@@ -61,6 +61,20 @@ them are in `devdva02/.scratch/content-parity-log/map.md`.
   finding.
 - **Occurrence count** — how many times the same difference is on the page. It
   is not part of the finding id.
+- **Difference** — any place the two sides do not agree. Wider than a finding:
+  every finding is a difference, and a difference the content team has no power
+  to change is not a finding. A canonical URL the store config generates is a
+  difference and never a finding.
+- **Display-only difference** — a difference the log renders but does not count.
+  It has no id, no override and no place in a bar, and it is framed so that it
+  cannot be read as actionable. The `<head>` panel is made of these.
+- **Direction** — which side a one-sided difference is missing from. Content
+  production has and the new site lost is a defect; content the new site invented
+  is usually not. Every one-sided check names the two directions as two classes,
+  and hides the invented side.
+- **Anchor heading** — the nearest heading before an element in document order.
+  It is how a finding says where it is on the page, and it is null for an element
+  that precedes every heading.
 
 ## Identity
 
