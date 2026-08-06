@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PILL } from '../lib/palette.mjs';
+import { INK, PILL } from '../lib/palette.mjs';
 
 /**
  * The one action control. Spec 29: one control, one place in the code, four call
@@ -70,7 +70,7 @@ export default function OverrideControl({ finding, observationId, append, canWri
       </span>
 
       {state === 'contradicted' && (
-        <span className="text-[11px] text-attention-ink">
+        <span className={`text-[11px] ${INK.attention}`}>
           geclaimd opgelost door {override.editor}, verschilt nog
         </span>
       )}

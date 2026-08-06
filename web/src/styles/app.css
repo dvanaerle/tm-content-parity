@@ -7,8 +7,13 @@
  * CommonJS, it calls `hyvaModules.mergeTailwindConfig()` at require-time, and it
  * uses v3 entry syntax. So the brand hexes are transcribed by hand from
  * `devdva02/app/design/frontend/Valantic/base/web/tailwind/tailwind.config.js`.
- * They are 22 self-contained values and nothing else in that file is a source
+ * That file holds 22 self-contained values, and nothing else in it is a source
  * for this tool.
+ *
+ * Four of the 22 are transcribed here, because brand colour is chrome and the
+ * chrome is a header, a link, a tab and a button. `@theme` makes a utility class
+ * for every value it declares, so a value no component wears is dead CSS. Read
+ * the storefront config, cited above, for the other 18.
  *
  * Three rules hold this palette together, and every one of them is a rule about
  * meaning rather than about taste:
@@ -27,32 +32,12 @@
  */
 @theme {
   /* --- The storefront's brand hexes, transcribed ------------------------- */
-  /* primary */
-  --color-brand-dark-green: #001a13;
+  /* primary: the header ground, the button hover, and the link and tab accent */
   --color-brand-green: #003017;
   --color-brand-medium-green: #002e21;
-  --color-brand-orange: #ff8000;
   --color-brand-lighter-green: #809700;
-  --color-brand-lighter-green-second: #8ba407;
-  --color-brand-light-green: #6d8005;
-  --color-brand-blue: #80a5e4;
-  --color-brand-yellow: #ffcb00;
-  --color-brand-red: #ff4d4d;
-  --color-brand-black: #11171f;
-  --color-brand-brown: #8a7b6c;
-  /* secondary */
+  /* secondary: the muted ink on the header ground */
   --color-brand-sand: #f5e6d7;
-  --color-brand-beige: #fff5ed;
-  --color-brand-bone: #e0d2c5;
-  /* neutral */
-  --color-brand-grey: #636363;
-  --color-brand-medium-grey: #878787;
-  --color-brand-light-grey: #e3e3e3;
-  --color-brand-white: #ffffff;
-  --color-brand-dark-grey: #151a1f;
-  /* container */
-  --color-brand-surface: #fafafa;
-  --color-brand-surface-darker: #f5f5f5;
 
   /*
    * --- Diff meaning ------------------------------------------------------ *

@@ -7,7 +7,7 @@
  * trust is the count, and the bar is the glance.
  */
 
-import { BANNER, CHROME, FILL, PILL } from '../lib/palette.mjs';
+import { BANNER, CHROME, FILL, INK, PILL } from '../lib/palette.mjs';
 
 export function PageBar({ bar, ready }) {
   const percent = bar.denominator === 0 ? 100 : Math.round((bar.closed / bar.denominator) * 100);
@@ -27,7 +27,7 @@ export function PageBar({ bar, ready }) {
         </span>
         {ready && <span className="tabular-nums text-slate-500">{bar.open} open</span>}
         {ready && bar.contradicted > 0 && (
-          <span className="tabular-nums text-attention-ink">{bar.contradicted} nog niet opgelost</span>
+          <span className={`tabular-nums ${INK.attention}`}>{bar.contradicted} nog niet opgelost</span>
         )}
         {ready && bar.muted > 0 && (
           // A mute leaves the denominator, so it is reported beside the bar and

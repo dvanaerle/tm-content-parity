@@ -4,7 +4,7 @@ import { Chip, ClassPill } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
 import OverrideControl from './OverrideControl.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
-import { BANNER, CHROME } from '../lib/palette.mjs';
+import { BANNER, CHROME, INK } from '../lib/palette.mjs';
 
 /**
  * Variant A: a tabbed ledger, production and the new site side by side.
@@ -291,7 +291,7 @@ function MetaTable({ production, next }) {
                     pages and those rows are gone, so the 2 pages where the new
                     site **lost** one must not read like the rest. */}
                 {row.field === 'canonical' && row.state === 'lost' && (
-                  <span className="mt-1 block text-[11px] font-normal text-lost">
+                  <span className={`mt-1 block text-[11px] font-normal ${INK.lost}`}>
                     de nieuwe site heeft er geen
                   </span>
                 )}

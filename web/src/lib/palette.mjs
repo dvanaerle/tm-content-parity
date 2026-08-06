@@ -65,33 +65,46 @@ export const FILL = {
   dark: 'bg-slate-900',
 };
 
-/** A whole-width message. Border, ground and ink. */
+/**
+ * A whole-width message. Border, ground and ink.
+ *
+ * `severe` gets the deeper amber ground and `attention` the pale one. The two
+ * tones must not print the same pixels: a `severe` banner reports a failure, an
+ * `attention` banner reports a condition, and a reader who sees one shape cannot
+ * tell which of the two they have.
+ */
 export const BANNER = {
   lost: 'border-lost-token bg-lost-surface text-lost',
   added: 'border-added-token bg-added-surface text-added',
-  severe: 'border-severe bg-attention text-attention-ink',
-  attention: 'border-severe bg-attention text-attention-ink',
+  severe: 'border-severe bg-attention-fill text-attention-ink',
+  attention: 'border-attention-fill bg-attention text-attention-ink',
   info: 'border-info bg-info text-info-ink',
   neutral: 'border-slate-200 bg-slate-50 text-slate-600',
   dark: 'border-slate-900 bg-slate-900 text-white',
 };
 
 /**
- * The row layer of the diff: a whole cell whose content exists on one side only.
- * `null` on every tone that is not a direction, because tinting a whole cell is a
- * claim that the content is missing on the other side, and only two tones make
- * that claim.
+ * Ink on the page ground, for a word or a number beside other text. No border and
+ * no fill: a tinted label is `PILL`.
  *
- * @type {Record<Tone, string | null>}
+ * It holds the tones a caller asks for, like `TOKEN` and unlike `SURFACE`. An
+ * entry is added when a component needs it.
+ */
+export const INK = {
+  lost: 'text-lost',
+  attention: 'text-attention-ink',
+  info: 'text-info-ink',
+};
+
+/**
+ * The row layer of the diff: a whole cell whose content exists on one side only.
+ *
+ * It holds two tones and no more. A tinted cell is a claim that the content is
+ * missing on the other side, and only `lost` and `added` make that claim.
  */
 export const SURFACE = {
   lost: 'bg-lost-surface',
   added: 'bg-added-surface',
-  severe: null,
-  attention: null,
-  info: null,
-  neutral: null,
-  dark: null,
 };
 
 /**
@@ -114,8 +127,6 @@ export const CHROME = {
   link: 'text-brand-green hover:text-brand-lighter-green',
   tabActive: 'border-brand-lighter-green text-brand-green',
   button: 'bg-brand-green hover:bg-brand-medium-green',
-  focus: 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lighter-green',
-  accent: 'bg-brand-orange',
 };
 
 /**

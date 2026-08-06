@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Bar, Chip, ClassPill } from './Chips.jsx';
 import { LogBanner } from './Progress.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
-import { CHROME } from '../lib/palette.mjs';
+import { CHROME, INK } from '../lib/palette.mjs';
 import { useStoreOverrides } from '../lib/overrides.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
@@ -141,11 +141,11 @@ export default function Dashboard({ pages, excluded }) {
                 </td>
                 <td className="px-4 py-2">
                   <Bar shown={openOf(page)} elements={page.sides.production.elements} />
-                  <span className={`ml-2 tabular-nums ${openOf(page) ? 'font-semibold' : 'text-info-ink'}`}>
+                  <span className={`ml-2 tabular-nums ${openOf(page) ? 'font-semibold' : INK.info}`}>
                     {openOf(page)}
                   </span>
                   {barOf(page)?.closed > 0 && (
-                    <span className="ml-1 text-xs text-info-ink">+{barOf(page).closed} af</span>
+                    <span className={`ml-1 text-xs ${INK.info}`}>+{barOf(page).closed} af</span>
                   )}
                 </td>
                 {CHECKS.map((check) => (
