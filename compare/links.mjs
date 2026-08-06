@@ -13,6 +13,7 @@
  *   guess about a 404 is worse than silence.
  */
 
+import { anchorFor } from './locate.mjs';
 import { tier2 } from './match.mjs';
 
 /**
@@ -75,6 +76,11 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
   const newLinks = byKey(next.links);
   const newHost = new URL(next.url).host.toLowerCase();
 
+  // Ticket 34. An anchor and its words share one position on the document-order
+  // counter, so a link finding names the same section the Diff tab would.
+  const prodAnchor = anchorFor(production.elements);
+  const newAnchor = anchorFor(next.elements);
+
   // --- Absolute checks on the new site -----------------------------------
   // These run first, because a leaked or cross-store link is already fully
   // explained. Reporting it a second time as `extra-link` would inflate the
@@ -84,18 +90,19 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
   for (const link of newLinks.values()) {
     const host = new URL(link.url).host.toLowerCase();
     const path = new URL(link.url).pathname.toLowerCase().replace(/\/+$/, '');
+    const anchor = newAnchor(link.index);
 
     if (LIVE_HOST.test(host) && !LEAKAGE_ALLOWED_HOSTS.has(host) && path && newSitePaths?.has(path)) {
       // A bare-home target has no path and falls out here, which is what spares
       // the `disclaimer` boilerplate on all six stores.
-      collector.add({ class: 'leakage', prod: null, new: link.key });
+      collector.add({ class: 'leakage', prod: null, new: link.key, anchor });
       explained.add(link.key);
     }
 
     if (INTERNAL_HOST.test(host) && host !== newHost) {
       // Host-based, not store-based: `be` and `be_fr` share one host, and a
       // store-based test would report every be_fr page against itself.
-      collector.add({ class: 'cross-store-link', prod: null, new: link.key });
+      collector.add({ class: 'cross-store-link', prod: null, new: link.key, anchor });
       explained.add(link.key);
     }
 
@@ -107,7 +114,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     if (state.status >= 400 || state.status === 0) {
       // Absolute, not comparative: it fires even when production is broken too,
       // because a dead link is actionable with near-zero false positives.
-      collector.add({ class: 'broken-link', prod: null, new: link.key });
+      collector.add({ class: 'broken-link', prod: null, new: link.key, anchor });
       continue;
     }
 
@@ -116,7 +123,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
       const prodState = counterpart ? statuses.get(counterpart.url) : undefined;
       // Never a finding when both sides redirect alike.
       if (prodState?.status === 200 && prodState.hops === 0) {
-        collector.add({ class: 'redirect', prod: counterpart?.key ?? null, new: link.key });
+        collector.add({ class: 'redirect', prod: counterpart?.key ?? null, new: link.key, anchor });
       }
     }
   }
@@ -130,7 +137,9 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     const newLink = newByText.get(text);
     if (!newLink || newLink.key === prodLink.key) continue;
     // The same anchor, a different target.
-    collector.add({ class: 'link-target', prod: prodLink.key, new: newLink.key });
+    collector.add({
+      class: 'link-target', prod: prodLink.key, new: newLink.key, anchor: prodAnchor(prodLink.index),
+    });
     retargeted.add(prodLink.key);
     retargeted.add(newLink.key);
   }
@@ -141,13 +150,13 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     // broken: the new site did not lose anything worth having.
     const state = link.internal ? statuses?.get(link.url) : undefined;
     if (state && (state.status >= 400 || state.status === 0)) continue;
-    collector.add({ class: 'missing-link', prod: key, new: null });
+    collector.add({ class: 'missing-link', prod: key, new: null, anchor: prodAnchor(link.index) });
   }
 
-  for (const key of newLinks.keys()) {
+  for (const [key, link] of newLinks) {
     if (prodLinks.has(key) || retargeted.has(key) || explained.has(key)) continue;
     // Hidden by default: the new site legitimately gained content, and flagging
     // an added link invites editors to delete good work.
-    collector.add({ class: 'extra-link', prod: null, new: key });
+    collector.add({ class: 'extra-link', prod: null, new: key, anchor: newAnchor(link.index) });
   }
 }

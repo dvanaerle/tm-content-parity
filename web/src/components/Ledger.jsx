@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { textFragmentUrl } from '../../../compare/locate.mjs';
 import { metaRows } from '../../../compare/meta.mjs';
 import { Chip, ClassPill } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
@@ -122,22 +123,22 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
               <input type="checkbox" checked={showMatches} onChange={(event) => setShowMatches(event.target.checked)} />
               Gelijke elementen ook tonen
             </label>
-            <DiffTable rows={rows} control={control} />
+            <DiffTable rows={rows} control={control} sides={report.sides} />
           </>
         )}
         {tab === 'Outline' && <Outline elements={production.elements} />}
-        {tab === 'Links' && <FindingTable findings={findings} check="links" control={control} />}
-        {tab === 'Afbeeldingen' && <FindingTable findings={findings} check="images" control={control} />}
+        {tab === 'Links' && <FindingTable findings={findings} check="links" control={control} sides={report.sides} />}
+        {tab === 'Afbeeldingen' && <FindingTable findings={findings} check="images" control={control} sides={report.sides} />}
         {tab === 'Content' && <SideBySide production={production} next={next} />}
         {tab === 'Meta' && <MetaTable production={production} next={next} />}
-        {tab === 'Taken' && <Tasks findings={findings} control={control} />}
+        {tab === 'Taken' && <Tasks findings={findings} control={control} sides={report.sides} />}
       </div>
     </section>
   );
 }
 
 /** The prototype's three columns: status, production as the reference, new site. */
-function DiffTable({ rows, control }) {
+function DiffTable({ rows, control, sides }) {
   if (!rows.length) return <Empty>Geen verschillen in deze filter.</Empty>;
 
   return (
@@ -157,6 +158,11 @@ function DiffTable({ rows, control }) {
             <td className="px-2 py-3">
               {row.class ? <ClassPill class={row.class} /> : <span className="text-xs text-slate-400">gelijk</span>}
               {row.score !== null && <span className="ml-2 text-xs text-slate-400">{row.score}</span>}
+              {/* Ticket 34: six positions can group into one finding, and an editor
+                  who fixes this one and believes the work is done is wrong five
+                  times. The tick already acts on all six; the badge says so. */}
+              <Occurrences finding={row.finding} />
+              <Section anchor={row.finding?.anchor} />
               {row.finding && <div className="mt-1">{control(row.finding)}</div>}
             </td>
             <DiffCells
@@ -164,8 +170,8 @@ function DiffTable({ rows, control }) {
               new={row.new?.norm ?? null}
               prodRaw={row.prod?.raw ?? null}
               newRaw={row.new?.raw ?? null}
-              prodPrefix={<Tag element={row.prod} />}
-              newPrefix={<Tag element={row.new} />}
+              prodPrefix={<><Tag element={row.prod} /><Locate url={sides.production.url} text={row.prod?.raw} side="productie" /></>}
+              newPrefix={<><Tag element={row.new} /><Locate url={sides.new.url} text={row.new?.raw} side="de nieuwe site" /></>}
               strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
             />
           </tr>
@@ -205,7 +211,7 @@ function Outline({ elements }) {
   );
 }
 
-function FindingTable({ findings, check, control }) {
+function FindingTable({ findings, check, control, sides }) {
   const rows = findings.filter((finding) => finding.check === check);
   if (!rows.length) return <Empty>Geen bevindingen voor {CHECK_LABEL[check]}.</Empty>;
 
@@ -224,11 +230,10 @@ function FindingTable({ findings, check, control }) {
             <td className="px-2 py-2">
               <ClassPill class={finding.class} />
               <Detail finding={finding} />
-              {finding.occurrences > 1 && (
-                <span className="ml-2 rounded bg-slate-900 px-1.5 text-[11px] text-white">
-                  ×{finding.occurrences}
-                </span>
-              )}
+              <Occurrences finding={finding} />
+              {/* A target key and an alt text are not words on the page, so the
+                  heading above them is the only thing a browser can scroll to. */}
+              <Section anchor={finding.anchor} sides={sides} />
               <div className="mt-1">{control(finding)}</div>
             </td>
             {/* The same component the content rows use. A link finding word-diffs
@@ -313,7 +318,7 @@ function MetaTable({ production, next }) {
  * The one place the three checks are unified, and now the one place an editor
  * can work down a page without leaving a tab.
  */
-function Tasks({ findings, control }) {
+function Tasks({ findings, control, sides }) {
   const byCheck = useMemo(() => {
     const groups = new Map();
     for (const finding of findings) {
@@ -342,6 +347,7 @@ function Tasks({ findings, control }) {
                   {finding.prod ?? '—'}
                   <span className="mx-1 text-slate-400">→</span>
                   {finding.new ?? '—'}
+                  <Section anchor={finding.anchor} sides={sides} />
                 </span>
                 {finding.occurrences > 1 && (
                   <span className="text-xs text-slate-400">×{finding.occurrences}</span>
@@ -366,5 +372,64 @@ const Empty = ({ children }) => <p className="py-6 text-sm text-slate-500">{chil
 const Detail = ({ finding }) => (
   finding.detail
     ? <span className="ml-2 font-mono text-[11px] text-slate-500">{finding.detail}</span>
+    : null
+);
+
+/**
+ * Ticket 34. A finding reading `hier` or `carports` used to send an editor hunting
+ * through the page by eye. This is the section it sits in: the nearest heading
+ * before it in document order, which is what the compare stage recorded.
+ *
+ * With `sides` it also carries the two deep links, for a finding whose own text is
+ * not words on the page — a link target and an image key are not there to scroll
+ * to. A content row does not pass them, because its own cells carry a link to the
+ * exact words, which is closer.
+ */
+const Section = ({ anchor, sides = null }) => (
+  anchor
+    ? (
+      <div className="mt-1 flex items-baseline gap-1 text-[11px] text-slate-500">
+        <span className="truncate" title={anchor}>onder “{anchor}”</span>
+        {sides && <Locate url={sides.production.url} text={anchor} side="productie" />}
+        {sides && <Locate url={sides.new.url} text={anchor} side="de nieuwe site" />}
+      </div>
+    )
+    : null
+);
+
+/**
+ * Opens the live page scrolled to this text, with a `#:~:text=` fragment the
+ * browser resolves against what it rendered. That is why it takes the **literal**
+ * text and never the normalised one: tier 1 folds curly quotes, NBSP and dashes,
+ * and a folded string is not on the page to be found.
+ */
+function Locate({ url, text, side }) {
+  const href = textFragmentUrl(url, text);
+  if (!href) return null;
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      title={`Open op ${side}, bij deze tekst`}
+      className="mr-2 text-[11px] text-slate-400 no-underline hover:text-slate-700"
+    >
+      ↗
+    </a>
+  );
+}
+
+/**
+ * One rename repeated six times is one finding, and the tick acts on all six. An
+ * editor who fixes the first and believes the page is done is wrong five times.
+ */
+const Occurrences = ({ finding }) => (
+  finding && finding.occurrences > 1
+    ? (
+      <span className="ml-2 rounded bg-slate-900 px-1.5 text-[11px] text-white">
+        ×{finding.occurrences}
+      </span>
+    )
     : null
 );

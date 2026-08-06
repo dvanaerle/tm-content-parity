@@ -4,6 +4,7 @@ import { comparePage, newSitePathsFor, reportFilename, skipReason } from './30-c
 import { FindingCollector, median, summarise, summariseReports } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
+import { textFragmentUrl } from './locate.mjs';
 import { lcsPairs, mayPair, maskNumbers, similarity, tier2 } from './match.mjs';
 import { metaRows } from './meta.mjs';
 import { classifyPair, diffRows, textFindings } from './text.mjs';
@@ -65,6 +66,12 @@ function collect(run) {
 function elements(texts) {
   seq = 0;
   return texts.map((text) => element(text));
+}
+
+/** @param {Array<[string, string]>} spec `[raw, tag]`, in document order. */
+function outline(spec) {
+  seq = 0;
+  return spec.map(([raw, tag]) => element(raw, { tag }));
 }
 
 describe('tier2', () => {
@@ -211,6 +218,56 @@ describe('diffRows', () => {
       'Onze prijzen zijn scherp',
       '+Nieuw blok',
     ]);
+  });
+
+  // Ticket 34. A new-only row used to sort by its index in the **new** document
+  // against **production** indices. The two index spaces only coincide while the
+  // documents are about the same length, and on `fotogalerij` production holds 178
+  // text elements against the new site's 9.
+  const LONG = [
+    'Overkappingen', 'Aluminium profielen', 'Glazen dak', 'Zonwering', 'Montage',
+    'Levertijd', 'Garantie', 'Kleuren en RAL', 'Onderhoud', 'Contact',
+  ];
+
+  it('anchors a new-only row to the production position of the nearest matched pair', () => {
+    const rows = diffRows(
+      extract({ elements: elements(LONG) }),
+      extract({ side: 'new', elements: elements(['Kleuren en RAL', 'Nieuw fotoblok', 'Onderhoud']) }),
+    );
+
+    // Under the old rule the addition carried new index 1 and landed second, six
+    // paragraphs above the content it follows.
+    expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
+      ...LONG.slice(0, 8), '+Nieuw fotoblok', ...LONG.slice(8),
+    ]);
+  });
+
+  it('puts a new-only row above the first agreement, not at the top of the page', () => {
+    const rows = diffRows(
+      extract({ elements: elements(LONG) }),
+      extract({ side: 'new', elements: elements(['Nieuw fotoblok', 'Kleuren en RAL']) }),
+    );
+    expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
+      ...LONG.slice(0, 7), '+Nieuw fotoblok', ...LONG.slice(7),
+    ]);
+  });
+
+  it('reads a page the two sides agree nowhere on as production first, then the new site', () => {
+    const rows = diffRows(
+      extract({ elements: elements(['Overkappingen', 'Aluminium profielen']) }),
+      extract({ side: 'new', elements: elements(['Nieuw fotoblok', 'Tweede fotoblok']) }),
+    );
+    expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
+      'Overkappingen', 'Aluminium profielen', '+Nieuw fotoblok', '+Tweede fotoblok',
+    ]);
+  });
+
+  it('keeps two additions after one pair in the order the new site has them', () => {
+    const rows = diffRows(
+      extract({ elements: elements(LONG) }),
+      extract({ side: 'new', elements: elements(['Kleuren en RAL', 'Eerste fotoblok', 'Tweede fotoblok']) }),
+    );
+    expect(rows.slice(8, 10).map((row) => row.new?.raw)).toEqual(['Eerste fotoblok', 'Tweede fotoblok']);
   });
 
   /** @param {string} prodTag @param {string} newTag */
@@ -381,12 +438,13 @@ describe('textFindings', () => {
 /**
  * @param {string} url
  * @param {string} text
- * @param {{ key?: string, internal?: boolean }} [overrides]
+ * @param {{ key?: string, internal?: boolean, index?: number }} [overrides]
  */
 function link(url, text, overrides = {}) {
   const parsed = new URL(url);
   const self = ['www.tuinmaximaal.nl', 'valanticnl.intern.systems'].includes(parsed.host);
   return {
+    index: overrides.index ?? 0,
     href: url,
     url,
     key: overrides.key
@@ -701,8 +759,8 @@ describe('compareLinks', () => {
 
 // --- Images --------------------------------------------------------------
 
-/** @param {string} key @param {string | null} alt */
-const image = (key, alt) => ({ key, src: `/media/wysiwyg/${key}`, alt });
+/** @param {string} key @param {string | null} alt @param {number} [index] */
+const image = (key, alt, index = 0) => ({ index, key, src: `/media/wysiwyg/${key}`, alt });
 
 describe('compareImages', () => {
   it('hides production its campaign banner instead of calling it missing', () => {
@@ -744,6 +802,143 @@ describe('compareImages', () => {
       collector,
     ));
     expect(findings.map((f) => f.class)).toEqual(['casing']);
+  });
+});
+
+// --- Position ------------------------------------------------------------
+
+/**
+ * Ticket 34. A finding that reads `hier` or `carports` used to send an editor
+ * hunting through the page by eye. It now names the section it sits in.
+ */
+describe('the heading a finding sits under', () => {
+  const PAGE = outline([
+    ['Onze overkappingen', 'h1'],
+    ['Voor de eerste kop', 'p'],
+    ['Kleuren en RAL', 'h2'],
+    ['Antraciet en creme', 'p'],
+    ['Montage', 'h2'],
+    ['Wij monteren zelf', 'p'],
+  ]);
+
+  /** @param {import('./contract.mjs').TextElement[]} elements */
+  const prod = (elements) => extract({ elements });
+
+  it('names the nearest heading before the element', () => {
+    const next = outline([
+      ['Onze overkappingen', 'h1'],
+      ['Voor de eerste kop', 'p'],
+      ['Kleuren en RAL', 'h2'],
+      ['Antraciet en creme', 'p'],
+      ['Montage', 'h2'],
+      ['Wij monteren graag zelf', 'p'],
+    ]);
+    const findings = collect((collector) => textFindings(
+      diffRows(prod(PAGE), extract({ side: 'new', elements: next })),
+      collector,
+    ));
+    expect(findings.map((finding) => [finding.class, finding.anchor]))
+      .toEqual([['copy', 'Montage']]);
+  });
+
+  it('is null when the element precedes every heading', () => {
+    const findings = collect((collector) => textFindings(
+      diffRows(
+        prod(outline([['Kruimelpad naar de winkel', 'p'], ['Kleuren en RAL', 'h2']])),
+        extract({ side: 'new', elements: outline([['Kleuren en RAL', 'h2']]) }),
+      ),
+      collector,
+    ));
+    expect(findings.map((finding) => [finding.class, finding.anchor]))
+      .toEqual([['text-missing', null]]);
+  });
+
+  it('takes the heading above a heading, never the heading itself', () => {
+    const after = outline([
+      ['Onze overkappingen', 'h1'],
+      ['Voor de eerste kop', 'p'],
+      ['Kleuren en RAL', 'h3'],
+      ['Antraciet en creme', 'p'],
+      ['Montage', 'h2'],
+      ['Wij monteren zelf', 'p'],
+    ]);
+    const findings = collect((collector) => textFindings(
+      diffRows(prod(PAGE), extract({ side: 'new', elements: after })),
+      collector,
+    ));
+    expect(findings.map((finding) => [finding.class, finding.anchor]))
+      .toEqual([['heading-level', 'Onze overkappingen']]);
+  });
+
+  it('falls back to the new site when the finding has no production side', () => {
+    const next = outline([['Kleuren en RAL', 'h2'], ['Ook in gepoedercoat wit', 'p']]);
+    const findings = collect((collector) => textFindings(
+      diffRows(prod(outline([['Kleuren en RAL', 'h2']])), extract({ side: 'new', elements: next })),
+      collector,
+    ));
+    expect(findings.map((finding) => [finding.class, finding.anchor]))
+      .toEqual([['text-added', 'Kleuren en RAL']]);
+  });
+
+  it('positions an image finding, so "which of the eleven images" has an answer', () => {
+    const findings = collect((collector) => compareImages(
+      extract({ elements: PAGE, images: [image('dak.jpg', 'Glazen dak', 5)] }),
+      extract({ side: 'new', images: [] }),
+      collector,
+    ));
+    expect(findings.map((finding) => [finding.class, finding.anchor]))
+      .toEqual([['image-missing', 'Montage']]);
+  });
+
+  it('positions a link finding', () => {
+    const findings = collect((collector) => compareLinks({
+      production: extract({
+        elements: PAGE,
+        links: [link('https://www.tuinmaximaal.nl/carport', 'Carports', { index: 3 })],
+      }),
+      new: extract({ side: 'new', url: newUrl, links: [] }),
+      collector,
+    }));
+    expect(findings.map((finding) => [finding.class, finding.anchor]))
+      .toEqual([['missing-link', 'Kleuren en RAL']]);
+  });
+
+  it('stays out of the finding id, so a heading edit never detaches a dismissal', () => {
+    const words = outline([['Kleuren en RAL', 'h2'], ['Antraciet en creme', 'p']]);
+    const renamed = outline([['Kleuren en kleurkeuze', 'h2'], ['Antraciet en creme', 'p']]);
+    const withoutHeading = outline([['Antraciet en creme', 'p']]);
+
+    const id = (prodElements, newElements) => collect((collector) => textFindings(
+      diffRows(extract({ elements: prodElements }), extract({ side: 'new', elements: newElements })),
+      collector,
+    )).find((finding) => finding.prod === 'Antraciet en creme' && finding.new === null)?.id;
+
+    expect(id(words, [])).toBe(id(withoutHeading, []));
+    expect(id(words, [])).toBe(id(renamed, []));
+  });
+});
+
+describe('textFragmentUrl', () => {
+  const PROD = 'https://www.tuinmaximaal.nl/overkappingen';
+
+  it('points at the words, so a one-word finding stops being a hunt', () => {
+    expect(textFragmentUrl(PROD, 'hier')).toBe(`${PROD}#:~:text=hier`);
+  });
+
+  it('takes the two ends of a long text, because the middle adds nothing', () => {
+    const long = 'een twee drie vier vijf zes zeven acht negen tien elf twaalf dertien';
+    expect(textFragmentUrl(PROD, long))
+      .toBe(`${PROD}#:~:text=een%20twee%20drie%20vier%20vijf%20zes,acht%20negen%20tien%20elf%20twaalf%20dertien`);
+  });
+
+  it('escapes the hyphen, which separates a prefix from a suffix in the directive', () => {
+    expect(textFragmentUrl(PROD, 'RAL-7016')).toBe(`${PROD}#:~:text=RAL%2D7016`);
+  });
+
+  it('has nothing to point at without a url or without text', () => {
+    expect(textFragmentUrl(PROD, '')).toBe(null);
+    expect(textFragmentUrl(PROD, '   ')).toBe(null);
+    expect(textFragmentUrl(null, 'hier')).toBe(null);
   });
 });
 

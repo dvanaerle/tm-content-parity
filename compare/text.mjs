@@ -11,6 +11,7 @@
  * first.
  */
 
+import { anchorFor } from './locate.mjs';
 import { lcsPairs, maskNumbers, pairLeftovers, tier2 } from './match.mjs';
 
 /**
@@ -33,6 +34,7 @@ export const PROMO = /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\
  * @property {import('./contract.mjs').TextElement | null} prod
  * @property {import('./contract.mjs').TextElement | null} new
  * @property {number | null} score
+ * @property {string | null} [anchor]  The heading this position sits under (ticket 34).
  */
 
 /**
@@ -179,14 +181,74 @@ export function diffRows(production, next) {
     rows.push({ class: 'text-added', prod: null, new: element, score: null });
   }
 
-  // A new-only element sorts just after the production element it follows, so an
-  // addition reads in place instead of collecting at the end.
-  return rows.sort((a, b) => order(a) - order(b));
+  const sorted = inProductionOrder(rows);
+
+  // Ticket 34: the position an editor scrolls to. Production is the source of
+  // truth, so its heading names the section; a row the new site invented has no
+  // production side and takes the heading above it on the new site.
+  const prodAnchor = anchorFor(prodElements);
+  const newAnchor = anchorFor(newElements);
+  for (const row of sorted) {
+    row.anchor = row.prod ? prodAnchor(row.prod.index) : newAnchor(row.new?.index);
+  }
+  return sorted;
 }
 
-/** @param {AlignedRow} row */
-function order(row) {
-  return row.prod ? row.prod.index : (row.new?.index ?? 0) + 0.5;
+/**
+ * Production's document order, with a new-only element read in place rather than
+ * collected at the end.
+ *
+ * **Ticket 34 fixes the defect here.** A new-only row used to sort on its index in
+ * the *new* document, compared against *production* indices. The two index spaces
+ * only coincide while the two documents are about the same length, and on
+ * `fotogalerij` production holds 178 text elements against the new site's 9 — so
+ * an addition that belongs at the foot of the page sorted near the top. The rule
+ * is instead: **anchor a new-only row to the production position of the nearest
+ * matched pair before it**, which is the last place the two documents agreed.
+ *
+ * Two cases have no pair before them. An addition above the **first** agreement is
+ * anchored just before that agreement, not at the top of the page: on `fotogalerij`
+ * the first agreement is production element 170, and the top of production is not
+ * where the new site's opening block belongs. And when the two documents agree
+ * **nowhere**, there is no position to claim, so the additions follow the whole of
+ * production — a wholly rebuilt page reads as production first, then the new site.
+ *
+ * The key is a tuple rather than a fraction, so no arithmetic can collide a new-only
+ * row with the production row it must sit against: the base position, then before
+ * (`-1`) or after (`1`) the rows with a production side, then the new-document order
+ * among the additions that share a base.
+ *
+ * @param {AlignedRow[]} rows
+ * @returns {AlignedRow[]}
+ */
+function inProductionOrder(rows) {
+  const matched = rows
+    .filter((row) => row.prod && row.new)
+    .sort((a, b) => a.new.index - b.new.index);
+
+  const keyed = rows.map((row) => ({ row, key: sortKey(row, matched) }));
+  keyed.sort((a, b) => a.key[0] - b.key[0] || a.key[1] - b.key[1] || a.key[2] - b.key[2]);
+  return keyed.map((entry) => entry.row);
+}
+
+/**
+ * @param {AlignedRow} row
+ * @param {AlignedRow[]} matched  Rows with both sides, by their new-document index.
+ * @returns {[number, number, number]}
+ */
+function sortKey(row, matched) {
+  if (row.prod) return [row.prod.index, 0, 0];
+
+  const index = row.new?.index ?? 0;
+  let before = null;
+  for (const pair of matched) {
+    if (pair.new.index >= index) break;
+    before = pair;
+  }
+
+  if (before) return [before.prod.index, 1, index];
+  if (matched.length) return [matched[0].prod.index, -1, index];
+  return [Infinity, 1, index];
 }
 
 /**
@@ -208,6 +270,7 @@ export function textFindings(rows, collector) {
       // equal, so the record would say "identical" and give an `h2` → `h3` the
       // same id as an `h2` → `h4`. The detail is what changed.
       detail: tagChange(row),
+      anchor: row.anchor ?? null,
       score: row.score,
     });
   }

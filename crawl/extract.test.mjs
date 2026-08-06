@@ -263,6 +263,50 @@ describe('links', () => {
   });
 });
 
+describe('one document-order walk', () => {
+  it('puts text, images and links on one shared counter', () => {
+    const extract = extractPage(page(`
+      <h2>Kleuren</h2>
+      <img src="/media/Veranda.jpg" alt="Veranda">
+      <p>Antraciet en creme</p>
+      <a href="/carport">Carport</a>`), CONTEXT);
+
+    expect(extract.elements.map((element) => element.index)).toEqual([0, 2, 3]);
+    expect(extract.images.map((image) => image.index)).toEqual([1]);
+    expect(extract.links.map((link) => link.index)).toEqual([3]);
+  });
+
+  it('gives an anchor one position for its words and its target', () => {
+    const extract = extractPage(page('<p>Intro tekst</p><a href="/carport">Carport</a>'), CONTEXT);
+    expect(extract.elements[1].index).toBe(extract.links[0].index);
+  });
+
+  it('gives a deduplicated image the position of its first occurrence', () => {
+    const extract = extractPage(page(`
+      <p>Intro tekst</p>
+      <img src="/media/Veranda.jpg" alt="Veranda">
+      <p>Tussen tekst</p>
+      <img src="/media/Veranda.jpg" alt="Veranda">`), CONTEXT);
+
+    expect(extract.images).toHaveLength(1);
+    expect(extract.images[0].index).toBe(1);
+    expect(extract.elements.map((element) => element.index)).toEqual([0, 2]);
+  });
+
+  it('still counts an anchor a heading spoke for as a link, at its own position', () => {
+    const extract = extractPage(page('<h2>Bekijk onze <a href="/carports">carports</a> nu</h2>'), CONTEXT);
+
+    expect(extract.elements.map((element) => [element.index, element.raw]))
+      .toEqual([[0, 'Bekijk onze carports nu']]);
+    expect(extract.links.map((link) => [link.index, link.key])).toEqual([[1, 'self/carports']]);
+  });
+
+  it('takes no position for an image with no identity', () => {
+    const extract = extractPage(page('<img alt="icon" width="24"><p>Antraciet en creme</p>'), CONTEXT);
+    expect(extract.elements[0].index).toBe(0);
+  });
+});
+
 describe('imageKey', () => {
   it('is the basename, lowercased, extension kept', () => {
     expect(imageKey('/cdn-cgi/image/quality=75/media/wysiwyg/tm/nl-nl/Terras_Antraciet.jpg?x=1'))
@@ -294,7 +338,8 @@ describe('images', () => {
     const extract = extractPage(page(`
       <img src="/media/Veranda.jpg" alt="Veranda">
       <img src="/media/Veranda.jpg" alt="Veranda">`), CONTEXT);
-    expect(extract.images).toEqual([{ key: 'veranda.jpg', src: '/media/Veranda.jpg', alt: 'Veranda' }]);
+    expect(extract.images)
+      .toEqual([{ index: 0, key: 'veranda.jpg', src: '/media/Veranda.jpg', alt: 'Veranda' }]);
   });
 
   it('takes the real alt when the two copies disagree', () => {

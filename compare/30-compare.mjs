@@ -85,6 +85,12 @@ export function comparePage({ sides, newSitePaths, statuses, observationId = new
   compareImages(production, next, collector);
 
   const findings = collector.all();
+  // Ticket 34: a `DiffRow` holds the position in the `elements` array, and the
+  // shared document-order counter is no longer that number — it runs over images
+  // and links too. The browser reads the element back with `elements[row.prod]`.
+  const prodAt = positionsIn(production.elements);
+  const newAt = positionsIn(next.elements);
+
   return {
     ...scope,
     sides,
@@ -93,8 +99,8 @@ export function comparePage({ sides, newSitePaths, statuses, observationId = new
     findings,
     rows: aligned.map((row) => ({
       class: row.class,
-      prod: row.prod ? row.prod.index : null,
-      new: row.new ? row.new.index : null,
+      prod: row.prod ? prodAt.get(row.prod) : null,
+      new: row.new ? newAt.get(row.new) : null,
       score: row.score,
       finding: row.finding ?? null,
     })),
@@ -103,6 +109,14 @@ export function comparePage({ sides, newSitePaths, statuses, observationId = new
     findingSetHash: findingSetHash(findings),
     builtAt: new Date().toISOString(),
   };
+}
+
+/**
+ * @param {import('./contract.mjs').TextElement[]} elements
+ * @returns {Map<import('./contract.mjs').TextElement, number>}
+ */
+function positionsIn(elements) {
+  return new Map(elements.map((element, at) => [element, at]));
 }
 
 /**

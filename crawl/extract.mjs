@@ -134,6 +134,72 @@ function assertHasContent(extract) {
 }
 
 /**
+ * Ticket 34: text, images and links come from **one** walk on **one** counter.
+ *
+ * They were three separate `querySelectorAll` passes, each with its own numbering
+ * or none at all, so an image and a paragraph could not be told apart by position
+ * and a finding could not say where on the page it was.
+ *
+ * Every record a node makes shares that node's position, so an anchor's words and
+ * its target agree about where they are. A node that makes no record takes no
+ * number, which keeps the counter gapless. A repeat of an already-seen image makes
+ * no record either: ticket 06 compares images as a set, and the position an editor
+ * wants is the **first** occurrence.
+ *
+ * @param {import('node-html-parser').HTMLElement} scope
+ * @param {string} pageUrl
+ * @param {{ prodHost?: string, newHost?: string }} hosts
+ */
+function walk(scope, pageUrl, hosts) {
+  /** @type {import('../compare/contract.mjs').TextElement[]} */
+  const elements = [];
+  /** @type {import('../compare/contract.mjs').LinkRecord[]} */
+  const links = [];
+  /** @type {Map<string, import('../compare/contract.mjs').ImageRecord>} */
+  const byKey = new Map();
+  let imagesWithoutSrc = 0;
+
+  /** Text elements a heading above them already spoke for. */
+  const swallowed = new Set();
+  let position = 0;
+
+  for (const node of scope.querySelectorAll(`${TEXT_TAGS},img`)) {
+    const tag = node.rawTagName.toLowerCase();
+
+    if (tag === 'img') {
+      const image = imageRecord(node);
+      if (!image) {
+        imagesWithoutSrc += 1;
+        continue;
+      }
+      const seen = byKey.get(image.key);
+      if (seen) {
+        // The two copies of one image can disagree. The page does carry the alt,
+        // so the real one wins over an absent or empty one.
+        if (!seen.alt && image.alt) seen.alt = image.alt;
+        continue;
+      }
+      byKey.set(image.key, { index: position, ...image });
+      position += 1;
+      continue;
+    }
+
+    const element = textElement(node, tag, swallowed);
+    // A heading swallows the words of an anchor inside it, and never its target:
+    // the swallow rule is about what an element **says**, and ticket 05 counts
+    // every anchor on the page.
+    const link = tag === 'a' ? linkRecord(node, pageUrl, hosts) : null;
+    if (!element && !link) continue;
+
+    if (element) elements.push({ index: position, ...element });
+    if (link) links.push({ index: position, ...link });
+    position += 1;
+  }
+
+  return { elements, links, images: [...byKey.values()], imagesWithoutSrc };
+}
+
+/**
  * Ticket 02: every leaf text element in document order, all anchors counted.
  *
  * **A heading is never a container** (ticket 33). Production builds every FAQ
@@ -159,107 +225,75 @@ function assertHasContent(extract) {
  * it and does not do it; `extract.test.mjs` pins the behaviour so the next reader
  * sees the limit instead of finding it.
  *
- * @param {import('node-html-parser').HTMLElement} scope
- * @returns {import('../compare/contract.mjs').TextElement[]}
+ * @param {import('node-html-parser').HTMLElement} node
+ * @param {string} tag
+ * @param {Set<unknown>} swallowed
+ * @returns {Omit<import('../compare/contract.mjs').TextElement, 'index'> | null}
  */
-function textElements(scope) {
-  const out = [];
-  /** Text elements a heading above them already spoke for. */
-  const swallowed = new Set();
+function textElement(node, tag, swallowed) {
+  if (swallowed.has(node)) return null;
 
-  for (const node of scope.querySelectorAll(TEXT_TAGS)) {
-    if (swallowed.has(node)) continue;
+  const heading = /^h[1-6]$/.test(tag);
+  if (heading) {
+    for (const inner of node.querySelectorAll(TEXT_TAGS)) swallowed.add(inner);
+  } else if (node.querySelectorAll(TEXT_TAGS).length > 0) return null;
 
-    const tag = node.rawTagName.toLowerCase();
-    const heading = /^h[1-6]$/.test(tag);
-    if (heading) {
-      for (const inner of node.querySelectorAll(TEXT_TAGS)) swallowed.add(inner);
-    } else if (node.querySelectorAll(TEXT_TAGS).length > 0) continue;
+  const raw = textOf(node);
+  const norm = tier1(raw);
+  if (norm.length < 2) return null;
+  // Bullets, arrows and separators carry no content to compare.
+  if (!/[\p{L}\p{N}]/u.test(norm)) return null;
 
-    const raw = textOf(node);
-    const norm = tier1(raw);
-    if (norm.length < 2) continue;
-    // Bullets, arrows and separators carry no content to compare.
-    if (!/[\p{L}\p{N}]/u.test(norm)) continue;
-
-    out.push({
-      index: out.length,
-      tag,
-      // Ticket 02: `cta` is a label only. A link in body copy is counted too.
-      kind: heading ? 'heading' : (tag === 'a' || tag === 'button') ? 'cta' : 'text',
-      level: heading ? Number(tag.slice(1)) : null,
-      raw,
-      norm,
-    });
-  }
-  return out;
+  return {
+    tag,
+    // Ticket 02: `cta` is a label only. A link in body copy is counted too.
+    kind: heading ? 'heading' : (tag === 'a' || tag === 'button') ? 'cta' : 'text',
+    level: heading ? Number(tag.slice(1)) : null,
+    raw,
+    norm,
+  };
 }
 
 /**
- * @param {import('node-html-parser').HTMLElement} scope
+ * @param {import('node-html-parser').HTMLElement} anchor
  * @param {string} pageUrl
  * @param {{ prodHost?: string, newHost?: string }} hosts
- * @returns {import('../compare/contract.mjs').LinkRecord[]}
+ * @returns {Omit<import('../compare/contract.mjs').LinkRecord, 'index'> | null}
  */
-function links(scope, pageUrl, hosts) {
-  const out = [];
-  for (const anchor of scope.querySelectorAll('a[href]')) {
-    const href = (anchor.getAttribute('href') ?? '').trim();
-    if (!href || NON_NAVIGATIONAL.test(href)) continue;
+function linkRecord(anchor, pageUrl, hosts) {
+  const href = (anchor.getAttribute('href') ?? '').trim();
+  if (!href || NON_NAVIGATIONAL.test(href)) return null;
 
-    let url;
-    try {
-      url = new URL(href, pageUrl);
-    } catch {
-      continue;
-    }
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') continue;
-
-    out.push({
-      href,
-      url: url.href,
-      key: linkKey(url, hosts),
-      text: tier1(textOf(anchor)),
-      internal: isInternalHost(url.host),
-    });
+  let url;
+  try {
+    url = new URL(href, pageUrl);
+  } catch {
+    return null;
   }
-  return out;
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+
+  return {
+    href,
+    url: url.href,
+    key: linkKey(url, hosts),
+    text: tier1(textOf(anchor)),
+    internal: isInternalHost(url.host),
+  };
 }
 
 /**
  * Ticket 06: `src` is authoritative and `data-src` is the fallback. An image
  * with neither is not an image for parity, because it carries no identity.
- * Images are compared as a set, so a page holds each identity once — the new
- * site emits a mobile and a desktop copy of the same src on every page.
  *
- * @param {import('node-html-parser').HTMLElement} scope
- * @returns {{ images: import('../compare/contract.mjs').ImageRecord[], withoutSrc: number }}
+ * @param {import('node-html-parser').HTMLElement} img
+ * @returns {Omit<import('../compare/contract.mjs').ImageRecord, 'index'> | null}
  */
-function images(scope) {
-  /** @type {Map<string, import('../compare/contract.mjs').ImageRecord>} */
-  const byKey = new Map();
-  let withoutSrc = 0;
+function imageRecord(img) {
+  const src = (img.getAttribute('src') ?? img.getAttribute('data-src') ?? '').trim();
+  if (!src || /^data:/i.test(src)) return null;
 
-  for (const img of scope.querySelectorAll('img')) {
-    const src = (img.getAttribute('src') ?? img.getAttribute('data-src') ?? '').trim();
-    if (!src || /^data:/i.test(src)) {
-      withoutSrc += 1;
-      continue;
-    }
-    const altAttribute = img.getAttribute('alt');
-    const alt = altAttribute == null ? null : tier1(altAttribute);
-    const key = imageKey(src);
-
-    const seen = byKey.get(key);
-    if (!seen) {
-      byKey.set(key, { key, src, alt });
-      continue;
-    }
-    // The two copies of one image can disagree. The page does carry the alt, so
-    // the real one wins over an absent or empty one.
-    if (!seen.alt && alt) seen.alt = alt;
-  }
-  return { images: [...byKey.values()], withoutSrc };
+  const altAttribute = img.getAttribute('alt');
+  return { key: imageKey(src), src, alt: altAttribute == null ? null : tier1(altAttribute) };
 }
 
 /**
@@ -322,8 +356,7 @@ export function extractPage(html, context) {
 
   const root = parse(html, PARSE_OPTIONS);
   const { scope, boundary } = contentRoot(root, warn);
-  const elements = textElements(scope);
-  const picture = images(scope);
+  const content = walk(scope, url, { prodHost, newHost });
 
   const extract = {
     store,
@@ -334,12 +367,12 @@ export function extractPage(html, context) {
     boundary,
     // The parser can drop the tag on malformed markup, so this reads the source.
     pageType: pageType(html.match(/<body[^>]*\sclass="([^"]*)"/i)?.[1] ?? ''),
-    elements,
-    links: links(scope, url, { prodHost, newHost }),
-    images: picture.images,
+    elements: content.elements,
+    links: content.links,
+    images: content.images,
     meta: meta(root, scope),
-    markdown: toMarkdown(elements),
-    diagnostics: { imagesWithoutSrc: picture.withoutSrc },
+    markdown: toMarkdown(content.elements),
+    diagnostics: { imagesWithoutSrc: content.imagesWithoutSrc },
     fetchedAt: new Date().toISOString(),
   };
 

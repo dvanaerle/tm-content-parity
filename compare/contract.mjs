@@ -30,7 +30,9 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * is the content outline and the diff input. It is one structure, not two.
  *
  * @typedef {object} TextElement
- * @property {number} index         Position in document order.
+ * @property {number} index         Position in document order. Ticket 34 put text,
+ *                                  images and links on **one** counter, so this is
+ *                                  no longer the position in `elements` as well.
  * @property {string} tag
  * @property {'heading' | 'text' | 'cta'} kind  `cta` is a label only. All anchors count.
  * @property {number | null} level  1 to 6 for a heading, else null.
@@ -40,6 +42,9 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
 
 /**
  * @typedef {object} LinkRecord
+ * @property {number} index         Position in document order, on the same counter as
+ *                                  `TextElement` and `ImageRecord` (ticket 34). An
+ *                                  anchor's words and its target share one position.
  * @property {string} href          The href as the page sends it.
  * @property {string} url           Resolved and absolute.
  * @property {string} key           Target identity: the two hosts of the page folded to one
@@ -50,7 +55,13 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  */
 
 /**
+ * Ticket 34 adds `index` and nothing else. Ticket 06's rules are untouched: the
+ * dedupe stays, the basename key stays, the set comparison stays, and `index` is
+ * **not** in the finding id — so no id moves and no override detaches.
+ *
  * @typedef {object} ImageRecord
+ * @property {number} index         Position in document order. For a deduplicated
+ *                                  record it is the **first** occurrence.
  * @property {string} key           The basename, lowercased, with a true size suffix
  *                                  (`-1292x729`) removed. Never a bare `_N`.
  * @property {string} src
@@ -109,6 +120,15 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * @property {string | null} detail What changed when the two sides of text are equal.
  *                                  `h2 → h3` on `heading-level` and `tag-changed`.
  *                                  Part of the id. See `findingId()`.
+ * @property {string | null} anchor The heading the finding sits under: the nearest
+ *                                  heading before it in document order, `null` when
+ *                                  it precedes every heading (ticket 34). Taken from
+ *                                  the production side when there is one, else from
+ *                                  the new site. On a grouped finding it is the
+ *                                  **first** occurrence; `occurrences` says there are
+ *                                  more. **Not part of the id**, like `occurrences`:
+ *                                  an edit to the heading above must not detach an
+ *                                  editor's dismissal of the words below it.
  * @property {number} occurrences   Not part of the id.
  * @property {number | null} score  The similarity score. On `copy` findings only.
  */
@@ -124,10 +144,15 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  *
  * `class: null` is an exact tier-1 match. Ticket 02: that is not a finding.
  *
+ * The two numbers are positions in the `elements` **array**, and since ticket 34
+ * that is no longer the same number as `TextElement.index`: the document-order
+ * counter now runs over images and links as well. The array position is what the
+ * browser needs, because it reads the element back with `elements[row.prod]`.
+ *
  * @typedef {object} DiffRow
  * @property {keyof FINDING_CLASSES | null} class
- * @property {number | null} prod   Index into `sides.production.elements`.
- * @property {number | null} new    Index into `sides.new.elements`.
+ * @property {number | null} prod   Position in `sides.production.elements`.
+ * @property {number | null} new    Position in `sides.new.elements`.
  * @property {number | null} score
  * @property {string | null} finding  The grouped finding this position belongs to.
  *                                    `null` on an exact match. Six positions that
