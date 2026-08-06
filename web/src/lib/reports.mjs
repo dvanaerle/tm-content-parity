@@ -1,26 +1,78 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { EXCLUDED_PAGES } from '../../../crawl/excluded-pages.mjs';
 
 /**
- * `compare/` writes one `PageReport` per store page into `data/reports/`.
- * The folder is not in git, so a fresh clone builds an empty log instead of
- * failing.
+ * `compare/30-compare.mjs` writes one `PageReport` per store page into
+ * `data/reports/`. The folder is not in git, so a fresh clone builds an empty log
+ * instead of failing.
  *
  * @typedef {import('../../../compare/contract.mjs').PageReport} PageReport
- * @returns {Promise<PageReport[]>}
  */
-export async function loadReports() {
-  const dir = fileURLToPath(new URL('../../../data/reports/', import.meta.url));
 
-  let names;
+const DIR = fileURLToPath(new URL('../../../data/reports/', import.meta.url));
+
+/** @returns {Promise<string[]>} */
+async function reportFiles() {
   try {
-    names = (await readdir(dir)).filter((name) => name.endsWith('.json'));
+    return (await readdir(DIR)).filter((name) => name.endsWith('.json')).sort();
   } catch (error) {
-    if (error.code === 'ENOENT') return [];
+    if (/** @type {any} */ (error).code === 'ENOENT') return [];
     throw error;
   }
-
-  return Promise.all(
-    names.map(async (name) => JSON.parse(await readFile(dir + name, 'utf8'))),
-  );
 }
+
+/** @returns {Promise<PageReport[]>} */
+export async function loadReports() {
+  const names = await reportFiles();
+  return Promise.all(names.map(async (name) => JSON.parse(await readFile(DIR + name, 'utf8'))));
+}
+
+/**
+ * The dashboard reads every page at once, and a full report holds both extracts —
+ * 11 MB across the NL store. So it keeps the summary and throws the rest away,
+ * one file at a time.
+ *
+ * @typedef {object} PageSummary
+ * @property {string} store
+ * @property {string} page
+ * @property {boolean} comparable
+ * @property {string | null} skipReason
+ * @property {import('../../../compare/contract.mjs').ReportSummary} summary
+ * @property {{ production: SideSummary, new: SideSummary }} sides
+ *
+ * @typedef {{ url: string, status: number, elements: number }} SideSummary
+ *
+ * @returns {Promise<PageSummary[]>}
+ */
+export async function loadSummaries() {
+  /** @type {PageSummary[]} */
+  const out = [];
+  for (const name of await reportFiles()) {
+    /** @type {PageReport} */
+    const report = JSON.parse(await readFile(DIR + name, 'utf8'));
+    out.push({
+      store: report.store,
+      page: report.page,
+      comparable: report.comparable,
+      skipReason: report.skipReason,
+      summary: report.summary,
+      sides: { production: side(report.sides.production), new: side(report.sides.new) },
+    });
+  }
+  return out;
+}
+
+/** @param {import('../../../compare/contract.mjs').PageExtract} extract */
+const side = (extract) => ({
+  url: extract.url,
+  status: extract.status,
+  elements: extract.elements.length,
+});
+
+/**
+ * Ticket 19: an excluded page stays **visible** as excluded, with its reason,
+ * rather than silently absent. Absence is what let a broken parse run for a whole
+ * crawl unnoticed.
+ */
+export const excluded = EXCLUDED_PAGES;

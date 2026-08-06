@@ -17,13 +17,35 @@ const TEXT_TAGS = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,dt,dd,button,a,figcaption,t
 
 /**
  * Ticket 02, trimmed to what removes something, with `[class*="breadcrumb"]`
- * restored by ticket 14. Inside `<main>` it removes nothing, so it runs on the
- * `body` fallback only.
+ * restored by ticket 14. Inside `<main>` it removes no *element*, so it runs on
+ * the `body` fallback only.
  */
 const CHROME = [
-  'header', 'footer', 'nav', 'form', 'script', 'style', 'noscript',
+  'header', 'footer', 'nav', 'form',
   '[class*="breadcrumb"]', '[class*="menu"]', '[role="dialog"]',
 ];
+
+/**
+ * These run inside the boundary as well, always.
+ *
+ * Ticket 02 measured that the chrome list removes zero text elements inside
+ * `<main>`, and put the whole list on the fallback path. That measurement asked
+ * whether a selector removes an *element* — and a `<style>` is not in
+ * `TEXT_TAGS`, so the answer was correctly zero. It never asked whether the
+ * **text inside** one bleeds into an ancestor that *is* in `TEXT_TAGS`.
+ *
+ * It does. Production nests a `<style>` and a `<script>` inside an `<a>`, and
+ * that anchor holds no other text element, so it is a leaf and `structuredText`
+ * hands over the CSS and the JavaScript as content. Measured over the nl store:
+ * **151 elements on 23 of 179 pages**, each of them a `structure` finding that
+ * no editor can act on.
+ *
+ * `<template>` is deliberately **not** in this list. Its text is not in the
+ * rendered document either, but the new site is Alpine-driven and a template
+ * there can hold copy the browser does render — removing it would invent
+ * production-only findings, which is the opposite mistake.
+ */
+const NEVER_CONTENT = ['script', 'style', 'noscript'];
 
 const BODY_CLASS_TYPE = [
   ['catalog-product-view', 'product'],
@@ -114,6 +136,12 @@ function contentRoot(root, warn) {
   const body = root.querySelector('body');
   if (!body) throw new Error('No <body> in the parsed document. The parse or the page is broken.');
 
+  // Before anything reads text: a script or a style is never content, wherever it
+  // sits, and its text leaks into whichever text element encloses it.
+  for (const selector of NEVER_CONTENT) {
+    for (const node of body.querySelectorAll(selector)) node.remove();
+  }
+
   const main = root.querySelector('main');
   if (main) return { scope: main, boundary: /** @type {'main'} */ ('main') };
 
@@ -122,6 +150,31 @@ function contentRoot(root, warn) {
     for (const node of body.querySelectorAll(selector)) node.remove();
   }
   return { scope: body, boundary: /** @type {'body'} */ ('body') };
+}
+
+/**
+ * Ticket 19: a page that answers 200 and holds nothing at all inside the
+ * boundary is either an undeclared application page or a broken parse. Both are
+ * engineering faults, so this fails the run instead of emitting findings an
+ * editor cannot act on.
+ *
+ * Emptiness is absolute, never a ratio: `fotogalerij` holds 9 text elements
+ * against production's 178 and is a real page, so any threshold band is already
+ * occupied. And emptiness counts images and links too — no text at all is a
+ * legitimate shape for a photo page, while nothing at all is not. The
+ * configurator scores 0 on all three.
+ *
+ * @param {import('../compare/contract.mjs').PageExtract} extract
+ */
+function assertHasContent(extract) {
+  if (extract.status !== 200) return;
+  if (extract.elements.length || extract.images.length || extract.links.length) return;
+
+  throw new Error(
+    'No text, image or link inside the content boundary on an HTTP 200 page. '
+    + 'Either the parse is broken, or this is an application page that '
+    + 'belongs in crawl/excluded-pages.mjs.'
+  );
 }
 
 /**
@@ -286,7 +339,7 @@ export function extractPage(html, context) {
   const elements = textElements(scope);
   const picture = images(scope);
 
-  return {
+  const extract = {
     store,
     page,
     side,
@@ -303,4 +356,7 @@ export function extractPage(html, context) {
     diagnostics: { imagesWithoutSrc: picture.withoutSrc },
     fetchedAt: new Date().toISOString(),
   };
+
+  assertHasContent(extract);
+  return extract;
 }

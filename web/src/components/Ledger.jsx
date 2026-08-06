@@ -1,16 +1,64 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Chip, ClassPill } from './Chips.jsx';
+import { CHECK_LABEL, isShown } from '../lib/classes.mjs';
 
-// Variant A: a tabbed ledger, production and the new site side by side.
-// This is the scaffold only. Ticket 12 tests whether seven tabs still read
-// well, and the panels get their content after that.
-const TABS = ['Diff', 'Outline', 'Links', 'Images', 'Content', 'Meta', 'Tasks'];
+/**
+ * Variant A: a tabbed ledger, production and the new site side by side.
+ *
+ * Diff lands first, not Tasks. Ticket 12 argued Tasks is arguably the landing
+ * tab now that findings come from three sources, and this build is the material
+ * for deciding that — but the diff is what makes the log trustworthy, and an
+ * editor who lands on a task list has to take the tool's word for it.
+ *
+ * Coverage is absent: Axis B is ticket 24, and ticket 11 forbids summing its bar
+ * with this one. It arrives as a ninth tab, not as extra rows in these.
+ */
+const TABS = ['Diff', 'Outline', 'Links', 'Afbeeldingen', 'Content', 'Meta', 'Taken'];
 
 export default function Ledger({ report }) {
-  const [tab, setTab] = useState(TABS[0]);
+  const [tab, setTab] = useState('Diff');
+  const [showNoise, setShowNoise] = useState(false);
+  const [showMatches, setShowMatches] = useState(false);
+
+  const { production, new: next } = report.sides;
+  const findings = useMemo(
+    () => report.findings.filter((finding) => showNoise || isShown(finding.class)),
+    [report.findings, showNoise],
+  );
+
+  const rows = useMemo(() => report.rows
+    .filter((row) => (row.class ? showNoise || isShown(row.class) : showMatches))
+    .map((row) => ({
+      ...row,
+      prod: row.prod === null ? null : production.elements[row.prod],
+      new: row.new === null ? null : next.elements[row.new],
+    })), [report.rows, showNoise, showMatches, production, next]);
+
+  const badges = {
+    Diff: rows.filter((row) => row.class).length,
+    Outline: production.elements.length,
+    Links: findings.filter((finding) => finding.check === 'links').length,
+    Afbeeldingen: findings.filter((finding) => finding.check === 'images').length,
+    Taken: findings.length,
+  };
+
+  if (!report.comparable) {
+    return (
+      <section className="rounded border border-amber-300 bg-amber-50 p-4">
+        <h2 className="font-semibold">Niet te vergelijken</h2>
+        <p className="text-sm text-amber-900">{report.skipReason}</p>
+        <p className="mt-2 text-sm text-amber-800">
+          Ticket 07 laat de vergelijking alleen doorgaan bij status 200 aan beide kanten:
+          een 404-pagina heeft ook een <code>&lt;main&gt;</code> en levert anders honderden
+          verschillen op waar niemand iets mee kan.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded border border-slate-200 bg-white">
-      <nav className="flex gap-1 border-b border-slate-200 px-2" role="tablist">
+      <nav className="flex flex-wrap items-center gap-1 border-b border-slate-200 px-2" role="tablist">
         {TABS.map((name) => (
           <button
             key={name}
@@ -18,35 +66,249 @@ export default function Ledger({ report }) {
             role="tab"
             aria-selected={name === tab}
             onClick={() => setTab(name)}
-            className={`px-3 py-2 text-sm ${
-              name === tab ? 'border-b-2 border-blue-700 font-semibold' : 'text-slate-600'
+            className={`flex items-center gap-2 px-3 py-2 text-sm ${
+              name === tab ? '-mb-px border-b-2 border-blue-700 font-semibold' : 'text-slate-600'
             }`}
           >
             {name}
+            {badges[name] !== undefined && (
+              <span className="rounded bg-slate-100 px-1.5 text-xs tabular-nums text-slate-600">
+                {badges[name]}
+              </span>
+            )}
           </button>
         ))}
+
+        <label className="ml-auto flex items-center gap-2 py-2 text-sm text-slate-600">
+          <input type="checkbox" checked={showNoise} onChange={(event) => setShowNoise(event.target.checked)} />
+          Ruis tonen ({report.summary.hidden})
+        </label>
       </nav>
 
-      <div className="grid grid-cols-2 gap-4 p-4" role="tabpanel">
-        <Column side="Productie" extract={report.sides.production} />
-        <Column side="Nieuw" extract={report.sides.new} />
+      <div role="tabpanel" className="p-4">
+        {tab === 'Diff' && (
+          <>
+            <label className="mb-3 flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" checked={showMatches} onChange={(event) => setShowMatches(event.target.checked)} />
+              Gelijke elementen ook tonen
+            </label>
+            <DiffTable rows={rows} />
+          </>
+        )}
+        {tab === 'Outline' && <Outline elements={production.elements} />}
+        {tab === 'Links' && <FindingTable findings={findings} check="links" head={['Productie', 'Nieuw']} />}
+        {tab === 'Afbeeldingen' && <FindingTable findings={findings} check="images" head={['Productie', 'Nieuw']} />}
+        {tab === 'Content' && <SideBySide production={production} next={next} />}
+        {tab === 'Meta' && <MetaTable production={production} next={next} />}
+        {tab === 'Taken' && <Tasks findings={findings} />}
       </div>
-
-      <p className="border-t border-slate-200 px-4 py-2 text-sm text-slate-500">
-        {report.findings.length} findings. The {tab} panel is not built yet.
-      </p>
     </section>
   );
 }
 
-function Column({ side, extract }) {
+/** The prototype's three columns: status, production as the reference, new site. */
+function DiffTable({ rows }) {
+  if (!rows.length) return <Empty>Geen verschillen in deze filter.</Empty>;
+
   return (
-    <div>
-      <h2 className="mb-1 text-sm font-semibold">{side}</h2>
-      <a className="text-sm text-blue-700 underline" href={extract.url}>
-        {extract.url}
-      </a>
-      <p className="text-sm text-slate-500">{extract.elements.length} elements</p>
+    <table className="w-full table-fixed text-sm">
+      <thead>
+        <tr className="border-b border-slate-200 text-left text-[11px] uppercase tracking-wide text-slate-500">
+          <th className="w-40 px-2 py-2 font-medium">Status</th>
+          <th className="px-2 py-2 font-medium">
+            Productie <span className="normal-case text-slate-400">— bron van waarheid</span>
+          </th>
+          <th className="px-2 py-2 font-medium">Nieuwe site</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, index) => (
+          <tr key={index} className="border-b border-slate-100 align-top last:border-0">
+            <td className="px-2 py-3">
+              {row.class ? <ClassPill class={row.class} /> : <span className="text-xs text-slate-400">gelijk</span>}
+              {row.score !== null && <span className="ml-2 text-xs text-slate-400">{row.score}</span>}
+            </td>
+            <Cell element={row.prod} />
+            <Cell element={row.new} />
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function Cell({ element }) {
+  if (!element) {
+    return <td className="px-2 py-3 text-sm italic text-slate-400">niet aanwezig</td>;
+  }
+  return (
+    <td className="px-2 py-3">
+      <span className="mr-2 font-mono text-[11px] text-slate-400">{element.tag}</span>
+      <span className={element.kind === 'heading' ? 'font-semibold' : ''}>{element.raw}</span>
+    </td>
+  );
+}
+
+/**
+ * Ticket 02: the outline and the diff are one structure, not two features. So
+ * this is production's document in order, indented by heading level — the same
+ * elements the Diff tab pairs.
+ */
+function Outline({ elements }) {
+  return (
+    <ol className="space-y-1 text-sm">
+      {elements.map((element) => (
+        <li
+          key={element.index}
+          className={element.kind === 'heading' ? 'font-semibold' : 'text-slate-700'}
+          style={{ paddingLeft: `${((element.level ?? 7) - 1) * 12}px` }}
+        >
+          <span className="mr-2 font-mono text-[11px] text-slate-400">{element.tag}</span>
+          {element.raw}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function FindingTable({ findings, check, head }) {
+  const rows = findings.filter((finding) => finding.check === check);
+  if (!rows.length) return <Empty>Geen bevindingen voor {CHECK_LABEL[check]}.</Empty>;
+
+  return (
+    <table className="w-full table-fixed text-sm">
+      <thead>
+        <tr className="border-b border-slate-200 text-left text-[11px] uppercase tracking-wide text-slate-500">
+          <th className="w-40 px-2 py-2 font-medium">Soort</th>
+          {head.map((label) => <th key={label} className="px-2 py-2 font-medium">{label}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((finding) => (
+          <tr key={finding.id} className="border-b border-slate-100 align-top last:border-0">
+            <td className="px-2 py-2">
+              <ClassPill class={finding.class} />
+              {finding.occurrences > 1 && (
+                <span className="ml-2 rounded bg-slate-900 px-1.5 text-[11px] text-white">
+                  ×{finding.occurrences}
+                </span>
+              )}
+            </td>
+            <td className="break-words px-2 py-2 font-mono text-xs">
+              {finding.prod ?? <span className="italic text-slate-400">niet aanwezig</span>}
+            </td>
+            <td className="break-words px-2 py-2 font-mono text-xs">
+              {finding.new ?? <span className="italic text-slate-400">niet aanwezig</span>}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/**
+ * Ticket 02: Markdown is a reading and export artefact, never the diff spine. It
+ * lives here so an editor can copy a whole page, and nowhere else.
+ */
+function SideBySide({ production, next }) {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {[['Productie', production], ['Nieuwe site', next]].map(([label, extract]) => (
+        <div key={label}>
+          <h3 className="mb-1 text-sm font-semibold">{label}</h3>
+          <pre className="max-h-[70vh] overflow-auto rounded bg-slate-50 p-3 text-xs whitespace-pre-wrap">
+            {extract.markdown}
+          </pre>
+        </div>
+      ))}
     </div>
   );
 }
+
+/**
+ * Display only. Ticket 21 has not decided what a parity defect in the head is, so
+ * this tab shows the two sides and makes **no** finding — the tool must not
+ * report a difference it cannot classify.
+ */
+function MetaTable({ production, next }) {
+  const fields = ['title', 'description', 'canonical', 'h1', 'noindex'];
+  return (
+    <>
+      <p className="mb-3 rounded bg-slate-50 p-2 text-sm text-slate-600">
+        Alleen weergave. Ticket 21 beslist nog wat in de <code>&lt;head&gt;</code> een
+        pariteitsdefect is, dus hier komen nog geen bevindingen uit.
+      </p>
+      <table className="w-full table-fixed text-sm">
+        <tbody>
+          {fields.map((field) => {
+            const differs = String(production.meta[field]) !== String(next.meta[field]);
+            return (
+              <tr key={field} className={`border-b border-slate-100 align-top ${differs ? 'bg-amber-50' : ''}`}>
+                <th className="w-32 px-2 py-2 text-left font-medium text-slate-500">{field}</th>
+                <td className="break-words px-2 py-2">{format(production.meta[field])}</td>
+                <td className="break-words px-2 py-2">{format(next.meta[field])}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </>
+  );
+}
+
+const format = (value) => (
+  value === null || value === '' ? <span className="italic text-slate-400">leeg</span> : String(value)
+);
+
+/**
+ * The one place the three checks are unified. Ticket 09's overrides are not here:
+ * a tick has nowhere to go until Supabase is wired, and a checkbox that forgets
+ * is worse than no checkbox.
+ */
+function Tasks({ findings }) {
+  const byCheck = useMemo(() => {
+    const groups = new Map();
+    for (const finding of findings) {
+      if (!groups.has(finding.check)) groups.set(finding.check, []);
+      groups.get(finding.check).push(finding);
+    }
+    return [...groups];
+  }, [findings]);
+
+  if (!findings.length) return <Empty>Deze pagina is gelijk aan productie.</Empty>;
+
+  return (
+    <div className="space-y-4">
+      <p className="rounded bg-slate-50 p-2 text-sm text-slate-600">
+        Afvinken, negeren en dempen komen uit ticket 09 en gaan naar Supabase. Zolang
+        dat niet aangesloten is, telt deze lijst alleen wat deze momentopname vindt.
+      </p>
+      {byCheck.map(([check, group]) => (
+        <div key={check}>
+          <h3 className="mb-1 flex items-center gap-2 font-semibold">
+            {CHECK_LABEL[check]}
+            <Chip value={group.length} label="open" />
+          </h3>
+          <ul className="text-sm">
+            {group.map((finding) => (
+              <li key={finding.id} className="flex gap-2 border-b border-slate-100 py-1.5 last:border-0">
+                <ClassPill class={finding.class} />
+                <span className="flex-1 break-words">
+                  {finding.prod ?? '—'}
+                  <span className="mx-1 text-slate-400">→</span>
+                  {finding.new ?? '—'}
+                </span>
+                {finding.occurrences > 1 && (
+                  <span className="text-xs text-slate-400">×{finding.occurrences}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const Empty = ({ children }) => <p className="py-6 text-sm text-slate-500">{children}</p>;

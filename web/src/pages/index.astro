@@ -1,28 +1,31 @@
 ---
+import Dashboard from '../components/Dashboard.jsx';
 import Shell from '../layouts/Shell.astro';
-import { loadReports } from '../lib/reports.mjs';
+import { excluded, loadSummaries } from '../lib/reports.mjs';
 
-const reports = await loadReports();
+const pages = await loadSummaries();
+const stores = [...new Set(pages.map((page) => page.store))];
 ---
 
 <Shell title="Overzicht">
   {
-    reports.length === 0 ? (
+    pages.length === 0 ? (
       <p class="text-slate-600">
-        No reports in <code>data/reports/</code>. Run the crawl and the
-        comparison first.
+        Nog geen rapporten in <code>data/reports/</code>. Draai
+        <code>node crawl/21-crawl-store.mjs nl</code> en daarna
+        <code>node compare/30-compare.mjs nl</code>.
       </p>
     ) : (
-      <ul class="space-y-1">
-        {reports.map((report) => (
-          <li>
-            <a class="text-blue-700 underline" href={`/${report.store}/${report.page}/`}>
-              {report.store} — {report.page}
-            </a>
-            <span class="text-slate-500"> ({report.findings.length})</span>
-          </li>
-        ))}
-      </ul>
+      <>
+        <header class="mb-4">
+          <h1 class="text-xl font-semibold">Pariteit met productie</h1>
+          <p class="text-sm text-slate-600">
+            Productie is de bron van waarheid, dus elk verschil is een defect op de
+            nieuwe site. Winkel{stores.length > 1 ? 's' : ''}: {stores.join(', ')}.
+          </p>
+        </header>
+        <Dashboard client:load pages={pages} excluded={excluded} />
+      </>
     )
   }
 </Shell>

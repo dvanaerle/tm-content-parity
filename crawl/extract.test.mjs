@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { exclusionReason, isExcludedPage } from './excluded-pages.mjs';
 import { extractPage, imageKey, linkKey, pageType, toMarkdown } from './extract.mjs';
 import { maintenanceReason } from './fetch-page.mjs';
 import { tier1 } from './normalise.mjs';
@@ -53,9 +54,47 @@ describe('the content boundary', () => {
     expect(extract.elements.map((element) => element.raw)).toEqual(['Real page copy']);
   });
 
+  it('does not read a nested <style> or <script> as content', () => {
+    // Production nests both inside an `<a>`, and that anchor holds no other text
+    // element, so it is a leaf and `structuredText` handed over the CSS as copy.
+    // 151 elements on 23 of 179 nl pages. Ticket 02 put the chrome list on the
+    // fallback path only, having measured that it removes no *element* inside
+    // `<main>` — which is true, and misses this.
+    const extract = extractPage(page(
+      '<a href="/carport">'
+      + '<style>.product-image-container-9656 { width: 480px; }</style>'
+      + '<script>var x = document.querySelectorAll(".a");</script>'
+      + 'Bekijk carports</a>',
+    ), CONTEXT);
+    expect(extract.elements.map((element) => element.raw)).toEqual(['Bekijk carports']);
+  });
+
+  it('keeps a <template>, because Alpine renders what is inside it', () => {
+    const extract = extractPage(page('<template><p>Gratis bezorging</p></template>'), CONTEXT);
+    expect(extract.elements.map((element) => element.raw)).toEqual(['Gratis bezorging']);
+  });
+
   it('throws when the document has no <body>, because a silent fallback hid a broken parse', () => {
     expect(() => extractPage('<p>orphan</p>', { ...CONTEXT }))
       .toThrow(/No <body>/);
+  });
+
+  it('throws on a 200 page that holds nothing, because that is an app page or a broken parse', () => {
+    // The whole of <main> on the new site's veranda-configurator.
+    const mount = '<div id="configurator-root" data-url-key="veranda"></div>';
+    expect(() => extractPage(page(mount), CONTEXT))
+      .toThrow(/application page that\s+belongs in crawl\/excluded-pages\.mjs/);
+  });
+
+  it('leaves a page with images and no text alone, because a photo page is a real page', () => {
+    const extract = extractPage(page('<img src="/media/serre.jpg" alt="Serre">'), CONTEXT);
+    expect(extract.elements).toEqual([]);
+    expect(extract.images).toHaveLength(1);
+  });
+
+  it('leaves an empty non-200 page alone, because the status gate already excludes it', () => {
+    const extract = extractPage(page(''), { ...CONTEXT, status: 404 });
+    expect(extract.elements).toEqual([]);
   });
 
   it('survives the malformed header markup that the new site sends', () => {
@@ -245,7 +284,7 @@ describe('meta', () => {
   });
 
   it('reads noindex', () => {
-    const extract = extractPage(page('<h1>x</h1>', { head: '<meta name="robots" content="NOINDEX,nofollow">' }), CONTEXT);
+    const extract = extractPage(page('<h1>Kop</h1>', { head: '<meta name="robots" content="NOINDEX,nofollow">' }), CONTEXT);
     expect(extract.meta.noindex).toBe(true);
   });
 
@@ -266,7 +305,7 @@ describe('pageType', () => {
   });
 
   it('is read from the raw html, because the parser can drop the tag', () => {
-    const extract = extractPage(page('<h1>x</h1>', { bodyClass: 'catalog-product-view' }), CONTEXT);
+    const extract = extractPage(page('<h1>Kop</h1>', { bodyClass: 'catalog-product-view' }), CONTEXT);
     expect(extract.pageType).toBe('product');
   });
 });
@@ -296,5 +335,17 @@ describe('maintenanceReason', () => {
   it('leaves a real page that talks about maintenance alone', () => {
     const html = `<html><body>${'Onderhoud en maintenance van uw overkapping. '.repeat(400)}</body></html>`;
     expect(maintenanceReason(200, html)).toBeNull();
+  });
+});
+
+describe('excluded pages', () => {
+  it('names the configurator and gives the reason', () => {
+    expect(isExcludedPage('veranda-configurator')).toBe(true);
+    expect(exclusionReason('veranda-configurator')).toMatch(/Application page/);
+  });
+
+  it('is exact keys, so a future configurator content page is still checked', () => {
+    expect(isExcludedPage('configurator-vergelijken')).toBe(false);
+    expect(exclusionReason('configurator-vergelijken')).toBeNull();
   });
 });

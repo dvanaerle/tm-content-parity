@@ -22,6 +22,15 @@ them are in `devdva02/.scratch/content-parity-log/map.md`.
   URL. The new-site URL is a host swap of the production URL.
 - **Store-page pair** — the unit of a parity comparison: production and the new
   site, for one store page.
+- **Application page** — a page whose content boundary holds a mounted JavaScript
+  application instead of content. It has no content unit, because its text is
+  transient interface state and not something an editor writes. An application
+  page is outside the log by definition, and it is named in a committed list with
+  its reason. It is not a one-sided page: a one-sided page waits for somebody to
+  rebuild or retire it, while an application page waits for nothing.
+- **Not checked** — the list of pages that the log deliberately leaves out, each
+  with the reason. An excluded page says why it is excluded; it is never silently
+  absent.
 
 ## Extraction
 
@@ -65,18 +74,65 @@ them are in `devdva02/.scratch/content-parity-log/map.md`.
 
 ## Overrides
 
-An **override** is an editor's judgement. It is kept in Supabase, and the table
-is append-only.
+A finding has **no state**. It has overrides. An **override** is an editor's
+event about a finding, a page class or a page. It is kept in Supabase, and the
+table is append-only, so a reversal is a new event and not an edit.
 
-- **Dismissal** — "these two exact strings are acceptable". Keyed on content,
-  thus on the finding id. It expires when either side changes. This is correct
-  behaviour: the judgement is stale, and the tool must ask again.
-- **Mute** — "this class is never a defect here". Keyed on store, page and
-  class. It persists. Muted findings stay visible behind a toggle.
-- **Resolved** — not an override. A difference that is really corrected is not
-  found by the next re-check, so there is nothing to keep.
+An override is a **claim of fact** or a **judgement**. The difference decides
+who wins against re-check.
+
+- **Fix claim** — a claim of fact: "I corrected this." It **loses** to re-check,
+  because re-check decides facts. Keyed on the finding id.
+- **Dismissal** — a judgement: "these two exact strings are acceptable." It
+  **beats** re-check, because re-check cannot decide what is acceptable. Keyed on
+  content, thus on the finding id, so it expires when either side changes. This
+  is correct behaviour: the judgement is stale, and the tool must ask again. A
+  note is necessary.
+- **Mute** — a judgement about a class on a page: "this class is never a defect
+  here." Keyed on store, page and class. It persists. Muted findings stay visible
+  behind a toggle.
+- **Page review** — "a human looked at this whole page." Keyed on store and page.
+  It covers what the tool cannot see: layout, tone, an image that agrees by name
+  and shows something else. It never expires; it becomes **stale**.
+- **Cleared** — the one action that revokes the last override on a key. There are
+  no `un-` words.
+- **Contradicted** — a fix claim that the current snapshot disagrees with. The
+  finding is open again, and the interface says *claimed fixed, still differs*,
+  with the name of the person who claimed it. It is derived, never kept.
+- **Stale** — a page review made against a page whose findings changed after it.
+  The interface says **"changed since review"**, not "needs review", because a
+  page also becomes stale when an editor corrects things.
 - **Editor** — a name that the browser keeps in `localStorage`. There is no
   login.
+
+Two words are retired. **"Resolved"** hid the difference between a claim and a
+judgement. **"Reopened"** describes nothing: a finding is in the snapshot or it
+is not.
+
+## Progress
+
+- **Closed** — a finding that is absent from the snapshot, or dismissed, or
+  claimed fixed and not contradicted.
+- **Denominator** — the findings in **shown** classes on this snapshot. A mute
+  takes findings out of it; a dismissal moves them into the numerator.
+- **Absolute counts go next to each percentage.** The denominator moves at each
+  crawl, so a percentage alone reads as a regression when the dataset only became
+  larger.
+- **Roll-up** — findings closed, over page, store and migration, summed over
+  findings and never over pages. Fresh page reviews, over store and migration
+  only. A class is a breakdown and never a bar: a class that grows across many
+  pages means a rule misfires, not that editors are behind.
+- Progress is **axis A only**. Axis B has its own tab and its own count.
+
+## One-sided pages
+
+- **Legacy-only page** — a store page on production that gives 404 on the new
+  site.
+- **New-only page** — a store page on the new site that gives 404 on production.
+
+Neither can make a finding, because the comparison needs 200 on both sides. They
+are scope decisions and not editor work, so they stay out of the progress bar and
+have their own migration checklist.
 
 ## Axes
 

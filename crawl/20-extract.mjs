@@ -10,6 +10,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { exclusionReason, isExcludedPage } from './excluded-pages.mjs';
 import { extractPage } from './extract.mjs';
 import { fetchPage } from './fetch-page.mjs';
 
@@ -24,6 +25,10 @@ const SEEDS = new URL('../data/10-store-seeds.json', import.meta.url);
  * @returns {Promise<{ production: import('../compare/contract.mjs').PageExtract, new: import('../compare/contract.mjs').PageExtract }>}
  */
 export async function extractStorePage({ store, page, prodUrl, newUrl }) {
+  if (isExcludedPage(page)) {
+    throw new Error(`${page} is outside the log: ${exclusionReason(page)}`);
+  }
+
   const hosts = { prodHost: new URL(prodUrl).host, newHost: new URL(newUrl).host };
   const [production, next] = await Promise.all([
     fetchPage(prodUrl),

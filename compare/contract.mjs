@@ -7,57 +7,22 @@
 
 import { createHash } from 'node:crypto';
 
-/** @typedef {'nl' | 'be' | 'be_fr' | 'de' | 'fr' | 'uk'} Store */
-
-/** @typedef {'production' | 'new'} Side */
-
-/** @typedef {'text' | 'links' | 'images' | 'meta'} Check */
-
 /**
- * @typedef {object} FindingClass
- * @property {Check} check
- * @property {boolean} shown  Whether the class is shown before an editor changes a filter.
- * @property {string} meaning
+ * The class vocabulary lives in `vocabulary.mjs` and is re-exported here, so a
+ * Node consumer still has one import site for the whole contract. The browser
+ * imports `vocabulary.mjs` directly: `findingId()` needs `node:crypto`, and a
+ * Vite build of an island that reaches this file fails on that import. Ids are
+ * made in `compare/`, never in the browser.
  */
+export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
 
-/**
- * The closed class vocabulary. A class is also the mute key, so each name must
- * be a name that an editor knows. A ticket can add a class, and it must give
- * the default.
- *
- * @type {Record<string, FindingClass>}
- */
-export const FINDING_CLASSES = {
-  // Ticket 02 — text
-  copy: { check: 'text', shown: true, meaning: 'The text changed. Both sides are present.' },
-  structure: { check: 'text', shown: true, meaning: 'The element is on one side only.' },
-  casing: { check: 'text', shown: true, meaning: 'Only letter case or trailing punctuation is different.' },
-  restructured: { check: 'text', shown: false, meaning: 'The same content, but a different element on each side.' },
-  price: { check: 'text', shown: false, meaning: 'Only the numbers are different.' },
-  campaign: { check: 'text', shown: false, meaning: 'Promotional copy. The pattern must match both sides.' },
+/** @typedef {import('./vocabulary.mjs').Store} Store */
 
-  // Ticket 05 — links
-  'broken-link': { check: 'links', shown: true, meaning: 'The target does not answer. It fires also if production is broken.' },
-  'missing-link': { check: 'links', shown: true, meaning: 'Production has the link. The new site does not.' },
-  'link-target': { check: 'links', shown: true, meaning: 'The two sides point at different targets.' },
-  leakage: { check: 'links', shown: true, meaning: 'The new site points at the live domain, and that path exists as a new-site page.' },
-  'cross-store-link': { check: 'links', shown: true, meaning: 'The link goes to the host of a different store.' },
-  redirect: { check: 'links', shown: false, meaning: 'The target answers, after a redirect.' },
-  'extra-link': { check: 'links', shown: false, meaning: 'The new site has a link that production does not have.' },
+/** @typedef {import('./vocabulary.mjs').Side} Side */
 
-  // Ticket 06 — images
-  'image-missing': { check: 'images', shown: true, meaning: 'Production has the image. The new site does not.' },
-  'alt-lost': { check: 'images', shown: true, meaning: 'Production has alt text. The new site has none.' },
-  'alt-changed': { check: 'images', shown: true, meaning: 'Both sides have alt text, and it is different.' },
-  'image-added': { check: 'images', shown: false, meaning: 'The new site has an image that production does not have.' },
-  'image-campaign': { check: 'images', shown: false, meaning: 'A campaign image. The pattern matches on either side.' },
-};
+/** @typedef {import('./vocabulary.mjs').Check} Check */
 
-/** @type {Check[]} */
-export const CHECKS = ['text', 'links', 'images', 'meta'];
-
-/** @type {Store[]} */
-export const STORES = ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'];
+/** @typedef {import('./vocabulary.mjs').FindingClass} FindingClass */
 
 /**
  * One leaf text element inside the content boundary, in document order. This
@@ -145,13 +110,53 @@ export const STORES = ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'];
  */
 
 /**
+ * One aligned position in the Diff tab, in production's document order.
+ *
+ * A finding is **grouped** — one rename repeated six times is one finding — and a
+ * row is a **position**, so the two cannot be the same record. The rows are
+ * derived from the same alignment pass as the findings, and they hold element
+ * indices rather than copies of the text: the elements are already in
+ * `sides`, and duplicating them roughly doubles a report on disk.
+ *
+ * `class: null` is an exact tier-1 match. Ticket 02: that is not a finding.
+ *
+ * @typedef {object} DiffRow
+ * @property {keyof FINDING_CLASSES | null} class
+ * @property {number | null} prod   Index into `sides.production.elements`.
+ * @property {number | null} new    Index into `sides.new.elements`.
+ * @property {number | null} score
+ */
+
+/**
+ * The counts the dashboard and the page bar read. Ticket 09: a hidden class is
+ * not in the bar, and absolute numbers are always shown, because the denominator
+ * moves.
+ *
+ * @typedef {object} ReportSummary
+ * @property {number} shown
+ * @property {number} hidden
+ * @property {number} total
+ * @property {Record<string, number>} byClass
+ * @property {Record<string, number>} byCheck
+ */
+
+/**
  * What `web/` reads, one file per store page.
+ *
+ * Ticket 07: the compare stage **gates on `status === 200`**, because a 404 page
+ * still extracts — the 404 page has a `<main>`. A page that fails the gate is
+ * still a report, so the dashboard can show it and say why, but it carries no
+ * findings. One-sided pages are ticket 20's subject, not a wall of `structure`.
  *
  * @typedef {object} PageReport
  * @property {Store} store
  * @property {string} page
  * @property {{ production: PageExtract, new: PageExtract }} sides
+ * @property {boolean} comparable
+ * @property {string | null} skipReason
  * @property {Finding[]} findings
+ * @property {DiffRow[]} rows
+ * @property {ReportSummary} summary
  * @property {string} builtAt       ISO 8601.
  */
 

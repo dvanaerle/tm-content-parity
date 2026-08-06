@@ -2,6 +2,7 @@
 // Both sides, plain fetch, concurrency 8. Records every throw, so a page that
 // the extractor cannot read is visible instead of silent.
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { isExcludedPage } from '../excluded-pages.mjs';
 import { extractPage } from '../extract.mjs';
 import { fetchPage } from '../fetch-page.mjs';
 
@@ -9,7 +10,7 @@ const CONCURRENCY = 8;
 const seeds = JSON.parse(readFileSync(new URL('../../data/10-store-seeds.json', import.meta.url), 'utf8'));
 
 const jobs = seeds.rows
-  .filter((row) => row.stores?.nl)
+  .filter((row) => row.stores?.nl && !isExcludedPage(row.page))
   .map((row) => ({ page: row.page, ...row.stores.nl }));
 
 const results = [];
