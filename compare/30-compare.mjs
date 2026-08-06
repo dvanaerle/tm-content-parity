@@ -14,6 +14,7 @@
 
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { findingSetHash, newObservationId } from './contract.mjs';
 import { FindingCollector, summarise } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
@@ -52,9 +53,12 @@ export function skipReason(production, next) {
  * @param {{ production: import('./contract.mjs').PageExtract, new: import('./contract.mjs').PageExtract }} input.sides
  * @param {Set<string>} [input.newSitePaths]
  * @param {Map<string, { status: number, hops: number }>} [input.statuses]
+ * @param {string} [input.observationId]  One per run. The batch below passes one id for
+ *                                        the whole build; the re-check service passes one
+ *                                        per request.
  * @returns {import('./contract.mjs').PageReport}
  */
-export function comparePage({ sides, newSitePaths, statuses }) {
+export function comparePage({ sides, newSitePaths, statuses, observationId = newObservationId() }) {
   const { production, new: next } = sides;
   const scope = { store: production.store, page: production.page };
   const reason = skipReason(production, next);
@@ -68,6 +72,8 @@ export function comparePage({ sides, newSitePaths, statuses }) {
       findings: [],
       rows: [],
       summary: summarise([]),
+      observationId,
+      findingSetHash: findingSetHash([]),
       builtAt: new Date().toISOString(),
     };
   }
@@ -90,8 +96,11 @@ export function comparePage({ sides, newSitePaths, statuses }) {
       prod: row.prod ? row.prod.index : null,
       new: row.new ? row.new.index : null,
       score: row.score,
+      finding: row.finding ?? null,
     })),
     summary: summarise(findings),
+    observationId,
+    findingSetHash: findingSetHash(findings),
     builtAt: new Date().toISOString(),
   };
 }
@@ -171,6 +180,10 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
   const pathsByStore = new Map();
   await mkdir(fileURLToPath(REPORTS), { recursive: true });
 
+  // One build is one observation, so every report of this run carries the same id.
+  // A fix claim made against it is not contradicted by it — only by the next run.
+  const observationId = newObservationId();
+
   const files = await jsonFiles(only ? new URL(`${only}/`, EXTRACTS) : EXTRACTS);
   let comparable = 0;
   let findings = 0;
@@ -181,7 +194,9 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
     const store = sides.production.store;
     if (!pathsByStore.has(store)) pathsByStore.set(store, newSitePathsFor(seeds, store));
 
-    const report = comparePage({ sides, newSitePaths: pathsByStore.get(store), statuses });
+    const report = comparePage({
+      sides, newSitePaths: pathsByStore.get(store), statuses, observationId,
+    });
     await writeFile(
       new URL(reportFilename(report.store, report.page), REPORTS),
       JSON.stringify(report),
@@ -192,9 +207,23 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
     shown += report.summary.shown;
   }
 
+  await writeFile(
+    new URL('../data/snapshot.json', import.meta.url),
+    JSON.stringify({
+      observationId,
+      builtAt: new Date().toISOString(),
+      store: only ?? null,
+      pages: files.length,
+      comparable,
+      findings,
+      shown,
+    }, null, 2),
+  );
+
   console.log(
     `${files.length} pages, ${comparable} comparable, `
     + `${findings} findings of which ${shown} shown by default.`,
   );
+  console.log(`observation ${observationId}`);
   console.log(`wrote ${fileURLToPath(REPORTS)}`);
 }

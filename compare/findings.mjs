@@ -30,6 +30,13 @@ export class FindingCollector {
    * @param {string | null} parts.prod   Tier-1 text, letter case kept.
    * @param {string | null} parts.new
    * @param {number | null} [parts.score]  On `copy` findings only.
+   * @returns {string} The finding id this occurrence belongs to.
+   *
+   * The id comes back so a caller can keep the link from its own record to the
+   * grouped finding. The Diff tab needs exactly that: a row is a **position** and
+   * a finding is **grouped**, so the two cannot be the same record — but an
+   * override control on a row has to act on the finding. The browser cannot
+   * recompute the id, because `findingId()` needs `node:crypto`.
    */
   add({ class: cls, prod, new: next, score = null }) {
     const record = FINDING_CLASSES[cls];
@@ -39,20 +46,22 @@ export class FindingCollector {
     const seen = this.byKey.get(key);
     if (seen) {
       seen.occurrences += 1;
-      return;
+      return seen.id;
     }
 
+    const id = findingId({
+      store: this.store,
+      page: this.page,
+      check: record.check,
+      // Ticket 08: `rule` is the class id. No finer identifier exists, so a
+      // re-classification detaches a dismissal. Written down, not solved.
+      rule: cls,
+      prodNorm: prod,
+      newNorm: next,
+    });
+
     this.byKey.set(key, {
-      id: findingId({
-        store: this.store,
-        page: this.page,
-        check: record.check,
-        // Ticket 08: `rule` is the class id. No finer identifier exists, so a
-        // re-classification detaches a dismissal. Written down, not solved.
-        rule: cls,
-        prodNorm: prod,
-        newNorm: next,
-      }),
+      id,
       store: this.store,
       page: this.page,
       check: record.check,
@@ -62,6 +71,7 @@ export class FindingCollector {
       occurrences: 1,
       score,
     });
+    return id;
   }
 
   /** @returns {import('./contract.mjs').Finding[]} */

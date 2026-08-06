@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Chip, ClassPill } from './Chips.jsx';
-import { CHECK_LABEL, isShown } from '../lib/classes.mjs';
+import OverrideControl from './OverrideControl.jsx';
+import { CHECK_LABEL } from '../lib/classes.mjs';
 
 /**
  * Variant A: a tabbed ledger, production and the new site side by side.
@@ -15,24 +16,50 @@ import { CHECK_LABEL, isShown } from '../lib/classes.mjs';
  */
 const TABS = ['Diff', 'Outline', 'Links', 'Afbeeldingen', 'Content', 'Meta', 'Taken'];
 
-export default function Ledger({ report }) {
+/**
+ * `findings` are the **derived** findings from `derivePageState()` — the same
+ * records with a `state` and an `override` attached. The Ledger never re-derives
+ * anything; it renders what the pure function decided.
+ */
+export default function Ledger({ report, findings: derived, append, canWrite, observationId }) {
   const [tab, setTab] = useState('Diff');
   const [showNoise, setShowNoise] = useState(false);
   const [showMatches, setShowMatches] = useState(false);
 
   const { production, new: next } = report.sides;
+
+  // A muted finding stays **visible behind the toggle**: muting is not deleting,
+  // and an editor who muted a class by mistake must be able to find it again.
   const findings = useMemo(
-    () => report.findings.filter((finding) => showNoise || isShown(finding.class)),
-    [report.findings, showNoise],
+    () => derived.filter((finding) => showNoise || (finding.shown && finding.state !== 'muted')),
+    [derived, showNoise],
   );
 
+  const byId = useMemo(
+    () => new Map(derived.map((finding) => [finding.id, finding])),
+    [derived],
+  );
+  const visible = useMemo(() => new Set(findings.map((finding) => finding.id)), [findings]);
+
   const rows = useMemo(() => report.rows
-    .filter((row) => (row.class ? showNoise || isShown(row.class) : showMatches))
+    .filter((row) => (row.class ? visible.has(row.finding) : showMatches))
     .map((row) => ({
       ...row,
+      finding: row.finding ? byId.get(row.finding) : null,
       prod: row.prod === null ? null : production.elements[row.prod],
       new: row.new === null ? null : next.elements[row.new],
-    })), [report.rows, showNoise, showMatches, production, next]);
+    })), [report.rows, visible, byId, showMatches, production, next]);
+
+  const control = (finding) => (
+    <OverrideControl
+      finding={finding}
+      observationId={observationId}
+      append={append}
+      canWrite={canWrite}
+    />
+  );
+
+  const hiddenCount = derived.length - derived.filter((f) => f.shown && f.state !== 'muted').length;
 
   const badges = {
     Diff: rows.filter((row) => row.class).length,
@@ -81,7 +108,7 @@ export default function Ledger({ report }) {
 
         <label className="ml-auto flex items-center gap-2 py-2 text-sm text-slate-600">
           <input type="checkbox" checked={showNoise} onChange={(event) => setShowNoise(event.target.checked)} />
-          Ruis tonen ({report.summary.hidden})
+          Ruis en gedempt tonen ({hiddenCount})
         </label>
       </nav>
 
@@ -92,29 +119,29 @@ export default function Ledger({ report }) {
               <input type="checkbox" checked={showMatches} onChange={(event) => setShowMatches(event.target.checked)} />
               Gelijke elementen ook tonen
             </label>
-            <DiffTable rows={rows} />
+            <DiffTable rows={rows} control={control} />
           </>
         )}
         {tab === 'Outline' && <Outline elements={production.elements} />}
-        {tab === 'Links' && <FindingTable findings={findings} check="links" head={['Productie', 'Nieuw']} />}
-        {tab === 'Afbeeldingen' && <FindingTable findings={findings} check="images" head={['Productie', 'Nieuw']} />}
+        {tab === 'Links' && <FindingTable findings={findings} check="links" control={control} />}
+        {tab === 'Afbeeldingen' && <FindingTable findings={findings} check="images" control={control} />}
         {tab === 'Content' && <SideBySide production={production} next={next} />}
         {tab === 'Meta' && <MetaTable production={production} next={next} />}
-        {tab === 'Taken' && <Tasks findings={findings} />}
+        {tab === 'Taken' && <Tasks findings={findings} control={control} />}
       </div>
     </section>
   );
 }
 
 /** The prototype's three columns: status, production as the reference, new site. */
-function DiffTable({ rows }) {
+function DiffTable({ rows, control }) {
   if (!rows.length) return <Empty>Geen verschillen in deze filter.</Empty>;
 
   return (
     <table className="w-full table-fixed text-sm">
       <thead>
         <tr className="border-b border-slate-200 text-left text-[11px] uppercase tracking-wide text-slate-500">
-          <th className="w-40 px-2 py-2 font-medium">Status</th>
+          <th className="w-56 px-2 py-2 font-medium">Status</th>
           <th className="px-2 py-2 font-medium">
             Productie <span className="normal-case text-slate-400">— bron van waarheid</span>
           </th>
@@ -127,6 +154,7 @@ function DiffTable({ rows }) {
             <td className="px-2 py-3">
               {row.class ? <ClassPill class={row.class} /> : <span className="text-xs text-slate-400">gelijk</span>}
               {row.score !== null && <span className="ml-2 text-xs text-slate-400">{row.score}</span>}
+              {row.finding && <div className="mt-1">{control(row.finding)}</div>}
             </td>
             <Cell element={row.prod} />
             <Cell element={row.new} />
@@ -171,7 +199,7 @@ function Outline({ elements }) {
   );
 }
 
-function FindingTable({ findings, check, head }) {
+function FindingTable({ findings, check, control }) {
   const rows = findings.filter((finding) => finding.check === check);
   if (!rows.length) return <Empty>Geen bevindingen voor {CHECK_LABEL[check]}.</Empty>;
 
@@ -179,8 +207,9 @@ function FindingTable({ findings, check, head }) {
     <table className="w-full table-fixed text-sm">
       <thead>
         <tr className="border-b border-slate-200 text-left text-[11px] uppercase tracking-wide text-slate-500">
-          <th className="w-40 px-2 py-2 font-medium">Soort</th>
-          {head.map((label) => <th key={label} className="px-2 py-2 font-medium">{label}</th>)}
+          <th className="w-56 px-2 py-2 font-medium">Soort</th>
+          <th className="px-2 py-2 font-medium">Productie</th>
+          <th className="px-2 py-2 font-medium">Nieuw</th>
         </tr>
       </thead>
       <tbody>
@@ -193,6 +222,7 @@ function FindingTable({ findings, check, head }) {
                   ×{finding.occurrences}
                 </span>
               )}
+              <div className="mt-1">{control(finding)}</div>
             </td>
             <td className="break-words px-2 py-2 font-mono text-xs">
               {finding.prod ?? <span className="italic text-slate-400">niet aanwezig</span>}
@@ -262,11 +292,10 @@ const format = (value) => (
 );
 
 /**
- * The one place the three checks are unified. Ticket 09's overrides are not here:
- * a tick has nowhere to go until Supabase is wired, and a checkbox that forgets
- * is worse than no checkbox.
+ * The one place the three checks are unified, and now the one place an editor
+ * can work down a page without leaving a tab.
  */
-function Tasks({ findings }) {
+function Tasks({ findings, control }) {
   const byCheck = useMemo(() => {
     const groups = new Map();
     for (const finding of findings) {
@@ -280,10 +309,6 @@ function Tasks({ findings }) {
 
   return (
     <div className="space-y-4">
-      <p className="rounded bg-slate-50 p-2 text-sm text-slate-600">
-        Afvinken, negeren en dempen komen uit ticket 09 en gaan naar Supabase. Zolang
-        dat niet aangesloten is, telt deze lijst alleen wat deze momentopname vindt.
-      </p>
       {byCheck.map(([check, group]) => (
         <div key={check}>
           <h3 className="mb-1 flex items-center gap-2 font-semibold">
@@ -292,9 +317,9 @@ function Tasks({ findings }) {
           </h3>
           <ul className="text-sm">
             {group.map((finding) => (
-              <li key={finding.id} className="flex gap-2 border-b border-slate-100 py-1.5 last:border-0">
+              <li key={finding.id} className="flex flex-wrap items-start gap-2 border-b border-slate-100 py-1.5 last:border-0">
                 <ClassPill class={finding.class} />
-                <span className="flex-1 break-words">
+                <span className="min-w-48 flex-1 break-words">
                   {finding.prod ?? '—'}
                   <span className="mx-1 text-slate-400">→</span>
                   {finding.new ?? '—'}
@@ -302,6 +327,7 @@ function Tasks({ findings }) {
                 {finding.occurrences > 1 && (
                   <span className="text-xs text-slate-400">×{finding.occurrences}</span>
                 )}
+                {control(finding)}
               </li>
             ))}
           </ul>

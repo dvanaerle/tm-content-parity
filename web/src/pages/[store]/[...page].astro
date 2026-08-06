@@ -1,5 +1,5 @@
 ---
-import Ledger from '../../components/Ledger.jsx';
+import PageView from '../../components/PageView.jsx';
 import Shell from '../../layouts/Shell.astro';
 import { loadReports } from '../../lib/reports.mjs';
 
@@ -26,13 +26,9 @@ const { production, new: next } = report.sides;
       <a class="ml-auto text-sm text-blue-700 hover:underline" href="/">← alle pagina's</a>
     </div>
 
+    {/* The two count chips are gone: the bar in the island replaces them, because
+        a count that ignores the overrides contradicts the one beside it. */}
     <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
-      <span class="rounded bg-slate-900 px-2 py-1 text-white">
-        <strong>{report.summary.shown}</strong> open
-      </span>
-      <span class="rounded bg-slate-100 px-2 py-1 text-slate-600">
-        <strong>{report.summary.hidden}</strong> verborgen
-      </span>
       <span class="rounded bg-slate-100 px-2 py-1 text-slate-600">
         productie <strong>{production.status}</strong> · {production.elements.length} elementen
       </span>
@@ -49,10 +45,5 @@ const { production, new: next } = report.sides;
     </div>
   </header>
 
-  <Ledger client:load report={report} />
-
-  <p class="mt-4 text-xs text-slate-500">
-    Momentopname van {report.builtAt}. De Recheck-knop hoort bij ticket 10 en zit
-    nog niet in deze build.
-  </p>
+  <PageView client:load report={report} />
 </Shell>

@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Bar, Chip, ClassPill } from './Chips.jsx';
+import { LogBanner } from './Progress.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
+import { useStoreOverrides } from '../lib/overrides.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
 
@@ -16,41 +18,66 @@ export default function Dashboard({ pages, excluded }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('worst');
 
-  const comparable = pages.filter((page) => page.comparable);
+  // One-sided pages are out of the bar from the first day: ticket 20 owns them,
+  // and seventy-six undecidable rows would poison the roll-up.
+  const comparable = useMemo(() => pages.filter((page) => page.comparable), [pages]);
   const oneSided = pages.filter((page) => !page.comparable);
+
+  const log = useStoreOverrides({ pages: comparable });
+
+  /** The open count **after** overrides, so the worst page is the worst remaining page. */
+  const openOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar.open ?? page.summary.shown;
+  const barOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar;
 
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const found = comparable.filter((page) => !needle || page.page.toLowerCase().includes(needle));
     return [...found].sort((a, b) => (
-      sort === 'worst'
-        ? b.summary.shown - a.summary.shown
-        : a.page.localeCompare(b.page)
+      sort === 'worst' ? openOf(b) - openOf(a) : a.page.localeCompare(b.page)
     ));
-  }, [comparable, query, sort]);
+  }, [comparable, query, sort, log.byPage]);
 
   const totals = useMemo(() => {
     const byClass = {};
-    let shown = 0;
     let hidden = 0;
-    let clean = 0;
     for (const page of comparable) {
-      shown += page.summary.shown;
       hidden += page.summary.hidden;
-      if (page.summary.shown === 0) clean += 1;
       for (const [cls, count] of Object.entries(page.summary.byClass)) {
         byClass[cls] = (byClass[cls] ?? 0) + count;
       }
     }
-    return { shown, hidden, clean, byClass };
-  }, [comparable]);
+    // Clean means clean **now**: no open findings after the overrides.
+    const clean = comparable.filter((page) => openOf(page) === 0).length;
+    return { hidden, clean, byClass, ...log.derived.bar };
+  }, [comparable, log.derived]);
 
   return (
     <div className="space-y-6">
+      <LogBanner
+        connected={log.connected}
+        notConnectedReason={log.notConnectedReason}
+        ready={log.ready}
+        error={log.error}
+      />
+
       <section className="flex flex-wrap items-center gap-2">
         <Chip value={comparable.length} label="pagina's vergeleken" tone="dark" />
-        <Chip value={totals.shown} label="verschillen open" tone="rose" />
+        <Chip value={totals.open} label="verschillen open" tone="rose" />
+        <Chip value={totals.closed} label="afgehandeld" tone="green" />
         <Chip value={totals.clean} label="pagina's gelijk" tone="green" />
+        {totals.contradicted > 0 && (
+          <Chip
+            value={totals.contradicted}
+            label="nog niet opgelost"
+            tone="rose"
+            title="Geclaimd opgelost, maar een latere waarneming ziet het verschil nog."
+          />
+        )}
+        <Chip
+          value={log.derived.reviewedFresh}
+          label="pagina's gecontroleerd"
+          title="Een mens heeft alles op deze pagina bekeken, ook wat het gereedschap niet ziet."
+        />
         <Chip value={totals.hidden} label="verborgen (ruis)" />
         <Chip
           value={oneSided.length}
@@ -112,10 +139,13 @@ export default function Dashboard({ pages, excluded }) {
                   <span className="ml-2 text-xs text-slate-400">{page.sides.production.elements} elementen</span>
                 </td>
                 <td className="px-4 py-2">
-                  <Bar shown={page.summary.shown} elements={page.sides.production.elements} />
-                  <span className={`ml-2 tabular-nums ${page.summary.shown ? 'font-semibold' : 'text-emerald-700'}`}>
-                    {page.summary.shown}
+                  <Bar shown={openOf(page)} elements={page.sides.production.elements} />
+                  <span className={`ml-2 tabular-nums ${openOf(page) ? 'font-semibold' : 'text-emerald-700'}`}>
+                    {openOf(page)}
                   </span>
+                  {barOf(page)?.closed > 0 && (
+                    <span className="ml-1 text-xs text-emerald-700">+{barOf(page).closed} af</span>
+                  )}
                 </td>
                 {CHECKS.map((check) => (
                   <td key={check} className="px-2 py-2 tabular-nums text-slate-600">

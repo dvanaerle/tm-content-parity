@@ -5,7 +5,8 @@
  * tiers, ticket 05 the link classes, ticket 06 the image classes.
  */
 
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { FINDING_CLASSES as CLASSES } from './vocabulary.mjs';
 
 /**
  * The class vocabulary lives in `vocabulary.mjs` and is re-exported here, so a
@@ -125,6 +126,12 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * @property {number | null} prod   Index into `sides.production.elements`.
  * @property {number | null} new    Index into `sides.new.elements`.
  * @property {number | null} score
+ * @property {string | null} finding  The grouped finding this position belongs to.
+ *                                    `null` on an exact match. Six positions that
+ *                                    grouped into one finding share one id, so an
+ *                                    override on any of them acts on all six. The
+ *                                    browser cannot recompute it — `findingId()`
+ *                                    needs `node:crypto`.
  */
 
 /**
@@ -157,8 +164,62 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * @property {Finding[]} findings
  * @property {DiffRow[]} rows
  * @property {ReportSummary} summary
+ * @property {string} observationId  The run that produced this report. See `newObservationId()`.
+ * @property {string} findingSetHash Over the **shown** finding ids only. Page-review staleness.
  * @property {string} builtAt       ISO 8601.
  */
+
+/**
+ * The part of a `PageReport` that the override derivation reads, and nothing
+ * else. A `PageReport` satisfies it, and so does the dashboard's much smaller
+ * `PageSummary` — which is why one derivation serves the page and the store, and
+ * the two can never disagree about a bar.
+ *
+ * @typedef {object} ObservedPage
+ * @property {Store} store
+ * @property {string} page
+ * @property {Finding[]} findings
+ * @property {string} observationId
+ * @property {string} findingSetHash
+ */
+
+/**
+ * An **observation** is one look at the two sites: a build of the log, or one
+ * Recheck. Ticket 09 says a fix claim counts as closed until it is contradicted,
+ * and that it is worth pressing on a frozen snapshot "where nothing can
+ * contradict it". Those two sentences only agree if a claim knows what it was
+ * claimed against — so a `fixed` event records its observation, and it is
+ * contradicted only by a **later** one that still gives the finding.
+ *
+ * "Later" has to be decidable without a clock, because `derivePageState()` is
+ * pure. So the identifier is **lexicographically sortable**: a fixed-width ISO
+ * 8601 UTC timestamp, then a random tail to separate two runs in the same
+ * millisecond. Comparing two ids with `<` is comparing their times.
+ *
+ * @returns {string}
+ */
+export function newObservationId() {
+  return `${new Date().toISOString()}-${randomUUID().slice(0, 8)}`;
+}
+
+/**
+ * A hash over the sorted ids of the findings in **shown** classes.
+ *
+ * A page review records this, and goes stale when it stops matching. It must be
+ * the shown set only: over every class, muting something would change the hash
+ * and make every review on the page stale, which is the opposite of what a mute
+ * is for.
+ *
+ * @param {Pick<Finding, 'id' | 'class'>[]} findings
+ * @returns {string} 16 base64url characters.
+ */
+export function findingSetHash(findings) {
+  const ids = findings
+    .filter((finding) => CLASSES[finding.class]?.shown)
+    .map((finding) => finding.id)
+    .sort();
+  return createHash('sha256').update(ids.join('|'), 'utf8').digest('base64url').slice(0, 16);
+}
 
 /**
  * The finding id from ticket 01.

@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { CHECKS, FINDING_CLASSES, findingId, muteKey } from './contract.mjs';
+import { CHECKS, FINDING_CLASSES, findingId, muteKey, newObservationId } from './contract.mjs';
 
 const base = {
   store: 'nl',
@@ -10,6 +10,40 @@ const base = {
   prodNorm: 'Levering in 5 werkdagen',
   newNorm: 'Levering in 5 werkdagen.',
 };
+
+// `isContradicted()` in overrides/state.mjs compares two of these with `<` and
+// calls the result "later". That is a rule, so it has a test: it holds only
+// while the format is fixed-width and time-ordered, and nothing else here would
+// fail if the format changed.
+describe('newObservationId', () => {
+  it('sorts later than an id made a millisecond before it', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-08-06T10:00:00.000Z'));
+      const earlier = newObservationId();
+      vi.setSystemTime(new Date('2026-08-06T10:00:00.001Z'));
+      const later = newObservationId();
+      expect(earlier < later).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('sorts by time, not by the random tail', () => {
+    const ids = ['2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.001Z', '2026-02-01T00:00:00.000Z']
+      .map((at) => `${at}-${'zzzzzzzz'}`);
+    expect([...ids].reverse().sort()).toEqual(ids);
+  });
+
+  it('is a fixed-width ISO 8601 UTC stamp and a tail', () => {
+    expect(newObservationId()).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z-[0-9a-f]{8}$/);
+  });
+
+  it('separates two runs in the same millisecond', () => {
+    const many = new Set(Array.from({ length: 50 }, () => newObservationId()));
+    expect(many.size).toBe(50);
+  });
+});
 
 describe('findingId', () => {
   it('is deterministic', () => {

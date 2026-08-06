@@ -9,9 +9,14 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "compare": "node compare/30-compare.mjs",
+    "build": "npm --prefix web run build",
+    "serve": "node api/server.mjs",
+    "start": "npm run build && npm run serve"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.1",
     "node-html-parser": "^9.0.1"
   },
   "devDependencies": {

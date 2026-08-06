@@ -139,7 +139,11 @@ function order(row) {
 export function textFindings(rows, collector) {
   for (const row of rows) {
     if (!row.class) continue;
-    collector.add({
+    // The row keeps the id of the finding it was grouped into, so the Diff tab
+    // can offer an override control on a position. Six positions that grouped to
+    // one finding all carry that one id, and acting on any of them acts on all
+    // six — which is what grouping means.
+    row.finding = collector.add({
       class: row.class,
       prod: row.prod?.norm ?? null,
       new: row.new?.norm ?? null,

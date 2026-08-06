@@ -1,0 +1,178 @@
+/**
+ * The local re-check service, and the one command that runs the whole tool.
+ *
+ *   node api/server.mjs [port]
+ *
+ * Plain Node, no framework, no Playwright. Ticket 19 ruled browser rendering out
+ * for good, and plain `fetch` reads every page in scope.
+ *
+ * It exists because **neither site sends CORS headers**, so a browser cannot
+ * fetch either of them. A local service is mandatory, and it is the reason the
+ * hosted snapshot cannot re-check: the webhost runs no server code.
+ *
+ * The front end **feature-detects** it on `/api/health`. Present, the Recheck
+ * button renders; absent, it does not, and nothing else changes. There is no
+ * build flag, because the same static files are the hosted snapshot and the
+ * local copy.
+ */
+
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { extname, join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { newObservationId } from '../compare/contract.mjs';
+import { checkAll } from '../compare/link-status.mjs';
+import { comparePage, newSitePathsFor } from '../compare/30-compare.mjs';
+import { MaintenanceError } from '../crawl/fetch-page.mjs';
+import { extractStorePage } from '../crawl/20-extract.mjs';
+
+const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
+const SEEDS = new URL('../data/10-store-seeds.json', import.meta.url);
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.woff2': 'font/woff2',
+  '.ico': 'image/x-icon',
+};
+
+/** @type {any} */
+let seeds = null;
+const readSeeds = async () => (seeds ??= JSON.parse(await readFile(SEEDS, 'utf8')));
+
+/**
+ * @param {string} store
+ * @param {string} page
+ */
+async function urlsFor(store, page) {
+  const all = await readSeeds();
+  const cell = all.rows.find((row) => row.page === page)?.stores?.[store];
+  if (!cell) throw new Error(`Geen pagina ${store}/${page} in de seed-lijst.`);
+  return { prodUrl: cell.prodUrl, newUrl: cell.newUrl };
+}
+
+/**
+ * One page, both sites, one fresh observation.
+ *
+ * Link status is checked on **this page's** targets only, deduplicated within the
+ * page, with a cold cache. Ticket 05 forbids a site-wide sweep from a button; the
+ * probe did 37 targets in 1.1 seconds, which is a button press.
+ *
+ * @param {string} store
+ * @param {string} page
+ */
+export async function recheck(store, page) {
+  const { prodUrl, newUrl } = await urlsFor(store, page);
+  const sides = await extractStorePage({ store, page, prodUrl, newUrl });
+
+  const targets = ['production', 'new'].flatMap(
+    (side) => sides[side].links.filter((link) => link.internal).map((link) => link.url),
+  );
+  const statuses = new Map(Object.entries(await checkAll(targets)));
+
+  return comparePage({
+    sides,
+    newSitePaths: newSitePathsFor(await readSeeds(), store),
+    statuses,
+    observationId: newObservationId(),
+  });
+}
+
+/** @param {import('node:http').ServerResponse} response */
+const send = (response, status, body, type = 'application/json; charset=utf-8') => {
+  response.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' });
+  response.end(typeof body === 'string' ? body : JSON.stringify(body));
+};
+
+/**
+ * The router, with the work injected. The extraction and the comparison have
+ * their own suites and are not re-tested through HTTP — this takes a stub, so
+ * the two smoke tests never reach the network.
+ *
+ * @param {{ recheck: (store: string, page: string) => Promise<any> }} deps
+ */
+export function createApi({ recheck: run }) {
+  /**
+   * @param {import('node:http').IncomingMessage} request
+   * @param {import('node:http').ServerResponse} response
+   */
+  return async function handle(request, response) {
+  const { pathname } = new URL(request.url ?? '/', 'http://localhost');
+
+  // Its only job is to exist.
+  if (pathname === '/api/health') return send(response, 200, { ok: true });
+
+  if (pathname.startsWith('/api/recheck/')) {
+    if (request.method !== 'POST') return send(response, 405, { reason: 'Gebruik POST.' });
+
+    // A page key can hold a slash (`faq/productinformatie`), so the store is the
+    // first segment and the page is everything after it.
+    const [store, ...rest] = pathname.slice('/api/recheck/'.length).split('/');
+    const page = decodeURIComponent(rest.join('/'));
+    if (!store || !page) return send(response, 400, { reason: 'Geef een winkel en een pagina.' });
+
+    try {
+      return send(response, 200, await run(store, page));
+    } catch (error) {
+      // Ticket 04: production goes into maintenance mode without warning, and a
+      // run that records the maintenance page records phantom defects. This is a
+      // plain refusal with the reason, never a result.
+      if (error instanceof MaintenanceError) {
+        return send(response, 503, {
+          reason: `De site staat in onderhoudsmodus (${error.message}). Er is niets vergeleken,`
+            + ' want een onderhoudspagina levert honderden verzonnen verschillen op.',
+        });
+      }
+      return send(response, 500, { reason: /** @type {Error} */ (error).message });
+    }
+  }
+
+  if (pathname.startsWith('/api/')) return send(response, 404, { reason: 'Onbekend eindpunt.' });
+
+  return serveStatic(pathname, response);
+  };
+}
+
+/** It also serves `dist/`, so one command gives the whole tool locally. */
+async function serveStatic(pathname, response) {
+  const clean = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '');
+  const candidates = extname(clean)
+    ? [clean]
+    : [join(clean, 'index.html'), `${clean.replace(/\/$/, '')}.html`];
+
+  for (const candidate of candidates) {
+    const file = join(DIST, candidate);
+    if (!file.startsWith(DIST)) break;
+    try {
+      const body = await readFile(file);
+      response.writeHead(200, { 'content-type': MIME[extname(file)] ?? 'application/octet-stream' });
+      return response.end(body);
+    } catch {
+      // Try the next shape, then fall through to the 404 below.
+    }
+  }
+
+  return send(
+    response,
+    404,
+    'Niet gevonden. Draai eerst `npm run build` in de hoofdmap, of `npm start`.',
+    'text/plain; charset=utf-8',
+  );
+}
+
+if (process.argv[1]?.endsWith('server.mjs')) {
+  const port = Number(process.argv[2] ?? process.env.PORT ?? 4321);
+  const handle = createApi({ recheck });
+
+  createServer((request, response) => {
+    handle(request, response).catch((error) => send(response, 500, { reason: String(error) }));
+  }).listen(port, () => {
+    console.log(`Content parity log op http://localhost:${port}`);
+    console.log('  GET  /api/health');
+    console.log('  POST /api/recheck/<store>/<page>');
+  });
+}

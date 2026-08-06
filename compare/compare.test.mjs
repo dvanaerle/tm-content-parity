@@ -463,7 +463,23 @@ describe('comparePage', () => {
         new: extract({ side: 'new', elements: elements(['Overkappingen']) }),
       },
     });
-    expect(report.rows).toEqual([{ class: null, prod: 0, new: 0, score: null }]);
+    // `finding` is null on an exact match: spec 29 links a row to the grouped
+    // finding it belongs to, and a match is not a finding.
+    expect(report.rows).toEqual([{ class: null, prod: 0, new: 0, score: null, finding: null }]);
+  });
+
+  it('links a row to the grouped finding it belongs to', () => {
+    // A row is a position and a finding is grouped, so the two cannot be the same
+    // record — but an override control on a row has to act on the finding, and
+    // the browser cannot recompute the id: `findingId()` needs `node:crypto`.
+    const report = comparePage({
+      sides: {
+        production: extract({ elements: elements(['Levering in 5 werkdagen']) }),
+        new: extract({ side: 'new', elements: elements(['Levering in vijf werkdagen']) }),
+      },
+    });
+    const row = report.rows.find((candidate) => candidate.class);
+    expect(row.finding).toBe(report.findings[0].id);
   });
 
   it('counts a shown and a hidden class apart', () => {
