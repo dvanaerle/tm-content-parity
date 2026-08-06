@@ -32,7 +32,7 @@ ticket 02's 0.6 pair threshold, so that every tunable number is in one file:
   punctuation and units
 - **0.5** divergent positions is the `restructured` cap for the heading outline
 
-## Three questions to settle first
+## Four questions to settle first
 
 Ticket 11 did not see these. Settle them here, write the answer in this ticket,
 and do not open them again in a later ticket.
@@ -50,6 +50,16 @@ and do not open them again in a later ticket.
 3. **Axis B reports must not go in `data/reports/`.** `web/src/lib/reports.mjs`
    reads that directory with one flat listing and gives every file to the axis A
    dashboard. A sibling directory keeps the two apart.
+4. **`classInfo().direction` has no consumer.** From the ticket 35 review. Ticket
+   33 added it, and its comment says the diff needs the direction and not the tone,
+   because `text-added` is hidden by default and therefore grey while its cell must
+   still be green. `Diff.jsx` does not read it: the cell tint comes from `prod ===
+   null` or `next === null`. Delete it, or make `Diff.jsx` read it. There is one
+   fact that decides this: the tint tests `null`, and `Cell` treats `''` as absent
+   as well, so a side that is an empty string shows "niet aanwezig" in an **untinted**
+   cell. Find out whether a normalised `''` can reach the diff. If it can, the
+   direction is the correct key and `Diff.jsx` must read it. If it cannot, delete
+   the field. Either way, add the test.
 
 ## The nine new classes
 

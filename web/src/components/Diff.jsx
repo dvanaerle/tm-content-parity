@@ -22,6 +22,12 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
  *
  * Colour is not the only indication. A removed word is a `<del>`, and an added word
  * is an `<ins>`. Thus the strike-through and the underline also show the change.
+ *
+ * **`mono` is for a machine string, and not for prose.** A url, an image path and a
+ * `<head>` value align character by character, and an editor reads them for the one
+ * character that changed. A content cell holds Dutch prose. On a long paragraph,
+ * `font-mono text-xs` costs more legibility than the alignment returns, and the word
+ * layer already shows which words changed.
  */
 
 /**

@@ -135,11 +135,20 @@ Also fixed: `severityTone()` has tests, so does the reservation of red and green
 the five `null` tones in `SURFACE` and the two unread `CHROME` entries are deleted;
 the new prose is in Simplified Technical English; and the probe keeps its `nu`.
 
-Three findings are open and are **not** this ticket's to close: the content diff
-cells are still proportional and not monospaced, `classInfo().direction` has no
-consumer, and `compare/meta.mjs` imports `crawl/keys.mjs`, which inverts the
-layering `AGENTS.md` states. The last one needs an ADR about where a shared
-identity key lives.
+**The monospaced family is for machine strings only.** The review read "a
+monospaced family is added for the comparison cells" and found the content cells
+proportional. That is the decision and not an oversight: a url, an image path and a
+`<head>` value align character by character and are read for the one character that
+changed, so they are mono. A content cell holds Dutch prose that an editor reads as
+prose, and `font-mono text-xs` on a long paragraph costs more legibility than the
+alignment returns. The word layer already shows which words changed.
+
+Two findings stay open, and neither is this ticket's to close:
+
+- `classInfo().direction` has no consumer. Folded into **ticket 39**, which owns
+  that table.
+- `compare/meta.mjs` imports `crawl/keys.mjs`, which inverts the layering
+  `AGENTS.md` states. **Ticket 47** owns it, and it needs an ADR.
 
 ## Left for another ticket
 
