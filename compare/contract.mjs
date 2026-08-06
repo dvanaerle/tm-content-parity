@@ -102,6 +102,15 @@ export const STORES = ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'];
  */
 
 /**
+ * Numbers that explain a page, and that must never become a finding. Ticket 06
+ * counts the new site's 76 Alpine-bound icons here: they carry no identity, so
+ * they cannot be matched, missed or fixed.
+ *
+ * @typedef {object} PageDiagnostics
+ * @property {number} imagesWithoutSrc
+ */
+
+/**
  * What `crawl/` gives for one URL. `compare/` reads nothing else.
  *
  * @typedef {object} PageExtract
@@ -118,6 +127,7 @@ export const STORES = ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'];
  * @property {ImageRecord[]} images
  * @property {PageMeta} meta
  * @property {string} markdown      A rendering for reading and export. Never the diff spine.
+ * @property {PageDiagnostics} diagnostics
  * @property {string} fetchedAt     ISO 8601.
  */
 

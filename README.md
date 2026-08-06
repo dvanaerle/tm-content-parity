@@ -34,11 +34,22 @@ npm install --prefix web   # the Astro front end
 npm test
 ```
 
+## Extract one page
+
+```sh
+node crawl/20-extract.mjs nl heavy-duty-terrasoverkapping
+node crawl/20-extract.mjs nl carport <prodUrl> <newUrl>   # without the seed file
+```
+
+It writes `data/extract/<store>/<page>.json`: the two sides, in the
+`PageExtract` shape from `compare/contract.mjs`.
+
 ## Status
 
-The repo is a scaffold. The scripts in `crawl/` are the baseline from the
-`sitemap-content-overview` survey. They are moved here without changes, and
-ticket 07 replaces them with the extractor v2.
+`crawl/extract.mjs` is the extractor v2 (ticket 07). It gives elements, links,
+images, meta and Markdown in one pass, for one URL. The numbered `0*.mjs`
+scripts are the baseline from the `sitemap-content-overview` survey. They make
+the seed data, and they do not follow the contract.
 
 The decisions are in `../../gitlab/devdva02/.scratch/content-parity-log/map.md`.
 `CONTEXT.md` holds the words that the code uses.
