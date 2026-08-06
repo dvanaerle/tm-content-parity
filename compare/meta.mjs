@@ -1,17 +1,16 @@
 /**
  * What the `<head>` panel shows (ticket 35, phase 6 of spec 32).
  *
- * **This makes no findings.** Ticket 21 has not decided what a parity defect in
- * the head is, and this ticket does not decide it either: nothing here enters the
- * contract, the bar or the count. The panel wears the diff's colours so an editor
- * reads a changed `<title>` the same way as changed body copy, and it carries no
- * override control, so the shared visual language cannot be mistaken for
- * actionability.
+ * **This makes no findings.** Ticket 21 has not decided what a parity defect in the
+ * head is, and this ticket does not decide it. Nothing here goes into the contract,
+ * the bar or the count. The panel uses the diff's colours, thus an editor reads a
+ * changed `<title>` in the same way as changed body copy. The panel has no override
+ * control, thus the shared colours cannot show something an editor can act on.
  *
- * So every rule in this file answers one question — *is an editor shown this
- * row?* — and each one is a rule about wasted attention rather than about
- * correctness. That is also why they are here and not in a component: a rule that
- * decides what a person never sees needs a test.
+ * Each rule in this file answers one question: *does an editor see this row?* Each
+ * rule is about attention, and not about correctness. This is also why the rules
+ * are here and not in a component. A rule that decides what a person never sees
+ * needs a test.
  *
  * **Browser-safe and pure.** The panel is inside a React island, so this imports
  * only `crawl/keys.mjs`, which imports nothing.
@@ -22,9 +21,9 @@ import { linkKey } from '../crawl/keys.mjs';
 /**
  * The fields, in reading order.
  *
- * `h1` is **not** one of them. It is an element inside the content boundary and
- * the merged content view owns it, with a position, a level and a finding id. It
- * differs on 93 of 179 nl pages, and it must be reported once.
+ * `h1` is **not** one of them. It is an element inside the content boundary, and
+ * the merged content view owns it. That view gives it a position, a level and a
+ * finding id. The `h1` differs on 93 of 179 nl pages, and one report is enough.
  */
 export const META_FIELDS = ['title', 'description', 'canonical', 'noindex'];
 
@@ -59,9 +58,9 @@ function fold(value, hosts) {
 }
 
 /**
- * `noindex` is a boolean on the wire and a word on screen. The words are the ones
- * a `<meta name="robots">` tag uses, so an editor can search the page source for
- * what the panel says.
+ * `noindex` is a boolean in the data and a word on the screen. The two words are
+ * the words of a `<meta name="robots">` tag. Thus an editor can search the page
+ * source for the word that the panel shows.
  *
  * @param {import('./contract.mjs').PageMeta} meta
  * @param {string} field

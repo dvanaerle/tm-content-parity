@@ -4,23 +4,24 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
 
 /**
  * One diff, four surfaces: content rows, link findings, image findings and the
- * `<head>` panel. Ticket 35 makes it one component so the four cannot disagree
- * about what red means — before it, the same production/new pair was rendered in
- * four different idioms and none of them highlighted anything.
+ * `<head>` panel. Ticket 35 makes it one component, so that the four surfaces
+ * cannot disagree about the meaning of red. Before this component, the same
+ * production/new pair had four different presentations, and no presentation
+ * highlighted a change.
  *
- * **Two layers, and they never both fire on one cell.**
+ * **Two layers, and only one layer applies to a cell.**
  *
- * - *Row level.* Content that exists on one side only tints that whole cell: red
- *   where production has it and the new site does not, green the other way. There
- *   is nothing to diff against, so there is no word layer — striking through a
- *   whole paragraph says the same thing twice and reads as noise.
- * - *Word level.* When both sides have text, the cells stay calm and the changed
- *   **words** carry the colour. This is the layer that lets an editor see
- *   `Verkrijgbaar in de volgende kleuren` become `Beschikbare kleuren` without
- *   reading both strings end to end.
+ * - *Row level.* Content that is on one side only tints that whole cell. It is red
+ *   if production has the content and the new site does not, and green in the other
+ *   direction. There is nothing to diff against, thus there is no word layer. A
+ *   strike-through on a whole paragraph gives the same information two times.
+ * - *Word level.* If both sides have text, the cells stay plain and the changed
+ *   **words** get the colour. This layer shows an editor that `Verkrijgbaar in de
+ *   volgende kleuren` became `Beschikbare kleuren`. The editor does not read both
+ *   strings from start to end.
  *
- * Colour is never the only channel: a removed word is a `<del>` and an added one
- * an `<ins>`, so the strike and the underline say it as well.
+ * Colour is not the only indication. A removed word is a `<del>`, and an added word
+ * is an `<ins>`. Thus the strike-through and the underline also show the change.
  */
 
 /**
@@ -106,10 +107,10 @@ function Cell({ side, value, spans, tint, prefix, raw, mono, strong }) {
 }
 
 /**
- * A span carries the separators around its words, because the module reconstructs
- * each side exactly. The **highlight** must not: a box drawn around a trailing
- * space is a box that says a space changed. So the edge whitespace is rendered
- * outside the mark and every character still reaches the screen.
+ * A span includes the separators around its words, because the module gives each
+ * side exactly. The **highlight** must not include them. A box around a trailing
+ * space tells the reader that a space changed. Therefore the whitespace at the two
+ * edges is outside the mark, and each character is still on the screen.
  *
  * @param {{ spans: import('../../../compare/worddiff.mjs').DiffSpan[] }} props
  */
@@ -132,12 +133,12 @@ function Spans({ spans }) {
 }
 
 /**
- * The way back to the literal string. The cells render `norm`, and an editor
- * pasting into Magento needs the punctuation production actually shipped —
- * including the curly quote and the non-breaking space that tier 1 folded away.
+ * The way back to the literal string. The cells show `norm`. An editor who pastes
+ * into Magento needs the punctuation that production has, and this includes the
+ * curly quote and the non-breaking space that tier 1 folded.
  *
- * It appears only where `raw` and `norm` differ. Everywhere else the text on
- * screen is already the literal one and the button would be furniture.
+ * The button is present only if `raw` and `norm` differ. In all other rows the text
+ * on the screen is already the literal string, and the button has no use.
  */
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);

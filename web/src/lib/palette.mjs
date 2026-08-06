@@ -1,14 +1,14 @@
 /**
  * The one colour map (ticket 35).
  *
- * Before this file there were four of them — a class tone table, a chip tone
- * table, a finding-state table and a banner table — plus three colour pairs
- * written inline. They keyed different vocabularies onto overlapping values, and
- * `bg-emerald-100 text-emerald-800` appeared under three different names. So the
- * question "what does green mean here?" had no answer.
+ * There were four colour maps before this file: a class tone table, a chip tone
+ * table, a finding-state table and a banner table. Three colour pairs were also
+ * written inline. The maps put different names onto overlapping values, and
+ * `bg-emerald-100 text-emerald-800` had three of those names. Thus the question
+ * "what does green mean here?" had no answer.
  *
- * It has one now. Every colour a component wears comes from this file, and every
- * entry is one of seven **tones**. A tone is a meaning, not a hue:
+ * It has an answer now. Each colour in a component comes from this file. Each
+ * entry is one of seven **tones**. A tone is a meaning, and not a hue:
  *
  * | tone        | meaning                                                     |
  * |-------------|-------------------------------------------------------------|
@@ -20,14 +20,14 @@
  * | `neutral`   | hidden, muted, or switched off                               |
  * | `dark`      | a total, which is not a judgement at all                     |
  *
- * `lost` and `added` are the only red and the only green in the interface, and
- * they are never spent on status. That is what lets the diff say what it says:
- * red is a loss and nothing else. `severe` and `attention` are two weights of one
- * amber for the same reason — a third loud hue would have to be the brand orange,
- * and brand colour is chrome only.
+ * `lost` and `added` are the only red and the only green in the interface. No
+ * status uses them. This rule is what makes the diff readable: red shows a loss,
+ * and nothing else. `severe` and `attention` are two weights of one amber for the
+ * same reason. A third loud hue must be the brand orange, and brand colour is
+ * for chrome only.
  *
- * Tailwind reads class names out of the source, so every value here is a literal
- * and none is assembled from parts.
+ * Tailwind finds class names in the source text. Therefore each value in this
+ * file is a literal, and no value is assembled from parts.
  */
 
 /** @typedef {'lost' | 'added' | 'severe' | 'attention' | 'info' | 'neutral' | 'dark'} Tone */
@@ -43,7 +43,7 @@ export const PILL = {
   dark: 'bg-slate-900 text-white',
 };
 
-/** A filled chip, for a number an editor reads from across the room. */
+/** A filled chip. Use it for a number that must be legible at a distance. */
 export const SOLID = {
   lost: 'bg-lost text-white',
   added: 'bg-added text-white',
@@ -118,8 +118,8 @@ export const TOKEN = {
 };
 
 /**
- * Chrome. The brand lives here and nowhere else. Reading a colour off this object
- * is how a component says "I am furniture, not a finding".
+ * Chrome. The brand colours are in this object and nowhere else. A component that
+ * reads a colour from here shows structure, and not a finding.
  */
 export const CHROME = {
   header: 'bg-brand-green text-white',
@@ -130,10 +130,10 @@ export const CHROME = {
 };
 
 /**
- * How much of a page differs, as a tone. Amber in two weights, blue for none —
- * never red, however bad the page is. A page that differs everywhere is still a
- * status and not a direction, and an editor who sees the diff red here would read
- * the whole page as lost content.
+ * How much of a page differs, as a tone. Amber in two weights, and blue for none.
+ * Never red, however bad the page is. A page that differs everywhere is still a
+ * status, and not a direction. An editor who sees the diff red here reads the
+ * whole page as lost content.
  *
  * @param {number} share 0 to 1.
  * @returns {Tone}

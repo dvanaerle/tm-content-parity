@@ -15,20 +15,20 @@
  * for every value it declares, so a value no component wears is dead CSS. Read
  * the storefront config, cited above, for the other 18.
  *
- * Three rules hold this palette together, and every one of them is a rule about
- * meaning rather than about taste:
+ * Three rules hold this palette together. Each rule is about meaning, and not about
+ * taste:
  *
- * 1. **Brand colour is chrome only** — the header, the tab bar, focus rings and
- *    links. It says "this is a Tuinmaximaal tool" and it never says anything
- *    about a finding.
- * 2. **Red and green are reserved for diff meaning and never for status.** The
- *    brand primary is dark green and the accent is orange, so letting green mean
- *    both "Tuinmaximaal" and "the new site added this" would put two meanings on
- *    one hue eight pixels apart. Status is amber and blue.
- * 3. **Stock neutral greys carry the table surface.** The storefront's neutral
- *    ramp is five steps with a hole exactly where table borders, zebra stripes
- *    and hover states live, so `slate-*` carries the surface and the brand greys
- *    do not.
+ * 1. **Brand colour is for chrome only**: the header, the tab bar and links. The
+ *    brand colour shows that this is a Tuinmaximaal tool. It shows nothing about a
+ *    finding.
+ * 2. **Red and green are for diff meaning, and never for status.** The brand
+ *    primary is dark green and the accent is orange. If green also means "the new
+ *    site added this", one hue has two meanings eight pixels apart. Status is amber
+ *    and blue.
+ * 3. **Stock neutral greys make the table surface.** The storefront's neutral ramp
+ *    has five steps, and it has no step for a table border, a zebra stripe or a
+ *    hover state. Therefore `slate-*` makes the surface, and the brand greys do
+ *    not.
  */
 @theme {
   /* --- The storefront's brand hexes, transcribed ------------------------- */
@@ -41,14 +41,14 @@
 
   /*
    * --- Diff meaning ------------------------------------------------------ *
-   * One red and one green, each in three weights: the ink, the tint a whole cell
-   * gets when the row is one-sided, and the stronger tint a changed **word**
-   * gets inside an otherwise neutral row. The two tints must stay apart while
-   * sitting inside one another, which is the only reason there are two.
+   * One red and one green, each in three weights: the ink, the tint of a whole cell
+   * in a one-sided row, and the stronger tint of a changed **word** in a neutral
+   * row. The two tints must stay different when one is inside the other. That is
+   * the only reason for two tints.
    *
-   * The values are stock Tailwind red and emerald. Nothing in the storefront is
-   * a diff colour, so brand-adjacent hexes here would claim a provenance they do
-   * not have.
+   * The values are stock Tailwind red and emerald. No colour in the storefront is a
+   * diff colour. Thus a brand-adjacent hex here shows an origin that it does not
+   * have.
    */
   --color-lost: #b91c1c;
   --color-lost-surface: #fef2f2;
@@ -59,8 +59,8 @@
 
   /*
    * --- Status ------------------------------------------------------------ *
-   * Amber for "an editor has to look at this", blue for "this is done, or this
-   * is information". Neither hue can be mistaken for a direction.
+   * Amber shows that an editor must look at this. Blue shows that this is done, or
+   * that this is information. A reader cannot read either hue as a direction.
    */
   --color-attention: #fef3c7;
   --color-attention-ink: #78350f;
@@ -70,9 +70,9 @@
   --color-info-ink: #1d4ed8;
 
   /*
-   * The comparison cells. The storefront has no monospaced family at all, and
-   * two near-identical strings only line up in one. No webfont: the build is
-   * static and is read from outside the network.
+   * The comparison cells. The storefront has no monospaced family. Two strings that
+   * are almost the same align only in a monospaced family. There is no webfont: the
+   * build is static, and a reader opens it from outside the network.
    */
   --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'SF Mono', Menlo,
     Consolas, monospace;

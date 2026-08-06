@@ -1,12 +1,12 @@
 /**
  * The two identity keys, and nothing else.
  *
- * They lived in `extract.mjs` until ticket 35, and they moved here for the same
- * reason `vocabulary.mjs` split out of `contract.mjs`: the **browser** needs
- * `linkKey()` now. The meta panel host-folds a canonical before it compares it,
- * and it does so with the folding the links check already uses rather than a
- * second one that would drift from it. `extract.mjs` imports `node-html-parser`,
- * which has no business in a React island.
+ * They were in `extract.mjs` until ticket 35. They moved here for the same reason
+ * that made `vocabulary.mjs` a separate file from `contract.mjs`: the **browser**
+ * needs `linkKey()` now. The meta panel folds the host out of a canonical before it
+ * compares it. It uses the folding of the links check, and not a second folding
+ * that can become different. `extract.mjs` imports `node-html-parser`, and a React
+ * island must not import that package.
  *
  * Both functions are pure and import nothing.
  */
@@ -15,9 +15,9 @@
 const SIZE_SUFFIX = /[_-]\d{2,4}x\d{2,4}$/;
 
 /**
- * Target identity from ticket 05: the page's own two hosts fold to one token,
- * the path is lowercased and loses its trailing slash, the query stays and the
- * fragment goes.
+ * Target identity from ticket 05. The page's own two hosts fold to one token. The
+ * path becomes lower case and loses its trailing slash. The query stays, and the
+ * fragment is removed.
  *
  * @param {URL} url
  * @param {{ prodHost?: string, newHost?: string }} hosts

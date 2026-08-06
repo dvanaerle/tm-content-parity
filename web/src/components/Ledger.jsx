@@ -261,13 +261,14 @@ function SideBySide({ production, next }) {
 }
 
 /**
- * Display only, and now with the diff treatment (ticket 35). A changed `<title>`
- * reads the same way as changed body copy, because it is the same kind of change.
+ * Display only, and now with the diff colours (ticket 35). An editor reads a changed
+ * `<title>` in the same way as changed body copy, because it is the same type of
+ * change.
  *
  * It still makes **no** finding. Ticket 21 has not decided what a parity defect in
- * the head is, so nothing here enters the contract, the bar or the count — and
- * that is exactly why the rows carry no override control. The shared colours must
- * not be mistaken for something an editor can tick off.
+ * the head is. Thus nothing here goes into the contract, the bar or the count. For
+ * the same reason the rows have no override control: the shared colours must not
+ * show something an editor can complete.
  *
  * Which rows exist at all is `compare/meta.mjs`'s decision, not this component's.
  */

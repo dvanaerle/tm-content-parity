@@ -2,28 +2,27 @@
  * The word-level diff (ticket 35). Two normalised strings in, a list of
  * unchanged / removed / added spans out.
  *
- * **Browser-safe and pure.** It imports nothing, so a React island imports it
- * directly — the same rule that split `vocabulary.mjs` out of `contract.mjs`.
- * This is the one new seam spec 32 adds, and it is a module rather than a
- * component precisely so Node can test it: there is no browser test stack in this
- * repo, and a rule with judgement in it that only a component can run is a rule
- * with no test.
+ * **Browser-safe and pure.** It imports nothing, thus a React island can import it
+ * directly. This is the same rule that made `vocabulary.mjs` a separate file from
+ * `contract.mjs`. It is the one new seam spec 32 adds. It is a module and not a
+ * component, so that Node can test it. There is no browser test stack in this
+ * repo. A rule that has judgement in it, and that only a component can run, is a
+ * rule with no test.
  *
- * **Words, not characters.** A Dutch compound shares most of its letters with the
- * compound that replaced it — `terrasoverkapping` against `tuinoverkapping` — so a
- * character-level diff paints confetti inside one word instead of saying that the
- * word changed. The whole word is the unit.
+ * **Words, not characters.** A Dutch compound has almost the same letters as the
+ * compound that replaced it. An example is `terrasoverkapping` against
+ * `tuinoverkapping`. A character-level diff marks small changes inside such a
+ * word. It does not show that the word changed. Therefore the unit is the word.
  *
- * **A link target is a word list too.** The panel diffs two link keys with this
- * same function, so the separators inside a url — `/ ? & = #` — count as
- * boundaries beside whitespace. Without them a target is a single token, the diff
- * says only "it changed", and the changed **path segment** is what an editor needs
- * to see.
+ * **A link target is also a list of words.** The panel diffs two link keys with
+ * this same function. Therefore the separators in a url — `/ ? & = #` — are
+ * boundaries, together with whitespace. Without them, a target is one token and
+ * the diff shows only that the target changed. An editor must see which **path
+ * segment** changed.
  *
- * **The caller passes `norm`, never `raw`.** Tier 1 folds curly quotes, NBSP,
- * dashes and entities deliberately, and diffing `raw` would paint differences that
- * the tool classifies as equal in the same breath. `raw` reaches an editor through
- * a copy button instead.
+ * **The caller gives `norm`, and never `raw`.** Tier 1 folds curly quotes, NBSP,
+ * dashes and entities on purpose. Thus a diff of `raw` marks differences that the
+ * tool classifies as equal. A copy button gives `raw` to the editor instead.
  */
 
 /**
@@ -34,10 +33,10 @@
  */
 
 /**
- * Runs of separator and runs of content, alternating. The separators are kept as
- * tokens of their own rather than glued to a neighbour, so that concatenating one
- * side's spans reproduces that side's input character for character — a renderer
- * that has to insert the spaces back would be guessing where they were.
+ * Runs of separator and runs of content, in alternation. A separator is a token of
+ * its own, and is not part of a neighbour token. Thus a join of one side's spans
+ * gives that side's input, character for character. A renderer that must put the
+ * spaces back cannot know where they were.
  */
 const TOKENS = /[\s/?&=#]+|[^\s/?&=#]+/g;
 
@@ -50,8 +49,8 @@ const tokens = (text) => (text ?? '').match(TOKENS) ?? [];
 /**
  * @param {string | null} prod  Production's normalised text.
  * @param {string | null} next  The new site's normalised text.
- * @returns {DiffSpan[]} In reading order. Neighbouring tokens of the same type are
- *   one span, because two removed words in a row are one edit to a reader.
+ * @returns {DiffSpan[]} In reading order. Adjacent tokens of the same type make one
+ *   span, because a reader sees two removed words in sequence as one change.
  */
 export function wordDiff(prod, next) {
   const left = tokens(prod);

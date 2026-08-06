@@ -49,26 +49,26 @@ for (const file of files) {
 
   for (const [i, j] of lcsPairs(production.elements, next.elements)) {
     const prod = production.elements[i];
-    const newElement = next.elements[j];
+    const nu = next.elements[j];
     exactPairs += 1;
-    if (prod.tag === newElement.tag) continue;
+    if (prod.tag === nu.tag) continue;
 
     pagesWithTagChange.add(production.page);
-    bump(byTagPair, `${prod.tag} -> ${newElement.tag}`);
-    bump(byKindPair, `${prod.kind} -> ${newElement.kind}`);
-    if (prod.level !== newElement.level) headingLevelChanges += 1;
-    if (prod.kind !== newElement.kind) kindChanges += 1;
+    bump(byTagPair, `${prod.tag} -> ${nu.tag}`);
+    bump(byKindPair, `${prod.kind} -> ${nu.kind}`);
+    if (prod.level !== nu.level) headingLevelChanges += 1;
+    if (prod.kind !== nu.kind) kindChanges += 1;
 
     cases.push({
       page: production.page,
       prodTag: prod.tag,
-      newTag: newElement.tag,
+      newTag: nu.tag,
       prodKind: prod.kind,
-      newKind: newElement.kind,
+      newKind: nu.kind,
       prodLevel: prod.level,
-      newLevel: newElement.level,
+      newLevel: nu.level,
       prodIndex: prod.index,
-      newIndex: newElement.index,
+      newIndex: nu.index,
       text: prod.norm,
     });
   }
