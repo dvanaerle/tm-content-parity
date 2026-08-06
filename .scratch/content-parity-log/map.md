@@ -370,6 +370,39 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   One question is left for a human — the ticket amended its own acceptance
   criterion to drop `axis`, and 39 owns the word.
 
+- [34 — Where is it? Position for every finding](issues/34-position-and-ordering.md)
+  — **Phase 2 of spec 32 is built, and the numbers did not move.** 179 crawled,
+  124 comparable, 10,796 findings, 7,456 shown, median 37 — ticket 33's baseline to
+  the finding. Position adds no rule, so movement would have been a defect.
+
+  The extractor's three walks became **one walk on one counter**. Every record a
+  node makes shares that node's position, so an anchor's words and its target
+  agree about where they are; a deduplicated image keeps its **first** occurrence.
+  `compare/locate.mjs` is the new browser-safe module and holds both answers: the
+  nearest heading before a position, and a `#:~:text=` url that opens the live
+  page scrolled to it. No DOM path — ticket 01 stands.
+
+  | | |
+  |---|---|
+  | findings carrying an anchor heading | **9,174** of 10,796 |
+  | findings with none, all above the first heading | 1,622 |
+  | rows the ordering fix moves | **6,990**, on **109** of 124 pages |
+
+  **The row-ordering defect was bigger than the ticket guessed.** A new-only row
+  sorted on its index in the *new* document against *production* indices; it is
+  now anchored to the production position of the nearest matched pair before it.
+  Invisible today, because the Diff tab shows only the differing rows. Ticket 36
+  makes it visible.
+
+  Three decisions the ticket did not give. **`TextElement.index` is no longer the
+  position in the `elements` array** — the shared counter runs over images and
+  links too — so `DiffRow` carries the array position, which is what the contract
+  always said it was. **`anchor` is out of the grouping key as well as out of the
+  id**, or one rename under six headings would have become six findings. And the
+  ordering rule needed two cases the ticket did not name: an addition above the
+  first agreement sits just before that agreement, and a page the two sides agree
+  nowhere on reads as production first, then the new site.
+
 ### Facts found while charting
 
 - Production emits 9 `data-content-type` attributes on a page where the new site
@@ -521,16 +554,15 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   Tailwind 4 `@theme`. Resolves ticket 28 and closes ticket 12's remaining
   questions.
 
-  Broken into six build tickets. **33 is resolved and measured**, so 34, 35 and 38
-  can all start now.
+  Broken into six build tickets. **33 and 34 are resolved and measured**, so 36
+  is unblocked once 35 lands.
 
   ```
-  33 ✓ ──> 34 ──┐
-     └──> 35 ───┴──> 36 ──> 37
+  33 ✓ ──> 34 ✓ ─┐
+     └──> 35 ────┴──> 36 ──> 37
   38 (independent)
   ```
 
-  - [34 — Where is it? Position for every finding](issues/34-position-and-ordering.md)
   - [35 — One visual language: brand tokens and a real diff](issues/35-diff-rendering-and-design-system.md)
   - [36 — The content view: the whole page, filtered, tickable](issues/36-merged-content-view.md)
   - [37 — Leesweergave: the page as a reader sees it](issues/37-leesweergave.md)
@@ -539,7 +571,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   33 was **measured** before 34 and 35 — three times, because the split and the two
   new classes move the count in opposite directions. **The baseline for every later
   phase is 10,796 findings / 7,456 shown / median 37 / 179 crawled / 124
-  comparable**, not 8,573. Take it with `node compare/measure.mjs nl`.
+  comparable**, not 8,573. Take it with `node compare/measure.mjs nl`. Ticket 34
+  held all five numbers exactly, which is what a phase that adds no rule must do.
 
 - **Axis B: coverage, NL against the other five stores.** Ticket 11 resolved every
   rule and nothing was built. `/to-tickets` cut it into seven slices on
