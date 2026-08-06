@@ -1,0 +1,28 @@
+---
+import Shell from '../layouts/Shell.astro';
+import { loadReports } from '../lib/reports.mjs';
+
+const reports = await loadReports();
+---
+
+<Shell title="Overzicht">
+  {
+    reports.length === 0 ? (
+      <p class="text-slate-600">
+        No reports in <code>data/reports/</code>. Run the crawl and the
+        comparison first.
+      </p>
+    ) : (
+      <ul class="space-y-1">
+        {reports.map((report) => (
+          <li>
+            <a class="text-blue-700 underline" href={`/${report.store}/${report.page}/`}>
+              {report.store} — {report.page}
+            </a>
+            <span class="text-slate-500"> ({report.findings.length})</span>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Shell>

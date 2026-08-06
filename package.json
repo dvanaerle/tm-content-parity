@@ -1,0 +1,20 @@
+{
+  "name": "tm-content-parity",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Content parity log for the Tuinmaximaal storefront: crawl, compare, and report the differences between production and the new Hyva site.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "node-html-parser": "^9.0.1"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

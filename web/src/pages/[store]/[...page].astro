@@ -1,0 +1,21 @@
+---
+import Ledger from '../../components/Ledger.jsx';
+import Shell from '../../layouts/Shell.astro';
+import { loadReports } from '../../lib/reports.mjs';
+
+// One real HTML page per store page. The tabs are an island inside it.
+export async function getStaticPaths() {
+  const reports = await loadReports();
+  return reports.map((report) => ({
+    params: { store: report.store, page: report.page },
+    props: { report },
+  }));
+}
+
+const { report } = Astro.props;
+---
+
+<Shell title={`${report.store} — ${report.page}`}>
+  <h1 class="mb-4 text-xl font-semibold">{report.page}</h1>
+  <Ledger client:load report={report} />
+</Shell>
