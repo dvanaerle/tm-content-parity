@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { exclusionReason, isExcludedPage } from './excluded-pages.mjs';
-import { extractPage, imageKey, linkKey, pageType, toMarkdown } from './extract.mjs';
+import { extractPage, pageType, toMarkdown } from './extract.mjs';
+import { imageKey, linkKey } from './keys.mjs';
 import { maintenanceReason } from './fetch-page.mjs';
 import { tier1 } from './normalise.mjs';
 
@@ -176,6 +177,18 @@ describe('text elements', () => {
     const extract = extractPage(page('<li><p>Antraciet</p></li>'), CONTEXT);
     expect(extract.elements.map((element) => [element.tag, element.raw])).toEqual([
       ['p', 'Antraciet'],
+    ]);
+  });
+
+  it('still loses loose text beside a heading in a container, and that is recorded', () => {
+    // The mirror of the rule above, and **not** fixed in ticket 33: the `<td>` is
+    // skipped for holding a text tag, so `Levertijd` is dropped. Rescuing it means
+    // emitting the direct text nodes of a container as an element, which changes
+    // what an element is and moves the count on all 179 pages. Pinned here so the
+    // limit is read rather than discovered.
+    const extract = extractPage(page('<table><tr><td>Levertijd <h4>Vraag</h4></td></tr></table>'), CONTEXT);
+    expect(extract.elements.map((element) => [element.tag, element.raw])).toEqual([
+      ['h4', 'Vraag'],
     ]);
   });
 

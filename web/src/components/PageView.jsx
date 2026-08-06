@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import Ledger from './Ledger.jsx';
 import { EditorPrompt, LogBanner, PageBar, ReviewControl } from './Progress.jsx';
+import { BANNER, CHROME } from '../lib/palette.mjs';
 import { useEditor, useOverrides } from '../lib/overrides.mjs';
 import { useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
 
@@ -43,7 +44,7 @@ export default function PageView({ report: built }) {
             type="button"
             disabled={recheck.running}
             onClick={() => recheck.run(report.store, report.page)}
-            className="rounded bg-blue-700 px-3 py-1.5 text-sm text-white hover:bg-blue-800 disabled:opacity-50"
+            className={`rounded px-3 py-1.5 text-sm text-white disabled:opacity-50 ${CHROME.button}`}
           >
             {recheck.running ? 'Bezig met hercontrole…' : 'Hercontroleer'}
           </button>
@@ -60,7 +61,7 @@ export default function PageView({ report: built }) {
       />
 
       {recheck.error && (
-        <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p className={`rounded border px-3 py-2 text-sm ${BANNER.attention}`}>
           <strong>De hercontrole is niet uitgevoerd.</strong> {recheck.error} De pagina is
           onveranderd gebleven.
         </p>

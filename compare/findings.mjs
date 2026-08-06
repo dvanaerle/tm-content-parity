@@ -29,6 +29,7 @@ export class FindingCollector {
    * @param {keyof FINDING_CLASSES} parts.class
    * @param {string | null} parts.prod   Tier-1 text, letter case kept.
    * @param {string | null} parts.new
+   * @param {string | null} [parts.detail]  What changed when the two texts are equal.
    * @param {number | null} [parts.score]  On `copy` findings only.
    * @returns {string} The finding id this occurrence belongs to.
    *
@@ -38,11 +39,14 @@ export class FindingCollector {
    * override control on a row has to act on the finding. The browser cannot
    * recompute the id, because `findingId()` needs `node:crypto`.
    */
-  add({ class: cls, prod, new: next, score = null }) {
+  add({ class: cls, prod, new: next, detail = null, score = null }) {
     const record = FINDING_CLASSES[cls];
     if (!record) throw new Error(`Unknown finding class: ${cls}. The vocabulary is closed.`);
 
-    const key = [cls, prod ?? '', next ?? ''].join('|');
+    // Ticket 33: `detail` is part of the grouping key as well as the id. An
+    // `h2` → `h3` and an `h2` → `h4` on the same words are two findings, and the
+    // key must say so, or the second one would be counted as a repeat of the first.
+    const key = [cls, prod ?? '', next ?? '', detail ?? ''].join('|');
     const seen = this.byKey.get(key);
     if (seen) {
       seen.occurrences += 1;
@@ -58,6 +62,7 @@ export class FindingCollector {
       rule: cls,
       prodNorm: prod,
       newNorm: next,
+      detail,
     });
 
     this.byKey.set(key, {
@@ -68,6 +73,7 @@ export class FindingCollector {
       class: cls,
       prod,
       new: next,
+      detail,
       occurrences: 1,
       score,
     });
@@ -100,4 +106,58 @@ export function summarise(findings) {
   }
 
   return { shown, hidden: findings.length - shown, total: findings.length, byClass, byCheck };
+}
+
+/**
+ * @param {number[]} values
+ * @returns {number}
+ */
+export function median(values) {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+/**
+ * The same tally one level up: over pages instead of over findings. It lives
+ * beside `summarise()` because both answer "how many of each class", and two
+ * places that answer that question would eventually disagree. `compare/measure.mjs`
+ * is the command that **prints** this; it is not the place that defines it.
+ *
+ * Not named "roll-up": `CONTEXT.md` gives that word to findings closed, summed
+ * over page, store and migration. This counts findings made.
+ *
+ * The median is over **comparable** pages only. A page that cannot be compared
+ * carries no findings by design (ticket 07), so counting its zero would drag the
+ * median down for a reason that has nothing to do with the rules.
+ *
+ * @param {import('./contract.mjs').PageReport[]} reports
+ */
+export function summariseReports(reports) {
+  const comparable = reports.filter((report) => report.comparable);
+  /** @type {Record<string, number>} */
+  const byClass = {};
+  let findings = 0;
+  let shown = 0;
+  let clean = 0;
+
+  for (const report of comparable) {
+    findings += report.summary.total;
+    shown += report.summary.shown;
+    if (report.summary.shown === 0) clean += 1;
+    for (const [cls, count] of Object.entries(report.summary.byClass)) {
+      byClass[cls] = (byClass[cls] ?? 0) + count;
+    }
+  }
+  return {
+    crawled: reports.length,
+    comparable: comparable.length,
+    findings,
+    shown,
+    medianShown: median(comparable.map((report) => report.summary.shown)),
+    medianTotal: median(comparable.map((report) => report.summary.total)),
+    cleanPages: clean,
+    byClass,
+  };
 }

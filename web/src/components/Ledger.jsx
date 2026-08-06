@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
+import { metaRows } from '../../../compare/meta.mjs';
 import { Chip, ClassPill } from './Chips.jsx';
+import { DiffCells } from './Diff.jsx';
 import OverrideControl from './OverrideControl.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
+import { BANNER, CHROME } from '../lib/palette.mjs';
 
 /**
  * Variant A: a tabbed ledger, production and the new site side by side.
@@ -71,10 +74,10 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
 
   if (!report.comparable) {
     return (
-      <section className="rounded border border-amber-300 bg-amber-50 p-4">
+      <section className={`rounded border p-4 ${BANNER.attention}`}>
         <h2 className="font-semibold">Niet te vergelijken</h2>
-        <p className="text-sm text-amber-900">{report.skipReason}</p>
-        <p className="mt-2 text-sm text-amber-800">
+        <p className="text-sm">{report.skipReason}</p>
+        <p className="mt-2 text-sm">
           Ticket 07 laat de vergelijking alleen doorgaan bij status 200 aan beide kanten:
           een 404-pagina heeft ook een <code>&lt;main&gt;</code> en levert anders honderden
           verschillen op waar niemand iets mee kan.
@@ -94,7 +97,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
             aria-selected={name === tab}
             onClick={() => setTab(name)}
             className={`flex items-center gap-2 px-3 py-2 text-sm ${
-              name === tab ? '-mb-px border-b-2 border-blue-700 font-semibold' : 'text-slate-600'
+              name === tab ? `-mb-px border-b-2 font-semibold ${CHROME.tabActive}` : 'text-slate-600'
             }`}
           >
             {name}
@@ -156,8 +159,15 @@ function DiffTable({ rows, control }) {
               {row.score !== null && <span className="ml-2 text-xs text-slate-400">{row.score}</span>}
               {row.finding && <div className="mt-1">{control(row.finding)}</div>}
             </td>
-            <Cell element={row.prod} />
-            <Cell element={row.new} />
+            <DiffCells
+              prod={row.prod?.norm ?? null}
+              new={row.new?.norm ?? null}
+              prodRaw={row.prod?.raw ?? null}
+              newRaw={row.new?.raw ?? null}
+              prodPrefix={<Tag element={row.prod} />}
+              newPrefix={<Tag element={row.new} />}
+              strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
+            />
           </tr>
         ))}
       </tbody>
@@ -165,17 +175,13 @@ function DiffTable({ rows, control }) {
   );
 }
 
-function Cell({ element }) {
-  if (!element) {
-    return <td className="px-2 py-3 text-sm italic text-slate-400">niet aanwezig</td>;
-  }
-  return (
-    <td className="px-2 py-3">
-      <span className="mr-2 font-mono text-[11px] text-slate-400">{element.tag}</span>
-      <span className={element.kind === 'heading' ? 'font-semibold' : ''}>{element.raw}</span>
-    </td>
-  );
-}
+/**
+ * The element's own tag beside its words. On a `heading-level` row it is the whole
+ * finding: the two texts are identical and the tag is what changed.
+ */
+const Tag = ({ element }) => (
+  element ? <span className="mr-2 font-mono text-[11px] text-slate-400">{element.tag}</span> : null
+);
 
 /**
  * Ticket 02: the outline and the diff are one structure, not two features. So
@@ -217,6 +223,7 @@ function FindingTable({ findings, check, control }) {
           <tr key={finding.id} className="border-b border-slate-100 align-top last:border-0">
             <td className="px-2 py-2">
               <ClassPill class={finding.class} />
+              <Detail finding={finding} />
               {finding.occurrences > 1 && (
                 <span className="ml-2 rounded bg-slate-900 px-1.5 text-[11px] text-white">
                   ×{finding.occurrences}
@@ -224,12 +231,9 @@ function FindingTable({ findings, check, control }) {
               )}
               <div className="mt-1">{control(finding)}</div>
             </td>
-            <td className="break-words px-2 py-2 font-mono text-xs">
-              {finding.prod ?? <span className="italic text-slate-400">niet aanwezig</span>}
-            </td>
-            <td className="break-words px-2 py-2 font-mono text-xs">
-              {finding.new ?? <span className="italic text-slate-400">niet aanwezig</span>}
-            </td>
+            {/* The same component the content rows use. A link finding word-diffs
+                two target keys, which makes a changed path segment jump out. */}
+            <DiffCells prod={finding.prod} new={finding.new} mono />
           </tr>
         ))}
       </tbody>
@@ -257,39 +261,49 @@ function SideBySide({ production, next }) {
 }
 
 /**
- * Display only. Ticket 21 has not decided what a parity defect in the head is, so
- * this tab shows the two sides and makes **no** finding — the tool must not
- * report a difference it cannot classify.
+ * Display only, and now with the diff treatment (ticket 35). A changed `<title>`
+ * reads the same way as changed body copy, because it is the same kind of change.
+ *
+ * It still makes **no** finding. Ticket 21 has not decided what a parity defect in
+ * the head is, so nothing here enters the contract, the bar or the count — and
+ * that is exactly why the rows carry no override control. The shared colours must
+ * not be mistaken for something an editor can tick off.
+ *
+ * Which rows exist at all is `compare/meta.mjs`'s decision, not this component's.
  */
 function MetaTable({ production, next }) {
-  const fields = ['title', 'description', 'canonical', 'h1', 'noindex'];
+  const rows = useMemo(() => metaRows(production, next), [production, next]);
+
   return (
     <>
       <p className="mb-3 rounded bg-slate-50 p-2 text-sm text-slate-600">
-        Alleen weergave. Ticket 21 beslist nog wat in de <code>&lt;head&gt;</code> een
-        pariteitsdefect is, dus hier komen nog geen bevindingen uit.
+        Alleen weergave, zonder afvinken. Ticket 21 beslist nog wat in de{' '}
+        <code>&lt;head&gt;</code> een pariteitsdefect is, dus hier komen geen bevindingen
+        uit en deze regels staan niet in de teller.
       </p>
       <table className="w-full table-fixed text-sm">
         <tbody>
-          {fields.map((field) => {
-            const differs = String(production.meta[field]) !== String(next.meta[field]);
-            return (
-              <tr key={field} className={`border-b border-slate-100 align-top ${differs ? 'bg-amber-50' : ''}`}>
-                <th className="w-32 px-2 py-2 text-left font-medium text-slate-500">{field}</th>
-                <td className="break-words px-2 py-2">{format(production.meta[field])}</td>
-                <td className="break-words px-2 py-2">{format(next.meta[field])}</td>
-              </tr>
-            );
-          })}
+          {rows.map((row) => (
+            <tr key={row.field} className="border-b border-slate-100 align-top">
+              <th className="w-40 px-2 py-3 text-left font-medium text-slate-500">
+                {row.field}
+                {/* The one loud case. Production has no canonical on 147 of 179 nl
+                    pages and those rows are gone, so the 2 pages where the new
+                    site **lost** one must not read like the rest. */}
+                {row.field === 'canonical' && row.state === 'lost' && (
+                  <span className="mt-1 block text-[11px] font-normal text-lost">
+                    de nieuwe site heeft er geen
+                  </span>
+                )}
+              </th>
+              <DiffCells prod={row.prod} new={row.new} mono />
+            </tr>
+          ))}
         </tbody>
       </table>
     </>
   );
 }
-
-const format = (value) => (
-  value === null || value === '' ? <span className="italic text-slate-400">leeg</span> : String(value)
-);
 
 /**
  * The one place the three checks are unified, and now the one place an editor
@@ -319,6 +333,7 @@ function Tasks({ findings, control }) {
             {group.map((finding) => (
               <li key={finding.id} className="flex flex-wrap items-start gap-2 border-b border-slate-100 py-1.5 last:border-0">
                 <ClassPill class={finding.class} />
+                <Detail finding={finding} />
                 <span className="min-w-48 flex-1 break-words">
                   {finding.prod ?? '—'}
                   <span className="mx-1 text-slate-400">→</span>
@@ -338,3 +353,14 @@ function Tasks({ findings, control }) {
 }
 
 const Empty = ({ children }) => <p className="py-6 text-sm text-slate-500">{children}</p>;
+
+/**
+ * Ticket 33. On `heading-level` and `tag-changed` the two text columns are equal,
+ * so without this the row reads as a finding about nothing. The Diff tab needs no
+ * such thing: it prints the tag of each element next to the words.
+ */
+const Detail = ({ finding }) => (
+  finding.detail
+    ? <span className="ml-2 font-mono text-[11px] text-slate-500">{finding.detail}</span>
+    : null
+);

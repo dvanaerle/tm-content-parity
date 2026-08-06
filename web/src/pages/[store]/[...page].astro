@@ -2,6 +2,7 @@
 import PageView from '../../components/PageView.jsx';
 import Shell from '../../layouts/Shell.astro';
 import { loadReports } from '../../lib/reports.mjs';
+import { CHROME, PILL } from '../../lib/palette.mjs';
 
 // One real HTML page per store page. The tabs are an island inside it. A page key
 // that holds a slash renders through this rest route, verified by ticket 08.
@@ -21,9 +22,9 @@ const { production, new: next } = report.sides;
   <header class="mb-4">
     <div class="flex flex-wrap items-baseline gap-3">
       <h1 class="text-xl font-semibold">{report.page}</h1>
-      <a class="text-sm text-blue-700 hover:underline" href={production.url} rel="noreferrer">productie ↗</a>
-      <a class="text-sm text-blue-700 hover:underline" href={next.url} rel="noreferrer">nieuw ↗</a>
-      <a class="ml-auto text-sm text-blue-700 hover:underline" href="/">← alle pagina's</a>
+      <a class={`text-sm hover:underline ${CHROME.link}`} href={production.url} rel="noreferrer">productie ↗</a>
+      <a class={`text-sm hover:underline ${CHROME.link}`} href={next.url} rel="noreferrer">nieuw ↗</a>
+      <a class={`ml-auto text-sm hover:underline ${CHROME.link}`} href="/">← alle pagina's</a>
     </div>
 
     {/* The two count chips are gone: the bar in the island replaces them, because
@@ -37,7 +38,7 @@ const { production, new: next } = report.sides;
       </span>
       {
         (production.boundary !== 'main' || next.boundary !== 'main') && (
-          <span class="rounded bg-amber-100 px-2 py-1 text-amber-900">
+          <span class={`rounded px-2 py-1 ${PILL.attention}`}>
             grens: productie {production.boundary}, nieuw {next.boundary}
           </span>
         )

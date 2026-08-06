@@ -67,19 +67,25 @@ const isHeading = (element) => element.kind === 'heading';
  * Two elements whose normalised text is identical. Is the element itself still
  * the same?
  *
- * Ticket 33. The LCS anchors on `norm` alone, so before this rule existed a
+ * Ticket 33. The LCS anchors on `norm` alone. So before this rule existed a
  * heading demoted from `h2` to `h3` was an exact match that emitted nothing —
- * **762 elements on 80 nl pages**, 467 of them a heading-level change. This is
- * the one rule in spec 32 that turns a silent match into a finding.
+ * **762 elements on 80 nl pages**, 467 of them a heading-level change. It is the
+ * one rule in spec 32 that turns a silent match into a finding.
  *
- * A heading on either side makes it `heading-level` and shown, because the
- * outline is what a reader and a search engine navigate by, and it is what makes
- * the dropped `h1` visible. Two non-headings make it `tag-changed` and hidden:
- * production held the words in a `<p>` and the new site holds them in a `<td>`,
- * which is a PageBuilder rebuild an editor has nothing to do about.
+ * A heading on either side makes it `heading-level`, and it is shown. The outline
+ * is what a reader and a search engine navigate by. Two non-headings make it
+ * `tag-changed`, and it is hidden: production held the words in a `<p>` and the
+ * new site holds them in a `<td>`. That is a PageBuilder rebuild, and an editor
+ * has nothing to do about it.
+ *
+ * The class is also the mute key (ticket 01), so `heading-level` covers a level
+ * change and a promotion to or from a heading with one word. An editor who mutes
+ * it mutes both. That is accepted: both break the outline in the same way. The
+ * finding carries a `detail` (`h2 → h3`), so the two are still separate findings
+ * with separate ids.
  *
  * This is not `restructured`. That class needs the **text** to differ as well,
- * and it is the weakest claim the pairing makes; this rule fires on text that is
+ * and it is the weakest claim the pairing makes. This rule fires on text that is
  * character-for-character identical, which is a much stronger statement.
  *
  * @param {import('./contract.mjs').TextElement} prod
@@ -87,8 +93,31 @@ const isHeading = (element) => element.kind === 'heading';
  * @returns {'heading-level' | 'tag-changed' | null} `null` if the element is unchanged.
  */
 export function classifyExactPair(prod, next) {
-  if (prod.tag === next.tag && prod.level === next.level) return null;
+  // The tag alone. `level` is derived from the tag in `crawl/extract.mjs`, so it
+  // cannot differ while the tag is equal, and a second test would read as a rule
+  // that does not exist.
+  if (prod.tag === next.tag) return null;
   return isHeading(prod) || isHeading(next) ? 'heading-level' : 'tag-changed';
+}
+
+/**
+ * The two classes `classifyExactPair()` makes, and the only ones whose two sides
+ * of text are equal. They are the reason a finding needs a `detail`.
+ */
+const EXACT_PAIR_CLASSES = new Set(['heading-level', 'tag-changed']);
+
+/**
+ * What changed on a row whose two texts are equal, as an editor reads it.
+ *
+ * `null` on every other class, and that keeps their finding ids exactly where
+ * they were: `findingId()` joins `detail` only when it is present.
+ *
+ * @param {AlignedRow} row
+ * @returns {string | null}
+ */
+function tagChange(row) {
+  if (!row.class || !EXACT_PAIR_CLASSES.has(row.class)) return null;
+  return `${row.prod?.tag} → ${row.new?.tag}`;
 }
 
 /**
@@ -175,6 +204,10 @@ export function textFindings(rows, collector) {
       class: row.class,
       prod: row.prod?.norm ?? null,
       new: row.new?.norm ?? null,
+      // Ticket 33: on `heading-level` and `tag-changed` the two sides of text are
+      // equal, so the record would say "identical" and give an `h2` → `h3` the
+      // same id as an `h2` → `h4`. The detail is what changed.
+      detail: tagChange(row),
       score: row.score,
     });
   }

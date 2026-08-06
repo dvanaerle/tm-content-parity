@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { comparePage, newSitePathsFor, reportFilename, skipReason } from './30-compare.mjs';
-import { FindingCollector, summarise } from './findings.mjs';
+import { FindingCollector, median, summarise, summariseReports } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
 import { lcsPairs, mayPair, maskNumbers, similarity, tier2 } from './match.mjs';
+import { metaRows } from './meta.mjs';
 import { classifyPair, diffRows, textFindings } from './text.mjs';
+import { spansFor, wordDiff } from './worddiff.mjs';
 
 let seq = 0;
 
@@ -223,8 +225,10 @@ describe('diffRows', () => {
 
   it('reports a heading demoted from h2 to h3 with the text unchanged', () => {
     // The one rule in spec 32 that turns a currently-silent match into a
-    // finding. 467 of the 762 are a heading-level change, and it is what makes
-    // the missing `h1` on 16 pages visible.
+    // finding: 467 of the 762 are a heading-level change. It does **not** make a
+    // dropped `h1` visible — that needs the text to be identical on both sides,
+    // and a page that lost the words as well is `text-missing`. See ticket 33,
+    // "Left for another ticket".
     expect(samePairedText('h2', 'h3')).toEqual(['heading-level']);
   });
 
@@ -310,6 +314,60 @@ describe('textFindings', () => {
     expect(summarise(findings)).toMatchObject({ shown: 1, hidden: 1, total: 2 });
   });
 
+  it('says what changed when the two sides of text are equal', () => {
+    // Without a detail the record reads `prod` and `new` as the same string, so
+    // the finding says "identical" about a finding.
+    const text = 'Kleuren en afwerking';
+    const findings = collect((collector) => textFindings(
+      diffRows(
+        extract({ elements: [element(text, { tag: 'h2' })] }),
+        extract({ side: 'new', elements: [element(text, { tag: 'h3' })] }),
+      ),
+      collector,
+    ));
+    expect(findings.map((finding) => [finding.class, finding.detail])).toEqual([
+      ['heading-level', 'h2 → h3'],
+    ]);
+  });
+
+  it('separates two demotions of the same words, so a worse one detaches', () => {
+    const text = 'Kleuren en afwerking';
+    /** @param {string} newTag */
+    const idFor = (newTag) => collect((collector) => textFindings(
+      diffRows(
+        extract({ elements: [element(text, { tag: 'h2' })] }),
+        extract({ side: 'new', elements: [element(text, { tag: newTag })] }),
+      ),
+      collector,
+    ))[0].id;
+    expect(idFor('h3')).not.toBe(idFor('h4'));
+  });
+
+  it('carries no detail on a class whose two sides already differ', () => {
+    const findings = collect((collector) => textFindings(
+      diffRows(
+        extract({ elements: elements(['Vanaf € 799']) }),
+        extract({ side: 'new', elements: elements(['Vanaf € 849']) }),
+      ),
+      collector,
+    ));
+    expect(findings.map((finding) => [finding.class, finding.detail])).toEqual([['price', null]]);
+  });
+
+  it('groups two occurrences of one demotion into one finding', () => {
+    const text = 'Kleuren en afwerking';
+    const findings = collect((collector) => textFindings(
+      diffRows(
+        extract({ elements: [element(text, { tag: 'h2' }), element(text, { tag: 'h2' })] }),
+        extract({ side: 'new', elements: [element(text, { tag: 'h3' }), element(text, { tag: 'h3' })] }),
+      ),
+      collector,
+    ));
+    expect(findings.map((finding) => [finding.class, finding.occurrences])).toEqual([
+      ['heading-level', 2],
+    ]);
+  });
+
   it('gives every occurrence one id, so the count cannot detach a dismissal', () => {
     const production = extract({ elements: elements(['Kleuren:', 'Kleuren:']) });
     const next = extract({ side: 'new', elements: elements(['Kleur:', 'Kleur:']) });
@@ -338,7 +396,190 @@ function link(url, text, overrides = {}) {
   };
 }
 
+/**
+ * The one new seam in spec 32. It is a pure function of two strings, which is why
+ * it is a module and not a component: every rule with judgement in it has to be
+ * testable in Node, and there is no browser test stack in this repo.
+ *
+ * The assertions are about **spans**, never about markup. A span list is the
+ * shape the renderer consumes, so these survive a rewrite of the renderer.
+ */
+describe('wordDiff', () => {
+  /** @param {import('./worddiff.mjs').DiffSpan[]} spans */
+  const shape = (spans) => spans.map((span) => `${span.type}:${span.text}`);
+
+  it('gives two identical strings one unchanged span', () => {
+    expect(wordDiff('Gratis bezorging', 'Gratis bezorging'))
+      .toEqual([{ type: 'same', text: 'Gratis bezorging' }]);
+  });
+
+  it('gives a one-word substitution exactly one removed and one added span', () => {
+    const spans = wordDiff(
+      'Onze terrasoverkapping wordt gratis bezorgd',
+      'Onze terrasoverkapping wordt snel bezorgd',
+    );
+    expect(spans.filter((span) => span.type === 'removed')).toEqual([{ type: 'removed', text: 'gratis' }]);
+    expect(spans.filter((span) => span.type === 'added')).toEqual([{ type: 'added', text: 'snel' }]);
+  });
+
+  it('keeps the unchanged words around a substitution in place', () => {
+    expect(shape(wordDiff('een twee drie', 'een vier drie')))
+      .toEqual(['same:een ', 'removed:twee', 'added:vier', 'same: drie']);
+  });
+
+  it('reports an insertion at the head', () => {
+    expect(shape(wordDiff('twee drie', 'een twee drie')))
+      .toEqual(['added:een ', 'same:twee drie']);
+  });
+
+  it('reports an insertion at the tail', () => {
+    expect(shape(wordDiff('een twee', 'een twee drie')))
+      .toEqual(['same:een twee', 'added: drie']);
+  });
+
+  it('picks out the changed segment of a link target', () => {
+    // The reason the four surfaces share one component: two link keys are two
+    // word lists, and this is what makes a changed path segment jump out
+    // instead of reading as "the whole target changed".
+    expect(shape(wordDiff('self/overkappingen/veranda', 'self/overkappingen/tuinkamer')))
+      .toEqual(['same:self/overkappingen/', 'removed:veranda', 'added:tuinkamer']);
+  });
+
+  it('reproduces each side exactly when its spans are joined', () => {
+    // The renderer never puts a separator back, so the spans must carry every
+    // one. Anything else silently rewrites what production said.
+    const prod = 'Verkrijgbaar in de volgende kleuren:';
+    const next = 'Beschikbare kleuren:';
+    const spans = wordDiff(prod, next);
+    const join = (side) => spansFor(spans, side).map((span) => span.text).join('');
+    expect(join('production')).toBe(prod);
+    expect(join('new')).toBe(next);
+  });
+
+  it('reports a whole string as added when production is empty', () => {
+    expect(wordDiff('', 'Nieuwe kop')).toEqual([{ type: 'added', text: 'Nieuwe kop' }]);
+  });
+
+  it('reports a whole string as removed when the new site is empty', () => {
+    expect(wordDiff('Oude kop', '')).toEqual([{ type: 'removed', text: 'Oude kop' }]);
+  });
+
+  it('gives two empty strings no spans at all', () => {
+    expect(wordDiff('', '')).toEqual([]);
+    expect(wordDiff(null, null)).toEqual([]);
+  });
+
+  it('runs a word at a time and not a character at a time', () => {
+    // Ticket 35: character-level on a Dutch compound produces confetti.
+    // `terrasoverkapping` and `tuinoverkapping` share eleven letters and the
+    // whole word is what changed.
+    expect(shape(wordDiff('Onze terrasoverkapping', 'Onze tuinoverkapping')))
+      .toEqual(['same:Onze ', 'removed:terrasoverkapping', 'added:tuinoverkapping']);
+  });
+
+  it('shows each side only its own words', () => {
+    const spans = wordDiff('een twee drie', 'een vier drie');
+    expect(shape(spansFor(spans, 'production'))).toEqual(['same:een ', 'removed:twee', 'same: drie']);
+    expect(shape(spansFor(spans, 'new'))).toEqual(['same:een ', 'added:vier', 'same: drie']);
+  });
+
+  it('merges neighbouring words of the same kind into one span', () => {
+    // Two removed words in a row are one edit to a reader, so they are one
+    // highlight and not two boxes with a gap between them.
+    expect(shape(wordDiff('een twee drie vier', 'een vier')))
+      .toEqual(['same:een ', 'removed:twee drie ', 'same:vier']);
+  });
+});
+
 const newUrl = 'https://valanticnl.intern.systems/overkappingen';
+
+/**
+ * The `<head>` panel (ticket 35, phase 6 of spec 32). It emits **no findings** —
+ * ticket 21 has not decided what a parity defect in the head is — so these rules
+ * exist only to decide what an editor is shown. That is why they live in a pure
+ * module and are tested here rather than asserted through the panel.
+ */
+describe('metaRows', () => {
+  /**
+   * @param {Partial<import('./contract.mjs').PageMeta>} prodMeta
+   * @param {Partial<import('./contract.mjs').PageMeta>} newMeta
+   */
+  const rows = (prodMeta, newMeta) => metaRows(
+    extract({ url: 'https://www.tuinmaximaal.nl/overkappingen', meta: { title: null, description: null, canonical: null, noindex: false, h1: null, ...prodMeta } }),
+    extract({ url: newUrl, meta: { title: null, description: null, canonical: null, noindex: false, h1: null, ...newMeta } }),
+  );
+
+  /** @param {string} field */
+  const row = (all, field) => all.find((candidate) => candidate.field === field);
+
+  it('does not carry h1 — the content view owns it', () => {
+    // Spec 32, decision 34: 93 pages differ on the `h1`, and it is an element
+    // inside the content boundary. Reporting it here as well would report the
+    // same difference twice on two tabs.
+    expect(row(rows({ h1: 'Overkappingen' }, { h1: 'Veranda' }), 'h1')).toBeUndefined();
+    expect(rows({}, {}).map((each) => each.field))
+      .toEqual(['title', 'description', 'canonical', 'noindex']);
+  });
+
+  it('reads a changed title as changed and an equal one as equal', () => {
+    expect(row(rows({ title: 'Overkappingen' }, { title: 'Veranda' }), 'title').state).toBe('changed');
+    expect(row(rows({ title: 'Overkappingen' }, { title: 'Overkappingen' }), 'title').state).toBe('same');
+  });
+
+  it('folds the two hosts before it compares a canonical', () => {
+    // 18 of 179 nl pages differ on the canonical by hostname alone, and the
+    // hostname is the environment rather than a content difference.
+    const canonical = row(rows(
+      { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
+      { canonical: 'https://valanticnl.intern.systems/overkappingen/' },
+    ), 'canonical');
+    expect(canonical.state).toBe('same');
+  });
+
+  it('still reports a canonical that points at another page', () => {
+    const canonical = row(rows(
+      { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
+      { canonical: 'https://valanticnl.intern.systems/veranda' },
+    ), 'canonical');
+    expect(canonical.state).toBe('changed');
+  });
+
+  it('hides the canonical row when production has none and the new site has one', () => {
+    // 147 of 179 nl pages. The content team cannot set a canonical, so it was
+    // never a difference an editor could act on.
+    expect(row(rows({ canonical: null }, { canonical: 'https://valanticnl.intern.systems/overkappingen' }), 'canonical'))
+      .toBeUndefined();
+  });
+
+  it('keeps the canonical row when the new site lost one', () => {
+    // The other direction, on 2 pages. The suppression above must not bury it.
+    const canonical = row(rows({ canonical: 'https://www.tuinmaximaal.nl/overkappingen' }, { canonical: null }), 'canonical');
+    expect(canonical.state).toBe('lost');
+  });
+
+  it('keeps a canonical row that neither side has', () => {
+    expect(row(rows({ canonical: null }, { canonical: null }), 'canonical').state).toBe('same');
+  });
+
+  it('keeps noindex visible', () => {
+    // Four pages differ, and a page indexable on production and noindex on the
+    // new site is a launch blocker.
+    const noindex = row(rows({ noindex: false }, { noindex: true }), 'noindex');
+    expect(noindex.state).toBe('changed');
+    expect(noindex.new).toBe('noindex');
+    expect(noindex.prod).toBe('index');
+  });
+
+  it('reads a description the new site never wrote as lost', () => {
+    expect(row(rows({ description: 'Overkappingen op maat' }, { description: null }), 'description').state)
+      .toBe('lost');
+  });
+
+  it('reads a description production never had as added', () => {
+    expect(row(rows({ description: null }, { description: 'Veranda op maat' }), 'description').state)
+      .toBe('added');
+  });
+});
 
 describe('compareLinks', () => {
   it('reports a live-domain link only when the path is a page on the new site', () => {
@@ -573,6 +814,73 @@ describe('summarise', () => {
       { class: 'copy', check: 'text' },
       { class: 'extra-link', check: 'links' },
     ])).toMatchObject({ shown: 1, hidden: 1, total: 2 });
+  });
+});
+
+describe('median', () => {
+  it('takes the middle of an odd list and the mean of the two middles of an even one', () => {
+    expect(median([5, 1, 3])).toBe(3);
+    expect(median([1, 2, 3, 4])).toBe(2.5);
+  });
+
+  it('is 0 for no pages at all, so the gate prints a number', () => {
+    expect(median([])).toBe(0);
+  });
+
+  it('does not sort the caller its array, and does not sort as text', () => {
+    const values = [10, 9, 100];
+    expect(median(values)).toBe(10);
+    expect(values).toEqual([10, 9, 100]);
+  });
+});
+
+describe('summariseReports', () => {
+  /**
+   * @param {boolean} comparable
+   * @param {Record<string, number>} byClass
+   * @param {{ shown: number, total: number }} counts
+   */
+  const report = (comparable, byClass, counts) => ({
+    comparable,
+    summary: { ...counts, hidden: counts.total - counts.shown, byClass, byCheck: {} },
+  });
+
+  it('counts every crawled page but measures only the comparable ones', () => {
+    // Ticket 07: a page that fails the 200 gate carries no findings by design, so
+    // counting its zero would drag the median down for a reason that has nothing
+    // to do with the rules.
+    const result = summariseReports([
+      report(true, { copy: 4 }, { shown: 4, total: 4 }),
+      report(true, { copy: 40 }, { shown: 40, total: 40 }),
+      report(false, {}, { shown: 0, total: 0 }),
+    ]);
+    expect(result).toMatchObject({
+      crawled: 3,
+      comparable: 2,
+      findings: 44,
+      shown: 44,
+      medianShown: 22,
+      cleanPages: 0,
+    });
+  });
+
+  it('adds the class tally over the pages', () => {
+    const result = summariseReports([
+      report(true, { copy: 2, 'text-added': 1 }, { shown: 2, total: 3 }),
+      report(true, { copy: 3 }, { shown: 3, total: 3 }),
+    ]);
+    expect(result.byClass).toEqual({ copy: 5, 'text-added': 1 });
+  });
+
+  it('counts a page with only hidden findings as clean', () => {
+    // The gate reads `shown`, because a hidden class is not work for an editor.
+    const result = summariseReports([report(true, { 'text-added': 6 }, { shown: 0, total: 6 })]);
+    expect(result).toMatchObject({ cleanPages: 1, shown: 0, findings: 6 });
+  });
+
+  it('gives zeroes rather than NaN when nothing is comparable', () => {
+    const result = summariseReports([report(false, {}, { shown: 0, total: 0 })]);
+    expect(result).toMatchObject({ crawled: 1, comparable: 0, medianShown: 0, medianTotal: 0 });
   });
 });
 

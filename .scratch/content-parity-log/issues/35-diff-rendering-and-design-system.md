@@ -17,49 +17,104 @@ the diff needs exactly one red and one green, defined in exactly one place.
 **Blocked by:** [33](33-directional-text-classes.md) — the tints are keyed on
 direction, and direction is what 33 introduces.
 
-**Status:** ready-for-agent
+**Status:** resolved — built on branch `axis-a-compare-and-log`.
 
 **Implements:** spec [32](32-scannable-log-and-six-stores.md), phases 3, 6 and 8.
 
-- [ ] The storefront's 22 brand hexes are transcribed by hand into one Tailwind 4
+- [x] The storefront's 22 brand hexes are transcribed by hand into one Tailwind 4
       `@theme`. The storefront config cannot be imported — it is Tailwind 3
       CommonJS and needs a Hyvä Node package at require-time.
-- [ ] Brand colour is spent on **chrome only**: header, navigation, focus rings,
-      links.
-- [ ] **Red and green are reserved for diff meaning and never for status.** The
+      `web/src/styles/app.css`. The 22 are the 12 primary, 3 secondary and 5
+      neutral values plus the two container greys; `container.lighter` is
+      `neutral.white` again and is counted once.
+- [x] Brand colour is spent on **chrome only**: header, navigation, focus rings,
+      links. `CHROME` in `web/src/lib/palette.mjs` is the only door to it, so a
+      component that wears brand green has to say it is furniture.
+- [x] **Red and green are reserved for diff meaning and never for status.** The
       brand primary is dark green and the accent orange; status messages use
       amber and blue.
-- [ ] Stock neutral greys carry the table surface. The storefront's neutral ramp
+- [x] Stock neutral greys carry the table surface. The storefront's neutral ramp
       is five steps with a hole where borders, zebra stripes and hover states
       live.
-- [ ] A monospaced family is added for the comparison cells.
-- [ ] The four overlapping colour maps collapse onto the `@theme`.
-- [ ] A **browser-safe pure module** holds the word-level diff — two normalised
+- [x] A monospaced family is added for the comparison cells. A system stack, not
+      a webfont: the build is static and is read from outside the network.
+- [x] The four overlapping colour maps collapse onto the `@theme`, through
+      `web/src/lib/palette.mjs`. There were six, not four — the class tone table,
+      the chip table, the finding-state table, the banner table and two inline
+      tone pickers. Seven **tones** replace them, and a tone is a meaning rather
+      than a hue.
+- [x] A **browser-safe pure module** holds the word-level diff — two normalised
       strings in, a list of unchanged / removed / added spans out. No
       `node:crypto`, so an island imports it directly. **This is the one new test
-      seam in the whole spec.**
-- [ ] The algorithm is **word**-level over whitespace-split tokens with an LCS
+      seam in the whole spec.** `compare/worddiff.mjs`; it imports nothing at all.
+- [x] The algorithm is **word**-level over whitespace-split tokens with an LCS
       backbone. Character-level on Dutch compounds produces confetti.
-- [ ] The diff is computed on normalised text and normalised text is what is
+- [x] The diff is computed on normalised text and normalised text is what is
       rendered — tier 1 folds invisible differences deliberately, and diffing raw
       would paint differences the tool classifies as equal. Raw is reachable
-      through a copy button.
-- [ ] Two layers: a lost row's production cell red, an added row's new cell
+      through a copy button, which appears only where `raw` and `norm` differ.
+- [x] Two layers: a lost row's production cell red, an added row's new cell
       green, a changed row neutral with removed and added **tokens** coloured
-      inside it.
-- [ ] One diff component used in four places, including link findings — word-
+      inside it. The two never fire on one cell: a one-sided cell has nothing to
+      diff against, and striking a whole paragraph through says it twice.
+- [x] One diff component used in four places, including link findings — word-
       diffing two target URLs makes the changed path segment jump out.
-- [ ] **The `<head>` panel** renders with the diff treatment and emits **no
+      `web/src/components/Diff.jsx`.
+- [x] **The `<head>` panel** renders with the diff treatment and emits **no
       findings**; ticket 21 stays open. It is framed as display-only, with no
       override controls.
-- [ ] Absolute URLs in meta are host-folded before comparison, reusing the
+- [x] Absolute URLs in meta are host-folded before comparison, reusing the
       existing link-key folding.
-- [ ] Canonical is hidden **directionally**: hidden where production has none and
+- [x] Canonical is hidden **directionally**: hidden where production has none and
       the new site does (147 pages), kept and flagged where the new site lost one
       (2 pages).
-- [ ] `h1` leaves the meta panel — the content view owns it, with position, level
+- [x] `h1` leaves the meta panel — the content view owns it, with position, level
       and a finding id.
-- [ ] `noindex` stays visible.
-- [ ] Tests: the word-diff module at the compare seam (identical strings, one-word
+- [x] `noindex` stays visible.
+- [x] Tests: the word-diff module at the compare seam (identical strings, one-word
       substitution, head and tail insertion, empty on each side); host folding;
-      **both** directions of the canonical rule.
+      **both** directions of the canonical rule. 13 for `wordDiff`, 10 for
+      `metaRows`, in `compare/compare.test.mjs`.
+
+## Decided while building
+
+**A link target is a word list too, so the tokeniser splits on `/ ? & = #`
+beside whitespace.** The checklist said whitespace-split. With whitespace alone a
+target is one token, the diff says only "it changed", and the one thing the
+checklist asked for — the changed **path segment** jumping out — cannot happen.
+
+**A span carries its own separators.** The tokens are alternating runs of
+separator and content, so joining one side's spans reproduces that side's string
+character for character; a renderer that had to put the spaces back would be
+guessing where they were. The highlight itself trims the edge whitespace, because
+a box around a trailing space claims that a space changed.
+
+**`linkKey()` moved to `crawl/keys.mjs`** with `imageKey()` beside it. The meta
+panel is inside a React island and needs the folding; `extract.mjs` imports
+`node-html-parser`, which has no business in a browser bundle. Same split, and
+same reason, as `vocabulary.mjs` out of `contract.mjs`.
+
+## Against the resolved text
+
+Two colours moved that the checklist did not name, both forced by the rule that
+red and green are diff meaning only:
+
+- **`broken-link` is no longer red.** It was `bg-red-100`, and red now means "the
+  new site lost this". A dead link is a defect on the new site's own terms, which
+  is a status, so it takes the loudest **amber** instead. `leakage` and
+  `cross-store-link` join it there and give up violet, which is retired.
+- **"Done" is blue, not green.** The page bar fill, the `opgelost` pill and the
+  dashboard's closed counts were all emerald. Progress is status. `contradicted`
+  moves off red to amber for the same reason.
+
+Neither needed a third loud hue: the brand orange stayed on chrome, and amber in
+two weights carries the whole severity ramp.
+
+## Left for another ticket
+
+**The two pages where the new site lost its canonical cannot be seen yet.**
+`showroom-contact` and `vrijstaande-terrasoverkapping` both answer 404 on the new
+site, so ticket 07 stops the comparison and the page renders *Niet te
+vergelijken* with no Meta tab at all. The rule is real and tested in both
+directions; what it needs is those two pages migrated, or ticket 20's decision
+about one-sided pages.

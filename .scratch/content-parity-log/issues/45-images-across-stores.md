@@ -1,8 +1,8 @@
-# 39 — Images across stores
+# 45 — Images across stores
 
 Type: task
 Status: ready-for-agent
-Blocked by: 32, 35
+Blocked by: 39, 38
 Parent: ../map.md
 
 ## What to build
@@ -38,7 +38,7 @@ Compare as a **set**, not a multiset. Ticket 06 measured that the new site emits
 
 ## Notes
 
-This ticket does **not** read alt text. Ticket 37 owns `alt-untranslated`.
+This ticket does **not** read alt text. Ticket 43 owns `alt-untranslated`.
 
 Ticket 06 measured 357 image pairs with 1 collision over 124 pages, on the
 basename key. Expect a similar rate across the stores, and record the real number

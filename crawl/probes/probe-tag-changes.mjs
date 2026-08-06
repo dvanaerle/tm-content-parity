@@ -5,11 +5,13 @@
 // `heading-level` until the `a` -> `h3` group is judged: an anchor whose text
 // became a heading can be an extraction artefact rather than a content change.
 //
+// This probe reproduced every one of those numbers except the page count: the
+// 762 are on **80** pages, not 67.
+//
 // Reads `data/extract/` from disk. No network.
 //
 //   node crawl/probes/probe-tag-changes.mjs [store]
 import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import { lcsPairs } from '../../compare/match.mjs';
 
 const EXTRACTS = new URL('../../data/extract/', import.meta.url);
@@ -47,26 +49,26 @@ for (const file of files) {
 
   for (const [i, j] of lcsPairs(production.elements, next.elements)) {
     const prod = production.elements[i];
-    const nu = next.elements[j];
+    const newElement = next.elements[j];
     exactPairs += 1;
-    if (prod.tag === nu.tag) continue;
+    if (prod.tag === newElement.tag) continue;
 
     pagesWithTagChange.add(production.page);
-    bump(byTagPair, `${prod.tag} -> ${nu.tag}`);
-    bump(byKindPair, `${prod.kind} -> ${nu.kind}`);
-    if (prod.level !== nu.level) headingLevelChanges += 1;
-    if (prod.kind !== nu.kind) kindChanges += 1;
+    bump(byTagPair, `${prod.tag} -> ${newElement.tag}`);
+    bump(byKindPair, `${prod.kind} -> ${newElement.kind}`);
+    if (prod.level !== newElement.level) headingLevelChanges += 1;
+    if (prod.kind !== newElement.kind) kindChanges += 1;
 
     cases.push({
       page: production.page,
       prodTag: prod.tag,
-      newTag: nu.tag,
+      newTag: newElement.tag,
       prodKind: prod.kind,
-      newKind: nu.kind,
+      newKind: newElement.kind,
       prodLevel: prod.level,
-      newLevel: nu.level,
+      newLevel: newElement.level,
       prodIndex: prod.index,
-      newIndex: nu.index,
+      newIndex: newElement.index,
       text: prod.norm,
     });
   }

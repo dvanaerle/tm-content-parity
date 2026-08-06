@@ -123,13 +123,22 @@ describe('FINDING_CLASSES', () => {
   it('gives the same direction the same default on all three checks', () => {
     // `missing-link`, `image-missing` and `text-missing` are one idea on three
     // checks, and an editor who learns the rule on one must not be surprised on
-    // the next.
-    for (const lost of ['text-missing', 'missing-link', 'image-missing']) {
-      expect(FINDING_CLASSES[lost].shown, lost).toBe(true);
+    // the next. The test reads `direction` rather than a list of names, so a
+    // fourth one-sided class is covered on the day it is added.
+    for (const [name, cls] of Object.entries(FINDING_CLASSES)) {
+      if (cls.direction === 'lost') expect(cls.shown, name).toBe(true);
+      if (cls.direction === 'added') expect(cls.shown, name).toBe(false);
     }
-    for (const added of ['text-added', 'extra-link', 'image-added']) {
-      expect(FINDING_CLASSES[added].shown, added).toBe(false);
-    }
+  });
+
+  it('names a direction on every one-sided class, and on no other', () => {
+    const withDirection = Object.entries(FINDING_CLASSES)
+      .filter(([, cls]) => cls.direction)
+      .map(([name]) => name)
+      .sort();
+    expect(withDirection).toEqual([
+      'extra-link', 'image-added', 'image-missing', 'missing-link', 'text-added', 'text-missing',
+    ]);
   });
 
   it('shows copy, casing, text-missing and heading-level, and hides the rest of text', () => {
@@ -149,5 +158,23 @@ describe('findingId across ticket 33', () => {
     // Ticket 08: `rule` is the class id, so a re-classification detaches an
     // override. That cost is paid by `structure` alone and must not spread.
     expect(findingId(base)).toBe('7i2HEm3xn0h-9hr1');
+  });
+
+  it('is the same id with no detail as without the field at all', () => {
+    // `detail` joins the key only when it is present, which is what keeps the
+    // literal above true for the 19 classes that never carry one.
+    expect(findingId({ ...base, detail: null })).toBe(findingId(base));
+    expect(findingId({ ...base, detail: '' })).toBe(findingId(base));
+  });
+
+  it('separates two heading demotions of the same words', () => {
+    // The whole reason `detail` exists. Both sides of text are equal on
+    // `heading-level`, so without it an `h2` → `h3` and an `h2` → `h4` are one
+    // id, and making the demotion worse would keep the editor's dismissal.
+    const level = { ...base, rule: 'heading-level', newNorm: base.prodNorm };
+    const toH3 = findingId({ ...level, detail: 'h2 → h3' });
+    const toH4 = findingId({ ...level, detail: 'h2 → h4' });
+    expect(toH3).not.toBe(toH4);
+    expect(toH3).not.toBe(findingId(level));
   });
 });

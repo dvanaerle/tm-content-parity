@@ -7,6 +7,8 @@
  * trust is the count, and the bar is the glance.
  */
 
+import { BANNER, CHROME, FILL, PILL } from '../lib/palette.mjs';
+
 export function PageBar({ bar, ready }) {
   const percent = bar.denominator === 0 ? 100 : Math.round((bar.closed / bar.denominator) * 100);
 
@@ -25,7 +27,7 @@ export function PageBar({ bar, ready }) {
         </span>
         {ready && <span className="tabular-nums text-slate-500">{bar.open} open</span>}
         {ready && bar.contradicted > 0 && (
-          <span className="tabular-nums text-red-700">{bar.contradicted} nog niet opgelost</span>
+          <span className="tabular-nums text-attention-ink">{bar.contradicted} nog niet opgelost</span>
         )}
         {ready && bar.muted > 0 && (
           // A mute leaves the denominator, so it is reported beside the bar and
@@ -34,8 +36,10 @@ export function PageBar({ bar, ready }) {
         )}
       </div>
       <div className="h-2 w-full overflow-hidden rounded bg-slate-200">
+        {/* Blue, not green. Work done is status, and ticket 35 keeps green for
+            "the new site added this" and nothing else. */}
         <div
-          className="h-full bg-emerald-500 transition-[width]"
+          className={`h-full ${FILL.info} transition-[width]`}
           style={{ width: ready ? `${percent}%` : '0%' }}
         />
       </div>
@@ -53,7 +57,7 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
   if (review) {
     return (
       <div className="flex items-center gap-2 text-xs">
-        <span className={`rounded px-2 py-1 ${review.fresh ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'}`}>
+        <span className={`rounded px-2 py-1 ${review.fresh ? PILL.info : PILL.attention}`}>
           {review.fresh ? 'gecontroleerd' : 'gewijzigd sinds controle'} · {review.editor}
         </span>
         {canWrite && (
@@ -69,7 +73,7 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
           <button
             type="button"
             onClick={() => append({ scope: 'page', action: 'reviewed', findingSetHash })}
-            className="text-blue-700 hover:underline"
+            className={`hover:underline ${CHROME.link}`}
           >
             opnieuw markeren
           </button>
@@ -125,8 +129,10 @@ export function EditorPrompt({ editor, save }) {
  */
 export function LogBanner({ connected, notConnectedReason, ready, error }) {
   if (error) {
+    // Amber, not red. An unreachable log is a status, however bad it is, and
+    // ticket 35 keeps red for "production had this and the new site lost it".
     return (
-      <Banner tone="red">
+      <Banner tone="severe">
         <strong>Het afvinklogboek reageert niet.</strong> De pagina staat op alleen-lezen,
         zodat je geen wijzigingen kwijtraakt die je denkt te hebben opgeslagen.{' '}
         {/*
@@ -143,22 +149,16 @@ export function LogBanner({ connected, notConnectedReason, ready, error }) {
   }
   if (!connected) {
     return (
-      <Banner tone="amber">
+      <Banner tone="attention">
         <strong>Geen verbinding met het afvinklogboek.</strong> {notConnectedReason} Afvinken,
         negeren en dempen zijn uitgeschakeld; de rest van het logboek werkt gewoon.
       </Banner>
     );
   }
-  if (!ready) return <Banner tone="slate">Het afvinklogboek wordt geladen…</Banner>;
+  if (!ready) return <Banner tone="neutral">Het afvinklogboek wordt geladen…</Banner>;
   return null;
 }
 
-const TONE = {
-  red: 'border-red-300 bg-red-50 text-red-900',
-  amber: 'border-amber-300 bg-amber-50 text-amber-900',
-  slate: 'border-slate-200 bg-slate-50 text-slate-600',
-};
-
 const Banner = ({ tone, children }) => (
-  <p className={`rounded border px-3 py-2 text-sm ${TONE[tone]}`}>{children}</p>
+  <p className={`rounded border px-3 py-2 text-sm ${BANNER[tone]}`}>{children}</p>
 );

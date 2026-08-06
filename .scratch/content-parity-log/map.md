@@ -350,13 +350,25 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   hiding the invented side: the 5,049 `structure` findings were **3,486 lost** and
   **1,563 invented**. The new classes then add 738 findings, 467 of them shown.
   **179 crawled and 124 comparable held at every step.** `compare/measure.mjs` is
-  the new command that takes these numbers, so the gate is repeatable.
+  the new command that prints these numbers, over `rollUp()` in
+  `compare/findings.mjs`, so the gate and the page bar cannot count a class
+  differently.
 
   Two things found while resolving. The `a` → `h3` group the ticket ordered
   sampled **was an extraction artefact and is fixed** (below). And **user story 24
   is not closed**: `heading-level` needs identical text, so it surfaces 6 pages
   where an `h1`'s own words moved tag, not the pages that lost the `h1` outright.
   Overrides keyed on `structure` detach, as spec 32 decision 4 accepted.
+
+  **Reviewed on 2026-08-06** against the standards and the spec, and three things
+  came back. A finding whose two sides of text are equal now carries a `detail`
+  (`h2 → h3`) and the id includes it — without it an `h2` → `h3` and an `h2` → `h4`
+  were one id, so a demotion that got worse kept the editor's dismissal. A
+  one-sided class carries `direction`, so "lost is shown, invented is hidden" is
+  one field rather than three names in three places. And the gate got tests. The
+  numbers did not move: no page held two different tag changes of the same words.
+  One question is left for a human — the ticket amended its own acceptance
+  criterion to drop `axis`, and 39 owns the word.
 
 ### Facts found while charting
 
@@ -465,7 +477,13 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   the `kind` changes fell from 434 to 98. The rule is about headings and not about
   accordions because the leaf rule also lost content outright on
   `<h2>Bekijk onze <a>carports</a> nu</h2>` — the anchor was reported and the words
-  around it disappeared. It also moved two of spec 32's head-of-document numbers:
+  around it disappeared. **Half of the leaf rule is still open, and has no owner:**
+  a container that is not a heading and holds a heading plus loose text
+  (`<td>Levertijd <h4>Vraag</h4></td>`) still drops the loose words, because the
+  container is skipped for having a text tag inside it. Rescuing them means
+  emitting the direct text nodes of a container as an element, which changes what
+  an element is and moves the count on all 179 pages. Pinned by a test in
+  `crawl/extract.test.mjs`. It also moved two of spec 32's head-of-document numbers:
   pages starting on a non-`h1` fell from 16 to **11**, and pages with no `h1` from 8
   to **3**, because production wraps some `h1`s in an anchor too.
 - **762 tag changes are on 80 pages, not 67.** Re-measured by

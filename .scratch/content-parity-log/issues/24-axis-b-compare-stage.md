@@ -1,19 +1,19 @@
 # 24 — Build the Axis B compare stage
 
 Type: task
-Status: closed — superseded by 32, 35, 36, 37, 38, 39
+Status: closed — superseded by 39, 40, 42, 43, 44, 45
 Blocked by: 07, 11
 Parent: ../map.md
 
 > **Superseded 2026-08-06.** This ticket was one task for the whole axis B
 > compare stage. `/to-tickets` cut it into slices that each fit one session:
-> [32](32-class-vocabulary-axes.md) the contract prefactor,
-> [35](35-crawl-five-stores.md) the crawl it needs,
-> [36](36-untranslated-text.md) untranslated text,
-> [37](37-alt-language-and-meta.md) alt and meta,
-> [38](38-heading-outline-shape.md) the heading outline, and
-> [39](39-images-across-stores.md) the images. Presence went to
-> [33](33-coverage-missing-pages.md), because it needs no crawl.
+> [39](39-class-vocabulary-axes.md) the contract prefactor,
+> [42](42-untranslated-text.md) untranslated text,
+> [43](43-alt-language-and-meta.md) alt and meta,
+> [44](44-heading-outline-shape.md) the heading outline, and
+> [45](45-images-across-stores.md) the images. Presence went to
+> [40](40-coverage-missing-pages.md), because it needs no crawl.
+> The crawl it needs is [38](38-six-stores.md), from spec 32.
 > Nothing below is withdrawn. The rules stay as written; only the packaging
 > changed.
 

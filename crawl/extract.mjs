@@ -7,6 +7,7 @@
  */
 
 import { parse } from 'node-html-parser';
+import { imageKey, linkKey } from './keys.mjs';
 import { collapse, tier1 } from './normalise.mjs';
 
 /** Ticket 14: without this the new site's `<body>` and `<header>` are deleted. */
@@ -58,9 +59,6 @@ const BODY_CLASS_TYPE = [
 /** Ticket 05: no other shapes exist on the site. */
 const NON_NAVIGATIONAL = /^(#|mailto:|tel:)/i;
 
-/** A true trailing size suffix, per ticket 06. A bare `_N` is never one. */
-const SIZE_SUFFIX = /[_-]\d{2,4}x\d{2,4}$/;
-
 // node-html-parser concatenates child text with no separator, which glues a
 // button label onto the text above it. structuredText keeps the line breaks.
 const textOf = (node) => collapse((node.structuredText ?? node.text ?? '').replaceAll('\n', ' '));
@@ -75,48 +73,6 @@ export function pageType(bodyClass) {
     if (bodyClass.includes(needle)) return type;
   }
   return 'other';
-}
-
-/**
- * Target identity from ticket 05: the page's own two hosts fold to one token,
- * the path is lowercased and loses its trailing slash, the query stays and the
- * fragment goes.
- *
- * @param {URL} url
- * @param {{ prodHost?: string, newHost?: string }} hosts
- * @returns {string}
- */
-export function linkKey(url, { prodHost, newHost } = {}) {
-  const host = url.host.toLowerCase();
-  const own = [prodHost, newHost].filter(Boolean).map((h) => h.toLowerCase());
-  const token = own.includes(host) ? 'self' : host;
-  const path = url.pathname.toLowerCase().replace(/\/+$/, '');
-  // One page sends the same filter target as `6039,6040` and as `6039%2C6040`.
-  // The encoding is invisible to a reader, so it folds like tier 1 does.
-  const query = new URLSearchParams(url.search).toString();
-  return `${token}${path}${query ? `?${query}` : ''}`;
-}
-
-/**
- * Image identity from ticket 06: the basename, lowercased, extension kept.
- * Full-path matching scores 2.8%, because production resizes through Cloudflare
- * and the two environments carry different catalog cache hashes.
- *
- * @param {string} src
- * @returns {string}
- */
-export function imageKey(src) {
-  const withoutQuery = src.split('#')[0].split('?')[0];
-  let base = withoutQuery.split('/').pop() ?? '';
-  try {
-    base = decodeURIComponent(base);
-  } catch {
-    // A malformed escape keeps the raw basename.
-  }
-  base = base.toLowerCase();
-  const extension = base.match(/\.[a-z0-9]{2,5}$/)?.[0] ?? '';
-  const stem = extension ? base.slice(0, -extension.length) : base;
-  return stem.replace(SIZE_SUFFIX, '') + extension;
 }
 
 /**
@@ -192,6 +148,16 @@ function assertHasContent(extract) {
  * rule loses content outright on `<h2>Bekijk onze <a>carports</a> nu</h2>`: the
  * anchor was reported and the words around it disappeared. A heading is one
  * label, and its text is its own.
+ *
+ * **The mirror case is still lost, and stays lost here.** A container that is not
+ * a heading and holds both a heading and loose text —
+ * `<td>Levertijd <h4>Vraag</h4></td>` — gives up the loose words, because the
+ * container is skipped for having a text tag inside it. To rescue them the leaf
+ * rule would have to emit the direct text nodes of a container as an element of
+ * their own. That is a change to what an element **is**, it moves the count on
+ * every one of the 179 pages, and it needs its own measurement. Ticket 33 records
+ * it and does not do it; `extract.test.mjs` pins the behaviour so the next reader
+ * sees the limit instead of finding it.
  *
  * @param {import('node-html-parser').HTMLElement} scope
  * @returns {import('../compare/contract.mjs').TextElement[]}

@@ -11,10 +11,14 @@ This repo is **not** the Magento storefront. The storefront is
 
 ## Where the decisions are
 
-`Desktop/gitlab/devdva02/.scratch/content-parity-log/map.md` is the map, and
-`issues/NN-*.md` next to it hold the detail. Do not decide again what a
-resolved ticket decided. If you must go against a resolved ticket, say so in
-the ticket.
+`.scratch/content-parity-log/map.md` is the map, and `issues/NN-*.md` next to it
+hold the detail. Do not decide again what a resolved ticket decided. If you must
+go against a resolved ticket, say so in the ticket.
+
+The map and the tickets moved here from `devdva02` on 2026-08-06. They are in
+**this** repo now, and `.scratch/` here is **not** gitignored, so they are under
+version control with the code they describe. `docs/agents/issue-tracker.md` gives
+the layout.
 
 ## Rules
 
@@ -28,3 +32,17 @@ the ticket.
 - **Comments explain why, not what.** No comment is the default.
 - `crawl/probes/` holds one-time measurements that are kept as evidence. Read
   them for the numbers. Do not import them.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live as local markdown files under `.scratch/<feature>/`. External MRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label vocabulary (`needs-triage` / `needs-info` / `ready-for-agent` / `ready-for-human` / `wontfix`), recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

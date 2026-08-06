@@ -1,8 +1,8 @@
-# 38 — Heading outline shape
+# 44 — Heading outline shape
 
 Type: task
 Status: ready-for-agent
-Blocked by: 36
+Blocked by: 42
 Parent: ../map.md
 
 ## What to build
@@ -28,14 +28,16 @@ The extract gives this directly. Elements carry `kind: 'heading'` and
 - **Cap at 0.5.** If more than half the positions diverge, emit one finding for
   the whole page instead. The page is restructured, not incomplete.
 - **A tie goes to `outline-shape`**, which is the more actionable of the two.
-- The 0.5 number lives in `compare/contract.mjs`, put there by ticket 32.
+- The 0.5 number lives in `compare/contract.mjs`, put there by ticket 39.
 
 ## The class for the cap
 
-Ticket 11 said to reuse ticket 02's `restructured`. Ticket 32 settles whether
-that is possible, because a class record carries one axis and `muteKey()` is
-`store|page|class`, so one shared class would let an editor mute both axes with
-one click. **Use whatever ticket 32 decided.** Do not open it again.
+Ticket 11 said to reuse ticket 02's `restructured`. **Ticket 33 may have retired
+that class already** — spec 32 replaces `structure` with a directional pair and
+reworks the text classes. Ticket 39 settles what axis B uses for the cap, because
+a class record carries one axis and `muteKey()` is `store|page|class`, so one
+shared class would let an editor mute both axes with one click. **Use whatever
+ticket 39 decided.** Do not open it again.
 
 ## Acceptance criteria
 

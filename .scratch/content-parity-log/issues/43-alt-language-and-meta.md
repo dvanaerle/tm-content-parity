@@ -1,13 +1,13 @@
-# 37 — Alt language and meta
+# 43 — Alt language and meta
 
 Type: task
 Status: ready-for-agent
-Blocked by: 36
+Blocked by: 42
 Parent: ../map.md
 
 ## What to build
 
-Two more checks on the membership machinery that ticket 36 builds.
+Two more checks on the membership machinery that ticket 42 builds.
 
 **Alt language.** Ticket 06 handed alt text to this axis: the Images tab stays
 axis A only, production against the new site in one store. So axis B must read

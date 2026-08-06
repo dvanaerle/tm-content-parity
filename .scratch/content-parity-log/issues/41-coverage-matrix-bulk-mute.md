@@ -7,7 +7,7 @@ Parent: ../map.md
 
 ## What to build
 
-Ticket 33 makes the findings. This ticket makes them readable at full size.
+Ticket 40 makes the findings. This ticket makes them readable at full size.
 
 181 NL pages against 6 stores is 1086 cells. Only 20 rows hold all six stores,
 and 53 rows are NL only. The de store opens with about 136 missing pages. An
@@ -44,5 +44,5 @@ Ticket 23's questions are the acceptance criteria below.
 ## Notes
 
 `orphan-page` is a finding against the **NL** store, so it has no row in a matrix
-that is keyed on NL pages. Ticket 32 declares the class and builds no producer,
+that is keyed on NL pages. Ticket 39 declares the class and builds no producer,
 so there is nothing to render yet. Leave the space for it and say so.

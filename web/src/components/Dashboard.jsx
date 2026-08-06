@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Bar, Chip, ClassPill } from './Chips.jsx';
 import { LogBanner } from './Progress.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
+import { CHROME } from '../lib/palette.mjs';
 import { useStoreOverrides } from '../lib/overrides.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
@@ -62,14 +63,14 @@ export default function Dashboard({ pages, excluded }) {
 
       <section className="flex flex-wrap items-center gap-2">
         <Chip value={comparable.length} label="pagina's vergeleken" tone="dark" />
-        <Chip value={totals.open} label="verschillen open" tone="rose" />
-        <Chip value={totals.closed} label="afgehandeld" tone="green" />
-        <Chip value={totals.clean} label="pagina's gelijk" tone="green" />
+        <Chip value={totals.open} label="verschillen open" tone="attention" />
+        <Chip value={totals.closed} label="afgehandeld" tone="info" />
+        <Chip value={totals.clean} label="pagina's gelijk" tone="info" />
         {totals.contradicted > 0 && (
           <Chip
             value={totals.contradicted}
             label="nog niet opgelost"
-            tone="rose"
+            tone="attention"
             title="Geclaimd opgelost, maar een latere waarneming ziet het verschil nog."
           />
         )}
@@ -133,18 +134,18 @@ export default function Dashboard({ pages, excluded }) {
             {rows.map((page) => (
               <tr key={page.page} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                 <td className="px-4 py-2">
-                  <a className="font-medium text-blue-700 hover:underline" href={`/${page.store}/${page.page}/`}>
+                  <a className={`font-medium hover:underline ${CHROME.link}`} href={`/${page.store}/${page.page}/`}>
                     {page.page}
                   </a>
                   <span className="ml-2 text-xs text-slate-400">{page.sides.production.elements} elementen</span>
                 </td>
                 <td className="px-4 py-2">
                   <Bar shown={openOf(page)} elements={page.sides.production.elements} />
-                  <span className={`ml-2 tabular-nums ${openOf(page) ? 'font-semibold' : 'text-emerald-700'}`}>
+                  <span className={`ml-2 tabular-nums ${openOf(page) ? 'font-semibold' : 'text-info-ink'}`}>
                     {openOf(page)}
                   </span>
                   {barOf(page)?.closed > 0 && (
-                    <span className="ml-1 text-xs text-emerald-700">+{barOf(page).closed} af</span>
+                    <span className="ml-1 text-xs text-info-ink">+{barOf(page).closed} af</span>
                   )}
                 </td>
                 {CHECKS.map((check) => (
@@ -168,7 +169,7 @@ export default function Dashboard({ pages, excluded }) {
       >
         {oneSided.map((page) => (
           <li key={page.page} className="flex flex-wrap gap-2 py-1">
-            <a className="text-blue-700 hover:underline" href={`/${page.store}/${page.page}/`}>{page.page}</a>
+            <a className={`hover:underline ${CHROME.link}`} href={`/${page.store}/${page.page}/`}>{page.page}</a>
             <span className="text-slate-500">{page.skipReason}</span>
           </li>
         ))}

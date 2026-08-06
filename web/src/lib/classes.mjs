@@ -1,7 +1,8 @@
 /**
  * How a finding class looks. The vocabulary itself is the contract's, never
- * restated here — this file only adds the colour and the Dutch label an editor
- * reads.
+ * restated here — this file only names the **tone** of each class and the Dutch
+ * label an editor reads. The tone's pixels come from `palette.mjs`, which is the
+ * one place a colour is defined.
  *
  * The tone rule is one rule: a class hidden by default is grey. Ticket 09 gives
  * a hidden class no place in the bar either, so nothing coloured is ever
@@ -11,42 +12,29 @@
 // `vocabulary.mjs`, not `contract.mjs`: the contract also makes finding ids and
 // needs `node:crypto`, which a browser bundle cannot resolve.
 import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
+import { PILL } from './palette.mjs';
 
-/** @type {Record<string, string>} */
+/**
+ * `lost` is not in this table. It is the tone of "production had this and the new
+ * site does not", on all three checks, and the class itself says which those are:
+ * `direction: 'lost'` in the contract. Spelling the three names here again would
+ * let the colour come apart from the meaning.
+ *
+ * Ticket 35 moved `broken-link` off red. Red now means a lost element and only
+ * that, so the loudest a defect on the new site's own terms can be is `severe`.
+ *
+ * @type {Record<string, import('./palette.mjs').Tone>}
+ */
 const TONE = {
-  'broken-link': 'red',
-  // Rose is the tone of "production had this and the new site does not", on all
-  // three checks. Ticket 33 gave text its own name for that direction.
-  'text-missing': 'rose',
-  'missing-link': 'rose',
-  'image-missing': 'rose',
-  'heading-level': 'amber',
-  copy: 'amber',
-  'link-target': 'amber',
-  'alt-lost': 'amber',
-  'alt-changed': 'amber',
-  casing: 'sky',
-  leakage: 'violet',
-  'cross-store-link': 'violet',
-};
-
-/** Tailwind needs the whole class name in the source, so no template strings. */
-const PILL = {
-  red: 'bg-red-100 text-red-800',
-  rose: 'bg-rose-100 text-rose-800',
-  amber: 'bg-amber-100 text-amber-900',
-  sky: 'bg-sky-100 text-sky-800',
-  violet: 'bg-violet-100 text-violet-800',
-  slate: 'bg-slate-100 text-slate-600',
-};
-
-const DOT = {
-  red: 'bg-red-500',
-  rose: 'bg-rose-500',
-  amber: 'bg-amber-500',
-  sky: 'bg-sky-500',
-  violet: 'bg-violet-500',
-  slate: 'bg-slate-400',
+  'broken-link': 'severe',
+  leakage: 'severe',
+  'cross-store-link': 'severe',
+  'heading-level': 'attention',
+  copy: 'attention',
+  'link-target': 'attention',
+  'alt-lost': 'attention',
+  'alt-changed': 'attention',
+  casing: 'info',
 };
 
 /** @type {Record<string, string>} */
@@ -59,18 +47,34 @@ export const CHECK_LABEL = {
 
 /**
  * @param {string} cls
- * @returns {{ class: string, check: string, shown: boolean, meaning: string, pill: string, dot: string }}
+ * @param {import('../../../compare/vocabulary.mjs').FindingClass | undefined} record
+ * @returns {import('./palette.mjs').Tone}
+ */
+function toneOf(cls, record) {
+  if (!record?.shown) return 'neutral';
+  if (record.direction === 'lost') return 'lost';
+  return TONE[cls] ?? 'attention';
+}
+
+/**
+ * @param {string} cls
+ * @returns {{ class: string, check: string, shown: boolean, meaning: string,
+ *   direction: 'lost' | 'added' | null, tone: import('./palette.mjs').Tone, pill: string }}
  */
 export function classInfo(cls) {
   const record = FINDING_CLASSES[cls];
-  const tone = record?.shown ? (TONE[cls] ?? 'amber') : 'slate';
+  const tone = toneOf(cls, record);
   return {
     class: cls,
     check: record?.check ?? 'text',
     shown: record?.shown ?? false,
     meaning: record?.meaning ?? '',
+    // The diff paints a whole cell only on a one-sided class, so it needs the
+    // direction itself and not the tone: `text-added` is hidden by default and
+    // therefore grey, and its cell is still green.
+    direction: record?.direction ?? null,
+    tone,
     pill: PILL[tone],
-    dot: DOT[tone],
   };
 }
 

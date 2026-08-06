@@ -1,8 +1,8 @@
-# 36 — Untranslated text
+# 42 — Untranslated text
 
 Type: task
 Status: ready-for-agent
-Blocked by: 32, 35
+Blocked by: 39, 38
 Parent: ../map.md
 
 ## What to build

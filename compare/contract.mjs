@@ -106,6 +106,9 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * @property {keyof FINDING_CLASSES} class
  * @property {string | null} prod   The production side, normalised. `null` if absent.
  * @property {string | null} new    The new side, normalised. `null` if absent.
+ * @property {string | null} detail What changed when the two sides of text are equal.
+ *                                  `h2 → h3` on `heading-level` and `tag-changed`.
+ *                                  Part of the id. See `findingId()`.
  * @property {number} occurrences   Not part of the id.
  * @property {number | null} score  The similarity score. On `copy` findings only.
  */
@@ -232,6 +235,12 @@ export function findingSetHash(findings) {
  * hash, not truncated content: the prototype cut the key itself, and 156
  * findings collapsed to 88 ids.
  *
+ * `detail` says what changed when the two texts are equal (ticket 33). Without it
+ * an `h2` → `h3` and an `h2` → `h4` on the same words are one id, so a fix that
+ * makes the demotion worse keeps the editor's dismissal. It joins the key **only
+ * when it is present**, so every id in the 19 classes that have no detail is the
+ * id it was before ticket 33 — `contract.test.mjs` pins one with a literal.
+ *
  * @param {object} parts
  * @param {Store} parts.store
  * @param {string} parts.page
@@ -239,11 +248,13 @@ export function findingSetHash(findings) {
  * @param {string} parts.rule      The class id.
  * @param {string | null} parts.prodNorm
  * @param {string | null} parts.newNorm
+ * @param {string | null} [parts.detail]
  * @returns {string} 16 base64url characters.
  */
-export function findingId({ store, page, check, rule, prodNorm, newNorm }) {
-  const key = [store, page, check, rule, prodNorm ?? '', newNorm ?? ''].join('|');
-  return createHash('sha256').update(key, 'utf8').digest('base64url').slice(0, 16);
+export function findingId({ store, page, check, rule, prodNorm, newNorm, detail = null }) {
+  const parts = [store, page, check, rule, prodNorm ?? '', newNorm ?? ''];
+  if (detail) parts.push(detail);
+  return createHash('sha256').update(parts.join('|'), 'utf8').digest('base64url').slice(0, 16);
 }
 
 /**

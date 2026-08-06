@@ -81,5 +81,5 @@ images, meta and Markdown in one pass, for one URL. The numbered `0*.mjs`
 scripts are the baseline from the `sitemap-content-overview` survey. They make
 the seed data, and they do not follow the contract.
 
-The decisions are in `../../gitlab/devdva02/.scratch/content-parity-log/map.md`.
+The decisions are in `.scratch/content-parity-log/map.md`.
 `CONTEXT.md` holds the words that the code uses.

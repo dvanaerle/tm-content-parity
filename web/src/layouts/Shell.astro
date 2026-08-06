@@ -13,9 +13,14 @@ const { title } = Astro.props;
     <title>{title} — Content parity log</title>
   </head>
   <body class="bg-slate-100 text-slate-900">
-    <header class="border-b border-slate-200 bg-white px-6 py-4">
+    {/*
+      The one place brand colour is spent in the shell. Ticket 35: the header
+      says "this is a Tuinmaximaal tool" and nothing about a finding, so the
+      brand green stops at the bottom border of this element.
+    */}
+    <header class="bg-brand-green px-6 py-4 text-white">
       <a href="/" class="font-semibold">Content parity log</a>
-      <span class="ml-2 text-sm text-slate-500">Tuinmaximaal — productie tegen de nieuwe site</span>
+      <span class="ml-2 text-sm text-brand-sand">Tuinmaximaal — productie tegen de nieuwe site</span>
     </header>
     <main class="px-6 py-6">
       <slot />

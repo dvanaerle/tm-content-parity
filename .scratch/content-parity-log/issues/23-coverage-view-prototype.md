@@ -1,15 +1,15 @@
 # 23 — The store-level Coverage view: how does a 181 × 6 matrix read?
 
 Type: prototype
-Status: closed — folded into 34
+Status: closed — folded into 41
 Blocked by: 11
 Parent: ../map.md
 
-> **Folded 2026-08-06** into [34 — The coverage matrix, and bulk
-> muting](34-coverage-matrix-bulk-mute.md). The seed data is already on disk, so
+> **Folded 2026-08-06** into [41 — The coverage matrix, and bulk
+> muting](41-coverage-matrix-bulk-mute.md). The seed data is already on disk, so
 > a prototype of the matrix and the real matrix would be almost the same thing.
 > Build the simplest matrix and judge the real one. Every question below is an
-> acceptance criterion on ticket 34.
+> acceptance criterion on ticket 41.
 
 ## Question
 

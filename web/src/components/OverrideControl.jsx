@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PILL } from '../lib/palette.mjs';
 
 /**
  * The one action control. Spec 29: one control, one place in the code, four call
@@ -10,13 +11,21 @@ import { useState } from 'react';
  * what the derivation made of it, including *claimed fixed, still differs*.
  */
 
-/** @type {Record<string, { label: string, pill: string }>} */
+/**
+ * Ticket 35 took the colours out of here. `opgelost` was green and
+ * `nog niet opgelost` was red, which spent both diff hues on a work state — an
+ * editor scanning a page would have read "done" and "lost content" in the same
+ * two colours. Both are status now: blue for done, amber for a claim the re-check
+ * contradicted.
+ *
+ * @type {Record<string, { label: string, tone: import('../lib/palette.mjs').Tone }>}
+ */
 const STATE = {
-  open: { label: 'open', pill: 'bg-slate-100 text-slate-600' },
-  fixed: { label: 'opgelost', pill: 'bg-emerald-100 text-emerald-800' },
-  dismissed: { label: 'genegeerd', pill: 'bg-slate-200 text-slate-700' },
-  muted: { label: 'gedempt', pill: 'bg-slate-200 text-slate-500' },
-  contradicted: { label: 'nog niet opgelost', pill: 'bg-red-100 text-red-800' },
+  open: { label: 'open', tone: 'neutral' },
+  fixed: { label: 'opgelost', tone: 'info' },
+  dismissed: { label: 'genegeerd', tone: 'neutral' },
+  muted: { label: 'gedempt', tone: 'neutral' },
+  contradicted: { label: 'nog niet opgelost', tone: 'attention' },
 };
 
 export default function OverrideControl({ finding, observationId, append, canWrite }) {
@@ -56,12 +65,12 @@ export default function OverrideControl({ finding, observationId, append, canWri
 
   return (
     <div className="flex flex-wrap items-center gap-1">
-      <span className={`rounded px-1.5 py-0.5 text-[11px] ${STATE[state].pill}`}>
+      <span className={`rounded px-1.5 py-0.5 text-[11px] ${PILL[STATE[state].tone]}`}>
         {STATE[state].label}
       </span>
 
       {state === 'contradicted' && (
-        <span className="text-[11px] text-red-700">
+        <span className="text-[11px] text-attention-ink">
           geclaimd opgelost door {override.editor}, verschilt nog
         </span>
       )}
