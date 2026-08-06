@@ -296,7 +296,10 @@ function MetaTable({ production, next }) {
                   </span>
                 )}
               </th>
-              <DiffCells prod={row.prod} new={row.new} mono />
+              {/* `state` is the tool's answer, and the cells must not contradict it:
+                  a canonical that differs by hostname alone is `same`, and the
+                  hostname on screen is not a difference an editor can act on. */}
+              <DiffCells prod={row.prod} new={row.new} mono equal={row.state === 'same'} />
             </tr>
           ))}
         </tbody>

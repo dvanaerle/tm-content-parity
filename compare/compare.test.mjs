@@ -534,6 +534,12 @@ describe('metaRows', () => {
       { canonical: 'https://valanticnl.intern.systems/overkappingen/' },
     ), 'canonical');
     expect(canonical.state).toBe('same');
+    // It compares the folded pair and reports the raw one, so `state` is the only
+    // place the fold is readable. A panel that diffs `prod` against `new` paints
+    // the hostname on all 18 pages, which is why the cells key on `state` and not
+    // on the two strings they show.
+    expect(canonical.prod).toBe('https://www.tuinmaximaal.nl/overkappingen');
+    expect(canonical.new).toBe('https://valanticnl.intern.systems/overkappingen/');
   });
 
   it('still reports a canonical that points at another page', () => {

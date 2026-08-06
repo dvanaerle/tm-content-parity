@@ -35,6 +35,8 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
  * @param {string | null} [props.newRaw]
  * @param {boolean} [props.mono]
  * @param {boolean} [props.strong]
+ * @param {boolean} [props.equal]  The caller compared the two sides and got equal, on
+ *                                 values it does not show. Both cells stay plain.
  * @returns Two `<td>`s, for a caller that owns the `<tr>`.
  */
 export function DiffCells({
@@ -46,11 +48,18 @@ export function DiffCells({
   newRaw = null,
   mono = false,
   strong = false,
+  equal = false,
 }) {
   // The diff is computed on `norm` and `norm` is what is rendered. Tier 1 folds
   // curly quotes, NBSP, dashes and entities deliberately, so diffing `raw` would
   // paint differences the tool classifies as equal in the same breath.
-  const spans = useMemo(() => wordDiff(prod, next), [prod, next]);
+  //
+  // `equal` is the case where the caller cannot hand over what it compared. The
+  // meta panel folds the two hostnames out of a canonical before it compares, and
+  // then shows the hostnames, because an editor reading a canonical wants them. On
+  // 18 of 179 nl pages that is the whole of the difference, and a diff of what is
+  // on screen would paint it — the same defect one paragraph up.
+  const spans = useMemo(() => (equal ? null : wordDiff(prod, next)), [prod, next, equal]);
   const oneSided = prod === null || next === null;
 
   return (
@@ -59,7 +68,7 @@ export function DiffCells({
         side="production"
         value={prod}
         spans={oneSided ? null : spans}
-        tint={next === null ? SURFACE.lost : null}
+        tint={!equal && next === null ? SURFACE.lost : null}
         prefix={prodPrefix}
         raw={prodRaw}
         mono={mono}
@@ -69,7 +78,7 @@ export function DiffCells({
         side="new"
         value={next}
         spans={oneSided ? null : spans}
-        tint={prod === null ? SURFACE.added : null}
+        tint={!equal && prod === null ? SURFACE.added : null}
         prefix={newPrefix}
         raw={newRaw}
         mono={mono}
