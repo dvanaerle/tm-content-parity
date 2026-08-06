@@ -15,9 +15,12 @@ import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
 /** @type {Record<string, string>} */
 const TONE = {
   'broken-link': 'red',
-  structure: 'rose',
+  // Rose is the tone of "production had this and the new site does not", on all
+  // three checks. Ticket 33 gave text its own name for that direction.
+  'text-missing': 'rose',
   'missing-link': 'rose',
   'image-missing': 'rose',
+  'heading-level': 'amber',
   copy: 'amber',
   'link-target': 'amber',
   'alt-lost': 'amber',

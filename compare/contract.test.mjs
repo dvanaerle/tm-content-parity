@@ -97,10 +97,57 @@ describe('FINDING_CLASSES', () => {
     }
   });
 
-  it('shows copy, structure and casing, and hides restructured, price and campaign', () => {
-    const shown = Object.entries(FINDING_CLASSES)
-      .filter(([, cls]) => cls.check === 'text' && cls.shown)
-      .map(([name]) => name);
-    expect(shown.sort()).toEqual(['casing', 'copy', 'structure']);
+  it('is closed at 21 classes', () => {
+    // Ticket 33 took it from 18 to 21: `structure` out, `text-missing`,
+    // `text-added`, `heading-level` and `tag-changed` in.
+    expect(Object.keys(FINDING_CLASSES).length).toBe(21);
+  });
+
+  it('has retired structure', () => {
+    // The word said only "the element is on one side only", which is a statement
+    // about the alignment and not about the sites. Ticket 33 replaced it with a
+    // directional pair, and any override keyed on it detaches (ticket 08).
+    expect(FINDING_CLASSES).not.toHaveProperty('structure');
+  });
+
+  it('splits every one-sided text class by direction, shown lost and hidden added', () => {
+    expect(FINDING_CLASSES['text-missing']).toMatchObject({ check: 'text', shown: true });
+    expect(FINDING_CLASSES['text-added']).toMatchObject({ check: 'text', shown: false });
+  });
+
+  it('shows a heading-level change and hides a plain tag change', () => {
+    expect(FINDING_CLASSES['heading-level']).toMatchObject({ check: 'text', shown: true });
+    expect(FINDING_CLASSES['tag-changed']).toMatchObject({ check: 'text', shown: false });
+  });
+
+  it('gives the same direction the same default on all three checks', () => {
+    // `missing-link`, `image-missing` and `text-missing` are one idea on three
+    // checks, and an editor who learns the rule on one must not be surprised on
+    // the next.
+    for (const lost of ['text-missing', 'missing-link', 'image-missing']) {
+      expect(FINDING_CLASSES[lost].shown, lost).toBe(true);
+    }
+    for (const added of ['text-added', 'extra-link', 'image-added']) {
+      expect(FINDING_CLASSES[added].shown, added).toBe(false);
+    }
+  });
+
+  it('shows copy, casing, text-missing and heading-level, and hides the rest of text', () => {
+    const byDefault = (shown) => Object.entries(FINDING_CLASSES)
+      .filter(([, cls]) => cls.check === 'text' && cls.shown === shown)
+      .map(([name]) => name)
+      .sort();
+    expect(byDefault(true)).toEqual(['casing', 'copy', 'heading-level', 'text-missing']);
+    expect(byDefault(false)).toEqual([
+      'campaign', 'price', 'restructured', 'tag-changed', 'text-added',
+    ]);
+  });
+});
+
+describe('findingId across ticket 33', () => {
+  it('does not move for a class the ticket did not touch', () => {
+    // Ticket 08: `rule` is the class id, so a re-classification detaches an
+    // override. That cost is paid by `structure` alone and must not spread.
+    expect(findingId(base)).toBe('7i2HEm3xn0h-9hr1');
   });
 });

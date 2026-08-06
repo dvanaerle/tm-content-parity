@@ -60,19 +60,42 @@ export function classifyPair(prod, next) {
   return 'copy';
 }
 
+/** @param {import('./contract.mjs').TextElement} element */
+const isHeading = (element) => element.kind === 'heading';
+
+/**
+ * Two elements whose normalised text is identical. Is the element itself still
+ * the same?
+ *
+ * Ticket 33. The LCS anchors on `norm` alone, so before this rule existed a
+ * heading demoted from `h2` to `h3` was an exact match that emitted nothing —
+ * **762 elements on 80 nl pages**, 467 of them a heading-level change. This is
+ * the one rule in spec 32 that turns a silent match into a finding.
+ *
+ * A heading on either side makes it `heading-level` and shown, because the
+ * outline is what a reader and a search engine navigate by, and it is what makes
+ * the dropped `h1` visible. Two non-headings make it `tag-changed` and hidden:
+ * production held the words in a `<p>` and the new site holds them in a `<td>`,
+ * which is a PageBuilder rebuild an editor has nothing to do about.
+ *
+ * This is not `restructured`. That class needs the **text** to differ as well,
+ * and it is the weakest claim the pairing makes; this rule fires on text that is
+ * character-for-character identical, which is a much stronger statement.
+ *
+ * @param {import('./contract.mjs').TextElement} prod
+ * @param {import('./contract.mjs').TextElement} next
+ * @returns {'heading-level' | 'tag-changed' | null} `null` if the element is unchanged.
+ */
+export function classifyExactPair(prod, next) {
+  if (prod.tag === next.tag && prod.level === next.level) return null;
+  return isHeading(prod) || isHeading(next) ? 'heading-level' : 'tag-changed';
+}
+
 /**
  * Align the two element lists and label every position. A row with
- * `class: null` is an exact tier-1 match, and ticket 02 is explicit that it is
- * **not** a finding: the earlier count of 61 was wrong because it counted them.
- *
- * The LCS anchors on `norm` alone and ignores the tag, so text that production
- * held in a `<p>` and the new site holds in a `<td>`, unchanged, is an exact
- * match and makes no finding at all. Ticket 02 defines `restructured` as "the
- * same content, built with a different element", which reads as though this
- * case should fire it. It does not, and that is the right outcome: the class is
- * hidden by default and an editor has nothing to do about markup that carries
- * the same words. In practice `restructured` means "the text differs **and** the
- * element moved".
+ * `class: null` is an exact tier-1 match **in the same element**, and ticket 02
+ * is explicit that it is not a finding: the earlier count of 61 was wrong
+ * because it counted them.
  *
  * @param {import('./contract.mjs').PageExtract} production
  * @param {import('./contract.mjs').PageExtract} next
@@ -88,7 +111,7 @@ export function diffRows(production, next) {
 
   /** @type {AlignedRow[]} */
   const rows = anchors.map(([i, j]) => ({
-    class: null,
+    class: classifyExactPair(prodElements[i], newElements[j]),
     prod: prodElements[i],
     new: newElements[j],
     score: null,
@@ -112,14 +135,19 @@ export function diffRows(production, next) {
   }
 
   // Ticket 02 gives a one-sided element a single class. A production campaign
-  // line the new site dropped is `structure`, not `campaign`, because `campaign`
-  // needs the pattern on both sides. Ticket 06 relaxed that for images only,
-  // where the identity is a filename and the ambiguity is absent.
+  // line the new site dropped is `text-missing`, not `campaign`, because
+  // `campaign` needs the pattern on both sides. Ticket 06 relaxed that for images
+  // only, where the identity is a filename and the ambiguity is absent.
+  //
+  // Ticket 33 names the two directions apart. `structure` said only "the element
+  // is on one side only", which is a statement about the alignment rather than
+  // about the sites, and it carried the same word for a dropped paragraph and an
+  // invented one.
   for (const element of prodOnly) {
-    rows.push({ class: 'structure', prod: element, new: null, score: null });
+    rows.push({ class: 'text-missing', prod: element, new: null, score: null });
   }
   for (const element of newOnly) {
-    rows.push({ class: 'structure', prod: null, new: element, score: null });
+    rows.push({ class: 'text-added', prod: null, new: element, score: null });
   }
 
   // A new-only element sorts just after the production element it follows, so an

@@ -184,22 +184,22 @@ describe('diffRows', () => {
     expect(rows.filter((row) => row.class === null).length).toBe(2);
   });
 
-  it('pairs the edited paragraph instead of reporting two structure rows', () => {
+  it('pairs the edited paragraph instead of reporting a loss and an addition', () => {
     const edited = rows.find((row) => row.class === 'copy');
     expect(edited?.prod?.raw).toBe('Onze prijzen zijn scherp');
     expect(edited?.new?.raw).toBe('Onze prijzen zijn heel scherp');
     expect(edited?.score).toBeGreaterThan(0.6);
   });
 
-  it('makes no finding when unchanged text moved into another element', () => {
-    // The LCS anchors on `norm` and ignores the tag. `restructured` is hidden and
-    // an editor has nothing to do about markup carrying the same words, so this
-    // is the right outcome — see the note on diffRows.
+  it('reports unchanged text that moved into another element', () => {
+    // Before ticket 33 the LCS anchored on `norm` alone and this was an exact
+    // match that emitted nothing. 762 elements on 80 nl pages were reported as
+    // identical while their element had changed.
     const rows = diffRows(
       extract({ elements: [element('Verkrijgbaar in RAL 7016', { tag: 'p' })] }),
       extract({ side: 'new', elements: [element('Verkrijgbaar in RAL 7016', { tag: 'td' })] }),
     );
-    expect(rows.map((row) => row.class)).toEqual([null]);
+    expect(rows.map((row) => row.class)).toEqual(['tag-changed']);
   });
 
   it('keeps production document order and places an addition in place', () => {
@@ -209,6 +209,62 @@ describe('diffRows', () => {
       'Onze prijzen zijn scherp',
       '+Nieuw blok',
     ]);
+  });
+
+  /** @param {string} prodTag @param {string} newTag */
+  function samePairedText(prodTag, newTag) {
+    const text = 'Kleuren en afwerking';
+    const rows = diffRows(
+      extract({ elements: [element(text, { tag: prodTag })] }),
+      extract({ side: 'new', elements: [element(text, { tag: newTag })] }),
+    );
+    return rows.map((row) => row.class);
+  }
+
+  it('reports a heading demoted from h2 to h3 with the text unchanged', () => {
+    // The one rule in spec 32 that turns a currently-silent match into a
+    // finding. 467 of the 762 are a heading-level change, and it is what makes
+    // the missing `h1` on 16 pages visible.
+    expect(samePairedText('h2', 'h3')).toEqual(['heading-level']);
+  });
+
+  it('reports a heading on one side only as heading-level, in both directions', () => {
+    // "Either side is a heading" — a paragraph promoted to a heading and a
+    // heading demoted to a paragraph are both an outline change.
+    expect(samePairedText('p', 'h3')).toEqual(['heading-level']);
+    expect(samePairedText('h3', 'p')).toEqual(['heading-level']);
+  });
+
+  it('parks a tag change between two non-headings as hidden', () => {
+    expect(samePairedText('p', 'div')).toEqual(['tag-changed']);
+    expect(samePairedText('li', 'p')).toEqual(['tag-changed']);
+  });
+
+  it('keeps the same text in the same tag an exact match that emits nothing', () => {
+    expect(samePairedText('p', 'p')).toEqual([null]);
+    expect(samePairedText('h2', 'h2')).toEqual([null]);
+
+    const findings = collect((collector) => textFindings(
+      diffRows(
+        extract({ elements: [element('Kleuren', { tag: 'h2' })] }),
+        extract({ side: 'new', elements: [element('Kleuren', { tag: 'h2' })] }),
+      ),
+      collector,
+    ));
+    expect(findings).toEqual([]);
+  });
+
+  it('splits a one-sided element by direction', () => {
+    // Ticket 33 retires `structure`. A dropped paragraph and an invented one
+    // carried the same word, and the invented side is mostly a PageBuilder
+    // rebuild rather than a defect.
+    const rows = diffRows(
+      extract({ elements: elements(['Wij leveren door heel Nederland']) }),
+      extract({ side: 'new', elements: elements(['Bekijk onze showrooms in de buurt']) }),
+    );
+    expect(rows.map((row) => row.class).sort()).toEqual(['text-added', 'text-missing']);
+    expect(rows.find((row) => row.class === 'text-missing')?.new).toBe(null);
+    expect(rows.find((row) => row.class === 'text-added')?.prod).toBe(null);
   });
 });
 
@@ -228,7 +284,7 @@ describe('textFindings', () => {
     // `Kleuren:` → `Verkrijgbaar in de volgende kleuren:` scores 0.33, so it does
     // not pair at ticket 02's 0.6 — nor would it have at the prototype's 0.55.
     // Ticket 02 quotes it as its example of one change counted many times, but
-    // it is two `structure` findings, each grouped to four occurrences. The
+    // it is one loss and one addition, each grouped to four occurrences. The
     // grouping still does the work the ticket wanted; the pairing cannot.
     const production = extract({ elements: elements(['Kleuren:', 'Kleuren:', 'Kleuren:', 'Kleuren:']) });
     const label = 'Verkrijgbaar in de volgende kleuren:';
@@ -236,9 +292,22 @@ describe('textFindings', () => {
 
     const findings = collect((collector) => textFindings(diffRows(production, next), collector));
     expect(findings.map((finding) => [finding.class, finding.occurrences])).toEqual([
-      ['structure', 4],
-      ['structure', 4],
+      ['text-missing', 4],
+      ['text-added', 4],
     ]);
+  });
+
+  it('leaves the invented side out of the shown count', () => {
+    // Ticket 33: `text-added` is hidden, so a PageBuilder rebuild cannot bury
+    // the content that was actually lost.
+    const findings = collect((collector) => textFindings(
+      diffRows(
+        extract({ elements: elements(['Wij leveren door heel Nederland']) }),
+        extract({ side: 'new', elements: elements(['Bekijk onze showrooms in de buurt']) }),
+      ),
+      collector,
+    ));
+    expect(summarise(findings)).toMatchObject({ shown: 1, hidden: 1, total: 2 });
   });
 
   it('gives every occurrence one id, so the count cannot detach a dismissal', () => {
@@ -489,9 +558,12 @@ describe('comparePage', () => {
         new: extract({ side: 'new', elements: elements(['Vanaf € 849', 'Snelle bezorging vandaag']) }),
       },
     });
-    expect(report.summary.byClass.price).toBe(1);
-    expect(report.summary.hidden).toBe(1);
-    expect(report.summary.shown).toBe(report.summary.total - 1);
+    // `Gratis bezorging` → `Snelle bezorging vandaag` scores 0.4, so it does not
+    // pair: it is a loss and an addition, and ticket 33 hides the addition.
+    expect(report.summary.byClass).toEqual({
+      price: 1, 'text-missing': 1, 'text-added': 1,
+    });
+    expect(report.summary).toMatchObject({ shown: 1, hidden: 2, total: 3 });
   });
 });
 

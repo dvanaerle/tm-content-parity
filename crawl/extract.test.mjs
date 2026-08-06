@@ -144,6 +144,48 @@ describe('text elements', () => {
     const extract = extractPage(page('<p>samplepakket</p><button>Vraag aan</button>'), CONTEXT);
     expect(extract.elements.map((element) => element.raw)).toEqual(['samplepakket', 'Vraag aan']);
   });
+
+  it('reads a heading that wraps an accordion anchor as the heading', () => {
+    // Ticket 33. Production builds every FAQ question as
+    // `<h4 class="panel-title"><a data-toggle="collapse" …>`, so the anchor is
+    // the leaf and the heading level was thrown away: the element read as a
+    // `cta` with no level, against a plain `<h3>` on the new site. 337 elements
+    // on 40 of 179 nl pages, and it was about to be reported as 330 `a` → `h3`
+    // heading-level findings that name the wrong production element.
+    const extract = extractPage(page(
+      '<div class="panel-heading"><h4 class="panel-title">'
+      + '<a data-toggle="collapse" href="#question3890">Is mijn product op voorraad?</a>'
+      + '</h4></div>',
+    ), CONTEXT);
+    expect(extract.elements).toMatchObject([
+      { tag: 'h4', kind: 'heading', level: 4, raw: 'Is mijn product op voorraad?' },
+    ]);
+  });
+
+  it('keeps a heading whole when only part of it is a link', () => {
+    // The same rule, and the reason it is "a heading is never a container"
+    // rather than a rule about accordions: the leaf rule reported the anchor
+    // alone and silently dropped the words around it.
+    const extract = extractPage(page('<h2>Bekijk onze <a href="/carport">carports</a> nu</h2>'), CONTEXT);
+    expect(extract.elements.map((element) => [element.tag, element.raw])).toEqual([
+      ['h2', 'Bekijk onze carports nu'],
+    ]);
+  });
+
+  it('still takes the leaves inside a container that is not a heading', () => {
+    const extract = extractPage(page('<li><p>Antraciet</p></li>'), CONTEXT);
+    expect(extract.elements.map((element) => [element.tag, element.raw])).toEqual([
+      ['p', 'Antraciet'],
+    ]);
+  });
+
+  it('leaves the anchor in the link list when the heading swallows its text', () => {
+    // The links walk is its own pass over `a[href]` and ticket 05 owns it. A
+    // heading that wraps a real navigational link must still report the link.
+    const extract = extractPage(page('<h2><a href="/carport">Carports</a></h2>'), CONTEXT);
+    expect(extract.elements.map((element) => element.tag)).toEqual(['h2']);
+    expect(extract.links.map((record) => record.text)).toEqual(['Carports']);
+  });
 });
 
 describe('linkKey', () => {

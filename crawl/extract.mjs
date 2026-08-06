@@ -180,22 +180,42 @@ function assertHasContent(extract) {
 /**
  * Ticket 02: every leaf text element in document order, all anchors counted.
  *
+ * **A heading is never a container** (ticket 33). Production builds every FAQ
+ * question as `<h4 class="panel-title"><a data-toggle="collapse" …>`, so under
+ * the plain leaf rule the anchor spoke and the heading level was thrown away:
+ * the element read as a `cta` with no level, against a plain `<h3>` on the new
+ * site. **337 elements on 40 of 179 nl pages**, and ticket 33's new
+ * `heading-level` class would have reported all of them naming the wrong
+ * production element.
+ *
+ * The rule is about headings rather than about accordions, because the same leaf
+ * rule loses content outright on `<h2>Bekijk onze <a>carports</a> nu</h2>`: the
+ * anchor was reported and the words around it disappeared. A heading is one
+ * label, and its text is its own.
+ *
  * @param {import('node-html-parser').HTMLElement} scope
  * @returns {import('../compare/contract.mjs').TextElement[]}
  */
 function textElements(scope) {
   const out = [];
+  /** Text elements a heading above them already spoke for. */
+  const swallowed = new Set();
+
   for (const node of scope.querySelectorAll(TEXT_TAGS)) {
-    if (node.querySelectorAll(TEXT_TAGS).length > 0) continue;
+    if (swallowed.has(node)) continue;
 
     const tag = node.rawTagName.toLowerCase();
+    const heading = /^h[1-6]$/.test(tag);
+    if (heading) {
+      for (const inner of node.querySelectorAll(TEXT_TAGS)) swallowed.add(inner);
+    } else if (node.querySelectorAll(TEXT_TAGS).length > 0) continue;
+
     const raw = textOf(node);
     const norm = tier1(raw);
     if (norm.length < 2) continue;
     // Bullets, arrows and separators carry no content to compare.
     if (!/[\p{L}\p{N}]/u.test(norm)) continue;
 
-    const heading = /^h[1-6]$/.test(tag);
     out.push({
       index: out.length,
       tag,

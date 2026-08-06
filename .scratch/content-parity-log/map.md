@@ -35,6 +35,7 @@ differences, act on it, press Recheck, and watch the count fall to zero.
   node crawl/21-crawl-store.mjs nl     # ~2 min, 360 requests, --force to re-crawl
   node compare/link-status.mjs nl      # ~3 min, 2,623 unique targets
   node compare/30-compare.mjs nl       # seconds
+  node compare/measure.mjs nl          # the regression gate, reads the reports
   cd web && npm run dev                # or npm run build for dist/
   ```
 
@@ -327,6 +328,36 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   log. Two new classes close it. So the ticket both removes findings and adds
   them. Specified as [32](issues/32-scannable-log-and-six-stores.md).
 
+- [33 — The class vocabulary: direction, and the changes the log cannot see](issues/33-directional-text-classes.md)
+  — **Phase 1 of spec 32 is built and measured.** `structure` is retired for
+  `text-missing` (shown) and `text-added` (hidden), and an exact-text pair whose
+  element changed is no longer silent: `heading-level` (shown) when either side is
+  a heading, `tag-changed` (hidden) otherwise. 18 classes to 21, `classifyExactPair()`
+  in `compare/text.mjs`, 161 tests green. The 0.6 threshold was not touched.
+
+  **Measured in three steps, because the changes pull in opposite directions and
+  one number would have hidden both.** Baseline reproduced exactly first
+  (10,076 / 8,573 / median 41), then:
+
+  | | findings | shown | median shown |
+  |---|---|---|---|
+  | baseline | 10,076 | 8,573 | 41 |
+  | 1. the directional split | 10,076 | **7,010** | **34.5** |
+  | 2. + the two new classes | **10,814** | **7,477** | **37** |
+  | 3. + the heading-leaf bug fix | 10,796 | 7,456 | 37 |
+
+  The split is a pure rename — the total does not move, and the whole reduction is
+  hiding the invented side: the 5,049 `structure` findings were **3,486 lost** and
+  **1,563 invented**. The new classes then add 738 findings, 467 of them shown.
+  **179 crawled and 124 comparable held at every step.** `compare/measure.mjs` is
+  the new command that takes these numbers, so the gate is repeatable.
+
+  Two things found while resolving. The `a` → `h3` group the ticket ordered
+  sampled **was an extraction artefact and is fixed** (below). And **user story 24
+  is not closed**: `heading-level` needs identical text, so it surfaces 6 pages
+  where an `h1`'s own words moved tag, not the pages that lost the `h1` outright.
+  Overrides keyed on `structure` detach, as spec 32 decision 4 accepted.
+
 ### Facts found while charting
 
 - Production emits 9 `data-content-type` attributes on a page where the new site
@@ -422,6 +453,25 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   whether the text **inside** one bleeds into an ancestor that is in `TEXT_TAGS`.
   Fixed in ticket 26: `script`, `style` and `noscript` go before any text is read.
   `<template>` deliberately stays, because Alpine renders what is inside it.
+- **A heading that wraps an anchor was extracted as the anchor.** The same leaf
+  rule, one level up, and the second bug it has hidden. Production builds every FAQ
+  question as `<h4 class="panel-title"><a data-toggle="collapse" …>`, so the anchor
+  was the leaf and the heading level went in the bin: the element read as a `cta`
+  with no level against a plain `<h3>` on the new site. **337 elements on 40 of 179
+  pages.** Ticket 28 counted them as 434 `kind` changes and told ticket 33 to sample
+  them before trusting `heading-level`, which was the right instinct — the class
+  would have reported 330 findings naming the wrong production element. Fixed in
+  ticket 33: **a heading is never a container.** `a` → `h3` became `h4` → `h3`, and
+  the `kind` changes fell from 434 to 98. The rule is about headings and not about
+  accordions because the leaf rule also lost content outright on
+  `<h2>Bekijk onze <a>carports</a> nu</h2>` — the anchor was reported and the words
+  around it disappeared. It also moved two of spec 32's head-of-document numbers:
+  pages starting on a non-`h1` fell from 16 to **11**, and pages with no `h1` from 8
+  to **3**, because production wraps some `h1`s in an anchor too.
+- **762 tag changes are on 80 pages, not 67.** Re-measured by
+  `crawl/probes/probe-tag-changes.mjs` while resolving ticket 33. Every other number
+  in spec 32's table reproduced exactly — 3,659 exact-text pairs, 762 tag changes,
+  467 level changes, 434 `kind` changes — so the page count is the one to distrust.
 - **Ticket 02's headline example does not pair.** `Kleuren:` → `Verkrijgbaar in de
   volgende kleuren:` scores **0.33**, below the 0.6 threshold and below the
   prototype's 0.55 as well. It reports as two `structure` findings, each grouped to
@@ -446,31 +496,65 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   — the spec from the grilling session of 2026-08-06, `ready-for-agent`. Eight
   phases, and **phase 1 must be measured before phase 2 starts**. It retires
   `structure` for a directional `text-missing` / `text-added` pair, adds
-  `heading-level` and `tag-changed` for the **762 tag changes on 67 pages the log
-  currently reports as identical**, merges Diff and Content into one tinted
+  `heading-level` and `tag-changed` for the **762 tag changes on 80 pages the log
+  reported as identical**, merges Diff and Content into one tinted
   content view, adds class filters and a store switcher over all six stores, gives
   every finding a position, and puts the storefront's 22 brand hexes into one
   Tailwind 4 `@theme`. Resolves ticket 28 and closes ticket 12's remaining
   questions.
 
-  Broken into six build tickets, all `ready-for-agent`. **Two can start now:**
+  Broken into six build tickets. **33 is resolved and measured**, so 34, 35 and 38
+  can all start now.
 
   ```
-  33 ──> 34 ──┐
-   └──> 35 ───┴──> 36 ──> 37
+  33 ✓ ──> 34 ──┐
+     └──> 35 ───┴──> 36 ──> 37
   38 (independent)
   ```
 
-  - [33 — The class vocabulary: direction, and the changes the log cannot see](issues/33-directional-text-classes.md)
   - [34 — Where is it? Position for every finding](issues/34-position-and-ordering.md)
   - [35 — One visual language: brand tokens and a real diff](issues/35-diff-rendering-and-design-system.md)
   - [36 — The content view: the whole page, filtered, tickable](issues/36-merged-content-view.md)
   - [37 — Leesweergave: the page as a reader sees it](issues/37-leesweergave.md)
   - [38 — Six stores, not one](issues/38-six-stores.md)
 
-  33 must be **measured** before 34 and 35 start — the split and the two new
-  classes move the count in opposite directions, and a later change measured
-  against a moved baseline tells nobody anything.
+  33 was **measured** before 34 and 35 — three times, because the split and the two
+  new classes move the count in opposite directions. **The baseline for every later
+  phase is 10,796 findings / 7,456 shown / median 37 / 179 crawled / 124
+  comparable**, not 8,573. Take it with `node compare/measure.mjs nl`.
+
+- **Axis B: coverage, NL against the other five stores.** Ticket 11 resolved every
+  rule and nothing was built. `/to-tickets` cut it into seven slices on
+  2026-08-06. It **supersedes ticket 24** and **folds ticket 23** into 41.
+
+  ```
+  33 ✓ (spec 32) ──> 39 ──> 40 ──> 41
+                      └──────────────> 42 ──> 43
+         38 (spec 32) ┘        └──────────────> 44
+                               └──> 45
+  ```
+
+  - [39 — The class vocabulary learns about axes](issues/39-class-vocabulary-axes.md)
+    — the prefactor. Nothing changes on the screen.
+  - [40 — Coverage: missing pages, from the seed file alone](issues/40-coverage-missing-pages.md)
+    — the tracer bullet. **Needs no crawl**: the 635 null cells are on disk now.
+  - [41 — The coverage matrix, and bulk muting](issues/41-coverage-matrix-bulk-mute.md)
+  - [42 — Untranslated text](issues/42-untranslated-text.md) — the highest-value
+    check on the axis.
+  - [43 — Alt language and meta](issues/43-alt-language-and-meta.md)
+  - [44 — Heading outline shape](issues/44-heading-outline-shape.md)
+  - [45 — Images across stores](issues/45-images-across-stores.md)
+
+  **Two edges cross into spec 32, and both are real.** Ticket 39 adds an `axis`
+  to the same class table that ticket 33 rewrote, so 39 is **unblocked**: 33 landed
+  and was measured, and it deliberately left `axis` alone so that 39 still has a
+  ticket to resolve. There are 21 classes for it to reach, not 18. Ticket 44 is now
+  the nearest owner for spec 32's user story 24, which 33 could not close — a page
+  whose first heading is not an `h1` (11 pages) or that has no `h1` at all (3).
+  Tickets 42 and 45 need the five stores crawled, which is
+  ticket 38, not a ticket of their own —
+  [46](issues/46-crawl-five-stores.md) asked for the same crawl and is closed as
+  a duplicate.
 
 - [31 — Bulk dismissal across pages](issues/31-bulk-dismissal.md) — the one user
   story in spec 29 that shipped as nothing, found by the code review of the

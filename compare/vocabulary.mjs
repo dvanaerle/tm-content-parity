@@ -8,8 +8,15 @@
  * never in the browser, so the split costs nothing.
  *
  * Ticket 02 fixes the text classes, ticket 05 the link classes, ticket 06 the
- * image classes. A class is also the mute key (ticket 01), so each name must be a
- * name an editor knows, and each new class must give its default.
+ * image classes, ticket 33 the directional text split. A class is also the mute
+ * key (ticket 01), so each name must be a name an editor knows, and each new
+ * class must give its default.
+ *
+ * **A one-sided difference is named by its direction, on every check.** Content
+ * production has and the new site lost is shown; content the new site invented is
+ * hidden, because it is mostly a PageBuilder rebuild and not a defect. That rule
+ * holds for `text-missing`/`text-added`, `missing-link`/`extra-link` and
+ * `image-missing`/`image-added` — one idea an editor learns once.
  */
 
 /** @typedef {'nl' | 'be' | 'be_fr' | 'de' | 'fr' | 'uk'} Store */
@@ -29,11 +36,18 @@
 export const FINDING_CLASSES = {
   // Ticket 02 — text
   copy: { check: 'text', shown: true, meaning: 'The text changed. Both sides are present.' },
-  structure: { check: 'text', shown: true, meaning: 'The element is on one side only.' },
   casing: { check: 'text', shown: true, meaning: 'Only letter case or trailing punctuation is different.' },
   restructured: { check: 'text', shown: false, meaning: 'The same content, but a different element on each side.' },
   price: { check: 'text', shown: false, meaning: 'Only the numbers are different.' },
   campaign: { check: 'text', shown: false, meaning: 'Promotional copy. The pattern must match both sides.' },
+
+  // Ticket 33 — text, by direction. These replace `structure`.
+  'text-missing': { check: 'text', shown: true, meaning: 'Production has the text. The new site does not.' },
+  'text-added': { check: 'text', shown: false, meaning: 'The new site has text that production does not have.' },
+
+  // Ticket 33 — the same text in a different element. Silent before this ticket.
+  'heading-level': { check: 'text', shown: true, meaning: 'The text is the same, and it is a heading on one side or at another level.' },
+  'tag-changed': { check: 'text', shown: false, meaning: 'The text is the same, and it sits in a different element. Neither side is a heading.' },
 
   // Ticket 05 — links
   'broken-link': { check: 'links', shown: true, meaning: 'The target does not answer. It fires also if production is broken.' },

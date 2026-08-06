@@ -87,6 +87,15 @@ passes (14 tests) and `npm run build --prefix web` builds to `dist/`.
   no rule identifier that is more specific than the class exists. A
   consequence, written in `CONTEXT.md`: if a re-check gives a finding a
   different class, the id changes and the dismissal detaches.
+
+  **First paid on 2026-08-06.** Ticket 33 retired `structure`, so every override
+  keyed on it — a `fixed`, `dismissed` or `reviewed` event on one of the 5,049
+  `structure` findings, and any mute on `<store>|<page>|structure` — matches
+  nothing any more. Nothing was migrated and no alias was added, per spec 32
+  decision 4. It cost nothing because the Supabase project is still not wired
+  (ticket 13), and that is the only reason it was cheap. **A future
+  re-classification of a class with real override data behind it is not this
+  cheap**, and the next one needs a migration story before it lands.
 - **Tailwind 4 through the Vite plugin**, not the Tailwind 3 setup of
   `devdva02`. This repo shares no design tokens with the storefront, and the
   Astro 5 Tailwind integration is deprecated.
