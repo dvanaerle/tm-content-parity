@@ -110,6 +110,37 @@ red and green are diff meaning only:
 Neither needed a third loud hue: the brand orange stayed on chrome, and amber in
 two weights carries the whole severity ramp.
 
+## Fixed after the review
+
+The two-axis code review of this ticket's commit found ten things. Seven are fixed
+in `5ca7796`, `f25c0e3`, `3c1d9c5` and `651cd67`, and four of the seven change what
+this ticket decided:
+
+- **The meta cells painted a canonical this ticket calls equal.** `meta.mjs` folds
+  the hostname before it compares and reports the raw value, and the panel diffed
+  the two raw values. So on the 18 pages that differ by hostname alone the row said
+  `same` and the cells still painted the hostname. `DiffCells` takes `equal` now,
+  and `MetaTable` passes `state === 'same'`.
+- **`BANNER.severe` and `BANNER.attention` were one string.** The error banner and
+  the not-connected banner printed the same shape. `severe` takes the deeper amber
+  ground. Amber in two weights still carries the ramp.
+- **`palette.mjs` was not the only door to a colour.** `Shell.astro` wrote the brand
+  literals, and four components reached past the map for ink. `INK` holds the three
+  ink tones a caller asks for. The rendered html did not change.
+- **18 of the 22 transcribed brand hexes are gone.** `@theme` makes a utility for
+  each value it declares, so the 18 no component wears were dead CSS. The comment
+  cites the storefront config for them.
+
+Also fixed: `severityTone()` has tests, so does the reservation of red and green;
+the five `null` tones in `SURFACE` and the two unread `CHROME` entries are deleted;
+the new prose is in Simplified Technical English; and the probe keeps its `nu`.
+
+Three findings are open and are **not** this ticket's to close: the content diff
+cells are still proportional and not monospaced, `classInfo().direction` has no
+consumer, and `compare/meta.mjs` imports `crawl/keys.mjs`, which inverts the
+layering `AGENTS.md` states. The last one needs an ADR about where a shared
+identity key lives.
+
 ## Left for another ticket
 
 **The two pages where the new site lost its canonical cannot be seen yet.**
