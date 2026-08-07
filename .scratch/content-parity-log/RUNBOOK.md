@@ -47,7 +47,7 @@ work.
 | Human decisions | 4 | minutes each — **13 is decided and applied** |
 | Deferred, blocked by other tickets | 4 | none yet |
 | Opened by the review of ticket 38 | 2 | **done, session 2** — 59 and 60 both landed |
-| Opened by the grilling of the content unit | 10 | about 4 sittings, sessions 2A to 2D — **62 landed** |
+| Opened by the grilling of the content unit | 10 | about 4 sittings, sessions 2A to 2D — **62, 66, 65 and 61 landed** |
 
 **Two facts decide what can start today.**
 
@@ -64,6 +64,13 @@ are session 2A and they can start now.
 **62 is done**, and it proved the plan: no crawl, and the compare stage over the
 extracts on disk gave the whole measurement. **66 and 65 are done as well, so
 session 2A is complete.**
+
+**The count of three was wrong, and 61 shows how to test it.** A ticket that changes
+extraction still needs no crawl when the corpus carries the bytes the new rule reads.
+The old tier 1 left the invisible characters in `norm`, so a probe could re-normalise
+the extracts on disk and measure the whole effect. **Ask what the old rule discarded
+before you accept that a ticket is blocked on the hosts.** Ticket 63 excludes regions,
+and an extract holds no DOM path, so 63 is genuinely blocked. 61 was not.
 
 **The corpus total moved.** It is **34,559 findings, 23,570 shown**, over the same
 448 pages. Every number below that was measured against 34,910 and 23,961 is a
@@ -370,19 +377,43 @@ measures nothing.
 
 Needs the new environment. Three tickets, **three gates**. Do not batch them.
 
-```
-/clear
-```
+### Ticket 61 — DONE on 2026-08-07, and it needed no crawl
 
-```
-/implement .scratch/content-parity-log/issues/61-tier-one-normalisation-gaps.md
+The runbook said this one needs the new site. **It did not.** The old tier 1 left a
+hexadecimal entity, a zero-width character and a soft hyphen in `norm` untouched, so
+the corpus on disk still carries every byte the new fold reads. A probe re-normalises
+the stored extracts and compares each page before and after. The corpus is the input,
+so the hosts are not.
 
-Tier 1 folds invisible equivalence, and three characters a browser never draws are
-outside it. This changes extraction, so it needs a crawl.
+**The whole answer is a zero.** 448 pages, **34,559 findings before and after**, and
+no class moves by one. `crawl/probes/probe-tier1-gaps.mjs` is the measurement, and it
+is one command.
 
-Gate: crawl nl, compare, measure. The findings these characters caused are gone and
-no other count moves.
-```
+The reason the answer is a zero is the part to carry forward. The corpus holds **not
+one** hexadecimal entity, zero-width space, zero-width joiner, zero-width non-joiner
+or `&shy;`, in `data/extract/`, `data/reports/` or `data/rechecks/`. The string
+`Sorteer` does not occur at all. The **soft hyphen** occurs twice, on
+`steel-look-glazen-schuifwand` for nl and be, inside a `text-missing` finding it did
+not cause.
+
+So the gate is half met. "No other count moves" is shown. "The findings these
+characters caused are gone" **cannot be shown, because they are not in the report.**
+`Sorteer op` is a listing-toolbar label, so the page is outside the seed list, or it
+is client-rendered (ticket 19).
+
+**Two things are still owed, and neither blocks 63.**
+
+- **A page that shows the symptom.** Until one is named, the fix is correct, tested,
+  and unproven against the two reports that asked for it.
+- **The next crawl moves two finding ids.** The two soft-hyphen texts get shorter, so
+  their ids change. No override sits on either — ticket 65 read the whole log and the
+  5 live overrides are all on nl, none on this page. Session 2B's own crawl, for 63
+  and 64, carries this for free.
+
+Found while resolving: **a malformed numeric entity stopped the crawl.**
+`String.fromCodePoint()` throws above U+10FFFF, so `&#xdeadbeef;` in CMS text threw a
+`RangeError` out of the extractor. The decimal branch had the defect before this
+ticket; the hexadecimal branch makes it easy to hit. It is guarded and tested now.
 
 ```
 /clear
@@ -887,7 +918,7 @@ crawl, it is a `data` ticket and it runs alone.
 | 62 | Two identical units make no finding | session 2A | — | **done** — 391 phantom `casing` findings gone, no crawl |
 | 66 | Rename to `ContentUnit` | session 2A | — | **done** — 0 of 448 reports differ |
 | 65 | Count the overrides the fold detaches | session 2A | — | **done** — 5 live overrides, **1** detaches, 0 reviews |
-| 61 | Tier-1 invisible characters | session 2B | `data` | `/implement` — needs the new site |
+| 61 | Tier-1 invisible characters | session 2B | `read` | **done** — 34,559 findings before and after. No crawl was needed |
 | 63 | Regions excluded at extraction | session 2B | `data` | `/implement` — resolves 27 |
 | 64 | The promo banner, 7.7% | session 2B | `data` | `/implement` — after 63 |
 | 67 | A content unit folds its links | session 2C | `data` | `/implement` — after 66, needs 65 |
