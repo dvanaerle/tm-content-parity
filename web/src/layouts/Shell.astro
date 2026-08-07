@@ -1,5 +1,6 @@
 ---
 import '../styles/app.css';
+import BrandLogo from '../components/BrandLogo.astro';
 import { CHROME } from '../lib/palette.mjs';
 
 const { title } = Astro.props;
@@ -20,9 +21,10 @@ const { title } = Astro.props;
       brand green stops at the bottom border of this element. The colours come
       from `CHROME`, because a literal here is a second place to change one.
     */}
-    <header class={`px-6 py-4 ${CHROME.header}`}>
-      <a href="/" class="font-semibold">Content parity log</a>
-      <span class={`ml-2 text-sm ${CHROME.headerMuted}`}>Tuinmaximaal — productie tegen de nieuwe site</span>
+    <header class={`px-5 h-16 flex items-center ${CHROME.header}`}>
+      <a href="/" aria-label="Content parity log" class="inline-block">
+        <BrandLogo width={70} height={43} aria-hidden="true" />
+      </a>
     </header>
     <main class="px-6 py-6">
       <slot />
