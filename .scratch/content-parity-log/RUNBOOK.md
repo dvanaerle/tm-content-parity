@@ -23,7 +23,7 @@ directions. One number would have hidden both.
 | --- | --- | --- |
 | Build tickets, agent-ready | 19 | about 10 sittings |
 | Close or fold in triage | 4 | **done, session 1** |
-| Human decisions | 4 | minutes each |
+| Human decisions | 4 | minutes each — **13 is decided, session 1** |
 | Deferred, blocked by other tickets | 4 | none yet |
 | Opened by the review of ticket 38 | 2 | **triaged, both build in session 2** |
 
@@ -83,7 +83,7 @@ The triage below was applied. What it did:
 - **Three blocking edges recorded**: 16 by 55, 20 by 22 and 55, 48 by 37.
 - `map.md` agrees.
 
-**Ticket 13 is decided and built. Two human steps are left — see below.**
+**Ticket 13 is decided and built. Three human steps are left — see below.**
 
 No crawl. About 30 minutes.
 
@@ -147,7 +147,7 @@ Do not redo it. The three remaining "51" references in map.md are the seed
 ticket 51-runnable-tracked-seed-pipeline.md and are correct.
 ```
 
-### Ticket 13: two steps at a dashboard
+### Ticket 13: three steps, two of them at a dashboard
 
 Decided on 2026-08-07: **the plan stays free**, and a daily GitHub Action writes
 one row to a `keepalive` table. Pro was refused. The code is committed. Three
@@ -184,7 +184,8 @@ Two things this does not fix, both accepted, not solved:
   as quietly as the fault it prevents.
 - Nothing prevents a lost network or a Supabase outage.
 
-For all three, the detection is the same, and it is built already. A failed
+A pause, a lost network and an outage look the same to an editor, and the
+detection for all three is the same. It is built already. A failed
 write tells the editor: `overrides/supabase.mjs:106` throws,
 `web/src/lib/overrides.mjs:110` writes to local state only after the insert
 resolves, `canWrite` makes the controls read-only rather than dropping clicks,
