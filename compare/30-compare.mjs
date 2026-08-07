@@ -14,7 +14,7 @@
 
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { findingSetHash, newObservationId } from './contract.mjs';
+import { findingSetHash, newObservationId, reportFilename } from './contract.mjs';
 import { FindingCollector, summarise } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
@@ -149,18 +149,6 @@ async function jsonFiles(dir) {
     else if (entry.name.endsWith('.json')) out.push(fileURLToPath(new URL(entry.name, dir)));
   }
   return out;
-}
-
-/**
- * A page key can hold a slash (`faq/productinformatie`), and the report folder is
- * flat because `web/` reads it with one non-recursive listing. The store and the
- * page live inside the JSON, so the filename is storage and nothing else.
- *
- * @param {string} store
- * @param {string} page
- */
-export function reportFilename(store, page) {
-  return `${store}__${page.replaceAll('/', '__')}.json`;
 }
 
 /**

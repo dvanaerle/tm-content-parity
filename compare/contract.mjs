@@ -6,7 +6,7 @@
  */
 
 import { createHash, randomUUID } from 'node:crypto';
-import { FINDING_CLASSES as CLASSES } from './vocabulary.mjs';
+import { FINDING_CLASSES as CLASSES, STORES } from './vocabulary.mjs';
 
 /**
  * The class vocabulary lives in `vocabulary.mjs` and is re-exported here, so a
@@ -283,6 +283,41 @@ export function findingId({ store, page, check, rule, prodNorm, newNorm, detail 
   const parts = [store, page, check, rule, prodNorm ?? '', newNorm ?? ''];
   if (detail) parts.push(detail);
   return createHash('sha256').update(parts.join('|'), 'utf8').digest('base64url').slice(0, 16);
+}
+
+const SEPARATOR = '__';
+
+/**
+ * The name of the file that holds one `PageReport`.
+ *
+ * The store is in the name so that the store dashboard does not open every report
+ * to find its own: the build reads 45 files for `de`, not 448 (ticket 38). That
+ * makes the name data the web build parses, so the shape is stated here, once,
+ * with `storeOfFile()` beside it — and nowhere else (ticket 60).
+ *
+ * A page key can hold a slash (`faq/productinformatie`), and the report folder is
+ * flat because `web/` reads it with one non-recursive listing. So the separator
+ * serves twice: it joins the store to the page, and it replaces the slashes.
+ *
+ * @param {Store} store
+ * @param {string} page
+ * @returns {string}
+ */
+export function reportFilename(store, page) {
+  return `${store}${SEPARATOR}${page.replaceAll('/', SEPARATOR)}.json`;
+}
+
+/**
+ * The store `reportFilename()` wrote into a name.
+ *
+ * No two store ids are prefixes of one another once the separator is counted —
+ * `be__` does not match `be_fr__` — so the match is exact.
+ *
+ * @param {string} name
+ * @returns {Store | null} `null` for a name no store claims.
+ */
+export function storeOfFile(name) {
+  return STORES.find((store) => name.startsWith(`${store}${SEPARATOR}`)) ?? null;
 }
 
 /**

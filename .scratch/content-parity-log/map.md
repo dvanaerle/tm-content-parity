@@ -529,9 +529,10 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   `compare/contract.mjs` does not mention. **Both were triaged to
   `ready-for-agent` in session 2**: 59 refuses the store argument rather than
   merging the file, and 60 names the filename shape in the contract rather than
-  reading the store out of each report. **59 is resolved** on the same day. The
-  argument is refused with exit 2, and the sweep it asked for found no third
-  overwrite. 60 is open.
+  reading the store out of each report. **Both are resolved** on the same day. 59
+  refuses the argument with exit 2, and the sweep it asked for found no third
+  overwrite. 60 put `reportFilename()` and `storeOfFile()` in `contract.mjs`, so
+  the `__` separator is written once and not in two files.
 
 - [21 — The Axis A meta check: what is a parity defect in the head?](issues/21-axis-a-meta-check.md)
   — **The head is not one thing.** Each row is decided on its own, and the test is
@@ -876,7 +877,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   33 ✓ ──> 34 ~ ─┐
      └──> 35 ✓ ──┴──> 36 ✓ ──> 37 ← next ──> 48 (needs-triage)
   38 ✓ (independent) ──> 49 ✗ wontfix
-                     └──> 59, 60 (ready-for-agent, session 2)
+                     └──> 59 ✓, 60 ✓
   ```
 
   **34's open criterion blocks nothing.** 36 needed the row-ordering fix and 37
@@ -952,7 +953,11 @@ Settled while charting, in the destination-naming session. No ticket holds them.
     sweep of every `writeFile` into `data/` found no third overwrite, so the
     shape is not a pattern.
   - [60 — The report filename is crawl-to-web data outside the contract](issues/60-report-filename-in-the-contract.md)
-    — `ready-for-agent`, **session 2, before spec 50**.
+    — **resolved** 2026-08-07. `compare/contract.mjs` holds `reportFilename()`
+    and `storeOfFile()`, one beside the other, and the `__` separator is stated
+    once. `30-compare.mjs` writes through the first and `web/src/lib/reports.mjs`
+    reads through the second. A move, not a change: the tests moved with the
+    functions and no number moved.
 
   **The review of 36 acted, and one finding became 48.** `CONTEXT.md` gained the
   words the merged view brought — *content view*, *filter*, *noise toggle* — and it

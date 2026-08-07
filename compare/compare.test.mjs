@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { comparePage, newSitePathsFor, reportFilename, skipReason } from './30-compare.mjs';
+import { comparePage, newSitePathsFor, skipReason } from './30-compare.mjs';
 import { FindingCollector, median, summarise, summariseReports } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
@@ -1097,12 +1097,6 @@ describe('summariseReports', () => {
   it('gives zeroes rather than NaN when nothing is comparable', () => {
     const result = summariseReports([report(false, {}, { shown: 0, total: 0 })]);
     expect(result).toMatchObject({ crawled: 1, comparable: 0, medianShown: 0, medianTotal: 0 });
-  });
-});
-
-describe('reportFilename', () => {
-  it('flattens a page key that holds a slash', () => {
-    expect(reportFilename('nl', 'faq/productinformatie')).toBe('nl__faq__productinformatie.json');
   });
 });
 

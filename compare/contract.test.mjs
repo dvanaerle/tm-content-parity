@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { CHECKS, FINDING_CLASSES, findingId, muteKey, newObservationId } from './contract.mjs';
+import {
+  CHECKS,
+  FINDING_CLASSES,
+  findingId,
+  muteKey,
+  newObservationId,
+  reportFilename,
+  storeOfFile,
+} from './contract.mjs';
 
 const base = {
   store: 'nl',
@@ -86,6 +94,44 @@ describe('muteKey', () => {
     expect(muteKey({ store: 'nl', page: 'overkappingen', class: 'price' })).toBe(
       'nl|overkappingen|price',
     );
+  });
+});
+
+/**
+ * The report filename carries the store, and `web/` reads it back out. That makes
+ * it contract data, so the pair is tested here and not beside either caller.
+ */
+describe('reportFilename', () => {
+  it('flattens a page key that holds a slash', () => {
+    expect(reportFilename('nl', 'faq/productinformatie')).toBe('nl__faq__productinformatie.json');
+  });
+
+  it('round-trips the store it wrote', () => {
+    expect(storeOfFile(reportFilename('be_fr', 'carports'))).toBe('be_fr');
+  });
+});
+
+/**
+ * One rule with judgement in it: the store is read back from the name so that one
+ * store's dashboard opens one store's files. The judgement is that a prefix match
+ * is safe here.
+ */
+describe('storeOfFile', () => {
+  it('reads the store from the report filename', () => {
+    expect(storeOfFile('nl__overkappingen.json')).toBe('nl');
+    expect(storeOfFile('de__faq__productinformatie.json')).toBe('de');
+  });
+
+  it('does not read be_fr as be', () => {
+    // `be` is a prefix of `be_fr`, and the two stores share a host as well. The
+    // separator is what makes the match exact, so it is part of the match.
+    expect(storeOfFile('be_fr__carports.json')).toBe('be_fr');
+    expect(storeOfFile('be__carports.json')).toBe('be');
+  });
+
+  it('claims no store for a name it does not recognise', () => {
+    expect(storeOfFile('snapshot.json')).toBeNull();
+    expect(storeOfFile('nlx__overkappingen.json')).toBeNull();
   });
 });
 

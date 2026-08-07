@@ -2,6 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { EXCLUDED_PAGES } from '../../../crawl/excluded-pages.mjs';
 import { cellWithBothSides } from '../../../crawl/seed-rows.mjs';
+import { storeOfFile } from '../../../compare/contract.mjs';
 import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
 
 /**
@@ -13,21 +14,6 @@ import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
  */
 
 const DIR = fileURLToPath(new URL('../../../data/reports/', import.meta.url));
-
-/**
- * `compare/30-compare.mjs` names a report `<store>__<page>.json`, so the store of
- * a report is readable from its filename. Reading it there rather than from the
- * JSON is what lets one store's dashboard open only that store's files.
- *
- * No two store ids are prefixes of one another once the `__` is counted — `be__`
- * does not match `be_fr__` — so the match is exact.
- *
- * @param {string} name
- * @returns {string | null}
- */
-export function storeOfFile(name) {
-  return STORES.find((store) => name.startsWith(`${store}__`)) ?? null;
-}
 
 /**
  * @param {string} [store] Only this store's reports. Omit for every store.

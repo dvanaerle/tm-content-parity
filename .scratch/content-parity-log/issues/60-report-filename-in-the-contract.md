@@ -14,7 +14,7 @@ writes it, `compare/` and `web/` read it. Change the contract in that file first
 then the code." A filename shape that `web/` parses is exactly that kind of data,
 and it has no home in the contract file.
 
-**Status:** ready-for-agent
+**Status:** resolved 2026-08-07
 
 **Session:** 2, and **before spec 50**. See `../RUNBOOK.md`.
 
@@ -92,3 +92,28 @@ The payload measurement that would let "read the store out of the JSON" be judge
 fairly. It is not needed to make this fix, and it is not worth a crawl. If the
 folder-per-store shape is ever wanted, it starts from a contract that already
 names the pair of functions, which makes it a smaller change than it is today.
+
+## Resolved, 2026-08-07
+
+`compare/contract.mjs` holds `reportFilename(store, page)` and `storeOfFile(name)`,
+one beside the other, and one `SEPARATOR` constant. The comment says why the store
+is in the name: the store dashboard must not open every report to find its own.
+
+The shape was in two files and is now in one. `compare/30-compare.mjs` imports
+`reportFilename()` and keeps no template. `web/src/lib/reports.mjs` imports
+`storeOfFile()` and keeps no prefix match. The `__` is written once.
+
+The tests moved with the functions, from `compare/compare.test.mjs` and
+`web/src/lib/reports.test.mjs` into `compare/contract.test.mjs`. They pin what they
+pinned before — a slash flattens, and `be__` is not `be_fr__` — with one round-trip
+case added, because the pair is now one contract and the two halves must agree.
+
+No number moved. This was a move, not a change of behaviour: 275 tests green, and
+`node compare/measure.mjs nl` prints the same table over the same 448 reports. No
+report was rewritten.
+
+`web/src/lib/reports.mjs` now imports from `compare/contract.mjs` as well as from
+`compare/vocabulary.mjs`. Both imports go **down** the arrow, from `compare/` to
+`web/`, so ADR 0001 is satisfied and no back-arrow is added. The file is Node-only
+— it already reads `node:fs/promises` — so `contract.mjs` and its `node:crypto`
+import never reach a browser bundle.
