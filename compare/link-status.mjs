@@ -5,10 +5,12 @@
  * `broken-link` and `redirect` need this; the other five link classes are decided
  * from the two page HTMLs alone.
  *
- *   node compare/link-status.mjs [store]
+ *   node compare/link-status.mjs
  *
  * Reads every extract under `data/extract/`, collects the internal targets and
- * writes `data/link-status.json`.
+ * writes `data/link-status.json`. It takes no store: the file is keyed on the
+ * target url and holds every store, so a per-store run erases the rest. See
+ * `refusalReason`, ticket 59.
  */
 
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
@@ -119,12 +121,34 @@ async function jsonFiles(dir) {
   return out;
 }
 
+/**
+ * The status of a target is a fact about the target and not about a store. Thus
+ * `data/link-status.json` has no store dimension to give it (ticket 38), and the
+ * script takes no argument. The message below gives the rest of the reason.
+ *
+ * @param {string[]} args positional arguments, after the script path
+ * @returns {string | null} the reason to refuse, or null to run
+ */
+export function refusalReason(args) {
+  if (args.length === 0) return null;
+  return [
+    `link-status.mjs takes no argument, and it was given ${args.map((a) => `\`${a}\``).join(' ')}.`,
+    'It writes data/link-status.json, which is keyed on the target url and holds',
+    'every store at once. A per-store run would write over the other stores, and',
+    'the next compare would report no broken-link and no redirect at all.',
+    'Run it with no argument, over every store that is crawled.',
+  ].join('\n');
+}
+
 if (process.argv[1]?.endsWith('link-status.mjs')) {
-  const store = process.argv[2];
-  const root = store ? new URL(`${store}/`, EXTRACTS) : EXTRACTS;
+  const refusal = refusalReason(process.argv.slice(2));
+  if (refusal !== null) {
+    console.error(refusal);
+    process.exit(2);
+  }
 
   const urls = [];
-  for (const file of await jsonFiles(root)) {
+  for (const file of await jsonFiles(EXTRACTS)) {
     const sides = JSON.parse(await readFile(file, 'utf8'));
     for (const side of ['production', 'new']) {
       for (const link of sides[side].links) if (link.internal) urls.push(link.url);

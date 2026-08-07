@@ -58,10 +58,11 @@ npm start                             # build the front end and serve it on :432
 Crawl each store you want in the log: `nl`, `be`, `be_fr`, `de`, `fr`, `uk`. A
 failure is recorded per store, in `data/extract-failures-<store>.json`.
 
-**Give `link-status.mjs` no store.** It writes one file keyed on the absolute
-URL, and it overwrites that file, so a per-store run erases the store before it
-and `30-compare.mjs` then reports no `broken-link` and no `redirect` there. The
-script does not stop you yet — ticket 59 is open on that.
+**`link-status.mjs` takes no store, and it refuses one.** It writes one file
+keyed on the absolute URL, and it overwrites that file, so a per-store run would
+erase the other stores and `30-compare.mjs` would then report no `broken-link`
+and no `redirect` there. Given an argument, the script prints why and exits 2
+(ticket 59).
 
 `30-compare.mjs` takes an optional store and compares every crawled store without
 one. The front end gives each store its own dashboard at `/<store>/`, and `/` lists

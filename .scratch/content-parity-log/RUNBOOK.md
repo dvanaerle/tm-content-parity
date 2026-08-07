@@ -123,11 +123,8 @@ FOLD. Do not close:
 TRIAGE, both opened 2026-08-07 by the review of ticket 38 and both
 needs-triage. Neither is in the order above yet. Give each a label and a
 session:
-- 59-link-status-overwrite.md — link-status.mjs erases the other stores.
-  Recommendation: ready-for-agent, session 2, because session 3 and session 5
-  both run that script and session 5 is the 1,600-request crawl. Triage picks
-  between refusing the store argument and merging the file. Merging needs an
-  answer about per-target staleness, so refusing is the cheaper call.
+- 59-link-status-overwrite.md — **resolved 2026-08-07**. Triage took refusal over
+  merging, and the script now exits 2 on any argument. Nothing is left to triage.
 - 60-report-filename-in-the-contract.md — <store>__<page>.json is crawl-to-web
   data that web/ parses and compare/contract.mjs does not name. Decide it
   BEFORE spec 50: that spec takes the seed list from 451 to about 800 pages, so
@@ -210,9 +207,9 @@ Then, if triage made them ready-for-agent in session 1:
 /implement .scratch/content-parity-log/issues/60-report-filename-in-the-contract.md
 ```
 
-Build 59 before session 3. Session 3 and session 5 both run
-`compare/link-status.mjs`, and today the wrong argument silently erases every
-other store's link statuses.
+59 is done: `compare/link-status.mjs` refuses an argument and exits 2, so the
+call that erased every other store's link statuses cannot be typed. Session 3
+and session 5 both run that script.
 
 Gate: `npm test` is green, `npm run build` builds 455 pages, and no number
 moves. It is a move, not a change of behaviour.
@@ -485,7 +482,7 @@ The full pipeline, when a session needs fresh data:
 
 ```powershell
 node crawl/21-crawl-store.mjs nl   # about 2 min for each store, --force to crawl again
-node compare/link-status.mjs       # give it NO store, it writes one global file
+node compare/link-status.mjs       # no store. It refuses one, it writes one file
 node compare/30-compare.mjs
 node compare/measure.mjs nl
 Set-Location web
@@ -523,7 +520,7 @@ npm test; if ($?) { node compare/measure.mjs nl }
 | 13 | Supabase pause | session 1 | **done** — applied, one green run, cron unproven |
 | 30 | Wire Supabase | after a scheduled run | you, one click |
 | 47 | Shared keys layering | session 2 | **done** — ADR 0001, `shared/keys.mjs` |
-| 59 | link-status erases the other stores | session 2 | **triaged** → `/implement` |
+| 59 | link-status erases the other stores | session 2 | **done** — the script refuses an argument and exits 2 |
 | 60 | Report filename in the contract | session 2 | **triaged** → `/implement` |
 | 51 | Runnable seed pipeline | session 3 | `/implement` |
 | 52 | Production page list | session 3 | `/implement` |

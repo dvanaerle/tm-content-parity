@@ -39,11 +39,11 @@ differences, act on it, press Recheck, and watch the count fall to zero.
   cd web && npm run dev                # or npm run build for dist/
   ```
 
-  Crawl each of `nl be be_fr de fr uk`. **Give `link-status.mjs` no store**: it
-  overwrites one global file, so a per-store run erases the store before it
-  (ticket 38). Ticket [59](issues/59-link-status-overwrite.md) makes the script
-  refuse the argument, so this sentence becomes a description of a guard rather
-  than the only guard.
+  Crawl each of `nl be be_fr de fr uk`. **`link-status.mjs` takes no store**: it
+  overwrites one global file, so a per-store run would erase the other stores
+  (ticket 38). Ticket [59](issues/59-link-status-overwrite.md) made the script
+  refuse the argument and exit 2, so this sentence describes a guard rather than
+  being the guard.
 
   `data/` is gitignored, so a fresh clone needs the three commands before the
   front end has anything to show.
@@ -503,10 +503,12 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   argument guarded by prose is not guarded, and
   [60](issues/60-report-filename-in-the-contract.md), because
   `<store>__<page>.json` is crawl-to-web data that `web/` parses and
-  `compare/contract.mjs` does not mention. **Both are triaged, both are
-  `ready-for-agent`, and both build in session 2**: 59 refuses the store argument
-  rather than merging the file, and 60 names the filename shape in the contract
-  rather than reading the store out of each report.
+  `compare/contract.mjs` does not mention. **Both were triaged to
+  `ready-for-agent` in session 2**: 59 refuses the store argument rather than
+  merging the file, and 60 names the filename shape in the contract rather than
+  reading the store out of each report. **59 is resolved** on the same day. The
+  argument is refused with exit 2, and the sweep it asked for found no third
+  overwrite. 60 is open.
 
 - [21 — The Axis A meta check: what is a parity defect in the head?](issues/21-axis-a-meta-check.md)
   — **The head is not one thing.** Each row is decided on its own, and the test is
@@ -894,7 +896,10 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   - [49 — The be/be_fr shared-host blind spot, measured](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md)
     — **closed `wontfix`** on 2026-08-07 and moved to `issues/.out-of-scope/`.
   - [59 — `link-status.mjs` erases the other stores](issues/59-link-status-overwrite.md)
-    — `ready-for-agent`, **session 2, before session 3**.
+    — **resolved** 2026-08-07. The script takes no argument. Given one,
+    `refusalReason()` gives the reason, and the script prints it and exits 2. The
+    sweep of every `writeFile` into `data/` found no third overwrite, so the
+    shape is not a pattern.
   - [60 — The report filename is crawl-to-web data outside the contract](issues/60-report-filename-in-the-contract.md)
     — `ready-for-agent`, **session 2, before spec 50**.
 
