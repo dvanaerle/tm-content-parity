@@ -1,9 +1,61 @@
 # 27 — Product listings and filter UI inside `<main>` on a category page
 
 Type: grilling
-Status: open
+Status: resolved — 2026-08-07, by the grilling session on the content unit
 Blocked by: —
 Parent: ../map.md
+
+## Answer
+
+**A category page stays in the log. The grid leaves it, as a region.** The boundary
+between the log's business and the catalogue's business runs inside the page, exactly
+as this ticket said, and the log now has a word for the two sides of it:
+a **non-editorial region** is a region inside the content boundary whose text the
+catalogue or an extension makes.
+
+**Ticket 19's shape works for a region, and this ticket's objection decides where.**
+The objection was right: the extract carries no DOM path, so a check cannot say "the
+third section down". So the region goes **at extraction**, while the DOM still
+exists, and a check stays ignorant of regions. A committed list holds the entries,
+each with its selector, its reason, the pages it was measured on and the unit count it
+removes.
+
+**One selector cuts both hosts.** `#amasty-shopby-product-list` matches once inside
+`<main>` on production and once on the new site, with byte-identical class strings
+across `/overkapping`, `/carport` and `/veranda`, and it matches nothing on a home
+page or a product page. It removes 69 units on production and 48 on the new site, and
+it takes the sorter, the pager and the result count with the tiles. The narrower
+`.products-grid` also matches both hosts and removes 45 against 32; it was rejected
+because it knowingly leaves about 40 machine-generated differences per page alive.
+
+**`pageType` is not the hook.** It names a page kind, and the grid is a region inside
+a page that is otherwise in scope. Hanging the rule on a class that Magento controls
+would hide the question rather than answer it.
+
+**Found while resolving, and it changes what this ticket was measuring.** The product
+titles on production are in a tag the extraction never read, so production never had
+them. The new site holds a whole tile in one anchor, so it does. The result is not a
+symmetric noise problem: on `/overkapping` there are exactly **nine** invisible titles
+on production and exactly **nine** phantom `text-added` rows on the new site. The log
+was reporting invented content that was not invented.
+
+**A guard comes with the mechanism.** The generic page-builder wrapper on production
+looks like the right selector and is not — it wraps all CMS content, and excluding it
+would have removed 358 of 359 units on `/downloads` and 95 of 96 on
+`/showroom-contact`. So an exclusion above 20 content units throws. No editable region
+on this site is that large.
+
+**Left open on purpose: the USP strip.** It is template furniture that sits inside
+`<main>` on this page and outside it on others, and it duplicates because production
+ships a desktop and a mobile version of it. On the new site it sits inside the grid
+container, so the exclusion above already takes it. On production its position
+relative to that container is not measured. The duplication half goes to ticket
+[69](69-one-canonical-viewport.md); if the production strip survives the grid
+exclusion, it needs its own entry in the list and its own measurement. Do not add one
+blind.
+
+Built by ticket [63](63-regions-excluded-at-extraction.md). The decision is recorded
+in `docs/adr/0002-regions-are-excluded-at-extraction.md`.
 
 ## Question
 

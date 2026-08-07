@@ -55,17 +55,39 @@ them are in `.scratch/content-parity-log/map.md`.
 
 ## Extraction
 
-- **Content boundary** — the `<main>` element. Text elements outside `<main>`
+- **Content boundary** — the `<main>` element. Content units outside `<main>`
   are chrome, and the log ignores them. If a page has no `<main>`, the
   extraction uses `<body>` with the chrome selector list, and it says so.
-- **Text element** — one leaf node from the tag list in ticket 02
-  (`h1-h6, p, li, blockquote, dt, dd, button, a, figcaption, th, td`). A node
-  that contains another node from the list is not a text element: the children
-  speak.
+- **Content unit** — one block that an editor edits. The blocks are the tag list
+  in ticket 02 (`h1-h6, p, li, blockquote, dt, dd, figcaption, th, td`), and an
+  `a` or a `button` that stands alone. A unit folds the words of an `a` or a
+  `button` inside it, because nobody edits a link apart from its sentence. A
+  nested **block** still breaks a unit: an `li` gives way to a `p` inside it.
+  See `docs/adr/0001-content-unit-is-the-editable-block.md`.
+- **Chrome** — template furniture outside the content boundary. It is not
+  editor work on this page, and the log never compares it.
+- **Non-editorial region** — a region inside the content boundary whose text the
+  catalogue or an extension makes. Nobody writes it, so a difference in it is not
+  editor work. A **product grid** is one.
+- **Legacy-only region** — a region inside the content boundary that an editor
+  wrote and that the new site will not get. It is a scope decision, in the same
+  manner as a legacy-only page. The promo banner is one.
+- Both kinds of region are excluded at extraction and named in a committed list
+  with the reason, so an excluded region says why. The log is blind to what
+  changes inside one, and that is correct: neither kind can make editor work.
+  See `docs/adr/0002-regions-are-excluded-at-extraction.md`.
+- **Canonical viewport** — the one screen width the log reads a page at. Production
+  sends the desktop and the mobile version of some blocks in the same HTML, and the
+  extraction has no computed style, so it must choose. It chooses desktop. A
+  consequence to state plainly: the log does not check the mobile version.
 - **Raw text** — the text as the page sends it.
 - **Normalised text** — the raw text after tier-1 normalisation only. Letter
   case and trailing punctuation stay. If they do not stay, the `casing` finding
   cannot exist.
+
+One word is retired. **"Text element"** named an HTML element, and it carried the
+rule that a node holding another node from the list is not one. The unit is not an
+element any more: it folds the links inside it. Both the word and the rule are gone.
 
 ## Comparison
 
@@ -108,7 +130,7 @@ them are in `.scratch/content-parity-log/map.md`.
 ## The interface
 
 - **Content view** — the whole store page in document order, production and the new
-  site side by side, with a row for each text element. It is the spine of the log:
+  site side by side, with a row for each content unit. It is the spine of the log:
   a matched row and a changed row are both in it, so the colour on a changed row
   carries a signal. Markdown is an export beside it and never the spine, because
   Markdown flattens the element identity the finding id needs.

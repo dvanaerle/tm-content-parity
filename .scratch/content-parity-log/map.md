@@ -88,6 +88,15 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   destination. Tickets 15, 17 and 18 were closed on that ground.
 - **`tm-content-parity` is hosted on GitHub**, at `dvanaerle/tm-content-parity`.
   Settled outside a ticket; it removes the "where is it hosted" fog.
+- **The content unit is the editable block, not a leaf element.** A block folds the
+  inline links inside it, because a finding must map onto one edit and content is
+  edited one block at a time. The word "text element" is retired.
+  `docs/adr/0001-content-unit-is-the-editable-block.md`.
+- **A region leaves the log at extraction, from a committed list with a size cap.**
+  Two reasons and two words: **non-editorial** (nobody writes it) and **legacy-only**
+  (nobody will migrate it). An exclusion above 20 content units throws, because the
+  obvious wrapper selector on production would have removed 358 of 359 units on one
+  page. `docs/adr/0002-regions-are-excluded-at-extraction.md`.
 
 ### Resolved tickets
 
@@ -354,6 +363,20 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   heading-level change. A heading demoted from `h2` to `h3` is invisible to the
   log. Two new classes close it. So the ticket both removes findings and adds
   them. Specified as [32](issues/32-scannable-log-and-six-stores.md).
+
+- [27 — Product listings and filter UI inside `<main>`](issues/27-category-page-product-listings.md)
+  — **A category page stays in the log; the grid leaves it as a region.** The log
+  gains the word **non-editorial region**: a region inside the content boundary whose
+  text the catalogue or an extension makes. This ticket's own objection decided
+  *where*: the extract carries no DOM path, so the exclusion runs **at extraction**,
+  from a committed list, and a check stays ignorant of regions. One selector cuts both
+  hosts and removes 69 units on production against 48 on the new site. `pageType` was
+  rejected as the hook — it names a page kind, and this is a region. Found while
+  resolving: production's tile titles sit in a tag the extraction never read, so
+  production never had them, and the nine "added" tiles on `/overkapping` are exactly
+  the nine titles production cannot see. The log was reporting invented content that
+  was not invented. The USP strip is deliberately left open. Built by
+  [63](issues/63-regions-excluded-at-extraction.md).
 
 - [33 — The class vocabulary: direction, and the changes the log cannot see](issues/33-directional-text-classes.md)
   — **Phase 1 of spec 32 is built and measured.** `structure` is retired for
@@ -738,6 +761,34 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   Ticket 28.
 
 ## Ready to build
+
+- **The content unit, and the regions that leave the log** — ten tickets from the
+  grilling session of 2026-08-07, which started from two reports of findings on text
+  that looks identical. Four measurements decide them. **The leaf rule loses about
+  3,400 words of body copy over ten pages**, because one inline link discards its
+  whole paragraph; in one 190-word paragraph the log compares 35 characters, and that
+  paragraph holds a product-spec regression (`6063-T6` against `6036-T6`) that the
+  tool cannot report. **The promo banner makes 2,698 findings, 7.7% of 34,910, on 371
+  of 448 pages** — one shared block, authored once. **Production hides 614 words in
+  tags the extraction never read**, which is why nine tiles read as invented on each
+  category page. **Two byte-identical strings can be reported as a `casing`
+  difference**, when duplicate text defeats the ordered match. Ticket 28 read the
+  volume as a statement about alignment; a large part of it is a statement about
+  extraction, and that is fixable.
+  In dependency order:
+  [61 tier-1 gaps](issues/61-tier-one-normalisation-gaps.md),
+  [62 identical units](issues/62-identical-units-make-no-finding.md),
+  [63 regions at extraction](issues/63-regions-excluded-at-extraction.md),
+  [64 the promo banner](issues/64-promo-banner-legacy-only-region.md),
+  [65 count the overrides](issues/65-count-the-overrides-the-fold-detaches.md),
+  [66 the rename](issues/66-rename-text-element-to-content-unit.md),
+  [67 the fold](issues/67-a-content-unit-folds-its-inline-links.md),
+  [68 the content view](issues/68-the-content-view-survives-a-folded-unit.md),
+  [69 one viewport](issues/69-one-canonical-viewport.md),
+  [70 shared regions](issues/70-shared-regions-by-content-hash.md).
+  61, 62, 63, 65 and 66 have no blockers. 67 rebuilds every report and detaches
+  overrides, so it does not ship before 65 gives the number. 70 needs the new
+  environment, which answered HTTP 500 on all six hosts while this was written.
 
 - [50 — The content page discriminator](issues/50-content-page-discriminator.md)
   — designed in the grilling session of 2026-08-07, `claimed`. **The seed list
