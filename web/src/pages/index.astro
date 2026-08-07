@@ -4,20 +4,16 @@ import { storesInLog } from '../lib/reports.mjs';
 import { CHROME } from '../lib/palette.mjs';
 import { STORE_NAME } from '../lib/stores.mjs';
 
-// There is no all-stores dashboard: a store is what an editor is responsible for,
-// and six stores of summaries on one screen is what ticket 38 removes. So the
-// root is a doorway to the first store, and nothing more.
+// There is no all-stores dashboard. A store is what an editor is responsible for,
+// and six stores of summaries on one screen is what ticket 38 removes.
 //
-// It is a page and not `Astro.redirect`, for two reasons. A static redirect is a
-// meta-refresh page too, but it is generated in English with a two-second delay,
-// and the interface is Dutch on every store. And a doorway that lists the stores
-// is what a reader who arrived on a stale bookmark needs to see.
+// So the root lists the stores and waits. It moves nobody on. An earlier version
+// carried a meta refresh to the first store: the list was then never readable, and
+// back from a dashboard landed here and was pushed forward again.
 const stores = await storesInLog();
-const first = stores[0];
 ---
 
 <Shell title="Winkels">
-  {first && <meta slot="head" http-equiv="refresh" content={`0;url=/${first}/`} />}
   {
     stores.length === 0 ? (
       <p class="text-slate-600">
@@ -28,7 +24,9 @@ const first = stores[0];
     ) : (
       <>
         <h1 class="mb-2 text-xl font-semibold">Kies een winkel</h1>
-        <p class="mb-4 text-sm text-slate-600">Je gaat door naar {first}.</p>
+        <p class="mb-4 text-sm text-slate-600">
+          Elke winkel heeft zijn eigen overzicht en zijn eigen voortgang.
+        </p>
         <ul class="space-y-1 text-sm">
           {stores.map((store) => (
             <li>

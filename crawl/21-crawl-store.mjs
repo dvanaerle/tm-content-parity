@@ -17,6 +17,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exclusionReason, isExcludedPage } from './excluded-pages.mjs';
+import { cellWithBothSides } from './seed-rows.mjs';
 import { MaintenanceError } from './fetch-page.mjs';
 import { extractStorePage } from './20-extract.mjs';
 
@@ -38,18 +39,16 @@ export function failuresFilename(store) {
 
 /**
  * @param {string} store
- * @param {{ force?: boolean }} [options]
+ * @param {boolean} force Re-extract a page that already has an extract on disk.
  */
-export async function crawlStore(store, { force = false } = {}) {
+async function crawlStore(store, force) {
   const seeds = JSON.parse(await readFile(SEEDS, 'utf8'));
   const jobs = [];
   const skipped = [];
 
   for (const row of seeds.rows) {
-    const cell = row.stores?.[store];
-    // A null cell is the machine-readable form of "this page is not in that
-    // store's sitemap" (ticket 04). It is Axis B's subject, never a crawl target.
-    if (!cell?.prodUrl || !cell?.newUrl) continue;
+    const cell = cellWithBothSides(row, store);
+    if (!cell) continue;
 
     if (isExcludedPage(row.page)) {
       skipped.push({ page: row.page, reason: exclusionReason(row.page) });
@@ -127,6 +126,6 @@ if (process.argv[1]?.endsWith('21-crawl-store.mjs')) {
     console.error('usage: node crawl/21-crawl-store.mjs <store> [--force]');
     process.exit(2);
   }
-  const { aborted } = await crawlStore(store, { force: flags.includes('--force') });
+  const { aborted } = await crawlStore(store, flags.includes('--force'));
   if (aborted) process.exit(1);
 }

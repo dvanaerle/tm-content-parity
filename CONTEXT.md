@@ -99,6 +99,8 @@ them are in `.scratch/content-parity-log/map.md`.
   It is the store's own page, at `/<store>/`, and it carries only that store's
   summaries and only that store's progress numbers. There is no all-stores
   dashboard: a store is the unit an editor is responsible for.
+- **Doorway** — the root, `/`. It lists the stores and waits. It is not a dashboard
+  and it holds no numbers, because there is no all-stores dashboard for it to be.
 - **Store switcher** — the six store ids in the shell header, each a link to that
   store's dashboard. It never goes to the same page in another store: the stores
   translate the category url keys, so that page often does not exist.

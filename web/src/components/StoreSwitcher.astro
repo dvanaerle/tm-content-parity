@@ -6,14 +6,14 @@ import { STORE_NAME } from '../lib/stores.mjs';
  * The six store views, as links. The store is in the URL, so a link to the
  * French dashboard can be sent to a colleague (ticket 38).
  *
- * The label is the store id and not the country, because the store id is the word
- * the whole tool uses — `CONTEXT.md` gives it, the report filenames carry it and
- * an override is keyed on it. The Dutch name is the title, where it explains the
- * id without replacing it.
+ * The label is the store id and not the country. The store id is the word the
+ * whole tool uses. `CONTEXT.md` gives it, the report filenames carry it, and an
+ * override is keyed on it. The Dutch name is the title. There it explains the id
+ * without replacing it.
  *
- * It navigates to the dashboard of the store, never to the same page in another
- * store. A page key is not shared across stores — the stores translate the
- * category keys (ticket 04) — so "this page over there" often does not exist.
+ * It navigates to the dashboard of the store. It never goes to the same page in
+ * another store. The stores translate the category keys (ticket 04), so a page key
+ * is not shared and "this page over there" often does not exist.
  */
 const { stores, store } = Astro.props;
 ---

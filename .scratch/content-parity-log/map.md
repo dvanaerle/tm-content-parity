@@ -444,11 +444,10 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   store** — it overwrites one global file, so a per-store run erases the store
   before it and the next compare reports no `broken-link` and no `redirect`; run
   it over every crawled store at once. **There is no all-stores dashboard**: `/`
-  is a doorway that lists the stores and sends the reader to the first, written
-  as a Dutch page rather than `Astro.redirect`, whose static output is English
-  and waits two seconds. And **the switcher goes to the dashboard of a store,
-  never to the same page in another store**, because the stores translate the
-  category url keys and "this page over there" often does not exist.
+  lists the stores and waits, and it moves nobody on. And **the switcher goes to
+  the dashboard of a store, never to the same page in another store**, because the
+  stores translate the category url keys and "this page over there" often does not
+  exist.
 
   Payload per store, which is the criterion that a visitor does not download six
   stores to read one: nl 1,087 KB, be 925 KB, uk 470 KB, de 394 KB, be_fr 254 KB,
@@ -460,6 +459,27 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   page link is `/blog`, which is out of scope. Not zero, so
   [49](issues/49-be-fr-shared-host-blind-spot.md) is open and `needs-triage` with
   a recommendation of wontfix. **No rule was written against it.**
+
+  **The review of 38 acted, and two findings became tickets.** Twelve findings:
+  seven fixed in the same session, two opened as tickets, three recorded in the
+  ticket. The one that mattered was **one rule asked two ways** — the crawler
+  wanted both urls in a seed cell and the dashboard wanted the production url
+  alone, so the two could disagree on which store an excluded page belongs to.
+  `crawl/seed-rows.mjs` holds the condition now and both call sites read it. The
+  divergence was **latent**: `veranda-configurator` carries both urls on nl and
+  empty strings elsewhere, so every count was right before the fix and is
+  unchanged after it. Also fixed: `/` no longer carries a zero-second meta refresh
+  that made its own store list unreadable; `web/src/lib/stores.mjs` builds its
+  names from `STORES` instead of keeping a second list of the six; the shell reads
+  the report folder once for the build and not once on each of 455 pages; and
+  `storesFromFilenames()` and `excludedInStore()` are pure and tested, because a
+  rule with no test is not a rule. 270 tests green.
+
+  Opened: [59](issues/59-link-status-overwrite.md), because a data-destroying CLI
+  argument guarded by prose is not guarded, and
+  [60](issues/60-report-filename-in-the-contract.md), because
+  `<store>__<page>.json` is crawl-to-web data that `web/` parses and
+  `compare/contract.mjs` does not mention.
 
 ### Facts found while charting
 
@@ -633,7 +653,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   ```
   33 ✓ ──> 34 ~ ─┐
      └──> 35 ✓ ──┴──> 36 ✓ ──> 37 ← next
-  38 ✓ (independent) ──> 49 (needs-triage)
+  38 ✓ (independent) ──> 49, 59, 60 (needs-triage)
   ```
 
   **34's open criterion blocks nothing.** 36 needed the row-ordering fix and 37
@@ -700,6 +720,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   - [38 — Six stores, not one](issues/38-six-stores.md) — **resolved**, above.
   - [48 — Openstaande en afgeronde taken: the content view as a board](issues/48-open-and-done-board.md)
   - [49 — The be/be_fr shared-host blind spot, measured](issues/49-be-fr-shared-host-blind-spot.md)
+  - [59 — `link-status.mjs` erases the other stores](issues/59-link-status-overwrite.md)
+  - [60 — The report filename is crawl-to-web data outside the contract](issues/60-report-filename-in-the-contract.md)
 
   **The review of 36 acted, and one finding became 48.** `CONTEXT.md` gained the
   words the merged view brought — *content view*, *filter*, *noise toggle* — and it

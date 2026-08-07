@@ -59,11 +59,12 @@ failure is recorded per store, in `data/extract-failures-<store>.json`.
 
 **Give `link-status.mjs` no store.** It writes one file keyed on the absolute
 URL, and it overwrites that file, so a per-store run erases the store before it
-and `30-compare.mjs` then reports no `broken-link` and no `redirect` there.
+and `30-compare.mjs` then reports no `broken-link` and no `redirect` there. The
+script does not stop you yet — ticket 59 is open on that.
 
 `30-compare.mjs` takes an optional store and compares every crawled store without
-one. The front end gives each store its own dashboard at `/<store>/`, and `/`
-sends you to the first one.
+one. The front end gives each store its own dashboard at `/<store>/`, and `/` lists
+them.
 
 `data/` is not in git, so a fresh clone needs the first three commands before the
 front end has anything to show.

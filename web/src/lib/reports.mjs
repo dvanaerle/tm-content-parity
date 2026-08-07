@@ -1,6 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { EXCLUDED_PAGES } from '../../../crawl/excluded-pages.mjs';
+import { cellWithBothSides } from '../../../crawl/seed-rows.mjs';
 import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
 
 /**
@@ -43,15 +44,36 @@ async function reportFiles(store) {
 }
 
 /**
- * The stores the log actually holds, in the contract's order. A store with no
- * report has not been crawled and gets no route and no switcher entry — the
- * switcher offers what exists, never a dead link.
+ * The stores a set of report filenames holds, in the contract's order. A store
+ * with no report has not been crawled and gets no route and no switcher entry —
+ * the switcher offers what exists, never a dead link.
  *
- * @returns {Promise<string[]>}
+ * The order is the contract's and not the folder's, so the switcher reads the
+ * same on every store.
+ *
+ * @param {string[]} names
+ * @returns {string[]}
  */
-export async function storesInLog() {
-  const found = new Set((await reportFiles()).map(storeOfFile));
+export function storesFromFilenames(names) {
+  const found = new Set(names.map(storeOfFile));
   return STORES.filter((store) => found.has(store));
+}
+
+/**
+ * The shell carries the switcher, so every one of the 455 built pages asks for
+ * this list. The list is the same for the whole build, so the folder is read once.
+ *
+ * A store crawled while the dev server runs needs a restart to appear in the
+ * switcher. Only the list is held: the reports themselves are read per page.
+ *
+ * @type {Promise<string[]> | null}
+ */
+let storesCache = null;
+
+/** @returns {Promise<string[]>} */
+export function storesInLog() {
+  storesCache ??= reportFiles().then(storesFromFilenames);
+  return storesCache;
 }
 
 /**
@@ -136,6 +158,27 @@ const SEEDS = fileURLToPath(new URL('../../../data/10-store-seeds.json', import.
  * German dashboard that reported one page "niet gecontroleerd" would be counting
  * another store's page (ticket 38).
  *
+ * The store has the page when the cell has both sides, which is the crawler's
+ * condition and not a second one. Ticket 38's review found this asking for the
+ * production url alone: a page with production and no counterpart was excluded
+ * here and never excluded by the crawler, so the two counts could disagree.
+ *
+ * @param {import('../../../crawl/seed-rows.mjs').SeedRow[]} rows
+ * @param {string} store
+ * @returns {typeof EXCLUDED_PAGES}
+ */
+export function excludedInStore(rows, store) {
+  const inStore = new Set(
+    rows.filter((row) => cellWithBothSides(row, store)).map((row) => row.page),
+  );
+  return EXCLUDED_PAGES.filter((entry) => inStore.has(entry.page));
+}
+
+/**
+ * A missing seed file reports no excluded page rather than failing the build, for
+ * the same reason an empty `data/reports/` builds an empty log: a fresh clone has
+ * neither, and it must still build.
+ *
  * @param {string} store
  * @returns {Promise<typeof EXCLUDED_PAGES>}
  */
@@ -147,8 +190,5 @@ export async function excludedFor(store) {
     if (/** @type {any} */ (error).code === 'ENOENT') return [];
     throw error;
   }
-  const inStore = new Set(
-    seeds.rows.filter((row) => row.stores?.[store]?.prodUrl).map((row) => row.page),
-  );
-  return EXCLUDED_PAGES.filter((entry) => inStore.has(entry.page));
+  return excludedInStore(seeds.rows, store);
 }
