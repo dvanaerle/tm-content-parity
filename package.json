@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "compare": "node compare/30-compare.mjs",
     "build": "npm --prefix web run build",
+    "build:ci": "npm --prefix web ci && npm --prefix web run build",
     "serve": "node api/server.mjs",
     "start": "npm run build && npm run serve"
   },

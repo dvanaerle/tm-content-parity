@@ -1,0 +1,9 @@
+{
+  // Static assets only, no `main`: the Astro build in `dist/` is pre-rendered
+  // HTML and the host runs no server code. See web/astro.config.mjs.
+  "name": "tm-content-parity",
+  "compatibility_date": "2026-08-07",
+  "assets": {
+    "directory": "./dist"
+  }
+}
