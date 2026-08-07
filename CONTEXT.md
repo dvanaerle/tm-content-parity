@@ -91,8 +91,10 @@ element any more: it folds the links inside it. Both the word and the rule are g
 
 ## Comparison
 
-- **Tier 1** — invisible equivalence: no-break spaces, curly quotation marks,
-  dashes, HTML entities, collapsed whitespace. Fold silently.
+- **Tier 1** — invisible equivalence: every Unicode space, curly quotation marks,
+  dashes, collapsed whitespace, and HTML entities in three forms: named,
+  decimal and hexadecimal. The soft hyphen and the three zero-width characters
+  fold to nothing. A browser draws nothing for them. Fold silently.
 - **Tier 2** — visible difference: letter case, trailing punctuation. Report as
   a `casing` finding.
 - **Check** — a family of comparisons: `text`, `links`, `images`, `meta`.

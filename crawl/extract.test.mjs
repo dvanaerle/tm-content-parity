@@ -32,6 +32,50 @@ describe('tier1', () => {
     expect(tier1('Levering in 5 werkdagen.')).toBe('Levering in 5 werkdagen.');
     expect(tier1('Kleuren')).not.toBe(tier1('kleuren'));
   });
+
+  it('folds a hexadecimal numeric entity like a decimal one', () => {
+    expect(tier1('Sorteer&#x20;op')).toBe('Sorteer op');
+    expect(tier1('Sorteer&#32;op')).toBe('Sorteer op');
+    expect(tier1('Sorteer&#X20;op')).toBe('Sorteer op');
+    expect(tier1('Prijs&#xA0;nu')).toBe('Prijs nu');
+    expect(tier1('5&#x20AC;')).toBe('5€');
+  });
+
+  it('leaves a form that is not an entity alone', () => {
+    expect(tier1('&#xzz; &unknown; A & B')).toBe('&#xzz; &unknown; A & B');
+  });
+
+  // A crawl of 448 pages must not die on one malformed entity in one paragraph.
+  it('leaves a numeric entity outside Unicode alone, and does not throw', () => {
+    expect(tier1('&#x110000; &#1114112; &#xdeadbeef;')).toBe('&#x110000; &#1114112; &#xdeadbeef;');
+    expect(tier1('&#xd800;')).toBe('&#xd800;');
+    expect(tier1('&#x10ffff;')).toBe('􏿿');
+  });
+
+  it('folds a no-break space to one space', () => {
+    expect(tier1('Prijs nu')).toBe('Prijs nu');
+    expect(tier1('Prijs&nbsp;nu')).toBe('Prijs nu');
+  });
+
+  it('folds the zero-width characters and the soft hyphen to nothing', () => {
+    for (const code of [0x200b, 0x200c, 0x200d, 0x00ad]) {
+      const invisible = String.fromCodePoint(code);
+      expect(tier1(`Over${invisible}kappingen`)).toBe('Overkappingen');
+    }
+    for (const entity of ['&#x200b;', '&#8203;', '&shy;', '&zwj;', '&zwnj;']) {
+      expect(tier1(`Over${entity}kappingen`)).toBe('Overkappingen');
+    }
+  });
+
+  it('folds the remaining Unicode space characters to one space', () => {
+    const codes = [
+      0x1680, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007,
+      0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000, 0xfeff,
+    ];
+    for (const code of codes) {
+      expect(tier1(`Prijs${String.fromCodePoint(code)}nu`)).toBe('Prijs nu');
+    }
+  });
 });
 
 describe('the content boundary', () => {

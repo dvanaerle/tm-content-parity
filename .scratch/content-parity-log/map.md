@@ -791,6 +791,24 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   overrides, so it does not ship before 65 gives the number. 70 needs the new
   environment, which answered HTTP 500 on all six hosts while this was written.
 
+  **61 is resolved**, 2026-08-07, and it removed **no finding**. `tier1()` now
+  folds a hexadecimal entity like a decimal one, removes the soft hyphen and the
+  three zero-width characters, and names every Unicode space. Tier 2 is untouched.
+  The probe re-normalises all 448 extracts and compares each page before and
+  after: **34,559 findings on both sides**, no class moving by one. But the corpus
+  holds **not one** hexadecimal entity, zero-width character or `&shy;`, in
+  `data/extract/`, `data/reports/` or `data/rechecks/`; the string `Sorteer` does
+  not occur at all. The soft hyphen occurs twice, inside a `text-missing` finding
+  it did not cause. **The fix is correct, tested, and unproven against the two
+  reports that asked for it.** `Sorteer op` is a listing-toolbar label, so the
+  page is outside the seed list, or it is client-rendered (ticket 19). A page that
+  shows the symptom is still necessary.
+  Found while resolving: **a malformed numeric entity stopped the crawl.**
+  `String.fromCodePoint()` throws above U+10FFFF. The defect was there before this
+  ticket, on the decimal branch, but the hexadecimal branch makes it easy to hit:
+  `&#xdeadbeef;` in CMS text is now a match. A guard returns the entity unchanged
+  when the number is no character.
+
   **62 is resolved**, 2026-08-07. `classifyPair()` hands a pair of equal `norm`
   strings to `classifyExactPair()`. The tier-2 classifier now names a visible
   difference only when there is one. `casing` was its first test, and the
