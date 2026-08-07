@@ -9,9 +9,9 @@ page that links into the Dutch Belgian half of the same host is not flagged.
 Ticket 38 said to open a follow-up **only if the number is not zero**. It is not
 zero, so this ticket exists. But it is 1.
 
-**Status:** needs-triage
+**Status:** wontfix
 
-**Origin:** ticket [38](38-six-stores.md), measured on 2026-08-07 by
+**Origin:** ticket [38](../38-six-stores.md), measured on 2026-08-07 by
 `crawl/probes/probe-be-fr-shared-host.mjs` over all 29 crawled be_fr pages.
 
 ## The measurement
@@ -57,3 +57,39 @@ That is a **storefront defect on production**, so it is the log's output and not
 a ticket on the route to the destination — the map closed tickets 15, 17 and 18
 on exactly that ground. It needs an owner in `devdva02`, recorded beside them in
 `devdva02/docs/storefront-defects.md`.
+
+## Answer: wontfix
+
+Triaged 2026-08-07. **No rule is written, and the blind spot stays.** The
+recommendation this ticket carried is taken as given.
+
+The number decides it. `cross-store-link` reads the new side only, and the new
+side is **14 anchors on 5 pages**. **13 of the 14 are files under `/media/`**,
+which the two Belgian stores share and which are not a page of the other store —
+a rule would report all 13 as leaks unless it excluded `/media/`, so 13 of 14 are
+noise by construction. **The fourteenth is one link to `/blog`**, and the blog is
+out of scope for the log (104 posts and 4 categories).
+
+So the whole surface a rule would catch is **one anchor to an out-of-scope
+page**. Ticket 38 said not to write a rule against a hypothetical. One link is
+not a hypothetical, but it is near enough that a rule costs more than it finds:
+it needs a `/media/` exception, it applies to one store only, and it has one
+instance that nobody would act on.
+
+Ticket 05's host-based test stands. Do not make it store-based.
+
+### Re-open trigger
+
+Re-run `crawl/probes/probe-be-fr-shared-host.mjs` and re-open this ticket when
+either of these happens:
+
+- **After ticket [55](../55-five-stores-show-all-their-pages.md).** Spec
+  [50](../50-content-page-discriminator.md) takes `be_fr` from 29 pages to about
+  110. The measurement above covers 29 pages. Roughly four times the pages can be
+  roughly four times the anchors, and the number that made this wontfix is 1.
+- **When the blog re-enters scope.** The one page link is to `/blog`. If the blog
+  becomes a page of the log, that anchor stops being out of scope and the count
+  is no longer near zero.
+
+Neither trigger changes the reasoning above. Both change the number the reasoning
+rests on, which is why the probe is kept.

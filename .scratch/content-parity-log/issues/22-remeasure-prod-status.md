@@ -1,8 +1,9 @@
 # 22 — Re-measure production status with production live
 
 Type: task
-Status: open
+Status: folded
 Blocked by: —
+Folded into: 51, 53
 Parent: ../map.md
 
 ## Question
@@ -43,3 +44,38 @@ blocks the compare stage on the parity axis.
 
 It blocks **nothing on Axis B**: ticket 11 settled that the coverage axis reads
 the new site only.
+
+## Folded, 2026-08-07. Not closed, and not work of its own
+
+**This ticket has no work left in it. Both of its criteria live in spec 50 now.**
+It stays open as a `folded` pointer, because ticket 20 is blocked by this number
+and a reader who follows that edge must land somewhere that says where the number
+comes from.
+
+| what | where it went |
+|---|---|
+| Measure `prodStatus` and `prodRedirect` again | [53](53-every-content-page-in-the-seed-list.md) |
+| Clear the stale `prodMaintenance` flags | [53](53-every-content-page-in-the-seed-list.md) |
+| Arm ticket 04's fail-loudly guard | [51](51-runnable-tracked-seed-pipeline.md) |
+
+**Why it folded rather than ran.** This ticket measures the 451 store-page pairs
+of ticket 04's seed list. Spec [50](50-content-page-discriminator.md) replaces
+that list: 451 pairs become about 800, and 28 French pages become about 110. A
+run now measures a list that ticket 53 then throws away, and every number it
+produced would have to be produced again.
+
+**"Do not re-run the whole seed derivation" is overtaken.** That instruction was
+right while the page list was sound. Ticket 50 found that it is not sound — the
+`changefreq=daily` filter drops the store-local content of `de`, `fr` and
+`be_fr`, so a French editor sees one page in four. The list is being derived
+again for that reason, and the status measurement rides along with it.
+
+The guard half went to 51 instead of 53 because it is a move and not a
+measurement: `crawl/10-store-seeds.mjs:164-183` holds a private second copy of
+the maintenance rule that records the flag and carries on, where
+`crawl/fetch-page.mjs` throws. That private copy is how 451 phantom `prodStatus`
+values reached the file. 51 is the prefactor that makes the generator runnable,
+so it is where a duplicated rule is deleted.
+
+**Ticket 20 still waits on this number**, and it now waits on 53 and 55 through
+this ticket.

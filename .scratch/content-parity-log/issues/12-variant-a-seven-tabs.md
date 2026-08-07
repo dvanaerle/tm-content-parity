@@ -1,7 +1,7 @@
 # 12 — Variant A with eight tabs: does the density hold?
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 26
 Parent: ../map.md
 
@@ -99,3 +99,36 @@ Judge the built tool, not the prototype: `npm run dev` in
 superseded and should not be the reference.
 
 Resolve with `/grilling`.
+
+## Answer
+
+**Answered by ticket [36](36-merged-content-view.md). Closed as resolved in the
+triage of 2026-08-07.** The density question is dead, because the thing that made
+it dense is gone: **Diff is no longer a tab.** Ticket 36 merged Diff and Content
+into one content view — the whole document in order, matched rows included — and
+seven tabs became five: Inhoud, Links, Afbeeldingen, Meta, Taken.
+
+That answers each open question of this ticket:
+
+- **Does the Diff tab hold at 41 findings, and at 401?** There is no Diff tab.
+  The content view holds `fotogalerij/zonwering` at 399 findings over 178 rows,
+  and the filter re-renders there in **21 ms**. No virtualisation was needed.
+- **Should Taken be the landing tab?** No. Inhoud lands, and it is the whole
+  page rather than a wall of differences, which was the reason to move away from
+  it. Ticket 28 is resolved and does not reopen this.
+- **Is anything missing from the summary strip?** No. The filter is a pure
+  module, `web/src/lib/view.mjs`, and a test pins that a filter never moves a
+  count. The counts an editor reads are the ones ticket 09 defined.
+- **The badges.** All tab badges count findings, so a row count never sits beside
+  four finding counts. The eight-competing-badges problem did not materialise.
+
+### The one remnant, and it is dropped
+
+**Does the dashboard want a sitemap tree with roll-up, or is the flat sortable
+table enough?** Nobody has asked for a tree since ticket 26 built the table, and
+the table gained class filters and a store switcher in ticket 36 and ticket 38.
+Worst-first ordering is what an editor uses.
+
+**Dropped unless somebody asks for it.** This is not a deferral with an owner. If
+the want comes back, it is a new ticket against a built screen, and it is cheap
+to judge then because the screen exists.

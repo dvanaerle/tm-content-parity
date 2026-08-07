@@ -10,8 +10,10 @@ document order whatever its state. On `terrasoverkapping` that is 168 differing 
 in one list, and a row ticked an hour ago sits between two rows that are still open.
 The editor re-reads finished work to find unfinished work.
 
-**Blocked by:** [36](36-merged-content-view.md), which owns the tick and the view
-this groups. 36 is resolved.
+**Blocked by:** 37
+
+[36](36-merged-content-view.md) owns the tick and the view this groups, and 36 is
+resolved. The live edge is [37](37-leesweergave.md) — see below.
 
 **Status:** needs-triage
 
@@ -41,3 +43,24 @@ ticket or none.
 
 The *Alleen verschillen* filter and the class filter are narrowing, not grouping.
 They stay as ticket 36 built them.
+
+## Blocked by ticket 37, from the triage of 2026-08-07
+
+The blocking edge moves from 36 to [37](37-leesweergave.md). 36 is resolved and
+gave this ticket the tick and the view; 37 is unbuilt and decides the question
+this ticket cannot answer on its own.
+
+**The first triage question is "is this a third view mode?", and 37 owns the
+second one.** Ticket 37 adds *Leesweergave* — the page as a reader sees it. That
+makes the content view a thing with modes rather than a thing with one order, and
+it settles how a mode is chosen, how it is remembered and what a mode may do to
+document order. A board designed before that is a guess at an affordance ticket
+37 is about to define, and two mode mechanisms in one view is the drift the review
+of 36 already caught once with the class pills.
+
+The other two questions are unaffected and stay open: what counts as *afgerond*
+when a fix claim can be contradicted, and whether a `×6` finding is one task or
+six.
+
+Re-triage after 37 lands. This may still be no ticket at all — it is a want, not
+a defect.

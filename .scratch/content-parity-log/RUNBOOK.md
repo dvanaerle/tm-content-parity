@@ -22,10 +22,10 @@ directions. One number would have hidden both.
 | kind | count | cost |
 | --- | --- | --- |
 | Build tickets, agent-ready | 19 | about 10 sittings |
-| Close or fold in triage | 4 | 1 sitting |
+| Close or fold in triage | 4 | **done, session 1** |
 | Human decisions | 4 | minutes each |
 | Deferred, blocked by other tickets | 4 | none yet |
-| Opened by the review of ticket 38 | 2 | triage in session 1 |
+| Opened by the review of ticket 38 | 2 | **triaged, both build in session 2** |
 
 ## The order, and why
 
@@ -67,7 +67,23 @@ rewrites the seed list, so that is the file its new rule belongs beside.
 
 ---
 
-## Session 1 — Housekeeping
+## Session 1 — Housekeeping — DONE on 2026-08-07
+
+The triage below was applied. What it did:
+
+- **10 and 12 are resolved.** Both were built and neither ticket said so.
+- **49 is `wontfix`**, and it moved to `issues/.out-of-scope/`, which is new. That
+  folder holds `wontfix` tickets and each one states its re-open trigger. 49's
+  trigger is ticket 55, which takes be_fr from 29 pages to about 110.
+- **22 is `folded`**, not closed. Its criteria are in 53 (measure `prodStatus` and
+  `prodRedirect`, clear the stale flags) and in 51 (use the shared maintenance
+  guard instead of the generator's private copy).
+- **59 and 60 are `ready-for-agent`, session 2.** 59 refuses the store argument.
+  60 names the filename shape in `compare/contract.mjs` and keeps the filename.
+- **Three blocking edges recorded**: 16 by 55, 20 by 22 and 55, 48 by 37.
+- `map.md` agrees.
+
+**Ticket 13 is decided and built. Two human steps are left — see below.**
 
 No crawl. About 30 minutes.
 
@@ -131,20 +147,48 @@ Do not redo it. The three remaining "51" references in map.md are the seed
 ticket 51-runnable-tracked-seed-pipeline.md and are correct.
 ```
 
-### The decision to give it
+### Ticket 13: two steps at a dashboard
 
-Ticket 13 needs one answer from a human. A Supabase free project stops after
-about 7 days with no activity, and it fails without a message.
+Decided on 2026-08-07: **the plan stays free**, and a daily GitHub Action writes
+one row to a `keepalive` table. Pro was refused. The code is committed. Three
+things need a human, and nothing works until all three are done.
 
-Choose one:
+1. **Get the workflow onto `main`.** GitHub runs a `schedule` **only** from the
+   default branch, and it shows `workflow_dispatch` only for a workflow that is
+   on the default branch. On a feature branch the keep-alive does not appear in
+   the Actions tab at all. This is a second quiet way for it to never start.
+2. **Apply the table.** Supabase → SQL editor → run `supabase/keepalive.sql`.
+   Run **that file**, not `schema.sql`: `schema.sql` begins with
+   `drop table overrides` and would delete the override log.
+3. **Add two repository secrets.** GitHub → Settings → Secrets and variables →
+   Actions:
+   - `PUBLIC_SUPABASE_URL` — Project Settings → API → Project URL
+   - `PUBLIC_SUPABASE_ANON_KEY` — the **anon public** key. Never the
+     `sb_secret_…` one.
 
-- Accept the stop.
-- Add a keep-alive, for example a GitHub Action.
-- Pay for Pro, about $25 each month.
+   The same two values are in `web/.env.local`. They are not secret — the key is
+   baked into the static build — but a secret makes a rotation one field.
 
-The other half of ticket 13 is built already. A failed write tells the editor:
-`overrides/supabase.mjs:106` throws, `web/src/lib/overrides.mjs:110` writes
-only after the insert resolves, and the banner shows the error.
+Then run **Actions → Supabase keep-alive → Run workflow**. A green run means the
+insert works. It does **not** mean the cron works: ticket 30 unblocks only after
+a **scheduled** run has written a row, which is the next morning.
+
+**If the project is ever paused anyway**, and it can be — see below — open the
+Supabase dashboard and press **Resume project**. It takes a few minutes and the
+data is intact. A paused free project stays restorable for **up to a year**.
+
+Two things this does not fix, both accepted, not solved:
+
+- **GitHub disables a scheduled workflow after 60 days with no repository
+  activity.** It sends an e-mail and does not fail. So the keep-alive can stop
+  as quietly as the fault it prevents.
+- Nothing prevents a lost network or a Supabase outage.
+
+For all three, the detection is the same, and it is built already. A failed
+write tells the editor: `overrides/supabase.mjs:106` throws,
+`web/src/lib/overrides.mjs:110` writes to local state only after the insert
+resolves, `canWrite` makes the controls read-only rather than dropping clicks,
+and `LogBanner` shows the error.
 
 ---
 
@@ -477,15 +521,15 @@ npm test; if ($?) { node compare/measure.mjs nl }
 
 | # | ticket | where | skill |
 | --- | --- | --- | --- |
-| 10 | Re-check service | session 1 | close, resolved |
-| 12 | Variant A tabs | session 1 | close, resolved |
-| 49 | be/be_fr blind spot | session 1 | close, wontfix |
-| 22 | Re-measure prod status | session 1 | fold into 53 and 51 |
-| 13 | Supabase pause | session 1 | your decision |
-| 30 | Wire Supabase | any time | you, one click |
+| 10 | Re-check service | session 1 | **done** — resolved |
+| 12 | Variant A tabs | session 1 | **done** — resolved |
+| 49 | be/be_fr blind spot | session 1 | **done** — wontfix, `.out-of-scope/` |
+| 22 | Re-measure prod status | session 1 | **done** — folded into 53 and 51 |
+| 13 | Supabase pause | session 1 | **decided and built** — three human steps below |
+| 30 | Wire Supabase | after 13 | you, one click, once a scheduled run has landed |
 | 47 | Shared keys layering | session 2 | `/implement` |
-| 59 | link-status erases the other stores | session 1, then 2 | `/triage`, then `/implement` |
-| 60 | Report filename in the contract | session 1, then 2 | `/triage`, then `/implement` |
+| 59 | link-status erases the other stores | session 2 | **triaged** → `/implement` |
+| 60 | Report filename in the contract | session 2 | **triaged** → `/implement` |
 | 51 | Runnable seed pipeline | session 3 | `/implement` |
 | 52 | Production page list | session 3 | `/implement` |
 | 53 | Every content page | session 3 | `/implement` |
@@ -506,7 +550,7 @@ npm test; if ($?) { node compare/measure.mjs nl }
 | 25 | fotogalerij | any time | `/grilling` |
 | 34 | Position, the deep link | last | `/grill-with-docs` |
 | 31 | Bulk dismissal | last | `/implement` |
-| 16 | New site page discovery | after 55 | `/triage` |
-| 20 | One-sided pages | after 22 and 55 | `/grilling` |
-| 48 | Task board | after 37 | `/triage` |
+| 16 | New site page discovery | after 55 | `/triage` — edge recorded |
+| 20 | One-sided pages | after 22 and 55 | `/grilling` — edge recorded |
+| 48 | Task board | after 37 | `/triage` — edge recorded |
 | 32, 50 | The two specs | not work | none |

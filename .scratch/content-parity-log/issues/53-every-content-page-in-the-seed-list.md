@@ -41,6 +41,11 @@ carry a product signature. A product page carries all six alternates; exactly
 - [ ] The generator writes a page list and nothing else. It makes no live
       request. Ticket 38 ruled the status half of the old file stale, and every
       `prodOk` in it is zero.
+- [ ] **`prodStatus` and `prodRedirect` are measured again**, over every
+      store-page pair of the new list. Folded in from ticket 22 — see below.
+- [ ] **The stale `prodMaintenance` flags are cleared.** Maintenance is a
+      transient state of the moment a crawl ran. It is never a property of a
+      page, so the flag does not persist in the seed data.
 - [ ] The rule is a module that a test can import. The old generator exports
       nothing, so no test has ever read it.
 - [ ] Tests pin: the two clauses of the rule, both needed; the product signature;
@@ -55,6 +60,35 @@ carry a product signature. A product page carries all six alternates; exactly
 category pages, because a category page carries all six alternates and
 `/terrasoverkapping` is the most important page on the site. Ticket 50 settled
 that both clauses are kept.
+
+## Folded in from ticket 22: measure production status again
+
+Triage of 2026-08-07 folded [22](22-remeasure-prod-status.md) into this ticket
+and into [51](51-runnable-tracked-seed-pipeline.md). 22 is not closed; it is
+marked folded and points here.
+
+Ticket 22 wanted the status half of the seed data measured again, over the 451
+pairs that existed then. **This ticket rebuilds the list to about 800 pairs**, so
+measuring the old list first would measure a list that is about to be thrown
+away. The re-measurement rides on the rebuild.
+
+What 22 said, and it still holds:
+
+- All 451 `prodStatus` values are 0, because production was in maintenance mode
+  for the whole of ticket 04's seed run. It is not a measurement.
+- `prodMaintenance: true` is recorded on 177 of 181 NL rows and on nearly every
+  row of the other five stores. Ticket 06 then made 362 requests with **0**
+  maintenance responses, and ticket 38 made 538 with 0. The flag is stale.
+
+**The status pass is not the generator.** The criterion above says the generator
+writes a page list and makes no live request, and that stands: the status pass is
+a second step over the finished list, and it writes its own output. Two things in
+one script is what made the old file half list and half stale measurement.
+
+The guard is [51](51-runnable-tracked-seed-pipeline.md)'s: the status pass uses
+`maintenanceReason()` and `MaintenanceError` from `crawl/fetch-page.mjs`, so a
+second maintenance window **aborts the run** instead of recording phantom
+results.
 
 ## No branch for one store
 

@@ -2,7 +2,7 @@
 
 Type: grilling
 Status: open
-Blocked by: —
+Blocked by: 55
 Parent: ../map.md
 
 ## Question
@@ -45,6 +45,33 @@ Ticket 04 found no orphan in the production data — hreflang clustering resolve
 446 non-NL pages onto an NL key, with zero uses of the store-scoped fallback key.
 The rule therefore has no known instances yet. That is a reason to measure, not a
 reason to close.
+
+## Blocked by ticket 55, from the triage of 2026-08-07
+
+**Every number in this ticket is about to change, and one of its premises is
+already false.**
+
+The question here is what the log cannot find. Spec
+[50](50-content-page-discriminator.md) changes what it can: the seed list goes
+from 451 store-page pairs to about 800, and the French store from 28 pages to
+about 110. A grilling about the size of a gap must not run while the gap is being
+closed by three sittings of other work.
+
+Two things spec 50 already corrects here:
+
+- **"No page exists in a non-NL store without an NL counterpart" is false.**
+  Ticket 04 read one file two ways. **283 clusters have no NL member.** So the
+  production side of this ticket is not closed after all, and the shape of the
+  discovery problem is different from the one written above.
+- **A page with no `nl-NL` alternate is a row of its own store.** Ticket 53 makes
+  that so, and `CONTEXT.md` now separates "a page of its own store" from "a page
+  NL does not have". This ticket must not name the first as the second.
+
+Wait for [55](55-five-stores-show-all-their-pages.md), which is the rollout
+across all five non-NL stores and the sitting that finishes the new list. Then
+re-triage: the crawl this ticket asks about may be answered by the sitemap rule,
+or the remaining gap may be small enough to close the ticket without a crawl at
+all.
 
 ## Answer
 

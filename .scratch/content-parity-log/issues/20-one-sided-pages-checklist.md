@@ -2,7 +2,7 @@
 
 Type: grilling
 Status: open
-Blocked by: 22
+Blocked by: 22, 55
 Parent: ../map.md
 
 ## Question
@@ -65,3 +65,31 @@ comes from ticket 07's own measurement, not from the seed file, and the legacy-o
 population cannot be counted at all until 22 re-measures.
 
 Resolve with `/grilling` and `/domain-modeling`.
+
+## Also blocked by ticket 55, from the triage of 2026-08-07
+
+**Ticket 22 is folded, not done.** Its re-measurement of `prodStatus` and
+`prodRedirect` now happens inside
+[53](53-every-content-page-in-the-seed-list.md), on the rebuilt seed list. The
+edge on 22 stays, because 22 is where a reader learns why the number is missing,
+but the work is in spec [50](50-content-page-discriminator.md) now.
+
+**A second edge is added, on [55](55-five-stores-show-all-their-pages.md).** Both
+populations this ticket counts are counted **out of the seed list**, and spec 50
+rebuilds it:
+
+| what this ticket says today | why it moves |
+|---|---|
+| 34 of 451 store-page pairs answer 404 on the new side | 451 pairs become about 800 |
+| per store: nl 14, be 8, be_fr 4, de 3, fr 3, uk 2 | every non-NL store grows, `fr` from 28 pages to about 110 |
+| 42 of 181 NL pages are new-only, the `*/onderdelen` tree | the NL baseline holds at 181, so this half is stable |
+
+The NL half is the one number that does **not** move: ticket 50 matched all 181
+NL rows and none are new. Everything about the five other stores does.
+
+So the questions stay exactly as written — they are about what a checklist is and
+what closes a row, and no rebuild answers those. What must wait is the sizing.
+"Do they share a tab, or are they two lists?" is a different answer at 34 rows
+than at the number 55 produces.
+
+Re-triage after 55.

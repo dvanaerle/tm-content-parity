@@ -147,8 +147,10 @@ Measured over all 29 be_fr pages by
 shared host, and **13 of those are shared `/media/` files**, not pages. The one
 page link is `/blog`, which is out of scope for the log.
 
-So the number is not zero and [49](49-be-fr-shared-host-blind-spot.md) is open,
-`needs-triage`, with a recommendation of wontfix. No rule was written.
+So the number is not zero and [49](.out-of-scope/49-be-fr-shared-host-blind-spot.md)
+was opened with a recommendation of wontfix. No rule was written. **Triage took
+that recommendation on 2026-08-07**: 49 is `wontfix`, and it carries a trigger to
+run the probe again after ticket 55, which takes be_fr from 29 pages to about 110.
 
 Found beside it: **production** links out of the French store on all 29 be_fr
 pages, 29 of them to the same Dutch category page. That is a storefront defect

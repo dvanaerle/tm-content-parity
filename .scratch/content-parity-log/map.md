@@ -41,7 +41,9 @@ differences, act on it, press Recheck, and watch the count fall to zero.
 
   Crawl each of `nl be be_fr de fr uk`. **Give `link-status.mjs` no store**: it
   overwrites one global file, so a per-store run erases the store before it
-  (ticket 38).
+  (ticket 38). Ticket [59](issues/59-link-status-overwrite.md) makes the script
+  refuse the argument, so this sentence becomes a description of a guard rather
+  than the only guard.
 
   `data/` is gitignored, so a fresh clone needs the three commands before the
   front end has anything to show.
@@ -135,6 +137,27 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   Identify editors with a name in localStorage, not Anonymous Sign-In. Skip
   Realtime. No CORS allowlist needed. **Free projects pause after ~7 days idle and
   fail silently** — graduated to ticket 13.
+
+- [13 — Keeping the Supabase project awake](issues/13-supabase-pause-risk.md)
+  — **The plan stays free.** A daily GitHub Action inserts one row into a
+  `keepalive` table, plus `workflow_dispatch`, and it fails on a non-2xx. It
+  **writes** rather than reads, because whether a bare select counts as database
+  activity is unverified (`research/supabase-override-log.md`, line 175), and a
+  keep-alive built on that assumption fails in the same quiet shape as the fault
+  it prevents. It never touches `overrides`: ticket 09 makes that ledger
+  append-only and latest-event-wins, so a hosting row would enter the derivation
+  and the progress bar. `keepalive` holds `id` and `created_at` and nothing else,
+  so an anon insert with the public key can cost row count and nothing more. It
+  is **not** in `CONTEXT.md` — it is infrastructure, not parity vocabulary — and
+  it lives in `supabase/keepalive.sql` rather than `schema.sql`, because that
+  file drops `overrides` at the top and applying a keep-alive must not risk the
+  log. **Built 2026-08-07**, the first workflow in the repository; the SQL and
+  the two repository secrets are human steps in `RUNBOOK.md`.
+  **Accepted, not solved**: GitHub disables a scheduled workflow after 60 days of
+  repository quiet, silently, which is the same failure shape again. The
+  detection for that case is the loud write failure spec 29 built, which also
+  covers a lost network and an outage. Pro at $25 a month, a staleness warning, a
+  second free monitor and migration tooling were all refused.
 
 - [04 — Seed lists for all six store views](issues/04-six-store-page-lists.md)
   — Built: **181 pages, 451 store-page pairs**, new-site status measured over 902
@@ -317,8 +340,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   observation" be a string comparison inside a pure function. A `DiffRow` gained
   a `finding` id, because a row is a position and a finding is grouped, and the
   browser cannot recompute the id. **The Supabase project is not yet wired**: the
-  log runs in its designed not-connected state, and ticket 13 is still the one
-  real risk.
+  log runs in its designed not-connected state. Ticket 13 was the one real risk;
+  it is resolved, and the keep-alive it chose is built but not yet applied.
 
 - [28 — 41 findings on a median page, 61% of them `structure`](issues/28-structure-finding-volume.md)
   — **`structure` splits directionally** into `text-missing` (shown) and
@@ -457,8 +480,9 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   `cross-store-link` reads — 14 be_fr anchors on 5 pages point outside `/fr` on
   the shared host, and 13 are shared `/media/` files rather than pages. The one
   page link is `/blog`, which is out of scope. Not zero, so
-  [49](issues/49-be-fr-shared-host-blind-spot.md) is open and `needs-triage` with
-  a recommendation of wontfix. **No rule was written against it.**
+  [49](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md) was opened with a
+  recommendation of wontfix. **No rule was written against it**, and the triage of
+  2026-08-07 took the recommendation.
 
   **The review of 38 acted, and two findings became tickets.** Twelve findings:
   seven fixed in the same session, two opened as tickets, three recorded in the
@@ -479,7 +503,10 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   argument guarded by prose is not guarded, and
   [60](issues/60-report-filename-in-the-contract.md), because
   `<store>__<page>.json` is crawl-to-web data that `web/` parses and
-  `compare/contract.mjs` does not mention.
+  `compare/contract.mjs` does not mention. **Both are triaged, both are
+  `ready-for-agent`, and both build in session 2**: 59 refuses the store argument
+  rather than merging the file, and 60 names the filename shape in the contract
+  rather than reading the store out of each report.
 
 - [21 — The Axis A meta check: what is a parity defect in the head?](issues/21-axis-a-meta-check.md)
   — **The head is not one thing.** Each row is decided on its own, and the test is
@@ -520,6 +547,39 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   the status gate misses it, and it emits **25 findings, 15 shown, in every one of
   the six stores**. It goes into the exclusion list. Ticket 20 owns the 404 cell.
   Built as [58](issues/58-axis-a-meta-check.md).
+
+- [10 — Re-check service](issues/10-recheck-service.md)
+  — **Built by ticket 29, and closed on 2026-08-07 without work.** The ticket read
+  as open while the code had existed since spec 29 shipped. `api/server.mjs` holds
+  `POST /api/recheck/<store>/<page>` and `/api/health` and serves `dist/`;
+  `npm start` runs it; and `probeHealth()` at `web/src/lib/recheck.mjs:16` is the
+  feature detection that hides the Recheck button in the hosted copy, which is the
+  two-mode split ticket 10 asked for. The Supabase merge is `overrides/state.mjs`.
+
+- [12 — Variant A with eight tabs: does the density hold?](issues/12-variant-a-seven-tabs.md)
+  — **Answered by ticket 36, and closed on 2026-08-07.** The question dissolved
+  rather than got answered: **Diff is no longer a tab.** 36 merged Diff and
+  Content into one content view and seven tabs became five, so "do eight tabs
+  hold" has no subject. The worst case is measured — `fotogalerij/zonwering` at
+  399 findings over 178 rows, filter re-render **21 ms** — and Inhoud lands, not
+  Taken. **One remnant, and it is dropped**: whether the dashboard wants a sitemap
+  tree with roll-up instead of the flat sortable table. Nobody has asked since
+  ticket 26 built the table. It is not deferred with an owner; if the want comes
+  back it is a new ticket against a built screen.
+
+- [22 — Re-measure production status](issues/22-remeasure-prod-status.md)
+  — **Folded on 2026-08-07, not closed and not resolved.** Both criteria moved
+  into spec 50, because 22 measures the 451-pair seed list that ticket 53 is about
+  to replace with about 800 pairs. The measurement of `prodStatus` and
+  `prodRedirect` and the clearing of the stale `prodMaintenance` flags are in
+  [53](issues/53-every-content-page-in-the-seed-list.md); arming ticket 04's
+  fail-loudly guard is in [51](issues/51-runnable-tracked-seed-pipeline.md),
+  because `crawl/10-store-seeds.mjs:164-183` holds a **private second copy of the
+  maintenance rule** that records a flag and carries on where
+  `crawl/fetch-page.mjs` throws. That copy is how 451 phantom `prodStatus` values
+  reached the file. 22 stays open as a `folded` pointer, because ticket 20 follows
+  that edge. Its "do not re-run the whole seed derivation" instruction is
+  **overtaken** by ticket 50, which found the page list itself unsound.
 
 ### Facts found while charting
 
@@ -622,7 +682,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
 - **`PageMeta` holds no hreflang**, no og and no twitter field.
 - **All 451 `prodStatus` values in the seed data are 0**, and `prodMaintenance` is
   stale on nearly every row, because production was in maintenance mode for the
-  whole seed run. Ticket 22 re-measures.
+  whole seed run. Ticket 22 was to re-measure; it folded into tickets 51 and 53 on
+  2026-08-07, so the re-measurement happens on the rebuilt seed list of spec 50.
 - **A `<style>` or `<script>` nested inside an `<a>` was extracted as content.**
   That anchor holds no other text element, so it is a leaf, and `structuredText`
   handed the CSS and the JavaScript over as copy: **151 elements on 23 of 179
@@ -700,6 +761,18 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   283 unanchored clusters a real difference between the store views, or a gap in
   the sitemap metadata?
 
+  **Ticket 22 folded in on 2026-08-07.** 53 now also measures `prodStatus` and
+  `prodRedirect` over the rebuilt list and clears the stale `prodMaintenance`
+  flags, and 51 also deletes the generator's private copy of the maintenance rule
+  in favour of `maintenanceReason()` and `MaintenanceError` from
+  `crawl/fetch-page.mjs`. The status pass is a second step over the finished list,
+  not part of the generator — 53's "the generator makes no live request" stands.
+
+  **Two tickets now wait on 55**, the rollout sitting:
+  [16](issues/16-new-site-page-discovery.md) and
+  [20](issues/20-one-sided-pages-checklist.md). Both count out of the seed list,
+  and both re-triage after it.
+
   Broken into six build tickets, all `ready-for-agent`. **51 and 52 are
   unblocked and can start together.**
 
@@ -748,8 +821,9 @@ Settled while charting, in the destination-naming session. No ticket holds them.
 
   ```
   33 ✓ ──> 34 ~ ─┐
-     └──> 35 ✓ ──┴──> 36 ✓ ──> 37 ← next
-  38 ✓ (independent) ──> 49, 59, 60 (needs-triage)
+     └──> 35 ✓ ──┴──> 36 ✓ ──> 37 ← next ──> 48 (needs-triage)
+  38 ✓ (independent) ──> 49 ✗ wontfix
+                     └──> 59, 60 (ready-for-agent, session 2)
   ```
 
   **34's open criterion blocks nothing.** 36 needed the row-ordering fix and 37
@@ -815,9 +889,14 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   - [37 — Leesweergave: the page as a reader sees it](issues/37-leesweergave.md)
   - [38 — Six stores, not one](issues/38-six-stores.md) — **resolved**, above.
   - [48 — Openstaande en afgeronde taken: the content view as a board](issues/48-open-and-done-board.md)
-  - [49 — The be/be_fr shared-host blind spot, measured](issues/49-be-fr-shared-host-blind-spot.md)
+    — `needs-triage`, and **blocked by 37**. 37 makes the content view a thing
+    with modes, and 48's first question is whether a board is a third mode.
+  - [49 — The be/be_fr shared-host blind spot, measured](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md)
+    — **closed `wontfix`** on 2026-08-07 and moved to `issues/.out-of-scope/`.
   - [59 — `link-status.mjs` erases the other stores](issues/59-link-status-overwrite.md)
+    — `ready-for-agent`, **session 2, before session 3**.
   - [60 — The report filename is crawl-to-web data outside the contract](issues/60-report-filename-in-the-contract.md)
+    — `ready-for-agent`, **session 2, before spec 50**.
 
   **The review of 36 acted, and one finding became 48.** `CONTEXT.md` gained the
   words the merged view brought — *content view*, *filter*, *noise toggle* — and it
@@ -893,7 +972,9 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   is `ready-for-human` and nearly done: the schema is applied, the two public
   values are in `web/.env.local`, and the built bundle carries the client. What
   is left is one click — claim a fix, reload, press Hercontroleer — which is the
-  only end-to-end proof of the precedence rule against a real project.
+  only end-to-end proof of the precedence rule against a real project. It also
+  waits on ticket 13's keep-alive: **a scheduled run must have written a row**,
+  because a manual `workflow_dispatch` proves the insert and not the cron.
 
 ## Not yet specified
 

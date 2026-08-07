@@ -53,7 +53,9 @@ public values.
   proves the guard in `createOverridesPort()` always throws and drops the client
   as dead code, and the log reports itself as not connected. The connected
   bundle is `_astro/overrides.*.js` at ~228 KB; the not-connected one is ~11 KB.
-- **Free or paid:** not yet recorded. Ticket 13 turns on it.
+- **Free or paid:** **free**, decided by ticket 13 on 2026-08-07. The pause is
+  stopped by a daily GitHub Action that inserts one row into a `keepalive`
+  table. Pro was refused.
 
 ## Notes
 
@@ -62,6 +64,10 @@ into the static build that goes on the webhost. It identifies the project, not a
 person. It is not a secret and does not need hiding; `web/.env` is gitignored as
 a matter of hygiene, not of security.
 
-Resolve ticket 13 before this goes in front of an editor: a free project pauses
-after about seven days idle, and every override lives in it. Spec 29 made the
-failure **loud**, which is a mitigation and not an answer.
+[Ticket 13](13-supabase-pause-risk.md) is resolved: the plan stays free and a
+daily GitHub Action inserts one row into a `keepalive` table. **This ticket
+unblocks when a scheduled run has written a row**, not when a
+`workflow_dispatch` run has. A manual run proves the insert; only the cron
+proves the keep-alive. Until then the project can still pause after about seven
+days idle, and every override lives in it. Spec 29 made the failure **loud**,
+which is a mitigation and not an answer.

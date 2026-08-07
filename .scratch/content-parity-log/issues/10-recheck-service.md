@@ -1,7 +1,7 @@
 # 10 — Re-check service
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: 07, 08, 09, 19, 26
 Parent: ../map.md
 
@@ -58,3 +58,20 @@ page footer currently states in plain text that the button is not in this build.
 2026-08-06. [29 — Spec: make the log actionable](29-actionable-log.md) is the build
 instruction. It carries the user stories, the seam, the schema and the testing
 decisions for the re-check service. Read 29 before starting; this ticket keeps the reasoning.
+
+## Answer
+
+**Built by ticket 29. Closed as resolved in the triage of 2026-08-07.** Nothing
+in this ticket is open. The code is:
+
+- `api/server.mjs` — `POST /api/recheck/<store>/<page>` re-crawls one page on
+  both sites and returns the fresh report. `/api/health` is the probe. The same
+  server serves `dist/`, so one command gives the whole tool.
+- `npm start` in `package.json` runs it.
+- `web/src/lib/recheck.mjs:16` — `probeHealth()` is the feature detection. The
+  hosted copy has no API, so the probe fails and the Recheck button is absent.
+  This is the two-mode split this ticket asked for.
+
+The Supabase merge and the precedence rules are in `overrides/state.mjs`, which
+ticket 29 built as a pure derivation. Read ticket 29 for the numbers and the five
+decisions it took beyond the spec.

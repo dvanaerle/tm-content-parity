@@ -12,6 +12,10 @@
 -- not a person.
 --
 -- An editor is a name the browser keeps in localStorage. There is no login.
+--
+-- **Running this file whole drops the override log.** The `keepalive` table of
+-- ticket 13 is therefore in `keepalive.sql`, so that the keep-alive can be
+-- applied on its own.
 
 drop view if exists overrides_current;
 drop table if exists overrides;

@@ -34,6 +34,10 @@ touches the rule, or ticket 53 carries this work as well.
       delete them, and say which. They must not look runnable when they are not.
 - [ ] The generator writes a summary file to the repository root. That file is not
       ignored by git and does not exist. Decide where it belongs.
+- [ ] **The generator uses `maintenanceReason()` and `MaintenanceError` from
+      `crawl/fetch-page.mjs`.** Today it does its own raw `fetch` and matches its
+      own local regex at `crawl/10-store-seeds.mjs:164-183`. Folded in from
+      ticket 22 — see below.
 - [ ] `npm test` is green. No test changes behaviour in this ticket.
 
 ## The size of it, measured
@@ -52,6 +56,28 @@ instead of making them again.
 
 The generator also prints a provenance line that names a script path from another
 repository layout. That is almost certainly where the whole drift came from.
+
+## Folded in from ticket 22: one maintenance guard, not two
+
+Triage of 2026-08-07 folded [22](22-remeasure-prod-status.md) into this ticket
+and into [53](53-every-content-page-in-the-seed-list.md). 22 is not closed; it is
+marked folded and points at both.
+
+The generator holds a **second, private copy of the maintenance guard**.
+`crawl/10-store-seeds.mjs:164-183` does a raw `fetch` and tests the body against
+its own regex, `/the maintenance mode is enabled|Error 503: Service
+Unavailable/i`. `crawl/fetch-page.mjs` already holds the same rule as
+`maintenanceReason()`, and it throws `MaintenanceError`, which is ticket 04's
+fail-loudly guard.
+
+Two copies of one rule is the shape the review of ticket 38 found in
+`crawl/seed-rows.mjs` and fixed there: one rule asked two ways, so the two can
+disagree. Here the disagreement is worse than a wrong count. The private copy
+**records** maintenance as a flag on the row and carries on; the shared one
+**aborts**. That is how 451 phantom `prodStatus` values reached the seed file.
+
+This is a move and not a new rule, which is why it belongs in this prefactor and
+not in 53. 53 then does the measurement itself, on the rebuilt list.
 
 ## Why this is first
 
