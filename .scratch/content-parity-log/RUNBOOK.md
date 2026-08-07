@@ -15,6 +15,25 @@ Spec 32 shows why. Phase 1 had to be measured before phase 2 started. The
 directional split and the two new classes moved the count in opposite
 directions. One number would have hidden both.
 
+## The corpus is one asset, and it is not in git
+
+`data/` is in `.gitignore`. Git holds **no** file under it. The corpus on disk is
+the extracts, the seed list and the link statuses, and it is the only copy.
+
+The corpus cannot be rebuilt today. All six `valantic*` hosts answer HTTP 500,
+and an extract holds the text and not the markup, so no re-extraction is
+possible from what is on disk.
+
+Two rules come from this.
+
+**A gate is a shared resource, not a point in time.** The rule above says never
+batch across a gate. The reason is that `data/`, the report files and
+`link-status.json` are one set of files. Two sessions that write them at the same
+time destroy each other's numbers, and they do it quietly.
+
+**A `git worktree` starts with an empty `data/`.** A session there can build, but
+it can measure nothing until the corpus is beside it. See "In parallel" below.
+
 ## The state today
 
 Session 2 is complete, so 23 items were open. The grilling of the content unit added
@@ -574,10 +593,25 @@ After this sitting:
 
 ---
 
-## In parallel — ticket 37, in a worktree
+## In parallel — a lane owns its corpus
 
-Ticket 37 changes `web/` only. It cannot collide with the crawl. Use a second
-terminal, at any time after session 2.
+A **lane** is one worktree, one branch, one ticket, one number. Lanes run at the
+same time in separate windows.
+
+Read the **touches** column in the full list first. It says which shared resource
+a ticket writes, and it decides whether a lane needs a corpus of its own.
+
+| touches | what a lane needs | runs beside |
+| --- | --- | --- |
+| `talk` | nothing. It is a conversation | anything, including a crawl |
+| `read` | the corpus, read-only | anything |
+| `web` | a worktree. No corpus | anything |
+| `compare` | a worktree **and its own copy of `data/`** | any other lane |
+| `data` | the one corpus, and the hosts | **nothing**. It runs alone |
+
+### A `web` lane
+
+Ticket 37 changes `web/` only, so it cannot collide with a crawl.
 
 ```powershell
 git worktree add ..\tm-content-parity-37 -b ticket-37-leesweergave
@@ -585,11 +619,63 @@ Set-Location ..\tm-content-parity-37\web
 npm install
 ```
 
-Open a new session **in that directory**:
+### A `compare` lane
 
+The corpus is files, so a lane can hold a copy of it. Then the lane runs its own
+compare stage and its own `measure.mjs`, and the numbers of two lanes cannot
+touch.
+
+```powershell
+git worktree add ..\tm-cp-lane-42 -b ticket-42-untranslated-text
+Copy-Item -Recurse data ..\tm-cp-lane-42\data
+Set-Location ..\tm-cp-lane-42
+npm install
 ```
-/implement .scratch/content-parity-log/issues/37-leesweergave.md
-```
+
+The copy is about 450 extracts. Copy it, and do not move it: the corpus in the
+main checkout is the only copy, and the main checkout is where the next crawl
+runs.
+
+**A lane gate is a better gate than a batch.** Three tickets in one sitting give
+one number for three effects. Three lanes give three numbers.
+
+**A merge owes one more measurement.** Two lanes measure against the same
+starting corpus, so their effects are not added up. After both are merged, run
+`node compare/30-compare.mjs` and `node compare/measure.mjs nl` once in the main
+checkout and record the joint number. Ticket 64 shows why: ticket 62 moved the
+corpus under it, so its own 2,698 has to be measured again.
+
+### What runs in parallel today
+
+The hosts answer 500, so no `data` lane can start. These four can, and none of
+them collides:
+
+| lane | ticket | touches |
+| --- | --- | --- |
+| 1 | 37, leesweergave | `web` |
+| 2 | 25, fotogalerij | `talk` |
+| 3 | 34, the deep link | `talk` |
+| 4 | 31, bulk dismissal | `read` first |
+
+Lanes 2 and 3 are conversations. They need a person, so they are the limit and
+not the tooling.
+
+### The best batch in the roadmap
+
+Ticket 39 defines the class vocabulary and every ticket in sessions 7 to 9 reads
+it. Land 39 alone. **Then 42, 43, 44 and 45 are four independent classifiers**,
+and they are four lanes with four numbers. Session 9 collapses three of them into
+one gate today, which is the hiding the rule at the top warns against.
+
+### Three reasons to stay serial, and they are not the same
+
+- **A blocking edge.** 66 to 67 to 68. 63 to 64. 64 and 67 to 70. 51, 52 and 53
+  to 54 to 55. No lane fixes these.
+- **An exclusive resource.** Ticket 58 and session 5 crawl all six stores. A copy
+  of the corpus does not help, because the hosts are shared as well.
+- **One file, one meaning.** Ticket 39 is the vocabulary. Two lanes that both
+  widen it collide in meaning and not only in text. `compare/contract.mjs` is the
+  same case, and AGENTS.md holds the rule.
 
 ---
 
@@ -776,48 +862,59 @@ npm test; if ($?) { node compare/measure.mjs nl }
 
 ## The full list
 
-| # | ticket | where | skill |
-| --- | --- | --- | --- |
-| 10 | Re-check service | session 1 | **done** — resolved |
-| 12 | Variant A tabs | session 1 | **done** — resolved |
-| 49 | be/be_fr blind spot | session 1 | **done** — wontfix, `.out-of-scope/` |
-| 22 | Re-measure prod status | session 1 | **done** — folded into 53 and 51 |
-| 13 | Supabase pause | session 1 | **done** — applied, one green run, cron unproven |
-| 30 | Wire Supabase | after a scheduled run | you, one click |
-| 47 | Shared keys layering | session 2 | **done** — ADR 0001, `shared/keys.mjs` |
-| 59 | link-status erases the other stores | session 2 | **done** — the script refuses an argument and exits 2 |
-| 60 | Report filename in the contract | session 2 | **done** — the shape is in `compare/contract.mjs` |
-| 62 | Two identical units make no finding | session 2A | **done** — 391 phantom `casing` findings gone, no crawl |
-| 66 | Rename to `ContentUnit` | session 2A | **done** — 0 of 448 reports differ |
-| 65 | Count the overrides the fold detaches | session 2A | **done** — 5 live overrides, **1** detaches, 0 reviews |
-| 61 | Tier-1 invisible characters | session 2B | `/implement` — needs the new site |
-| 63 | Regions excluded at extraction | session 2B | `/implement` — resolves 27 |
-| 64 | The promo banner, 7.7% | session 2B | `/implement` — after 63 |
-| 67 | A content unit folds its links | session 2C | `/implement` — after 66, needs 65 |
-| 68 | The content view survives a fold | session 2C | `/implement` — after 67 |
-| 69 | One canonical viewport | session 2D | `/implement` — after 64 |
-| 70 | Shared regions by content hash | session 2D | `/implement` — after 64 and 67 |
-| 51 | Runnable seed pipeline | session 3 | `/implement` |
-| 52 | Production page list | session 3 | `/implement` |
-| 53 | Every content page | session 3 | `/implement` |
-| 54 | French store | session 4 | `/implement` |
-| 55 | Five stores | session 5 | `/implement` |
-| 56 | An excluded page says why | session 5 | `/implement` |
-| 04 | Six store page lists | closes with 55 | none |
-| 37 | Leesweergave | worktree | `/implement` |
-| 58 | Head becomes a check | session 6 | `/implement` |
-| 39 | Class vocabulary axes | session 7 | `/implement` |
-| 40 | Coverage, missing pages | session 7 | `/implement` |
-| 41 | Coverage matrix | session 8 | `/implement` |
-| 45 | Images across stores | session 8 | `/implement` |
-| 42 | Untranslated text | session 9 | `/implement` |
-| 43 | Alt language and meta | session 9 | `/implement` |
-| 44 | Heading outline shape | session 9 | `/implement` |
-| 27 | Category page grid | any time, early | **done** — resolved, built by 63 |
-| 25 | fotogalerij | any time | `/grilling` |
-| 34 | Position, the deep link | last | `/grill-with-docs` |
-| 31 | Bulk dismissal | last | `/implement` |
-| 16 | New site page discovery | after 55 | `/triage` — edge recorded |
-| 20 | One-sided pages | after 22 and 55 | `/grilling` — edge recorded |
-| 48 | Task board | after 37 | `/triage` — edge recorded |
-| 32, 50 | The two specs | not work | none |
+The **touches** column names the shared resource a ticket writes. It decides
+whether the ticket can run in a lane beside another one. "In parallel" above
+gives the five values and what each one needs.
+
+`data` writes `data/` or calls the hosts. `compare` re-runs the compare stage
+over the extracts on disk. `web` changes `web/` only. `read` writes nothing.
+`talk` is a conversation.
+
+The column is a claim and not a proof. If a `compare` ticket turns out to need a
+crawl, it is a `data` ticket and it runs alone.
+
+| # | ticket | where | touches | skill |
+| --- | --- | --- | --- | --- |
+| 10 | Re-check service | session 1 | — | **done** — resolved |
+| 12 | Variant A tabs | session 1 | — | **done** — resolved |
+| 49 | be/be_fr blind spot | session 1 | — | **done** — wontfix, `.out-of-scope/` |
+| 22 | Re-measure prod status | session 1 | — | **done** — folded into 53 and 51 |
+| 13 | Supabase pause | session 1 | — | **done** — applied, one green run, cron unproven |
+| 30 | Wire Supabase | after a scheduled run | you | you, one click |
+| 47 | Shared keys layering | session 2 | — | **done** — ADR 0001, `shared/keys.mjs` |
+| 59 | link-status erases the other stores | session 2 | — | **done** — the script refuses an argument and exits 2 |
+| 60 | Report filename in the contract | session 2 | — | **done** — the shape is in `compare/contract.mjs` |
+| 62 | Two identical units make no finding | session 2A | — | **done** — 391 phantom `casing` findings gone, no crawl |
+| 66 | Rename to `ContentUnit` | session 2A | — | **done** — 0 of 448 reports differ |
+| 65 | Count the overrides the fold detaches | session 2A | — | **done** — 5 live overrides, **1** detaches, 0 reviews |
+| 61 | Tier-1 invisible characters | session 2B | `data` | `/implement` — needs the new site |
+| 63 | Regions excluded at extraction | session 2B | `data` | `/implement` — resolves 27 |
+| 64 | The promo banner, 7.7% | session 2B | `data` | `/implement` — after 63 |
+| 67 | A content unit folds its links | session 2C | `data` | `/implement` — after 66, needs 65 |
+| 68 | The content view survives a fold | session 2C | `web` | `/implement` — after 67 |
+| 69 | One canonical viewport | session 2D | `compare` | `/implement` — after 64 |
+| 70 | Shared regions by content hash | session 2D | `data` | `/implement` — after 64 and 67 |
+| 51 | Runnable seed pipeline | session 3 | `data` | `/implement` |
+| 52 | Production page list | session 3 | `data` | `/implement` |
+| 53 | Every content page | session 3 | `data` | `/implement` |
+| 54 | French store | session 4 | `data` | `/implement` |
+| 55 | Five stores | session 5 | `data` **alone** | `/implement` |
+| 56 | An excluded page says why | session 5 | `data` | `/implement` |
+| 04 | Six store page lists | closes with 55 | — | none |
+| 37 | Leesweergave | a lane, any time | `web` | `/implement` |
+| 58 | Head becomes a check | session 6 | `data` **alone** | `/implement` |
+| 39 | Class vocabulary axes | session 7 | `compare` **alone** | `/implement` — the vocabulary. Land it first |
+| 40 | Coverage, missing pages | session 7 | `compare` | `/implement` |
+| 41 | Coverage matrix | session 8 | `web` | `/implement` |
+| 45 | Images across stores | session 8 | `compare` | `/implement` — a lane, after 39 |
+| 42 | Untranslated text | session 9 | `compare` | `/implement` — a lane, after 39 |
+| 43 | Alt language and meta | session 9 | `compare` | `/implement` — a lane, after 39 and 58 |
+| 44 | Heading outline shape | session 9 | `compare` | `/implement` — a lane, after 39 |
+| 27 | Category page grid | any time, early | — | **done** — resolved, built by 63 |
+| 25 | fotogalerij | any time | `talk` | `/grilling` |
+| 34 | Position, the deep link | last | `talk` | `/grill-with-docs` |
+| 31 | Bulk dismissal | last | `read`, then `web` | `/implement` |
+| 16 | New site page discovery | after 55 | `talk` | `/triage` — edge recorded |
+| 20 | One-sided pages | after 22 and 55 | `talk` | `/grilling` — edge recorded |
+| 48 | Task board | after 37 | `talk` | `/triage` — edge recorded |
+| 32, 50 | The two specs | not work | — | none |
