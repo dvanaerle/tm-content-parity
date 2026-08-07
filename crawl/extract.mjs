@@ -255,13 +255,13 @@ function textElement(node, tag, swallowed) {
 }
 
 /**
- * @param {import('node-html-parser').HTMLElement} anchor
+ * @param {import('node-html-parser').HTMLElement} link  The `<a>` element itself.
  * @param {string} pageUrl
  * @param {{ prodHost?: string, newHost?: string }} hosts
  * @returns {Omit<import('../compare/contract.mjs').LinkRecord, 'index'> | null}
  */
-function linkRecord(anchor, pageUrl, hosts) {
-  const href = (anchor.getAttribute('href') ?? '').trim();
+function linkRecord(link, pageUrl, hosts) {
+  const href = (link.getAttribute('href') ?? '').trim();
   if (!href || NON_NAVIGATIONAL.test(href)) return null;
 
   let url;
@@ -276,7 +276,7 @@ function linkRecord(anchor, pageUrl, hosts) {
     href,
     url: url.href,
     key: linkKey(url, hosts),
-    text: tier1(textOf(anchor)),
+    text: tier1(textOf(link)),
     internal: isInternalHost(url.host),
   };
 }

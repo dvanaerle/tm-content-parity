@@ -18,25 +18,25 @@
 /**
  * The section an editor should scroll to.
  *
- * A heading is not its own anchor. The nearest heading **before** the position is
- * the section it lives in, and a heading demoted from `h2` to `h3` is reported
- * under the heading above it, which is where a reader finds it.
+ * A heading is not its own anchor heading. The nearest heading **before** the
+ * position is the section it lives in, and a heading demoted from `h2` to `h3` is
+ * reported under the heading above it, which is where a reader finds it.
  *
  * @param {import('./contract.mjs').TextElement[]} elements  In document order.
  * @returns {(index: number | null | undefined) => string | null} `null` when the
  *   position precedes every heading, and on a page with no heading at all.
  */
-export function anchorFor(elements) {
+export function anchorHeadingFor(elements) {
   const headings = elements.filter((element) => element.kind === 'heading');
 
   return (index) => {
     if (typeof index !== 'number') return null;
-    let anchor = null;
+    let found = null;
     for (const heading of headings) {
       if (heading.index >= index) break;
-      anchor = heading;
+      found = heading;
     }
-    return anchor ? anchor.raw : null;
+    return found ? found.raw : null;
   };
 }
 

@@ -9,7 +9,7 @@
  * the list as a set without doing it again.
  */
 
-import { anchorFor } from './locate.mjs';
+import { anchorHeadingFor } from './locate.mjs';
 import { tier2 } from './match.mjs';
 
 /**
@@ -46,19 +46,19 @@ export function compareImages(production, next, collector) {
   // Ticket 34 answers "which of the eleven images". The image record now carries
   // its position on the same counter as the text, so the section it sits in is a
   // backwards scan over the elements of its own side.
-  const prodAnchor = anchorFor(production.elements);
-  const newAnchor = anchorFor(next.elements);
+  const prodHeading = anchorHeadingFor(production.elements);
+  const newHeading = anchorHeadingFor(next.elements);
 
   for (const [key, prod] of prodImages) {
     const image = newImages.get(key);
-    const anchor = prodAnchor(prod.index);
+    const anchorHeading = prodHeading(prod.index);
 
     if (!image) {
       collector.add({
         class: IMAGE_CAMPAIGN.test(key) ? 'image-campaign' : 'image-missing',
         prod: key,
         new: null,
-        anchor,
+        anchorHeading,
       });
       continue;
     }
@@ -71,7 +71,7 @@ export function compareImages(production, next, collector) {
     if (prodAlt === newAlt) continue;
 
     if (prodAlt && !newAlt) {
-      collector.add({ class: 'alt-lost', prod: prodAlt, new: null, anchor });
+      collector.add({ class: 'alt-lost', prod: prodAlt, new: null, anchorHeading });
       continue;
     }
     // The new site gained an alt where production had none. Production is the
@@ -86,7 +86,7 @@ export function compareImages(production, next, collector) {
       class: tier2(prodAlt) === tier2(newAlt) ? 'casing' : 'alt-changed',
       prod: prodAlt,
       new: newAlt,
-      anchor,
+      anchorHeading,
     });
   }
 
@@ -98,7 +98,7 @@ export function compareImages(production, next, collector) {
       class: IMAGE_CAMPAIGN.test(key) ? 'image-campaign' : 'image-added',
       prod: null,
       new: key,
-      anchor: newAnchor(image.index),
+      anchorHeading: newHeading(image.index),
     });
   }
 }

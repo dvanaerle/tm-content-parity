@@ -158,11 +158,8 @@ function DiffTable({ rows, control, sides }) {
             <td className="px-2 py-3">
               {row.class ? <ClassPill class={row.class} /> : <span className="text-xs text-slate-400">gelijk</span>}
               {row.score !== null && <span className="ml-2 text-xs text-slate-400">{row.score}</span>}
-              {/* Ticket 34: six positions can group into one finding, and an editor
-                  who fixes this one and believes the work is done is wrong five
-                  times. The tick already acts on all six; the badge says so. */}
               <Occurrences finding={row.finding} />
-              <Section anchor={row.finding?.anchor} />
+              <Section anchorHeading={row.finding?.anchorHeading} />
               {row.finding && <div className="mt-1">{control(row.finding)}</div>}
             </td>
             <DiffCells
@@ -233,7 +230,7 @@ function FindingTable({ findings, check, control, sides }) {
               <Occurrences finding={finding} />
               {/* A target key and an alt text are not words on the page, so the
                   heading above them is the only thing a browser can scroll to. */}
-              <Section anchor={finding.anchor} sides={sides} />
+              <Section anchorHeading={finding.anchorHeading} sides={sides} />
               <div className="mt-1">{control(finding)}</div>
             </td>
             {/* The same component the content rows use. A link finding word-diffs
@@ -347,11 +344,9 @@ function Tasks({ findings, control, sides }) {
                   {finding.prod ?? '—'}
                   <span className="mx-1 text-slate-400">→</span>
                   {finding.new ?? '—'}
-                  <Section anchor={finding.anchor} sides={sides} />
+                  <Section anchorHeading={finding.anchorHeading} sides={sides} />
                 </span>
-                {finding.occurrences > 1 && (
-                  <span className="text-xs text-slate-400">×{finding.occurrences}</span>
-                )}
+                <Occurrences finding={finding} />
                 {control(finding)}
               </li>
             ))}
@@ -385,13 +380,13 @@ const Detail = ({ finding }) => (
  * to. A content row does not pass them, because its own cells carry a link to the
  * exact words, which is closer.
  */
-const Section = ({ anchor, sides = null }) => (
-  anchor
+const Section = ({ anchorHeading, sides = null }) => (
+  anchorHeading
     ? (
       <div className="mt-1 flex items-baseline gap-1 text-[11px] text-slate-500">
-        <span className="truncate" title={anchor}>onder “{anchor}”</span>
-        {sides && <Locate url={sides.production.url} text={anchor} side="productie" />}
-        {sides && <Locate url={sides.new.url} text={anchor} side="de nieuwe site" />}
+        <span className="truncate" title={anchorHeading}>onder “{anchorHeading}”</span>
+        {sides && <Locate url={sides.production.url} text={anchorHeading} side="productie" />}
+        {sides && <Locate url={sides.new.url} text={anchorHeading} side="de nieuwe site" />}
       </div>
     )
     : null

@@ -11,7 +11,7 @@
  * first.
  */
 
-import { anchorFor } from './locate.mjs';
+import { anchorHeadingFor } from './locate.mjs';
 import { lcsPairs, maskNumbers, pairLeftovers, tier2 } from './match.mjs';
 
 /**
@@ -34,7 +34,7 @@ export const PROMO = /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\
  * @property {import('./contract.mjs').TextElement | null} prod
  * @property {import('./contract.mjs').TextElement | null} new
  * @property {number | null} score
- * @property {string | null} [anchor]  The heading this position sits under (ticket 34).
+ * @property {string | null} [anchorHeading]  The heading this position sits under (ticket 34).
  */
 
 /**
@@ -136,12 +136,12 @@ export function diffRows(production, next) {
   const prodElements = production.elements;
   const newElements = next.elements;
 
-  const anchors = lcsPairs(prodElements, newElements);
-  const anchoredProd = new Set(anchors.map(([i]) => prodElements[i]));
-  const anchoredNew = new Set(anchors.map(([, j]) => newElements[j]));
+  const exact = lcsPairs(prodElements, newElements);
+  const pairedProd = new Set(exact.map(([i]) => prodElements[i]));
+  const pairedNew = new Set(exact.map(([, j]) => newElements[j]));
 
   /** @type {AlignedRow[]} */
-  const rows = anchors.map(([i, j]) => ({
+  const rows = exact.map(([i, j]) => ({
     class: classifyExactPair(prodElements[i], newElements[j]),
     prod: prodElements[i],
     new: newElements[j],
@@ -149,8 +149,8 @@ export function diffRows(production, next) {
   }));
 
   const { pairs, prodOnly, newOnly } = pairLeftovers(
-    prodElements.filter((element) => !anchoredProd.has(element)),
-    newElements.filter((element) => !anchoredNew.has(element)),
+    prodElements.filter((element) => !pairedProd.has(element)),
+    newElements.filter((element) => !pairedNew.has(element)),
   );
 
   for (const pair of pairs) {
@@ -186,10 +186,10 @@ export function diffRows(production, next) {
   // Ticket 34: the position an editor scrolls to. Production is the source of
   // truth, so its heading names the section; a row the new site invented has no
   // production side and takes the heading above it on the new site.
-  const prodAnchor = anchorFor(prodElements);
-  const newAnchor = anchorFor(newElements);
+  const prodHeading = anchorHeadingFor(prodElements);
+  const newHeading = anchorHeadingFor(newElements);
   for (const row of sorted) {
-    row.anchor = row.prod ? prodAnchor(row.prod.index) : newAnchor(row.new?.index);
+    row.anchorHeading = row.prod ? prodHeading(row.prod.index) : newHeading(row.new?.index);
   }
   return sorted;
 }
@@ -226,7 +226,12 @@ function inProductionOrder(rows) {
     .filter((row) => row.prod && row.new)
     .sort((a, b) => a.new.index - b.new.index);
 
-  const keyed = rows.map((row) => ({ row, key: sortKey(row, matched) }));
+  // One past the last production element, which is what "the additions follow the
+  // whole of production" means as a position. It has to be a real number: two rows
+  // that both claimed `Infinity` would subtract to `NaN` in the comparator below.
+  const afterProduction = rows.reduce((last, row) => Math.max(last, row.prod ? row.prod.index + 1 : 0), 0);
+
+  const keyed = rows.map((row) => ({ row, key: sortKey(row, matched, afterProduction) }));
   keyed.sort((a, b) => a.key[0] - b.key[0] || a.key[1] - b.key[1] || a.key[2] - b.key[2]);
   return keyed.map((entry) => entry.row);
 }
@@ -234,9 +239,10 @@ function inProductionOrder(rows) {
 /**
  * @param {AlignedRow} row
  * @param {AlignedRow[]} matched  Rows with both sides, by their new-document index.
+ * @param {number} afterProduction  One past the last production element.
  * @returns {[number, number, number]}
  */
-function sortKey(row, matched) {
+function sortKey(row, matched, afterProduction) {
   if (row.prod) return [row.prod.index, 0, 0];
 
   const index = row.new?.index ?? 0;
@@ -248,7 +254,7 @@ function sortKey(row, matched) {
 
   if (before) return [before.prod.index, 1, index];
   if (matched.length) return [matched[0].prod.index, -1, index];
-  return [Infinity, 1, index];
+  return [afterProduction, 1, index];
 }
 
 /**
@@ -270,7 +276,7 @@ export function textFindings(rows, collector) {
       // equal, so the record would say "identical" and give an `h2` → `h3` the
       // same id as an `h2` → `h4`. The detail is what changed.
       detail: tagChange(row),
-      anchor: row.anchor ?? null,
+      anchorHeading: row.anchorHeading ?? null,
       score: row.score,
     });
   }

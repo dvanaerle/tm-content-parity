@@ -371,7 +371,9 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   criterion to drop `axis`, and 39 owns the word.
 
 - [34 — Where is it? Position for every finding](issues/34-position-and-ordering.md)
-  — **Phase 2 of spec 32 is built, and the numbers did not move.** 179 crawled,
+  — **Reopened 2026-08-07; eight of nine criteria hold.** The deep link is the
+  ninth and is not built. See the phase entry above.
+  **Phase 2 of spec 32 is otherwise built, and the numbers did not move.** 179 crawled,
   124 comparable, 10,796 findings, 7,456 shown, median 37 — ticket 33's baseline to
   the finding. Position adds no rule, so movement would have been a defect.
 
@@ -397,8 +399,13 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   Three decisions the ticket did not give. **`TextElement.index` is no longer the
   position in the `elements` array** — the shared counter runs over images and
   links too — so `DiffRow` carries the array position, which is what the contract
-  always said it was. **`anchor` is out of the grouping key as well as out of the
-  id**, or one rename under six headings would have become six findings. And the
+  always said it was — spec 32's decision 8 called `index` additive, which was
+  true of the image and link records and **not** of `TextElement`; the amendment
+  is written into 32. **`anchorHeading` is out of the grouping key as well as out
+  of the id**, or one rename under six headings would have become six findings.
+  The field is named in full because `anchor` alone is the `<a>` element
+  everywhere else in the code; `CONTEXT.md` already gave the term as "anchor
+  heading". And the
   ordering rule needed two cases the ticket did not name: an addition above the
   first agreement sits just before that agreement, and a page the two sides agree
   nowhere on reads as production first, then the new site.
@@ -554,14 +561,44 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   Tailwind 4 `@theme`. Resolves ticket 28 and closes ticket 12's remaining
   questions.
 
-  Broken into six build tickets. **33 and 34 are resolved and measured**, so 36
-  is unblocked once 35 lands.
+  Broken into six build tickets. **33 and 35 are resolved. 34 is measured and
+  eight-ninths built** — the review of 2026-08-07 reopened it on the one criterion
+  it ticked in error. **36 is unblocked and is the next ticket to build.**
 
   ```
-  33 ✓ ──> 34 ✓ ─┐
-     └──> 35 ────┴──> 36 ──> 37
-  38 (independent)
+  33 ✓ ──> 34 ~ ─┐
+     └──> 35 ✓ ──┴──> 36 ← next ──> 37
+  38 (independent, not started)
   ```
+
+  **34's open criterion blocks nothing.** 36 needed the row-ordering fix and 37
+  needed the document-order index; both landed and are measured. The deep link is
+  orthogonal to each, and neither ticket mentions it. So the reopening is a debt to
+  pay, not a gate to wait on — 36 can start today.
+
+  **Ticket 34 is reopened.** Position, ordering, the shared counter and the
+  occurrence badge all landed and hold the baseline exactly. What did not land is
+  the deep link: 1,622 of the 10,796 findings have no anchor heading and so carry
+  no link at all, and where a link does render both sides are built from the
+  **production** heading, which cannot resolve on the new site wherever that
+  heading changed. Spec 32's story 29 asked for both sides. Closing it needs a
+  decision nobody has taken — what a finding with no heading offers instead — so
+  it wants a grilling before it wants code.
+
+  **The logo belongs to no ticket.** `fe921ce` added the Tuinmaximaal mark to the
+  shell inside ticket 34's branch. It is not phase 7 (six stores, ticket 38) and it
+  is not phase 8 either: phase 8 is the design system, decisions 43–48, and it asks
+  for a `@theme`, a colour discipline, greys and a monospaced family. **No decision
+  in spec 32 asks for a logo.** The nearest owner is ticket 35, which holds the
+  chrome and the header — and 35 is resolved, so this arrived after its ticket
+  closed.
+
+  It is kept rather than reverted, and recorded here because unticketed work in the
+  shell is exactly what this map exists to catch. It also **removed the header title
+  and strapline**, so the product name now lives only in the `aria-label` of the
+  header link. That decision was never taken anywhere. Either restore the words
+  beside the mark or write down why the mark alone is enough — and do it against a
+  ticket, reopening 35 or opening a small one of its own.
 
   - [35 — One visual language: brand tokens and a real diff](issues/35-diff-rendering-and-design-system.md)
   - [36 — The content view: the whole page, filtered, tickable](issues/36-merged-content-view.md)

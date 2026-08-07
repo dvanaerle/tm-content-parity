@@ -30,7 +30,7 @@ export class FindingCollector {
    * @param {string | null} parts.prod   Tier-1 text, letter case kept.
    * @param {string | null} parts.new
    * @param {string | null} [parts.detail]  What changed when the two texts are equal.
-   * @param {string | null} [parts.anchor]  The heading it sits under (ticket 34).
+   * @param {string | null} [parts.anchorHeading]  The heading it sits under (ticket 34).
    * @param {number | null} [parts.score]  On `copy` findings only.
    * @returns {string} The finding id this occurrence belongs to.
    *
@@ -40,16 +40,16 @@ export class FindingCollector {
    * override control on a row has to act on the finding. The browser cannot
    * recompute the id, because `findingId()` needs `node:crypto`.
    */
-  add({ class: cls, prod, new: next, detail = null, anchor = null, score = null }) {
+  add({ class: cls, prod, new: next, detail = null, anchorHeading = null, score = null }) {
     const record = FINDING_CLASSES[cls];
     if (!record) throw new Error(`Unknown finding class: ${cls}. The vocabulary is closed.`);
 
     // Ticket 33: `detail` is part of the grouping key as well as the id. An
     // `h2` → `h3` and an `h2` → `h4` on the same words are two findings, and the
     // key must say so, or the second one would be counted as a repeat of the first.
-    // Ticket 34 keeps `anchor` **out** of this key as well as out of the id. The
-    // same rename under six different headings is still one rename; the anchor
-    // names the first of them and `occurrences` says there are more.
+    // Ticket 34 keeps `anchorHeading` **out** of this key as well as out of the
+    // id. The same rename under six different headings is still one rename; the
+    // heading names the first of them and `occurrences` says there are more.
     const key = [cls, prod ?? '', next ?? '', detail ?? ''].join('|');
     const seen = this.byKey.get(key);
     if (seen) {
@@ -78,7 +78,7 @@ export class FindingCollector {
       prod,
       new: next,
       detail,
-      anchor,
+      anchorHeading,
       occurrences: 1,
       score,
     });

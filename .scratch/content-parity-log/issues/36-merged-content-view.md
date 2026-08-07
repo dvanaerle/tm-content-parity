@@ -12,10 +12,15 @@ the colour would carry no signal; Content shows two blocks of flat Markdown with
 no diff at all. The only controls are one noise checkbox and the tab-per-check
 split, so `copy` — 270 findings — stays buried under thousands.
 
-**Blocked by:** [34](34-position-and-ordering.md) and
-[35](35-diff-rendering-and-design-system.md). 35 gives the rendering; 34 is
-required because the moment this view claims to show the whole document in
-order, the new-only row-ordering defect becomes a visible lie.
+**Blocked by:** nothing. Both edges are satisfied.
+[35](35-diff-rendering-and-design-system.md) gives the rendering and is resolved.
+[34](34-position-and-ordering.md) was required because the moment this view claims
+to show the whole document in order, the new-only row-ordering defect becomes a
+visible lie — and **that fix landed and is measured**: 6,990 rows move, on 109 of
+124 pages.
+
+34 was reopened on 2026-08-07 on a different criterion, the deep link. This view
+does not use it. Do not read 34's open status as a block on this ticket.
 
 **Status:** ready-for-agent
 

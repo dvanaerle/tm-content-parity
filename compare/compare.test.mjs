@@ -262,6 +262,21 @@ describe('diffRows', () => {
     ]);
   });
 
+  it('holds that order when the page is long enough to sort by merge', () => {
+    // The agree-nowhere rows all claim one base position, so the comparator
+    // decides between them on the new-document index alone. Twelve rows put the
+    // sort past the insertion-sort threshold, where an inconsistent comparator
+    // stops being harmless.
+    const additions = Array.from({ length: 12 }, (_, index) => `Fotoblok ${index}`);
+    const rows = diffRows(
+      extract({ elements: elements(['Overkappingen', 'Aluminium profielen']) }),
+      extract({ side: 'new', elements: elements(additions) }),
+    );
+    expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
+      'Overkappingen', 'Aluminium profielen', ...additions.map((raw) => `+${raw}`),
+    ]);
+  });
+
   it('keeps two additions after one pair in the order the new site has them', () => {
     const rows = diffRows(
       extract({ elements: elements(LONG) }),
@@ -837,7 +852,7 @@ describe('the heading a finding sits under', () => {
       diffRows(prod(PAGE), extract({ side: 'new', elements: next })),
       collector,
     ));
-    expect(findings.map((finding) => [finding.class, finding.anchor]))
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
       .toEqual([['copy', 'Montage']]);
   });
 
@@ -849,7 +864,7 @@ describe('the heading a finding sits under', () => {
       ),
       collector,
     ));
-    expect(findings.map((finding) => [finding.class, finding.anchor]))
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
       .toEqual([['text-missing', null]]);
   });
 
@@ -866,7 +881,7 @@ describe('the heading a finding sits under', () => {
       diffRows(prod(PAGE), extract({ side: 'new', elements: after })),
       collector,
     ));
-    expect(findings.map((finding) => [finding.class, finding.anchor]))
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
       .toEqual([['heading-level', 'Onze overkappingen']]);
   });
 
@@ -876,7 +891,7 @@ describe('the heading a finding sits under', () => {
       diffRows(prod(outline([['Kleuren en RAL', 'h2']])), extract({ side: 'new', elements: next })),
       collector,
     ));
-    expect(findings.map((finding) => [finding.class, finding.anchor]))
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
       .toEqual([['text-added', 'Kleuren en RAL']]);
   });
 
@@ -886,7 +901,7 @@ describe('the heading a finding sits under', () => {
       extract({ side: 'new', images: [] }),
       collector,
     ));
-    expect(findings.map((finding) => [finding.class, finding.anchor]))
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
       .toEqual([['image-missing', 'Montage']]);
   });
 
@@ -899,7 +914,7 @@ describe('the heading a finding sits under', () => {
       new: extract({ side: 'new', url: newUrl, links: [] }),
       collector,
     }));
-    expect(findings.map((finding) => [finding.class, finding.anchor]))
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
       .toEqual([['missing-link', 'Kleuren en RAL']]);
   });
 

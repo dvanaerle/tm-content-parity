@@ -1,20 +1,10 @@
----
-interface Props {
-  width?: number;
-  height?: number;
-  'aria-hidden'?: 'true' | 'false';
-}
-
-const { width = 70, height = 43, 'aria-hidden': ariaHidden } = Astro.props;
----
-
 <svg
-  width={width}
-  height={height}
+  width="70"
+  height="43"
   viewBox="0 0 97 60"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
-  aria-hidden={ariaHidden}
+  aria-hidden="true"
 >
   <g clip-path="url(#brand-logo-clip)">
     <path

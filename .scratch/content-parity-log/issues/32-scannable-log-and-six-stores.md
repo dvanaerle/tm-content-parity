@@ -5,7 +5,8 @@ Status: ready-for-agent
 Blocked by: —
 Parent: ../map.md
 Implements: the grilling session of 2026-08-06 (Q1–Q31)
-Amends: 02 (class vocabulary), 06 (ImageRecord), 12 (tab count), 21 (meta panel)
+Amends: 02 (class vocabulary), 06 (ImageRecord), 12 (tab count), 21 (meta panel),
+07 (`TextElement.index`, see decision 8)
 Resolves: 28 (the `structure` volume question)
 
 ## Problem Statement
@@ -250,6 +251,15 @@ moved baseline.
    **first** occurrence for a deduplicated record. Ticket 06's dedupe, set
    comparison and basename key are all unchanged. `index` is additive and does
    not enter the finding id, so no id moves and no override detaches.
+
+   **Amended by ticket 34, 2026-08-07.** Additive held for `ImageRecord` and
+   `LinkRecord`, which had no `index` before. It did **not** hold for
+   `TextElement.index`, which ticket 07 defined as the position in the `elements`
+   array: the shared counter of decision 7 runs over images and links too, so the
+   two numbers stopped agreeing. `30-compare.mjs` now maps an element to its array
+   position for `DiffRow.prod` and `DiffRow.new` rather than reading `.index`.
+   This premise was wrong when written, and the amendment is recorded here so the
+   next reader of decision 8 does not trust it.
 9. **A finding gains the heading it lives under**, computed at compare time by
    scanning backwards from the element's position to the nearest preceding
    heading. Null when there is none.

@@ -11,9 +11,13 @@ empty when it has nothing to say — a distinction that vanishes if both render 
 `![](file.jpg)`, and it is exactly the distinction the `alt-lost` class exists
 for.
 
-**Blocked by:** [34](34-position-and-ordering.md) — an image cannot be placed in
-the prose without the document-order index — and
-[36](36-merged-content-view.md), which owns the tab this toggle lives on.
+**Blocked by:** [36](36-merged-content-view.md) only, which owns the tab this
+toggle lives on. [34](34-position-and-ordering.md) was the other edge — an image
+cannot be placed in the prose without the document-order index — and **the shared
+counter landed**, so that edge is satisfied.
+
+34 was reopened on 2026-08-07 on a different criterion, the deep link. This view
+does not use it. Do not read 34's open status as a block on this ticket.
 
 **Status:** ready-for-agent
 

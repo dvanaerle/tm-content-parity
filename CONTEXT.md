@@ -79,7 +79,10 @@ them are in `.scratch/content-parity-log/map.md`.
   the default and the colour both follow from it.
 - **Anchor heading** — the nearest heading before an element in document order.
   It is how a finding says where it is on the page, and it is null for an element
-  that precedes every heading.
+  that precedes every heading. The code says `anchorHeading` in full, never
+  `anchor`: on its own that word is the `<a>` element, which the extractor and the
+  links check both talk about. Two meanings for one word is what this list exists
+  to stop.
 
 ## Identity
 

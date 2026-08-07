@@ -120,7 +120,8 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * @property {string | null} detail What changed when the two sides of text are equal.
  *                                  `h2 → h3` on `heading-level` and `tag-changed`.
  *                                  Part of the id. See `findingId()`.
- * @property {string | null} anchor The heading the finding sits under: the nearest
+ * @property {string | null} anchorHeading
+ *                                  The heading the finding sits under: the nearest
  *                                  heading before it in document order, `null` when
  *                                  it precedes every heading (ticket 34). Taken from
  *                                  the production side when there is one, else from
@@ -129,6 +130,8 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  *                                  more. **Not part of the id**, like `occurrences`:
  *                                  an edit to the heading above must not detach an
  *                                  editor's dismissal of the words below it.
+ *                                  Named in full because `anchor` alone is the `<a>`
+ *                                  element everywhere else. See `CONTEXT.md`.
  * @property {number} occurrences   Not part of the id.
  * @property {number | null} score  The similarity score. On `copy` findings only.
  */

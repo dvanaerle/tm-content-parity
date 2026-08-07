@@ -13,7 +13,11 @@ and `occurrences: 6` means it was six different places.
 the same rows twice, and phase 1's measurement must be settled against an
 unmoved baseline before anything else changes the comparison.
 
-**Status:** resolved
+**Status:** ready-for-agent
+
+Reopened on 2026-08-07 by the review of commit `3251d91..HEAD`. Eight of the nine
+criteria hold. The deep-link one does not, and it was ticked in error. See
+"What is not done" below.
 
 **Implements:** spec [32](32-scannable-log-and-six-stores.md), phase 2.
 
@@ -27,7 +31,7 @@ unmoved baseline before anything else changes the comparison.
       finding id, so no id moves and no override detaches.
 - [x] A finding carries its **anchor heading** — the nearest heading before it in
       document order, null when it precedes every heading.
-- [x] Every finding row offers a link that scrolls the live page to its text, for
+- [ ] Every finding row offers a link that scrolls the live page to its text, for
       production and for the new site.
 - [x] A finding with more than one occurrence says so on the row.
 - [x] **The row-ordering defect is fixed.** A new-only row currently sorts by its
@@ -39,10 +43,35 @@ unmoved baseline before anything else changes the comparison.
 - [x] Tests at the existing extract and compare seams, including the asymmetric
       ordering case and the null anchor heading.
 
+## What is not done
+
+**1,622 of the 10,796 findings have no anchor heading, and those rows carry no
+deep link at all.** `Section` renders nothing when the heading is null, so a
+finding above the first heading on its page offers the editor no way to reach it.
+The number is measurable: `anchorHeading` is set on 9,174 findings and null on
+1,622.
+
+**Where the link does render, it points at the heading and not at the finding.**
+Only the Diff tab links the words themselves. On the Links, Afbeeldingen and Taken
+tabs the fragment carries the section heading, because a link target and an image
+key are not words on the page.
+
+**Both deep links are built from the production heading.** `links.mjs` and
+`images.mjs` pass `prodHeading(...)` for the finding, and `Section` then makes the
+production url and the new-site url from that one string. On a page where the
+heading itself changed, the new-site fragment cannot resolve, and it fails
+silently.
+
+Spec 32's user story 29 asks for the link "for both production and the new site,
+so that I can see the difference in situ on both", so the second and third points
+are the same unmet requirement seen from two sides. Closing this needs a decision
+the ticket never took: what a finding with no anchor heading should offer instead.
+That decision belongs to a ticket of its own.
+
 ## Resolution
 
 Built on branch `axis-a-compare-and-log`, commit `00116f2`. 225 tests green,
-180 pages built.
+180 pages built. **Eight of the nine criteria.** The ninth is above.
 
 **The measurement did not move, and that is the result.** 179 crawled, 124
 comparable, 10,796 findings, 7,456 shown, median 37 a page — ticket 33's baseline,
@@ -71,9 +100,9 @@ saw the swallow set. It is now stated: `textElement()` returns null and
   `elements[row.prod]`, so `30-compare.mjs` maps the element to its array
   position instead of reading `.index`. The contract said "index into
   `sides.production.elements`" all along; the two numbers merely used to agree.
-- **`anchor` is out of the grouping key as well as out of the id.** The same
-  rename under six headings is still one rename. The anchor names the first of
-  them and `occurrences` says there are more. Putting it in the key would have
+- **`anchorHeading` is out of the grouping key as well as out of the id.** The
+  same rename under six headings is still one rename. The heading names the first
+  of them and `occurrences` says there are more. Putting it in the key would have
   split one finding into six.
 - **The ordering rule needed two cases the ticket did not name.** An addition
   above the **first** agreement anchors just before that agreement, not at the top
@@ -106,12 +135,39 @@ ticket 36, and it is why this had to land first.
 
 ### Left for another ticket
 
-`compare/locate.mjs` is browser-safe and holds both answers — `anchorFor()` and
-`textFragmentUrl()`. The word-level diff of spec 32 phase 3 is a separate module
-and stays that way.
+`compare/locate.mjs` is browser-safe and holds both answers —
+`anchorHeadingFor()` and `textFragmentUrl()`. The word-level diff of spec 32
+phase 3 is a separate module and stays that way.
 
 A text fragment is matched by the browser against what it **rendered**, so
 `textFragmentUrl()` takes the literal text and never the tier-1 normalisation: a
 folded curly quote is not on the page to be found. It is not yet known how often
 the browser fails to find a string the extractor read. Watch it on the first
 editor pass.
+
+## Review follow-up, 2026-08-07
+
+The two-axis review of `3251d91..HEAD` found nine things. Five were fixed in the
+same session, three are recorded here and in the map, and one is the unmet
+criterion above.
+
+One review finding was itself wrong and is corrected in the map: commit `fe921ce`,
+the logo, was reported as belonging to "phase 8 / ticket 38". Phase 8 is the design
+system and belongs to ticket 35; phase 7 is the six stores and belongs to 38. No
+decision in spec 32 asks for a logo at all.
+
+**The field is `anchorHeading`, not `anchor`.** `CONTEXT.md` gives the term as
+"anchor heading", and the one-word abbreviation collided with the `<a>` element,
+which is what `anchor` means everywhere else in `crawl/` and in the links check.
+`contract.mjs` changed first, then `locate.mjs`, `findings.mjs`, `text.mjs`,
+`links.mjs`, `images.mjs`, `crawl/extract.mjs` and `Ledger.jsx`. The LCS pivot
+variables in `diffRows()` were a third sense of the word and are now `exact`,
+`pairedProd` and `pairedNew`. The reports were regenerated: 10,796 findings,
+9,174 with a heading and 1,622 without, which is the same measurement as before.
+
+**`sortKey()` no longer returns `Infinity`.** Two agree-nowhere rows subtracted to
+`NaN` in the comparator. `NaN` is falsy, so the `||` chain fell through to the
+tiebreakers and the order came out right by accident. The base is now one past the
+last production element, which is what "the additions follow the whole of
+production" means as a number. No behaviour changed — this was a defect in the
+reason, not in the result.
