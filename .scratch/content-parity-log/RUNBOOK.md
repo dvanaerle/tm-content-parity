@@ -28,7 +28,7 @@ work.
 | Human decisions | 4 | minutes each — **13 is decided and applied** |
 | Deferred, blocked by other tickets | 4 | none yet |
 | Opened by the review of ticket 38 | 2 | **done, session 2** — 59 and 60 both landed |
-| Opened by the grilling of the content unit | 10 | about 4 sittings, sessions 2A to 2D |
+| Opened by the grilling of the content unit | 10 | about 4 sittings, sessions 2A to 2D — **62 landed** |
 
 **Two facts decide what can start today.**
 
@@ -41,6 +41,13 @@ Three of the ten tickets need no crawl. Ticket 62 changes the comparison only, s
 is measured by running the compare stage over the extracts already in `data/`.
 Ticket 66 is a rename and no number may move. Ticket 65 reads Supabase. Those three
 are session 2A and they can start now.
+
+**62 is done**, and it proved the plan: no crawl, and the compare stage over the
+extracts on disk gave the whole measurement. 66 and 65 are what is left of 2A.
+
+**The corpus total moved.** It is **34,559 findings, 23,570 shown**, over the same
+448 pages. Every number below that was measured against 34,910 and 23,961 is a
+baseline from before 62.
 
 ## The order, and why
 
@@ -259,21 +266,35 @@ moves. It is a move, not a change of behaviour.
 ## Session 2A — The three that need no crawl
 
 **Start here today.** The new environment is down, and none of these three touches it.
+**62 has landed. Two are left**, 66 and 65.
 
-```
-/clear
-```
+### Ticket 62 — DONE on 2026-08-07
 
-```
-/implement .scratch/content-parity-log/issues/62-identical-units-make-no-finding.md
+`classifyPair()` hands a pair of equal `norm` strings to `classifyExactPair()`, so
+the tier-2 classifier names a visible difference only when there is one. `casing`
+was its first test.
 
-This changes the comparison only, so it is measured over the extracts already in
-data/. Do not crawl. Run compare/30-compare.mjs and compare/measure.mjs nl.
+No crawl was needed, exactly as planned. The compare stage over the extracts on disk
+gave every number, before and after.
 
-The checkable output: /downloads reports no casing finding for
-"Download de montagehandleiding" or "Bekijk de installatievideo", and the casing
-count falls. Nothing else moves.
-```
+| | before | after |
+| --- | --- | --- |
+| findings | 34,910 | **34,559** |
+| shown by default | 23,961 | **23,570** |
+| `casing` | 662 | **271** |
+
+391 findings were the defect, all of them shown. 351 disappear and **40 become
+`tag-changed`** — equal text in a tag that moved, which the phantom finding hid.
+`/downloads` is clean on nl and uk. The two `casing` findings left on that page
+across the six stores are real letter-case differences, on be and de.
+
+Two things came out of it. `heading-level` is **not** reachable from tier 2, because
+`mayPair()` holds a leftover pair to one `kind` and one heading level; the ticket's
+second criterion is met by `tag-changed` alone. And **391 finding ids leave the log**,
+so an override keyed on one is an orphan — ticket 65 counts them, and that count is
+now 391 larger.
+
+Nothing is left to do here. 66 and 65 are next.
 
 ```
 /clear
@@ -354,8 +375,11 @@ loses a unit an editor wrote.
 ```
 /implement .scratch/content-parity-log/issues/64-promo-banner-legacy-only-region.md
 
-The largest single removal in the project: 2,698 findings, 7.7% of 34,910, on 371 of
-448 pages.
+The largest single removal in the project: 2,698 findings, on 371 of 448 pages.
+
+The 7.7% was 2,698 of 34,910, and ticket 62 took the corpus to 34,559. Re-measure the
+banner count itself as well. Some of the 391 findings ticket 62 removed may have sat
+on the banner, so neither the count nor the share carries over.
 
 Two things must not be skipped. The anchor is verified in ALL SIX stores — fr and
 be_fr are unverified, because the URLs used while grilling answered 404, which proves
@@ -744,7 +768,7 @@ npm test; if ($?) { node compare/measure.mjs nl }
 | 47 | Shared keys layering | session 2 | **done** — ADR 0001, `shared/keys.mjs` |
 | 59 | link-status erases the other stores | session 2 | **done** — the script refuses an argument and exits 2 |
 | 60 | Report filename in the contract | session 2 | **done** — the shape is in `compare/contract.mjs` |
-| 62 | Two identical units make no finding | session 2A | `/implement` — no crawl |
+| 62 | Two identical units make no finding | session 2A | **done** — 391 phantom `casing` findings gone, no crawl |
 | 66 | Rename to `ContentUnit` | session 2A | `/implement` — no crawl, no number moves |
 | 65 | Count the overrides the fold detaches | session 2A | `/implement` — Supabase |
 | 61 | Tier-1 invisible characters | session 2B | `/implement` — needs the new site |
