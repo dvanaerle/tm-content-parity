@@ -1,9 +1,8 @@
-import { useCallback, useState } from 'react';
 import Ledger from './Ledger.jsx';
 import { EditorPrompt, LogBanner, PageBar, ReviewControl } from './Progress.jsx';
 import { BANNER, CHROME } from '../lib/palette.mjs';
 import { useEditor, useOverrides } from '../lib/overrides.mjs';
-import { useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
+import { usePageReport, useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
 
 /**
  * The island that owns one store page.
@@ -12,14 +11,16 @@ import { useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
  * because a Recheck replaces it: the same component then re-derives every state
  * and every number against a new observation, and a fix claim made against the
  * old one has to prove itself. A Recheck that fails replaces nothing.
+ *
+ * A saved re-check from an earlier press replaces it the same way (ticket 71),
+ * and the footer says which of the two the reader is looking at.
  */
 export default function PageView({ report: built }) {
-  const [report, setReport] = useState(built);
   const { editor, save } = useEditor();
-  const log = useOverrides({ report, editor });
   const recheckAvailable = useRecheckAvailable();
+  const { report, source, onReport } = usePageReport(built, recheckAvailable);
+  const log = useOverrides({ report, editor });
 
-  const onReport = useCallback((fresh) => setReport(fresh), []);
   const recheck = useRecheck(onReport);
 
   const { derived, append, canWrite } = log;
@@ -82,8 +83,10 @@ export default function PageView({ report: built }) {
         observationId={report.observationId}
       />
 
+      {/* A restored re-check must not look like a crawl result. */}
       <p className="text-xs text-slate-500">
-        Momentopname van {new Date(report.builtAt).toLocaleString('nl-NL')}
+        {source === 'recheck' ? 'Hercontrole van ' : 'Momentopname van '}
+        {new Date(report.builtAt).toLocaleString('nl-NL')}
         {' · '}waarneming <code>{report.observationId}</code>
         {!recheckAvailable && ' · hercontrole vereist de lokale service'}
       </p>

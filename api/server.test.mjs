@@ -56,8 +56,39 @@ describe('the re-check endpoint', () => {
     expect(await call(handle, '/api/health', 'GET')).toMatchObject({ status: 200 });
   });
 
-  it('rejects a GET on recheck', async () => {
+  it('rejects a method that is neither POST nor GET', async () => {
     const handle = createApi({ recheck: async () => ({}) });
-    expect((await call(handle, '/api/recheck/nl/x', 'GET')).status).toBe(405);
+    expect((await call(handle, '/api/recheck/nl/x', 'DELETE')).status).toBe(405);
+  });
+});
+
+/**
+ * Ticket 71. The saved re-check is read from the same path with GET, so one
+ * parser splits the store from the page for both methods and the two can never
+ * disagree about `faq/productinformatie`.
+ */
+describe('the saved re-check endpoint', () => {
+  it('answers the saved report', async () => {
+    const handle = createApi({
+      recheck: async () => ({}),
+      savedRecheck: async (store, page) => ({ store, page, builtAt: '2026-08-07T11:00:00.000Z' }),
+    });
+    const { status, body } = await call(handle, '/api/recheck/nl/faq/productinformatie', 'GET');
+    expect(status).toBe(200);
+    expect(body).toMatchObject({ store: 'nl', page: 'faq/productinformatie' });
+  });
+
+  it('answers 404 when nothing is saved, which is the normal case', async () => {
+    // `data/` is not in git. A missing folder and a missing file are what a
+    // fresh clone has, and neither is an error.
+    const handle = createApi({ recheck: async () => ({}), savedRecheck: async () => null });
+    const { status, body } = await call(handle, '/api/recheck/nl/overkappingen', 'GET');
+    expect(status).toBe(404);
+    expect(body).not.toHaveProperty('findings');
+  });
+
+  it('answers 404 when the service was built without a reader', async () => {
+    const handle = createApi({ recheck: async () => ({}) });
+    expect((await call(handle, '/api/recheck/nl/overkappingen', 'GET')).status).toBe(404);
   });
 });

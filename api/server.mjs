@@ -17,10 +17,10 @@
  */
 
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { newObservationId } from '../compare/contract.mjs';
+import { newObservationId, reportFilename } from '../compare/contract.mjs';
 import { checkAll } from '../compare/link-status.mjs';
 import { comparePage, newSitePathsFor } from '../compare/30-compare.mjs';
 import { MaintenanceError } from '../crawl/fetch-page.mjs';
@@ -28,6 +28,14 @@ import { extractStorePage } from '../crawl/20-extract.mjs';
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 const SEEDS = new URL('../data/10-store-seeds.json', import.meta.url);
+
+/**
+ * A press writes here, beside `data/reports/` and never over it (ticket 71).
+ * `compare/measure.mjs` reads the crawl reports, so a button press must not move
+ * a measured baseline. `chooseReport()` in `web/src/lib/recheck-choice.mjs` holds
+ * the rule that picks between the two.
+ */
+const RECHECKS = new URL('../data/rechecks/', import.meta.url);
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -74,12 +82,37 @@ export async function recheck(store, page) {
   );
   const statuses = new Map(Object.entries(await checkAll(targets)));
 
-  return comparePage({
+  const report = comparePage({
     sides,
     newSitePaths: newSitePathsFor(await readSeeds(), store),
     statuses,
     observationId: newObservationId(),
   });
+
+  // Saved before it is answered, so a reload shows what the press showed.
+  await mkdir(fileURLToPath(RECHECKS), { recursive: true });
+  await writeFile(new URL(reportFilename(store, page), RECHECKS), JSON.stringify(report));
+
+  return report;
+}
+
+/**
+ * The saved re-check of one page, or `null`.
+ *
+ * `data/` is not in git, so a missing folder and a missing file are the normal
+ * case on a fresh clone. A file that cannot be read is the same answer as no
+ * file: the built page still carries the crawl report, and the reader loses
+ * nothing.
+ *
+ * @param {string} store
+ * @param {string} page
+ */
+export async function savedRecheck(store, page) {
+  try {
+    return JSON.parse(await readFile(new URL(reportFilename(store, page), RECHECKS), 'utf8'));
+  } catch {
+    return null;
+  }
 }
 
 /** @param {import('node:http').ServerResponse} response */
@@ -93,9 +126,11 @@ const send = (response, status, body, type = 'application/json; charset=utf-8') 
  * their own suites and are not re-tested through HTTP — this takes a stub, so
  * the two smoke tests never reach the network.
  *
- * @param {{ recheck: (store: string, page: string) => Promise<any> }} deps
+ * @param {object} deps
+ * @param {(store: string, page: string) => Promise<any>} deps.recheck
+ * @param {(store: string, page: string) => Promise<any>} [deps.savedRecheck]
  */
-export function createApi({ recheck: run }) {
+export function createApi({ recheck: run, savedRecheck: read = async () => null }) {
   /**
    * @param {import('node:http').IncomingMessage} request
    * @param {import('node:http').ServerResponse} response
@@ -107,13 +142,23 @@ export function createApi({ recheck: run }) {
   if (pathname === '/api/health') return send(response, 200, { ok: true });
 
   if (pathname.startsWith('/api/recheck/')) {
-    if (request.method !== 'POST') return send(response, 405, { reason: 'Gebruik POST.' });
-
     // A page key can hold a slash (`faq/productinformatie`), so the store is the
-    // first segment and the page is everything after it.
+    // first segment and the page is everything after it. One parser serves both
+    // methods, so the read and the press can never split a key differently.
     const [store, ...rest] = pathname.slice('/api/recheck/'.length).split('/');
     const page = decodeURIComponent(rest.join('/'));
     if (!store || !page) return send(response, 400, { reason: 'Geef een winkel en een pagina.' });
+
+    // Ticket 71: the saved re-check, never the crawl report. The built page
+    // already carries the crawl report, and it holds both extracts.
+    if (request.method === 'GET') {
+      const saved = await read(store, page);
+      return saved
+        ? send(response, 200, saved)
+        : send(response, 404, { reason: 'Geen bewaarde hercontrole.' });
+    }
+
+    if (request.method !== 'POST') return send(response, 405, { reason: 'Gebruik POST of GET.' });
 
     try {
       return send(response, 200, await run(store, page));
@@ -166,7 +211,7 @@ async function serveStatic(pathname, response) {
 
 if (process.argv[1]?.endsWith('server.mjs')) {
   const port = Number(process.argv[2] ?? process.env.PORT ?? 4321);
-  const handle = createApi({ recheck });
+  const handle = createApi({ recheck, savedRecheck });
 
   createServer((request, response) => {
     handle(request, response).catch((error) => send(response, 500, { reason: String(error) }));
@@ -174,5 +219,6 @@ if (process.argv[1]?.endsWith('server.mjs')) {
     console.log(`Content parity log op http://localhost:${port}`);
     console.log('  GET  /api/health');
     console.log('  POST /api/recheck/<store>/<page>');
+    console.log('  GET  /api/recheck/<store>/<page>');
   });
 }
