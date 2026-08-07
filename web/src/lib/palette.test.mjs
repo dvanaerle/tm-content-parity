@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BANNER, FILL, INK, PILL, SOLID, SURFACE, TOKEN, severityTone } from './palette.mjs';
+import { ACCENT, BANNER, FILL, INK, PILL, SOLID, SURFACE, TOKEN, severityTone } from './palette.mjs';
 
 /**
  * `palette.mjs` holds two rules with judgement in them, and the repo says a rule
@@ -35,7 +35,7 @@ describe('the tone maps', () => {
   const STATUS = ['severe', 'attention', 'info', 'neutral', 'dark'];
 
   it('spends the diff colours on direction only', () => {
-    for (const map of [PILL, SOLID, FILL, BANNER, INK]) {
+    for (const map of [PILL, SOLID, FILL, BANNER, INK, ACCENT]) {
       for (const tone of STATUS) {
         expect(map[tone] ?? '').not.toMatch(/lost|added/);
       }
@@ -46,6 +46,12 @@ describe('the tone maps', () => {
     // They were the same string, so an error banner and a not-connected banner
     // printed the same shape and a reader could not tell which one they had.
     expect(BANNER.severe).not.toBe(BANNER.attention);
+  });
+
+  it('gives the fix checkbox two ticked colours and no direction', () => {
+    // Ticket 36: ticked, and ticked-but-contradicted. A checkbox reports work, so
+    // neither of the two may be the red or the green of the diff.
+    expect(Object.keys(ACCENT)).toEqual(['info', 'attention']);
   });
 
   it('tints a whole cell for the two directions and for nothing else', () => {

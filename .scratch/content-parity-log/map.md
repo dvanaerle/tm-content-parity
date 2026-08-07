@@ -147,7 +147,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   mode** all session, so `prodStatus` is not yet a measurement.
 
 - [05 — Link checking rules](issues/05-link-checking-rules.md)
-  — The Links tab compares **targets only**; anchor text belongs to the Diff tab.
+  — The Links tab compares **targets only**; anchor text belongs to the content view.
   Status-check **internal hosts only** — the external surface is 28 hosts of YouTube,
   Maps and review platforms, all unfixable here. Seven classes, because `class` is the
   mute key: `broken-link` (absolute, fires even when production is broken too),
@@ -393,8 +393,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   **The row-ordering defect was bigger than the ticket guessed.** A new-only row
   sorted on its index in the *new* document against *production* indices; it is
   now anchored to the production position of the nearest matched pair before it.
-  Invisible today, because the Diff tab shows only the differing rows. Ticket 36
-  makes it visible.
+  Invisible while the Diff tab showed only the differing rows. Ticket 36 shows the
+  whole document, so it is visible now.
 
   Three decisions the ticket did not give. **`TextElement.index` is no longer the
   position in the `elements` array** — the shared counter runs over images and
@@ -561,20 +561,49 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   Tailwind 4 `@theme`. Resolves ticket 28 and closes ticket 12's remaining
   questions.
 
-  Broken into six build tickets. **33 and 35 are resolved. 34 is measured and
+  Broken into six build tickets. **33, 35 and 36 are resolved. 34 is measured and
   eight-ninths built** — the review of 2026-08-07 reopened it on the one criterion
-  it ticked in error. **36 is unblocked and is the next ticket to build.**
+  it ticked in error. **37 is unblocked and is the next ticket to build.**
 
   ```
   33 ✓ ──> 34 ~ ─┐
-     └──> 35 ✓ ──┴──> 36 ← next ──> 37
+     └──> 35 ✓ ──┴──> 36 ✓ ──> 37 ← next
   38 (independent, not started)
   ```
 
   **34's open criterion blocks nothing.** 36 needed the row-ordering fix and 37
   needed the document-order index; both landed and are measured. The deep link is
   orthogonal to each, and neither ticket mentions it. So the reopening is a debt to
-  pay, not a gate to wait on — 36 can start today.
+  pay, not a gate to wait on — 36 did not wait, and 37 need not.
+
+  **Ticket 36 is resolved: the log is one view of the page, and it can be
+  narrowed.** Seven tabs are five — Inhoud, Links, Afbeeldingen, Meta, Taken —
+  and Inhoud is the whole document in order, matched rows included, because a tint
+  only reads as a signal against untinted baseline. Outline is navigation now, a
+  sticky jump-list built from the rows that are actually on screen. Markdown is a
+  download.
+
+  **The filter is a pure module, and that is the load-bearing decision.**
+  `web/src/lib/view.mjs` decides what is on screen; the components are pixels. It
+  returns rows, the classes the page carries, and a row total — and a test pins
+  that it returns *nothing else*, because the one rule that outranks the rest here
+  is that a filter never moves a count. Measured: filtering the dashboard to
+  `casing` narrows 124 pages to 58 and leaves `7455 verschillen open` where it was.
+
+  Two things a reader will want to know. The tab badges all count **findings**,
+  Inhoud's included, so a row count never sits beside four finding counts. And a
+  class filter implies the differences: narrowing to `copy` does not also keep the
+  matched rows, because the pass an editor asked for is the copy edits.
+
+  | | |
+  |---|---|
+  | rows on the largest page, `terrasoverkapping` | **288** |
+  | `fotogalerij/zonwering`, the worst case | 399 findings over 178 rows |
+  | filter re-render there | **21 ms** — no virtualisation needed, none added |
+
+  The "Opgelost" button is a **checkbox** with three states: unticked, ticked, and
+  ticked-but-contradicted. Dismissal and mute keep their menu, because a note is
+  mandatory on a dismissal and a checkbox cannot carry one.
 
   **Ticket 34 is reopened.** Position, ordering, the shared counter and the
   occurrence badge all landed and hold the baseline exactly. What did not land is

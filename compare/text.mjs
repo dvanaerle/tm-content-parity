@@ -6,7 +6,7 @@
  * element identity, and the finding id depends on that identity.
  *
  * One alignment pass produces the rows, and the findings are derived from those
- * rows. The Diff tab and the finding count therefore cannot disagree about what
+ * rows. The content view and the finding count therefore cannot disagree about what
  * is on the page — a second alignment pass would eventually drift from the
  * first.
  */
@@ -264,7 +264,7 @@ function sortKey(row, matched, afterProduction) {
 export function textFindings(rows, collector) {
   for (const row of rows) {
     if (!row.class) continue;
-    // The row keeps the id of the finding it was grouped into, so the Diff tab
+    // The row keeps the id of the finding it was grouped into, so the content view
     // can offer an override control on a position. Six positions that grouped to
     // one finding all carry that one id, and acting on any of them acts on all
     // six — which is what grouping means.

@@ -50,7 +50,7 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * @property {string} key           Target identity: the two hosts of the page folded to one
  *                                  token, path lowercased, trailing slash removed, query kept,
  *                                  fragment dropped.
- * @property {string} text          The anchor text. The Diff tab owns it, not the Links tab.
+ * @property {string} text          The anchor text. The content view owns it, not the Links tab.
  * @property {boolean} internal
  */
 
@@ -137,7 +137,7 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  */
 
 /**
- * One aligned position in the Diff tab, in production's document order.
+ * One aligned position in the content view, in production's document order.
  *
  * A finding is **grouped** — one rename repeated six times is one finding — and a
  * row is a **position**, so the two cannot be the same record. The rows are

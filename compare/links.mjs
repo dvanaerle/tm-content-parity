@@ -77,7 +77,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
   const newHost = new URL(next.url).host.toLowerCase();
 
   // Ticket 34. An anchor and its words share one position on the document-order
-  // counter, so a link finding names the same section the Diff tab would.
+  // counter, so a link finding names the same section the content view would.
   const prodHeading = anchorHeadingFor(production.elements);
   const newHeading = anchorHeadingFor(next.elements);
 

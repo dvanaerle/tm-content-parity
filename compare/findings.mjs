@@ -35,7 +35,7 @@ export class FindingCollector {
    * @returns {string} The finding id this occurrence belongs to.
    *
    * The id comes back so a caller can keep the link from its own record to the
-   * grouped finding. The Diff tab needs exactly that: a row is a **position** and
+   * grouped finding. The content view needs exactly that: a row is a **position** and
    * a finding is **grouped**, so the two cannot be the same record — but an
    * override control on a row has to act on the finding. The browser cannot
    * recompute the id, because `findingId()` needs `node:crypto`.

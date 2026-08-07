@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react';
 import { Bar, Chip, ClassPill } from './Chips.jsx';
 import { LogBanner } from './Progress.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
-import { CHROME, INK } from '../lib/palette.mjs';
+import { BANNER, CHROME, INK } from '../lib/palette.mjs';
 import { useStoreOverrides } from '../lib/overrides.mjs';
+import { pagesWithClasses, toggleClass } from '../lib/view.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
 
@@ -18,6 +19,10 @@ const CHECKS = ['text', 'links', 'images'];
 export default function Dashboard({ pages, excluded }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('worst');
+  // Ticket 36 gives the class pills the same semantics the content view's filter
+  // has: a pure view filter, session-only, that moves no bar and no roll-up. The
+  // chips above the table keep counting every comparable page.
+  const [classes, setClasses] = useState(/** @type {string[]} */ ([]));
 
   // One-sided pages are out of the bar from the first day: ticket 20 owns them,
   // and seventy-six undecidable rows would poison the roll-up.
@@ -32,11 +37,12 @@ export default function Dashboard({ pages, excluded }) {
 
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const found = comparable.filter((page) => !needle || page.page.toLowerCase().includes(needle));
+    const found = pagesWithClasses(comparable, classes)
+      .filter((page) => !needle || page.page.toLowerCase().includes(needle));
     return [...found].sort((a, b) => (
       sort === 'worst' ? openOf(b) - openOf(a) : a.page.localeCompare(b.page)
     ));
-  }, [comparable, query, sort, log.byPage]);
+  }, [comparable, classes, query, sort, log.byPage]);
 
   const totals = useMemo(() => {
     const byClass = {};
@@ -93,12 +99,22 @@ export default function Dashboard({ pages, excluded }) {
           <div className="flex flex-wrap gap-1">
             {Object.entries(totals.byClass)
               .sort((a, b) => b[1] - a[1])
-              .map(([cls, count]) => (
-                <span key={cls} className="inline-flex items-center gap-1">
-                  <ClassPill class={cls} />
-                  <span className="mr-2 text-xs text-slate-500">{count}</span>
-                </span>
-              ))}
+              .map(([cls, count]) => {
+                const on = classes.includes(cls);
+                return (
+                  <button
+                    key={cls}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setClasses(toggleClass({ classes }, cls).classes)}
+                    title={`Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`}
+                    className={`mr-2 inline-flex items-center gap-1 rounded ${on ? 'ring-2 ring-brand-lighter-green' : 'opacity-70 hover:opacity-100'}`}
+                  >
+                    <ClassPill class={cls} />
+                    <span className="pr-1 text-xs tabular-nums text-slate-500">{count}</span>
+                  </button>
+                );
+              })}
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -118,6 +134,22 @@ export default function Dashboard({ pages, excluded }) {
             </select>
           </div>
         </header>
+
+        {/* The filter says so for as long as it is on. A narrowed list that looks
+            like the whole log is read as the whole log. */}
+        {classes.length > 0 && (
+          <p className={`flex flex-wrap items-center gap-2 border-b px-4 py-2 text-sm ${BANNER.attention}`}>
+            <strong>Gefilterd op {classes.join(', ')}.</strong>
+            {rows.length} van {comparable.length} pagina's. De getallen hierboven tellen alle pagina's.
+            <button
+              type="button"
+              onClick={() => setClasses([])}
+              className="rounded border border-current px-1.5 py-0.5 text-xs"
+            >
+              Filter wissen
+            </button>
+          </p>
+        )}
 
         <table className="w-full text-sm">
           <thead>

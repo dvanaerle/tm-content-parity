@@ -118,6 +118,19 @@ export const TOKEN = {
 };
 
 /**
+ * A native form control's own colour. The fix checkbox (ticket 36) has three
+ * visual states, and two of them are ticked: `info` for a claim that stands, and
+ * `attention` for a claim a later observation contradicted.
+ *
+ * It holds status tones only. A checkbox is a work state, and a work state never
+ * wears the diff hues.
+ */
+export const ACCENT = {
+  info: 'accent-info-ink',
+  attention: 'accent-attention-fill',
+};
+
+/**
  * Chrome. The brand colours are in this object and nowhere else. A component that
  * reads a colour from here shows structure, and not a finding.
  */

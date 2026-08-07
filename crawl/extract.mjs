@@ -320,7 +320,7 @@ function meta(root, scope) {
 /**
  * A reading and export artefact, never the diff spine: it flattens element
  * identity, which the finding id depends on. It renders the same elements the
- * Diff tab shows, so the two can never disagree about what is on the page.
+ * content view shows, so the two can never disagree about what is on the page.
  *
  * @param {import('../compare/contract.mjs').TextElement[]} elements
  * @returns {string}

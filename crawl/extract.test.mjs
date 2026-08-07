@@ -411,7 +411,7 @@ describe('pageType', () => {
 });
 
 describe('toMarkdown', () => {
-  it('renders the same elements the Diff tab shows', () => {
+  it('renders the same elements the content view shows', () => {
     const extract = extractPage(page(`
       <h1>Overkappingen</h1><p>Kies uw model.</p>
       <ul><li>Antraciet</li></ul><a href="/offerte">Offerte</a>`), CONTEXT);

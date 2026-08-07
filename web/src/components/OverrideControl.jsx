@@ -1,14 +1,20 @@
 import { useState } from 'react';
-import { INK, PILL } from '../lib/palette.mjs';
+import { ACCENT, INK, PILL } from '../lib/palette.mjs';
 
 /**
  * The one action control. Spec 29: one control, one place in the code, four call
- * sites — Diff, Links, Afbeeldingen and Taken.
+ * sites — Inhoud, Links, Afbeeldingen and Taken.
  *
  * The two powers are deliberately unequal, and the inequality is the design:
  * a **judgement** (negeren, dempen) beats a re-check, a **claim of fact**
  * (opgelost) does not. So the control offers all three and then reports back
  * what the derivation made of it, including *claimed fixed, still differs*.
+ *
+ * Ticket 36 makes the claim of fact a **checkbox**, and only the claim of fact.
+ * Ticking off a pass is then one click per row instead of a menu. Dismissal keeps
+ * its menu because a dismissal carries a mandatory note and a checkbox cannot, and
+ * mute keeps its menu because it acts on a whole class and a mis-click would take a
+ * class off the page.
  */
 
 /**
@@ -65,6 +71,16 @@ export default function OverrideControl({ finding, observationId, append, canWri
 
   return (
     <div className="flex flex-wrap items-center gap-1">
+      <FixCheckbox
+        finding={finding}
+        canWrite={canWrite}
+        onTick={(ticked) => (ticked
+          // The claim records the observation it was made against, or it could
+          // never be contradicted by a later one.
+          ? act({ action: 'fixed', observationId })
+          : act({ action: 'cleared' }))}
+      />
+
       <span className={`rounded px-1.5 py-0.5 text-[11px] ${PILL[STATE[state].tone]}`}>
         {STATE[state].label}
       </span>
@@ -83,9 +99,6 @@ export default function OverrideControl({ finding, observationId, append, canWri
 
       {canWrite && (state === 'open' || state === 'contradicted') && (
         <>
-          {/* The claim records the observation it was made against, or it could
-              never be contradicted by a later one. */}
-          <Action onClick={() => act({ action: 'fixed', observationId })}>Opgelost</Action>
           <Action onClick={() => setAsking(true)}>Negeren…</Action>
           <Action onClick={() => append({
             scope: 'page-class', action: 'muted', class: finding.class,
@@ -95,7 +108,9 @@ export default function OverrideControl({ finding, observationId, append, canWri
         </>
       )}
 
-      {canWrite && state !== 'open' && state !== 'contradicted' && (
+      {/* `fixed` is not here: its own checkbox unticks it. A second control for the
+          same event would let the two disagree about what is on screen. */}
+      {canWrite && (state === 'dismissed' || state === 'muted') && (
         <Action onClick={() => append(
           state === 'muted'
             ? { scope: 'page-class', action: 'cleared', class: finding.class }
@@ -105,6 +120,45 @@ export default function OverrideControl({ finding, observationId, append, canWri
         </Action>
       )}
     </div>
+  );
+}
+
+/**
+ * The claim of fact, with **three** visual states: unticked, ticked, and
+ * ticked-but-contradicted.
+ *
+ * The third state is the whole reason this is not a plain two-state checkbox. A fix
+ * claim loses to re-check, and a two-state checkbox is the affordance that made the
+ * superseded "the tick always wins" model feel natural. So a contradicted claim
+ * stays ticked — the editor did claim it — and turns amber.
+ *
+ * A dismissal and a mute also close a finding, and neither is a claim of fact.
+ * Their checkbox is disabled rather than ticked: ticking it would say the editor
+ * corrected something they in fact accepted.
+ */
+function FixCheckbox({ finding, canWrite, onTick }) {
+  const { state, occurrences } = finding;
+  const closedByJudgement = state === 'dismissed' || state === 'muted';
+  const contradicted = state === 'contradicted';
+
+  // One rename repeated six times is one finding, and one event closes all six.
+  // The editor is told so before the click, not after it.
+  const grouped = occurrences > 1 ? ` Eén vinkje vinkt alle ${occurrences} regels af.` : '';
+
+  return (
+    <input
+      type="checkbox"
+      className={`size-4 shrink-0 disabled:opacity-40 ${contradicted ? ACCENT.attention : ACCENT.info}`}
+      checked={state === 'fixed' || contradicted}
+      disabled={!canWrite || closedByJudgement}
+      onChange={(change) => onTick(change.target.checked)}
+      aria-label={`Opgelost — ${finding.class}`}
+      title={
+        contradicted
+          ? `Je claimde dit als opgelost, maar een latere waarneming ziet het verschil nog.${grouped}`
+          : `Ik heb dit gecorrigeerd.${grouped}`
+      }
+    />
   );
 }
 
