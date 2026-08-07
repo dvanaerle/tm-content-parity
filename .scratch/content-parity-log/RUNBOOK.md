@@ -522,7 +522,7 @@ npm test; if ($?) { node compare/measure.mjs nl }
 | 22 | Re-measure prod status | session 1 | **done** — folded into 53 and 51 |
 | 13 | Supabase pause | session 1 | **done** — applied, one green run, cron unproven |
 | 30 | Wire Supabase | after a scheduled run | you, one click |
-| 47 | Shared keys layering | session 2 | `/implement` |
+| 47 | Shared keys layering | session 2 | **done** — ADR 0001, `shared/keys.mjs` |
 | 59 | link-status erases the other stores | session 2 | **triaged** → `/implement` |
 | 60 | Report filename in the contract | session 2 | **triaged** → `/implement` |
 | 51 | Runnable seed pipeline | session 3 | `/implement` |

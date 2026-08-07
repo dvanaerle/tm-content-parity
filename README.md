@@ -15,6 +15,7 @@ closes itself.
 | `crawl/` | Sitemap parse, fetch, extract. One pass gives elements, links, images, meta and Markdown. |
 | `crawl/probes/` | One-time measurement scripts kept as evidence. Do not build on them. |
 | `compare/` | Normalisation, element matching, finding ids, classification, position and deep links. |
+| `shared/` | Pure decision functions that more than one stage needs. It imports from no stage. See ADR 0001. |
 | `overrides/` | What an editor's ticks add up to. `state.mjs` is pure and tested; `supabase.mjs` is the whole database surface, three functions wide. |
 | `api/` | The local re-check service, which also serves `dist/`. |
 | `web/` | Astro static build, with React islands for the interactive parts. |

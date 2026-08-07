@@ -7,7 +7,7 @@
  */
 
 import { parse } from 'node-html-parser';
-import { imageKey, linkKey } from './keys.mjs';
+import { imageKey, linkKey } from '../shared/keys.mjs';
 import { collapse, tier1 } from './normalise.mjs';
 
 /** Ticket 14: without this the new site's `<body>` and `<header>` are deleted. */

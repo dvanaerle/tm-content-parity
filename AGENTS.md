@@ -24,6 +24,10 @@ the layout.
 
 - **`compare/contract.mjs` is the contract.** `crawl/` writes it, `compare/`
   and `web/` read it. Change the contract in that file first, then the code.
+- **The arrow points one way**, from `crawl/` to `compare/` to `web/`. Do not add
+  an import back up it. A pure rule that two stages need goes in `shared/`, which
+  imports from no stage. ADR 0001 gives the three questions to ask, and it names
+  the two back-arrows that are still open.
 - **Node ESM**, `.mjs`, no build step outside `web/`.
 - **Vitest** for tests. `npm test`. The comparison rules are the crown jewels:
   a rule with no test is not a rule.

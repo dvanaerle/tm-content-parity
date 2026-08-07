@@ -13,10 +13,10 @@
  * needs a test.
  *
  * **Browser-safe and pure.** The panel is inside a React island, so this imports
- * only `crawl/keys.mjs`, which imports nothing.
+ * only `shared/keys.mjs`, which imports nothing.
  */
 
-import { linkKey } from '../crawl/keys.mjs';
+import { linkKey } from '../shared/keys.mjs';
 
 /**
  * The fields, in reading order.

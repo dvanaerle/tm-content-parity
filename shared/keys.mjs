@@ -1,14 +1,9 @@
 /**
  * The two identity keys, and nothing else.
  *
- * They were in `extract.mjs` until ticket 35. They moved here for the same reason
- * that made `vocabulary.mjs` a separate file from `contract.mjs`: the **browser**
- * needs `linkKey()` now. The meta panel folds the host out of a canonical before it
- * compares it. It uses the folding of the links check, and not a second folding
- * that can become different. `extract.mjs` imports `node-html-parser`, and a React
- * island must not import that package.
- *
- * Both functions are pure and import nothing.
+ * The crawl and the meta panel must fold a host the same way. One folding, and
+ * not two that become different. Two stages read this file, thus it is in
+ * `shared/`: pure, and it imports nothing. See ADR 0001.
  */
 
 /** A true trailing size suffix, per ticket 06. A bare `_N` is never one. */
