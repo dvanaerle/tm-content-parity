@@ -125,12 +125,48 @@ sits inside the grid container, so this entry takes it; on production it did not
 appear as a finding either way on this page. It still needs its own measurement
 before it gets its own entry. Do not add one blind.
 
+## The nl category pages, re-crawled 2026-08-07
+
+The 19 nl pages whose `pageType` is `category` were re-extracted and re-compared,
+and nothing else was touched. Finding ids are content-addressed on text and not on
+position, so a surviving finding keeps its id and no override detaches.
+
+**3,368 findings become 2,316. 2,323 shown become 1,743.** The entry is removed on
+16 pages on production (693 units) and on 14 on the new site (273 units).
+
+Three things the three measured pages could not show:
+
+**Four category pages have no grid at all.** `schuifwand` and `verlichting` match on
+neither host. `showroom-contact` and `vrijstaande-terrasoverkapping` were already
+known. The entry is silent on them, which is correct.
+
+**`glazen-schuifdeur` matches on both hosts, and the new site's grid holds zero
+content units.** The container is there and it is empty. One match on each side, 41
+units against 0. This is the rule working, not a fault.
+
+**`losse-onderdelen` breaks the ADR's third bar.** Production has the container and
+the new site does not have it at all, so the two sides are not cut by the same
+definition. **It widened nothing**: re-measured before and after, `text-added` stays
+at 15 and `text-missing` falls from 53 to 44. Removing units from one side cannot
+invent a row on the other here. But the new site's own grid furniture on that page —
+`Producten vergelijken`, `Vergelijken`, `Clear all`, `Filteren & Sorteren` and the
+category names — sits outside `#amasty-shopby-product-list` and survives.
+
+That is a **second entry waiting for a measurement**, and it is not added here. It
+needs the same bar the first one got: a selector, three pages, both sides. Do not add
+one blind.
+
 ## Not done here, on purpose
 
-The corpus was **not** re-crawled and the reports were **not** rebuilt. Rebuilding
-every report changes finding ids and detaches overrides, which is ticket
-[67](67-a-content-unit-folds-its-inline-links.md)'s business and not a side effect
-this ticket should cause. Until the next crawl the dashboard shows each entry as
-removed on no page, and it names the three causes: the store does not have the
-region, the selector does not match any more, or the snapshot is older than the
-entry.
+**The other five stores are not re-crawled**, and neither are the 160 nl pages that
+are not category pages. Their reports still carry the 2026-08-06 observation and no
+`regionsExcluded`, so the nl dashboard counts 16 pages and the other five dashboards
+count none. The entry takes effect on each store at its next crawl.
+
+The first note here said the whole corpus was left alone because a rebuild detaches
+overrides. That reason was wrong for **this** change: `findingId()` hashes the store,
+the page, the check, the class and the two texts, and no position. Cutting the grid
+removes the grid's own findings and leaves every surviving id untouched. The
+detachment risk belongs to ticket
+[67](67-a-content-unit-folds-its-inline-links.md), which rewrites the text of units
+that stay.

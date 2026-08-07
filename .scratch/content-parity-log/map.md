@@ -883,10 +883,19 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   One page pays the ticket-27 argument back: production gives `showroom-contact` the
   body class `catalog-category-view`, and the selector correctly matches nothing on
   it. `pageType` names a page kind; the grid is a region.
-  Not done on purpose: **the corpus was not re-crawled and no report was rebuilt**,
-  because that detaches overrides and belongs to 67. Until the next crawl every entry
-  reads "removed on no page" on the dashboard, which names all three causes rather
-  than asserting that the region stopped matching.
+  **The 19 nl category pages are re-crawled and re-compared, and nothing else is.**
+  **3,368 findings become 2,316, and 2,323 shown become 1,743.** A rebuild does not
+  detach an override here: `findingId()` hashes the two texts and no position, so a
+  surviving finding keeps its id. That risk belongs to 67, which rewrites the text of
+  units that stay. The other five stores pick the entry up at their next crawl.
+  Three things the three measured pages could not show. **Four category pages have no
+  grid at all**, and the entry is correctly silent on them. **`glazen-schuifdeur`
+  matches on both hosts with an empty grid on the new site** — 41 units against 0,
+  which is the rule working. And **`losse-onderdelen` breaks the ADR's third bar**:
+  production has the container and the new site does not have it at all. It widened
+  nothing — `text-added` stays at 15 and `text-missing` falls from 53 to 44 — but the
+  new site's grid furniture there survives the cut. That is a second entry waiting for
+  a measurement, and it is deliberately not added blind.
   The USP strip stays open. On the new site this entry already takes it; on
   production its position is still unmeasured, so it does not get an entry yet.
 
