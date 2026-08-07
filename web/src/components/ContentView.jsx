@@ -18,12 +18,12 @@ import {
  * Diff and Content answered half a question each. Diff showed only the differing
  * rows, so once ticket 35 tinted them every row was coloured and the colour carried
  * no signal. Content showed two blocks of flat Markdown with no diff at all. This
- * component is the two of them merged: **every element in document order**,
+ * component is the two of them merged: **every unit in document order**,
  * production and the new site side by side, matched rows calm and changed rows
  * coloured, so a difference is found by scanning rather than by reading.
  *
- * **The element table is the spine, and Markdown is an export.** Markdown flattens
- * the element identity the finding id depends on, so it can never be the spine — but
+ * **The unit table is the spine, and Markdown is an export.** Markdown flattens
+ * the unit identity the finding id depends on, so it can never be the spine — but
  * an editor pasting a whole page into Magento wants it, and the two download links
  * are where it lives now.
  *
@@ -144,9 +144,9 @@ function Export({ markdown, name, children }) {
 }
 
 /**
- * Outline, retired as a tab and returned as navigation. It was production's element
+ * Outline, retired as a tab and returned as navigation. It was production's unit
  * list indented by heading level, and the table beside it now holds every one of
- * those elements — so what is left of it is the jump list.
+ * those units — so what is left of it is the jump list.
  *
  * It sticks, because the page it navigates is up to 288 rows long.
  */
@@ -205,8 +205,8 @@ function Rows({ rows, control, sides }) {
               new={row.new?.norm ?? null}
               prodRaw={row.prod?.raw ?? null}
               newRaw={row.new?.raw ?? null}
-              prodPrefix={<><Tag element={row.prod} /><Locate url={sides.production.url} text={row.prod?.raw} side="productie" /></>}
-              newPrefix={<><Tag element={row.new} /><Locate url={sides.new.url} text={row.new?.raw} side="de nieuwe site" /></>}
+              prodPrefix={<><Tag unit={row.prod} /><Locate url={sides.production.url} text={row.prod?.raw} side="productie" /></>}
+              newPrefix={<><Tag unit={row.new} /><Locate url={sides.new.url} text={row.new?.raw} side="de nieuwe site" /></>}
               strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
             />
           </tr>

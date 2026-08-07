@@ -2,7 +2,7 @@
  * Extractor v2 (ticket 07). One HTML document in, one `PageExtract` out.
  *
  * The rules come from the resolved tickets and are not decided again here:
- * ticket 02 (text elements, boundary, normalisation), ticket 05 (links),
+ * ticket 02 (content units, boundary, normalisation), ticket 05 (links),
  * ticket 06 (images), ticket 14 (the parse).
  */
 
@@ -29,16 +29,16 @@ const CHROME = [
 /**
  * These run inside the boundary as well, always.
  *
- * Ticket 02 measured that the chrome list removes zero text elements inside
+ * Ticket 02 measured that the chrome list removes zero content units inside
  * `<main>`, and put the whole list on the fallback path. That measurement asked
  * whether a selector removes an *element* — and a `<style>` is not in
  * `TEXT_TAGS`, so the answer was correctly zero. It never asked whether the
  * **text inside** one bleeds into an ancestor that *is* in `TEXT_TAGS`.
  *
  * It does. Production nests a `<style>` and a `<script>` inside an `<a>`, and
- * that anchor holds no other text element, so it is a leaf and `structuredText`
+ * that anchor holds no other content unit, so it is a leaf and `structuredText`
  * hands over the CSS and the JavaScript as content. Measured over the nl store:
- * **151 elements on 23 of 179 pages**, each of them a `structure` finding that
+ * **151 units on 23 of 179 pages**, each of them a `structure` finding that
  * no editor can act on.
  *
  * `<template>` is deliberately **not** in this list. Its text is not in the
@@ -93,7 +93,7 @@ function contentRoot(root, warn) {
   if (!body) throw new Error('No <body> in the parsed document. The parse or the page is broken.');
 
   // Before anything reads text: a script or a style is never content, wherever it
-  // sits, and its text leaks into whichever text element encloses it.
+  // sits, and its text leaks into whichever content unit encloses it.
   for (const selector of NEVER_CONTENT) {
     for (const node of body.querySelectorAll(selector)) node.remove();
   }
@@ -114,7 +114,7 @@ function contentRoot(root, warn) {
  * engineering faults, so this fails the run instead of emitting findings an
  * editor cannot act on.
  *
- * Emptiness is absolute, never a ratio: `fotogalerij` holds 9 text elements
+ * Emptiness is absolute, never a ratio: `fotogalerij` holds 9 content units
  * against production's 178 and is a real page, so any threshold band is already
  * occupied. And emptiness counts images and links too — no text at all is a
  * legitimate shape for a photo page, while nothing at all is not. The
@@ -151,7 +151,7 @@ function assertHasContent(extract) {
  * @param {{ prodHost?: string, newHost?: string }} hosts
  */
 function walk(scope, pageUrl, hosts) {
-  /** @type {import('../compare/contract.mjs').TextElement[]} */
+  /** @type {import('../compare/contract.mjs').ContentUnit[]} */
   const elements = [];
   /** @type {import('../compare/contract.mjs').LinkRecord[]} */
   const links = [];
@@ -159,7 +159,7 @@ function walk(scope, pageUrl, hosts) {
   const byKey = new Map();
   let imagesWithoutSrc = 0;
 
-  /** Text elements a heading above them already spoke for. */
+  /** Content units a heading above them already spoke for. */
   const swallowed = new Set();
   let position = 0;
 
@@ -184,14 +184,14 @@ function walk(scope, pageUrl, hosts) {
       continue;
     }
 
-    const element = textElement(node, tag, swallowed);
+    const unit = contentUnit(node, tag, swallowed);
     // A heading swallows the words of an anchor inside it, and never its target:
-    // the swallow rule is about what an element **says**, and ticket 05 counts
+    // the swallow rule is about what a unit **says**, and ticket 05 counts
     // every anchor on the page.
     const link = tag === 'a' ? linkRecord(node, pageUrl, hosts) : null;
-    if (!element && !link) continue;
+    if (!unit && !link) continue;
 
-    if (element) elements.push({ index: position, ...element });
+    if (unit) elements.push({ index: position, ...unit });
     if (link) links.push({ index: position, ...link });
     position += 1;
   }
@@ -200,15 +200,15 @@ function walk(scope, pageUrl, hosts) {
 }
 
 /**
- * Ticket 02: every leaf text element in document order, all anchors counted.
+ * Ticket 02: every leaf content unit in document order, all anchors counted.
  *
  * **A heading is never a container** (ticket 33). Production builds every FAQ
  * question as `<h4 class="panel-title"><a data-toggle="collapse" …>`, so under
  * the plain leaf rule the anchor spoke and the heading level was thrown away:
- * the element read as a `cta` with no level, against a plain `<h3>` on the new
- * site. **337 elements on 40 of 179 nl pages**, and ticket 33's new
+ * the unit read as a `cta` with no level, against a plain `<h3>` on the new
+ * site. **337 units on 40 of 179 nl pages**, and ticket 33's new
  * `heading-level` class would have reported all of them naming the wrong
- * production element.
+ * production unit.
  *
  * The rule is about headings rather than about accordions, because the same leaf
  * rule loses content outright on `<h2>Bekijk onze <a>carports</a> nu</h2>`: the
@@ -219,8 +219,8 @@ function walk(scope, pageUrl, hosts) {
  * a heading and holds both a heading and loose text —
  * `<td>Levertijd <h4>Vraag</h4></td>` — gives up the loose words, because the
  * container is skipped for having a text tag inside it. To rescue them the leaf
- * rule would have to emit the direct text nodes of a container as an element of
- * their own. That is a change to what an element **is**, it moves the count on
+ * rule would have to emit the direct text nodes of a container as a unit of
+ * their own. That is a change to what a unit **is**, it moves the count on
  * every one of the 179 pages, and it needs its own measurement. Ticket 33 records
  * it and does not do it; `extract.test.mjs` pins the behaviour so the next reader
  * sees the limit instead of finding it.
@@ -228,9 +228,9 @@ function walk(scope, pageUrl, hosts) {
  * @param {import('node-html-parser').HTMLElement} node
  * @param {string} tag
  * @param {Set<unknown>} swallowed
- * @returns {Omit<import('../compare/contract.mjs').TextElement, 'index'> | null}
+ * @returns {Omit<import('../compare/contract.mjs').ContentUnit, 'index'> | null}
  */
-function textElement(node, tag, swallowed) {
+function contentUnit(node, tag, swallowed) {
   if (swallowed.has(node)) return null;
 
   const heading = /^h[1-6]$/.test(tag);
@@ -318,21 +318,21 @@ function meta(root, scope) {
 }
 
 /**
- * A reading and export artefact, never the diff spine: it flattens element
- * identity, which the finding id depends on. It renders the same elements the
+ * A reading and export artefact, never the diff spine: it flattens unit
+ * identity, which the finding id depends on. It renders the same units the
  * content view shows, so the two can never disagree about what is on the page.
  *
- * @param {import('../compare/contract.mjs').TextElement[]} elements
+ * @param {import('../compare/contract.mjs').ContentUnit[]} units
  * @returns {string}
  */
-export function toMarkdown(elements) {
+export function toMarkdown(units) {
   const lines = [];
-  for (const element of elements) {
-    if (element.kind === 'heading') lines.push(`${'#'.repeat(element.level)} ${element.raw}`);
-    else if (element.kind === 'cta') lines.push(`[${element.raw}]`);
-    else if (element.tag === 'blockquote') lines.push(`> ${element.raw}`);
-    else if (['li', 'dt', 'dd', 'th', 'td'].includes(element.tag)) lines.push(`- ${element.raw}`);
-    else lines.push(element.raw);
+  for (const unit of units) {
+    if (unit.kind === 'heading') lines.push(`${'#'.repeat(unit.level)} ${unit.raw}`);
+    else if (unit.kind === 'cta') lines.push(`[${unit.raw}]`);
+    else if (unit.tag === 'blockquote') lines.push(`> ${unit.raw}`);
+    else if (['li', 'dt', 'dd', 'th', 'td'].includes(unit.tag)) lines.push(`- ${unit.raw}`);
+    else lines.push(unit.raw);
   }
   return lines.join('\n\n');
 }

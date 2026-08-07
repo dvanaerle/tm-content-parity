@@ -22,11 +22,11 @@ import {
  */
 
 /** @param {Partial<{ tag: string, kind: string, level: number | null, raw: string }>} part */
-const element = (part) => ({
+const unit = (part) => ({
   tag: 'p', kind: 'text', level: null, raw: part.raw ?? 'tekst', norm: part.raw ?? 'tekst', ...part,
 });
 
-const heading = (raw, level = 2) => element({ tag: `h${level}`, kind: 'heading', level, raw });
+const heading = (raw, level = 2) => unit({ tag: `h${level}`, kind: 'heading', level, raw });
 
 /**
  * Production: a heading, a paragraph that changed, a paragraph that matches, and a
@@ -34,8 +34,8 @@ const heading = (raw, level = 2) => element({ tag: `h${level}`, kind: 'heading',
  */
 const fixture = () => ({
   elements: {
-    production: [heading('Kleuren'), element({ raw: 'Verkrijgbaar in drie kleuren' }), element({ raw: 'Gelijk' }), element({ raw: 'Weg' })],
-    new: [heading('Kleuren'), element({ raw: 'Beschikbare kleuren' }), element({ raw: 'Gelijk' })],
+    production: [heading('Kleuren'), unit({ raw: 'Verkrijgbaar in drie kleuren' }), unit({ raw: 'Gelijk' }), unit({ raw: 'Weg' })],
+    new: [heading('Kleuren'), unit({ raw: 'Beschikbare kleuren' }), unit({ raw: 'Gelijk' })],
   },
   rows: [
     { class: null, prod: 0, new: 0, score: null, finding: null },
@@ -60,7 +60,7 @@ describe('prepareRows', () => {
     ]);
   });
 
-  it('resolves each side to its element, and to null where the side has none', () => {
+  it('resolves each side to its unit, and to null where the side has none', () => {
     const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
     const lost = rows.at(-1);
 

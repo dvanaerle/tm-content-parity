@@ -21,7 +21,7 @@ import { linkKey } from '../shared/keys.mjs';
 /**
  * The fields, in reading order.
  *
- * `h1` is **not** one of them. It is an element inside the content boundary, and
+ * `h1` is **not** one of them. It is a unit inside the content boundary, and
  * the merged content view owns it. That view gives it a position, a level and a
  * finding id. The `h1` differs on 93 of 179 nl pages, and one report is enough.
  */

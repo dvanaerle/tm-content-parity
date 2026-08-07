@@ -787,7 +787,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   [68 the content view](issues/68-the-content-view-survives-a-folded-unit.md),
   [69 one viewport](issues/69-one-canonical-viewport.md),
   [70 shared regions](issues/70-shared-regions-by-content-hash.md).
-  61, 62, 63, 65 and 66 have no blockers. 67 rebuilds every report and detaches
+  61, 63 and 65 have no blockers. 67 rebuilds every report and detaches
   overrides, so it does not ship before 65 gives the number. 70 needs the new
   environment, which answered HTTP 500 on all six hosts while this was written.
 
@@ -802,6 +802,18 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   keeps `heading-level` off this path, so ticket 33's LCS route to it is untouched.
   391 finding ids leave the log, which is 391 more orphaned overrides for ticket 65
   to count.
+
+  **66 is resolved**, 2026-08-07. `TextElement` is `ContentUnit`, and
+  `textElement()` is `contentUnit()`. The larger part was the synonym: 25 files
+  called a unit an "element" in a comment, a local, a test factory or a React prop.
+  The word "element" now means the HTML element and nothing else, which is the whole
+  point of the new noun. **No field name moved** — `PageExtract.elements` is
+  untouched, so no report changes shape. All 448 reports were rebuilt against the
+  build from before the rename: **0 differ**, 34,559 findings and 34,559 ids on both
+  sides, 0 lost and 0 gained. The contract states in its own words that the unit does
+  not fold yet, so it never reads ahead of its code; ticket 67 deletes that
+  sentence. The Dutch interface said "elementen" and now says **"blokken"**, taking
+  ADR 0002's own word for the thing.
 
 - [50 — The content page discriminator](issues/50-content-page-discriminator.md)
   — designed in the grilling session of 2026-08-07, `claimed`. **The seed list
@@ -1040,6 +1052,18 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   difference on thirty pages", and a measurement that says whether a mute is the
   better answer. Resolve the measurement first — it can shrink the ticket to
   nothing.
+
+- [71 — A saved re-check survives a reload](issues/71-a-saved-recheck-survives-a-reload.md)
+  — **resolved**, 2026-08-07. A press of `Hercontroleer` writes the fresh report
+  to `data/rechecks/` before it answers, and the page asks for it again on the
+  next load. The overlay is written **beside** the crawl report and never over
+  it, because `compare/measure.mjs` reads `data/reports/` and the corpus totals
+  come from it: a button press must not move a measured baseline (ticket 28). The
+  newer of the two wins and the crawl wins a tie, so a crawl that runs after a
+  press makes the press stale; the stale file stays on disk as evidence.
+  `chooseReport()` in `web/src/lib/recheck-choice.mjs` is the rule, with a test
+  for each of the six cases. The page view only — the dashboard and the home page
+  keep the built snapshot. No count moves.
 
 - [30 — Wire the Supabase project to the built log](issues/30-wire-the-supabase-project.md)
   is `ready-for-human` and nearly done: the schema is applied, the two public

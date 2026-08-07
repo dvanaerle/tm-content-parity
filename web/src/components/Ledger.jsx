@@ -12,7 +12,7 @@ import { BANNER, CHROME, INK } from '../lib/palette.mjs';
  * A tabbed ledger, production and the new site side by side.
  *
  * **Five tabs** since ticket 36, and Inhoud lands first. Diff and Content were two
- * tabs answering half a question each, and Outline was production's element list
+ * tabs answering half a question each, and Outline was production's unit list
  * indented by heading level — which the merged content view now contains, and which
  * returns there as navigation. That closes ticket 12's question about the tab count.
  *

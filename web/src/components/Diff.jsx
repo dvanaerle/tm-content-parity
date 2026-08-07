@@ -35,7 +35,7 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
  * @param {string | null} props.prod       Production's normalised text.
  * @param {string | null} props.new        The new site's normalised text.
  * @param {import('react').ReactNode} [props.prodPrefix]  Rendered before production's text,
- *                                                        for the element tag.
+ *                                                        for the unit tag.
  * @param {import('react').ReactNode} [props.newPrefix]
  * @param {string | null} [props.prodRaw]  The literal string, for the copy button. Absent
  *                                         where there is no raw — a link key has none.

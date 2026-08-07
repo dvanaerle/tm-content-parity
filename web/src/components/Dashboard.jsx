@@ -149,10 +149,10 @@ export default function Dashboard({ pages, excluded }) {
                   <a className={`font-medium hover:underline ${CHROME.link}`} href={`/${page.store}/${page.page}/`}>
                     {page.page}
                   </a>
-                  <span className="ml-2 text-xs text-slate-400">{page.sides.production.elements} elementen</span>
+                  <span className="ml-2 text-xs text-slate-400">{page.sides.production.units} blokken</span>
                 </td>
                 <td className="px-4 py-2">
-                  <Bar shown={openOf(page)} elements={page.sides.production.elements} />
+                  <Bar shown={openOf(page)} units={page.sides.production.units} />
                   <span className={`ml-2 tabular-nums ${openOf(page) ? 'font-semibold' : INK.info}`}>
                     {openOf(page)}
                   </span>

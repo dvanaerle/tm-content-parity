@@ -10,17 +10,17 @@ import { textFragmentUrl } from '../../../compare/locate.mjs';
  */
 
 /**
- * The element's own tag beside its words. On a `heading-level` row it is the whole
+ * The unit's own tag beside its words. On a `heading-level` row it is the whole
  * finding: the two texts are identical and the tag is what changed.
  */
-export const Tag = ({ element }) => (
-  element ? <span className="mr-2 font-mono text-[11px] text-slate-400">{element.tag}</span> : null
+export const Tag = ({ unit }) => (
+  unit ? <span className="mr-2 font-mono text-[11px] text-slate-400">{unit.tag}</span> : null
 );
 
 /**
  * Ticket 33. On `heading-level` and `tag-changed` the two text columns are equal,
  * so without this the row reads as a finding about nothing. The content view needs
- * no such thing: it prints the tag of each element next to the words.
+ * no such thing: it prints the tag of each unit next to the words.
  */
 export const Detail = ({ finding }) => (
   finding.detail

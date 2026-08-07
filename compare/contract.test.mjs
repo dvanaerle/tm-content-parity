@@ -150,7 +150,7 @@ describe('FINDING_CLASSES', () => {
   });
 
   it('has retired structure', () => {
-    // The word said only "the element is on one side only", which is a statement
+    // The word said only "the unit is on one side only", which is a statement
     // about the alignment and not about the sites. Ticket 33 replaced it with a
     // directional pair, and any override keyed on it detaches (ticket 08).
     expect(FINDING_CLASSES).not.toHaveProperty('structure');

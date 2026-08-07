@@ -22,12 +22,12 @@
  * position is the section it lives in, and a heading demoted from `h2` to `h3` is
  * reported under the heading above it, which is where a reader finds it.
  *
- * @param {import('./contract.mjs').TextElement[]} elements  In document order.
+ * @param {import('./contract.mjs').ContentUnit[]} units  In document order.
  * @returns {(index: number | null | undefined) => string | null} `null` when the
  *   position precedes every heading, and on a page with no heading at all.
  */
-export function anchorHeadingFor(elements) {
-  const headings = elements.filter((element) => element.kind === 'heading');
+export function anchorHeadingFor(units) {
+  const headings = units.filter((unit) => unit.kind === 'heading');
 
   return (index) => {
     if (typeof index !== 'number') return null;

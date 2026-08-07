@@ -68,7 +68,7 @@ export function wordDiff(prod, next) {
   const n = left.length;
   const m = right.length;
 
-  // Longest common subsequence, the same backbone `lcsPairs` uses on elements, so
+  // Longest common subsequence, the same backbone `lcsPairs` uses on units, so
   // one inserted word does not report every later word as changed. `table[i][j]`
   // is the length of the LCS of `left[i..]` and `right[j..]`.
   const table = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));

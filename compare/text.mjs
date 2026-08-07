@@ -2,8 +2,8 @@
  * The text check (ticket 02). Production is the source of truth; every
  * difference is a defect on the new site.
  *
- * The element list is the diff spine. Markdown is never used here: it flattens
- * element identity, and the finding id depends on that identity.
+ * The unit list is the diff spine. Markdown is never used here: it flattens
+ * unit identity, and the finding id depends on that identity.
  *
  * One alignment pass produces the rows, and the findings are derived from those
  * rows. The content view and the finding count therefore cannot disagree about what
@@ -25,20 +25,20 @@ import { lcsPairs, maskNumbers, pairLeftovers, tier2 } from './match.mjs';
 export const PROMO = /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\s+vanaf|op\s+voorraad/i;
 
 /**
- * A row with the elements attached. The contract's `DiffRow` is the same row with
- * the elements reduced to indices for the wire; this shape is what the
+ * A row with the units attached. The contract's `DiffRow` is the same row with
+ * the units reduced to indices for the wire; this shape is what the
  * comparison works on.
  *
  * @typedef {object} AlignedRow
  * @property {keyof import('./contract.mjs').FINDING_CLASSES | null} class
- * @property {import('./contract.mjs').TextElement | null} prod
- * @property {import('./contract.mjs').TextElement | null} new
+ * @property {import('./contract.mjs').ContentUnit | null} prod
+ * @property {import('./contract.mjs').ContentUnit | null} new
  * @property {number | null} score
  * @property {string | null} [anchorHeading]  The heading this position sits under (ticket 34).
  */
 
 /**
- * Two elements that the pairing decided are the same content. Which visible
+ * Two units that the pairing decided are the same content. Which visible
  * difference is it?
  *
  * The order is the argument. `casing` is asked first, because a difference that
@@ -51,14 +51,14 @@ export const PROMO = /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\
  * texts that are equal character for character. The LCS keeps document order, so
  * a reorder of 24 identical links on `/downloads` left one copy unmatched on
  * **both** sides. The leftovers then paired at score 1.0, and `casing` answered a
- * question that has no answer. Equal text is the element rule's question, so it
+ * question that has no answer. Equal text is the unit rule's question, so it
  * is handed over.
  *
  * `mayPair()` holds a leftover pair to one `kind` and one heading level, so the
- * only class that arrives here from the element rule is `tag-changed`.
+ * only class that arrives here from the unit rule is `tag-changed`.
  *
- * @param {import('./contract.mjs').TextElement} prod
- * @param {import('./contract.mjs').TextElement} next
+ * @param {import('./contract.mjs').ContentUnit} prod
+ * @param {import('./contract.mjs').ContentUnit} next
  * @returns {'casing' | 'price' | 'campaign' | 'restructured' | 'copy' | 'heading-level' | 'tag-changed' | null}
  */
 export function classifyPair(prod, next) {
@@ -73,16 +73,16 @@ export function classifyPair(prod, next) {
   return 'copy';
 }
 
-/** @param {import('./contract.mjs').TextElement} element */
-const isHeading = (element) => element.kind === 'heading';
+/** @param {import('./contract.mjs').ContentUnit} unit */
+const isHeading = (unit) => unit.kind === 'heading';
 
 /**
- * Two elements whose normalised text is identical. Is the element itself still
+ * Two units whose normalised text is identical. Is the unit itself still
  * the same?
  *
  * Ticket 33. The LCS anchors on `norm` alone. So before this rule existed a
  * heading demoted from `h2` to `h3` was an exact match that emitted nothing —
- * **762 elements on 80 nl pages**, 467 of them a heading-level change. It is the
+ * **762 units on 80 nl pages**, 467 of them a heading-level change. It is the
  * one rule in spec 32 that turns a silent match into a finding.
  *
  * A heading on either side makes it `heading-level`, and it is shown. The outline
@@ -101,9 +101,9 @@ const isHeading = (element) => element.kind === 'heading';
  * and it is the weakest claim the pairing makes. This rule fires on text that is
  * character-for-character identical, which is a much stronger statement.
  *
- * @param {import('./contract.mjs').TextElement} prod
- * @param {import('./contract.mjs').TextElement} next
- * @returns {'heading-level' | 'tag-changed' | null} `null` if the element is unchanged.
+ * @param {import('./contract.mjs').ContentUnit} prod
+ * @param {import('./contract.mjs').ContentUnit} next
+ * @returns {'heading-level' | 'tag-changed' | null} `null` if the unit is unchanged.
  */
 export function classifyExactPair(prod, next) {
   // The tag alone. `level` is derived from the tag in `crawl/extract.mjs`, so it
@@ -134,8 +134,8 @@ function tagChange(row) {
 }
 
 /**
- * Align the two element lists and label every position. A row with
- * `class: null` holds the same text in the same element, and ticket 02 is
+ * Align the two unit lists and label every position. A row with
+ * `class: null` holds the same text in the same unit, and ticket 02 is
  * explicit that it is not a finding: the earlier count of 61 was wrong because
  * it counted them. Ticket 62: which tier paired the row does not change that.
  *
@@ -144,24 +144,24 @@ function tagChange(row) {
  * @returns {AlignedRow[]} In production's document order.
  */
 export function diffRows(production, next) {
-  const prodElements = production.elements;
-  const newElements = next.elements;
+  const prodUnits = production.elements;
+  const newUnits = next.elements;
 
-  const exact = lcsPairs(prodElements, newElements);
-  const pairedProd = new Set(exact.map(([i]) => prodElements[i]));
-  const pairedNew = new Set(exact.map(([, j]) => newElements[j]));
+  const exact = lcsPairs(prodUnits, newUnits);
+  const pairedProd = new Set(exact.map(([i]) => prodUnits[i]));
+  const pairedNew = new Set(exact.map(([, j]) => newUnits[j]));
 
   /** @type {AlignedRow[]} */
   const rows = exact.map(([i, j]) => ({
-    class: classifyExactPair(prodElements[i], newElements[j]),
-    prod: prodElements[i],
-    new: newElements[j],
+    class: classifyExactPair(prodUnits[i], newUnits[j]),
+    prod: prodUnits[i],
+    new: newUnits[j],
     score: null,
   }));
 
   const { pairs, prodOnly, newOnly } = pairLeftovers(
-    prodElements.filter((element) => !pairedProd.has(element)),
-    newElements.filter((element) => !pairedNew.has(element)),
+    prodUnits.filter((unit) => !pairedProd.has(unit)),
+    newUnits.filter((unit) => !pairedNew.has(unit)),
   );
 
   for (const pair of pairs) {
@@ -176,20 +176,20 @@ export function diffRows(production, next) {
     });
   }
 
-  // Ticket 02 gives a one-sided element a single class. A production campaign
+  // Ticket 02 gives a one-sided unit a single class. A production campaign
   // line the new site dropped is `text-missing`, not `campaign`, because
   // `campaign` needs the pattern on both sides. Ticket 06 relaxed that for images
   // only, where the identity is a filename and the ambiguity is absent.
   //
-  // Ticket 33 names the two directions apart. `structure` said only "the element
+  // Ticket 33 names the two directions apart. `structure` said only "the unit
   // is on one side only", which is a statement about the alignment rather than
   // about the sites, and it carried the same word for a dropped paragraph and an
   // invented one.
-  for (const element of prodOnly) {
-    rows.push({ class: 'text-missing', prod: element, new: null, score: null });
+  for (const unit of prodOnly) {
+    rows.push({ class: 'text-missing', prod: unit, new: null, score: null });
   }
-  for (const element of newOnly) {
-    rows.push({ class: 'text-added', prod: null, new: element, score: null });
+  for (const unit of newOnly) {
+    rows.push({ class: 'text-added', prod: null, new: unit, score: null });
   }
 
   const sorted = inProductionOrder(rows);
@@ -197,8 +197,8 @@ export function diffRows(production, next) {
   // Ticket 34: the position an editor scrolls to. Production is the source of
   // truth, so its heading names the section; a row the new site invented has no
   // production side and takes the heading above it on the new site.
-  const prodHeading = anchorHeadingFor(prodElements);
-  const newHeading = anchorHeadingFor(newElements);
+  const prodHeading = anchorHeadingFor(prodUnits);
+  const newHeading = anchorHeadingFor(newUnits);
   for (const row of sorted) {
     row.anchorHeading = row.prod ? prodHeading(row.prod.index) : newHeading(row.new?.index);
   }
@@ -206,20 +206,20 @@ export function diffRows(production, next) {
 }
 
 /**
- * Production's document order, with a new-only element read in place rather than
+ * Production's document order, with a new-only unit read in place rather than
  * collected at the end.
  *
  * **Ticket 34 fixes the defect here.** A new-only row used to sort on its index in
  * the *new* document, compared against *production* indices. The two index spaces
  * only coincide while the two documents are about the same length, and on
- * `fotogalerij` production holds 178 text elements against the new site's 9 — so
+ * `fotogalerij` production holds 178 content units against the new site's 9 — so
  * an addition that belongs at the foot of the page sorted near the top. The rule
  * is instead: **anchor a new-only row to the production position of the nearest
  * matched pair before it**, which is the last place the two documents agreed.
  *
  * Two cases have no pair before them. An addition above the **first** agreement is
  * anchored just before that agreement, not at the top of the page: on `fotogalerij`
- * the first agreement is production element 170, and the top of production is not
+ * the first agreement is production unit 170, and the top of production is not
  * where the new site's opening block belongs. And when the two documents agree
  * **nowhere**, there is no position to claim, so the additions follow the whole of
  * production — a wholly rebuilt page reads as production first, then the new site.
@@ -237,7 +237,7 @@ function inProductionOrder(rows) {
     .filter((row) => row.prod && row.new)
     .sort((a, b) => a.new.index - b.new.index);
 
-  // One past the last production element, which is what "the additions follow the
+  // One past the last production unit, which is what "the additions follow the
   // whole of production" means as a position. It has to be a real number: two rows
   // that both claimed `Infinity` would subtract to `NaN` in the comparator below.
   const afterProduction = rows.reduce((last, row) => Math.max(last, row.prod ? row.prod.index + 1 : 0), 0);
@@ -250,7 +250,7 @@ function inProductionOrder(rows) {
 /**
  * @param {AlignedRow} row
  * @param {AlignedRow[]} matched  Rows with both sides, by their new-document index.
- * @param {number} afterProduction  One past the last production element.
+ * @param {number} afterProduction  One past the last production unit.
  * @returns {[number, number, number]}
  */
 function sortKey(row, matched, afterProduction) {

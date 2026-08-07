@@ -58,7 +58,7 @@ export function similarity(a, b) {
 
 /**
  * Longest common subsequence over `norm`, so one insertion on the new site does
- * not cascade into every later element reading as different.
+ * not cascade into every later unit reading as different.
  *
  * @template {{ norm: string }} T
  * @param {T[]} left
@@ -100,8 +100,8 @@ export function lcsPairs(left, right) {
  * asserts they are the same content, and a heading is never the same content as
  * a button label.
  *
- * @param {import('./contract.mjs').TextElement} a
- * @param {import('./contract.mjs').TextElement} b
+ * @param {import('./contract.mjs').ContentUnit} a
+ * @param {import('./contract.mjs').ContentUnit} b
  * @returns {boolean}
  */
 export function mayPair(a, b) {
@@ -111,11 +111,11 @@ export function mayPair(a, b) {
 }
 
 /**
- * Greedy best-match pairing of the elements the LCS left over. Each new-site
- * element is claimed once, so two production paragraphs can never both point at
+ * Greedy best-match pairing of the units the LCS left over. Each new-site
+ * unit is claimed once, so two production paragraphs can never both point at
  * the same replacement.
  *
- * @template {import('./contract.mjs').TextElement} T
+ * @template {import('./contract.mjs').ContentUnit} T
  * @param {T[]} prodLeft
  * @param {T[]} newLeft
  * @returns {{ pairs: Array<{ prod: T, new: T, score: number }>, prodOnly: T[], newOnly: T[] }}

@@ -38,7 +38,7 @@ describe('the content boundary', () => {
   it('is <main>, and nothing outside it counts', () => {
     const extract = extractPage(page('<h1>Overkappingen</h1>'), CONTEXT);
     expect(extract.boundary).toBe('main');
-    expect(extract.elements.map((element) => element.raw)).toEqual(['Overkappingen']);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Overkappingen']);
   });
 
   it('falls back to <body> and strips chrome when the page has no <main>', () => {
@@ -53,13 +53,13 @@ describe('the content boundary', () => {
 
     expect(extract.boundary).toBe('body');
     expect(onWarn).toHaveBeenCalledOnce();
-    expect(extract.elements.map((element) => element.raw)).toEqual(['Real page copy']);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Real page copy']);
   });
 
   it('does not read a nested <style> or <script> as content', () => {
-    // Production nests both inside an `<a>`, and that anchor holds no other text
-    // element, so it is a leaf and `structuredText` handed over the CSS as copy.
-    // 151 elements on 23 of 179 nl pages. Ticket 02 put the chrome list on the
+    // Production nests both inside an `<a>`, and that anchor holds no other content
+    // unit, so it is a leaf and `structuredText` handed over the CSS as copy.
+    // 151 units on 23 of 179 nl pages. Ticket 02 put the chrome list on the
     // fallback path only, having measured that it removes no *element* inside
     // `<main>` — which is true, and misses this.
     const extract = extractPage(page(
@@ -68,12 +68,12 @@ describe('the content boundary', () => {
       + '<script>var x = document.querySelectorAll(".a");</script>'
       + 'Bekijk carports</a>',
     ), CONTEXT);
-    expect(extract.elements.map((element) => element.raw)).toEqual(['Bekijk carports']);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Bekijk carports']);
   });
 
   it('keeps a <template>, because Alpine renders what is inside it', () => {
     const extract = extractPage(page('<template><p>Gratis bezorging</p></template>'), CONTEXT);
-    expect(extract.elements.map((element) => element.raw)).toEqual(['Gratis bezorging']);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Gratis bezorging']);
   });
 
   it('throws when the document has no <body>, because a silent fallback hid a broken parse', () => {
@@ -109,11 +109,11 @@ describe('the content boundary', () => {
     const extract = extractPage(html, CONTEXT);
 
     expect(extract.boundary).toBe('main');
-    expect(extract.elements.map((element) => element.raw)).toEqual(['Overkappingen']);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Overkappingen']);
   });
 });
 
-describe('text elements', () => {
+describe('content units', () => {
   it('takes the leaves in document order and skips the containers', () => {
     const extract = extractPage(page('<div><h2>Kleuren</h2><ul><li>Antraciet</li><li>Wit</li></ul></div>'), CONTEXT);
     expect(extract.elements).toMatchObject([
@@ -125,7 +125,7 @@ describe('text elements', () => {
 
   it('counts every anchor, not only the ones that look like a button', () => {
     const extract = extractPage(page('<p><a href="/carport">Lees over carports</a></p><a class="btn" href="/offerte">Offerte</a>'), CONTEXT);
-    expect(extract.elements.map((element) => [element.kind, element.raw])).toEqual([
+    expect(extract.elements.map((unit) => [unit.kind, unit.raw])).toEqual([
       ['cta', 'Lees over carports'],
       ['cta', 'Offerte'],
     ]);
@@ -139,21 +139,21 @@ describe('text elements', () => {
 
   it('drops text that carries no letter and no number', () => {
     const extract = extractPage(page('<p>—</p><p>••</p><p>OK</p>'), CONTEXT);
-    expect(extract.elements.map((element) => element.raw)).toEqual(['OK']);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['OK']);
   });
 
   it('separates the child texts that the parser glues together', () => {
     const extract = extractPage(page('<p>samplepakket</p><button>Vraag aan</button>'), CONTEXT);
-    expect(extract.elements.map((element) => element.raw)).toEqual(['samplepakket', 'Vraag aan']);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['samplepakket', 'Vraag aan']);
   });
 
   it('reads a heading that wraps an accordion anchor as the heading', () => {
     // Ticket 33. Production builds every FAQ question as
     // `<h4 class="panel-title"><a data-toggle="collapse" …>`, so the anchor is
-    // the leaf and the heading level was thrown away: the element read as a
-    // `cta` with no level, against a plain `<h3>` on the new site. 337 elements
+    // the leaf and the heading level was thrown away: the unit read as a
+    // `cta` with no level, against a plain `<h3>` on the new site. 337 units
     // on 40 of 179 nl pages, and it was about to be reported as 330 `a` → `h3`
-    // heading-level findings that name the wrong production element.
+    // heading-level findings that name the wrong production unit.
     const extract = extractPage(page(
       '<div class="panel-heading"><h4 class="panel-title">'
       + '<a data-toggle="collapse" href="#question3890">Is mijn product op voorraad?</a>'
@@ -169,14 +169,14 @@ describe('text elements', () => {
     // rather than a rule about accordions: the leaf rule reported the anchor
     // alone and silently dropped the words around it.
     const extract = extractPage(page('<h2>Bekijk onze <a href="/carport">carports</a> nu</h2>'), CONTEXT);
-    expect(extract.elements.map((element) => [element.tag, element.raw])).toEqual([
+    expect(extract.elements.map((unit) => [unit.tag, unit.raw])).toEqual([
       ['h2', 'Bekijk onze carports nu'],
     ]);
   });
 
   it('still takes the leaves inside a container that is not a heading', () => {
     const extract = extractPage(page('<li><p>Antraciet</p></li>'), CONTEXT);
-    expect(extract.elements.map((element) => [element.tag, element.raw])).toEqual([
+    expect(extract.elements.map((unit) => [unit.tag, unit.raw])).toEqual([
       ['p', 'Antraciet'],
     ]);
   });
@@ -184,11 +184,11 @@ describe('text elements', () => {
   it('still loses loose text beside a heading in a container, and that is recorded', () => {
     // The mirror of the rule above, and **not** fixed in ticket 33: the `<td>` is
     // skipped for holding a text tag, so `Levertijd` is dropped. Rescuing it means
-    // emitting the direct text nodes of a container as an element, which changes
-    // what an element is and moves the count on all 179 pages. Pinned here so the
+    // emitting the direct text nodes of a container as a unit, which changes
+    // what a unit is and moves the count on all 179 pages. Pinned here so the
     // limit is read rather than discovered.
     const extract = extractPage(page('<table><tr><td>Levertijd <h4>Vraag</h4></td></tr></table>'), CONTEXT);
-    expect(extract.elements.map((element) => [element.tag, element.raw])).toEqual([
+    expect(extract.elements.map((unit) => [unit.tag, unit.raw])).toEqual([
       ['h4', 'Vraag'],
     ]);
   });
@@ -197,7 +197,7 @@ describe('text elements', () => {
     // The links walk is its own pass over `a[href]` and ticket 05 owns it. A
     // heading that wraps a real navigational link must still report the link.
     const extract = extractPage(page('<h2><a href="/carport">Carports</a></h2>'), CONTEXT);
-    expect(extract.elements.map((element) => element.tag)).toEqual(['h2']);
+    expect(extract.elements.map((unit) => unit.tag)).toEqual(['h2']);
     expect(extract.links.map((record) => record.text)).toEqual(['Carports']);
   });
 });
@@ -272,7 +272,7 @@ describe('one document-order walk', () => {
       <p>Antraciet en creme</p>
       <a href="/carport">Carport</a>`), CONTEXT);
 
-    expect(extract.elements.map((element) => element.index)).toEqual([0, 2, 3]);
+    expect(extract.elements.map((unit) => unit.index)).toEqual([0, 2, 3]);
     expect(extract.images.map((image) => image.index)).toEqual([1]);
     expect(extract.links.map((link) => link.index)).toEqual([3]);
   });
@@ -291,13 +291,13 @@ describe('one document-order walk', () => {
 
     expect(extract.images).toHaveLength(1);
     expect(extract.images[0].index).toBe(1);
-    expect(extract.elements.map((element) => element.index)).toEqual([0, 2]);
+    expect(extract.elements.map((unit) => unit.index)).toEqual([0, 2]);
   });
 
   it('still counts an anchor a heading spoke for as a link, at its own position', () => {
     const extract = extractPage(page('<h2>Bekijk onze <a href="/carports">carports</a> nu</h2>'), CONTEXT);
 
-    expect(extract.elements.map((element) => [element.index, element.raw]))
+    expect(extract.elements.map((unit) => [unit.index, unit.raw]))
       .toEqual([[0, 'Bekijk onze carports nu']]);
     expect(extract.links.map((link) => [link.index, link.key])).toEqual([[1, 'self/carports']]);
   });
@@ -412,7 +412,7 @@ describe('pageType', () => {
 });
 
 describe('toMarkdown', () => {
-  it('renders the same elements the content view shows', () => {
+  it('renders the same units the content view shows', () => {
     const extract = extractPage(page(`
       <h1>Overkappingen</h1><p>Kies uw model.</p>
       <ul><li>Antraciet</li></ul><a href="/offerte">Offerte</a>`), CONTEXT);

@@ -1,6 +1,6 @@
 // PROTOTYPE - throwaway. Answers: "what should the parity page view look like,
 // and do element-level findings read as trustworthy or as noise?"
-// Fetches one page from prod + new, aligns their text elements, writes findings
+// Fetches one page from prod + new, aligns their content units, writes findings
 // JSON for _prototype/index.html. Not production code.
 
 import { parse } from 'node-html-parser';
@@ -54,7 +54,7 @@ function extractElements(html) {
   const out = [];
 
   for (const node of candidates) {
-    // Skip containers: if it holds another text element, its children speak.
+    // Skip containers: if it holds another content unit, its children speak.
     if (node.querySelectorAll(TEXT_TAGS).length > 0) continue;
 
     const tag = node.rawTagName.toLowerCase();

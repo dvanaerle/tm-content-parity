@@ -86,10 +86,10 @@ export function FilterBanner({ onClear, className = '', children }) {
  * class is not in it at all — a bar that counts what the editor was never asked
  * to look at cannot be read.
  */
-export function Bar({ shown, elements }) {
-  // The element count is the only honest denominator available before overrides
+export function Bar({ shown, units }) {
+  // The unit count is the only honest denominator available before overrides
   // exist: it is how many things the page says.
-  const scale = Math.max(elements, shown, 1);
+  const scale = Math.max(units, shown, 1);
   const share = Math.min(1, shown / scale);
   return (
     <span className="inline-flex h-1.5 w-24 overflow-hidden rounded bg-slate-200 align-middle">

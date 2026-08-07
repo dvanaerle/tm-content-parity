@@ -45,7 +45,7 @@ export function compareImages(production, next, collector) {
 
   // Ticket 34 answers "which of the eleven images". The image record now carries
   // its position on the same counter as the text, so the section it sits in is a
-  // backwards scan over the elements of its own side.
+  // backwards scan over the units of its own side.
   const prodHeading = anchorHeadingFor(production.elements);
   const newHeading = anchorHeadingFor(next.elements);
 

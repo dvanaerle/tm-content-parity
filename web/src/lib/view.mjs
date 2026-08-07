@@ -69,24 +69,24 @@ export function toggleClass(filter, cls) {
 
 /**
  * One row of the content view: a `DiffRow` with both sides resolved to their
- * element and its finding attached.
+ * unit and its finding attached.
  *
- * @typedef {import('../../../compare/contract.mjs').TextElement} TextElement
+ * @typedef {import('../../../compare/contract.mjs').ContentUnit} ContentUnit
  *
  * @typedef {object} ContentRow
  * @property {string} key
  * @property {string | null} class
  * @property {number | null} score
  * @property {object | null} finding    The **derived** finding, with `state` and `shown`.
- * @property {TextElement | null} prod
- * @property {TextElement | null} new
+ * @property {ContentUnit | null} prod
+ * @property {ContentUnit | null} new
  */
 
 /**
  * @param {object} input
  * @param {import('../../../compare/contract.mjs').DiffRow[]} input.rows
  * @param {object[]} input.findings   Derived findings, from `derivePageState()`.
- * @param {{ production: TextElement[], new: TextElement[] }} input.elements
+ * @param {{ production: ContentUnit[], new: ContentUnit[] }} input.elements
  * @param {ContentFilter} input.filter
  * @param {boolean} input.showNoise   The ledger's toggle: hidden classes and muted rows.
  * @returns {{ rows: ContentRow[], total: number, classes: { class: string, rows: number }[] }}
@@ -149,7 +149,7 @@ function classCounts(rows) {
 /**
  * The heading jump-list, from the rows that are on screen (spec 32, decision 19).
  *
- * Outline was production's element list indented by heading level, which the merged
+ * Outline was production's unit list indented by heading level, which the merged
  * view now contains. What is left is navigation, and it is derived from the
  * **rendered** rows so that a narrowed view never offers a jump to a row that is
  * filtered away.
@@ -161,11 +161,11 @@ export function outlineFrom(rows) {
   /** @type {{ key: string, level: number, text: string }[]} */
   const out = [];
   for (const row of rows) {
-    const element = row.prod ?? row.new;
-    if (element?.kind !== 'heading') continue;
+    const unit = row.prod ?? row.new;
+    if (unit?.kind !== 'heading') continue;
     // A heading with no level indents deepest rather than not at all: guessing it
     // is an `h1` would put an invented section at the top of the list.
-    out.push({ key: row.key, level: element.level ?? 6, text: element.raw });
+    out.push({ key: row.key, level: unit.level ?? 6, text: unit.raw });
   }
   return out;
 }

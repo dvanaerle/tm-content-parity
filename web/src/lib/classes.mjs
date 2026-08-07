@@ -20,7 +20,7 @@ import { PILL } from './palette.mjs';
  * `direction: 'lost'` in the contract. Spelling the three names here again would
  * let the colour come apart from the meaning.
  *
- * Ticket 35 moved `broken-link` off red. Red now means a lost element and only
+ * Ticket 35 moved `broken-link` off red. Red now means a lost unit and only
  * that, so the loudest a defect on the new site's own terms can be is `severe`.
  *
  * @type {Record<string, import('./palette.mjs').Tone>}

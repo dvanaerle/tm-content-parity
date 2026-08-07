@@ -26,10 +26,14 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
 /** @typedef {import('./vocabulary.mjs').FindingClass} FindingClass */
 
 /**
- * One leaf text element inside the content boundary, in document order. This
- * is the content outline and the diff input. It is one structure, not two.
+ * One content unit inside the content boundary, in document order. This is the
+ * content outline and the diff input. It is one structure, not two. `CONTEXT.md`
+ * gives the word and `docs/adr/0002` gives the decision.
  *
- * @typedef {object} TextElement
+ * Ticket 66 moved the name only. The unit is still one leaf element here, so an
+ * inline `a` still breaks the block that holds it. Ticket 67 makes it fold.
+ *
+ * @typedef {object} ContentUnit
  * @property {number} index         Position in document order. Ticket 34 put text,
  *                                  images and links on **one** counter, so this is
  *                                  no longer the position in `elements` as well.
@@ -43,7 +47,7 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
 /**
  * @typedef {object} LinkRecord
  * @property {number} index         Position in document order, on the same counter as
- *                                  `TextElement` and `ImageRecord` (ticket 34). An
+ *                                  `ContentUnit` and `ImageRecord` (ticket 34). An
  *                                  anchor's words and its target share one position.
  * @property {string} href          The href as the page sends it.
  * @property {string} url           Resolved and absolute.
@@ -99,7 +103,7 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * @property {'main' | 'body'} boundary  `body` says that the page has no `<main>`.
  * @property {string | null} pageType    From the `<body class>`, read with a regex on the
  *                                       raw HTML, because the parser drops the tag.
- * @property {TextElement[]} elements
+ * @property {ContentUnit[]} elements
  * @property {LinkRecord[]} links
  * @property {ImageRecord[]} images
  * @property {PageMeta} meta
@@ -141,16 +145,16 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  *
  * A finding is **grouped** — one rename repeated six times is one finding — and a
  * row is a **position**, so the two cannot be the same record. The rows are
- * derived from the same alignment pass as the findings, and they hold element
- * indices rather than copies of the text: the elements are already in
+ * derived from the same alignment pass as the findings, and they hold unit
+ * indices rather than copies of the text: the units are already in
  * `sides`, and duplicating them roughly doubles a report on disk.
  *
  * `class: null` is an exact tier-1 match. Ticket 02: that is not a finding.
  *
  * The two numbers are positions in the `elements` **array**, and since ticket 34
- * that is no longer the same number as `TextElement.index`: the document-order
+ * that is no longer the same number as `ContentUnit.index`: the document-order
  * counter now runs over images and links as well. The array position is what the
- * browser needs, because it reads the element back with `elements[row.prod]`.
+ * browser needs, because it reads the unit back with `elements[row.prod]`.
  *
  * @typedef {object} DiffRow
  * @property {keyof FINDING_CLASSES | null} class
@@ -298,6 +302,11 @@ const SEPARATOR = '__';
  * A page key can hold a slash (`faq/productinformatie`), and the report folder is
  * flat because `web/` reads it with one non-recursive listing. So the separator
  * serves twice: it joins the store to the page, and it replaces the slashes.
+ *
+ * Two folders use this name. The crawl writes `data/reports/` and a press of
+ * Recheck writes `data/rechecks/` beside it, so one page has at most one file in
+ * each. `chooseReport()` in `web/src/lib/recheck-choice.mjs` says which of the
+ * two a reader sees (ticket 71).
  *
  * @param {Store} store
  * @param {string} page

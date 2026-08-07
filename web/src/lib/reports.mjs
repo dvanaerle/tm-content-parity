@@ -95,7 +95,7 @@ export async function loadReports(store) {
  * @property {string} findingSetHash
  * @property {{ production: SideSummary, new: SideSummary }} sides
  *
- * @typedef {{ url: string, status: number, elements: number }} SideSummary
+ * @typedef {{ url: string, status: number, units: number }} SideSummary
  *
  * @param {string} [store] Only this store's reports. Omit for every store.
  * @returns {Promise<PageSummary[]>}
@@ -127,7 +127,7 @@ export async function loadSummaries(store) {
 const side = (extract) => ({
   url: extract.url,
   status: extract.status,
-  elements: extract.elements.length,
+  units: extract.elements.length,
 });
 
 /**

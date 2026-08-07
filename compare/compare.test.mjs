@@ -14,9 +14,9 @@ let seq = 0;
 
 /**
  * @param {string} raw
- * @param {Partial<import('./contract.mjs').TextElement>} [overrides]
+ * @param {Partial<import('./contract.mjs').ContentUnit>} [overrides]
  */
-function element(raw, overrides = {}) {
+function unit(raw, overrides = {}) {
   const tag = overrides.tag ?? 'p';
   const heading = /^h[1-6]$/.test(tag);
   return {
@@ -63,15 +63,15 @@ function collect(run) {
 }
 
 /** @param {string[]} texts */
-function elements(texts) {
+function units(texts) {
   seq = 0;
-  return texts.map((text) => element(text));
+  return texts.map((text) => unit(text));
 }
 
 /** @param {Array<[string, string]>} spec `[raw, tag]`, in document order. */
 function outline(spec) {
   seq = 0;
-  return spec.map(([raw, tag]) => element(raw, { tag }));
+  return spec.map(([raw, tag]) => unit(raw, { tag }));
 }
 
 describe('tier2', () => {
@@ -113,47 +113,47 @@ describe('similarity', () => {
 });
 
 describe('lcsPairs', () => {
-  it('does not cascade an insertion into every later element', () => {
-    const left = elements(['een', 'twee', 'drie']);
-    const right = elements(['een', 'nieuw', 'twee', 'drie']);
+  it('does not cascade an insertion into every later unit', () => {
+    const left = units(['een', 'twee', 'drie']);
+    const right = units(['een', 'nieuw', 'twee', 'drie']);
     expect(lcsPairs(left, right).length).toBe(3);
   });
 });
 
 describe('mayPair', () => {
   it('refuses two headings of a different level', () => {
-    expect(mayPair(element('Kleuren', { tag: 'h2' }), element('Kleuren', { tag: 'h3' }))).toBe(false);
+    expect(mayPair(unit('Kleuren', { tag: 'h2' }), unit('Kleuren', { tag: 'h3' }))).toBe(false);
   });
 
   it('refuses a heading against a button label', () => {
-    expect(mayPair(element('Kleuren', { tag: 'h2' }), element('Kleuren', { tag: 'button' }))).toBe(false);
+    expect(mayPair(unit('Kleuren', { tag: 'h2' }), unit('Kleuren', { tag: 'button' }))).toBe(false);
   });
 });
 
 describe('classifyPair', () => {
   it('calls a case-only difference casing, not copy', () => {
     expect(classifyPair(
-      element('Stijl Modern of Klassiek'),
-      element('Stijl modern of klassiek'),
+      unit('Stijl Modern of Klassiek'),
+      unit('Stijl modern of klassiek'),
     )).toBe('casing');
   });
 
   it('calls a trailing full stop casing', () => {
-    expect(classifyPair(element('Gratis bezorging'), element('Gratis bezorging.'))).toBe('casing');
+    expect(classifyPair(unit('Gratis bezorging'), unit('Gratis bezorging.'))).toBe('casing');
   });
 
   it('calls a number-only difference price', () => {
-    expect(classifyPair(element('Vanaf € 799'), element('Vanaf € 849'))).toBe('price');
+    expect(classifyPair(unit('Vanaf € 799'), unit('Vanaf € 849'))).toBe('price');
   });
 
   it('needs the promotional pattern on both sides', () => {
     // The prototype matched the two sides joined, so one keyword was enough and
     // `Bekijk alle deals` → `Bekijk alle FAQs` was hidden as a campaign. It is a
     // real CTA change.
-    expect(classifyPair(element('Bekijk alle deals'), element('Bekijk alle FAQs'))).toBe('copy');
+    expect(classifyPair(unit('Bekijk alle deals'), unit('Bekijk alle FAQs'))).toBe('copy');
     expect(classifyPair(
-      element('Nu 10% korting op alle overkappingen'),
-      element('Nu 15% korting op alle overkappingen en zonwering'),
+      unit('Nu 10% korting op alle overkappingen'),
+      unit('Nu 15% korting op alle overkappingen en zonwering'),
     )).toBe('campaign');
   });
 
@@ -162,19 +162,19 @@ describe('classifyPair', () => {
     // defect. The tag must differ across the sides, so two `td` cells that
     // disagree stay visible as `copy`.
     expect(classifyPair(
-      element('Dakdikte 16 mm gehard glas', { tag: 'td' }),
-      element('Dakdikte 8 mm gehard glas', { tag: 'td' }),
+      unit('Dakdikte 16 mm gehard glas', { tag: 'td' }),
+      unit('Dakdikte 8 mm gehard glas', { tag: 'td' }),
     )).toBe('price');
     expect(classifyPair(
-      element('Dakdikte gehard glas', { tag: 'td' }),
-      element('Dakdikte gelaagd glas', { tag: 'td' }),
+      unit('Dakdikte gehard glas', { tag: 'td' }),
+      unit('Dakdikte gelaagd glas', { tag: 'td' }),
     )).toBe('copy');
   });
 
-  it('calls the same content in a moved element restructured', () => {
+  it('calls the same content in a moved unit restructured', () => {
     expect(classifyPair(
-      element('Verkrijgbaar in RAL 7016 antraciet', { tag: 'p' }),
-      element('Verkrijgbaar in RAL 7016 antracietgrijs', { tag: 'td' }),
+      unit('Verkrijgbaar in RAL 7016 antraciet', { tag: 'p' }),
+      unit('Verkrijgbaar in RAL 7016 antracietgrijs', { tag: 'td' }),
     )).toBe('restructured');
   });
 
@@ -182,24 +182,24 @@ describe('classifyPair', () => {
     // Ticket 62. `casing` was the first test, so a pair the matching left over
     // with identical text was asked to name a difference that does not exist.
     const text = 'Download de montagehandleiding';
-    expect(classifyPair(element(text), element(text))).toBe(null);
+    expect(classifyPair(unit(text), unit(text))).toBe(null);
   });
 
-  it('still reads the moved element on two texts that are equal', () => {
+  it('still reads the moved unit on two texts that are equal', () => {
     // Only `tag-changed`. `mayPair` holds a leftover pair to one `kind` and one
     // heading level, so no heading reaches this rule against a paragraph.
     const text = 'Download de montagehandleiding';
-    expect(classifyPair(element(text, { tag: 'p' }), element(text, { tag: 'td' }))).toBe('tag-changed');
+    expect(classifyPair(unit(text, { tag: 'p' }), unit(text, { tag: 'td' }))).toBe('tag-changed');
   });
 });
 
 describe('diffRows', () => {
   const production = extract({
-    elements: elements(['Overkappingen', 'Gratis bezorging', 'Onze prijzen zijn scherp']),
+    elements: units(['Overkappingen', 'Gratis bezorging', 'Onze prijzen zijn scherp']),
   });
   const next = extract({
     side: 'new',
-    elements: elements(['Overkappingen', 'Gratis bezorging', 'Onze prijzen zijn heel scherp', 'Nieuw blok']),
+    elements: units(['Overkappingen', 'Gratis bezorging', 'Onze prijzen zijn heel scherp', 'Nieuw blok']),
   });
   const rows = diffRows(production, next);
 
@@ -214,13 +214,13 @@ describe('diffRows', () => {
     expect(edited?.score).toBeGreaterThan(0.6);
   });
 
-  it('reports unchanged text that moved into another element', () => {
+  it('reports unchanged text that moved into another unit', () => {
     // Before ticket 33 the LCS anchored on `norm` alone and this was an exact
-    // match that emitted nothing. 762 elements on 80 nl pages were reported as
-    // identical while their element had changed.
+    // match that emitted nothing. 762 units on 80 nl pages were reported as
+    // identical while their unit had changed.
     const rows = diffRows(
-      extract({ elements: [element('Verkrijgbaar in RAL 7016', { tag: 'p' })] }),
-      extract({ side: 'new', elements: [element('Verkrijgbaar in RAL 7016', { tag: 'td' })] }),
+      extract({ elements: [unit('Verkrijgbaar in RAL 7016', { tag: 'p' })] }),
+      extract({ side: 'new', elements: [unit('Verkrijgbaar in RAL 7016', { tag: 'td' })] }),
     );
     expect(rows.map((row) => row.class)).toEqual(['tag-changed']);
   });
@@ -237,7 +237,7 @@ describe('diffRows', () => {
   // Ticket 34. A new-only row used to sort by its index in the **new** document
   // against **production** indices. The two index spaces only coincide while the
   // documents are about the same length, and on `fotogalerij` production holds 178
-  // text elements against the new site's 9.
+  // content units against the new site's 9.
   const LONG = [
     'Overkappingen', 'Aluminium profielen', 'Glazen dak', 'Zonwering', 'Montage',
     'Levertijd', 'Garantie', 'Kleuren en RAL', 'Onderhoud', 'Contact',
@@ -245,8 +245,8 @@ describe('diffRows', () => {
 
   it('anchors a new-only row to the production position of the nearest matched pair', () => {
     const rows = diffRows(
-      extract({ elements: elements(LONG) }),
-      extract({ side: 'new', elements: elements(['Kleuren en RAL', 'Nieuw fotoblok', 'Onderhoud']) }),
+      extract({ elements: units(LONG) }),
+      extract({ side: 'new', elements: units(['Kleuren en RAL', 'Nieuw fotoblok', 'Onderhoud']) }),
     );
 
     // Under the old rule the addition carried new index 1 and landed second, six
@@ -258,8 +258,8 @@ describe('diffRows', () => {
 
   it('puts a new-only row above the first agreement, not at the top of the page', () => {
     const rows = diffRows(
-      extract({ elements: elements(LONG) }),
-      extract({ side: 'new', elements: elements(['Nieuw fotoblok', 'Kleuren en RAL']) }),
+      extract({ elements: units(LONG) }),
+      extract({ side: 'new', elements: units(['Nieuw fotoblok', 'Kleuren en RAL']) }),
     );
     expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
       ...LONG.slice(0, 7), '+Nieuw fotoblok', ...LONG.slice(7),
@@ -268,8 +268,8 @@ describe('diffRows', () => {
 
   it('reads a page the two sides agree nowhere on as production first, then the new site', () => {
     const rows = diffRows(
-      extract({ elements: elements(['Overkappingen', 'Aluminium profielen']) }),
-      extract({ side: 'new', elements: elements(['Nieuw fotoblok', 'Tweede fotoblok']) }),
+      extract({ elements: units(['Overkappingen', 'Aluminium profielen']) }),
+      extract({ side: 'new', elements: units(['Nieuw fotoblok', 'Tweede fotoblok']) }),
     );
     expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
       'Overkappingen', 'Aluminium profielen', '+Nieuw fotoblok', '+Tweede fotoblok',
@@ -283,8 +283,8 @@ describe('diffRows', () => {
     // stops being harmless.
     const additions = Array.from({ length: 12 }, (_, index) => `Fotoblok ${index}`);
     const rows = diffRows(
-      extract({ elements: elements(['Overkappingen', 'Aluminium profielen']) }),
-      extract({ side: 'new', elements: elements(additions) }),
+      extract({ elements: units(['Overkappingen', 'Aluminium profielen']) }),
+      extract({ side: 'new', elements: units(additions) }),
     );
     expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
       'Overkappingen', 'Aluminium profielen', ...additions.map((raw) => `+${raw}`),
@@ -293,8 +293,8 @@ describe('diffRows', () => {
 
   it('keeps two additions after one pair in the order the new site has them', () => {
     const rows = diffRows(
-      extract({ elements: elements(LONG) }),
-      extract({ side: 'new', elements: elements(['Kleuren en RAL', 'Eerste fotoblok', 'Tweede fotoblok']) }),
+      extract({ elements: units(LONG) }),
+      extract({ side: 'new', elements: units(['Kleuren en RAL', 'Eerste fotoblok', 'Tweede fotoblok']) }),
     );
     expect(rows.slice(8, 10).map((row) => row.new?.raw)).toEqual(['Eerste fotoblok', 'Tweede fotoblok']);
   });
@@ -303,8 +303,8 @@ describe('diffRows', () => {
   function samePairedText(prodTag, newTag) {
     const text = 'Kleuren en afwerking';
     const rows = diffRows(
-      extract({ elements: [element(text, { tag: prodTag })] }),
-      extract({ side: 'new', elements: [element(text, { tag: newTag })] }),
+      extract({ elements: [unit(text, { tag: prodTag })] }),
+      extract({ side: 'new', elements: [unit(text, { tag: newTag })] }),
     );
     return rows.map((row) => row.class);
   }
@@ -336,8 +336,8 @@ describe('diffRows', () => {
 
     const findings = collect((collector) => textFindings(
       diffRows(
-        extract({ elements: [element('Kleuren', { tag: 'h2' })] }),
-        extract({ side: 'new', elements: [element('Kleuren', { tag: 'h2' })] }),
+        extract({ elements: [unit('Kleuren', { tag: 'h2' })] }),
+        extract({ side: 'new', elements: [unit('Kleuren', { tag: 'h2' })] }),
       ),
       collector,
     ));
@@ -351,23 +351,23 @@ describe('diffRows', () => {
     // `casing` — a difference between two strings that are equal.
     const link = 'Download de montagehandleiding';
     const rows = diffRows(
-      extract({ elements: elements([link, 'Zonwering', link]) }),
-      extract({ side: 'new', elements: elements([link, link, 'Zonwering']) }),
+      extract({ elements: units([link, 'Zonwering', link]) }),
+      extract({ side: 'new', elements: units([link, link, 'Zonwering']) }),
     );
     expect(rows.map((row) => row.class)).toEqual([null, null, null]);
     expect(collect((collector) => textFindings(rows, collector))).toEqual([]);
   });
 
-  it('still reports the moved element when the repeated line changed tag', () => {
+  it('still reports the moved unit when the repeated line changed tag', () => {
     // The other half of ticket 62: 40 of the 391 phantom `casing` findings are
     // this row. The words are equal; the markup is not, and the finding carries
     // the tag change as its detail.
     const link = 'Download de montagehandleiding';
     const rows = diffRows(
-      extract({ elements: [element(link), element('Zonwering'), element(link)] }),
+      extract({ elements: [unit(link), unit('Zonwering'), unit(link)] }),
       extract({
         side: 'new',
-        elements: [element(link), element(link, { tag: 'div' }), element('Zonwering')],
+        elements: [unit(link), unit(link, { tag: 'div' }), unit('Zonwering')],
       }),
     );
     expect(rows.map((row) => row.class)).toEqual([null, null, 'tag-changed']);
@@ -376,13 +376,13 @@ describe('diffRows', () => {
     ]);
   });
 
-  it('splits a one-sided element by direction', () => {
+  it('splits a one-sided unit by direction', () => {
     // Ticket 33 retires `structure`. A dropped paragraph and an invented one
     // carried the same word, and the invented side is mostly a PageBuilder
     // rebuild rather than a defect.
     const rows = diffRows(
-      extract({ elements: elements(['Wij leveren door heel Nederland']) }),
-      extract({ side: 'new', elements: elements(['Bekijk onze showrooms in de buurt']) }),
+      extract({ elements: units(['Wij leveren door heel Nederland']) }),
+      extract({ side: 'new', elements: units(['Bekijk onze showrooms in de buurt']) }),
     );
     expect(rows.map((row) => row.class).sort()).toEqual(['text-added', 'text-missing']);
     expect(rows.find((row) => row.class === 'text-missing')?.new).toBe(null);
@@ -394,8 +394,8 @@ describe('textFindings', () => {
   it('counts one rename repeated four times as one finding', () => {
     const before = 'Verkrijgbaar in de volgende kleuren';
     const after = 'Verkrijgbaar in deze kleuren';
-    const production = extract({ elements: elements([before, before, before, before]) });
-    const next = extract({ side: 'new', elements: elements([after, after, after, after]) });
+    const production = extract({ elements: units([before, before, before, before]) });
+    const next = extract({ side: 'new', elements: units([after, after, after, after]) });
 
     const findings = collect((collector) => textFindings(diffRows(production, next), collector));
     expect(findings.length).toBe(1);
@@ -408,9 +408,9 @@ describe('textFindings', () => {
     // Ticket 02 quotes it as its example of one change counted many times, but
     // it is one loss and one addition, each grouped to four occurrences. The
     // grouping still does the work the ticket wanted; the pairing cannot.
-    const production = extract({ elements: elements(['Kleuren:', 'Kleuren:', 'Kleuren:', 'Kleuren:']) });
+    const production = extract({ elements: units(['Kleuren:', 'Kleuren:', 'Kleuren:', 'Kleuren:']) });
     const label = 'Verkrijgbaar in de volgende kleuren:';
-    const next = extract({ side: 'new', elements: elements([label, label, label, label]) });
+    const next = extract({ side: 'new', elements: units([label, label, label, label]) });
 
     const findings = collect((collector) => textFindings(diffRows(production, next), collector));
     expect(findings.map((finding) => [finding.class, finding.occurrences])).toEqual([
@@ -424,8 +424,8 @@ describe('textFindings', () => {
     // the content that was actually lost.
     const findings = collect((collector) => textFindings(
       diffRows(
-        extract({ elements: elements(['Wij leveren door heel Nederland']) }),
-        extract({ side: 'new', elements: elements(['Bekijk onze showrooms in de buurt']) }),
+        extract({ elements: units(['Wij leveren door heel Nederland']) }),
+        extract({ side: 'new', elements: units(['Bekijk onze showrooms in de buurt']) }),
       ),
       collector,
     ));
@@ -438,8 +438,8 @@ describe('textFindings', () => {
     const text = 'Kleuren en afwerking';
     const findings = collect((collector) => textFindings(
       diffRows(
-        extract({ elements: [element(text, { tag: 'h2' })] }),
-        extract({ side: 'new', elements: [element(text, { tag: 'h3' })] }),
+        extract({ elements: [unit(text, { tag: 'h2' })] }),
+        extract({ side: 'new', elements: [unit(text, { tag: 'h3' })] }),
       ),
       collector,
     ));
@@ -453,8 +453,8 @@ describe('textFindings', () => {
     /** @param {string} newTag */
     const idFor = (newTag) => collect((collector) => textFindings(
       diffRows(
-        extract({ elements: [element(text, { tag: 'h2' })] }),
-        extract({ side: 'new', elements: [element(text, { tag: newTag })] }),
+        extract({ elements: [unit(text, { tag: 'h2' })] }),
+        extract({ side: 'new', elements: [unit(text, { tag: newTag })] }),
       ),
       collector,
     ))[0].id;
@@ -464,8 +464,8 @@ describe('textFindings', () => {
   it('carries no detail on a class whose two sides already differ', () => {
     const findings = collect((collector) => textFindings(
       diffRows(
-        extract({ elements: elements(['Vanaf € 799']) }),
-        extract({ side: 'new', elements: elements(['Vanaf € 849']) }),
+        extract({ elements: units(['Vanaf € 799']) }),
+        extract({ side: 'new', elements: units(['Vanaf € 849']) }),
       ),
       collector,
     ));
@@ -476,8 +476,8 @@ describe('textFindings', () => {
     const text = 'Kleuren en afwerking';
     const findings = collect((collector) => textFindings(
       diffRows(
-        extract({ elements: [element(text, { tag: 'h2' }), element(text, { tag: 'h2' })] }),
-        extract({ side: 'new', elements: [element(text, { tag: 'h3' }), element(text, { tag: 'h3' })] }),
+        extract({ elements: [unit(text, { tag: 'h2' }), unit(text, { tag: 'h2' })] }),
+        extract({ side: 'new', elements: [unit(text, { tag: 'h3' }), unit(text, { tag: 'h3' })] }),
       ),
       collector,
     ));
@@ -487,8 +487,8 @@ describe('textFindings', () => {
   });
 
   it('gives every occurrence one id, so the count cannot detach a dismissal', () => {
-    const production = extract({ elements: elements(['Kleuren:', 'Kleuren:']) });
-    const next = extract({ side: 'new', elements: elements(['Kleur:', 'Kleur:']) });
+    const production = extract({ elements: units(['Kleuren:', 'Kleuren:']) });
+    const next = extract({ side: 'new', elements: units(['Kleur:', 'Kleur:']) });
     const [finding] = collect((collector) => textFindings(diffRows(production, next), collector));
     expect(finding.id).toMatch(/^[A-Za-z0-9_-]{16}$/);
   });
@@ -632,7 +632,7 @@ describe('metaRows', () => {
   const row = (all, field) => all.find((candidate) => candidate.field === field);
 
   it('does not carry h1 — the content view owns it', () => {
-    // Spec 32, decision 34: 93 pages differ on the `h1`, and it is an element
+    // Spec 32, decision 34: 93 pages differ on the `h1`, and it is a unit
     // inside the content boundary. Reporting it here as well would report the
     // same difference twice on two tabs.
     expect(row(rows({ h1: 'Overkappingen' }, { h1: 'Veranda' }), 'h1')).toBeUndefined();
@@ -882,10 +882,10 @@ describe('the heading a finding sits under', () => {
     ['Wij monteren zelf', 'p'],
   ]);
 
-  /** @param {import('./contract.mjs').TextElement[]} elements */
+  /** @param {import('./contract.mjs').ContentUnit[]} elements */
   const prod = (elements) => extract({ elements });
 
-  it('names the nearest heading before the element', () => {
+  it('names the nearest heading before the unit', () => {
     const next = outline([
       ['Onze overkappingen', 'h1'],
       ['Voor de eerste kop', 'p'],
@@ -902,7 +902,7 @@ describe('the heading a finding sits under', () => {
       .toEqual([['copy', 'Montage']]);
   });
 
-  it('is null when the element precedes every heading', () => {
+  it('is null when the unit precedes every heading', () => {
     const findings = collect((collector) => textFindings(
       diffRows(
         prod(outline([['Kruimelpad naar de winkel', 'p'], ['Kleuren en RAL', 'h2']])),
@@ -969,8 +969,8 @@ describe('the heading a finding sits under', () => {
     const renamed = outline([['Kleuren en kleurkeuze', 'h2'], ['Antraciet en creme', 'p']]);
     const withoutHeading = outline([['Antraciet en creme', 'p']]);
 
-    const id = (prodElements, newElements) => collect((collector) => textFindings(
-      diffRows(extract({ elements: prodElements }), extract({ side: 'new', elements: newElements })),
+    const id = (prodUnits, newUnits) => collect((collector) => textFindings(
+      diffRows(extract({ elements: prodUnits }), extract({ side: 'new', elements: newUnits })),
       collector,
     )).find((finding) => finding.prod === 'Antraciet en creme' && finding.new === null)?.id;
 
@@ -1020,7 +1020,7 @@ describe('comparePage', () => {
     const report = comparePage({
       sides: {
         production: extract({ status: 404 }),
-        new: extract({ side: 'new', elements: elements(['Onderdelen', 'Bekijk alles']) }),
+        new: extract({ side: 'new', elements: units(['Onderdelen', 'Bekijk alles']) }),
       },
     });
     expect(report.comparable).toBe(false);
@@ -1028,11 +1028,11 @@ describe('comparePage', () => {
     expect(report.skipReason).toBeTruthy();
   });
 
-  it('holds rows as element indices, not copies of the text', () => {
+  it('holds rows as unit indices, not copies of the text', () => {
     const report = comparePage({
       sides: {
-        production: extract({ elements: elements(['Overkappingen']) }),
-        new: extract({ side: 'new', elements: elements(['Overkappingen']) }),
+        production: extract({ elements: units(['Overkappingen']) }),
+        new: extract({ side: 'new', elements: units(['Overkappingen']) }),
       },
     });
     // `finding` is null on an exact match: spec 29 links a row to the grouped
@@ -1046,8 +1046,8 @@ describe('comparePage', () => {
     // the browser cannot recompute the id: `findingId()` needs `node:crypto`.
     const report = comparePage({
       sides: {
-        production: extract({ elements: elements(['Levering in 5 werkdagen']) }),
-        new: extract({ side: 'new', elements: elements(['Levering in vijf werkdagen']) }),
+        production: extract({ elements: units(['Levering in 5 werkdagen']) }),
+        new: extract({ side: 'new', elements: units(['Levering in vijf werkdagen']) }),
       },
     });
     const row = report.rows.find((candidate) => candidate.class);
@@ -1057,8 +1057,8 @@ describe('comparePage', () => {
   it('counts a shown and a hidden class apart', () => {
     const report = comparePage({
       sides: {
-        production: extract({ elements: elements(['Vanaf € 799', 'Gratis bezorging']) }),
-        new: extract({ side: 'new', elements: elements(['Vanaf € 849', 'Snelle bezorging vandaag']) }),
+        production: extract({ elements: units(['Vanaf € 799', 'Gratis bezorging']) }),
+        new: extract({ side: 'new', elements: units(['Vanaf € 849', 'Snelle bezorging vandaag']) }),
       },
     });
     // `Gratis bezorging` → `Snelle bezorging vandaag` scores 0.4, so it does not

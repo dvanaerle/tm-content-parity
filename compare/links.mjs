@@ -40,7 +40,7 @@ function byKey(links) {
 
 /**
  * Anchor text is the only identity available for "the same anchor now points
- * somewhere else": an element carries no DOM path. So a text that occurs once on
+ * somewhere else": a unit carries no DOM path. So a text that occurs once on
  * each side is a usable anchor identity, and a text that repeats is not — two
  * `Lees meer` links cannot be told apart, and a wrong pair asserts a target
  * change that did not happen.
