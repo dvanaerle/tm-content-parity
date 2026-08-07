@@ -94,9 +94,11 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   `docs/adr/0002-content-unit-is-the-editable-block.md`.
 - **A region leaves the log at extraction, from a committed list with a size cap.**
   Two reasons and two words: **non-editorial** (nobody writes it) and **legacy-only**
-  (nobody will migrate it). An exclusion above 20 content units throws, because the
-  obvious wrapper selector on production would have removed 358 of 359 units on one
-  page. `docs/adr/0003-regions-are-excluded-at-extraction.md`.
+  (nobody will migrate it). An exclusion above its cap throws, because the obvious
+  wrapper selector on production would have removed 358 of 359 units on one page. The
+  cap is per entry, it defaults to 20, an entry cannot declare a cap below its own
+  recorded measurement, and no entry may declare one above 100.
+  `docs/adr/0003-regions-are-excluded-at-extraction.md`.
 
 ### Resolved tickets
 
@@ -370,7 +372,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   text the catalogue or an extension makes. This ticket's own objection decided
   *where*: the extract carries no DOM path, so the exclusion runs **at extraction**,
   from a committed list, and a check stays ignorant of regions. One selector cuts both
-  hosts and removes 69 units on production against 48 on the new site. `pageType` was
+  hosts and removes 50 units on production against 21 on the new site — the grilling
+  said 69 and 48, and ticket 63 re-measured. `pageType` was
   rejected as the hook — it names a page kind, and this is a region. Found while
   resolving: production's tile titles sit in a tag the extraction never read, so
   production never had them, and the nine "added" tiles on `/overkapping` are exactly
@@ -787,7 +790,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   [68 the content view](issues/68-the-content-view-survives-a-folded-unit.md),
   [69 one viewport](issues/69-one-canonical-viewport.md),
   [70 shared regions](issues/70-shared-regions-by-content-hash.md).
-  61, 63 and 65 have no blockers. 67 rebuilds every report and detaches
+  61, 62, 63, 65 and 66 are resolved. 67 rebuilds every report and detaches
   overrides, so it does not ship before 65 gives the number. 70 needs the new
   environment, which answered HTTP 500 on all six hosts while this was written.
 
@@ -848,6 +851,44 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   innocent** — `restructured` fires when the two sides differ in tag, and the class
   is in the id, so a pair that goes from `a` vs `a` to `p` vs `a` changes class,
   becomes hidden, and drops the dismissal. That is the one detachment.
+
+  **63 is resolved**, 2026-08-07, and it resolves ticket 27 with it.
+  `shared/excluded-regions.mjs` is the committed list, and `extractPage()` cuts a
+  region before the walk, so no unit the log has no business with ever takes a
+  number. The list is in `shared/` because `crawl/` cuts the region and `web/` lists
+  it — ADR 0001's first resident that was written into the seam rather than moved
+  into it. The first entry is `#amasty-shopby-product-list`. Measured on both hosts
+  on `/overkapping`, `/carport` and `/veranda`: **one match on each side, −50 units
+  on production and −21 on the new site**, the same on all three, and **no match** on
+  four CMS pages, a home page and a live product page. The probe compares each
+  category page before and after the cut: on `/overkapping` **258 findings become 172
+  and 186 shown become 139**, `text-added` falls from 32 to 16, and **16 rows leave
+  and 0 appear on each of the three pages**. That nothing appears is the half that
+  matters: a cut that moved the pairing would invent findings elsewhere. The sixteen
+  are the nine tile titles, the pager, the result count, the sorter and the three USP
+  strip lines.
+  **The flat cap of 20 could not ship, and the cap is now per entry.** Ticket 63
+  asked for 20 and ticket 27's own first entry removes 50, so the two criteria
+  contradicted each other. An entry that declares no cap still gets 20, and the list
+  **refuses an entry whose cap is below its own recorded measurement**. Because both
+  numbers are written by hand, no entry may declare a cap **above 100** — above the
+  widest entry (50) and below the `.magezon-builder` near-miss (139 on the same
+  page). A region wider than the ceiling needs a decision in the ADR. The cap counts
+  the whole entry on one page, not one match, and a nested match once. It counts
+  content units only, so a link-dense or image-dense region does not trip it; that
+  limit is stated in the ADR.
+  **Ticket 27's 69 and 48 do not reproduce**, and the cause is not established. The
+  catalogue moved (`1702 resultaten` then, `1320` now) and ticket 61 shipped in
+  between; neither is proven. Ticket 27 is corrected in place.
+  One page pays the ticket-27 argument back: production gives `showroom-contact` the
+  body class `catalog-category-view`, and the selector correctly matches nothing on
+  it. `pageType` names a page kind; the grid is a region.
+  Not done on purpose: **the corpus was not re-crawled and no report was rebuilt**,
+  because that detaches overrides and belongs to 67. Until the next crawl every entry
+  reads "removed on no page" on the dashboard, which names all three causes rather
+  than asserting that the region stopped matching.
+  The USP strip stays open. On the new site this entry already takes it; on
+  production its position is still unmeasured, so it does not get an entry yet.
 
 - [50 — The content page discriminator](issues/50-content-page-discriminator.md)
   — designed in the grilling session of 2026-08-07, `claimed`. **The seed list

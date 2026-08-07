@@ -1,7 +1,7 @@
 ---
 import Dashboard from '../../components/Dashboard.jsx';
 import Shell from '../../layouts/Shell.astro';
-import { excludedFor, loadSummaries, storesInLog } from '../../lib/reports.mjs';
+import { excludedFor, loadSummaries, regionsRemovedInStore, storesInLog } from '../../lib/reports.mjs';
 import { STORE_NAME } from '../../lib/stores.mjs';
 
 // One dashboard per store. The page-level route already carried the store; this
@@ -18,6 +18,7 @@ const { store } = Astro.params;
 // visitor who opens `de` downloads 45 pages and not 451.
 const pages = await loadSummaries(store);
 const excluded = await excludedFor(store);
+const regions = regionsRemovedInStore(pages);
 
 // The crawled total is stated beside the store. The chips below start at
 // `pagina's vergeleken`, and that number counts the **comparable** pages only.
@@ -41,5 +42,5 @@ const oneSided = pages.filter((page) => !page.comparable).length;
       }
     </p>
   </header>
-  <Dashboard client:load pages={pages} excluded={excluded} />
+  <Dashboard client:load pages={pages} excluded={excluded} regions={regions} />
 </Shell>

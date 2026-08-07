@@ -83,12 +83,30 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  */
 
 /**
+ * What one entry of `shared/excluded-regions.mjs` did on **one page**. The entry
+ * is the rule; this is the occurrence. Ticket 63: an exclusion is visible on the
+ * page it cut, never silent.
+ *
+ * @typedef {object} RegionRemoval
+ * @property {string} selector
+ * @property {'non-editorial' | 'legacy-only'} kind
+ * @property {string} reason    The prose the web build shows.
+ * @property {number} matches   How many times the selector matched inside the boundary.
+ * @property {number} units     Content units the matches held, counted before removal.
+ */
+
+/**
  * Numbers that explain a page, and that must never become a finding. Ticket 06
  * counts the new site's 76 Alpine-bound icons here: they carry no identity, so
  * they cannot be matched, missed or fixed.
  *
+ * Ticket 63 adds the regions. `regionsExcluded` is empty on a page no entry
+ * matched, so a region that stops matching reads as a change and not as absence.
+ *
  * @typedef {object} PageDiagnostics
  * @property {number} imagesWithoutSrc
+ * @property {RegionRemoval[]} regionsExcluded
+ * @property {number} unitsExcluded  Sum of `units` over `regionsExcluded`.
  */
 
 /**

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { excludedInStore, storesFromFilenames } from './reports.mjs';
+import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
+import { excludedInStore, regionsRemovedInStore, storesFromFilenames } from './reports.mjs';
 
 /**
  * Which stores get a route and a switcher entry. The judgement is that a store is
@@ -60,5 +61,45 @@ describe('excludedInStore', () => {
 
   it('gives nothing for a page that is not excluded', () => {
     expect(excludedInStore([{ page: 'overkappingen', stores: { nl: both } }], 'nl')).toEqual([]);
+  });
+});
+
+/**
+ * Ticket 63: an excluded region says why, and it says where. `removedOn` is what
+ * makes the entry falsifiable. An entry removed on no page has stopped matching.
+ */
+describe('regionsRemovedInStore', () => {
+  const GRID = EXCLUDED_REGIONS[0].selector;
+  const page = (production, next) => ({
+    sides: {
+      production: { regionsExcluded: production },
+      new: { regionsExcluded: next },
+    },
+  });
+
+  it('counts the pages and the units, on each side apart', () => {
+    const [entry] = regionsRemovedInStore([
+      page([{ selector: GRID, units: 50 }], [{ selector: GRID, units: 21 }]),
+      page([{ selector: GRID, units: 50 }], [{ selector: GRID, units: 21 }]),
+      page([], []),
+    ]);
+
+    expect(entry.removedOn).toEqual({
+      production: { pages: 2, units: 100 },
+      new: { pages: 2, units: 42 },
+    });
+  });
+
+  it('lists an entry that matched nothing, so a region that stopped matching is one line', () => {
+    const [entry] = regionsRemovedInStore([page([], [])]);
+    expect(entry.selector).toBe(GRID);
+    expect(entry.removedOn.production.pages).toBe(0);
+  });
+
+  it('carries the reason and the kind through, because the list must say why', () => {
+    for (const entry of regionsRemovedInStore([])) {
+      expect(entry.reason).toBeTruthy();
+      expect(['non-editorial', 'legacy-only']).toContain(entry.kind);
+    }
   });
 });

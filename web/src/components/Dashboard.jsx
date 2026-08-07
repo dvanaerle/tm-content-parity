@@ -17,7 +17,7 @@ const CHECKS = ['text', 'links', 'images'];
  * Axis A only. Ticket 11 gave the coverage axis its own bar, which must never be
  * summed with this one, and ticket 23 owns its store-level view.
  */
-export default function Dashboard({ pages, excluded }) {
+export default function Dashboard({ pages, excluded, regions = [] }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('worst');
   // Ticket 36 gives the class pills the same semantics the content view's filter
@@ -198,9 +198,34 @@ export default function Dashboard({ pages, excluded }) {
           </li>
         ))}
       </Aside>
+
+      <Aside
+        title={`Uitgesloten regio's (${regions.length})`}
+        note="Stukken binnen de contentgrens die geen redactiewerk zijn (ticket 63). Ze gaan er bij de extractie uit. Zichtbaar uitgesloten, niet stil weggelaten."
+      >
+        {regions.map((region) => (
+          <li key={region.selector} className="py-1">
+            <code className="font-medium">{region.selector}</code>
+            <span className="text-slate-500"> — {REGION_KIND[region.kind] ?? region.kind}. {region.reason}</span>
+            <span className="block text-slate-500">
+              {region.removedOn.production.pages === 0 && region.removedOn.new.pages === 0
+                ? 'In deze snapshot nergens weggehaald. Drie mogelijke oorzaken: deze winkel heeft de regio niet, de selector past niet meer, of de snapshot is ouder dan deze regel.'
+                : `Weggehaald op ${region.removedOn.production.pages} pagina's op productie `
+                  + `(${region.removedOn.production.units} blokken) en op ${region.removedOn.new.pages} `
+                  + `op de nieuwe site (${region.removedOn.new.units} blokken).`}
+            </span>
+          </li>
+        ))}
+      </Aside>
     </div>
   );
 }
+
+/** The two words of the vocabulary, in the language the dashboard speaks. */
+const REGION_KIND = {
+  'non-editorial': 'Niet-redactioneel: de catalogus of een extensie maakt de tekst',
+  'legacy-only': 'Alleen oud: geschreven, maar de nieuwe site krijgt het niet',
+};
 
 function Aside({ title, note, children }) {
   return (

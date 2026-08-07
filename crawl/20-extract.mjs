@@ -78,6 +78,9 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
       + `elements=${extract.elements.length} links=${extract.links.length} `
       + `images=${extract.images.length} (${extract.diagnostics.imagesWithoutSrc} without src)`
     );
+    for (const region of extract.diagnostics.regionsExcluded) {
+      console.log(`${' '.repeat(11)}region ${region.selector} ×${region.matches}, -${region.units} units (${region.kind})`);
+    }
   }
   console.log(`wrote ${fileURLToPath(out)}`);
 }

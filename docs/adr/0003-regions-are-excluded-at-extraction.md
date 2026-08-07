@@ -5,9 +5,13 @@ from the catalogue. A promo banner is a shared block that the new site will not 
 Both make findings that nobody can act on.
 
 We decided that a region is removed **at extraction**, by a committed list in
-`crawl/excluded-regions.mjs`. Each entry names its selector, its reason and its
+`shared/excluded-regions.mjs`. Each entry names its selector, its reason and its
 kind. An exclusion that removes more than a small number of content units **throws**
 instead of running.
+
+The list is in `shared/` and not in `crawl/`. `crawl/` cuts the region and `web/`
+lists it, so two stages read it, and ADR 0001 gives that shape one home. The list
+holds no DOM: `crawl/extract.mjs` holds the removal.
 
 ## Why at extraction, and not at the check
 
@@ -35,12 +39,43 @@ That selector would have deleted the whole download index, the whole payment tab
 and the contact telephone number. The mistake was one plausible line of code, and
 nothing in the pipeline would have reported it.
 
-So the cap is not a nicety. **An exclusion above 20 content units is a bug by
-definition**, because no editable region on this site is that large. The crawl fails
-loudly, in the same manner as `assertHasContent`.
+So the cap is not a nicety. The crawl fails loudly, in the same manner as
+`assertHasContent`.
+
+**The cap is per entry, and it defaults to 20.** An entry that declares none is
+capped at 20, because no *editable* region on this site is that large. An entry that
+needs more declares the number, and the list refuses the entry unless the declared
+number is at or above the entry's own recorded measurement. The product grid is the
+reason the cap has this shape: it is not editable, and it removes 50 units on
+production. A flat 20 would have rejected the first entry the list was built for.
+
+The declared number is not a free hand. `validateRegions()` checks it against
+`measured`, so an entry cannot claim headroom it never measured. The same function
+runs on a list that a caller gives the extractor, so a test list and a probe list
+get the same bar.
+
+**No entry may declare a cap above 100.** The per-entry number and the measurement
+beside it are both written by hand. Without a ceiling the guard is only "type the
+number twice". 100 is above the widest entry today (50) and below the near-miss
+above (139 units on `/overkapping`). A region wider than the ceiling needs a new
+decision here, and not a larger number in the list.
+
+The cap counts **the whole entry on one page**, not one match. Two matches of half
+the size are the same wrong selector as one wide match. A match inside another match
+of the same entry counts once: the outer match removes the inner one anyway.
+
+The cap counts **content units only**. A selector that takes few units and many
+links or images does not trip it. That is a known limit and not an oversight: the
+unit is what the cap is defined in, and the two other checks have no such guard yet.
 
 Every extraction also records the regions removed and the units removed, beside
-`diagnostics.imagesWithoutSrc`. An exclusion is visible, never silent.
+`diagnostics.imagesWithoutSrc`. An exclusion is visible, never silent. The store
+dashboard lists each entry with its reason and with the pages it was removed on, so
+an entry removed on no page reads as one line.
+
+An extract written before this rule has no `regionsExcluded`. It reads as "no region
+cut here", which is the over-reporting direction, and the dashboard says the snapshot
+may be older than the entry rather than that the region stopped matching.
 
 ## The bar for a new entry
 

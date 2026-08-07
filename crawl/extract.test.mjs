@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import {
+  ABSOLUTE_MAX_UNITS, DEFAULT_MAX_UNITS, EXCLUDED_REGIONS, REGION_KINDS, capFor, validateRegions,
+} from '../shared/excluded-regions.mjs';
 import { exclusionReason, isExcludedPage } from './excluded-pages.mjs';
 import { extractPage, pageType, toMarkdown } from './extract.mjs';
 import { failuresFilename } from './21-crawl-store.mjs';
@@ -492,6 +495,207 @@ describe('excluded pages', () => {
   it('is exact keys, so a future configurator content page is still checked', () => {
     expect(isExcludedPage('configurator-vergelijken')).toBe(false);
     expect(exclusionReason('configurator-vergelijken')).toBeNull();
+  });
+});
+
+describe('excluded regions', () => {
+  const GRID = [{
+    selector: '#grid',
+    kind: 'non-editorial',
+    reason: 'The catalogue writes it.',
+    measured: { pages: ['a', 'b', 'c'], production: 4, new: 4 },
+  }];
+
+  const withGrid = (main) => extractPage(page(main), { ...CONTEXT, excludedRegions: GRID });
+
+  it('removes the units, the links and the images of a matched region', () => {
+    const extract = withGrid(`
+      <h1>Overkappingen</h1><p>Kies uw model.</p>
+      <div id="grid">
+        <h3>Heavy Duty 6.06 x 3 meter</h3>
+        <a href="/p/heavy-duty">Bekijk product</a>
+        <img src="/media/tile.jpg" alt="Heavy Duty">
+      </div>`);
+
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Overkappingen', 'Kies uw model.']);
+    expect(extract.links).toEqual([]);
+    expect(extract.images).toEqual([]);
+  });
+
+  it('counts the units it removed, so the exclusion is visible on the page it cut', () => {
+    const extract = withGrid(`
+      <h1>Overkappingen</h1>
+      <div id="grid"><h3>Tegel</h3><p>1702 resultaten</p></div>`);
+
+    expect(extract.diagnostics.regionsExcluded).toEqual([{
+      selector: '#grid',
+      kind: 'non-editorial',
+      reason: 'The catalogue writes it.',
+      matches: 1,
+      units: 2,
+    }]);
+    expect(extract.diagnostics.unitsExcluded).toBe(2);
+  });
+
+  it('says nothing on a page no entry matched, so a region that stops matching reads as a change', () => {
+    const extract = withGrid('<h1>Overkappingen</h1><p>Geen grid.</p>');
+    expect(extract.diagnostics.regionsExcluded).toEqual([]);
+    expect(extract.diagnostics.unitsExcluded).toBe(0);
+    expect(extract.elements).toHaveLength(2);
+  });
+
+  it('does not renumber the units that stay, because a finding id is not positional', () => {
+    const extract = withGrid(`
+      <h1>Overkappingen</h1>
+      <div id="grid"><p>Tegel</p></div>
+      <p>Na het grid.</p>`);
+
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Overkappingen', 'Na het grid.']);
+    expect(extract.elements.map((unit) => unit.index)).toEqual([0, 1]);
+  });
+
+  it('throws above the entry cap, because a wider match is a wrong selector', () => {
+    const tiles = '<p>Een tegel met tekst.</p>'.repeat(21);
+
+    expect(() => extractPage(page(`<h1>Kop</h1><div id="grid">${tiles}</div>`), {
+      ...CONTEXT, excludedRegions: GRID,
+    })).toThrow(/#grid holds 21 content units.*cap is 20/s);
+  });
+
+  it('counts a match inside another match once, so the recorded count is right', () => {
+    // `querySelectorAll` gives the ancestor and the descendant. The outer match
+    // removes the inner one anyway, so counting both doubles the number.
+    const extract = withGrid(`
+      <h1>Kop</h1>
+      <div id="grid"><p>Buiten</p><div id="grid"><p>Binnen</p></div></div>`);
+
+    expect(extract.diagnostics.regionsExcluded[0]).toMatchObject({ matches: 1, units: 2 });
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Kop']);
+  });
+
+  it('does not throw on a nested match that only double-counting would push over the cap', () => {
+    const eleven = '<p>Een tegel met tekst.</p>'.repeat(11);
+    const extract = withGrid(`<h1>Kop</h1><div id="grid"><div id="grid">${eleven}</div></div>`);
+
+    expect(extract.diagnostics.unitsExcluded).toBe(11);
+  });
+
+  it('honours a cap the entry declares, so a measured wide region can ship', () => {
+    const tiles = '<p>Een tegel met tekst.</p>'.repeat(21);
+    const wide = [{ ...GRID[0], measured: { pages: ['a', 'b', 'c'], production: 21, new: 21 }, maxUnits: 90 }];
+
+    const extract = extractPage(page(`<h1>Kop</h1><div id="grid">${tiles}</div>`), {
+      ...CONTEXT, excludedRegions: wide,
+    });
+    expect(extract.elements).toHaveLength(1);
+    expect(extract.diagnostics.unitsExcluded).toBe(21);
+  });
+
+  it('caps the whole entry and not one match, so two half-size matches still throw', () => {
+    const half = '<p>Een tegel met tekst.</p>'.repeat(11);
+
+    expect(() => extractPage(
+      page(`<h1>Kop</h1><div id="grid">${half}</div><div id="grid">${half}</div>`),
+      { ...CONTEXT, excludedRegions: GRID },
+    )).toThrow(/matched 2 times/);
+  });
+
+  it('holds a list a caller gives to the same bar as the committed one', () => {
+    const unmeasured = [{ ...GRID[0], measured: { pages: ['a'], production: 1, new: 1 } }];
+    expect(() => extractPage(page('<h1>Kop</h1>'), { ...CONTEXT, excludedRegions: unmeasured }))
+      .toThrow(/measured on 1 page/);
+  });
+
+  it('names the page and the side, because a crawl fails on one page of 448', () => {
+    const tiles = '<p>Een tegel met tekst.</p>'.repeat(21);
+    expect(() => extractPage(page(`<div id="grid">${tiles}</div>`), { ...CONTEXT, excludedRegions: GRID }))
+      .toThrow(/nl\/overkappingen production/);
+  });
+
+  it('leaves a page with no <main> to the chrome list, and still cuts the region', () => {
+    const html = `<!doctype html><html><body class="catalog-category-view">
+      <h1>Overkappingen</h1><div id="grid"><p>Tegel</p></div></body></html>`;
+    const extract = extractPage(html, { ...CONTEXT, excludedRegions: GRID });
+
+    expect(extract.boundary).toBe('body');
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Overkappingen']);
+  });
+});
+
+describe('the committed region list', () => {
+  it('cuts the product grid on both hosts by one selector', () => {
+    expect(EXCLUDED_REGIONS).toHaveLength(1);
+    expect(EXCLUDED_REGIONS[0].selector).toBe('#amasty-shopby-product-list');
+    expect(EXCLUDED_REGIONS[0].kind).toBe('non-editorial');
+  });
+
+  it('gives every entry a reason from the vocabulary and three measured pages', () => {
+    for (const entry of EXCLUDED_REGIONS) {
+      expect(REGION_KINDS).toContain(entry.kind);
+      expect(entry.reason.length).toBeGreaterThan(20);
+      expect(entry.measured.pages.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('never caps an entry below its own measurement', () => {
+    for (const entry of EXCLUDED_REGIONS) {
+      expect(capFor(entry)).toBeGreaterThanOrEqual(Math.max(entry.measured.production, entry.measured.new));
+    }
+  });
+
+  it('falls back to 20 for an entry that declares no cap', () => {
+    expect(capFor(/** @type {any} */ ({ selector: '#x' }))).toBe(DEFAULT_MAX_UNITS);
+    expect(DEFAULT_MAX_UNITS).toBe(20);
+  });
+});
+
+/**
+ * The bar for an entry is a rule, so it has tests. Asserting only that today's
+ * list satisfies the bar leaves a broken validator green.
+ */
+describe('validateRegions', () => {
+  const good = {
+    selector: '#grid',
+    kind: 'non-editorial',
+    reason: 'The catalogue writes it.',
+    measured: { pages: ['a', 'b', 'c'], production: 4, new: 4 },
+  };
+  const check = (patch) => () => validateRegions([{ ...good, ...patch }]);
+
+  it('accepts an entry that meets the bar', () => {
+    expect(check({})).not.toThrow();
+  });
+
+  it('refuses a reason outside the vocabulary', () => {
+    expect(check({ kind: 'noisy' })).toThrow(/vocabulary is non-editorial or legacy-only/);
+  });
+
+  it('refuses an entry with no prose reason, because an excluded region says why', () => {
+    expect(check({ reason: '' })).toThrow(/says why/);
+  });
+
+  it('refuses a measurement on fewer than three pages', () => {
+    expect(check({ measured: { pages: ['a', 'b'], production: 4, new: 4 } })).toThrow(/The bar is 3/);
+  });
+
+  it('refuses a cap below the entry\'s own measurement', () => {
+    expect(check({ measured: { pages: ['a', 'b', 'c'], production: 30, new: 4 }, maxUnits: 25 }))
+      .toThrow(/throw on its own evidence/);
+  });
+
+  it('refuses a cap above the ceiling, so an author cannot declare their way out', () => {
+    // The per-entry cap and the measurement beside it are both written by hand.
+    // Without a ceiling the guard is only "type the number twice".
+    expect(check({
+      measured: { pages: ['a', 'b', 'c'], production: 400, new: 400 },
+      maxUnits: 400,
+    })).toThrow(/ceiling is 100/);
+    expect(ABSOLUTE_MAX_UNITS).toBe(100);
+  });
+
+  it('names where the list came from, so a caller\'s list is told apart from the committed one', () => {
+    expect(() => validateRegions([{ ...good, kind: 'noisy' }], 'context.excludedRegions'))
+      .toThrow(/context\.excludedRegions: #grid/);
   });
 });
 

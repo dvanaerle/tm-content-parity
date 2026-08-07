@@ -23,8 +23,17 @@ removes.
 **One selector cuts both hosts.** `#amasty-shopby-product-list` matches once inside
 `<main>` on production and once on the new site, with byte-identical class strings
 across `/overkapping`, `/carport` and `/veranda`, and it matches nothing on a home
-page or a product page. It removes 69 units on production and 48 on the new site, and
-it takes the sorter, the pager and the result count with the tiles. The narrower
+page or a product page. It removes **50 units on production and 21 on the new site**,
+and it takes the sorter, the pager and the result count with the tiles.
+
+> **Corrected 2026-08-07 by ticket 63.** This paragraph said 69 and 48. Ticket 63
+> re-measured with `crawl/probes/probe-excluded-regions.mjs` on both hosts and on all
+> three pages, and got 50 and 21, the same on all three. The grilling numbers do not
+> reproduce and the cause is not established. Everything else here held, including
+> the "matches nothing on a home page or a product page" claim, which ticket 63
+> checked against a live product page and four CMS pages.
+
+The narrower
 `.products-grid` also matches both hosts and removes 45 against 32; it was rejected
 because it knowingly leaves about 40 machine-generated differences per page alive.
 

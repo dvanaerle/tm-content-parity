@@ -7,6 +7,7 @@
  */
 
 import { parse } from 'node-html-parser';
+import { EXCLUDED_REGIONS, capBreachMessage, capFor, validateRegions } from '../shared/excluded-regions.mjs';
 import { imageKey, linkKey } from '../shared/keys.mjs';
 import { collapse, tier1 } from './normalise.mjs';
 
@@ -106,6 +107,82 @@ function contentRoot(root, warn) {
     for (const node of body.querySelectorAll(selector)) node.remove();
   }
   return { scope: body, boundary: /** @type {'body'} */ ('body') };
+}
+
+/**
+ * The content units one subtree holds, counted by the same rule that emits them.
+ *
+ * It gets its own `swallowed` set, so a heading inside the region swallows only
+ * inside the region. The region root itself is not counted: every entry names a
+ * wrapper, and `querySelectorAll` does not return the node it is called on.
+ *
+ * @param {import('node-html-parser').HTMLElement} node
+ * @returns {number}
+ */
+function countUnitsIn(node) {
+  const swallowed = new Set();
+  let units = 0;
+  for (const inner of node.querySelectorAll(TEXT_TAGS)) {
+    if (contentUnit(inner, inner.rawTagName.toLowerCase(), swallowed)) units += 1;
+  }
+  return units;
+}
+
+/**
+ * A match that another match of the same entry already holds.
+ *
+ * `querySelectorAll` gives the ancestor and the descendant. Counted as they come,
+ * the inner subtree is counted twice, and the recorded unit count is then wrong.
+ * The outer match removes the inner one anyway.
+ *
+ * @param {import('node-html-parser').HTMLElement} node
+ * @param {import('node-html-parser').HTMLElement[]} matches
+ */
+function isInsideAnother(node, matches) {
+  for (let parent = node.parentNode; parent; parent = parent.parentNode) {
+    if (matches.includes(parent)) return true;
+  }
+  return false;
+}
+
+/**
+ * Ticket 63: a region that is not editor work leaves the log here, while the DOM
+ * still exists.
+ *
+ * Each entry is counted before it is cut. An entry above its cap **throws**. The
+ * cap is on the whole entry on one page, and not on one match: two matches of
+ * half the size are the same wrong selector as one wide match.
+ *
+ * The failure direction over-reports on purpose. When an entry stops matching,
+ * nothing is removed, and the region comes back as findings.
+ *
+ * @param {import('node-html-parser').HTMLElement} scope
+ * @param {import('../shared/excluded-regions.mjs').ExcludedRegion[]} entries
+ * @param {string} where  `store/page side`, because a crawl fails on one page of 448.
+ * @returns {import('../compare/contract.mjs').RegionRemoval[]}
+ */
+function removeExcludedRegions(scope, entries, where) {
+  /** @type {import('../compare/contract.mjs').RegionRemoval[]} */
+  const removed = [];
+
+  for (const entry of entries) {
+    const all = scope.querySelectorAll(entry.selector);
+    const matches = all.filter((node) => !isInsideAnother(node, all));
+    if (matches.length === 0) continue;
+
+    const units = matches.reduce((total, node) => total + countUnitsIn(node), 0);
+    if (units > capFor(entry)) {
+      throw new Error(capBreachMessage(entry, { units, matches: matches.length, where }));
+    }
+
+    for (const node of matches) node.remove();
+    removed.push({
+      selector: entry.selector, kind: entry.kind, reason: entry.reason,
+      matches: matches.length, units,
+    });
+  }
+
+  return removed;
 }
 
 /**
@@ -348,6 +425,7 @@ export function toMarkdown(units) {
  * @param {string} [context.prodHost]
  * @param {string} [context.newHost]
  * @param {(message: string) => void} [context.onWarn]
+ * @param {import('../shared/excluded-regions.mjs').ExcludedRegion[]} [context.excludedRegions]
  * @returns {import('../compare/contract.mjs').PageExtract}
  */
 export function extractPage(html, context) {
@@ -356,6 +434,14 @@ export function extractPage(html, context) {
 
   const root = parse(html, PARSE_OPTIONS);
   const { scope, boundary } = contentRoot(root, warn);
+  // Before the walk, so the counter never numbers a unit the log has no business
+  // with, and `meta()` reads no h1 the catalogue wrote.
+  // A list a caller gives gets the same bar as the committed one, so no path into
+  // the extractor skips the validation.
+  const entries = context.excludedRegions
+    ? validateRegions(context.excludedRegions, 'context.excludedRegions')
+    : EXCLUDED_REGIONS;
+  const regionsExcluded = removeExcludedRegions(scope, entries, `${store}/${page} ${side}`);
   const content = walk(scope, url, { prodHost, newHost });
 
   const extract = {
@@ -372,7 +458,11 @@ export function extractPage(html, context) {
     images: content.images,
     meta: meta(root, scope),
     markdown: toMarkdown(content.elements),
-    diagnostics: { imagesWithoutSrc: content.imagesWithoutSrc },
+    diagnostics: {
+      imagesWithoutSrc: content.imagesWithoutSrc,
+      regionsExcluded,
+      unitsExcluded: regionsExcluded.reduce((total, region) => total + region.units, 0),
+    },
     fetchedAt: new Date().toISOString(),
   };
 

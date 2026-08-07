@@ -80,6 +80,17 @@ Spec 50 rewrites `crawl/`, and it opens both files, so that is the change that
 moves them. Ticket 47 scoped itself to `keys.mjs`, thus this record names the debt
 rather than hiding it.
 
+### A third resident, 2026-08-07
+
+Ticket 63 needed a new list of the same shape: the regions that leave the log.
+`crawl/` cuts them and `web/` lists them, so it passes all three questions and it
+would have made `web/` reach into `crawl/` a third time. The exception above applies,
+so it was **born in `shared/`** as `shared/excluded-regions.mjs` and never lived in
+`crawl/`. The DOM work stays in `crawl/extract.mjs`, which keeps the list pure.
+
+This is the first evidence the ticket asked for: the seam got a resident that was
+not moved into it, but written into it. The two rows above are still open.
+
 `api/server.mjs` imports `crawl/fetch-page.mjs` and `crawl/20-extract.mjs`. That
 is **not** a back-arrow. The re-check service runs the crawl on demand, thus it is
 a caller of the crawl stage and not a reader downstream of it.

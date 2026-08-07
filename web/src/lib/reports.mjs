@@ -1,6 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { EXCLUDED_PAGES } from '../../../crawl/excluded-pages.mjs';
+import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
 import { cellWithBothSides } from '../../../crawl/seed-rows.mjs';
 import { storeOfFile } from '../../../compare/contract.mjs';
 import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
@@ -95,7 +96,7 @@ export async function loadReports(store) {
  * @property {string} findingSetHash
  * @property {{ production: SideSummary, new: SideSummary }} sides
  *
- * @typedef {{ url: string, status: number, units: number }} SideSummary
+ * @typedef {{ url: string, status: number, units: number, regionsExcluded: { selector: string, units: number }[] }} SideSummary
  *
  * @param {string} [store] Only this store's reports. Omit for every store.
  * @returns {Promise<PageSummary[]>}
@@ -123,11 +124,19 @@ export async function loadSummaries(store) {
   return out;
 }
 
-/** @param {import('../../../compare/contract.mjs').PageExtract} extract */
+/**
+ * A report written before ticket 63 has no `regionsExcluded`, and so does a
+ * re-check from an older service. It reads as "no region cut here", which is the
+ * over-reporting direction and the safe one.
+ *
+ * @param {import('../../../compare/contract.mjs').PageExtract} extract
+ */
 const side = (extract) => ({
   url: extract.url,
   status: extract.status,
   units: extract.elements.length,
+  regionsExcluded: (extract.diagnostics?.regionsExcluded ?? [])
+    .map((region) => ({ selector: region.selector, units: region.units })),
 });
 
 /**
@@ -136,6 +145,37 @@ const side = (extract) => ({
  * crawl unnoticed.
  */
 export const excluded = EXCLUDED_PAGES;
+
+/**
+ * Ticket 63: an excluded **region** is visible in the same manner as an excluded
+ * page. Every entry is listed. Each one says where it was removed in this store's
+ * snapshot: the pages, and the units it took.
+ *
+ * `removedOn` is what makes the entry falsifiable. An entry removed on no page has
+ * stopped matching. The reader then sees one line, and does not have to infer it
+ * from the findings that came back.
+ *
+ * The word `coverage` is not used here on purpose. `CONTEXT.md` gives it to axis B.
+ *
+ * @param {PageSummary[]} pages
+ */
+export function regionsRemovedInStore(pages) {
+  return EXCLUDED_REGIONS.map((entry) => {
+    const removedOn = {
+      production: { pages: 0, units: 0 },
+      new: { pages: 0, units: 0 },
+    };
+    for (const page of pages) {
+      for (const name of /** @type {const} */ (['production', 'new'])) {
+        const cut = page.sides[name].regionsExcluded.find((r) => r.selector === entry.selector);
+        if (!cut) continue;
+        removedOn[name].pages += 1;
+        removedOn[name].units += cut.units;
+      }
+    }
+    return { ...entry, removedOn };
+  });
+}
 
 const SEEDS = fileURLToPath(new URL('../../../data/10-store-seeds.json', import.meta.url));
 
