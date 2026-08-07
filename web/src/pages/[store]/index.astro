@@ -1,7 +1,9 @@
 ---
 import Dashboard from '../../components/Dashboard.jsx';
 import Shell from '../../layouts/Shell.astro';
-import { excludedFor, loadSummaries, regionsRemovedInStore, storesInLog } from '../../lib/reports.mjs';
+import {
+  excludedFor, loadSummaries, regionsChangedInLog, regionsRemovedInStore, storesInLog,
+} from '../../lib/reports.mjs';
 import { STORE_NAME } from '../../lib/stores.mjs';
 
 // One dashboard per store. The page-level route already carried the store; this
@@ -19,6 +21,11 @@ const { store } = Astro.params;
 const pages = await loadSummaries(store);
 const excluded = await excludedFor(store);
 const regions = regionsRemovedInStore(pages);
+
+// Ticket 64: about the whole run, and not about this store. The banner anchor is
+// campaign-specific, so the day it stops matching must be one line here and not
+// 2,600 rows that came back.
+const regionsChanged = await regionsChangedInLog();
 
 // The crawled total is stated beside the store. The chips below start at
 // `pagina's vergeleken`, and that number counts the **comparable** pages only.
@@ -42,5 +49,11 @@ const oneSided = pages.filter((page) => !page.comparable).length;
       }
     </p>
   </header>
-  <Dashboard client:load pages={pages} excluded={excluded} regions={regions} />
+  <Dashboard
+    client:load
+    pages={pages}
+    excluded={excluded}
+    regions={regions}
+    regionsChanged={regionsChanged}
+  />
 </Shell>

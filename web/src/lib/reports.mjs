@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { EXCLUDED_PAGES } from '../../../crawl/excluded-pages.mjs';
 import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
 import { cellWithBothSides } from '../../../crawl/seed-rows.mjs';
+import { CoverageTally } from '../../../compare/region-coverage.mjs';
 import { storeOfFile } from '../../../compare/contract.mjs';
 import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
 
@@ -157,27 +158,55 @@ export const excluded = EXCLUDED_PAGES;
  *
  * The word `coverage` is not used here on purpose. `CONTEXT.md` gives it to axis B.
  *
+ * Ticket 64 counts the same thing at the compare stage, to compare it with the
+ * run before. The counting is one rule, so it is done in one place: this function
+ * adds the reason and the measurement that the dashboard shows, and nothing else.
+ *
  * @param {PageSummary[]} pages
  */
 export function regionsRemovedInStore(pages) {
-  return EXCLUDED_REGIONS.map((entry) => {
-    const removedOn = {
-      production: { pages: 0, units: 0 },
-      new: { pages: 0, units: 0 },
-    };
-    for (const page of pages) {
-      for (const name of /** @type {const} */ (['production', 'new'])) {
-        const cut = page.sides[name].regionsExcluded.find((r) => r.selector === entry.selector);
-        if (!cut) continue;
-        removedOn[name].pages += 1;
-        removedOn[name].units += cut.units;
-      }
-    }
-    return { ...entry, removedOn };
-  });
+  const tally = new CoverageTally(EXCLUDED_REGIONS);
+  for (const page of pages) {
+    tally.addPage({
+      production: page.sides.production.regionsExcluded,
+      new: page.sides.new.regionsExcluded,
+    });
+  }
+
+  const counted = new Map(tally.all().map((region) => [region.selector, region.removedOn]));
+  return EXCLUDED_REGIONS.map((entry) => ({ ...entry, removedOn: counted.get(entry.selector) }));
 }
 
 const SEEDS = fileURLToPath(new URL('../../../data/10-store-seeds.json', import.meta.url));
+const SNAPSHOT = fileURLToPath(new URL('../../../data/snapshot.json', import.meta.url));
+
+/**
+ * Ticket 64: the excluded-region coverage of the last run, against the run before
+ * it. The banner anchor is campaign-specific, so it will stop matching one day,
+ * and 2,600 findings will come back at once. This is the line that says so.
+ *
+ * It is a statement about the **whole run**, not about one store, and the
+ * dashboard labels it that way. `compare/30-compare.mjs` writes it.
+ *
+ * A missing snapshot reports nothing rather than failing the build, for the same
+ * reason an empty `data/reports/` builds an empty log.
+ *
+ * @returns {Promise<{ store: string | null, reason: string | null, changes: import('../../../compare/region-coverage.mjs').CoverageChange[] }>}
+ */
+export async function regionsChangedInLog() {
+  let snapshot;
+  try {
+    snapshot = JSON.parse(await readFile(SNAPSHOT, 'utf8'));
+  } catch (error) {
+    if (/** @type {any} */ (error).code === 'ENOENT') return { store: null, reason: null, changes: [] };
+    throw error;
+  }
+  return {
+    store: snapshot.store ?? null,
+    reason: snapshot.regionsChanged?.reason ?? null,
+    changes: snapshot.regionsChanged?.changes ?? [],
+  };
+}
 
 /**
  * The excluded pages **this** store has. `veranda-configurator` is nl only, so a

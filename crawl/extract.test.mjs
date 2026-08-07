@@ -624,7 +624,7 @@ describe('excluded regions', () => {
 
 describe('the committed region list', () => {
   it('cuts the product grid on both hosts by one selector', () => {
-    expect(EXCLUDED_REGIONS).toHaveLength(1);
+    expect(EXCLUDED_REGIONS).toHaveLength(2);
     expect(EXCLUDED_REGIONS[0].selector).toBe('#amasty-shopby-product-list');
     expect(EXCLUDED_REGIONS[0].kind).toBe('non-editorial');
   });
@@ -646,6 +646,88 @@ describe('the committed region list', () => {
   it('falls back to 20 for an entry that declares no cap', () => {
     expect(capFor(/** @type {any} */ ({ selector: '#x' }))).toBe(DEFAULT_MAX_UNITS);
     expect(DEFAULT_MAX_UNITS).toBe(20);
+  });
+});
+
+/**
+ * Ticket 64. The banner anchor is the one selector in the list that is not a
+ * class or an id, so what it does and does not match is a rule of its own.
+ *
+ * The entry is read from the committed list, never retyped, so a test cannot
+ * drift from the selector that ships.
+ */
+describe('the promo banner entry', () => {
+  const BANNER = EXCLUDED_REGIONS.filter((entry) => entry.kind === 'legacy-only');
+  const only = (main) => extractPage(page(main), { ...CONTEXT, excludedRegions: BANNER });
+
+  /** The two responsive versions, as production nests them: siblings in one wrapper. */
+  const section = (href, copy) => `
+    <div class="tfix5k1 mgz-element mgz-element-section w-full">
+      <div class="mgz-element-inner">
+        <div class="y1842ri mgz-element mgz-element-section grow">
+          <p>${copy}</p><a href="${href}">Bekijk alle deals</a>
+        </div>
+      </div>
+    </div>`;
+
+  const DESKTOP = section('/terrasoverkapping?terrasoverkapping_model=6039,6040#productbuilder', 'Nu 10% korting.');
+  const MOBILE = section('/terrasoverkapping?terrasoverkapping_model=6039%2C6040#productbuilder', 'Nu 10% korting.');
+
+  it('is one entry, legacy-only, and it names its campaign and its date', () => {
+    expect(BANNER).toHaveLength(1);
+    expect(BANNER[0].reason).toMatch(/10% korting/);
+    expect(BANNER[0].reason).toMatch(/augustus 2026/);
+  });
+
+  it('takes both responsive versions, because one entry counts all its matches', () => {
+    const extract = only(`<h1>Kop</h1><div class="magezon-builder">${DESKTOP}${MOBILE}</div>`);
+    const [cut] = extract.diagnostics.regionsExcluded;
+
+    expect(cut.matches).toBe(2);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Kop']);
+  });
+
+  it('reads both encodings of the comma, because one page sends both', () => {
+    // `[href*=]` reads the raw attribute. It is not encoding-insensitive the way
+    // `linkKey()` is, so a selector on one encoding is blind to the other.
+    expect(only(`<h1>Kop</h1>${DESKTOP}`).diagnostics.regionsExcluded[0].matches).toBe(1);
+    expect(only(`<h1>Kop</h1>${MOBILE}`).diagnostics.regionsExcluded[0].matches).toBe(1);
+  });
+
+  it('leaves a filter link on one option id alone, because the pair is the campaign', () => {
+    // `/overkapping` carries an editorial filter link to `?terrasoverkapping_model=6039`
+    // with the anchor text `Authentiek`. An anchor on one id would delete the
+    // section that holds it.
+    const editorial = `
+      <div class="p9crveb mgz-element mgz-element-section">
+        <p>Kies een model: <a href="/overkapping?terrasoverkapping_model=6039">Authentiek</a>.</p>
+      </div>`;
+    const extract = only(`<h1>Kop</h1>${editorial}`);
+
+    expect(extract.diagnostics.regionsExcluded).toEqual([]);
+    expect(extract.elements.map((unit) => unit.raw)).toContain('Authentiek');
+    expect(extract.links.map((link) => link.text)).toContain('Authentiek');
+  });
+
+  it('measures zero on the new site, because that is what legacy-only means', () => {
+    expect(BANNER[0].measured.new).toBe(0);
+    expect(BANNER[0].measured.production).toBeGreaterThan(0);
+  });
+
+  it('allows three placements of one small block, and no more', () => {
+    // Three nl pages carry the same banner twice, at 18 units. A correct selector
+    // must not stop the crawl, and 30 is still far below the 139 units the generic
+    // wrapper holds on `/overkapping`.
+    expect(capFor(BANNER[0])).toBe(30);
+    expect(capFor(BANNER[0])).toBeGreaterThan(2 * BANNER[0].measured.production);
+    expect(capFor(BANNER[0])).toBeLessThan(4 * BANNER[0].measured.production);
+  });
+
+  it('counts two placements of the block as one entry, so the cap sees both', () => {
+    const twice = `<h1>Kop</h1><div class="magezon-builder">${DESKTOP}${MOBILE}${DESKTOP}${MOBILE}</div>`;
+    const [cut] = only(twice).diagnostics.regionsExcluded;
+
+    expect(cut.matches).toBe(4);
   });
 });
 

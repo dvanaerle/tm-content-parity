@@ -17,7 +17,9 @@ const CHECKS = ['text', 'links', 'images'];
  * Axis A only. Ticket 11 gave the coverage axis its own bar, which must never be
  * summed with this one, and ticket 23 owns its store-level view.
  */
-export default function Dashboard({ pages, excluded, regions = [] }) {
+export default function Dashboard({
+  pages, excluded, regions = [], regionsChanged = { store: null, reason: null, changes: [] },
+}) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('worst');
   // Ticket 36 gives the class pills the same semantics the content view's filter
@@ -216,10 +218,66 @@ export default function Dashboard({ pages, excluded, regions = [] }) {
             </span>
           </li>
         ))}
+        <RegionCoverage {...regionsChanged} />
       </Aside>
     </div>
   );
 }
+
+/**
+ * Ticket 64: the coverage of this run against the run before it. One entry is
+ * anchored on a campaign, so it will stop matching the day the campaign changes,
+ * and 2,600 findings come back at once. This is the line that says so, instead of
+ * leaving the reader to infer it from the rows that returned.
+ *
+ * The verdict comes from `compare/region-coverage.mjs` and the words are written
+ * here, because the crawl and the dashboard speak two languages.
+ *
+ * It is a statement about the whole run. A store's own numbers are the line above.
+ */
+function RegionCoverage({ store, reason, changes }) {
+  const moved = changes.filter((change) => change.verdict !== 'unchanged');
+  if (!reason && moved.length === 0) return null;
+
+  const scope = store ? `winkel ${store}` : 'alle winkels';
+  return (
+    <li className="mt-2 border-t border-slate-200 pt-2">
+      <strong className="font-medium">Vergeleken met de vorige snapshot ({scope})</strong>
+      {reason
+        ? <span className="block text-slate-500">Niet vergeleken. {REGION_VERDICT_REASON}</span>
+        : moved.map((change) => (
+          <span key={change.selector} className="block text-slate-500">
+            <code>{change.selector}</code>
+            {' — '}
+            {REGION_VERDICT[change.verdict](change)}
+          </span>
+        ))}
+    </li>
+  );
+}
+
+const REGION_VERDICT_REASON = 'De vorige snapshot heeft een andere omvang, of hij is er niet. '
+  + 'De volgende run vergelijkt weer.';
+
+/**
+ * One sentence for each verdict. `unchanged` has none, because a run where
+ * nothing moved must stay quiet.
+ */
+const REGION_VERDICT = {
+  'stopped-matching': (change) => `weggehaald op ${change.was.pages} pagina's in de vorige snapshot, `
+    + `en nu op ${change.now.pages}. Deze regel past niet meer, en de regio staat weer in het log. `
+    + 'Een anker op een campagne stopt met passen als de campagne verandert.',
+  'started-matching': (change) => `weggehaald op ${change.was.pages} pagina's in de vorige snapshot, `
+    + `en nu op ${change.now.pages}. Deze regel past sinds deze run.`,
+  narrowed: (change) => `weggehaald op ${change.was.pages} pagina's in de vorige snapshot, `
+    + `en nu op ${change.now.pages}. Deze regel past op minder pagina's dan eerst.`,
+  widened: (change) => `weggehaald op ${change.was.pages} pagina's in de vorige snapshot, `
+    + `en nu op ${change.now.pages}. Deze regel past op meer pagina's dan eerst.`,
+  'new-entry': (change) => `nieuw in de lijst, weggehaald op ${change.now.pages} pagina's. `
+    + 'De vorige snapshot heeft er geen getal voor.',
+  'left-the-list': (change) => 'staat niet meer in de lijst. Weggehaald op '
+    + `${change.was.pages} pagina's in de vorige snapshot.`,
+};
 
 /** The two words of the vocabulary, in the language the dashboard speaks. */
 const REGION_KIND = {

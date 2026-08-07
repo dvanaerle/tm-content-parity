@@ -21,24 +21,125 @@ a link target — Magento attribute codes and option ids are global. Measured in
 
 **Blocked by:** 63.
 
-**Status:** ready-for-agent
+**Status:** resolved — 2026-08-07
 
 **Origin:** the grilling of 2026-08-07 on the content unit. The user asked for the
 banner to be ignored, and then asked what happens when the content changes.
 
-- [ ] One entry in the excluded-region list, reason `legacy-only`, anchored on the
+- [x] One entry in the excluded-region list, reason `legacy-only`, anchored on the
       campaign option ids in a link target.
-- [ ] The entry names the campaign and the date, because the anchor is
+- [x] The entry names the campaign and the date, because the anchor is
       campaign-specific by construction.
-- [ ] The entry is verified in all six stores. `fr` and `be_fr` are **not** verified
+- [x] The entry is verified in all six stores. `fr` and `be_fr` are **not** verified
       yet: the URLs used while grilling answered 404, which proves only that they were
       guessed. Take the real URLs from the seed list.
-- [ ] Both responsive versions of the banner leave together. They sit inside one
-      wrapper, so one match removes both.
-- [ ] **Coverage is compared against the previous snapshot.** If the region was
+- [x] Both responsive versions of the banner leave together. They sit inside one
+      wrapper, so one match removes both. **The outcome holds. The reason is wrong;
+      see below.**
+- [x] **Coverage is compared against the previous snapshot.** If the region was
       removed on 371 pages and is now removed on none, the log says that in one line.
       The reader must never have to infer it from 2,698 rows that came back.
-- [ ] The 2,698 findings are gone, and no page loses a unit that an editor wrote.
+- [x] The 2,698 findings are gone, and no page loses a unit that an editor wrote.
+      **4,055 findings, not 2,698.**
+
+## What was measured
+
+Two probes, both kept as evidence. Neither re-crawls: `data/extract/` and
+`data/reports/` are untouched, because a re-crawl detaches overrides and that is
+ticket 67.
+
+- `crawl/probes/probe-promo-banner.mjs` — what the selector matches, on three pages
+  that all six stores have, and on four controls.
+- `crawl/probes/probe-promo-banner-corpus.mjs` — the whole seed list, 448 store
+  pages, in every store, with the real link statuses.
+
+**The anchor.** `.mgz-element-section:has(a[href*="_model=6039,6040"])`, and the
+same selector again for the `%2C` encoding. On production it matches **twice** on
+every page, in **all six stores**, and on the new site it matches **nothing**. The
+two matches are the desktop and the mobile version of one banner. `fr` and `be_fr`
+are verified from the seed urls, and they answer 200.
+
+**The corpus.** The banner is on **446 of 448 pages**, not 371. Only `meettool`, on
+nl and be, does not have it.
+
+| | before | after | gone |
+| --- | --- | --- | --- |
+| findings | 34,488 | 30,433 | **4,055 (11.8%)** |
+| shown by default | 23,020 | 19,460 | 3,560 |
+
+By store, findings gone: **nl 1,347, be 1,156, de 498, uk 479, be_fr 300, fr 275.**
+
+By class, findings gone: `text-missing` 2,378, `missing-link` 1,169,
+`image-campaign` 503, `restructured` 10, `link-target` 6, `copy` 6, `casing` 5,
+`heading-level` 1.
+
+**No page loses a unit an editor wrote.** Across 446 pages the entry removes 8, 9
+or 18 units, and nothing else. Every removed unit is banner copy, in the store's own
+language: `10% korting op terrasoverkappingen en carports.`,
+`10% Rabatt auf Terrassenüberdachungen und Carports.`,
+`10% de réduction sur les vérandas et les carports.`, with the offer link, the small
+print and the terms link.
+
+## Four things this ticket got wrong
+
+1. **The count and the share were low.** The ticket said 2,698 of 34,910, or 7.7%.
+   Measured: **4,055 of 34,488, or 11.8%**. The class list also missed
+   `image-campaign` entirely, which is 503 findings: the banner carries a campaign
+   image in both responsive versions.
+2. **The page count was low.** 371 of 448 in the ticket, **446 of 448** measured.
+3. **"They sit inside one wrapper, so one match removes both" is wrong.** The two
+   responsive versions are **siblings**, each its own `.mgz-element-section`. The
+   shared wrapper above them is `.magezon-builder`, which is the selector ADR 0003
+   forbids, because it holds 358 of 359 units on `/downloads`. Both versions leave
+   together because **one entry counts all of its matches**, and not because one
+   match takes both. The outcome the ticket wanted holds. The reason it gave does
+   not.
+4. **The default cap was not enough.** Three nl pages carry the same banner
+   **twice** — `glazen-schuifwand`, `shading-panel` and
+   `steel-look-glazen-schuifwand`, at 4 matches and 18 units. The default cap of 20
+   holds today, and it would stop the crawl on a third placement. A correct selector
+   must not fail the run, so the entry declares `maxUnits: 30`. That is three
+   placements, and it is far below the sizes the cap defends against: 139 units on
+   `/overkapping` and 358 on `/downloads`.
+
+## The 23 findings that appeared
+
+22 pages gain one finding each, 23 in total, and 18 of them are nl. Every one is the
+**pairing correcting itself**. A banner unit was absorbing a new-site unit, and with
+the banner gone the new-site unit reads as what it is.
+
+13 are `text-added`, which is hidden by default, so they arrive behind the noise
+toggle. `Bekijk alle FAQs` is the common one. The rest are 5 `restructured`, 3
+`copy` and 1 `extra-link`.
+
+They are more reporting and not less, and the net is still 4,055 findings fewer. A
+row that appeared is a row the banner was hiding.
+
+## Two fetch failures
+
+`faq/offerte` on nl and be answered a transport error during the corpus run. It is
+not the banner, and 448 of 450 store pages measured. Both pages are in the probe
+result with their error.
+
+## What the coverage check does
+
+`compare/region-coverage.mjs` counts the pages each entry was removed on, and
+`compare/30-compare.mjs` compares that count with the run before it. The verdict —
+`stopped-matching`, `narrowed`, `widened`, `started-matching`, `new-entry` or
+`left-the-list` — goes into `data/snapshot.json`, and the crawl prints one line for
+each entry that moved. A run where nothing moved prints nothing.
+
+**The verdict is stored, and never the sentence.** The crawl says it in Simplified
+Technical English and the dashboard says it in Dutch. Two translations of one
+sentence would drift apart; two readings of one verdict cannot.
+
+Two runs are compared only when they cover the same scope. A
+`node compare/30-compare.mjs nl` run against a whole-corpus snapshot would otherwise
+read as five stores that stopped matching, so it says that instead of comparing.
+
+The dashboard states the line on every store, and it labels it as a statement about
+the whole run. Ticket 70 names the reading this prevents: a campaign that changes
+"reads on the dashboard as a collapse in every store when nothing regressed".
 
 ## Not to decide again
 

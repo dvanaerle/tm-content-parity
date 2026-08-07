@@ -18,12 +18,14 @@ import { findingSetHash, newObservationId, reportFilename } from './contract.mjs
 import { FindingCollector, summarise } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
+import { CoverageTally, coverageDelta, coverageLines } from './region-coverage.mjs';
 import { diffRows, textFindings } from './text.mjs';
 
 const EXTRACTS = new URL('../data/extract/', import.meta.url);
 const REPORTS = new URL('../data/reports/', import.meta.url);
 const SEEDS = new URL('../data/10-store-seeds.json', import.meta.url);
 const LINK_STATUS = new URL('../data/link-status.json', import.meta.url);
+const SNAPSHOT = new URL('../data/snapshot.json', import.meta.url);
 
 /**
  * Ticket 07: the compare stage gates on `status === 200`, because a 404 page
@@ -186,7 +188,12 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
   // A fix claim made against it is not contradicted by it — only by the next run.
   const observationId = newObservationId();
 
+  // Read before the write below overwrites it. This is the only copy of the
+  // previous run's excluded-region coverage.
+  const previous = await readJson(SNAPSHOT);
+
   const files = await jsonFiles(only ? new URL(`${only}/`, EXTRACTS) : EXTRACTS);
+  const coverage = new CoverageTally();
   let comparable = 0;
   let findings = 0;
   let shown = 0;
@@ -195,6 +202,11 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
     const sides = JSON.parse(await readFile(file, 'utf8'));
     const store = sides.production.store;
     if (!pathsByStore.has(store)) pathsByStore.set(store, newSitePathsFor(seeds, store));
+
+    coverage.addPage({
+      production: sides.production.diagnostics?.regionsExcluded,
+      new: sides.new.diagnostics?.regionsExcluded,
+    });
 
     const report = comparePage({
       sides, newSitePaths: pathsByStore.get(store), statuses, observationId,
@@ -209,16 +221,23 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
     shown += report.summary.shown;
   }
 
+  // `regions` is what the next run compares against, so it is written whether or
+  // not this run could compare itself with the run before.
+  const current = { store: only ?? null, regions: coverage.all() };
+  const regionsChanged = coverageDelta(previous, current);
+
   await writeFile(
-    new URL('../data/snapshot.json', import.meta.url),
+    SNAPSHOT,
     JSON.stringify({
       observationId,
       builtAt: new Date().toISOString(),
-      store: only ?? null,
+      store: current.store,
       pages: files.length,
       comparable,
       findings,
       shown,
+      regions: current.regions,
+      regionsChanged,
     }, null, 2),
   );
 
@@ -226,6 +245,9 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
     `${files.length} pages, ${comparable} comparable, `
     + `${findings} findings of which ${shown} shown by default.`,
   );
+  // Ticket 64: an entry that stopped matching is one line, and it is here rather
+  // than 2,600 rows down in the report.
+  for (const line of coverageLines(regionsChanged)) console.log(`region coverage: ${line}`);
   console.log(`observation ${observationId}`);
   console.log(`wrote ${fileURLToPath(REPORTS)}`);
 }

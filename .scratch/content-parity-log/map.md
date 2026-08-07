@@ -99,6 +99,11 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   cap is per entry, it defaults to 20, an entry cannot declare a cap below its own
   recorded measurement, and no entry may declare one above 100.
   `docs/adr/0003-regions-are-excluded-at-extraction.md`.
+- **Excluded-region coverage is compared against the previous snapshot.** An entry
+  that stopped matching is **one line**, and never 4,000 rows the reader must infer
+  it from. The comparison stores the verdict and not the sentence, because the crawl
+  and the dashboard speak two languages, and it compares only two runs of the same
+  scope. Ticket 64, which needs it: its anchor is campaign-specific by construction.
 
 ### Resolved tickets
 
@@ -790,7 +795,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   [68 the content view](issues/68-the-content-view-survives-a-folded-unit.md),
   [69 one viewport](issues/69-one-canonical-viewport.md),
   [70 shared regions](issues/70-shared-regions-by-content-hash.md).
-  61, 62, 63, 65 and 66 are resolved. 67 rebuilds every report and detaches
+  61, 62, 63, 64, 65 and 66 are resolved. 67 rebuilds every report and detaches
   overrides, so it does not ship before 65 gives the number. 70 needs the new
   environment, which answered HTTP 500 on all six hosts while this was written.
 
@@ -898,6 +903,45 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   a measurement, and it is deliberately not added blind.
   The USP strip stays open. On the new site this entry already takes it; on
   production its position is still unmeasured, so it does not get an entry yet.
+
+  **64 is resolved**, 2026-08-07, and it is **the largest single removal in the
+  project**. The promo banner is the list's first `legacy-only` entry. Its anchor is
+  the campaign option ids in a link href — `.mgz-element-section:has(a[href*=
+  "_model=6039,6040"])`, and the same selector again for `6039%2C6040`, because
+  `[href*=]` reads the **raw** attribute and one page sends both encodings. The
+  banner has no other hook: its wrapper class is a generated hash, a different hash
+  in each store, and its text is translated per store.
+  **Measured on the whole corpus, in all six stores, from the seed urls** — `fr` and
+  `be_fr` included, which the grilling never verified. Production matches **twice**
+  on every page, the new site matches **nothing**, and the banner is on **446 of 448
+  pages**. **34,488 findings become 30,433, so 4,055 leave, 11.8%**, and 23,020 shown
+  become 19,460. By store: **nl 1,347, be 1,156, de 498, uk 479, be_fr 300, fr 275.**
+  By class: `text-missing` 2,378, `missing-link` 1,169, **`image-campaign` 503**,
+  and a tail of 28.
+  **The ticket's own numbers were low on all three counts** — it said 2,698 of 34,910
+  on 371 pages, and it missed `image-campaign` entirely. **And its reason for the two
+  responsive versions was wrong**: they are siblings, not one wrapper. They leave
+  together because one entry counts all of its matches. The wrapper above them is
+  `.magezon-builder`, which is the near-miss the ADR forbids.
+  **The default cap of 20 could not ship either.** Three nl pages carry the same
+  banner **twice** — `glazen-schuifwand`, `shading-panel`,
+  `steel-look-glazen-schuifwand` — at 4 matches and 18 units. 20 holds today and
+  stops the crawl on a third placement, so the entry declares **30**. A small region
+  that repeats needs room for a repeat, and that is now in the ADR.
+  **23 findings appear, on 22 pages, and every one is the pairing correcting
+  itself**: a banner unit was absorbing a new-site unit. 13 are `text-added`, which
+  is hidden. They are more reporting and not less.
+  **Coverage is now compared against the previous snapshot.**
+  `compare/region-coverage.mjs` counts the pages each entry was removed on, and
+  `data/snapshot.json` carries the verdict. The verdict is stored and never the
+  sentence: the crawl writes Simplified Technical English and the dashboard writes
+  Dutch, so two translations cannot drift. Two runs are compared only at the same
+  scope, because a one-store run against a corpus snapshot would read as five stores
+  that stopped matching. The counting is one rule in one place, and
+  `regionsRemovedInStore()` in `web/` now calls it.
+  **No crawl was run**, for ticket 63's reason: a rebuild detaches overrides, and
+  that is 67. Both probes measure live and write nothing else. Two pages,
+  `faq/offerte` on nl and be, answered a transport error and are unmeasured.
 
 - [50 — The content page discriminator](issues/50-content-page-discriminator.md)
   — designed in the grilling session of 2026-08-07, `claimed`. **The seed list

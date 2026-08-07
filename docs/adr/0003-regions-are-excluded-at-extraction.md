@@ -60,6 +60,12 @@ number twice". 100 is above the widest entry today (50) and below the near-miss
 above (139 units on `/overkapping`). A region wider than the ceiling needs a new
 decision here, and not a larger number in the list.
 
+The declared number must also allow the **same region more than once on one page**.
+Ticket 64 found three nl pages that carry the promo banner twice, at 18 units. The
+default cap of 20 held, and a third placement would have stopped the crawl on a
+correct selector. So a small region that repeats declares room for a repeat: the
+banner declares 30 for a block of 9.
+
 The cap counts **the whole entry on one page**, not one match. Two matches of half
 the size are the same wrong selector as one wide match. A match inside another match
 of the same entry counts once: the outer match removes the inner one anyway.
@@ -87,7 +93,10 @@ The list will grow. Each new entry needs all four:
    in the entry. The `.magezon-builder` near-miss was found by measuring, not by
    reading the markup.
 3. **A selector that matches on both hosts.** Production and the new site must be
-   cut by the same definition, or the two sides stop being comparable.
+   cut by the same definition, or the two sides stop being comparable. One
+   definition, not one count: a `legacy-only` region is on production alone, so the
+   same selector measures zero on the new site. That zero is the entry's evidence
+   for its own kind, and ticket 64 records it as `measured.new`.
 4. **A failure direction that over-reports.** When the entry stops matching, the
    region must come back as findings. It must never widen.
 
@@ -103,22 +112,31 @@ The list will grow. Each new entry needs all four:
   `10% discount on verandas and carports.` in `uk`. A Dutch anchor is blind in four
   stores.
 - **A content hash over regions across the corpus.** Not rejected — deferred to
-  ticket 66. It is the durable rule, because the defining property of the banner is
-  that it repeats on 371 pages, not what this campaign says. It needs a
-  corpus-wide pass and a measurement that waits for the new environment.
+  **ticket 70** (this said ticket 66, which is the `ContentUnit` rename). It is the
+  durable rule, because the defining property of the banner is that it repeats on
+  446 pages, not what this campaign says. It needs a corpus-wide pass and a
+  measurement that waits for the new environment.
 
 ## Consequences
 
-- The promo banner removes 2,698 findings, 7.7% of the corpus of 34,910, on 371 of
-  448 pages.
+- The promo banner removes **4,055 findings, 11.8% of the corpus of 34,488, on 446
+  of 448 pages**. Ticket 64 measured this. The estimate before it was 2,698 of
+  34,910 on 371 pages, and it was low on all three numbers.
 - The banner anchor uses the campaign option ids in a link href
-  (`_model=6039,6040`). Magento attribute codes and option ids are global, so the
-  signal is the same in every store. It is **campaign-specific**: the next campaign
-  changes the ids, the entry stops matching, and the banner returns as findings. The
-  list needs an owner.
+  (`_model=6039,6040`, and the same ids as `6039%2C6040`). Magento attribute codes
+  and option ids are global, so the signal is the same in every store. It is
+  **campaign-specific**: the next campaign changes the ids, the entry stops
+  matching, and the banner returns as findings. The list needs an owner.
+- An anchor on a link href reads the **raw attribute**. It is not
+  encoding-insensitive the way `linkKey()` is, so an anchor of this shape asks for
+  every encoding the markup uses.
 - Excluded-region coverage is compared against the last snapshot. If a region was
-  removed on 371 pages and is now removed on none, the log says so in one line. The
-  reader must not have to infer it from 2,698 rows that came back.
+  removed on 446 pages and is now removed on none, the log says so in one line. The
+  reader must not have to infer it from the 4,055 rows that came back.
+  `compare/region-coverage.mjs` holds the rule, `data/snapshot.json` holds the
+  verdicts, and the crawl and the dashboard write their own words from them.
+- Coverage is compared **between two runs of the same scope**. A one-store run
+  against a whole-corpus snapshot would read as five stores that stopped matching.
 - We are blind to content changes inside an excluded region. For both reasons in the
   vocabulary this is correct: a catalogue change is not editor work, and a region
   that will never be migrated cannot create work.

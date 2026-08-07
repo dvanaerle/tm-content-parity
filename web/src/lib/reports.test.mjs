@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
-import { excludedInStore, regionsRemovedInStore, storesFromFilenames } from './reports.mjs';
+import {
+  excludedInStore, regionsChangedInLog, regionsRemovedInStore, storesFromFilenames,
+} from './reports.mjs';
 
 /**
  * Which stores get a route and a switcher entry. The judgement is that a store is
@@ -101,5 +103,24 @@ describe('regionsRemovedInStore', () => {
       expect(entry.reason).toBeTruthy();
       expect(['non-editorial', 'legacy-only']).toContain(entry.kind);
     }
+  });
+
+  it('gives every committed entry a count, so a new entry cannot read as absent', () => {
+    expect(regionsRemovedInStore([]).map((entry) => entry.selector))
+      .toEqual(EXCLUDED_REGIONS.map((entry) => entry.selector));
+  });
+});
+
+/**
+ * Ticket 64. The dashboard reads the snapshot's verdicts, and it must survive a
+ * snapshot that is older than the rule as well as no snapshot at all.
+ */
+describe('regionsChangedInLog', () => {
+  it('reads the run scope, the reason and the verdicts', async () => {
+    const read = await regionsChangedInLog();
+
+    expect(read).toHaveProperty('store');
+    expect(Array.isArray(read.changes)).toBe(true);
+    expect(read.reason === null || typeof read.reason === 'string').toBe(true);
   });
 });

@@ -74,6 +74,58 @@ export const EXCLUDED_REGIONS = [
     // 60% above the measurement, for a category with a wider catalogue page.
     maxUnits: 80,
   },
+  {
+    // The campaign option ids in a link target (ticket 64). The banner has no
+    // stable class — its wrapper class is a generated hash, and a different hash
+    // in each store — and no stable text, because it is translated per store.
+    // Magento attribute codes and option ids are global, so the ids are the one
+    // signal that reads the same in all six stores.
+    //
+    // Both encodings of the comma are asked for. One production page sends the
+    // same target as `6039,6040` and as `6039%2C6040`, and `[href*=]` reads the
+    // raw attribute: it is not encoding-insensitive the way `linkKey()` is.
+    //
+    // The **pair** is the campaign. A single id is not enough: `/overkapping`
+    // carries an editorial filter link to `?terrasoverkapping_model=6039` with
+    // the anchor text `Authentiek`, and an anchor on one id would take the
+    // section that holds it.
+    selector:
+      '.mgz-element-section:has(a[href*="_model=6039,6040"]), '
+      + '.mgz-element-section:has(a[href*="_model=6039%2C6040"])',
+    kind: 'legacy-only',
+    reason:
+      'De campagnebanner "10% korting op terrasoverkappingen en carports", de '
+      + 'campagne van augustus 2026. Eén gedeeld Magento-blok, in alle zes de '
+      + 'winkels, op bijna elke pagina. Een redacteur schrijft de banner wel, dus '
+      + 'niet-redactioneel is het niet. Maar de nieuwe site krijgt hem niet, en '
+      + 'daardoor maakt hetzelfde blok op elke pagina dezelfde bevindingen die '
+      + 'niemand kan oplossen. Het ankerpunt is de optie-ids van de campagne '
+      + '(6039 en 6040) in een linkdoel, want de banner heeft geen vaste class en '
+      + 'geen vaste tekst. Het anker is dus campagnespecifiek: de volgende '
+      + 'campagne heeft andere ids, deze regel past dan niet meer, en de banner '
+      + 'komt terug als bevindingen. Deze lijst heeft een eigenaar nodig.',
+    // Measured 2026-08-07 by `crawl/probes/probe-promo-banner.mjs`. Two matches on
+    // production — the desktop and the mobile version of one banner — on every
+    // page, in every store, and zero matches on the new site. `production: 9` is
+    // the nl count; the five other stores remove 8. The new side is 0 because the
+    // banner is not there, which is what `legacy-only` means.
+    measured: {
+      pages: ['carport', 'terrasoverkapping', '(home)'],
+      production: 9,
+      new: 0,
+    },
+    // The whole corpus removes 8, 9 or 18 units, and nothing else
+    // (`crawl/probes/probe-promo-banner-corpus.mjs`, 446 of 448 pages). 18 is
+    // three nl pages that carry the **same** block twice: `glazen-schuifwand`,
+    // `shading-panel` and `steel-look-glazen-schuifwand`, at 4 matches of 9.
+    //
+    // So the default cap of 20 would hold today and fail on a third placement,
+    // and a correct selector must not stop the crawl. 30 allows three placements.
+    // It is far below the wrong-selector sizes the cap defends against: the
+    // generic Magezon wrapper holds 139 units on `/overkapping` and 358 on
+    // `/downloads`.
+    maxUnits: 30,
+  },
 ];
 
 /**

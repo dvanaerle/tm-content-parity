@@ -407,8 +407,10 @@ is client-rendered (ticket 19).
   and unproven against the two reports that asked for it.
 - **The next crawl moves two finding ids.** The two soft-hyphen texts get shorter, so
   their ids change. No override sits on either — ticket 65 read the whole log and the
-  5 live overrides are all on nl, none on this page. Session 2B's own crawl, for 63
-  and 64, carries this for free.
+  5 live overrides are all on nl, none on this page. **This is still owed.** Session
+  2B ran no full crawl: 63 re-crawled the 19 nl category pages only, and 64 measured
+  live and rebuilt nothing. `steel-look-glazen-schuifwand` is in neither set, so the
+  two ids have not moved yet. The next full crawl carries it.
 
 Found while resolving: **a malformed numeric entity stopped the crawl.**
 `String.fromCodePoint()` throws above U+10FFFF, so `&#xdeadbeef;` in CMS text threw a
@@ -433,6 +435,49 @@ throw.
 Gate: the nine phantom text-added rows on each category page are gone, and no page
 loses a unit an editor wrote.
 ```
+
+```
+/clear
+```
+
+### Ticket 64 — DONE on 2026-08-07, and it needed no crawl either
+
+**The largest single removal in the project, and it is larger than the ticket said.**
+The banner is on **446 of 448 pages**, not 371, and it makes **4,055 findings of
+34,488 — 11.8%**, not 2,698 of 34,910. Every number in the ticket was low, and the
+class list missed `image-campaign`, which is 503 findings on its own.
+
+By store, findings gone: **nl 1,347, be 1,156, de 498, uk 479, be_fr 300, fr 275.**
+That is the gate, and every store answers it. `fr` and `be_fr` are verified from the
+seed urls this time, and both answer 200.
+
+**Two probes, no crawl.** `crawl/probes/probe-promo-banner.mjs` measures what the
+selector matches, on three pages and four controls.
+`crawl/probes/probe-promo-banner-corpus.mjs` measures the corpus, live, with the real
+link statuses. Nothing under `data/` is rebuilt, for ticket 63's reason: a rebuild
+detaches overrides, and that is 67.
+
+**The anchor needs both encodings of one comma.** `[href*=]` reads the raw attribute,
+so `6039,6040` and `6039%2C6040` are two selectors. It needs the **pair** as well: a
+single id is an editorial filter link, `Authentiek` on `/overkapping`.
+
+**Three corrections the ticket earned.**
+
+- The two responsive versions are **siblings**, not one wrapper. They leave together
+  because one entry counts all of its matches. The wrapper above them is
+  `.magezon-builder`, the near-miss the ADR forbids.
+- The **default cap of 20 could not ship.** Three nl pages carry the same banner
+  twice, at 18 units. 20 holds today and stops the crawl on a third placement. The
+  entry declares 30, and the ADR now says a small region that repeats needs room to
+  repeat.
+- **23 findings appear**, on 22 pages. Every one is the pairing correcting itself,
+  and 13 are hidden `text-added`. More reporting, not less.
+
+Found while measuring: **the ticket-63 probe measured link findings without hosts.**
+It passed no `prodHost`/`newHost`, so `linkKey()` folded no host and every internal
+link read as a difference. Ticket 63's `0 appeared` was true because it counted
+`text-added` only. The new probes pass hosts, and the first run of the new one showed
+seven phantom `link-target` rows that went away when they did.
 
 ```
 /clear
@@ -803,14 +848,19 @@ tickets came out of it, 61 to 70, in sessions 2A to 2D. Two ADRs hold the decisi
 
 Nothing is left to do here. Ticket 63 builds it.
 
-### Ticket 25, fotogalerij
+### Ticket 25, fotogalerij — ON HOLD on 2026-08-07
 
-```
-/grilling .scratch/content-parity-log/issues/25-fotogalerij-worst-case-page.md
-```
+Grilled. Do not grill it again. The text half is settled: production renders each
+tile three times and the new site renders it once, as the `alt`, so the 155
+`text-missing` findings are a lost duplicate and not lost copy.
 
-It needs a person who knows what the gallery was to become. Ticket 36 proved
-that the view holds at 401 findings. Only "defect or redesign" is left.
+The image half is open, and one crawl cannot close it. There is a third state
+that the ticket did not have: the migration can be **unfinished**, which looks
+the same as broken in a snapshot. Empty alts on 4 of 7 pages, `serre` and
+`tuinkamer` identical, and counts that move both ways all point that way.
+
+The owner will rebuild the page by hand and compare. Until then, mute nothing on
+these pages — a mute on `image-missing` hides the number to watch.
 
 ---
 
@@ -919,8 +969,8 @@ crawl, it is a `data` ticket and it runs alone.
 | 66 | Rename to `ContentUnit` | session 2A | — | **done** — 0 of 448 reports differ |
 | 65 | Count the overrides the fold detaches | session 2A | — | **done** — 5 live overrides, **1** detaches, 0 reviews |
 | 61 | Tier-1 invisible characters | session 2B | `read` | **done** — 34,559 findings before and after. No crawl was needed |
-| 63 | Regions excluded at extraction | session 2B | `data` | `/implement` — resolves 27 |
-| 64 | The promo banner, 7.7% | session 2B | `data` | `/implement` — after 63 |
+| 63 | Regions excluded at extraction | session 2B | `data` | **done** — resolves 27. The cap is per entry, not a flat 20 |
+| 64 | The promo banner, 11.8% | session 2B | `data` | **done** — 4,055 findings, on 446 of 448 pages. No crawl was needed |
 | 67 | A content unit folds its links | session 2C | `data` | `/implement` — after 66, needs 65 |
 | 68 | The content view survives a fold | session 2C | `web` | `/implement` — after 67 |
 | 69 | One canonical viewport | session 2D | `compare` | `/implement` — after 64 |
