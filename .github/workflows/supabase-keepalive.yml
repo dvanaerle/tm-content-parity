@@ -1,0 +1,66 @@
+# Ticket 13. A Supabase free project is paused after about 7 days with no
+# database activity, and the pause is invisible to an editor: the static page
+# still loads and only the override log stops. This writes one row each day.
+#
+# It inserts into `keepalive` (see supabase/keepalive.sql) and never into
+# `overrides`.
+#
+# It must be on the DEFAULT BRANCH. GitHub fires a schedule only from there, and
+# shows Run workflow only for a workflow that is on it.
+#
+# Known and accepted: GitHub disables a scheduled workflow after 60 days with no
+# repository activity. It sends an e-mail and does not fail. So this can stop
+# without a signal. The fallback is the loud write failure that spec 29 built.
+
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Daily, and not on the hour. Scheduled runs are best effort and are delayed
+    # or dropped when GitHub is busy, which it is at the top of each hour. The
+    # pause threshold is about 7 days, so a daily ping has six spare failures.
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Insert one row
+        env:
+          SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_ANON_KEY}" ]; then
+            echo "Missing PUBLIC_SUPABASE_URL or PUBLIC_SUPABASE_ANON_KEY." >&2
+            echo "Set both as repository secrets." >&2
+            exit 1
+          fi
+
+          # A pasted trailing slash would make the path //rest/v1/keepalive,
+          # which redirects. curl does not follow it and exits 0, so the run
+          # would go green without writing anything.
+          url="${SUPABASE_URL%/}"
+
+          # --fail-with-body gives a non-zero exit on 4xx and 5xx and still
+          # prints what the server said. A ping that hides its own error is a
+          # green check that means nothing.
+          #
+          # `Prefer: return=minimal` asks for no representation back. The table
+          # has an insert policy and no select policy, so a request that asked
+          # for the row would be refused.
+          #
+          # `{}` inserts a row of defaults: it names no column, so the identity
+          # id and `created_at default now()` both fill themselves.
+          curl --fail-with-body --silent --show-error \
+            --request POST "${url}/rest/v1/keepalive" \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            --header "Content-Type: application/json" \
+            --header "Prefer: return=minimal" \
+            --data '{}'
