@@ -1,0 +1,36 @@
+---
+import { CHROME } from '../lib/palette.mjs';
+import { STORE_NAME } from '../lib/stores.mjs';
+
+/**
+ * The six store views, as links. The store is in the URL, so a link to the
+ * French dashboard can be sent to a colleague (ticket 38).
+ *
+ * The label is the store id and not the country, because the store id is the word
+ * the whole tool uses — `CONTEXT.md` gives it, the report filenames carry it and
+ * an override is keyed on it. The Dutch name is the title, where it explains the
+ * id without replacing it.
+ *
+ * It navigates to the dashboard of the store, never to the same page in another
+ * store. A page key is not shared across stores — the stores translate the
+ * category keys (ticket 04) — so "this page over there" often does not exist.
+ */
+const { stores, store } = Astro.props;
+---
+
+{
+  stores.length > 1 && (
+    <nav aria-label="Winkel" class="ml-auto flex items-center gap-1 text-sm">
+      {stores.map((id) => (
+        <a
+          href={`/${id}/`}
+          title={STORE_NAME[id]}
+          aria-current={id === store ? 'page' : undefined}
+          class={`rounded px-2 py-1 font-medium ${id === store ? CHROME.storeCurrent : CHROME.storeOther}`}
+        >
+          {id}
+        </a>
+      ))}
+    </nav>
+  )
+}

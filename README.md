@@ -48,11 +48,22 @@ It writes `data/extract/<store>/<page>.json`: the two sides, in the
 ## Run the whole tool
 
 ```sh
-node crawl/21-crawl-store.mjs nl     # ~2 min. --force to re-crawl
-node compare/link-status.mjs nl      # ~3 min
-node compare/30-compare.mjs nl       # seconds
-npm start                            # build the front end and serve it on :4321
+node crawl/21-crawl-store.mjs nl     # ~2 min. --force to re-crawl. One store.
+node compare/link-status.mjs          # ~10 min over every store that is crawled
+node compare/30-compare.mjs           # seconds
+npm start                             # build the front end and serve it on :4321
 ```
+
+Crawl each store you want in the log: `nl`, `be`, `be_fr`, `de`, `fr`, `uk`. A
+failure is recorded per store, in `data/extract-failures-<store>.json`.
+
+**Give `link-status.mjs` no store.** It writes one file keyed on the absolute
+URL, and it overwrites that file, so a per-store run erases the store before it
+and `30-compare.mjs` then reports no `broken-link` and no `redirect` there.
+
+`30-compare.mjs` takes an optional store and compares every crawled store without
+one. The front end gives each store its own dashboard at `/<store>/`, and `/`
+sends you to the first one.
 
 `data/` is not in git, so a fresh clone needs the first three commands before the
 front end has anything to show.

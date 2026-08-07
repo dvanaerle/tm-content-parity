@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { exclusionReason, isExcludedPage } from './excluded-pages.mjs';
 import { extractPage, pageType, toMarkdown } from './extract.mjs';
+import { failuresFilename } from './21-crawl-store.mjs';
 import { imageKey, linkKey } from './keys.mjs';
 import { maintenanceReason } from './fetch-page.mjs';
 import { tier1 } from './normalise.mjs';
@@ -447,5 +448,13 @@ describe('excluded pages', () => {
   it('is exact keys, so a future configurator content page is still checked', () => {
     expect(isExcludedPage('configurator-vergelijken')).toBe(false);
     expect(exclusionReason('configurator-vergelijken')).toBeNull();
+  });
+});
+
+describe('failuresFilename', () => {
+  it('carries the store, so a be run does not erase the nl record', () => {
+    expect(failuresFilename('nl')).toBe('extract-failures-nl.json');
+    expect(failuresFilename('be_fr')).toBe('extract-failures-be_fr.json');
+    expect(failuresFilename('be')).not.toBe(failuresFilename('be_fr'));
   });
 });

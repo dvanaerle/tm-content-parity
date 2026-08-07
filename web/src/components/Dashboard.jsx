@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
-import { Bar, Chip, ClassPill } from './Chips.jsx';
+import { Bar, Chip, ClassFilterPills, FilterBanner } from './Chips.jsx';
 import { LogBanner } from './Progress.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
-import { BANNER, CHROME, INK } from '../lib/palette.mjs';
+import { CHROME, INK } from '../lib/palette.mjs';
 import { useStoreOverrides } from '../lib/overrides.mjs';
-import { pagesWithClasses, toggleClass } from '../lib/view.mjs';
+import { pagesWithClasses, toggleIn } from '../lib/view.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
 
 /**
- * Every page in the log on one screen. 179 rows is too many to read top to
+ * Every page of **one store** on one screen. A store is what an editor is
+ * responsible for (ticket 38). Even one store is too many rows to read top to
  * bottom, so the list is sorted worst-first and filterable — the question this
  * view answers is "which page do I open next", not "what is on page 84".
  *
@@ -96,26 +97,14 @@ export default function Dashboard({ pages, excluded }) {
 
       <section className="rounded border border-slate-200 bg-white">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-          <div className="flex flex-wrap gap-1">
-            {Object.entries(totals.byClass)
+          <ClassFilterPills
+            counts={Object.entries(totals.byClass)
               .sort((a, b) => b[1] - a[1])
-              .map(([cls, count]) => {
-                const on = classes.includes(cls);
-                return (
-                  <button
-                    key={cls}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setClasses(toggleClass({ classes }, cls).classes)}
-                    title={`Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`}
-                    className={`mr-2 inline-flex items-center gap-1 rounded ${on ? 'ring-2 ring-brand-lighter-green' : 'opacity-70 hover:opacity-100'}`}
-                  >
-                    <ClassPill class={cls} />
-                    <span className="pr-1 text-xs tabular-nums text-slate-500">{count}</span>
-                  </button>
-                );
-              })}
-          </div>
+              .map(([cls, count]) => ({ class: cls, count }))}
+            selected={classes}
+            onToggle={(cls) => setClasses(toggleIn(classes, cls))}
+            title={(cls) => `Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`}
+          />
           <div className="flex items-center gap-2">
             <input
               type="search"
@@ -135,20 +124,11 @@ export default function Dashboard({ pages, excluded }) {
           </div>
         </header>
 
-        {/* The filter says so for as long as it is on. A narrowed list that looks
-            like the whole log is read as the whole log. */}
         {classes.length > 0 && (
-          <p className={`flex flex-wrap items-center gap-2 border-b px-4 py-2 text-sm ${BANNER.attention}`}>
+          <FilterBanner onClear={() => setClasses([])} className="border-b px-4 py-2">
             <strong>Gefilterd op {classes.join(', ')}.</strong>
             {rows.length} van {comparable.length} pagina's. De getallen hierboven tellen alle pagina's.
-            <button
-              type="button"
-              onClick={() => setClasses([])}
-              className="rounded border border-current px-1.5 py-0.5 text-xs"
-            >
-              Filter wissen
-            </button>
-          </p>
+          </FilterBanner>
         )}
 
         <table className="w-full text-sm">
@@ -164,7 +144,7 @@ export default function Dashboard({ pages, excluded }) {
           </thead>
           <tbody>
             {rows.map((page) => (
-              <tr key={page.page} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+              <tr key={`${page.store}/${page.page}`} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                 <td className="px-4 py-2">
                   <a className={`font-medium hover:underline ${CHROME.link}`} href={`/${page.store}/${page.page}/`}>
                     {page.page}
@@ -200,7 +180,7 @@ export default function Dashboard({ pages, excluded }) {
         note="Een kant antwoordt geen 200, dus er is niets te vergelijken. Ticket 20 beslist of dit een migratietaak wordt."
       >
         {oneSided.map((page) => (
-          <li key={page.page} className="flex flex-wrap gap-2 py-1">
+          <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
             <a className={`hover:underline ${CHROME.link}`} href={`/${page.store}/${page.page}/`}>{page.page}</a>
             <span className="text-slate-500">{page.skipReason}</span>
           </li>

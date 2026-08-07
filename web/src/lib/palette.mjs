@@ -140,6 +140,11 @@ export const CHROME = {
   link: 'text-brand-green hover:text-brand-lighter-green',
   tabActive: 'border-brand-lighter-green text-brand-green',
   button: 'bg-brand-green hover:bg-brand-medium-green',
+  // The store switcher sits on the green header, so both of its states are chrome
+  // (ticket 38). The current store is the one that reads as ink on white; the rest
+  // are sand on green, which is `headerMuted` given a hover.
+  storeCurrent: 'bg-white text-brand-green',
+  storeOther: 'text-brand-sand hover:bg-brand-medium-green hover:text-white',
 };
 
 /**

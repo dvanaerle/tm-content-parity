@@ -84,6 +84,34 @@ them are in `.scratch/content-parity-log/map.md`.
   links check both talk about. Two meanings for one word is what this list exists
   to stop.
 
+## The interface
+
+- **Content view** — the whole store page in document order, production and the new
+  site side by side, with a row for each text element. It is the spine of the log:
+  a matched row and a changed row are both in it, so the colour on a changed row
+  carries a signal. Markdown is an export beside it and never the spine, because
+  Markdown flattens the element identity the finding id needs.
+- **Filter** — a narrowing of what is on screen, by class. It is session-only and it
+  moves no bar, no denominator and no count. The content view narrows a page to a
+  class and the dashboard narrows the page list to the same class; both say so with
+  an amber strip for as long as the filter is on.
+- **Dashboard** — every page of **one store** on one screen, sorted worst-first.
+  It is the store's own page, at `/<store>/`, and it carries only that store's
+  summaries and only that store's progress numbers. There is no all-stores
+  dashboard: a store is the unit an editor is responsible for.
+- **Store switcher** — the six store ids in the shell header, each a link to that
+  store's dashboard. It never goes to the same page in another store: the stores
+  translate the category url keys, so that page often does not exist.
+- **Noise toggle** — the control that shows hidden classes and muted findings. It is
+  **not** a filter: it belongs to the whole log, and *filter wissen* does not clear
+  it. An editor who asked to see the muted rows did not ask a question about classes.
+
+Three tab names are retired, and the content view is what replaced them.
+**"Diff"** showed the differing rows only, so once every row was tinted the tint said
+nothing. **"Content"** showed two blocks of flat Markdown and no diff. **"Outline"**
+was production's elements indented by heading level, which the content view contains;
+what is left of it is a heading jump-list beside the rows.
+
 ## Identity
 
 - **Finding id** —

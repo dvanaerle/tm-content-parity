@@ -33,11 +33,15 @@ differences, act on it, press Recheck, and watch the count fall to zero.
 
   ```
   node crawl/21-crawl-store.mjs nl     # ~2 min, 360 requests, --force to re-crawl
-  node compare/link-status.mjs nl      # ~3 min, 2,623 unique targets
-  node compare/30-compare.mjs nl       # seconds
+  node compare/link-status.mjs         # ~10 min, 9,119 unique targets over six stores
+  node compare/30-compare.mjs          # seconds
   node compare/measure.mjs nl          # the regression gate, reads the reports
   cd web && npm run dev                # or npm run build for dist/
   ```
+
+  Crawl each of `nl be be_fr de fr uk`. **Give `link-status.mjs` no store**: it
+  overwrites one global file, so a per-store run erases the store before it
+  (ticket 38).
 
   `data/` is gitignored, so a fresh clone needs the three commands before the
   front end has anything to show.
@@ -410,6 +414,53 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   first agreement sits just before that agreement, and a page the two sides agree
   nowhere on reads as production first, then the new site.
 
+- [38 — Six stores, not one](issues/38-six-stores.md)
+  — **The log is six stores now, and nl did not move.** Phase 7 of spec 32. The
+  five non-NL stores are crawled, compared and browsable; `/<store>/` is a
+  dashboard of its own; and a switcher in the shell moves between them. 269 of
+  270 rows crawled — `be/faq/offerte` is the one loss, and it is ticket 17's
+  production redirect loop, not a tool failure.
+
+  | store | crawled | comparable | findings | shown | median shown |
+  |---|---|---|---|---|---|
+  | nl | 179 | 124 | 10,796 | 7,456 | 37 |
+  | be | 125 | 117 | 9,690 | 6,562 | 34 |
+  | de | 45 | 42 | 4,166 | 2,830 | 38.5 |
+  | uk | 42 | 40 | 5,137 | 3,642 | 40 |
+  | be_fr | 29 | 25 | 2,582 | 1,762 | 28 |
+  | fr | 28 | 25 | 2,539 | 1,709 | 27 |
+  | **all six** | **448** | **373** | **34,910** | **23,961** | |
+
+  **Every nl number held exactly**, which is what a phase that adds no rule must
+  do. Production was verified live on all ten hosts before the run and no
+  `MaintenanceError` fired in 538 requests, so the stale `prodMaintenance` flags
+  were never consulted.
+
+  The prefactor landed first and earned itself: the failure log is
+  `data/extract-failures-<store>.json`, and the `be` run then failed on
+  `faq/offerte` without erasing the nl record of the same failure.
+
+  Three decisions the ticket did not give. **`link-status.mjs` must be given no
+  store** — it overwrites one global file, so a per-store run erases the store
+  before it and the next compare reports no `broken-link` and no `redirect`; run
+  it over every crawled store at once. **There is no all-stores dashboard**: `/`
+  is a doorway that lists the stores and sends the reader to the first, written
+  as a Dutch page rather than `Astro.redirect`, whose static output is English
+  and waits two seconds. And **the switcher goes to the dashboard of a store,
+  never to the same page in another store**, because the stores translate the
+  category url keys and "this page over there" often does not exist.
+
+  Payload per store, which is the criterion that a visitor does not download six
+  stores to read one: nl 1,087 KB, be 925 KB, uk 470 KB, de 394 KB, be_fr 254 KB,
+  fr 246 KB. 455 pages built.
+
+  **The be/be_fr blind spot is 1.** On the new side — the only side
+  `cross-store-link` reads — 14 be_fr anchors on 5 pages point outside `/fr` on
+  the shared host, and 13 are shared `/media/` files rather than pages. The one
+  page link is `/blog`, which is out of scope. Not zero, so
+  [49](issues/49-be-fr-shared-host-blind-spot.md) is open and `needs-triage` with
+  a recommendation of wontfix. **No rule was written against it.**
+
 ### Facts found while charting
 
 - Production emits 9 `data-content-type` attributes on a page where the new site
@@ -486,7 +537,20 @@ Settled while charting, in the destination-naming session. No ticket holds them.
 - **The extractor is store-agnostic already.** Nothing in `extractPage()` or the
   contract is NL-specific, `STORES` lists all six, and the seeds carry the
   cross-language key. `data/extract/` holds **one** page. The gap is coverage of
-  the crawl, not capability.
+  the crawl, not capability. (Closed by ticket 38: the claim held. 269 rows were
+  crawled across five stores with no change to the extractor at all.)
+- **The five non-NL stores are not cleaner than nl.** Measured by ticket 38: the
+  median page differs in 27 to 40 places in every store, and `uk` is the worst at
+  40 with `de` next at 38.5 — both above nl's 37. `text-missing` is the largest
+  class in all six, from 31% (be) to 40% (uk). **No page in any store is clean.**
+- **`cross-store-link` fires 4 times site-wide, all on `be`.** Ticket 05 measured
+  0 on nl and the number is still 0 there. The whole cross-store link surface of
+  six stores is four anchors.
+- **Production links out of the French store on all 29 be_fr pages.** 29 anchors
+  to `terrasoverkapping?terrasoverkapping_model=6039%2C6040`, the Dutch category
+  page, and one to `fotogalerij/glazen-schuifwand`. The new site does not: 1
+  anchor, to `/blog`. It is a production storefront defect, so it is the log's
+  output and needs an owner in `devdva02`. Recorded in ticket 49.
 - **An element carries no DOM path.** `{ index, tag, kind, level, raw, norm }` is
   the whole record, so any check that needs to align two documents must do it from
   text or from the heading levels. Nothing else is available.
@@ -561,14 +625,15 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   Tailwind 4 `@theme`. Resolves ticket 28 and closes ticket 12's remaining
   questions.
 
-  Broken into six build tickets. **33, 35 and 36 are resolved. 34 is measured and
-  eight-ninths built** — the review of 2026-08-07 reopened it on the one criterion
-  it ticked in error. **37 is unblocked and is the next ticket to build.**
+  Broken into six build tickets. **33, 35, 36 and 38 are resolved. 34 is measured
+  and eight-ninths built** — the review of 2026-08-07 reopened it on the one
+  criterion it ticked in error. **37 is unblocked and is the next ticket to
+  build.**
 
   ```
   33 ✓ ──> 34 ~ ─┐
      └──> 35 ✓ ──┴──> 36 ✓ ──> 37 ← next
-  38 (independent, not started)
+  38 ✓ (independent) ──> 49 (needs-triage)
   ```
 
   **34's open criterion blocks nothing.** 36 needed the row-ordering fix and 37
@@ -632,7 +697,21 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   - [35 — One visual language: brand tokens and a real diff](issues/35-diff-rendering-and-design-system.md)
   - [36 — The content view: the whole page, filtered, tickable](issues/36-merged-content-view.md)
   - [37 — Leesweergave: the page as a reader sees it](issues/37-leesweergave.md)
-  - [38 — Six stores, not one](issues/38-six-stores.md)
+  - [38 — Six stores, not one](issues/38-six-stores.md) — **resolved**, above.
+  - [48 — Openstaande en afgeronde taken: the content view as a board](issues/48-open-and-done-board.md)
+  - [49 — The be/be_fr shared-host blind spot, measured](issues/49-be-fr-shared-host-blind-spot.md)
+
+  **The review of 36 acted, and one finding became 48.** `CONTEXT.md` gained the
+  words the merged view brought — *content view*, *filter*, *noise toggle* — and it
+  names *Diff*, *Content* and *Outline* as retired tab names. The class pills and the
+  amber strip became one `ClassFilterPills` and one `FilterBanner`, shared by the
+  content view and the dashboard, because ticket 36 asks for the same semantics in
+  both and two copies of one affordance drift. *Alleen verschillen* now draws ticked
+  and disabled while a class filter is on: a class filter already leaves no matched
+  row, so the unticked box was a control that lied. **235 and 288 are the same page** —
+  235 rows under the default noise toggle, 288 rows in all — and the ticket now says
+  which basis each count is on. 48 is the one finding that turned out to be a want
+  rather than a defect, and it is `needs-triage`, not agent-ready.
 
   33 was **measured** before 34 and 35 — three times, because the split and the two
   new classes move the count in opposite directions. **The baseline for every later
@@ -647,7 +726,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   ```
   33 ✓ (spec 32) ──> 39 ──> 40 ──> 41
                       └──────────────> 42 ──> 43
-         38 (spec 32) ┘        └──────────────> 44
+       38 ✓ (spec 32) ┘        └──────────────> 44
                                └──> 45
   ```
 
@@ -671,7 +750,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   Tickets 42 and 45 need the five stores crawled, which is
   ticket 38, not a ticket of their own —
   [46](issues/46-crawl-five-stores.md) asked for the same crawl and is closed as
-  a duplicate.
+  a duplicate. **38 is resolved, so 42 and 45 have their data**: 269 non-NL rows
+  are extracted on disk, and Axis B needs the new side only.
 
 - [31 — Bulk dismissal across pages](issues/31-bulk-dismissal.md) — the one user
   story in spec 29 that shipped as nothing, found by the code review of the

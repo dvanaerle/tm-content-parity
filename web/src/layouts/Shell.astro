@@ -1,9 +1,15 @@
 ---
 import '../styles/app.css';
 import BrandLogo from '../components/BrandLogo.astro';
+import StoreSwitcher from '../components/StoreSwitcher.astro';
 import { CHROME } from '../lib/palette.mjs';
+import { storesInLog } from '../lib/reports.mjs';
 
-const { title } = Astro.props;
+const { title, store } = Astro.props;
+
+// The switcher belongs to the shell, so every page carries it and the store is
+// never something the reader has to go back to the dashboard to change.
+const stores = await storesInLog();
 ---
 
 <!doctype html>
@@ -13,6 +19,7 @@ const { title } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
     <title>{title} — Content parity log</title>
+    <slot name="head" />
   </head>
   <body class="bg-slate-100 text-slate-900">
     {/*
@@ -22,9 +29,10 @@ const { title } = Astro.props;
       from `CHROME`, because a literal here is a second place to change one.
     */}
     <header class={`px-5 h-16 flex items-center ${CHROME.header}`}>
-      <a href="/" aria-label="Content parity log" class="inline-block">
+      <a href={store ? `/${store}/` : '/'} aria-label="Content parity log" class="inline-block">
         <BrandLogo />
       </a>
+      <StoreSwitcher stores={stores} store={store} />
     </header>
     <main class="px-6 py-6">
       <slot />

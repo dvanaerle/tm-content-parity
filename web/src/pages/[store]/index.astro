@@ -1,0 +1,44 @@
+---
+import Dashboard from '../../components/Dashboard.jsx';
+import Shell from '../../layouts/Shell.astro';
+import { excludedFor, loadSummaries, storesInLog } from '../../lib/reports.mjs';
+import { STORE_NAME } from '../../lib/stores.mjs';
+
+// One dashboard per store. The page-level route already carried the store; this
+// was the one route that did not, so a link to the French dashboard could not be
+// sent to a colleague (ticket 38).
+export async function getStaticPaths() {
+  const stores = await storesInLog();
+  return stores.map((store) => ({ params: { store } }));
+}
+
+const { store } = Astro.params;
+
+// Only this store's summaries. The build reads no other store's reports, so the
+// visitor who opens `de` downloads 45 pages and not 451.
+const pages = await loadSummaries(store);
+const excluded = await excludedFor(store);
+
+// The crawled total is stated beside the store, because the chips below start at
+// `pagina's vergeleken` and that number is the **comparable** pages. On nl the
+// gap is 179 to 124 and nobody reads 124 as the store; on fr it is 28 to 25, and
+// a reader who lands there through the switcher does read 25 as the store.
+const oneSided = pages.filter((page) => !page.comparable).length;
+---
+
+<Shell title={`Overzicht — ${store}`} store={store}>
+  <header class="mb-4">
+    <h1 class="text-xl font-semibold">Pariteit met productie</h1>
+    <p class="text-sm text-slate-600">
+      Productie is de bron van waarheid, dus elk verschil is een defect op de
+      nieuwe site. Winkel: <strong>{store}</strong> — {STORE_NAME[store]}.
+    </p>
+    <p class="text-sm text-slate-600">
+      <strong>{pages.length}</strong> pagina's gecrawld, waarvan {pages.length - oneSided} te
+      vergelijken.{
+        oneSided > 0 && ` De andere ${oneSided} zijn eenzijdig: de nieuwe site antwoordt daar geen 200. Ze staan onderaan.`
+      }
+    </p>
+  </header>
+  <Dashboard client:load pages={pages} excluded={excluded} />
+</Shell>
