@@ -65,9 +65,10 @@ person. It is not a secret and does not need hiding; `web/.env` is gitignored as
 a matter of hygiene, not of security.
 
 [Ticket 13](13-supabase-pause-risk.md) is resolved: the plan stays free and a
-daily GitHub Action inserts one row into a `keepalive` table. **This ticket
-unblocks when a scheduled run has written a row**, not when a
-`workflow_dispatch` run has. A manual run proves the insert; only the cron
-proves the keep-alive. Until then the project can still pause after about seven
+daily GitHub Action inserts one row into a `keepalive` table. **Applied on
+2026-08-07**: the workflow is on `main`, the table and the secrets are in place,
+and a manual run finished green. **This ticket unblocks when a scheduled run has
+written a row**, not when a `workflow_dispatch` run has. A manual run proves the
+insert; only the cron proves the keep-alive. Until then the project can pause after about seven
 days idle, and every override lives in it. Spec 29 made the failure **loud**,
 which is a mitigation and not an answer.

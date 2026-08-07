@@ -23,7 +23,7 @@ directions. One number would have hidden both.
 | --- | --- | --- |
 | Build tickets, agent-ready | 19 | about 10 sittings |
 | Close or fold in triage | 4 | **done, session 1** |
-| Human decisions | 4 | minutes each — **13 is decided, session 1** |
+| Human decisions | 4 | minutes each — **13 is decided and applied** |
 | Deferred, blocked by other tickets | 4 | none yet |
 | Opened by the review of ticket 38 | 2 | **triaged, both build in session 2** |
 
@@ -83,7 +83,7 @@ The triage below was applied. What it did:
 - **Three blocking edges recorded**: 16 by 55, 20 by 22 and 55, 48 by 37.
 - `map.md` agrees.
 
-**Ticket 13 is decided and built. Three human steps are left — see below.**
+**Ticket 13 is decided, built and applied.** One check is left on the next day.
 
 No crawl. About 30 minutes.
 
@@ -147,31 +147,25 @@ Do not redo it. The three remaining "51" references in map.md are the seed
 ticket 51-runnable-tracked-seed-pipeline.md and are correct.
 ```
 
-### Ticket 13: three steps, two of them at a dashboard
+### Ticket 13: applied on 2026-08-07
 
-Decided on 2026-08-07: **the plan stays free**, and a daily GitHub Action writes
-one row to a `keepalive` table. Pro was refused. The code is committed. Three
-things need a human, and nothing works until all three are done.
+Decided: **the plan stays free**, and a daily GitHub Action writes one row to a
+`keepalive` table. Pro was refused.
 
-1. **Get the workflow onto `main`.** GitHub runs a `schedule` **only** from the
-   default branch, and it shows `workflow_dispatch` only for a workflow that is
-   on the default branch. On a feature branch the keep-alive does not appear in
-   the Actions tab at all. This is a second quiet way for it to never start.
-2. **Apply the table.** Supabase → SQL editor → run `supabase/keepalive.sql`.
-   Run **that file**, not `schema.sql`: `schema.sql` begins with
-   `drop table overrides` and would delete the override log.
-3. **Add two repository secrets.** GitHub → Settings → Secrets and variables →
-   Actions:
-   - `PUBLIC_SUPABASE_URL` — Project Settings → API → Project URL
-   - `PUBLIC_SUPABASE_ANON_KEY` — the **anon public** key. Never the
-     `sb_secret_…` one.
+All three human steps are done. The workflow is on `main` (commit `b6dcf01`,
+which carries only the workflow and `supabase/keepalive.sql`), the table and its
+insert policy are applied, the two repository secrets are set, and a manual
+**Run workflow** finished green. So the insert works from end to end: the
+secrets are readable, the `anon` role can insert under the policy, and PostgREST
+accepts the empty-object insert.
 
-   The same two values are in `web/.env.local`. They are not secret — the key is
-   baked into the static build — but a secret makes a rotation one field.
+**One check is left, on the next day.** A green manual run proves the insert. It
+does not prove the cron. Open Actions and confirm that a **scheduled** run has
+written a row. The schedule is `17 4 * * *` UTC and GitHub runs it when it can,
+so one or two hours late is usual and is not a fault. **Ticket 30 unblocks
+then**, not before.
 
-Then run **Actions → Supabase keep-alive → Run workflow**. A green run means the
-insert works. It does **not** mean the cron works: ticket 30 unblocks only after
-a **scheduled** run has written a row, which is the next morning.
+Nothing else in this runbook waits on it. Session 2 can start now.
 
 **If the project is ever paused anyway**, and it can be — see below — open the
 Supabase dashboard and press **Resume project**. It takes a few minutes and the
@@ -526,8 +520,8 @@ npm test; if ($?) { node compare/measure.mjs nl }
 | 12 | Variant A tabs | session 1 | **done** — resolved |
 | 49 | be/be_fr blind spot | session 1 | **done** — wontfix, `.out-of-scope/` |
 | 22 | Re-measure prod status | session 1 | **done** — folded into 53 and 51 |
-| 13 | Supabase pause | session 1 | **decided and built** — three human steps below |
-| 30 | Wire Supabase | after 13 | you, one click, once a scheduled run has landed |
+| 13 | Supabase pause | session 1 | **done** — applied, one green run, cron unproven |
+| 30 | Wire Supabase | after a scheduled run | you, one click |
 | 47 | Shared keys layering | session 2 | `/implement` |
 | 59 | link-status erases the other stores | session 2 | **triaged** → `/implement` |
 | 60 | Report filename in the contract | session 2 | **triaged** → `/implement` |
