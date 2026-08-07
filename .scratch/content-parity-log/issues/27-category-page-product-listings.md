@@ -55,7 +55,7 @@ exclusion, it needs its own entry in the list and its own measurement. Do not ad
 blind.
 
 Built by ticket [63](63-regions-excluded-at-extraction.md). The decision is recorded
-in `docs/adr/0002-regions-are-excluded-at-extraction.md`.
+in `docs/adr/0003-regions-are-excluded-at-extraction.md`.
 
 ## Question
 

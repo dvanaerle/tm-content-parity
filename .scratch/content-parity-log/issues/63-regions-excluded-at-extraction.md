@@ -15,7 +15,7 @@ The exclusion happens in the crawl, not in a check. Ticket 27 named the reason: 
 extract carries no DOM path, so a check cannot say which region a unit came from.
 The DOM exists only while the page is parsed.
 
-See `docs/adr/0002-regions-are-excluded-at-extraction.md`, which also records why
+See `docs/adr/0003-regions-are-excluded-at-extraction.md`, which also records why
 the obvious wrapper selector is a trap.
 
 **Blocked by:** None — can start immediately.

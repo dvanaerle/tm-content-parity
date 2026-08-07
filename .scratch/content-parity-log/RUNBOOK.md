@@ -17,7 +17,9 @@ directions. One number would have hidden both.
 
 ## The state today
 
-33 items are open. They are not 33 pieces of work.
+Session 2 is complete, so 23 items were open. The grilling of the content unit added
+**10** and resolved ticket 27. So 33 items are open, and they are not 33 pieces of
+work.
 
 | kind | count | cost |
 | --- | --- | --- |
@@ -25,21 +27,57 @@ directions. One number would have hidden both.
 | Close or fold in triage | 4 | **done, session 1** |
 | Human decisions | 4 | minutes each — **13 is decided and applied** |
 | Deferred, blocked by other tickets | 4 | none yet |
-| Opened by the review of ticket 38 | 2 | **triaged, both build in session 2** |
+| Opened by the review of ticket 38 | 2 | **done, session 2** — 59 and 60 both landed |
+| Opened by the grilling of the content unit | 10 | about 4 sittings, sessions 2A to 2D |
+
+**Two facts decide what can start today.**
+
+The new environment answers HTTP 500 on all six `valantic*` hosts. No crawl and no
+re-check can run, so any ticket that changes **extraction** cannot be measured. The
+repository keeps no raw HTML — an extract holds the text and not the markup — so
+there is no way to re-extract from what is on disk.
+
+Three of the ten tickets need no crawl. Ticket 62 changes the comparison only, so it
+is measured by running the compare stage over the extracts already in `data/`.
+Ticket 66 is a rename and no number may move. Ticket 65 reads Supabase. Those three
+are session 2A and they can start now.
 
 ## The order, and why
 
 1. **Housekeeping.** It costs no crawl. It removes four items and unblocks
    three.
-2. **Spec 50, the gate.** It takes the seed list from 451 pages to about 800.
+2. **The content unit, sessions 2A to 2D.** They remove noise, and they go before
+   spec 50 — see below.
+3. **Spec 50, the gate.** It takes the seed list from 451 pages to about 800.
    Almost every other open ticket is measured against that list. Run it first
    or measure everything twice.
-3. **Ticket 58, the head check.** It re-crawls all six stores. It must run
+4. **Ticket 58, the head check.** It re-crawls all six stores. It must run
    alone.
-4. **Axis B.** There are no axis-B classes in the vocabulary today.
-5. **Debt and decisions.**
+5. **Axis B.** There are no axis-B classes in the vocabulary today.
+6. **Debt and decisions.**
 
 Grillings are conversations. They touch no data. Run them beside a crawl.
+
+### Why the content unit goes before spec 50
+
+It looks like a contradiction: spec 50 is the gate, and almost everything is measured
+against its page list. The exception is written into spec 50 itself. **The NL baseline
+must not move** — 133 of its 181 rows are in the new set, 48 are carried over, and
+none are new.
+
+So `nl` is invariant across spec 50, and `node compare/measure.mjs nl` is the gate for
+every one of these ten tickets. A number measured on `nl` before spec 50 is still true
+after it. Nothing is measured twice.
+
+Two things are bought by going first. Session 5 is the large crawl, about 1,600
+requests, and it bakes the new extraction rules in for free instead of needing a
+rebuild for each of them afterwards. And the largest single win in the project —
+2,698 findings, 7.7% of the corpus — stops waiting behind three spec sittings.
+
+**One rule holds inside these sessions as everywhere else: one ticket, one gate.**
+Ticket 67 moves the count in both directions at once. It removes the one-sided rows
+that a dropped paragraph caused, and it adds copy differences that a markup difference
+was hiding. Batched with 63 or 64, one number would hide all three effects.
 
 ---
 
@@ -78,8 +116,8 @@ The triage below was applied. What it did:
 - **22 is `folded`**, not closed. Its criteria are in 53 (measure `prodStatus` and
   `prodRedirect`, clear the stale flags) and in 51 (use the shared maintenance
   guard instead of the generator's private copy).
-- **59 and 60 are `ready-for-agent`, session 2.** 59 refuses the store argument.
-  60 names the filename shape in `compare/contract.mjs` and keeps the filename.
+- **59 and 60 are resolved, session 2.** 59 refuses the store argument. 60 names
+  the filename shape in `compare/contract.mjs` and keeps the filename.
 - **Three blocking edges recorded**: 16 by 55, 20 by 22 and 55, 48 by 37.
 - `map.md` agrees.
 
@@ -125,12 +163,10 @@ needs-triage. Neither is in the order above yet. Give each a label and a
 session:
 - 59-link-status-overwrite.md — **resolved 2026-08-07**. Triage took refusal over
   merging, and the script now exits 2 on any argument. Nothing is left to triage.
-- 60-report-filename-in-the-contract.md — <store>__<page>.json is crawl-to-web
-  data that web/ parses and compare/contract.mjs does not name. Decide it
-  BEFORE spec 50: that spec takes the seed list from 451 to about 800 pages, so
-  it multiplies the files this shape names. Reading the store out of each JSON
-  instead costs the payload win of ticket 38, so that option needs the
-  measurement first.
+- 60-report-filename-in-the-contract.md — **resolved 2026-08-07**. Triage kept
+  the filename and named its shape in the contract. reportFilename() and
+  storeOfFile() are in compare/contract.mjs, so the __ separator is written
+  once. Nothing is left to triage.
 
 BLOCKING EDGES:
 - 16-new-site-page-discovery.md — Blocked by: 55
@@ -211,8 +247,194 @@ Then, if triage made them ready-for-agent in session 1:
 call that erased every other store's link statuses cannot be typed. Session 3
 and session 5 both run that script.
 
+60 is done as well: `reportFilename()` and `storeOfFile()` live in
+`compare/contract.mjs`, and spec 50 can multiply the report files without
+multiplying the places the `__` separator is written.
+
 Gate: `npm test` is green, `npm run build` builds 455 pages, and no number
 moves. It is a move, not a change of behaviour.
+
+---
+
+## Session 2A — The three that need no crawl
+
+**Start here today.** The new environment is down, and none of these three touches it.
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/62-identical-units-make-no-finding.md
+
+This changes the comparison only, so it is measured over the extracts already in
+data/. Do not crawl. Run compare/30-compare.mjs and compare/measure.mjs nl.
+
+The checkable output: /downloads reports no casing finding for
+"Download de montagehandleiding" or "Bekijk de installatievideo", and the casing
+count falls. Nothing else moves.
+```
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/66-rename-text-element-to-content-unit.md
+
+A rename and nothing else. TextElement becomes ContentUnit. Read
+docs/adr/0002-content-unit-is-the-editable-block.md and CONTEXT.md first: both are
+written already, and the code must agree with them.
+
+Gate: every count and every finding id is identical before and after. If a number
+moves, behaviour came in with the rename and must come out.
+```
+
+Then ticket 65, which is a measurement and not a build:
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/65-count-the-overrides-the-fold-detaches.md
+
+Read Supabase. Count the live overrides that sit on a unit the fold will change, and
+the page reviews that will go stale, per store. Write the numbers into ticket 67.
+
+If Supabase is not reachable, say so in the ticket and stop. Do not estimate. A
+wrong number here would be quoted later as measured.
+```
+
+**Session 2C cannot ship without ticket 65's number.** It can be written without it.
+
+---
+
+## Session 2B — The invisible characters, and the regions
+
+Needs the new environment. Three tickets, **three gates**. Do not batch them.
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/61-tier-one-normalisation-gaps.md
+
+Tier 1 folds invisible equivalence, and three characters a browser never draws are
+outside it. This changes extraction, so it needs a crawl.
+
+Gate: crawl nl, compare, measure. The findings these characters caused are gone and
+no other count moves.
+```
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/63-regions-excluded-at-extraction.md
+
+This resolves ticket 27, which is already answered in the ticket file. Read that
+answer and docs/adr/0003-regions-are-excluded-at-extraction.md. Do not decide it
+again.
+
+The size cap is not a nicety. The obvious wrapper selector on production would have
+removed 358 of 359 units on /downloads. An exclusion above 20 content units must
+throw.
+
+Gate: the nine phantom text-added rows on each category page are gone, and no page
+loses a unit an editor wrote.
+```
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/64-promo-banner-legacy-only-region.md
+
+The largest single removal in the project: 2,698 findings, 7.7% of 34,910, on 371 of
+448 pages.
+
+Two things must not be skipped. The anchor is verified in ALL SIX stores — fr and
+be_fr are unverified, because the URLs used while grilling answered 404, which proves
+only that they were guessed. Take the real URLs from the seed list. And the coverage
+check reports in one line when the entry stops matching, because the anchor is
+campaign-specific by construction.
+
+Gate: measure nl, and report the count for every store separately.
+```
+
+---
+
+## Session 2C — The fold
+
+The big one. It rebuilds every report and it detaches overrides.
+
+Blocked by 66 (session 2A). Needs ticket 65's number before it ships.
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/67-a-content-unit-folds-its-inline-links.md
+
+Read docs/adr/0002-content-unit-is-the-editable-block.md first. The decision and the
+rejected alternatives are recorded there and are not reopened.
+
+Measure it TWICE and report the two numbers separately. It removes the one-sided rows
+that a discarded paragraph caused, and it adds copy differences that a markup
+difference was hiding. One number would hide both.
+
+The checkable output: the /overkapping paragraph is one unit on each side, and the
+6063-T6 against 6036-T6 difference is reported. That defect is invisible today.
+
+Do not ship without ticket 65's number and the dated note that goes with it.
+```
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/68-the-content-view-survives-a-folded-unit.md
+
+Nothing clamps a row today, and after 67 one row is 450 to 550 pixels tall on a page
+of up to 288 rows. Measure first paint on the worst page before and after, and put
+both numbers in the ticket.
+```
+
+---
+
+## Session 2D — The tail
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/69-one-canonical-viewport.md
+
+Measure the residual duplication AFTER ticket 64. The banner is most of it. If what
+is left is one label on a category page, say so and close this ticket rather than
+build a rule for one label.
+```
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/70-shared-regions-by-content-hash.md
+
+Blocked by 64 and 67. Measure first: how many differing units are shared across
+pages. If the share is small, only the exclusion half ships.
+
+If the measurement shows that most findings are shared-block findings, STOP and say
+so. That reorders the roadmap, and it is not this ticket's decision to make quietly.
+```
 
 ---
 
@@ -403,23 +625,23 @@ first heading is not an h1 (11 pages), and pages with no h1 (3).
 
 ---
 
-## At any time — the two grillings that remove work
+## At any time — the grilling that removes work
 
-These are conversations. They touch no data. Run them while a crawl runs.
+A conversation. It touches no data. Run it while a crawl runs.
 
-### Ticket 27, the category grid
+### Ticket 27, the category grid — DONE on 2026-08-07
 
-```
-/clear
-```
+Resolved by the grilling of the content unit. **A category page stays in the log and
+the grid leaves it as a region.** The ticket's own objection decided where: the extract
+carries no DOM path, so the exclusion runs at extraction and a check stays ignorant of
+regions.
 
-```
-/grilling .scratch/content-parity-log/issues/27-category-page-product-listings.md
-```
+The grilling went well past the question. It found that the leaf rule discards a whole
+paragraph when one inline link sits in it, that production hides 614 words in tags the
+extraction never read, and that the promo banner alone makes 7.7% of the corpus. Ten
+tickets came out of it, 61 to 70, in sessions 2A to 2D. Two ADRs hold the decisions.
 
-**Do this one early.** 17 pages carry 2,838 shown findings. That is 33% of
-everything shown. The decision is about a rule, not about the data, so spec 50
-does not change it.
+Nothing is left to do here. Ticket 63 builds it.
 
 ### Ticket 25, fotogalerij
 
@@ -521,7 +743,17 @@ npm test; if ($?) { node compare/measure.mjs nl }
 | 30 | Wire Supabase | after a scheduled run | you, one click |
 | 47 | Shared keys layering | session 2 | **done** — ADR 0001, `shared/keys.mjs` |
 | 59 | link-status erases the other stores | session 2 | **done** — the script refuses an argument and exits 2 |
-| 60 | Report filename in the contract | session 2 | **triaged** → `/implement` |
+| 60 | Report filename in the contract | session 2 | **done** — the shape is in `compare/contract.mjs` |
+| 62 | Two identical units make no finding | session 2A | `/implement` — no crawl |
+| 66 | Rename to `ContentUnit` | session 2A | `/implement` — no crawl, no number moves |
+| 65 | Count the overrides the fold detaches | session 2A | `/implement` — Supabase |
+| 61 | Tier-1 invisible characters | session 2B | `/implement` — needs the new site |
+| 63 | Regions excluded at extraction | session 2B | `/implement` — resolves 27 |
+| 64 | The promo banner, 7.7% | session 2B | `/implement` — after 63 |
+| 67 | A content unit folds its links | session 2C | `/implement` — after 66, needs 65 |
+| 68 | The content view survives a fold | session 2C | `/implement` — after 67 |
+| 69 | One canonical viewport | session 2D | `/implement` — after 64 |
+| 70 | Shared regions by content hash | session 2D | `/implement` — after 64 and 67 |
 | 51 | Runnable seed pipeline | session 3 | `/implement` |
 | 52 | Production page list | session 3 | `/implement` |
 | 53 | Every content page | session 3 | `/implement` |
@@ -538,7 +770,7 @@ npm test; if ($?) { node compare/measure.mjs nl }
 | 42 | Untranslated text | session 9 | `/implement` |
 | 43 | Alt language and meta | session 9 | `/implement` |
 | 44 | Heading outline shape | session 9 | `/implement` |
-| 27 | Category page grid | any time, early | `/grilling` |
+| 27 | Category page grid | any time, early | **done** — resolved, built by 63 |
 | 25 | fotogalerij | any time | `/grilling` |
 | 34 | Position, the deep link | last | `/grill-with-docs` |
 | 31 | Bulk dismissal | last | `/implement` |

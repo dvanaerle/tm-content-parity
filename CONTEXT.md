@@ -63,7 +63,7 @@ them are in `.scratch/content-parity-log/map.md`.
   `a` or a `button` that stands alone. A unit folds the words of an `a` or a
   `button` inside it, because nobody edits a link apart from its sentence. A
   nested **block** still breaks a unit: an `li` gives way to a `p` inside it.
-  See `docs/adr/0001-content-unit-is-the-editable-block.md`.
+  See `docs/adr/0002-content-unit-is-the-editable-block.md`.
 - **Chrome** — template furniture outside the content boundary. It is not
   editor work on this page, and the log never compares it.
 - **Non-editorial region** — a region inside the content boundary whose text the
@@ -75,7 +75,7 @@ them are in `.scratch/content-parity-log/map.md`.
 - Both kinds of region are excluded at extraction and named in a committed list
   with the reason, so an excluded region says why. The log is blind to what
   changes inside one, and that is correct: neither kind can make editor work.
-  See `docs/adr/0002-regions-are-excluded-at-extraction.md`.
+  See `docs/adr/0003-regions-are-excluded-at-extraction.md`.
 - **Canonical viewport** — the one screen width the log reads a page at. Production
   sends the desktop and the mobile version of some blocks in the same HTML, and the
   extraction has no computed style, so it must choose. It chooses desktop. A

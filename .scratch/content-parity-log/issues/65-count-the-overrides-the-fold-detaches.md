@@ -18,7 +18,7 @@ But the size of the loss decides how the change is announced, and nobody knows i
 **Status:** ready-for-agent
 
 **Origin:** the grilling of 2026-08-07 on the content unit, question 9. Required by
-`docs/adr/0001-content-unit-is-the-editable-block.md`.
+`docs/adr/0002-content-unit-is-the-editable-block.md`.
 
 - [ ] The count of live overrides, by kind, that sit on a unit which the fold will
       change. A unit is affected when it is an anchor inside a text block, or a text

@@ -14,7 +14,7 @@ list is skipped, because "the children speak". The list holds `a` and `button`, 
 those are the only two tags that can break a paragraph. Headings already fold their
 children, so this ticket makes the general case behave like the case that was right.
 
-See `docs/adr/0001-content-unit-is-the-editable-block.md` for the decision and the
+See `docs/adr/0002-content-unit-is-the-editable-block.md` for the decision and the
 rejected alternatives.
 
 **Blocked by:** 66.

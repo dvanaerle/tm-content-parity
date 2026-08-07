@@ -91,12 +91,12 @@ Settled while charting, in the destination-naming session. No ticket holds them.
 - **The content unit is the editable block, not a leaf element.** A block folds the
   inline links inside it, because a finding must map onto one edit and content is
   edited one block at a time. The word "text element" is retired.
-  `docs/adr/0001-content-unit-is-the-editable-block.md`.
+  `docs/adr/0002-content-unit-is-the-editable-block.md`.
 - **A region leaves the log at extraction, from a committed list with a size cap.**
   Two reasons and two words: **non-editorial** (nobody writes it) and **legacy-only**
   (nobody will migrate it). An exclusion above 20 content units throws, because the
   obvious wrapper selector on production would have removed 358 of 359 units on one
-  page. `docs/adr/0002-regions-are-excluded-at-extraction.md`.
+  page. `docs/adr/0003-regions-are-excluded-at-extraction.md`.
 
 ### Resolved tickets
 
