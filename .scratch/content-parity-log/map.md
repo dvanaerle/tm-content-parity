@@ -791,6 +791,18 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   overrides, so it does not ship before 65 gives the number. 70 needs the new
   environment, which answered HTTP 500 on all six hosts while this was written.
 
+  **62 is resolved**, 2026-08-07. `classifyPair()` hands a pair of equal `norm`
+  strings to `classifyExactPair()`. The tier-2 classifier now names a visible
+  difference only when there is one. `casing` was its first test, and the
+  byte-identical `casing` finding was **391 findings on 448 pages**, all of them
+  shown. The rebuild goes from 34,910 findings and 23,961 shown to **34,559 and
+  23,570**: 351 disappear and **40 become `tag-changed`** — equal text in a tag that
+  moved, which the phantom finding had been hiding. `casing` stands at 271, every
+  one a real letter-case difference. No class entered the vocabulary. `mayPair()`
+  keeps `heading-level` off this path, so ticket 33's LCS route to it is untouched.
+  391 finding ids leave the log, which is 391 more orphaned overrides for ticket 65
+  to count.
+
 - [50 — The content page discriminator](issues/50-content-page-discriminator.md)
   — designed in the grilling session of 2026-08-07, `claimed`. **The seed list
   holds 28 French pages. The French store has about 110.** The cause is not the

@@ -177,6 +177,20 @@ describe('classifyPair', () => {
       element('Verkrijgbaar in RAL 7016 antracietgrijs', { tag: 'td' }),
     )).toBe('restructured');
   });
+
+  it('names no class for two texts that are equal character for character', () => {
+    // Ticket 62. `casing` was the first test, so a pair the matching left over
+    // with identical text was asked to name a difference that does not exist.
+    const text = 'Download de montagehandleiding';
+    expect(classifyPair(element(text), element(text))).toBe(null);
+  });
+
+  it('still reads the moved element on two texts that are equal', () => {
+    // Only `tag-changed`. `mayPair` holds a leftover pair to one `kind` and one
+    // heading level, so no heading reaches this rule against a paragraph.
+    const text = 'Download de montagehandleiding';
+    expect(classifyPair(element(text, { tag: 'p' }), element(text, { tag: 'td' }))).toBe('tag-changed');
+  });
 });
 
 describe('diffRows', () => {
@@ -328,6 +342,38 @@ describe('diffRows', () => {
       collector,
     ));
     expect(findings).toEqual([]);
+  });
+
+  it('makes no finding when the same line repeats in another order', () => {
+    // Ticket 62, the `/downloads` defect. The LCS keeps document order, so a
+    // reorder of identical links leaves one copy unmatched on **both** sides.
+    // The leftovers then pair at score 1.0, and the classifier called that
+    // `casing` — a difference between two strings that are equal.
+    const link = 'Download de montagehandleiding';
+    const rows = diffRows(
+      extract({ elements: elements([link, 'Zonwering', link]) }),
+      extract({ side: 'new', elements: elements([link, link, 'Zonwering']) }),
+    );
+    expect(rows.map((row) => row.class)).toEqual([null, null, null]);
+    expect(collect((collector) => textFindings(rows, collector))).toEqual([]);
+  });
+
+  it('still reports the moved element when the repeated line changed tag', () => {
+    // The other half of ticket 62: 40 of the 391 phantom `casing` findings are
+    // this row. The words are equal; the markup is not, and the finding carries
+    // the tag change as its detail.
+    const link = 'Download de montagehandleiding';
+    const rows = diffRows(
+      extract({ elements: [element(link), element('Zonwering'), element(link)] }),
+      extract({
+        side: 'new',
+        elements: [element(link), element(link, { tag: 'div' }), element('Zonwering')],
+      }),
+    );
+    expect(rows.map((row) => row.class)).toEqual([null, null, 'tag-changed']);
+    expect(collect((collector) => textFindings(rows, collector))).toMatchObject([
+      { class: 'tag-changed', prod: link, new: link, detail: 'p → div' },
+    ]);
   });
 
   it('splits a one-sided element by direction', () => {

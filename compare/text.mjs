@@ -47,11 +47,22 @@ export const PROMO = /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\
  * `price` and hide. `restructured` is asked last of the hidden three, because it
  * is the weakest claim: it says only that the markup moved.
  *
+ * Ticket 62 puts equality before all of it. The pairing can hand this rule two
+ * texts that are equal character for character. The LCS keeps document order, so
+ * a reorder of 24 identical links on `/downloads` left one copy unmatched on
+ * **both** sides. The leftovers then paired at score 1.0, and `casing` answered a
+ * question that has no answer. Equal text is the element rule's question, so it
+ * is handed over.
+ *
+ * `mayPair()` holds a leftover pair to one `kind` and one heading level, so the
+ * only class that arrives here from the element rule is `tag-changed`.
+ *
  * @param {import('./contract.mjs').TextElement} prod
  * @param {import('./contract.mjs').TextElement} next
- * @returns {'casing' | 'price' | 'campaign' | 'restructured' | 'copy'}
+ * @returns {'casing' | 'price' | 'campaign' | 'restructured' | 'copy' | 'heading-level' | 'tag-changed' | null}
  */
 export function classifyPair(prod, next) {
+  if (prod.norm === next.norm) return classifyExactPair(prod, next);
   if (tier2(prod.norm) === tier2(next.norm)) return 'casing';
   if (maskNumbers(prod.norm) === maskNumbers(next.norm)) return 'price';
   if (PROMO.test(prod.norm) && PROMO.test(next.norm)) return 'campaign';
@@ -124,9 +135,9 @@ function tagChange(row) {
 
 /**
  * Align the two element lists and label every position. A row with
- * `class: null` is an exact tier-1 match **in the same element**, and ticket 02
- * is explicit that it is not a finding: the earlier count of 61 was wrong
- * because it counted them.
+ * `class: null` holds the same text in the same element, and ticket 02 is
+ * explicit that it is not a finding: the earlier count of 61 was wrong because
+ * it counted them. Ticket 62: which tier paired the row does not change that.
  *
  * @param {import('./contract.mjs').PageExtract} production
  * @param {import('./contract.mjs').PageExtract} next
