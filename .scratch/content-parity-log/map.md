@@ -481,6 +481,46 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   `<store>__<page>.json` is crawl-to-web data that `web/` parses and
   `compare/contract.mjs` does not mention.
 
+- [21 — The Axis A meta check: what is a parity defect in the head?](issues/21-axis-a-meta-check.md)
+  — **The head is not one thing.** Each row is decided on its own, and the test is
+  `CONTEXT.md`'s: a difference the content team cannot change is not a finding.
+  Five rows — **Meta Title, Meta Keywords, Meta Description, Robots, Canonical** —
+  of which three make findings and two stay display only. `h1` stays out; the
+  content view owns it, and it differs on 93 of 179 nl pages. **Nine classes**,
+  taking the table from 21 to 30. Keywords and the raw robots string are crawled
+  for the first time, so the whole corpus must be re-crawled.
+
+  **130 findings over 373 comparable pages — 0.54% of shown.** 45 title, 78
+  description, 4 `meta-casing`, 3 robots. 68% of comparable pages get none.
+
+  Three decisions the ticket did not ask for. **A tenth class was drafted and
+  removed by measurement**: `meta-brand-suffix` would have folded a trailing
+  ` | Tuinmaximaal`, but only **3 of 45** title differences collapse when it is
+  stripped, and the suffix sits on ~45% of titles on *both* sides, so it is editor
+  text and not a template. The other 42 are real rewrites. No rule was written and
+  no brand string enters the code. **The head labels are English** in a Dutch
+  interface, because they name the Magento admin field the editor goes to fix —
+  written into `CONTEXT.md` so the next reader does not translate them. And **the
+  Meta tab keeps its five-row shape** rather than becoming a finding table, with
+  the override controls inline and no class pill: on five fixed rows the cells
+  already say what changed.
+
+  Both robots directions ship. `robots-index-lost` — production indexable, the new
+  site `noindex` — fires **once**, on `be`, and it is the severe one: the page
+  leaves Google. The four `lost`/`added` classes fire **zero** times, because both
+  sides always send a title and a description. They ship anyway; the two-direction
+  pair is mandatory for a one-sided check.
+
+  **`axis` is not taken here.** Ticket 39 owns it, and now has 30 classes to reach.
+
+  Two defects found while resolving, both in the ticket. **A stale extract reads as
+  clean** — there is no version marker, so a new `PageMeta` field folds to `null`
+  on both sides and reports `same`; `PageExtract` gains `extractVersion`. And
+  **`no-route` compares a 404 page against a 404 page** — both sides answer 200, so
+  the status gate misses it, and it emits **25 findings, 15 shown, in every one of
+  the six stores**. It goes into the exclusion list. Ticket 20 owns the 404 cell.
+  Built as [58](issues/58-axis-a-meta-check.md).
+
 ### Facts found while charting
 
 - Production emits 9 `data-content-type` attributes on a page where the new site
@@ -576,7 +616,9 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   text or from the heading levels. Nothing else is available.
 - **`CHECKS` declares a `meta` check that no class uses.** The meta vocabulary is
   empty on both axes. Ticket 11 adds the first two, on the coverage axis;
-  ticket 21 owns the parity side.
+  ticket 21 owns the parity side. (Closed by ticket 21: nine parity classes, built
+  as ticket 58. The Meta column on the dashboard has printed `—` on every row since
+  the dashboard existed.)
 - **`PageMeta` holds no hreflang**, no og and no twitter field.
 - **All 451 `prodStatus` values in the seed data are 0**, and `prodMaintenance` is
   stale on nearly every row, because production was in maintenance mode for the
@@ -633,6 +675,60 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   Ticket 28.
 
 ## Ready to build
+
+- [50 — The content page discriminator](issues/50-content-page-discriminator.md)
+  — designed in the grilling session of 2026-08-07, `claimed`. **The seed list
+  holds 28 French pages. The French store has about 110.** The cause is not the
+  sitemap: all six production sitemaps hold all six stores and are ≥99% the same
+  URL set. The cause is the filter. `nl`, `be` and `uk` mark their store-local
+  content `changefreq=daily`; `de`, `fr` and `be_fr` mark the same content
+  `never`. The new rule is `(alternates < 6 or daily in any file) and not a
+  product signature` — a product page carries all six hreflang alternates, and
+  exactly 4,444 locs for each store do. Verified on the live navigation of three
+  stores: 88–91% coverage, against 40% for French under the old rule. The store
+  page count goes from 451 to about 800.
+
+  **The NL baseline does not move**: 133 of its 181 rows are in the new set, 48
+  are in no sitemap at all and are carried over, and none are new. This reopens
+  [04](issues/04-six-store-page-lists.md), whose "the sitemap yields exactly the
+  hreflang counts" reads one file two ways, and whose "no page exists in a non-NL
+  store without an NL counterpart" is false — 283 clusters have no NL member.
+  Ticket 38's per-store counts must be re-measured after it lands.
+
+  **The cross-store view for editors is the next ticket, not this one.** It is
+  axis B, and everything ticket 38 built is axis A. Its first question: are those
+  283 unanchored clusters a real difference between the store views, or a gap in
+  the sitemap metadata?
+
+  Broken into six build tickets, all `ready-for-agent`. **51 and 52 are
+  unblocked and can start together.**
+
+  ```
+  51 ─┬──> 53 ──> 54 ─┬──> 55
+  52 ─┘               └──> 56
+  ```
+
+  Run them in three sittings, not six: **51+52+53** is the input and the rule,
+  and ends with per-store counts that can be checked against the Magento store-view
+  grid. **54** is French end to end and is the go/no-go. **55+56+57** is the
+  rollout, the excluded list and the cleanup. The cost is the crawl — about 1,600
+  requests — and it is the same cost whatever the ticket count. 54 exists so that a
+  design defect costs one store and not six.
+
+  **57 was written and then merged**, because the count it waited on came back
+  narrow. The page value is used in about 82 places and only **twelve** hold an
+  assumption about its shape; the finding id, the mute key, the database column and
+  everything shown to an editor treat it as opaque. So there is no expand and
+  contract: a page that has a Dutch url key keeps its current string, byte for
+  byte, and nothing stored detaches. The override table is append-only by policy,
+  so that condition is not a convenience — a reformatted key could never be
+  repaired. The identity change lands inside 54.
+
+  One trap recorded there: the unused store-scoped fallback key in the old
+  generator uses a **colon**, which is illegal in a Windows filename and would
+  break the extract writer, the report writer and the static build. The home-page
+  sentinel proves that **parentheses** survive all four. No current key contains a
+  colon, so the fallback has never fired.
 
 - [32 — A scannable diff, class filters, six stores, and a design system](issues/32-scannable-log-and-six-stores.md)
   — the spec from the grilling session of 2026-08-06, `ready-for-agent`. Eight
@@ -766,7 +862,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   **Two edges cross into spec 32, and both are real.** Ticket 39 adds an `axis`
   to the same class table that ticket 33 rewrote, so 39 is **unblocked**: 33 landed
   and was measured, and it deliberately left `axis` alone so that 39 still has a
-  ticket to resolve. There are 21 classes for it to reach, not 18. Ticket 44 is now
+  ticket to resolve. There are 21 classes for it to reach, not 18 — **30 once
+  ticket 58 lands**, so 39 gets cheaper the earlier it runs. Ticket 44 is now
   the nearest owner for spec 32's user story 24, which 33 could not close — a page
   whose first heading is not an `h1` (11 pages) or that has no `h1` at all (3).
   Tickets 42 and 45 need the five stores crawled, which is
@@ -774,6 +871,15 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   [46](issues/46-crawl-five-stores.md) asked for the same crawl and is closed as
   a duplicate. **38 is resolved, so 42 and 45 have their data**: 269 non-NL rows
   are extracted on disk, and Axis B needs the new side only.
+
+- [58 — The head becomes a check](issues/58-axis-a-meta-check.md)
+  — builds what ticket 21 decided, `ready-for-agent`, blocked by nothing. Nine
+  classes, two newly crawled head fields, and the Meta tab becomes tickable. **It
+  must be measured twice**, because the two halves move the counter in opposite
+  directions: excluding `no-route` removes about 150 findings over six stores and
+  the meta classes add about 130. One number would hide both, as ticket 33 found.
+  It re-crawls all six stores, so nothing else should be in flight against
+  `data/`.
 
 - [31 — Bulk dismissal across pages](issues/31-bulk-dismissal.md) — the one user
   story in spec 29 that shipped as nothing, found by the code review of the

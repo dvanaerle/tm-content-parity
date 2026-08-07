@@ -1,8 +1,18 @@
 # 04 — Seed lists for all six store views
 
 Type: task
-Status: closed
+Status: reopened
 Assignee: d.aerle
+
+> **Reopened 2026-08-07 by [50](50-content-page-discriminator.md).** Three
+> conclusions below are unsound. The `changefreq=daily` filter is not a marker of
+> a content page: `de`, `fr` and `be_fr` mark their content `never`, so this
+> ticket found 27 French pages of about 110. "The sitemap yields exactly the
+> hreflang counts" reads one file two ways, so the agreement is a tautology. "No
+> page exists in a non-NL store without an NL counterpart" is false: 283 clusters
+> have no NL member. The stores-per-row table here says 54/77/8/15/8/19; the
+> committed file says 53/77/8/15/8/20, so the file on disk is not the file this
+> ticket measured. Ticket 50 holds the measurements.
 Blocked by: —
 Parent: ../map.md
 
