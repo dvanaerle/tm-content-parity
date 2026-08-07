@@ -1,9 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Locate, Occurrences, Tag } from './Annotations.jsx';
-import { ClassPill } from './Chips.jsx';
+import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
-import { BANNER, CHROME } from '../lib/palette.mjs';
-import { NO_FILTER, isNarrowed, outlineFrom, prepareRows, toggleClass } from '../lib/view.mjs';
+import { CHROME } from '../lib/palette.mjs';
+import {
+  NO_FILTER,
+  isNarrowed,
+  onlyDifferencesState,
+  outlineFrom,
+  prepareRows,
+  toggleClass,
+} from '../lib/view.mjs';
 
 /**
  * The content view: the whole page, filtered, tickable (ticket 36).
@@ -53,23 +60,11 @@ export default function ContentView({ report, findings, showNoise, control }) {
           store={report.store}
         />
 
-        {/*
-          Decision: the filter state is visible for as long as it is on. A filtered
-          page that looks like a whole page is read as a finished page, and the
-          editor stops early. One click clears it.
-        */}
         {narrowed && (
-          <p className={`mb-3 flex flex-wrap items-center gap-2 rounded border px-3 py-2 text-sm ${BANNER.attention}`}>
+          <FilterBanner onClear={() => setFilter(NO_FILTER)} className="mb-3 rounded border px-3 py-2">
             <strong>Gefilterd.</strong>
             Je ziet {rows.length} van {total} regels. Dit is niet de hele pagina.
-            <button
-              type="button"
-              onClick={() => setFilter(NO_FILTER)}
-              className="rounded border border-current px-1.5 py-0.5 text-xs"
-            >
-              Filter wissen
-            </button>
-          </p>
+          </FilterBanner>
         )}
 
         {rows.length === 0
@@ -89,33 +84,29 @@ export default function ContentView({ report, findings, showNoise, control }) {
  * number a bar could be built from.
  */
 function Controls({ classes, filter, setFilter, production, next, page, store }) {
+  const differences = onlyDifferencesState(filter);
+
   return (
     <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-      <div className="flex flex-wrap items-center gap-1">
-        {classes.map(({ class: cls, rows }) => {
-          const on = filter.classes.includes(cls);
-          return (
-            <button
-              key={cls}
-              type="button"
-              aria-pressed={on}
-              onClick={() => setFilter(toggleClass(filter, cls))}
-              title={`${rows} regels in deze klasse. Filteren verandert geen enkel getal.`}
-              className={`inline-flex items-center gap-1 rounded ${on ? 'ring-2 ring-brand-lighter-green' : 'opacity-70 hover:opacity-100'}`}
-            >
-              <ClassPill class={cls} />
-              <span className="pr-1 text-xs tabular-nums text-slate-500">{rows}</span>
-            </button>
-          );
-        })}
-      </div>
+      <ClassFilterPills
+        counts={classes.map(({ class: cls, rows }) => ({ class: cls, count: rows }))}
+        selected={filter.classes}
+        onToggle={(cls) => setFilter(toggleClass(filter, cls))}
+        title={(_cls, count) => `${count} regels in deze klasse. Filteren verandert geen enkel getal.`}
+      />
 
       {/* The inverse control. Matched rows are the default, because a tint only
           reads as a signal against untinted baseline. */}
-      <label className="flex items-center gap-2 text-sm text-slate-600">
+      <label
+        className={`flex items-center gap-2 text-sm ${differences.disabled ? 'text-slate-400' : 'text-slate-600'}`}
+        title={differences.disabled
+          ? 'Een klassefilter toont altijd alleen verschillen.'
+          : undefined}
+      >
         <input
           type="checkbox"
-          checked={filter.onlyDifferences}
+          checked={differences.checked}
+          disabled={differences.disabled}
           onChange={(event) => setFilter({ ...filter, onlyDifferences: event.target.checked })}
         />
         Alleen verschillen
@@ -142,6 +133,10 @@ function Export({ markdown, name, children }) {
     () => URL.createObjectURL(new Blob([markdown], { type: 'text/markdown' })),
     [markdown],
   );
+
+  // A blob url pins its blob until it is revoked. Without this an editor walking the
+  // log strands one whole page of Markdown per side per page they open.
+  useEffect(() => () => URL.revokeObjectURL(href), [href]);
 
   return (
     <a href={href} download={name} className={`hover:underline ${CHROME.link}`}>{children}</a>

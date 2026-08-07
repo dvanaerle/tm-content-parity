@@ -35,6 +35,13 @@ minus Leesweergave.
 - [x] **Matched rows are shown by default.** `terrasoverkapping` opens on all 235
       rows, not on the 168 that differ. The inverse control — *Alleen verschillen* —
       is a checkbox beside the class filter.
+      *A class filter implies it, and the box says so.* `prepareRows` drops every
+      matched row as soon as a class is on, so while a class pill is ticked the box
+      is ticked and disabled (`onlyDifferencesState()`). An unticked box over a
+      differences-only view is a control that lies about what is on screen.
+      *Both numbers are under the default noise toggle.* The page has 288 rows in
+      all; 53 of them carry a hidden class. Say which basis a row count is on: 235
+      and 288 are the same page.
 - [x] Outline is retired as a tab and returns as a sticky heading jump-list beside
       the content view. It is derived from the **rendered** rows (`outlineFrom()`),
       so a narrowed view never offers a jump to a row that is filtered away.
@@ -52,6 +59,11 @@ minus Leesweergave.
       editor who asked to see the muted rows did not ask a question about classes.
 - [x] The dashboard's class pills are clickable with the same semantics. Ticking
       `casing` narrows 124 pages to 58 and moves nothing above the table.
+      *The dashboard gets the amber strip too.* This ticket asked for it on the
+      content view only, but "the same semantics" has to include the warning: a
+      narrowed page list that looks like the whole log is read as the whole log,
+      which is the same failure the strip exists to stop. One `FilterBanner`
+      serves both, so the two cannot drift apart.
 - [x] A **checkbox** replaces the "Opgelost" button only. *Negeren…* and *Klasse
       dempen* keep their menu; a dismissal carries a mandatory note and a checkbox
       cannot.
@@ -79,6 +91,19 @@ components are pixels.
 **`Annotations.jsx` is new and is not a feature.** The tag, the detail, the section
 and the occurrence badge were about to exist twice — once in the content view and
 once in the finding tables. Two copies of *where is this on the page* drift apart.
+
+**The section label leaves the content row.** Ticket 34 gave each finding an anchor
+heading so that a finding says where it is. A content row does not need it: the row
+is in document order and its heading is a row a few lines above it, so the view shows
+the structure itself. The label would repeat on every row under one heading and say
+nothing. `Section` stays in `Annotations.jsx` and the finding tables keep it, because
+a finding table has no document order to read the position from. 34 is not weakened —
+the same fact is on screen, carried by the order instead of by a label.
+
+**One class filter, in one place.** `ClassFilterPills` and `FilterBanner` in
+`Chips.jsx` are the pills and the amber strip for both the content view and the
+dashboard. The two were built as separate copies of the same affordance, and two
+copies of *narrow to this class* drift.
 
 **What this ticket did not touch.** Leesweergave is ticket 37. Ticket 34's deep
 link is still what it was: this view does not use it.

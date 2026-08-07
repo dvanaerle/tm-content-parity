@@ -1,5 +1,5 @@
 import { classInfo } from '../lib/classes.mjs';
-import { FILL, SOLID, severityTone } from '../lib/palette.mjs';
+import { BANNER, FILL, SOLID, severityTone } from '../lib/palette.mjs';
 
 /**
  * The count row from the won prototype: a number in bold, its label beside it.
@@ -25,6 +25,59 @@ export function ClassPill({ class: cls }) {
     >
       {cls}
     </span>
+  );
+}
+
+/**
+ * The class filter, wherever it is. The content view narrows a page to a class and
+ * the dashboard narrows the page list to the same class, and ticket 36 asks for the
+ * **same semantics** in both — so it is one component. Two copies of *narrow to this
+ * class* would drift, and the drift would land on the one word an editor reads the
+ * affordance by.
+ *
+ * The count beside each pill is whatever the caller counts — regels on a page, pagina's
+ * on the dashboard — so the caller owns the tooltip that names the unit.
+ */
+export function ClassFilterPills({ counts, selected, onToggle, title }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {counts.map(({ class: cls, count }) => {
+        const on = selected.includes(cls);
+        return (
+          <button
+            key={cls}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onToggle(cls)}
+            title={title(cls, count)}
+            className={`inline-flex items-center gap-1 rounded ${on ? 'ring-2 ring-brand-lighter-green' : 'opacity-70 hover:opacity-100'}`}
+          >
+            <ClassPill class={cls} />
+            <span className="pr-1 text-xs tabular-nums text-slate-500">{count}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * A filter says so for as long as it is on. A narrowed view that looks like the whole
+ * thing is read as the whole thing, and the editor stops early — so the strip is amber
+ * and it carries the one action that clears it.
+ */
+export function FilterBanner({ onClear, className = '', children }) {
+  return (
+    <p className={`flex flex-wrap items-center gap-2 text-sm ${BANNER.attention} ${className}`}>
+      {children}
+      <button
+        type="button"
+        onClick={onClear}
+        className="rounded border border-current px-1.5 py-0.5 text-xs"
+      >
+        Filter wissen
+      </button>
+    </p>
   );
 }
 

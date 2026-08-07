@@ -30,35 +30,63 @@ export const NO_FILTER = Object.freeze({ onlyDifferences: false, classes: Object
 export const isNarrowed = (filter) => filter.onlyDifferences || filter.classes.length > 0;
 
 /**
+ * What *Alleen verschillen* must draw. A class filter already implies the differences
+ * — `prepareRows` drops every matched row as soon as a class is on — so an unticked
+ * box over a differences-only view is a control that says one thing while the view
+ * does another. While a class is on the box is on, and it is disabled, because
+ * turning it off would change nothing.
+ *
+ * @param {ContentFilter} filter
+ * @returns {{ checked: boolean, disabled: boolean }}
+ */
+export function onlyDifferencesState(filter) {
+  const impliedByClass = filter.classes.length > 0;
+  return { checked: impliedByClass || filter.onlyDifferences, disabled: impliedByClass };
+}
+
+/**
+ * Add or remove one item. The dashboard holds a bare class list and the content view
+ * holds a whole filter, so the set operation is separate from the filter it lives in:
+ * a caller with no `onlyDifferences` to carry must not have to invent one.
+ *
+ * @template T
+ * @param {readonly T[]} list
+ * @param {T} item
+ * @returns {T[]} A new list. The caller holds the old one in React state.
+ */
+export function toggleIn(list, item) {
+  return list.includes(item) ? list.filter((held) => held !== item) : [...list, item];
+}
+
+/**
  * @param {ContentFilter} filter
  * @param {string} cls
  * @returns {ContentFilter} A new filter. The caller holds the old one in React state.
  */
 export function toggleClass(filter, cls) {
-  const classes = filter.classes.includes(cls)
-    ? filter.classes.filter((held) => held !== cls)
-    : [...filter.classes, cls];
-  return { ...filter, classes };
+  return { ...filter, classes: toggleIn(filter.classes, cls) };
 }
 
 /**
  * One row of the content view: a `DiffRow` with both sides resolved to their
  * element and its finding attached.
  *
+ * @typedef {import('../../../compare/contract.mjs').TextElement} TextElement
+ *
  * @typedef {object} ContentRow
  * @property {string} key
  * @property {string | null} class
  * @property {number | null} score
  * @property {object | null} finding    The **derived** finding, with `state` and `shown`.
- * @property {object | null} prod
- * @property {object | null} new
+ * @property {TextElement | null} prod
+ * @property {TextElement | null} new
  */
 
 /**
  * @param {object} input
  * @param {import('../../../compare/contract.mjs').DiffRow[]} input.rows
  * @param {object[]} input.findings   Derived findings, from `derivePageState()`.
- * @param {{ production: object[], new: object[] }} input.elements
+ * @param {{ production: TextElement[], new: TextElement[] }} input.elements
  * @param {ContentFilter} input.filter
  * @param {boolean} input.showNoise   The ledger's toggle: hidden classes and muted rows.
  * @returns {{ rows: ContentRow[], total: number, classes: { class: string, rows: number }[] }}

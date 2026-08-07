@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   NO_FILTER,
   isNarrowed,
+  onlyDifferencesState,
   outlineFrom,
   pagesWithClasses,
   prepareRows,
   toggleClass,
+  toggleIn,
 } from './view.mjs';
 
 /**
@@ -165,6 +167,49 @@ describe('the filter itself', () => {
     const held = { ...NO_FILTER };
     toggleClass(held, 'copy');
     expect(held.classes).toEqual([]);
+  });
+});
+
+describe('onlyDifferencesState', () => {
+  // The control must report the view it is over. `prepareRows` drops every matched
+  // row as soon as a class is on, so an unticked box beside a class pill would say
+  // "you are seeing the whole page" over a differences-only view.
+  it('is off and live when no class is on', () => {
+    expect(onlyDifferencesState(NO_FILTER)).toEqual({ checked: false, disabled: false });
+  });
+
+  it('is on and live when the editor ticked it', () => {
+    expect(onlyDifferencesState({ onlyDifferences: true, classes: [] }))
+      .toEqual({ checked: true, disabled: false });
+  });
+
+  it('is on and dead while a class filter implies it', () => {
+    expect(onlyDifferencesState({ onlyDifferences: false, classes: ['copy'] }))
+      .toEqual({ checked: true, disabled: true });
+  });
+
+  it('matches what prepareRows does: a class filter leaves no matched row', () => {
+    const filter = { onlyDifferences: false, classes: ['copy'] };
+    const { rows } = prepareRows({ ...fixture(), filter, showNoise: false });
+
+    expect(rows.every((row) => row.class)).toBe(true);
+    expect(onlyDifferencesState(filter).checked).toBe(true);
+  });
+});
+
+describe('toggleIn', () => {
+  // The dashboard holds a bare class list and the content view holds a whole filter.
+  // The set operation is shared so that the dashboard does not have to invent an
+  // `onlyDifferences` it has no use for.
+  it('adds an absent item and removes a held one', () => {
+    expect(toggleIn(['copy'], 'casing')).toEqual(['copy', 'casing']);
+    expect(toggleIn(['copy', 'casing'], 'copy')).toEqual(['casing']);
+  });
+
+  it('leaves the list it was given alone', () => {
+    const held = ['copy'];
+    toggleIn(held, 'casing');
+    expect(held).toEqual(['copy']);
   });
 });
 
