@@ -44,7 +44,42 @@ block at a time in PageBuilder and in the WYSIWYG editor.
 - [ ] The probes whose numbers are quoted in the code comments are re-run, and the
       comments are rewritten. The corpus they measured no longer exists.
 - [ ] The override count from ticket 65 exists, and the dated note goes out with the
-      change. The fold does not ship without it.
+      change. The fold does not ship without it. **The count exists — see below.**
+      Run `node crawl/probes/probe-fold-detachment.mjs` again on the day, because
+      the log is written to daily, and put that day's number in the note. Run it
+      **before** you change the extractor: the probe holds a copy of the extraction
+      rule as it stands, so a run after the fold measures nothing.
+
+## The loss, measured by ticket 65 on 2026-08-07
+
+**One dismissal detaches. No page review goes stale.**
+
+| kind | live, all six stores | detached |
+|---|---|---|
+| dismissed | 5 | **1** |
+| fixed | 0 | 0 |
+| muted | 0 | 0 |
+| reviewed | 0 | 0 |
+
+All five live overrides are on `nl`; the other five stores hold none. One more
+dismissal is detached already, by an edit the editor made on the new site, and
+the fold cannot be charged with it.
+
+Two things ticket 65 found that this ticket must build against:
+
+- **An anchor alone in its paragraph keeps its id.** The words do not move, and
+  the id reads the words. Do not expect the fold to detach every dismissal on a
+  folded link — it detaches the ones whose **text** changes.
+- **A tag that moves on one side only changes the class.** `restructured` fires
+  when the two sides differ in tag, and the class is in the id. The single
+  detachment is that shape: production folds `Lees meer >` into a `<p>` while
+  the new site keeps a bare `<a>`, so `copy` becomes `restructured` — and
+  `restructured` is hidden, so the finding also leaves the shown count. Watch
+  this class in the two measurements this ticket takes. It is the most likely
+  place for the count to move for a reason that is not editorial.
+
+The announcement is drafted at
+[`notes/2026-08-07-the-fold-and-your-judgements.md`](../notes/2026-08-07-the-fold-and-your-judgements.md).
 
 ## Known and accepted
 

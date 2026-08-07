@@ -815,6 +815,22 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   sentence. The Dutch interface said "elementen" and now says **"blokken"**, taking
   ADR 0002's own word for the thing.
 
+  **65 is resolved**, 2026-08-07, and the answer is **one dismissal**. Supabase is
+  reachable and holds 45 events, 14 keys and **5 live overrides**, all of them
+  dismissals and all of them on `nl`. Of the five, **1 detaches**, 3 hold, and 1 is
+  detached already by an edit the editor made on the new site. **No page review is
+  live in any store**, so the fold cannot make one stale. Ticket 62's 391 lost
+  finding ids orphaned **0** live overrides, so that sentence above is a count of
+  findings and not of judgements.
+  `crawl/probes/probe-fold-detachment.mjs` is the measurement, and ticket 67 runs it
+  again on the day it ships, before it changes the extractor.
+  Two things the naive rule got wrong. **"An anchor inside a text block" over-counts
+  by three of five**: the id reads the words, and an anchor alone in its paragraph
+  keeps its words when the fold moves it one tag up. And **the tag is still not
+  innocent** — `restructured` fires when the two sides differ in tag, and the class
+  is in the id, so a pair that goes from `a` vs `a` to `p` vs `a` changes class,
+  becomes hidden, and drops the dismissal. That is the one detachment.
+
 - [50 — The content page discriminator](issues/50-content-page-discriminator.md)
   — designed in the grilling session of 2026-08-07, `claimed`. **The seed list
   holds 28 French pages. The French store has about 110.** The cause is not the

@@ -43,7 +43,8 @@ Ticket 66 is a rename and no number may move. Ticket 65 reads Supabase. Those th
 are session 2A and they can start now.
 
 **62 is done**, and it proved the plan: no crawl, and the compare stage over the
-extracts on disk gave the whole measurement. 66 and 65 are what is left of 2A.
+extracts on disk gave the whole measurement. **66 and 65 are done as well, so
+session 2A is complete.**
 
 **The corpus total moved.** It is **34,559 findings, 23,570 shown**, over the same
 448 pages. Every number below that was measured against 34,910 and 23,961 is a
@@ -266,7 +267,7 @@ moves. It is a move, not a change of behaviour.
 ## Session 2A — The three that need no crawl
 
 **Start here today.** The new environment is down, and none of these three touches it.
-**62 has landed. Two are left**, 66 and 65.
+**All three have landed**: 62, then 66, then 65. Session 2A is complete.
 
 ### Ticket 62 — DONE on 2026-08-07
 
@@ -327,7 +328,22 @@ If Supabase is not reachable, say so in the ticket and stop. Do not estimate. A
 wrong number here would be quoted later as measured.
 ```
 
-**Session 2C cannot ship without ticket 65's number.** It can be written without it.
+### Ticket 65 — DONE on 2026-08-07
+
+**One dismissal.** Supabase answered, and the whole log is 45 events, 14 keys and
+**5 live overrides**: all dismissals, all on `nl`. 1 detaches, 3 hold, and 1 is
+detached already by an edit on the new site. **No page review is live**, in any
+store, so the fold makes none stale. Ticket 62's 391 lost ids orphaned **0** live
+overrides — that number counts findings, not judgements.
+
+`crawl/probes/probe-fold-detachment.mjs` is the measurement and it is one command.
+**Session 2C runs it again on its own day, before it touches the extractor**: the
+table is written to daily and it grew by two events while this was measured, and
+the probe holds a copy of today's extraction rule, so a run after the fold
+measures nothing.
+
+**Session 2C now has ticket 65's number**, and the note is drafted at
+`notes/2026-08-07-the-fold-and-your-judgements.md`.
 
 ---
 
@@ -415,7 +431,10 @@ difference was hiding. One number would hide both.
 The checkable output: the /overkapping paragraph is one unit on each side, and the
 6063-T6 against 6036-T6 difference is reported. That defect is invisible today.
 
-Do not ship without ticket 65's number and the dated note that goes with it.
+Ticket 65 gave the number on 2026-08-07: **one dismissal detaches, no page review
+goes stale.** Re-run `node crawl/probes/probe-fold-detachment.mjs` on the day, and
+send `notes/2026-08-07-the-fold-and-your-judgements.md` with that day's number in
+it.
 ```
 
 ```
@@ -769,8 +788,8 @@ npm test; if ($?) { node compare/measure.mjs nl }
 | 59 | link-status erases the other stores | session 2 | **done** — the script refuses an argument and exits 2 |
 | 60 | Report filename in the contract | session 2 | **done** — the shape is in `compare/contract.mjs` |
 | 62 | Two identical units make no finding | session 2A | **done** — 391 phantom `casing` findings gone, no crawl |
-| 66 | Rename to `ContentUnit` | session 2A | `/implement` — no crawl, no number moves |
-| 65 | Count the overrides the fold detaches | session 2A | `/implement` — Supabase |
+| 66 | Rename to `ContentUnit` | session 2A | **done** — 0 of 448 reports differ |
+| 65 | Count the overrides the fold detaches | session 2A | **done** — 5 live overrides, **1** detaches, 0 reviews |
 | 61 | Tier-1 invisible characters | session 2B | `/implement` — needs the new site |
 | 63 | Regions excluded at extraction | session 2B | `/implement` — resolves 27 |
 | 64 | The promo banner, 7.7% | session 2B | `/implement` — after 63 |
