@@ -17,7 +17,7 @@ directions. One number would have hidden both.
 
 ## The state today
 
-31 items are open. They are not 31 pieces of work.
+33 items are open. They are not 33 pieces of work.
 
 | kind | count | cost |
 | --- | --- | --- |
@@ -25,6 +25,7 @@ directions. One number would have hidden both.
 | Close or fold in triage | 4 | 1 sitting |
 | Human decisions | 4 | minutes each |
 | Deferred, blocked by other tickets | 4 | none yet |
+| Opened by the review of ticket 38 | 2 | triage in session 1 |
 
 ## The order, and why
 
@@ -55,6 +56,12 @@ The references were corrected at the same time: the heading of the moved file,
 and four lines in `map.md` (502, 600, 844, 853). The three remaining `51`
 references in `map.md` (683, 687, 691) are the seed ticket and are correct.
 `21-axis-a-meta-check.md` holds no reference to the file name.
+
+The review of ticket 38 was acted on in commit `837d5b8`, after this file was
+first written. Seven findings were fixed, and two became tickets 59 and 60. The
+condition for "this store has this page" now lives in one place,
+`crawl/seed-rows.mjs`, and both the crawler and the web build read it. Spec 50
+rewrites the seed list, so that is the file its new rule belongs beside.
 
 **Nothing is left to do here. Start at session 1.**
 
@@ -97,6 +104,21 @@ FOLD. Do not close:
   uses its own raw fetch and a local regex at crawl/10-store-seeds.mjs:164-183.
   Mark 22 as folded. Point at both tickets.
 
+TRIAGE, both opened 2026-08-07 by the review of ticket 38 and both
+needs-triage. Neither is in the order above yet. Give each a label and a
+session:
+- 59-link-status-overwrite.md — link-status.mjs erases the other stores.
+  Recommendation: ready-for-agent, session 2, because session 3 and session 5
+  both run that script and session 5 is the 1,600-request crawl. Triage picks
+  between refusing the store argument and merging the file. Merging needs an
+  answer about per-target staleness, so refusing is the cheaper call.
+- 60-report-filename-in-the-contract.md — <store>__<page>.json is crawl-to-web
+  data that web/ parses and compare/contract.mjs does not name. Decide it
+  BEFORE spec 50: that spec takes the seed list from 451 to about 800 pages, so
+  it multiplies the files this shape names. Reading the store out of each JSON
+  instead costs the payload win of ticket 38, so that option needs the
+  measurement first.
+
 BLOCKING EDGES:
 - 16-new-site-page-discovery.md — Blocked by: 55
 - 20-one-sided-pages-checklist.md — Blocked by: 22, 55
@@ -126,9 +148,10 @@ only after the insert resolves, and the banner shows the error.
 
 ---
 
-## Session 2 — Ticket 47, the layering ADR
+## Session 2 — Ticket 47, the layering ADR, and the two review tickets
 
-Do this before spec 50 changes `crawl/`.
+Do this before spec 50 changes `crawl/`. All three are about where code lives,
+none of them crawls, and spec 50 rewrites the files they touch.
 
 ```
 /clear
@@ -138,7 +161,21 @@ Do this before spec 50 changes `crawl/`.
 /implement .scratch/content-parity-log/issues/47-shared-keys-layering.md
 ```
 
-Gate: `npm test` is green, `npm run build` builds 180 pages, and no number
+Then, if triage made them ready-for-agent in session 1:
+
+```
+/implement .scratch/content-parity-log/issues/59-link-status-overwrite.md
+```
+
+```
+/implement .scratch/content-parity-log/issues/60-report-filename-in-the-contract.md
+```
+
+Build 59 before session 3. Session 3 and session 5 both run
+`compare/link-status.mjs`, and today the wrong argument silently erases every
+other store's link statuses.
+
+Gate: `npm test` is green, `npm run build` builds 455 pages, and no number
 moves. It is a move, not a change of behaviour.
 
 ---
@@ -223,7 +260,8 @@ The rollout.
 
 This is the large crawl, about 1,600 requests. Give compare/link-status.mjs no
 store argument. It overwrites one global file, so a run for one store erases
-the store before it.
+the store before it. If ticket 59 landed in session 2 the script refuses the
+argument itself, and this warning is then a reminder and not the only guard.
 ```
 
 After this sitting:
@@ -446,6 +484,8 @@ npm test; if ($?) { node compare/measure.mjs nl }
 | 13 | Supabase pause | session 1 | your decision |
 | 30 | Wire Supabase | any time | you, one click |
 | 47 | Shared keys layering | session 2 | `/implement` |
+| 59 | link-status erases the other stores | session 1, then 2 | `/triage`, then `/implement` |
+| 60 | Report filename in the contract | session 1, then 2 | `/triage`, then `/implement` |
 | 51 | Runnable seed pipeline | session 3 | `/implement` |
 | 52 | Production page list | session 3 | `/implement` |
 | 53 | Every content page | session 3 | `/implement` |

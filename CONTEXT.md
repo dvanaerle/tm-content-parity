@@ -15,13 +15,34 @@ them are in `.scratch/content-parity-log/map.md`.
 
 - **Store** — one of the six Magento store views: `nl`, `be`, `be_fr`, `de`,
   `fr`, `uk`. The `be` and `be_fr` stores have the same host.
-- **Page** — one content page, identified by its **NL url key**. The other
-  stores translate the category keys, but they keep the NL key for CMS pages,
-  so the NL key is the only key that groups the six stores.
+- **Page** — one content page in one or more stores. A page that production
+  declares in Dutch is identified by its **NL url key**. A page that production
+  declares only in another language has no NL url key, and it is identified by
+  its store and its path. More than half of the pages are of the second kind.
 - **Store page** — one page in one store. It has a production URL and a new-site
   URL. The new-site URL is a host swap of the production URL.
 - **Store-page pair** — the unit of a parity comparison: production and the new
   site, for one store page.
+- **Anchored page** — a page that production declares with an `nl-NL` hreflang
+  alternate. It has an NL url key, so it can go beside the other stores.
+- **Unanchored page** — a page with no `nl-NL` alternate. It is a page of its
+  store, and it is comparable on axis A, because axis A needs no NL page. It is
+  absent from axis B.
+- **No NL page** and **no declared alternate** are two different things. The
+  first says the store has content that NL does not have. The second says
+  production does not say which NL page is the counterpart. The log must not name
+  the second as the first.
+- **Seed row** — one page in the seed list, with one **cell** for each of the six
+  stores.
+- **Cell** — one store page in a seed row, or `null`. A null cell says that the
+  store does not have the page. A cell of a page that answers 404 is a different
+  absence, and it is not null.
+- **Provenance** — where a cell came from: the production sitemap, a crawl of the
+  new site, or the hand-seeded store home pages. The NL store has cells that no
+  sitemap declares, so the provenance is part of the data and not a comment.
+- **Content page** and **product page** — production distinguishes them in the
+  sitemap only by the count of hreflang alternates and by `changefreq`. A product
+  page carries all six alternates. See ticket 50 for the rule.
 - **Application page** — a page whose content boundary holds a mounted JavaScript
   application instead of content. It has no content unit, because its text is
   transient interface state and not something an editor writes. An application
