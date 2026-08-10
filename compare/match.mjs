@@ -94,18 +94,24 @@ export function lcsPairs(left, right) {
 }
 
 /**
- * Ticket 02 forbids pairing two headings of a different level. The `kind` test
- * beside it is not in the ticket, but it follows the ticket's own rule that a
- * wrong pair is worse than no pair: a paired row puts two texts side by side and
- * asserts they are the same content, and a heading is never the same content as
- * a button label.
+ * Ticket 02 forbids pairing two headings of a different level. A heading also
+ * pairs with a heading only: a paired row puts two texts side by side and asserts
+ * they are the same content, and a heading is never the same content as a button
+ * label. A heading level is an editorial fact.
+ *
+ * Ticket 67 removed the test that the two kinds are equal, which held `cta` away
+ * from `text`. After the fold the kind says how the unit is wrapped, and a
+ * wrapper is not an editorial fact: production leaves the arrow of `Lees meer >`
+ * outside the anchor, so the block reads `text`, while the new site keeps a bare
+ * `<a>` that reads `cta`. Refusing that pair made one `copy` row into two
+ * one-sided rows.
  *
  * @param {import('./contract.mjs').ContentUnit} a
  * @param {import('./contract.mjs').ContentUnit} b
  * @returns {boolean}
  */
 export function mayPair(a, b) {
-  if (a.kind !== b.kind) return false;
+  if ((a.kind === 'heading') !== (b.kind === 'heading')) return false;
   if (a.kind === 'heading' && a.level !== b.level) return false;
   return true;
 }

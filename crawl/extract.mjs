@@ -14,8 +14,17 @@ import { collapse, tier1 } from './normalise.mjs';
 /** Ticket 14: without this the new site's `<body>` and `<header>` are deleted. */
 const PARSE_OPTIONS = { closeAllByClosing: true };
 
-/** Ticket 02. A node that holds another of these is a container: the children speak. */
-const TEXT_TAGS = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,dt,dd,button,a,figcaption,th,td';
+/** Ticket 02, split by ticket 67. Each of these is a block, and a block is a unit. */
+const BLOCK_TAGS = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,dt,dd,figcaption,th,td';
+
+/**
+ * Ticket 67: a block folds these into its own text, because nobody edits a link
+ * apart from the sentence that holds it. Alone, each one is still a unit.
+ */
+const FOLDABLE = 'a,button';
+
+/** Every tag that can make a unit, in the one order the walk needs: document order. */
+const TEXT_TAGS = `${BLOCK_TAGS},${FOLDABLE}`;
 
 /**
  * Ticket 02, trimmed to what removes something, with `[class*="breadcrumb"]`
@@ -32,15 +41,19 @@ const CHROME = [
  *
  * Ticket 02 measured that the chrome list removes zero content units inside
  * `<main>`, and put the whole list on the fallback path. That measurement asked
- * whether a selector removes an *element* — and a `<style>` is not in
- * `TEXT_TAGS`, so the answer was correctly zero. It never asked whether the
- * **text inside** one bleeds into an ancestor that *is* in `TEXT_TAGS`.
+ * whether a selector removes an *element* — and a `<style>` is not a block, so the
+ * answer was correctly zero. It never asked whether the **text inside** one bleeds
+ * into an ancestor that *is* a unit.
  *
  * It does. Production nests a `<style>` and a `<script>` inside an `<a>`, and
- * that anchor holds no other content unit, so it is a leaf and `structuredText`
- * hands over the CSS and the JavaScript as content. Measured over the nl store:
- * **151 units on 23 of 179 pages**, each of them a `structure` finding that
- * no editor can act on.
+ * `structuredText` hands over the CSS and the JavaScript as content. Measured over
+ * the nl store **before ticket 67 folded inline links**: 151 units on 23 of 179
+ * pages, each of them a `structure` finding that no editor can act on.
+ *
+ * Ticket 67 widened the hole this closes rather than narrowing it. The anchor no
+ * longer has to be a leaf: the block that folds the anchor takes the CSS with the
+ * words. The count above is not carried over, because the fold moved the whole unit
+ * corpus, and no probe measures this counterfactual.
  *
  * `<template>` is deliberately **not** in this list. Its text is not in the
  * rendered document either, but the new site is Alpine-driven and a template
@@ -191,11 +204,14 @@ function removeExcludedRegions(scope, entries, where) {
  * engineering faults, so this fails the run instead of emitting findings an
  * editor cannot act on.
  *
- * Emptiness is absolute, never a ratio: `fotogalerij` holds 9 content units
- * against production's 178 and is a real page, so any threshold band is already
- * occupied. And emptiness counts images and links too — no text at all is a
- * legitimate shape for a photo page, while nothing at all is not. The
- * configurator scores 0 on all three.
+ * Emptiness is absolute, never a ratio: `fotogalerij` holds 47 content units
+ * against production's 163 and is a real page, so any threshold band is already
+ * occupied. It was 9 against 178 before the fold, and the gap is still wide.
+ * (Measured 2026-08-10 by `crawl/probes/probe-extract-v2.mjs`.)
+ *
+ * And emptiness counts images and links too. No text at all is a legitimate shape
+ * for a photo page, while nothing at all is not. The configurator scores 0 on all
+ * three.
  *
  * @param {import('../compare/contract.mjs').PageExtract} extract
  */
@@ -236,7 +252,7 @@ function walk(scope, pageUrl, hosts) {
   const byKey = new Map();
   let imagesWithoutSrc = 0;
 
-  /** Content units a heading above them already spoke for. */
+  /** Nodes a unit above them already spoke for. Ticket 67 widened this past headings. */
   const swallowed = new Set();
   let position = 0;
 
@@ -262,9 +278,10 @@ function walk(scope, pageUrl, hosts) {
     }
 
     const unit = contentUnit(node, tag, swallowed);
-    // A heading swallows the words of an anchor inside it, and never its target:
+    // A block swallows the words of an anchor inside it, and never its target:
     // the swallow rule is about what a unit **says**, and ticket 05 counts
-    // every anchor on the page.
+    // every anchor on the page. So a folded anchor makes no unit and still takes
+    // its own position for its link record.
     const link = tag === 'a' ? linkRecord(node, pageUrl, hosts) : null;
     if (!unit && !link) continue;
 
@@ -277,30 +294,34 @@ function walk(scope, pageUrl, hosts) {
 }
 
 /**
- * Ticket 02: every leaf content unit in document order, all anchors counted.
+ * One content unit: the block an editor edits, in document order.
+ *
+ * **A block folds its inline links** (ticket 67). Ticket 02 made a unit of every
+ * *leaf* in the tag list, and a node that held another node from the list was
+ * skipped, because "the children speak". `a` and `button` are in that list, so one
+ * inline link discarded its whole paragraph and only the link words were compared.
+ * A finding must map onto one decision, and nobody edits an anchor apart from the
+ * sentence that holds it. `docs/adr/0002-content-unit-is-the-editable-block.md`
+ * holds the decision and the rejected alternatives.
+ *
+ * **A nested block still breaks a unit.** An `li` gives way to a `p` inside it,
+ * because both are blocks and each is edited on its own.
  *
  * **A heading is never a container** (ticket 33). Production builds every FAQ
- * question as `<h4 class="panel-title"><a data-toggle="collapse" …>`, so under
- * the plain leaf rule the anchor spoke and the heading level was thrown away:
- * the unit read as a `cta` with no level, against a plain `<h3>` on the new
- * site. **337 units on 40 of 179 nl pages**, and ticket 33's new
- * `heading-level` class would have reported all of them naming the wrong
- * production unit.
+ * question as `<h4 class="panel-title"><a data-toggle="collapse" …>`, so under the
+ * leaf rule the anchor spoke and the heading level was thrown away: the unit read
+ * as a `cta` with no level, against a plain `<h3>` on the new site. Ticket 33 fixed
+ * the heading case alone, and ticket 67 made the general case behave like the case
+ * that was right. A heading keeps one rule of its own: it folds a nested **block**
+ * as well, because a heading is one label whatever markup is inside it.
  *
- * The rule is about headings rather than about accordions, because the same leaf
- * rule loses content outright on `<h2>Bekijk onze <a>carports</a> nu</h2>`: the
- * anchor was reported and the words around it disappeared. A heading is one
- * label, and its text is its own.
- *
- * **The mirror case is still lost, and stays lost here.** A container that is not
- * a heading and holds both a heading and loose text —
- * `<td>Levertijd <h4>Vraag</h4></td>` — gives up the loose words, because the
- * container is skipped for having a text tag inside it. To rescue them the leaf
- * rule would have to emit the direct text nodes of a container as a unit of
- * their own. That is a change to what a unit **is**, it moves the count on
- * every one of the 179 pages, and it needs its own measurement. Ticket 33 records
- * it and does not do it; `extract.test.mjs` pins the behaviour so the next reader
- * sees the limit instead of finding it.
+ * **The mirror case is still lost, and stays lost here.** A block that holds both a
+ * nested block and loose text — `<td>Levertijd <h4>Vraag</h4></td>` — gives up the
+ * loose words, because the outer block gives way to the inner one. To rescue them
+ * this rule would have to emit the direct text nodes of a block as a unit of their
+ * own. That is a change to what a unit **is** and it needs its own measurement.
+ * Ticket 33 records it, ticket 67 does not widen it, and `extract.test.mjs` pins the
+ * behaviour so the next reader sees the limit instead of finding it.
  *
  * @param {import('node-html-parser').HTMLElement} node
  * @param {string} tag
@@ -311,9 +332,9 @@ function contentUnit(node, tag, swallowed) {
   if (swallowed.has(node)) return null;
 
   const heading = /^h[1-6]$/.test(tag);
-  if (heading) {
-    for (const inner of node.querySelectorAll(TEXT_TAGS)) swallowed.add(inner);
-  } else if (node.querySelectorAll(TEXT_TAGS).length > 0) return null;
+  // A heading is one label and folds whatever is inside it. Every other block
+  // gives way to a nested block, so an `li` gives way to a `p` inside it.
+  if (!heading && node.querySelectorAll(BLOCK_TAGS).length > 0) return null;
 
   const raw = textOf(node);
   const norm = tier1(raw);
@@ -321,14 +342,38 @@ function contentUnit(node, tag, swallowed) {
   // Bullets, arrows and separators carry no content to compare.
   if (!/[\p{L}\p{N}]/u.test(norm)) return null;
 
+  // This unit spoke for everything inside it. Nothing inside speaks again.
+  for (const inner of node.querySelectorAll(TEXT_TAGS)) swallowed.add(inner);
+
   return {
     tag,
     // Ticket 02: `cta` is a label only. A link in body copy is counted too.
-    kind: heading ? 'heading' : (tag === 'a' || tag === 'button') ? 'cta' : 'text',
+    kind: heading ? 'heading' : isWhollyOneCta(node, tag, norm) ? 'cta' : 'text',
     level: heading ? Number(tag.slice(1)) : null,
     raw,
     norm,
   };
+}
+
+/**
+ * Ticket 67: a unit is a call to action when the whole unit is one link, and the
+ * tag that emitted it is not asked. The two sites wrap the same button
+ * differently — production puts `Vraag een offerte aan` in a `<p>`, the new site
+ * leaves a bare `<a>` — and `mayPair()` reads the kind, so a kind that came from
+ * the tag stopped the pair.
+ *
+ * Two links in one block make it text. Then the block is a sentence with links
+ * in it, and no single target belongs to the whole unit.
+ *
+ * @param {import('node-html-parser').HTMLElement} node
+ * @param {string} tag
+ * @param {string} norm  The tier-1 text of the whole unit.
+ * @returns {boolean}
+ */
+function isWhollyOneCta(node, tag, norm) {
+  if (tag === 'a' || tag === 'button') return true;
+  const inner = node.querySelectorAll(FOLDABLE);
+  return inner.length === 1 && tier1(textOf(inner[0])) === norm;
 }
 
 /**

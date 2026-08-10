@@ -20,8 +20,9 @@
 
 /**
  * The cap for an entry that declares none. No editable region on this site is
- * that large. The generic Magezon wrapper on production would have removed 358
- * units of 359 on `/downloads`. Nothing else in the pipeline reports that.
+ * that large. The generic Magezon wrapper on production holds the whole of
+ * `/downloads`: 190 content units on a page of 182 (2026-08-10, after the fold;
+ * 358 of 359 before it). Nothing else in the pipeline reports that.
  */
 export const DEFAULT_MAX_UNITS = 20;
 
@@ -33,8 +34,15 @@ export const DEFAULT_MAX_UNITS = 20;
  * part an author cannot raise: a region wider than this needs a new decision in
  * the ADR, not a larger number in the list.
  *
- * 100 is above the widest measured entry (50) and below the near-miss the ADR
+ * 100 is above the widest measured entry (50) and was below the near-miss the ADR
  * warns about (139 units on `/overkapping`).
+ *
+ * **The second half of that no longer holds.** Ticket 67 folded inline links, and a
+ * folded block is one unit where the parts were several. Re-measured on 2026-08-10,
+ * the same Magezon wrapper holds **91** units on `/overkapping`, under this ceiling
+ * instead of over it. The ceiling still excludes the wrapper on `/downloads` (190),
+ * and the number is not moved here: it is a decision of ticket 63 and ADR 0009, and
+ * it needs its own ticket with its own measurement. Written down, not solved.
  */
 export const ABSOLUTE_MAX_UNITS = 100;
 
@@ -66,6 +74,9 @@ export const EXCLUDED_REGIONS = [
       + 'Daardoor leek productie negen tegels kwijt die het nooit had.',
     // Measured 2026-08-07 by `crawl/probes/probe-excluded-regions.mjs`. One match
     // on each host, on all three pages, with the same count on all three.
+    // Re-measured 2026-08-10 after ticket 67 folded inline links: both counts are
+    // unchanged. The grid holds tile titles and filter labels, and each of those is
+    // already one block with one link in it.
     measured: {
       pages: ['overkapping', 'carport', 'veranda'],
       production: 50,
@@ -104,25 +115,28 @@ export const EXCLUDED_REGIONS = [
       + 'geen vaste tekst. Het anker is dus campagnespecifiek: de volgende '
       + 'campagne heeft andere ids, deze regel past dan niet meer, en de banner '
       + 'komt terug als bevindingen. Deze lijst heeft een eigenaar nodig.',
-    // Measured 2026-08-07 by `crawl/probes/probe-promo-banner.mjs`. Two matches on
-    // production — the desktop and the mobile version of one banner — on every
-    // page, in every store, and zero matches on the new site. `production: 9` is
-    // the nl count; the five other stores remove 8. The new side is 0 because the
+    // Measured 2026-08-07 by `crawl/probes/probe-promo-banner.mjs` and re-measured
+    // 2026-08-10 after ticket 67 folded inline links. Two matches on production —
+    // the desktop and the mobile version of one banner — on every page, in every
+    // store, and zero matches on the new site. `production: 8` is the nl count; the
+    // five other stores remove 7. The fold took one unit off each: the banner holds
+    // a line of copy with the campaign link inside it. The new side is 0 because the
     // banner is not there, which is what `legacy-only` means.
     measured: {
       pages: ['carport', 'terrasoverkapping', '(home)'],
-      production: 9,
+      production: 8,
       new: 0,
     },
-    // The whole corpus removes 8, 9 or 18 units, and nothing else
-    // (`crawl/probes/probe-promo-banner-corpus.mjs`, 446 of 448 pages). 18 is
-    // three nl pages that carry the **same** block twice: `glazen-schuifwand`,
-    // `shading-panel` and `steel-look-glazen-schuifwand`, at 4 matches of 9.
+    // The whole corpus removes 7, 8 or 16 units, and nothing else
+    // (`crawl/probes/probe-promo-banner-corpus.mjs`, 2026-08-10, 811 of 816
+    // comparable pages; the other five hold no banner). 16 is three nl pages that
+    // carry the **same** block twice: `glazen-schuifwand`, `shading-panel` and
+    // `steel-look-glazen-schuifwand`, at 4 matches of 8.
     //
     // So the default cap of 20 would hold today and fail on a third placement,
     // and a correct selector must not stop the crawl. 30 allows three placements.
-    // It is far below the wrong-selector sizes the cap defends against: the
-    // generic Magezon wrapper holds 139 units on `/overkapping` and 358 on
+    // It is still far below the wrong-selector sizes the cap defends against: the
+    // generic Magezon wrapper holds 91 units on `/overkapping` and 190 on
     // `/downloads`.
     maxUnits: 30,
   },

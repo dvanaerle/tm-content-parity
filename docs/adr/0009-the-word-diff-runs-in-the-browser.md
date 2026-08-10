@@ -65,7 +65,10 @@ for the reason `CONTEXT.md` retires the word "changed": the tool cannot know tha
 - The cap number rests on a corpus measured **before** ticket 67 folds inline links, so
   it understates the sizes that will exist. The words the leaf rule discards are in no
   stored file, so the post-fold sizes cannot be measured until the crawl is re-run.
-  Ticket 68 carries that re-measurement as its own criterion.
+  Ticket 68 carries that re-measurement as its own criterion. The fold shipped on
+  2026-08-10, so the block on that measurement is lifted: the nl store went from 9,293
+  production units to 7,424 on the same 179 pages, and one `/overkapping` paragraph
+  went from 35 compared characters to 1,232.
 - `DiffSpan` gains a fourth type, `uncompared`. A consumer that does not know the type
   renders text rather than failing, and `spansFor` is unchanged.
 - The trim must be provably a speed-up and nothing else, so the test that matters is

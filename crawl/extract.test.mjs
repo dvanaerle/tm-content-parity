@@ -104,11 +104,12 @@ describe('the content boundary', () => {
   });
 
   it('does not read a nested <style> or <script> as content', () => {
-    // Production nests both inside an `<a>`, and that anchor holds no other content
-    // unit, so it is a leaf and `structuredText` handed over the CSS as copy.
-    // 151 units on 23 of 179 nl pages. Ticket 02 put the chrome list on the
-    // fallback path only, having measured that it removes no *element* inside
-    // `<main>` — which is true, and misses this.
+    // Production nests both inside an `<a>`, and `structuredText` handed over the
+    // CSS as copy: 151 units on 23 of 179 nl pages, measured before ticket 67
+    // folded inline links. Ticket 02 put the chrome list on the fallback path only,
+    // having measured that it removes no *element* inside `<main>` — which is true,
+    // and misses this. After the fold the block that folds the anchor takes the CSS
+    // as well, so the guard covers more than it did.
     const extract = extractPage(page(
       '<a href="/carport">'
       + '<style>.product-image-container-9656 { width: 480px; }</style>'
@@ -170,11 +171,40 @@ describe('content units', () => {
     ]);
   });
 
-  it('counts every anchor, not only the ones that look like a button', () => {
+  it('folds an inline link into the paragraph that holds it', () => {
+    // The loss ticket 67 measured: 62 blocks and about 3,400 words of body copy
+    // on 10 of 10 pages, because one inline link discarded its whole block.
+    const extract = extractPage(page(
+      '<p>Onze <a href="/carport">carports</a> zijn van 6063-T6 aluminium.</p>',
+    ), CONTEXT);
+    expect(extract.elements.map((unit) => [unit.tag, unit.kind, unit.raw])).toEqual([
+      ['p', 'text', 'Onze carports zijn van 6063-T6 aluminium.'],
+    ]);
+  });
+
+  it('folds a button as well as an anchor, and two links make the block text', () => {
+    // A block is a call to action only when the **whole** block is one link. Two
+    // links make it a sentence with links in it, and no one target is the unit's.
+    const extract = extractPage(page(
+      '<p><button>Vraag een offerte aan</button></p>'
+      + '<li>Kies <a href="/wit">wit</a> of <a href="/grijs">grijs</a></li>',
+    ), CONTEXT);
+    expect(extract.elements.map((unit) => [unit.tag, unit.kind, unit.raw])).toEqual([
+      ['p', 'cta', 'Vraag een offerte aan'],
+      ['li', 'text', 'Kies wit of grijs'],
+    ]);
+  });
+
+  it('gives a wrapped anchor and a bare anchor one kind', () => {
+    // Ticket 67 inverted this test. It pinned the leaf rule: the `<p>` was
+    // skipped for holding an `a`, so the anchor made a unit of its own and both
+    // units read `cta` from their tag. Now the block speaks. `kind` reads the
+    // content instead of the tag, so the two shapes of one call to action still
+    // pair, and one `copy` row does not become two one-sided rows.
     const extract = extractPage(page('<p><a href="/carport">Lees over carports</a></p><a class="btn" href="/offerte">Offerte</a>'), CONTEXT);
-    expect(extract.elements.map((unit) => [unit.kind, unit.raw])).toEqual([
-      ['cta', 'Lees over carports'],
-      ['cta', 'Offerte'],
+    expect(extract.elements.map((unit) => [unit.tag, unit.kind, unit.raw])).toEqual([
+      ['p', 'cta', 'Lees over carports'],
+      ['a', 'cta', 'Offerte'],
     ]);
   });
 
@@ -196,11 +226,13 @@ describe('content units', () => {
 
   it('reads a heading that wraps an accordion anchor as the heading', () => {
     // Ticket 33. Production builds every FAQ question as
-    // `<h4 class="panel-title"><a data-toggle="collapse" …>`, so the anchor is
+    // `<h4 class="panel-title"><a data-toggle="collapse" …>`, so the anchor was
     // the leaf and the heading level was thrown away: the unit read as a
     // `cta` with no level, against a plain `<h3>` on the new site. 337 units
-    // on 40 of 179 nl pages, and it was about to be reported as 330 `a` → `h3`
-    // heading-level findings that name the wrong production unit.
+    // on 40 of 179 nl pages, measured before ticket 67, and it was about to be
+    // reported as 330 `a` → `h3` heading-level findings that name the wrong
+    // production unit. Ticket 67 gave every block the rule the heading had, so this
+    // is no longer the exception it was.
     const extract = extractPage(page(
       '<div class="panel-heading"><h4 class="panel-title">'
       + '<a data-toggle="collapse" href="#question3890">Is mijn product op voorraad?</a>'
@@ -241,8 +273,8 @@ describe('content units', () => {
   });
 
   it('leaves the anchor in the link list when the heading swallows its text', () => {
-    // The links walk is its own pass over `a[href]` and ticket 05 owns it. A
-    // heading that wraps a real navigational link must still report the link.
+    // Ticket 05 owns the links, and the swallow rule is about what a unit says.
+    // A heading that wraps a real navigational link must still report the link.
     const extract = extractPage(page('<h2><a href="/carport">Carports</a></h2>'), CONTEXT);
     expect(extract.elements.map((unit) => unit.tag)).toEqual(['h2']);
     expect(extract.links.map((record) => record.text)).toEqual(['Carports']);
@@ -347,6 +379,17 @@ describe('one document-order walk', () => {
     expect(extract.elements.map((unit) => [unit.index, unit.raw]))
       .toEqual([[0, 'Bekijk onze carports nu']]);
     expect(extract.links.map((link) => [link.index, link.key])).toEqual([[1, 'self/carports']]);
+  });
+
+  it('still counts a folded anchor as a link, at its own position', () => {
+    // Ticket 67. The paragraph speaks for the words, and the anchor takes the
+    // next position for its target alone. The links check compares targets and
+    // the fold does not touch it.
+    const extract = extractPage(page('<p>Onze <a href="/carport">carports</a> zijn sterk</p>'), CONTEXT);
+
+    expect(extract.elements.map((unit) => [unit.index, unit.tag])).toEqual([[0, 'p']]);
+    expect(extract.links.map((link) => [link.index, link.key, link.text]))
+      .toEqual([[1, 'self/carport', 'carports']]);
   });
 
   it('takes no position for an image with no identity', () => {
@@ -705,7 +748,9 @@ describe('the promo banner entry', () => {
     const extract = only(`<h1>Kop</h1>${editorial}`);
 
     expect(extract.diagnostics.regionsExcluded).toEqual([]);
-    expect(extract.elements.map((unit) => unit.raw)).toContain('Authentiek');
+    // Ticket 67: the words are in the paragraph that holds the link, not in a
+    // unit of their own. The link keeps its own record either way.
+    expect(extract.elements.map((unit) => unit.raw)).toContain('Kies een model: Authentiek.');
     expect(extract.links.map((link) => link.text)).toContain('Authentiek');
   });
 
@@ -715,9 +760,9 @@ describe('the promo banner entry', () => {
   });
 
   it('allows three placements of one small block, and no more', () => {
-    // Three nl pages carry the same banner twice, at 18 units. A correct selector
-    // must not stop the crawl, and 30 is still far below the 139 units the generic
-    // wrapper holds on `/overkapping`.
+    // Three nl pages carry the same banner twice, at 16 units. A correct selector
+    // must not stop the crawl, and 30 is still far below the 91 units the generic
+    // wrapper holds on `/overkapping` (2026-08-10, after the fold).
     expect(capFor(BANNER[0])).toBe(30);
     expect(capFor(BANNER[0])).toBeGreaterThan(2 * BANNER[0].measured.production);
     expect(capFor(BANNER[0])).toBeLessThan(4 * BANNER[0].measured.production);

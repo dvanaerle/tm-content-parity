@@ -57,3 +57,20 @@ product-spec regression — production says `6063-T6`, the new site says `6036-T
   folded block is about 380 tokens on each side.
 - A production block that the new site splits in two gives one `copy` row and one
   `text-added` row. Accepted for now. Many-to-one matching waits for a measurement.
+
+## What it measured when it shipped, 2026-08-10
+
+- The nl store went from **9,293** production content units to **7,424** on the same
+  179 pages, and the new site from 6,855 to 6,486. A fifth of production's units were
+  fragments of a block (`crawl/probes/probe-extract-v2.mjs`).
+- The `/overkapping` paragraph this decision is named after is **one** `<p>` on each
+  side, 190 words against 188, and the `6063-T6` against `6036-T6` regression is
+  reported as a shown `copy` finding. The log compared 35 characters of it before and
+  compares 1,232 now (`crawl/probes/probe-overkapping-fold.mjs`).
+- Seven live judgements of 33 detached, all on `nl`: four dismissals and three fix
+  claims. No page review went stale and no muted class moved
+  (`crawl/probes/probe-fold-detachment.mjs`, run before the extractor changed).
+- One consequence was not foreseen. `ABSOLUTE_MAX_UNITS` was justified as sitting below
+  a near-miss of 139 units on `/overkapping`; the fold takes that near-miss to 91,
+  under the ceiling. The ceiling is ticket 63's decision and is not moved here. See the
+  comment on it in `shared/excluded-regions.mjs`.

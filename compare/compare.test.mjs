@@ -17,6 +17,9 @@ let seq = 0;
  * @param {Partial<import('./contract.mjs').ContentUnit>} [overrides]
  */
 function unit(raw, overrides = {}) {
+  // The `kind` below reads the tag, and the extractor reads the content: after
+  // ticket 67 a `<p>` that holds nothing but one anchor is a `cta` too. There is no
+  // DOM here to ask, so a test that needs that shape passes `kind` itself.
   const tag = overrides.tag ?? 'p';
   const heading = /^h[1-6]$/.test(tag);
   return {
@@ -128,6 +131,15 @@ describe('mayPair', () => {
   it('refuses a heading against a button label', () => {
     expect(mayPair(unit('Kleuren', { tag: 'h2' }), unit('Kleuren', { tag: 'button' }))).toBe(false);
   });
+
+  it('permits a call to action against a block that is not wholly one link', () => {
+    // Ticket 67. Production wraps `Lees meer >` in a `<p>` and leaves the arrow
+    // outside the anchor, so the block is not wholly one link and reads `text`.
+    // The new site keeps a bare `<a>`, which reads `cta`. The kind now records
+    // how the unit is wrapped, and a wrapper is not an editorial fact. Refusing
+    // this pair made one `copy` row into two one-sided rows.
+    expect(mayPair(unit('Lees meer >', { tag: 'p' }), unit('Lees meer >', { tag: 'a' }))).toBe(true);
+  });
 });
 
 describe('classifyPair', () => {
@@ -186,8 +198,8 @@ describe('classifyPair', () => {
   });
 
   it('still reads the moved unit on two texts that are equal', () => {
-    // Only `tag-changed`. `mayPair` holds a leftover pair to one `kind` and one
-    // heading level, so no heading reaches this rule against a paragraph.
+    // Only `tag-changed`. `mayPair` holds a leftover pair to one heading level,
+    // so no heading reaches this rule against a paragraph.
     const text = 'Download de montagehandleiding';
     expect(classifyPair(unit(text, { tag: 'p' }), unit(text, { tag: 'td' }))).toBe('tag-changed');
   });
@@ -225,6 +237,21 @@ describe('diffRows', () => {
     expect(rows.map((row) => row.class)).toEqual(['tag-changed']);
   });
 
+  it('gives a call to action that is wrapped on one side only one row', () => {
+    // Ticket 67. Production folds `Lees meer >` into a `<p>` and leaves the arrow
+    // outside the anchor, so the block reads `text`; the new site keeps a bare
+    // `<a>`, which reads `cta`. While the kinds had to be equal to pair, this was
+    // one loss and one addition, and the reader had to find the two halves.
+    const rows = diffRows(
+      extract({ elements: [unit('Lees meer > over onze carports', { tag: 'p' })] }),
+      extract({ side: 'new', elements: [unit('Lees meer over onze carports', { tag: 'a' })] }),
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].class).toBe('restructured');
+    expect(rows[0].prod?.raw).toBe('Lees meer > over onze carports');
+    expect(rows[0].new?.raw).toBe('Lees meer over onze carports');
+  });
+
   it('keeps production document order and places an addition in place', () => {
     expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
       'Overkappingen',
@@ -236,8 +263,8 @@ describe('diffRows', () => {
 
   // Ticket 34. A new-only row used to sort by its index in the **new** document
   // against **production** indices. The two index spaces only coincide while the
-  // documents are about the same length, and on `fotogalerij` production holds 178
-  // content units against the new site's 9.
+  // documents are about the same length, and on `fotogalerij` production holds 163
+  // content units against the new site's 47 (2026-08-10, after the fold).
   const LONG = [
     'Overkappingen', 'Aluminium profielen', 'Glazen dak', 'Zonwering', 'Montage',
     'Levertijd', 'Garantie', 'Kleuren en RAL', 'Onderhoud', 'Contact',

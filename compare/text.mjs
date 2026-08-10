@@ -54,7 +54,8 @@ export const PROMO = /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\
  * question that has no answer. Equal text is the unit rule's question, so it
  * is handed over.
  *
- * `mayPair()` holds a leftover pair to one `kind` and one heading level, so the
+ * `mayPair()` holds a leftover pair to one heading level, and after ticket 67 it
+ * permits `cta` against `text`. A heading still pairs with a heading only, so the
  * only class that arrives here from the unit rule is `tag-changed`.
  *
  * @param {import('./contract.mjs').ContentUnit} prod
@@ -82,8 +83,13 @@ const isHeading = (unit) => unit.kind === 'heading';
  *
  * Ticket 33. The LCS anchors on `norm` alone. So before this rule existed a
  * heading demoted from `h2` to `h3` was an exact match that emitted nothing —
- * **762 units on 80 nl pages**, 467 of them a heading-level change. It is the
- * one rule in spec 32 that turns a silent match into a finding.
+ * 762 units on 80 nl pages, 467 of them a heading-level change, measured by
+ * `crawl/probes/probe-tag-changes.mjs` **before ticket 67 folded inline links**.
+ * That probe reads `data/extract/`, and the fold took production from 9,293 units
+ * to 7,424 on the same 179 pages, so the number is history and not a count of
+ * today. It is the one rule in spec 32 that turns a silent match into a finding,
+ * and the fold does not weaken the reason for it: a folded block still carries the
+ * tag it was emitted from.
  *
  * A heading on either side makes it `heading-level`, and it is shown. The outline
  * is what a reader and a search engine navigate by. Two non-headings make it
@@ -212,15 +218,19 @@ export function diffRows(production, next) {
  * **Ticket 34 fixes the defect here.** A new-only row used to sort on its index in
  * the *new* document, compared against *production* indices. The two index spaces
  * only coincide while the two documents are about the same length, and on
- * `fotogalerij` production holds 178 content units against the new site's 9 — so
+ * `fotogalerij` production holds 163 content units against the new site's 47
+ * (2026-08-10, after the fold; 178 against 9 before it) — so
  * an addition that belongs at the foot of the page sorted near the top. The rule
  * is instead: **anchor a new-only row to the production position of the nearest
  * matched pair before it**, which is the last place the two documents agreed.
  *
  * Two cases have no pair before them. An addition above the **first** agreement is
  * anchored just before that agreement, not at the top of the page: on `fotogalerij`
- * the first agreement is production unit 170, and the top of production is not
- * where the new site's opening block belongs. And when the two documents agree
+ * the first agreement is production unit 21, and the top of production is not
+ * where the new site's opening block belongs. It was unit 170 before the fold. The
+ * fold gave the new site 47 units where it had 9, so the two documents agree in 15
+ * places instead of one. The rule does not change. The case it defends against is
+ * smaller. And when the two documents agree
  * **nowhere**, there is no position to claim, so the additions follow the whole of
  * production — a wholly rebuilt page reads as production first, then the new site.
  *

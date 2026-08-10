@@ -30,15 +30,22 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * content outline and the diff input. It is one structure, not two. `CONTEXT.md`
  * gives the word and `docs/adr/0002` gives the decision.
  *
- * Ticket 66 moved the name only. The unit is still one leaf element here, so an
- * inline `a` still breaks the block that holds it. Ticket 67 makes it fold.
+ * Ticket 67: a unit is a block, and a block folds the `a` and the `button` inside
+ * it. A nested block still breaks it. So a unit is no longer one HTML element, and
+ * one element is no longer at most one unit.
  *
  * @typedef {object} ContentUnit
  * @property {number} index         Position in document order. Ticket 34 put text,
  *                                  images and links on **one** counter, so this is
  *                                  no longer the position in `elements` as well.
- * @property {string} tag
- * @property {'heading' | 'text' | 'cta'} kind  `cta` is a label only. All anchors count.
+ *                                  A folded anchor makes no unit and keeps its own
+ *                                  position for its link record.
+ * @property {string} tag           The tag that emitted the unit, which is the block,
+ *                                  never a tag the block folded.
+ * @property {'heading' | 'text' | 'cta'} kind  `cta` is a label only, and ticket 67
+ *                                  derives it from the content: a unit whose whole
+ *                                  text is one anchor or one button, whatever tag
+ *                                  emitted it. All anchors still count.
  * @property {number | null} level  1 to 6 for a heading, else null.
  * @property {string} raw
  * @property {string} norm          Tier-1 text. Letter case and trailing punctuation stay.

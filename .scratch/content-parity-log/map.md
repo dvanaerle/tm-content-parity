@@ -1047,9 +1047,18 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   [68 the clamp](issues/68-the-content-view-clamps-a-tall-row.md),
   [69 one viewport](issues/69-one-canonical-viewport.md),
   [70 shared regions](issues/70-shared-regions-by-content-hash.md).
-  61, 62, 63, 64, 65 and 66 are resolved. 67 rebuilds every report and detaches
-  overrides, so it does not ship before 65 gives the number. 70 needs the new
-  environment, which answered HTTP 500 on all six hosts while this was written.
+  61, 62, 63, 64, 65, 66 and 67 are resolved. 70 needs the new environment, which
+  answered HTTP 500 on all six hosts while this was written.
+
+  **67 is resolved**, 2026-08-10. A content unit is a block, and a block folds the
+  `a` and the `button` inside it; a nested block still breaks it. The nl store went
+  from **9,293** production units to **7,424** on the same 179 pages, so a fifth of
+  production's units were fragments. The `/overkapping` paragraph the ticket is named
+  after is one `<p>` on each side and the `6036-T6` regression is a shown `copy`
+  finding, where the log used to compare 35 of its 1,232 characters. Seven live
+  judgements of 33 detached, all on `nl`, and the dated note goes out with it. It also
+  put `ABSOLUTE_MAX_UNITS` in question: the near-miss that justified the ceiling of
+  100 now measures 91. That needs a ticket.
 
   **61 is resolved**, 2026-08-07, and it removed **no finding**. `tier1()` now
   folds a hexadecimal entity like a decimal one, removes the soft hyphen and the
