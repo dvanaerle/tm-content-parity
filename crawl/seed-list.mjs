@@ -12,6 +12,7 @@
  * an editor of the French store saw one page in four (ticket 50).
  */
 
+import { HOME, unanchoredKey, unsafeReason } from '../shared/page-key.mjs';
 import { STORES } from '../shared/stores.mjs';
 
 /** @typedef {import('../shared/stores.mjs').Store} Store */
@@ -194,27 +195,21 @@ export const provenanceOf = ({ changefreq }) =>
  * **unanchored**: it is a page of its own store, and it is keyed on its store
  * and its path. More than half of the pages are of the second kind.
  *
- * The sentinel is a parenthesis, never a colon. `(home)` has carried the home
- * row since ticket 04 and it survives the Windows filesystem, the report
- * filename and the static route; a colon is the NTFS alternate-data-stream
- * separator and breaks all three (ticket 54).
- *
- * The store roots are the home row, whatever they declare. Measured: `be/` and
- * `de/` declare no alternate at all, and `be/fr/` and `fr/` declare each other
- * and no Dutch page. The alternate rule alone would make four one-store rows out
- * of one page and detach every finding stored against `(home)`. Only `nl/` and
- * `co.uk/` carry an `nl-NL` alternate and would find the home row on their own.
+ * `shared/page-key.mjs` owns the shape: the sentinel is a parenthesis, the store
+ * roots are the home row whatever they declare, and `unsafeReason()` says which
+ * characters a key may not hold. This function is the producer, and it is the
+ * only other place that writes the form.
  *
  * @param {{ store: Store, path: string, alternates?: Record<string, string> }} input
  * @returns {string}
  */
 export function pageKey({ store, path, alternates = {} }) {
-  if (path === homePath(store)) return '(home)';
+  if (path === homePath(store)) return HOME;
 
   const nl = store === 'nl' ? `${NL_PREFIX}${path}` : alternates['nl-NL'];
-  if (nl?.startsWith(NL_PREFIX)) return nl.slice(NL_PREFIX.length) || '(home)';
+  if (nl?.startsWith(NL_PREFIX)) return nl.slice(NL_PREFIX.length) || HOME;
 
-  return `(${store})${path}`;
+  return unanchoredKey(store, path);
 }
 
 /** The new site is a host swap of production. Nothing else changes. */
@@ -418,7 +413,8 @@ export function schemaDisagreements(seeds) {
       said.push('a row has no `page`');
       continue;
     }
-    if (row.page.includes(':')) said.push(`${row.page}: a colon is not a safe page key`);
+    const unsafe = unsafeReason(row.page);
+    if (unsafe) said.push(`${row.page}: ${unsafe}`);
     if (seen.has(row.page)) said.push(`${row.page}: two rows hold this key`);
     seen.add(row.page);
 

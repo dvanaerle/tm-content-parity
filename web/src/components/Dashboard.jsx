@@ -4,6 +4,7 @@ import { LogBanner } from './Progress.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { useStoreOverrides } from '../lib/overrides.mjs';
+import { pageHref } from '../lib/page-url.mjs';
 import { pagesWithClasses, toggleIn } from '../lib/view.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
@@ -148,7 +149,7 @@ export default function Dashboard({
             {rows.map((page) => (
               <tr key={`${page.store}/${page.page}`} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                 <td className="px-4 py-2">
-                  <a className={`font-medium hover:underline ${CHROME.link}`} href={`/${page.store}/${page.page}/`}>
+                  <a className={`font-medium hover:underline ${CHROME.link}`} href={pageHref(page.store, page.page)}>
                     {page.page}
                   </a>
                   <span className="ml-2 text-xs text-slate-400">{page.sides.production.units} blokken</span>
@@ -183,7 +184,7 @@ export default function Dashboard({
       >
         {oneSided.map((page) => (
           <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
-            <a className={`hover:underline ${CHROME.link}`} href={`/${page.store}/${page.page}/`}>{page.page}</a>
+            <a className={`hover:underline ${CHROME.link}`} href={pageHref(page.store, page.page)}>{page.page}</a>
             <span className="text-slate-500">{page.skipReason}</span>
           </li>
         ))}

@@ -80,6 +80,24 @@ Spec 50 rewrites `crawl/`, and it opens both files, so that is the change that
 moves them. Ticket 47 scoped itself to `keys.mjs`, thus this record names the debt
 rather than hiding it.
 
+### The two rows are closed, 2026-08-10
+
+Ticket 54 opened `web/src/lib/reports.mjs`, which is the condition this record
+set. `crawl/excluded-pages.mjs` is `shared/excluded-pages.mjs` and
+`crawl/seed-rows.mjs` is `shared/seed-rows.mjs`. Nine importers changed and no
+count moved, which is what a move must do.
+
+`compare/vocabulary.mjs` and `compare/worddiff.mjs` are still where they were.
+They break no arrow, so the rule above applies unchanged: they move when a change
+has a reason to open them.
+
+### A fourth resident, 2026-08-10
+
+`shared/page-key.mjs` was born here for the same reason `excluded-regions.mjs`
+was. `crawl/seed-list.mjs` produces the page key and `compare/` asks whether
+production declares a Dutch counterpart for it, so two stages read one pure rule
+and `crawl/` cannot import `compare/`.
+
 ### A third resident, 2026-08-07
 
 Ticket 63 needed a new list of the same shape: the regions that leave the log.

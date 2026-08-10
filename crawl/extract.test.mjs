@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ABSOLUTE_MAX_UNITS, DEFAULT_MAX_UNITS, EXCLUDED_REGIONS, REGION_KINDS, capFor, validateRegions,
 } from '../shared/excluded-regions.mjs';
-import { exclusionReason, isExcludedPage } from './excluded-pages.mjs';
+import { exclusionReason, isExcludedPage } from '../shared/excluded-pages.mjs';
 import { extractPage, pageType, toMarkdown } from './extract.mjs';
 import { failuresFilename } from './21-crawl-store.mjs';
 import { imageKey, linkKey } from '../shared/keys.mjs';
@@ -132,7 +132,7 @@ describe('the content boundary', () => {
     // The whole of <main> on the new site's veranda-configurator.
     const mount = '<div id="configurator-root" data-url-key="veranda"></div>';
     expect(() => extractPage(page(mount), CONTEXT))
-      .toThrow(/application page that\s+belongs in crawl\/excluded-pages\.mjs/);
+      .toThrow(/application page that\s+belongs in shared\/excluded-pages\.mjs/);
   });
 
   it('leaves a page with images and no text alone, because a photo page is a real page', () => {

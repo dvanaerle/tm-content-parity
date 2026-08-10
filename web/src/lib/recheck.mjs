@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { chooseReport } from './recheck-choice.mjs';
+import { recheckPath } from './page-url.mjs';
 
 /** A local service answers in milliseconds. Anything slower is not one. */
 const PROBE_TIMEOUT_MS = 1500;
@@ -43,15 +44,16 @@ export function useRecheckAvailable() {
 }
 
 /**
- * A page key can hold a slash (`faq/productinformatie`), so the rest of the path
- * is the page. The service parses it the same way.
+ * `recheckPath()` builds the path and the service parses it the same way, so a
+ * key that holds a slash stays two segments and a key that holds anything else is
+ * encoded (ticket 54).
  *
  * @param {string} store
  * @param {string} page
  * @returns {Promise<import('../../../compare/contract.mjs').PageReport>}
  */
 export async function recheckPage(store, page) {
-  const response = await fetch(`/api/recheck/${store}/${page}`, { method: 'POST' });
+  const response = await fetch(recheckPath(store, page), { method: 'POST' });
   const body = await response.json().catch(() => null);
 
   if (!response.ok) {
@@ -77,7 +79,7 @@ export async function recheckPage(store, page) {
  */
 export async function savedRecheck(store, page) {
   try {
-    const response = await fetch(`/api/recheck/${store}/${page}`);
+    const response = await fetch(recheckPath(store, page));
     if (!response.ok) return null;
     return await response.json();
   } catch {

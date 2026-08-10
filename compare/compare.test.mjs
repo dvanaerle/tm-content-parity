@@ -1028,6 +1028,55 @@ describe('comparePage', () => {
     expect(report.skipReason).toBeTruthy();
   });
 
+  it('says that production declares no alternate for an unanchored page', () => {
+    // `CONTEXT.md`: "no NL page" and "no declared alternate" are two different
+    // things, and the log must not name the second as the first. This is the
+    // second, and it is a defect of the sitemap metadata.
+    const report = comparePage({
+      sides: {
+        production: extract({ store: 'fr', page: '(fr)heavy-duty-veranda' }),
+        new: extract({ store: 'fr', page: '(fr)heavy-duty-veranda', side: 'new' }),
+      },
+    });
+    const finding = report.findings.find((one) => one.class === 'no-declared-alternate');
+    expect(finding).toMatchObject({ check: 'meta', prod: null, new: null });
+  });
+
+  it('says it on a one-sided page too, because the alternate is missing either way', () => {
+    const report = comparePage({
+      sides: {
+        production: extract({ store: 'fr', page: '(fr)heavy-duty-veranda', status: 404 }),
+        new: extract({ store: 'fr', page: '(fr)heavy-duty-veranda', side: 'new' }),
+      },
+    });
+    expect(report.comparable).toBe(false);
+    expect(report.findings.map((one) => one.class)).toEqual(['no-declared-alternate']);
+  });
+
+  it('says nothing about the alternate on a page production declares in Dutch', () => {
+    const report = comparePage({
+      sides: { production: extract({}), new: extract({ side: 'new' }) },
+    });
+    expect(report.findings.map((one) => one.class)).not.toContain('no-declared-alternate');
+  });
+
+  it('leaves the bar alone, because the metadata is not a content difference', () => {
+    // A hidden class is out of the denominator (ticket 09) and out of the
+    // find-set hash (ticket 09 again), so 96 of the 123 French pages do not each
+    // arrive carrying an open finding an editor cannot close.
+    const anchored = comparePage({
+      sides: { production: extract({}), new: extract({ side: 'new' }) },
+    });
+    const unanchored = comparePage({
+      sides: {
+        production: extract({ store: 'fr', page: '(fr)heavy-duty-veranda' }),
+        new: extract({ store: 'fr', page: '(fr)heavy-duty-veranda', side: 'new' }),
+      },
+    });
+    expect(unanchored.summary.shown).toBe(anchored.summary.shown);
+    expect(unanchored.findingSetHash).toBe(anchored.findingSetHash);
+  });
+
   it('holds rows as unit indices, not copies of the text', () => {
     const report = comparePage({
       sides: {

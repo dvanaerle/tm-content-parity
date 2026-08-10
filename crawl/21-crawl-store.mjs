@@ -16,8 +16,8 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { exclusionReason, isExcludedPage } from './excluded-pages.mjs';
-import { cellWithBothSides } from './seed-rows.mjs';
+import { exclusionReason, isExcludedPage } from '../shared/excluded-pages.mjs';
+import { cellWithBothSides } from '../shared/seed-rows.mjs';
 import { MaintenanceError } from './fetch-page.mjs';
 import { extractStorePage } from './20-extract.mjs';
 

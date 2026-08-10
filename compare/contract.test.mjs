@@ -101,6 +101,27 @@ describe('reportFilename', () => {
   it('round-trips the store it wrote', () => {
     expect(storeOfFile(reportFilename('be_fr', 'carports'))).toBe('be_fr');
   });
+
+  it('keeps the unanchored sentinel, which a Windows filename may hold', () => {
+    // The parenthesis is the sentinel because it survives all three writers. A
+    // colon would not: it is the NTFS alternate-data-stream separator. More than
+    // half of the pages carry this shape (ticket 53).
+    expect(reportFilename('fr', '(fr)heavy-duty-veranda')).toBe(
+      'fr__(fr)heavy-duty-veranda.json'
+    );
+    expect(reportFilename('be_fr', '(be_fr)fr/pergola')).toBe(
+      'be_fr__(be_fr)fr__pergola.json'
+    );
+  });
+
+  it('takes the store from the name it wrote, never from the sentinel', () => {
+    // `(be_fr)fr/pergola` names `be_fr` in the sentinel and `fr` in its path, and
+    // the store of the report is neither of those readings: it is the store the
+    // crawl wrote. A reader that parsed the sentinel would file `be`'s French
+    // pages under `fr` and the two dashboards would disagree.
+    expect(storeOfFile(reportFilename('be_fr', '(be_fr)fr/pergola'))).toBe('be_fr');
+    expect(storeOfFile(reportFilename('fr', '(fr)heavy-duty-veranda'))).toBe('fr');
+  });
 });
 
 /**
@@ -135,10 +156,12 @@ describe('FINDING_CLASSES', () => {
     }
   });
 
-  it('is closed at 21 classes', () => {
+  it('is closed at 22 classes', () => {
     // Ticket 33 took it from 18 to 21: `structure` out, `text-missing`,
-    // `text-added`, `heading-level` and `tag-changed` in.
-    expect(Object.keys(FINDING_CLASSES).length).toBe(21);
+    // `text-added`, `heading-level` and `tag-changed` in. Ticket 54 added the
+    // twenty-second, `no-declared-alternate`, and it is the first `meta` class:
+    // `CHECKS` had declared the check since ticket 08 with nothing using it.
+    expect(Object.keys(FINDING_CLASSES).length).toBe(22);
   });
 
   it('has retired structure', () => {

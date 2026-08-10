@@ -2,7 +2,7 @@
 // Both sides, plain fetch, concurrency 8. Records every throw, so a page that
 // the extractor cannot read is visible instead of silent.
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
-import { isExcludedPage } from '../excluded-pages.mjs';
+import { isExcludedPage } from '../../shared/excluded-pages.mjs';
 import { extractPage } from '../extract.mjs';
 import { fetchPage } from '../fetch-page.mjs';
 

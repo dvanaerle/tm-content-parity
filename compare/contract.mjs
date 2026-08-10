@@ -118,7 +118,10 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  *                                  production declares in Dutch, and `(store)path` on
  *                                  a page with no `nl-NL` alternate. More than half of
  *                                  the pages are of the second kind (ticket 53). Every
- *                                  reader treats it as an opaque string.
+ *                                  reader treats it as an opaque string, with one named
+ *                                  exception: `shared/page-key.mjs` owns the shape, and
+ *                                  it is where `crawl/` writes the form and `compare/`
+ *                                  reads it back (ticket 54).
  * @property {Side} side
  * @property {string} url
  * @property {number} status

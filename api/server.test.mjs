@@ -40,6 +40,16 @@ describe('the re-check endpoint', () => {
     expect(body).toMatchObject({ store: 'nl', page: 'faq/productinformatie' });
   });
 
+  it('reads the key of a page that production declares in no Dutch alternate', async () => {
+    // More than half of the pages are of this shape (ticket 53). The parenthesis
+    // needs no percent encoding, which is why it is the sentinel, so the path the
+    // browser builds arrives unchanged. `web/src/lib/page-url.test.mjs` pins the
+    // same two literals from the sending side.
+    const handle = createApi({ recheck: async (store, page) => ({ store, page }) });
+    const { body } = await call(handle, '/api/recheck/fr/(fr)heavy-duty-veranda');
+    expect(body).toMatchObject({ store: 'fr', page: '(fr)heavy-duty-veranda' });
+  });
+
   it('refuses on maintenance mode rather than answering with findings', async () => {
     // Ticket 04: a run that records the maintenance page records phantom defects.
     const handle = createApi({

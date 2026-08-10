@@ -206,7 +206,7 @@ function assertHasContent(extract) {
   throw new Error(
     'No text, image or link inside the content boundary on an HTTP 200 page. '
     + 'Either the parse is broken, or this is an application page that '
-    + 'belongs in crawl/excluded-pages.mjs.'
+    + 'belongs in shared/excluded-pages.mjs.'
   );
 }
 

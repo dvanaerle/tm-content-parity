@@ -14,6 +14,7 @@
 
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { unanchoredStore } from '../shared/page-key.mjs';
 import { findingSetHash, newObservationId, reportFilename } from './contract.mjs';
 import { FindingCollector, summarise } from './findings.mjs';
 import { compareImages } from './images.mjs';
@@ -51,6 +52,30 @@ export function skipReason(production, next) {
 }
 
 /**
+ * What production's **sitemap metadata** says about the page, rather than what
+ * either page holds.
+ *
+ * An unanchored page has no `nl-NL` alternate, so production never says which
+ * Dutch page is its counterpart. That is a defect of the metadata and not a
+ * content difference, and `CONTEXT.md` insists the two are not named as one: the
+ * page is comparable on axis A, which needs no Dutch page, and it is absent from
+ * axis B by definition.
+ *
+ * It is emitted whether or not the page is comparable, because the alternate is
+ * missing either way. **No view states it yet.** `Ledger.jsx` renders the "not
+ * comparable" panel before any finding, so on a one-sided page nothing shows it,
+ * and on a comparable page it sits behind the hidden-class filter. The record has
+ * to exist before a view can read it; tickets 20 and 56 own that surface.
+ *
+ * @param {{ store: import('./contract.mjs').Store, page: string }} scope
+ * @param {FindingCollector} collector
+ */
+export function metadataFindings(scope, collector) {
+  if (!unanchoredStore(scope.page)) return;
+  collector.add({ class: 'no-declared-alternate', prod: null, new: null });
+}
+
+/**
  * @param {object} input
  * @param {{ production: import('./contract.mjs').PageExtract, new: import('./contract.mjs').PageExtract }} input.sides
  * @param {Set<string>} [input.newSitePaths]
@@ -66,21 +91,25 @@ export function comparePage({ sides, newSitePaths, statuses, observationId = new
   const reason = skipReason(production, next);
 
   if (reason) {
+    const collector = new FindingCollector(scope);
+    metadataFindings(scope, collector);
+    const metadata = collector.all();
     return {
       ...scope,
       sides,
       comparable: false,
       skipReason: reason,
-      findings: [],
+      findings: metadata,
       rows: [],
-      summary: summarise([]),
+      summary: summarise(metadata),
       observationId,
-      findingSetHash: findingSetHash([]),
+      findingSetHash: findingSetHash(metadata),
       builtAt: new Date().toISOString(),
     };
   }
 
   const collector = new FindingCollector(scope);
+  metadataFindings(scope, collector);
   const aligned = diffRows(production, next);
   textFindings(aligned, collector);
   compareLinks({ production, new: next, collector, newSitePaths, statuses });

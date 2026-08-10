@@ -10,7 +10,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { exclusionReason, isExcludedPage } from './excluded-pages.mjs';
+import { exclusionReason, isExcludedPage } from '../shared/excluded-pages.mjs';
 import { extractPage } from './extract.mjs';
 import { fetchPage } from './fetch-page.mjs';
 

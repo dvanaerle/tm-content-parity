@@ -20,10 +20,10 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { ABSOLUTE_MAX_UNITS, EXCLUDED_REGIONS } from '../../shared/excluded-regions.mjs';
 import { comparePage, newSitePathsFor } from '../../compare/30-compare.mjs';
-import { cellWithBothSides } from '../seed-rows.mjs';
+import { cellWithBothSides } from '../../shared/seed-rows.mjs';
 import { extractPage } from '../extract.mjs';
 import { fetchPage } from '../fetch-page.mjs';
-import { isExcludedPage } from '../excluded-pages.mjs';
+import { isExcludedPage } from '../../shared/excluded-pages.mjs';
 
 const SEEDS = new URL('../../data/10-store-seeds.json', import.meta.url);
 const LINK_STATUS = new URL('../../data/link-status.json', import.meta.url);

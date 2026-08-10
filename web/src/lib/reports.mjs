@@ -1,8 +1,8 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { EXCLUDED_PAGES } from '../../../crawl/excluded-pages.mjs';
+import { EXCLUDED_PAGES } from '../../../shared/excluded-pages.mjs';
 import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
-import { cellWithBothSides } from '../../../crawl/seed-rows.mjs';
+import { cellWithBothSides } from '../../../shared/seed-rows.mjs';
 import { CoverageTally } from '../../../compare/region-coverage.mjs';
 import { storeOfFile } from '../../../compare/contract.mjs';
 import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
@@ -224,7 +224,7 @@ export async function regionsChangedInLog() {
  * production url alone: a page with production and no counterpart was excluded
  * here and never excluded by the crawler, so the two counts could disagree.
  *
- * @param {import('../../../crawl/seed-rows.mjs').SeedRow[]} rows
+ * @param {import('../../../shared/seed-rows.mjs').SeedRow[]} rows
  * @param {string} store
  * @returns {typeof EXCLUDED_PAGES}
  */

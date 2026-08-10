@@ -462,6 +462,14 @@ describe('the seed schema', () => {
     );
   });
 
+  it('refuses a double underscore in a page key', () => {
+    const seeds = good();
+    seeds.rows[0].page = 'fr__heavy-duty-veranda';
+    expect(schemaDisagreements(seeds)).toContain(
+      'fr__heavy-duty-veranda: a double underscore is not a safe page key'
+    );
+  });
+
   it('refuses two rows with one key', () => {
     const seeds = good();
     seeds.rows.push(structuredClone(seeds.rows[0]));

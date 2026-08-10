@@ -71,6 +71,15 @@ export const FINDING_CLASSES = {
   'alt-changed': { check: 'images', shown: true, meaning: 'Both sides have alt text, and it is different.' },
   'image-added': { check: 'images', shown: false, direction: 'added', meaning: 'The new site has an image that production does not have.' },
   'image-campaign': { check: 'images', shown: false, meaning: 'A campaign image. The pattern matches on either side.' },
+
+  // Ticket 54 — the page metadata, not the page. `CONTEXT.md` separates "no NL
+  // page" from "no declared alternate": the first says the store has content NL
+  // does not have, the second says production does not say which NL page is the
+  // counterpart. This is the second, so it is hidden — it is a defect of the
+  // sitemap and there is nothing on the page for an editor to change. It is the
+  // `meta` check because it is metadata about the page; it reaches the log
+  // through the page key and not through the `<head>`.
+  'no-declared-alternate': { check: 'meta', shown: false, meaning: 'Production declares no hreflang alternate for this page, so the log cannot put it beside the other stores.' },
 };
 
 /** @type {Check[]} */
