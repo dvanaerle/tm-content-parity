@@ -6,8 +6,13 @@ This file answers one question: **what do I do next?** `RUNBOOK.md` says *why*
 the order is what it is, and `map.md` stays the map. If this file and the map
 disagree, the map wins.
 
-**48 of the 90 tickets are closed.** 34 steps are below and **steps 01, 02, 03 and
-06 are done**. Seven tickets are parked and they are at the end.
+**47 of the 90 tickets are closed**, counted from the `Status:` line of every
+ticket file on 2026-08-10. 43 are open. 34 steps are below and **steps 01, 02, 03
+and 06 are done**. Seven tickets are parked and they are at the end.
+
+The count went 46 to 47 and not to 48: tickets **54** and **55** closed, and
+ticket **49** re-opened. A closed ticket that comes back is why this line is
+counted and never incremented by hand.
 
 **The corpus is 816 store pages**, from 451, since step 03 landed on 2026-08-10.
 Every count taken against 448 reports or 451 pairs is stale, and steps 12 and 13
@@ -22,8 +27,9 @@ Work the steps from the top. Each step is one sitting.
 
 - **`/clear` between every step.** The next ticket is self-contained.
 - **One ticket, one gate.** Never batch two tickets that move the same number in
-  opposite directions. Step 03 and step 04 are the one exception, and the step
-  says why.
+  opposite directions. Step 03 and step 04 were written as the one exception.
+  **They were not batched**: step 03 ran alone on 2026-08-10 and step 04 is still
+  open. Nothing was lost, so the exception is now a permission nobody needs.
 - **After every step:** `npm test`, then `node compare/measure.mjs nl`. A step
   that adds no rule must move no number.
 - **Before a `data` step:** check that the six `valantic*` hosts answer. That is a
@@ -68,20 +74,23 @@ What can run in the second session today:
 | step | what | why it is safe |
 | --- | --- | --- |
 | **32** | Ticket 34, the deep link | `talk`. No blocker. It writes one ticket file. |
+| **33** | The re-triage of 04, 16, 20 and 48 | `talk`. **Joined on 2026-08-10**, when step 03 landed. |
 | **13** | Ticket 89, the campaign rule | `read`. No blocker. It **reads** `data/`, so see rule 2. |
 | **00b** | The first real mute | A browser. Nothing in git. |
 | **23** | Ticket 30, wire Supabase | A browser and `web/.env`. Nothing in git. |
 
-Step 33 is the next one to join the list, and step 03 unblocks it. Step 34 never
-joins it: it is on hold and it waits for a person.
+**Step 33 has joined the list.** Step 03 unblocked it on 2026-08-10, and three of
+its four tickets already carry their new numbers. Step 34 never joins: it is on
+hold and it waits for a person.
 
 **Rule 1. The second session does not tick a box.** `WORKLIST.md`, `map.md`,
 `CONTEXT.md` and `docs/adr/` are the four files that both sessions want. The
 first session owns them. The second session reports, and you write the tick.
 
-**Rule 2. Nothing measures while a crawl runs.** Steps 02, 03, 05, 10 and 11
-rewrite `data/`. A number read in the middle of a crawl looks correct and is not.
-While a crawl runs, the second session talks. It does not measure.
+**Rule 2. Nothing measures while a crawl runs.** Steps **05, 10 and 11** rewrite
+`data/` — 02 and 03 did and are done. A number read in the middle of a crawl looks
+correct and is not. While a crawl runs, the second session talks. It does not
+measure.
 
 **Prefer a background command to a second session.** A crawl started in the
 background keeps the one session free, and it needs no second window and no
@@ -323,17 +332,39 @@ again before building to it. The exclusions the spec meant are the ones the seed
 rule never admitted, and those are counted in `data/10-store-seeds.json` under
 `dropped`, not in the report folder.
 
-**Why batched.** The runbook batches 55 and 56 in one session, and it is allowed
-here because 56 changes what the dashboard shows and not what the crawl fetches.
-It moves no finding count, so step 03's number stays readable.
+```
+/clear
+```
 
 ```
 /implement .scratch/content-parity-log/issues/56-an-excluded-page-says-why.md
+
+The corpus is built already: 816 reports from 820 seed store pages. Read the gate
+below before you build to it — the "about 60" was an estimate and the report
+folder holds 1 excluded page, not 60.
 ```
 
-**Gate.** About **60** of the ~800 discovered pages are excluded. Each one names
-the rule that excluded it, in a committed list and not in code, and each is still
-counted in the store total.
+**Gate, and it needs re-reading.** As written: about **60** of the ~800 discovered
+pages are excluded, each naming the rule that excluded it, in a committed list and
+not in code, and each still counted in the store total.
+
+**The 60 is two different populations, and only one of them is this ticket's.**
+Step 03 measured both.
+
+| population | count | where it lives |
+| --- | --- | --- |
+| excluded by `shared/excluded-pages.mjs` | **1** | `veranda-configurator`, nl only |
+| cannot be crawled | **3** | `faq/offerte` ×2, `(uk)measuring-tool` |
+| **dropped by the seed rule** | **105** | `data/10-store-seeds.json` |
+
+876 candidates − 105 dropped + 49 carried over = the 820 seed store pages, and 816
+of those reach the report folder.
+
+**The 105 is the ticket's surface**, and "about 60" was the estimate for it. But
+`dropped` is a **number and not a list**: the generator counts what it discards and
+records nothing about which page or which rule. So the first half of this ticket is
+making `crawl/` emit the list at all. Nothing downstream can name a reason that
+nothing upstream wrote down.
 
 **It inherits a class with no surface.** Ticket 54 added `no-declared-alternate`.
 The finding is in the report JSON and it is correct there, but nobody can see it:
@@ -516,7 +547,9 @@ quietly.
 ```
 
 **Gate.** The shared-unit count is recorded. Ticket 64's campaign anchor guards
-about **4,055** findings that a hash would judge once instead of 446 times.
+about **4,055** findings that a hash would judge once instead of 446 times — and
+both of those were counted over 448 pages. The corpus is 816 now, so re-measure
+the guard before you size the ticket against it.
 
 ---
 
@@ -544,6 +577,13 @@ time. Measure it TWICE and report the two numbers separately.
 six stores. The nine meta classes add about **130** over 373 comparable pages,
 which is 0.54% of shown. `robots-index-lost` fires **exactly once**, on `be`.
 
+**Both numbers were counted over 373 comparable pages and there are now 722**, so
+scale them before you gate on them: about **250** and about **250** if the rate
+holds, and 0.54% of shown is the figure to check rather than either count. The
+`robots-index-lost` "exactly once" is the one claim that does not scale — it is a
+fact about one store's head, and if it fires more than once now, that is a finding
+and not a drift.
+
 **The corpus is now settled. Do not re-open it before step 12.**
 
 ---
@@ -554,8 +594,14 @@ Both are research tickets. They write numbers, not features. touches `read`, so
 they collide with nothing and they can run beside each other.
 
 **Every number designed against must be re-stated before it is designed against.**
-Ticket 55 took the corpus from 451 pairs to about 800, and tickets 64, 67 and 58
-each moved the finding count.
+Ticket 55 took the corpus from 451 pairs to **816** on 2026-08-10, and tickets 64,
+67 and 58 each moved the finding count.
+
+**The scale of what needs restating, now that step 03 has landed:** 448 reports
+became **816**, 373 comparable pages became **722**, and 34,559 findings with
+23,570 shown became **54,723 and 37,329**. Every gate in this file that quotes a
+number over 448 reports or 373 comparable pages is stale until these two steps run.
+Steps 11, 29 and 32 each carry one, and each says so.
 
 ---
 
@@ -996,8 +1042,13 @@ this file must not move it. This one must, and by a known amount.
 ```
 
 **Gate.** `heading-level` carries `visibility: 'information'`. Per-store totals
-before and after show that **nothing else moved**. It is **1,215** shown
-findings, 5.3% of shown.
+before and after show that **nothing else moved**.
+
+**The size is stale and step 12 restates it.** 1,215 shown findings at 5.3% was
+counted over 448 reports. `nl` alone holds **469** today, so re-measure the class
+across the 816 before you move the denominator by it — this is the one step that
+moves the denominator on purpose, so it is the one step that must know the amount
+first.
 
 ---
 
@@ -1064,10 +1115,14 @@ it writes one ticket file and it reads no number.
 ```
 /grill-with-docs .scratch/content-parity-log/issues/34-position-and-ordering.md
 
-Only the deep link is open. 1,622 of 10,796 findings have no anchor heading, so
-they carry no link. Where a link does show, both sides are built from the
-PRODUCTION heading, which cannot resolve on the new site where that heading
-changed. What a finding with no heading gives instead has never been decided.
+Only the deep link is open. 1,622 of 10,796 nl findings have no anchor heading, so
+they carry no link. That ratio is 15% and it is the number that matters; the two
+counts are ticket 38's nl figures and nl is 9,635 findings now, over a corpus of
+54,723. Do not quote either count as current.
+
+Where a link does show, both sides are built from the PRODUCTION heading, which
+cannot resolve on the new site where that heading changed. What a finding with no
+heading gives instead has never been decided.
 ```
 
 **Gate.** The ticket says what a finding with no anchor heading links to.
@@ -1078,14 +1133,26 @@ changed. What a finding with no heading gives instead has never been decided.
 
 touches `talk`. Each one waited for a blocker that has now landed.
 
-- **04** — closes with step 03. `Status: reopened` today.
-- **16** — blocked by 55, step 03. Its premise needs correcting first: 283
-  clusters have no NL member, so ticket 04's "no page exists without an NL
-  counterpart" is false.
-- **20** — blocked by 22, done, and 55, step 03. Two populations: **34 of 451**
-  store-page pairs 404 on the new side, and **42 of 181** NL pages are new-only.
-  Only the NL 42 stays stable, so re-size both after step 03. It also owns half of
-  the missing surface for `no-declared-alternate`. Step 04 says which half.
+- **04** — **step 03 has landed, so it closes here.** `Status: reopened` today.
+- **16** — unblocked by 55, step 03 — **done**. Its premise needs correcting
+  first: 283 clusters have no NL member, so ticket 04's "no page exists without an
+  NL counterpart" is false.
+- **20** — unblocked by 22 and 55, both **done**. **Both populations are
+  re-measured**, over 816 pairs instead of 451:
+
+  | population | was | is |
+  | --- | --- | --- |
+  | pairs whose new side 404s — not migrated | 34 of 451 | **53 of 816** |
+  | nl pages that exist only on the new site | 42 of 181 | **41 of 179** |
+  | non-comparable pairs, all six stores | — | **94 of 816** |
+
+  New-side 404s by store: nl 14, de 11, be 8, be_fr 7, uk 7, fr 6. **The new-only
+  population is entirely nl** — all 41 of it, and no other store has a single one.
+  That is worth a sentence in the re-triage: it says the 41 are the carried-over
+  pages that no sitemap declares any more, and not a migration surplus.
+
+  It also owns half of the missing surface for `no-declared-alternate`. Step 04
+  says which half.
 - **48** — blocked by 37, step 08. Question one is answered already by ADR 0006
   and ticket 79. Two are left: what counts as *afgerond*, and whether a `×6`
   finding is one task or six.
@@ -1144,8 +1211,8 @@ Ticket 11 holds every rule and none of them expires.
 Two reasons to leave them. Every ADR from 0004 to 0008 is axis A, and axis B
 keeps its own bar that is never summed with the parity bar, per ticket 11. And
 the numbers in tickets 40 to 45 are counted against a 451-pair seed list that
-step 03 takes to about 800, so every one of them must be re-stated when the
-stream restarts.
+step 03 took to **816** on 2026-08-10, so every one of them must be re-stated when
+the stream restarts.
 
 When it restarts: **land ticket 39 alone.** It is the class vocabulary and every
 other ticket reads it, so two lanes that both widen it collide in meaning and not
@@ -1187,7 +1254,8 @@ A step that adds no rule must not move a number. This check found every real
 defect in the project so far.
 
 **The baseline is 472 tests green in 20 files, 0 failing**, measured on 2026-08-10
-after commit `90c5e7a`. Ticket 54 took it from 452. It is worth
+after commit `baac5d8`. Ticket 54 took it from 452, and ticket 55 added none: it
+runs the pipeline the earlier tickets built and adds no rule. It is worth
 stating because it was not true until that day: `crawl/sitemap-extract.test.mjs`
 failed on every Windows checkout. The committed evidence is compared byte for
 byte, `core.autocrlf=true` rewrote the working copy to CRLF, and the bytes on
