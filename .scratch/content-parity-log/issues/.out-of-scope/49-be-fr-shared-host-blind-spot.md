@@ -9,7 +9,11 @@ page that links into the Dutch Belgian half of the same host is not flagged.
 Ticket 38 said to open a follow-up **only if the number is not zero**. It is not
 zero, so this ticket exists. But it is 1.
 
-**Status:** wontfix
+**Status:** needs-triage — **re-opened 2026-08-10 by ticket
+[55](../55-five-stores-show-all-their-pages.md).** The first re-open trigger below
+fired. The number that made this wontfix was **1**; it is **12** now. The wontfix
+answer is kept below, unedited, because the reasoning is still sound and only the
+number under it moved.
 
 **Origin:** ticket [38](../38-six-stores.md), measured on 2026-08-07 by
 `crawl/probes/probe-be-fr-shared-host.mjs` over all 29 crawled be_fr pages.
@@ -93,3 +97,46 @@ either of these happens:
 
 Neither trigger changes the reasoning above. Both change the number the reasoning
 rests on, which is why the probe is kept.
+
+## The re-measurement, 2026-08-10, after ticket 55
+
+The first trigger fired. `be_fr` went from 29 pages to **122**, and the probe was
+run again over all of them. The number the wontfix rests on is no longer near
+zero.
+
+| side | anchors | on the shared host | outside `/fr` | pages | to a **page** | to a `/media/` file |
+|---|---|---|---|---|---|---|
+| new, 29 pages | 508 | 501 | 14 | 5 | **1** | 13 |
+| new, **122 pages** | 1663 | 1545 | 140 | 23 | **16** | 124 |
+| production, 122 pages | 2732 | 2570 | 124 | 43 | 34 | 90 |
+
+`cross-store-link` reads the **new side only**, so the new row still decides. It
+is **16 anchors to a page of the other store**, and **4 of the 16 are blog posts**,
+which stay out of scope. So the surface a rule would catch is **12 in-scope Dutch
+pages linked from French pages**, on the shared host:
+
+```
+2  self/shading-panel          1  self/glazen-schuifwand/montage
+2  self/garantie               1  self/glazen-schuifwand
+1  self/steel-look-glazen-schuifwand?acc_composition=6035
+1  self/steel-look-glazen-schuifwand?acc_composition=6034
+1  self/questions-frequemment-posees
+1  self/terrasoverkapping      1  self/glazen-schuifwanden
+1  self/zonwering
+```
+
+**The wontfix reasoning is not refuted, and it is not confirmed either.** Both of
+its two grounds have moved:
+
+- *"13 of 14 are noise by construction."* The `/media/` share is still the bulk —
+  124 of 140 — so a rule still needs the `/media/` exception. That ground holds.
+- *"The whole surface is one anchor to an out-of-scope page."* This one is gone.
+  Twelve in-scope pages is not a hypothetical, and it is not one link that nobody
+  would act on.
+
+One of the twelve is its own oddity and not a cross-store leak of the usual kind:
+`self/questions-frequemment-posees` is a **French** path served outside `/fr`.
+
+**This ticket decides nothing here.** Ticket 55 owed the re-check and this is it.
+Whether 12 buys the rule that ticket 05 refused is triage's call, and
+`WORKLIST.md` step 33 is where it is booked.

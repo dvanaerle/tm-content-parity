@@ -1,7 +1,8 @@
 # 54 — The French store shows all of its pages
 
 Type: task
-Status: ready-for-agent — **the identity half is built. The crawl is blocked.**
+Status: resolved 2026-08-10 — the identity half was built on the day; the crawl
+ran when the hosts came back, inside ticket 55's sitting.
 Assignee: —
 Blocked by: 53
 Parent: 50-content-page-discriminator.md
@@ -16,8 +17,9 @@ This is the tracer bullet. One store through every layer. If the page list, the
 contract, the crawl, the comparison and the dashboard all hold together on
 French, nothing in ticket 55 is in doubt.
 
-- [ ] The French store is crawled and compared on the new page list, and the
-      dashboard shows every page in it. **Blocked: the new site answers 500.**
+- [x] The French store is crawled and compared on the new page list, and the
+      dashboard shows every page in it. **Done 2026-08-10, once the hosts answered
+      200. 123 pages crawled, 117 comparable, and the dashboard holds all 123.**
 - [x] A page with no Dutch counterpart is comparable. Axis A is production against
       the new site in one store, so it needs no Dutch page. Such a page is absent
       from axis B, and that is correct: axis B does not compare words across
@@ -47,8 +49,9 @@ French, nothing in ticket 55 is in doubt.
       one already collides with a page path.
 - [x] Three places build a link or a fetch URL from the page value with no URL
       encoding. They work today by luck. Encode them.
-- [ ] The French numbers are measured and recorded here: pages crawled, pages
-      comparable, findings, and the median. **Blocked: the new site answers 500.**
+- [x] The French numbers are measured and recorded here: pages crawled, pages
+      comparable, findings, and the median. **Done 2026-08-10. See "The French
+      numbers" below.**
 - [x] French was 40% of its navigation and footer under the old rule. It must now
       reach the 88% that ticket 50 measured. The remaining 12% is the blog engine
       and the newsletter page, which are in no sitemap.
@@ -271,9 +274,39 @@ snapshot, and ticket 55 rebuilds them.
 twice, which also says the React island still hydrates after the two new imports.
 Step 00a's lesson holds: a green `npm test` says nothing about the bundle.
 
-### What is left, and what it needs
+## The French numbers, 2026-08-10
 
-Nothing here waits on a decision. It waits on a server.
+**The server came back the same day, and the crawl ran inside ticket 55's
+sitting.** All five `valantic*` hosts answer 200. The two criteria above are
+closed, and this ticket is resolved.
+
+| | predicted | measured |
+|---|---|---|
+| rows | 123 | **123** |
+| crawled | 123 | **123** |
+| comparable | about 117 | **117** |
+| findings | — | **8,154** |
+| shown | — | **5,495** |
+| median shown | — | **25 a page** |
+| navigation and footer coverage | 90.2% | **90.2%** |
+
+**Every prediction in the section below held.** 123 of 123 crawled with no
+failure, and the six that are not comparable are the six the seed list said would
+404 on the new side. The dashboard was counted in the built HTML: **123 page
+links**.
+
+The clean-up the section below prescribes was **not needed**. It says to delete the
+28 old French extracts and reports first, because they are keyed on superseded page
+keys. By the time the crawl ran, `data/extract/fr/` already held 123 files on the
+new keys, and `compare/30-compare.mjs` writes reports from the extracts, so no
+stale report survived: 816 reports on disk against 820 seed pages, and **zero** of
+them keyed outside the current seed list. Checked, not assumed.
+
+Ticket 55 holds the rest of the measurement, including the whole-corpus table.
+
+### What was left, and what it needed
+
+Nothing here waited on a decision. It waited on a server, and the server came back.
 
 When the five `valantic*` hosts answer 200:
 

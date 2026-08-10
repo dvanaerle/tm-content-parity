@@ -6,8 +6,12 @@ This file answers one question: **what do I do next?** `RUNBOOK.md` says *why*
 the order is what it is, and `map.md` stays the map. If this file and the map
 disagree, the map wins.
 
-**46 of the 90 tickets are closed.** 34 steps are below and **step 01 is done**.
-Seven tickets are parked and they are at the end.
+**48 of the 90 tickets are closed.** 34 steps are below and **steps 01, 02, 03 and
+06 are done**. Seven tickets are parked and they are at the end.
+
+**The corpus is 816 store pages**, from 451, since step 03 landed on 2026-08-10.
+Every count taken against 448 reports or 451 pairs is stale, and steps 12 and 13
+exist to restate them.
 
 The steps are **not renumbered** as they close. Step 24 says "blocked by step 22"
 and a renumbering would make every such line a lie.
@@ -22,13 +26,74 @@ Work the steps from the top. Each step is one sitting.
   says why.
 - **After every step:** `npm test`, then `node compare/measure.mjs nl`. A step
   that adds no rule must move no number.
-- **Before a `data` step:** check that the six `valantic*` hosts answer. On
-  2026-08-07 they all answered HTTP 500. That is a measurement, not a memory.
+- **Before a `data` step:** check that the six `valantic*` hosts answer. That is a
+  measurement, not a memory, and 2026-08-10 shows why: all five answered HTTP 500
+  in the morning and all five answered **200** at 11:59. Production answers 200
+  throughout. Ticket 51's guard stops a run on any 500, so a crawl started on a
+  memory of yesterday is a crawl that aborts.
+
+  ```powershell
+  node -e "for (const h of ['valanticnl','valanticbe','valanticde','valanticfr','valanticuk']) { const r = await fetch('https://'+h+'.intern.systems/'); console.log(h, r.status) }"
+  ```
+
+  The network needs the sandbox disabled in this environment.
 - Tick the box when the ticket file says `Status: resolved`.
 
 **touches** says which shared resource the step writes. `data` runs alone.
-`compare` needs its own copy of `data/` if it runs in a worktree. `web` and
-`read` and `talk` collide with nothing.
+`compare` and `web` write code, so they hold the first session on their own.
+`read` and `talk` collide with nothing. "Two sessions at once" below says what
+may run beside the first session.
+
+---
+
+## Two sessions at once
+
+**There are no worktrees.** One checkout, and a second session opens in the same
+directory. Two sessions are safe only when their **write sets do not overlap**.
+
+`RUNBOOK.md` still describes lanes as one worktree each. That section is
+superseded for this worklist. It stays true for the parked axis B stream, where
+four independent classifiers really are four lanes.
+
+That leaves one safe kind of work: the step that writes **markdown only** — a
+ticket file, `CONTEXT.md`, an ADR. A grilling is that, and a triage is that. A
+step that touches `data` or `compare` or `web` writes code, so it stays in the
+first session.
+
+**"Blocked by nothing" is not "safe beside".** Steps 14, 17, 18, 20, 21, 26 and
+27 have no blocker and they still collide, because they write the same tree.
+
+What can run in the second session today:
+
+| step | what | why it is safe |
+| --- | --- | --- |
+| **32** | Ticket 34, the deep link | `talk`. No blocker. It writes one ticket file. |
+| **13** | Ticket 89, the campaign rule | `read`. No blocker. It **reads** `data/`, so see rule 2. |
+| **00b** | The first real mute | A browser. Nothing in git. |
+| **23** | Ticket 30, wire Supabase | A browser and `web/.env`. Nothing in git. |
+
+Step 33 is the next one to join the list, and step 03 unblocks it. Step 34 never
+joins it: it is on hold and it waits for a person.
+
+**Rule 1. The second session does not tick a box.** `WORKLIST.md`, `map.md`,
+`CONTEXT.md` and `docs/adr/` are the four files that both sessions want. The
+first session owns them. The second session reports, and you write the tick.
+
+**Rule 2. Nothing measures while a crawl runs.** Steps 02, 03, 05, 10 and 11
+rewrite `data/`. A number read in the middle of a crawl looks correct and is not.
+While a crawl runs, the second session talks. It does not measure.
+
+**Prefer a background command to a second session.** A crawl started in the
+background keeps the one session free, and it needs no second window and no
+second `npm install`.
+
+**What this buys.** The longest chain of blocked steps is about 23 of the 34, and
+the workspace stream alone holds 12 that cannot overlap at all. A second session
+saves about 2.5 hours of the 8.5. It buys nothing after step 19, so close it
+there.
+
+**One reviewer.** Two diffs that arrive together are two diffs read badly, and a
+diff read badly is how a number moves in silence.
 
 ---
 
@@ -65,19 +130,15 @@ until a reason is typed. After the section press, **64** go and **22** stay. The
 *Ongedaan maken* brings them back, and the row it wrote is `cleared` with the
 heading on it.
 
-### ☐ 00c — Repair `web/node_modules`
+### ☑ 00c — Repair `web/node_modules`
 
-Reverting the half-applied Astro upgrade left `web/node_modules` on the newer
-tree, so `npm --prefix web run build` fails on a missing Astro file. `npm test`
-is unaffected and green, and the dev server runs, so this bites only at a build
-gate. `npm install` cannot repair it while the dev server holds the file locks.
+Repaired on 2026-08-10. Reverting the half-applied Astro upgrade had left
+`web/node_modules` on the newer tree, so `npm --prefix web run build` failed on a
+missing Astro file. `npm install` could not repair it while the dev server held
+the file locks, so the dev server was stopped first.
 
-```powershell
-# stop the running `astro dev` first
-Set-Location web; npm install
-```
-
-**Gate.** `npm --prefix web run build` builds the same page count as before.
+The build gate is green again. It carries three steps that cannot start without
+it: 14, 15 and 16 each gate on `npm run build`.
 
 ---
 
@@ -118,7 +179,20 @@ cleared dismissal already has onto a class mute. Both directions are tested.
 
 ---
 
-### ☐ Step 02 — Ticket 54, the French store shows all its pages
+### ☑ Step 02 — Ticket 54, the French store shows all its pages — **DONE**
+
+Resolved 2026-08-10. The identity half landed on the day; the crawl was blocked by
+HTTP 500 on all five `valantic*` hosts and ran later, inside step 03's sitting,
+once they answered 200 again. **123 pages crawled, 117 comparable, 8,154 findings,
+5,495 shown, median 25.** Coverage 90.2%, exactly as predicted. The prescribed
+delete of the stale 28-key extracts was not needed and the reports were checked for
+strays: zero.
+
+The original step is kept below.
+
+---
+
+#### Step 02 as it was written, kept for the record
 
 touches `data` **alone**. Blocked by 53 — **done**.
 
@@ -126,26 +200,88 @@ touches `data` **alone**. Blocked by 53 — **done**.
 costs one store and not six. It also carries the identity change merged in from
 ticket 57.
 
+**The code is done. Only the crawl is left.** Commit `90c5e7a` on 2026-08-10, and
+`npm test` is green at 472. `Status: ready-for-agent`, and **nine of the eleven
+criteria are ticked**. The two that are open are one blockage: the five
+`valantic*` hosts answered HTTP 500 all that day, so the French crawl and the
+French comparison numbers could not be taken. **They answer 200 again at 11:59 on
+2026-08-10, so this step can now finish.** The ticket file holds every number and
+every command.
+
 ```
 /clear
 ```
 
 ```
-/implement .scratch/content-parity-log/issues/54-french-store-shows-all-its-pages.md
+Finish ticket 54. Read
+.scratch/content-parity-log/issues/54-french-store-shows-all-its-pages.md, and the
+section "What is left, and what it needs" holds the commands. No code is needed.
+Two criteria are open and both want one French crawl and one comparison.
 
-This ticket is French end to end, and it is the go/no-go for the spec. It also
-carries the identity change from 57-retire-the-nl-url-key-assumption.md, which
-was merged into it. A page that has a Dutch url key keeps its current string,
-byte for byte. The override table is append-only, so a reformatted key could
-never be repaired.
+Check the five valantic hosts first. They answered 500 all morning on 2026-08-10.
+
+Delete data/extract/fr/ and data/reports/fr__*.json BEFORE the crawl. The 28
+extracts on disk are keyed on the old page keys, and 95 of the 123 new keys did
+not exist when they were written. All 28 old French paths are in the new list, so
+nothing is lost.
+
+compare/link-status.mjs takes no store. It writes one global file and it refuses
+an argument with exit 2, per ticket 59.
 ```
 
-**Gate.** The French dashboard shows about **126** pages, not 28. Navigation and
-footer coverage reaches **88%**, from 40%.
+**Gate.** The French dashboard shows **123** pages, not 28, of which about **117**
+are comparable. Ticket 53 settled the count at 123, and six pages answer 404 on
+the new side, so the ticket's older headline of "about 126" is superseded.
+Navigation and footer coverage reaches **90.2%**, from 35.3%, measured by
+`data/probe-navigation-coverage.json`.
+
+**The 35.3% before-value is the thinner half of that row.** The probe measures the
+current rule. The old number came from looking the same 51 candidate paths up in
+the seed list of commit `f640567`.
+
+Then run `node compare/measure.mjs nl` and confirm that `nl` has not moved from
+**179 / 124 / 9,635 / 6,747 / median 37**.
 
 ---
 
-### ☐ Step 03 — Ticket 55, the other five stores
+### ☑ Step 03 — Ticket 55, the other five stores — **DONE**
+
+Resolved 2026-08-10. `Status: resolved`.
+
+**816 store pages against 451.** nl 179, be 130, be_fr 122, de 134, fr 123, uk 128,
+and each dashboard was counted in the built HTML and holds its whole store. 722
+comparable, 54,723 findings, 37,329 shown, 823 pages built.
+
+**The NL baseline held byte for byte** — 179 / 124 / 9,635 / 6,747 / median 37.
+`node crawl/21-crawl-store.mjs nl` wrote **0** extracts, which is why: without
+`--force` the crawler skips a page that already has an extract, so nl could not
+drift. That is the check that the new rule did not over-collect.
+
+**The crawl was 368 requests, not 1,600.** `fr` and `be_fr` were already on disk
+against the new key set and `be` needed 5 pages, so only `de` (89) and `uk` (86)
+were large. The estimate was right for the work and wrong for this sitting.
+
+Coverage: nl 94.2%, be 90.6%, be_fr **92.0%**, de **90.6%**, fr 90.2%, uk
+**88.5%**. `de` and `uk` hit ticket 50's numbers exactly. A probe defect was fixed
+on the way — `NOT_A_PAGE` is anchored at the store root and `be_fr`'s root is
+`fr/`, so four Magento routes sat in its denominator. `be_fr` moved 85.2 to 92.0
+and **no other store moved**.
+
+**Two pages of 820 cannot be crawled, and both are storefront defects**, not tool
+failures: `faq/offerte` on nl and be (ticket 17's redirect loop, on the new side
+now) and `(uk)measuring-tool` (production 301s to a 404; the new site serves a
+456-byte empty page).
+
+**Ticket 49 is re-opened.** Its own first trigger fired: `be_fr` went 29 pages to
+122 and the in-scope count that made it wontfix went from **1 to 12**. Ticket 38's
+per-store table and its map entry are re-measured. Ticket 04 closes, and 16 and 20
+come back to step 33.
+
+The original step is kept below.
+
+---
+
+#### Step 03 as it was written, kept for the record
 
 touches `data` **alone**. Blocked by 54.
 
@@ -164,14 +300,28 @@ store argument. It writes one global file. Ticket 59 landed, so the script
 refuses an argument and exits 2, and this line is a reminder and not the guard.
 ```
 
-**Gate.** The **NL baseline does not move** — still 181 pages, identical to
-ticket 38's numbers. The store total goes from 451 pairs to about **800**.
+**Gate.** The **NL baseline does not move**. The number to hold it against is
+today's, not ticket 38's: `node compare/measure.mjs nl` reads **179 crawled, 124
+comparable, 9,635 findings, 6,747 shown, median 37** on 2026-08-10. Ticket 38's
+181 is the older count and it is not the gate. The store total goes from 451 pairs
+to about **800**.
 
 ---
 
 ### ☐ Step 04 — Ticket 56, an excluded page says why
 
-touches `web`. Blocked by 54. **Same sitting as step 03.**
+touches `web`. Blocked by 54. **Was to be the same sitting as step 03, and it was
+not.** Step 03 was run on its own, so this step is still open and it is now the
+next one. Nothing is lost: 56 moves no finding count, so step 03's number stays
+readable whenever this lands.
+
+**One number for it is measured already.** 820 seed store pages give **816**
+reports: 1 excluded (`veranda-configurator`, nl only) and 3 that cannot be
+crawled — `faq/offerte` on nl and be, and `(uk)measuring-tool`. The gate below
+expects about 60 excluded pages and the real figure is **1**, so read the gate
+again before building to it. The exclusions the spec meant are the ones the seed
+rule never admitted, and those are counted in `data/10-store-seeds.json` under
+`dropped`, not in the report folder.
 
 **Why batched.** The runbook batches 55 and 56 in one session, and it is allowed
 here because 56 changes what the dashboard shows and not what the crawl fetches.
@@ -185,13 +335,22 @@ It moves no finding count, so step 03's number stays readable.
 the rule that excluded it, in a committed list and not in code, and each is still
 counted in the store total.
 
-**After steps 03 and 04, four things fall out:**
+**It inherits a class with no surface.** Ticket 54 added `no-declared-alternate`.
+The finding is in the report JSON and it is correct there, but nobody can see it:
+`web/src/components/Ledger.jsx` returns the *Niet te vergelijken* panel before any
+finding renders, so a one-sided page shows nothing, and on a comparable page the
+class sits behind the hidden-class filter. This step and ticket 20, at step 33, own
+that surface between them. The code comment in `compare/30-compare.mjs` says so.
 
-- Ticket **04** closes.
-- Ticket **49** gets its probe again — it is in `issues/.out-of-scope/` and its
-  re-open trigger is exactly this.
+**After steps 03 and 04, four things fall out.** Step 03 landed on 2026-08-10 and
+three of the four are done already:
+
+- Ticket **04** closes. **Still open** — it goes to step 33 with the other three.
+- Ticket **49** gets its probe again — **done**. Its trigger fired and it is
+  re-opened as `needs-triage`: 1 in-scope anchor became **12**.
 - Tickets **16** and **20** come back for triage. That is step 33.
-- Ticket 38's per-store counts need a new measurement.
+- Ticket 38's per-store counts need a new measurement — **done**, in the ticket
+  and in `map.md`.
 
 ---
 
@@ -228,54 +387,63 @@ today. **Exactly 1 dismissal detaches** and no page review goes stale.
 
 ---
 
-### ☐ Step 06 — Ticket 68, the grilling. Three numbers are unchosen
+### ☑ Step 06 — Ticket 68, the grilling. Four numbers are chosen
 
-touches `talk`. Blocked by 67.
+touched `talk`. Done 2026-08-10.
 
-**Why a grilling and not a build.** Three of the six acceptance criteria carry a
-number nobody has chosen: "a cell clamps to about three lines", "a cap for the
-genuinely rewritten paragraph", and a first-paint measurement with no target. A
-criterion with an unchosen number is a decision, and a decision goes to
-`/grill-with-docs`. An agent asked to build this invents all three values, and
-the review is then of its taste and not of its work.
+The clamp is **four lines**. The cap is **50,000 cells of n·m**, after the trim. The
+diff cost must **fall by 70%** in total LCS cells on `nl__privacy-beleid`, which is the
+gate, because Node can count it and a test can hold it. First paint is **LCP 2.5 s and
+TBT 200 ms** on two pages, as a target and as evidence.
 
-```
-/clear
-```
+The ticket is renamed to
+[68 the clamp](issues/68-the-content-view-clamps-a-tall-row.md), because "fold" is now
+reserved: a unit folds its inline links, tier 1 folds a character to nothing, and a run
+of equal rows **collapses**. `CONTEXT.md` gained **clamp** and **uncompared**.
 
-```
-/grill-with-docs .scratch/content-parity-log/issues/68-the-content-view-survives-a-folded-unit.md
+**Two things the grilling found that this worklist had wrong.**
 
-Settle the three unspecified numbers: the clamp height, the cap for a rewritten
-paragraph, and an acceptable first paint. Name the worst page — tickets 79 and 87
-both name nl__fotogalerij/zonwering at 399 findings. Then write all four into the
-acceptance criteria.
+- **`nl__fotogalerij/zonwering` is the wrong page for the diff.** 7 two-sided rows and
+  15 LCS cells: its new side has 9 elements against production's 178, so almost every
+  row is one-sided and a one-sided row costs the diff nothing. The worst page for the
+  diff is `nl__privacy-beleid` at 287,971 cells. It stays the right page for the clamp
+  and the jump.
+- **78% of the diff cost is rows that already agree.** `ContentView.jsx` passes no
+  `equal` prop, so the browser builds a full LCS table for 8,461 identical rows — 11.5
+  of the corpus's 14.8 million cells, and they are the longest rows. One prop, and it
+  is worth more than the trim and the cap together.
 
-Nothing clamps a row today, and after 67 one row is 450 to 550 pixels tall on a
-page of up to 288 rows.
-```
-
-**Gate.** Four numbers are in the ticket file, and each one can be tested.
+Two criteria also changed shape. The one that said the quiet rows stay short says
+nothing after 79, so the clamp keys on **length**. And the jump criterion needs **no
+code**: nothing above the table is sticky, so the row height was the whole complaint.
 
 ---
 
 ### ☐ Step 07 — Ticket 68, the build
 
-touches `web`. Blocked by step 06.
+touches `web`. Blocked by step 06 and **by 79**.
 
 ```
 /clear
 ```
 
 ```
-/implement .scratch/content-parity-log/issues/68-the-content-view-survives-a-folded-unit.md
+/implement .scratch/content-parity-log/issues/68-the-content-view-clamps-a-tall-row.md
 
-Measure first paint on the named page before and after, and put both numbers in
-the ticket.
+Measure the cell count and first paint on both named pages, before and after, and
+put the numbers in the ticket. Bank the equal-row skip on its own, before the trim
+and the cap land.
 ```
 
-**Gate.** A cell clamps to the height chosen in step 06 and carries an expand
-control. The worst page holds up to 288 rows and stays scannable.
+**Gate.** A row clamps to four lines with one control, the cap fires at 50,000 cells
+and reports the cell as uncompared without touching a class, and the total LCS cell
+count on `nl__privacy-beleid` has fallen by 70% or more.
+
+**A loose end this step cannot decide.** 68 is sequenced after 79, and `map.md` puts 68
+in the corpus stream (`54 → 55 + 56 → 67 → 68 → 58`) with 79 in the workspace stream
+that runs two streams later. The edge crosses the streams. Either 68 leaves the corpus
+stream and goes beside 79, or 79 comes forward, or the two are decoupled. Ticket 37 is
+"after 68", so it moves with whatever is chosen.
 
 ---
 
@@ -414,6 +582,7 @@ decisions, 50% costs 903, 75% costs 3,393 and 90% costs **5,930**.
 ### ☐ Step 13 — Ticket 89, what a one-sided campaign rule would catch
 
 touches `read`. Blocked by nothing. **It may refuse ticket 90.**
+**Runs in the second session**, but not while a crawl runs.
 
 ```
 /clear
@@ -527,9 +696,13 @@ becomes work / information / diagnostic. It is NOT a second axis — ticket 02
 removed that, and the class stays the only axis and the mute key.
 ```
 
-**Gate.** The class count stays **21**. All **12** shown classes become `work`
-and the **9** hidden ones split. **The denominator shows no movement on any
+**Gate.** The class count stays **22**. All **12** shown classes become `work`
+and the **10** hidden ones split. **The denominator shows no movement on any
 store.** Expect no movement at all.
+
+The count was 21 in every earlier draft of this step. Ticket 54 added
+`no-declared-alternate`, hidden, which took the vocabulary to 22 — measured from
+`compare/vocabulary.mjs` on 2026-08-10, not quoted.
 
 **Tickets 85 and 86 both wait on this.**
 
@@ -881,7 +1054,8 @@ compressed.
 ### ☐ Step 32 — Ticket 34, the deep link
 
 touches `talk`. A conversation, so it can run beside any crawl. 8 of its 9
-criteria are done.
+criteria are done. **This is the first choice for the second session**, because
+it writes one ticket file and it reads no number.
 
 ```
 /clear
@@ -910,7 +1084,8 @@ touches `talk`. Each one waited for a blocker that has now landed.
   counterpart" is false.
 - **20** — blocked by 22, done, and 55, step 03. Two populations: **34 of 451**
   store-page pairs 404 on the new side, and **42 of 181** NL pages are new-only.
-  Only the NL 42 stays stable, so re-size both after step 03.
+  Only the NL 42 stays stable, so re-size both after step 03. It also owns half of
+  the missing surface for `no-declared-alternate`. Step 04 says which half.
 - **48** — blocked by 37, step 08. Question one is answered already by ADR 0006
   and ticket 79. Two are left: what counts as *afgerond*, and whether a `×6`
   finding is one task or six.
@@ -930,8 +1105,10 @@ counted against a corpus that has since moved.
 - 20-one-sided-pages-checklist.md — unblocked by 22 and 55
 - 48-open-and-done-board.md — unblocked by 37
 
-Ticket 49 in issues/.out-of-scope/ also gets its probe again. Its re-open trigger
-is 55, which took be_fr from 29 pages to about 110.
+Ticket 49 is re-opened already. Ticket 55 re-ran its probe on 2026-08-10: be_fr is
+122 pages, and the new-side count that made it wontfix went from 1 in-scope anchor
+to 12. The new table is in the ticket. Decide whether 12 buys the rule ticket 05
+refused. Do not re-run the probe.
 ```
 
 ---
@@ -1009,7 +1186,8 @@ node compare/measure.mjs nl
 A step that adds no rule must not move a number. This check found every real
 defect in the project so far.
 
-**The baseline is 452 tests green, 0 failing**, as of 2026-08-10. It is worth
+**The baseline is 472 tests green in 20 files, 0 failing**, measured on 2026-08-10
+after commit `90c5e7a`. Ticket 54 took it from 452. It is worth
 stating because it was not true until that day: `crawl/sitemap-extract.test.mjs`
 failed on every Windows checkout. The committed evidence is compared byte for
 byte, `core.autocrlf=true` rewrote the working copy to CRLF, and the bytes on

@@ -66,7 +66,19 @@ const NOT_A_PAGE = [
   /^(customer|checkout|dealer|sales|wishlist|newsletter\/subscriber)(\/|$)/,
 ];
 
-const isNotAPage = (/** @type {string} */ path) => NOT_A_PAGE.some((rule) => rule.test(path));
+/**
+ * The rules are anchored at the store root, and `be_fr` is the one store whose
+ * root is not `/`. Its paths carry the `fr/` prefix, so `fr/checkout/cart` read
+ * as a content page and four Magento routes landed in its denominator. Ticket 55.
+ *
+ * @param {string} path
+ * @param {string} store
+ */
+const isNotAPage = (path, store) => {
+  const root = homePath(store);
+  const relative = path.startsWith(root) ? path.slice(root.length) : path;
+  return NOT_A_PAGE.some((rule) => rule.test(relative));
+};
 
 /** The paths the chrome of one production page links to, inside the same store. */
 function chromePaths(html, store) {
@@ -115,8 +127,8 @@ for (const store of stores) {
   if (page.status !== 200) throw new Error(`${home} answered ${page.status}`);
 
   const all = chromePaths(page.html, store);
-  const notPages = all.filter(isNotAPage);
-  const candidates = all.filter((path) => !isNotAPage(path));
+  const notPages = all.filter((path) => isNotAPage(path, store));
+  const candidates = all.filter((path) => !isNotAPage(path, store));
   const missing = candidates.filter((path) => !inSeeds.has(path));
   const found = candidates.length - missing.length;
   // A store whose chrome yields no candidate is a broken read, not 0% coverage.

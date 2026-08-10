@@ -552,6 +552,24 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   `MaintenanceError` fired in 538 requests, so the stale `prodMaintenance` flags
   were never consulted.
 
+  **Re-measured on 2026-08-10 by ticket 55, and every non-NL row above was a
+  floor.** The counts read the old page list. The new table:
+
+  | store | crawled | comparable | findings | shown | median shown |
+  |---|---|---|---|---|---|
+  | nl | 179 | 124 | 9,635 | 6,747 | 37 |
+  | be | 130 | 122 | 9,744 | 6,572 | 34 |
+  | de | 134 | 123 | 8,932 | 6,149 | 29 |
+  | uk | 128 | 121 | 10,027 | 6,820 | 30 |
+  | be_fr | 122 | 115 | 8,231 | 5,546 | 26 |
+  | fr | 123 | 117 | 8,154 | 5,495 | 25 |
+  | **all six** | **816** | **722** | **54,723** | **37,329** | |
+
+  **The two tables are not a before and an after.** The page list grew (ticket 55)
+  and tickets 62, 63 and 64 removed findings, and the two effects pull opposite
+  ways. `nl` is the control: the new list adds it nothing, so its fall from 10,796
+  to 9,635 is the three rules alone.
+
   The prefactor landed first and earned itself: the failure log is
   `data/extract-failures-<store>.json`, and the `be` run then failed on
   `faq/offerte` without erasing the nl record of the same failure.
@@ -1194,7 +1212,8 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   [04](issues/04-six-store-page-lists.md), whose "the sitemap yields exactly the
   hreflang counts" reads one file two ways, and whose "no page exists in a non-NL
   store without an NL counterpart" is false — 283 clusters have no NL member.
-  Ticket 38's per-store counts must be re-measured after it lands.
+  Ticket 38's per-store counts must be re-measured after it lands. **Done on
+  2026-08-10 by ticket 55**, in ticket 38 and in its entry above.
 
   **The cross-store view for editors is the next ticket, not this one.** It is
   axis B, and everything ticket 38 built is axis A. Its first question: are those
@@ -1211,7 +1230,27 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   **Two tickets now wait on 55**, the rollout sitting:
   [16](issues/16-new-site-page-discovery.md) and
   [20](issues/20-one-sided-pages-checklist.md). Both count out of the seed list,
-  and both re-triage after it.
+  and both re-triage after it. **55 landed on 2026-08-10, so both are unblocked**,
+  and so is [04](issues/04-six-store-page-lists.md).
+  [49](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md) is **re-opened**:
+  its own trigger fired and the number that made it wontfix went from 1 to 12.
+  `WORKLIST.md` step 33 holds all four.
+
+  **The spec is delivered. 55 landed on 2026-08-10 and the number is 816.** Every
+  one of the six dashboards holds every page of its store: nl 179, be 130, be_fr
+  122, de 134, fr 123, uk 128, against 451 store-page pairs before. The German
+  store goes from 45 pages to **134** and the British from 42 to **128**.
+
+  **The NL baseline held, byte for byte** — 179 crawled, 124 comparable, 9,635
+  findings, 6,747 shown, median 37. That is the check that the new rule did not
+  over-collect, and it is the whole reason `nl` was kept invariant across the spec.
+
+  Navigation and footer coverage, measured on production for all six stores:
+  nl 94.2%, be 90.6%, be_fr 92.0%, de **90.6%**, fr 90.2%, uk **88.5%**. `de` and
+  `uk` hit ticket 50's numbers exactly. Every miss is a blog page or the
+  newsletter, and both are in no sitemap — with one exception, `/Separate-parts`
+  in the British chrome, which is a storefront defect and is recorded in
+  `devdva02`.
 
   Broken into six build tickets. **51, 52 and 53 are all resolved (2026-08-10),
   so 54 is unblocked and is the go/no-go.**

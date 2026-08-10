@@ -85,6 +85,45 @@ it is a production defect that already has a record.
 34's baseline to the finding. Adding five stores adds no rule, so movement would
 have been a defect.
 
+### The table above is superseded. Re-measured 2026-08-10 by ticket 55
+
+**Every non-NL number above was a floor and not a measurement**, because it counted
+the old page list. Ticket [55](55-five-stores-show-all-their-pages.md) crawled the
+new list and re-measured. This is bookkeeping: it decides nothing and it reopens
+nothing in this ticket.
+
+| store | crawled | comparable | findings | shown | median shown |
+|---|---|---|---|---|---|
+| nl | 179 | 124 | 9,635 | 6,747 | 37 |
+| be | 130 | 122 | 9,744 | 6,572 | 34 |
+| de | 134 | 123 | 8,932 | 6,149 | 29 |
+| uk | 128 | 121 | 10,027 | 6,820 | 30 |
+| be_fr | 122 | 115 | 8,231 | 5,546 | 26 |
+| fr | 123 | 117 | 8,154 | 5,495 | 25 |
+| **all six** | **816** | **722** | **54,723** | **37,329** | |
+
+**The two tables must not be read as a before and an after.** Two different things
+moved between them and they moved in opposite directions:
+
+- **The page list grew**, which is ticket 55. 448 crawled pages to 816.
+- **Three rules removed findings**, which is tickets 62, 63 and 64, all landed
+  after this ticket. That is why nl **falls** from 10,796 to 9,635 while its page
+  count does not move at all: nl is the store the new page list adds nothing to,
+  so nl isolates the rule changes exactly.
+
+So `nl` is the control and it is the only row in either table that can be compared
+straight down. Every other row mixes the two effects.
+
+**The `de` and `uk` medians fall** — 38.5 to 29 and 40 to 30 — and that is the page
+list and not a repair. The old list held the category pages, which are the busiest;
+the new list adds 89 and 86 mostly quieter CMS pages, and a median moves toward
+them.
+
+`findings` counts the **comparable** pages here, as `compare/measure.mjs` does. The
+report files hold **54,742**: 19 more, every one a hidden `no-declared-alternate`
+on a one-sided page. `shown` is **37,329** by either count, because the class is
+hidden.
+
 ## Decisions the ticket did not give
 
 **`link-status.mjs` must be given no store.** It writes one file keyed on the
@@ -151,6 +190,11 @@ So the number is not zero and [49](.out-of-scope/49-be-fr-shared-host-blind-spot
 was opened with a recommendation of wontfix. No rule was written. **Triage took
 that recommendation on 2026-08-07**: 49 is `wontfix`, and it carries a trigger to
 run the probe again after ticket 55, which takes be_fr from 29 pages to about 110.
+
+**That trigger fired on 2026-08-10.** `be_fr` is 122 pages, and the probe over all
+of them reports **16 anchors to a page of the other store** where 29 pages reported
+1. Twelve of the 16 are in scope. Ticket 49 is re-opened as `needs-triage` and
+holds the new table.
 
 Found beside it: **production** links out of the French store on all 29 be_fr
 pages, 29 of them to the same Dutch category page. That is a storefront defect
