@@ -33,7 +33,7 @@ alter table overrides add constraint override_anchor_heading check (
 -- `not valid` on purpose. The table is append-only, so a mute written before this
 -- ticket can never be repaired — only superseded. The rule holds from the next
 -- row on, and the history stays as it was written.
-alter table overrides drop constraint override_note;
+alter table overrides drop constraint if exists override_note;
 alter table overrides add constraint override_note check (
   action not in ('dismissed', 'muted') or length(trim(coalesce(note, ''))) > 0
 ) not valid;
