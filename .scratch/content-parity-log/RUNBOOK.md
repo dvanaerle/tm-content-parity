@@ -1,10 +1,17 @@
 # Runbook: how to work the open tickets
 
-Written 2026-08-07, from the triage of the open tail. It gives the order, the
-sessions, and the exact commands.
+Written 2026-08-07, from the triage of the open tail. **Revised 2026-08-10**,
+after the grilling that added nineteen tickets and five ADRs. It gives the
+order, the sessions, and the exact commands.
 
 `map.md` stays the map. This file says **in which order to work it**, and
-nothing more. If the two disagree, the map wins.
+nothing more. If the two disagree, the map wins. The map's `## Working order`
+section holds the same order in short form.
+
+**`WORKLIST.md` is the checklist.** It holds one numbered step for each open
+ticket, from the first to the last, with the command and the gate for each. Read
+this file for *why* the order is what it is. Read `WORKLIST.md` for *what to do
+next*.
 
 ## The rule this order comes from
 
@@ -17,12 +24,23 @@ directions. One number would have hidden both.
 
 ## The corpus is one asset, and it is not in git
 
-`data/` is in `.gitignore`. Git holds **no** file under it. The corpus on disk is
-the extracts, the seed list and the link statuses, and it is the only copy.
+`data/` is in `.gitignore`, with **three exceptions**. Ticket 51 tracked the seed
+list and tickets 52 and 53 tracked the sitemap evidence, so git now holds
+`data/10-store-seeds.json`, `data/sitemap-extract.json` and
+`data/sitemap-manifest.json`. Everything else under `data/` — the extracts, the
+reports, the link statuses and the re-checks — is the only copy and is not in
+git.
 
-The corpus cannot be rebuilt today. All six `valantic*` hosts answer HTTP 500,
-and an extract holds the text and not the markup, so no re-extraction is
-possible from what is on disk.
+**A rebuild needs the hosts.** An extract holds the text and not the markup, so no
+re-extraction is possible from what is on disk. On 2026-08-07 all six `valantic*`
+hosts answered HTTP 500 and no crawl could run at all. Measure that before you
+plan a `data` sitting.
+
+**But ask what the old rule discarded before you accept that a ticket is blocked
+on the hosts.** Tickets 61, 62, 64 and 65 all read as blocked and none of them
+was. A ticket that changes extraction still needs no crawl when the corpus
+carries the bytes the new rule reads. Ticket 63 is the true case: an extract holds
+no DOM path, so a region cut cannot be measured from disk.
 
 Two rules come from this.
 
@@ -34,27 +52,57 @@ time destroy each other's numbers, and they do it quietly.
 **A `git worktree` starts with an empty `data/`.** A session there can build, but
 it can measure nothing until the corpus is beside it. See "In parallel" below.
 
-## The state today
+## The state today, 2026-08-10
+
+**45 of the 90 tickets are closed**, counted from the `Status:` line of every
+ticket file on 2026-08-10. 45 are open, and they are five streams and not one
+queue. `WORKLIST.md` splits them into 34 numbered steps and 7 parked tickets.
+
+Three things changed on 2026-08-10.
+
+**Spec 50 sitting A is done.** Tickets 51, 52 and 53 are built and committed on
+`spec-50-content-page-discriminator` (`f640567`, `49f71ca`, `e43c125`). Session 3
+below is history now. **Ticket 54 is the next build.**
+
+**The grilling added nineteen tickets, 72 to 90, and five ADRs 0004 to 0008.**
+They make the log a workspace. Session 10 below holds them. Axis A only.
+
+**Axis B is parked.** Tickets 39 to 45 stay a named stream and nobody starts
+them. Sessions 7 to 9 below are on hold, not cancelled.
+
+### Before anything: the planning work is committed — DONE on 2026-08-10
+
+The nineteen tickets, `PRD.md` and the five ADRs were untracked on the spec-50
+branch. Commit `11d4f4b` on `main` carries all of them, and the spec-50 branch is
+merged. `.scratch/` is under version control in this repo, so planning that is
+not committed is planning that can be lost.
+
+**Two loose ends are left, and `WORKLIST.md` step 00 holds both.** The revision
+of this file is still only in the working tree, and an unrecorded Astro 5 to 7
+bump sits in `web/package.json`, which is session 10C work out of order and
+skipping ticket 72.
+
+### The counts
 
 Session 2 is complete, so 23 items were open. The grilling of the content unit added
-**10** and resolved ticket 27. So 33 items are open, and they are not 33 pieces of
-work.
+**10** and resolved ticket 27. The grilling of 2026-08-10 added **19**.
 
 | kind | count | cost |
 | --- | --- | --- |
-| Build tickets, agent-ready | 19 | about 10 sittings |
 | Close or fold in triage | 4 | **done, session 1** |
 | Human decisions | 4 | minutes each — **13 is decided and applied** |
-| Deferred, blocked by other tickets | 4 | none yet |
 | Opened by the review of ticket 38 | 2 | **done, session 2** — 59 and 60 both landed |
-| Opened by the grilling of the content unit | 10 | about 4 sittings, sessions 2A to 2D — **62, 66, 65 and 61 landed** |
+| Opened by the grilling of the content unit | 10 | sessions 2A to 2D — **61 to 66 landed. 67 to 70 are open** |
+| Spec 50, the seed list | 6 | sessions 3 to 5 — **51, 52, 53 landed. 54, 55, 56 are open** |
+| Opened by the grilling of 2026-08-10 | 19 | session 10, about 8 sittings |
+| Axis B | 7 | **parked** |
+| Deferred, blocked by other tickets | 4 | none yet |
 
-**Two facts decide what can start today.**
-
-The new environment answers HTTP 500 on all six `valantic*` hosts. No crawl and no
-re-check can run, so any ticket that changes **extraction** cannot be measured. The
+**Check the hosts before you plan a sitting.** On 2026-08-07 the new environment
+answered HTTP 500 on all six `valantic*` hosts, and that stopped every crawl. The
 repository keeps no raw HTML — an extract holds the text and not the markup — so
-there is no way to re-extract from what is on disk.
+there is no way to re-extract from what is on disk. Whether the hosts answer today
+is a measurement, not a memory.
 
 Three of the ten tickets need no crawl. Ticket 62 changes the comparison only, so it
 is measured by running the compare stage over the extracts already in `data/`.
@@ -78,19 +126,36 @@ baseline from before 62.
 
 ## The order, and why
 
-1. **Housekeeping.** It costs no crawl. It removes four items and unblocks
-   three.
-2. **The content unit, sessions 2A to 2D.** They remove noise, and they go before
-   spec 50 — see below.
-3. **Spec 50, the gate.** It takes the seed list from 451 pages to about 800.
-   Almost every other open ticket is measured against that list. Run it first
-   or measure everything twice.
-4. **Ticket 58, the head check.** It re-crawls all six stores. It must run
-   alone.
-5. **Axis B.** There are no axis-B classes in the vocabulary today.
+Revised 2026-08-10. Three constraints give it.
+
+1. **`data/` has one writer.** Tickets 54, 55, 58 and 67 each rebuild the corpus.
+   Two of them must never be in flight together.
+2. **Ticket 88 is free today and impossible tomorrow.** Ticket 65 counted the
+   table: no mute is live in any store. The table is append-only, so a mute
+   written under the old key can never be repaired, only superseded.
+3. **A measurement before the corpus settles is a measurement done twice.**
+   Tickets 76 and 89 count the corpus that ticket 55 takes from 451 pairs to
+   about 800.
+
+The order:
+
+0. **Ticket 88, alone and first.** Out of dependency order, for constraint 2.
+   Session 10A.
+1. **The corpus.** 54, then 55 and 56, then 67, then 68, then 58. One ticket, one
+   gate. Sessions 4, 5, 2C and 6.
+2. **Re-measure.** 76 and 89. Also ticket 38's per-store counts, and the
+   re-triage of 04, 16, 20 and 25. Session 10B.
+3. **The stack, alone.** 72, 73, 74. An upgrade that carries a product change
+   cannot be reviewed. Session 10C.
+4. **The contract, then the workspace.** 75 and 77, then 78 to 87 and 90.
+   Sessions 10D and 10E.
+5. **Axis B.** Parked. Sessions 7 to 9 wait.
 6. **Debt and decisions.**
 
 Grillings are conversations. They touch no data. Run them beside a crawl.
+
+**Ticket 37 moves to after 68.** It builds modes onto a content view that the fold
+rewrites.
 
 ### Why the content unit goes before spec 50
 
@@ -373,9 +438,10 @@ measures nothing.
 
 ---
 
-## Session 2B — The invisible characters, and the regions
+## Session 2B — The invisible characters, and the regions — DONE on 2026-08-07
 
-Needs the new environment. Three tickets, **three gates**. Do not batch them.
+**All three landed**: 61, 63 and 64. Two of the three needed no crawl. Three
+tickets, **three gates**, and they were not batched.
 
 ### Ticket 61 — DONE on 2026-08-07, and it needed no crawl
 
@@ -536,12 +602,39 @@ it.
 /clear
 ```
 
+**Ticket 68 is grilled before it is built.** Three of its six criteria carry a
+number nobody has chosen: "a cell clamps to about three lines", "a cap for the
+genuinely rewritten paragraph", and a first-paint measurement with no target. It
+also says "the worst page" and does not name it, where tickets 79 and 87 both name
+`nl__fotogalerij/zonwering` at 399 findings. An agent asked to build this invents
+all three values, and the review is then of its taste and not of its work.
+
+```
+/clear
+```
+
+```
+/grill-with-docs .scratch/content-parity-log/issues/68-the-content-view-survives-a-folded-unit.md
+
+Settle the three unspecified numbers: the clamp height, the cap for a rewritten
+paragraph, and an acceptable first paint. Name the worst page. Then write them into
+the acceptance criteria.
+
+Nothing clamps a row today, and after 67 one row is 450 to 550 pixels tall on a page
+of up to 288 rows.
+```
+
+Then, with the numbers in the ticket:
+
+```
+/clear
+```
+
 ```
 /implement .scratch/content-parity-log/issues/68-the-content-view-survives-a-folded-unit.md
 
-Nothing clamps a row today, and after 67 one row is 450 to 550 pixels tall on a page
-of up to 288 rows. Measure first paint on the worst page before and after, and put
-both numbers in the ticket.
+Measure first paint on the named page before and after, and put both numbers in
+the ticket.
 ```
 
 ---
@@ -576,17 +669,21 @@ so. That reorders the roadmap, and it is not this ticket's decision to make quie
 
 ---
 
-## Session 3 — Spec 50, sitting A
+## Session 3 — Spec 50, sitting A — DONE on 2026-08-10
 
-The input and the rule.
+The input and the rule. **51, 52 and 53 are all resolved and committed** on
+`spec-50-content-page-discriminator`.
 
-```
-/clear
-```
+- **51** deleted the six baseline scripts rather than repairing them, moved the
+  generator to `data/`, and replaced the private maintenance regex with
+  `maintenanceReason()` and `MaintenanceError`.
+- **52** reduced 181 MB of sitemap source to two tracked files of 289 KB. The six
+  sitemap urls were written down nowhere and were recovered from `robots.txt`.
+- **53** applied the new rule over both inputs.
 
-```powershell
-git checkout -b spec-50-content-page-discriminator
-```
+**Ticket 54 is the next build. Start at session 4.**
+
+The command that ran, kept as the record:
 
 ```
 /implement Build these three tickets in order, in this one session. They are
@@ -721,27 +818,39 @@ starting corpus, so their effects are not added up. After both are merged, run
 checkout and record the joint number. Ticket 64 shows why: ticket 62 moved the
 corpus under it, so its own 2,698 has to be measured again.
 
-### What runs in parallel today
+### What runs in parallel today, 2026-08-10
 
-The hosts answer 500, so no `data` lane can start. These four can, and none of
-them collides:
+**Ticket 88 runs first and alone.** It writes `web/` and the Supabase policy, not
+`data/`, so it does not block a crawl — but it is small, and splitting attention
+across it wastes the reason it goes first.
+
+Beside the corpus sessions, these lanes are open and none of them collides:
 
 | lane | ticket | touches |
 | --- | --- | --- |
-| 1 | 37, leesweergave | `web` |
+| 1 | 68, the clamp | `talk` — a grilling, then `web` |
 | 2 | 25, fotogalerij | `talk` |
 | 3 | 34, the deep link | `talk` |
-| 4 | 31, bulk dismissal | `read` first |
+| 4 | 76 and 89, the two measurements | `read` |
 
 Lanes 2 and 3 are conversations. They need a person, so they are the limit and
 not the tooling.
 
+**Ticket 37 is no longer a free `web` lane.** It moved to after 68, because it
+builds modes onto a content view that ticket 67's fold rewrites.
+
 ### The best batch in the roadmap
 
-Ticket 39 defines the class vocabulary and every ticket in sessions 7 to 9 reads
-it. Land 39 alone. **Then 42, 43, 44 and 45 are four independent classifiers**,
-and they are four lanes with four numbers. Session 9 collapses three of them into
-one gate today, which is the hiding the rule at the top warns against.
+**Session 10E is twelve tickets on one shared surface**, so it is the opposite
+case to a lane: `compare/vocabulary.mjs`, `overrides/state.mjs` and
+`web/src/lib/view.mjs` are each read by several of them. One ticket in each
+sitting, and the order in session 10E is the order.
+
+When axis B restarts, ticket 39 defines the class vocabulary and every ticket in
+sessions 7 to 9 reads it. Land 39 alone. **Then 42, 43, 44 and 45 are four
+independent classifiers**, and they are four lanes with four numbers. Session 9
+collapses three of them into one gate as written, which is the hiding the rule at
+the top warns against.
 
 ### Three reasons to stay serial, and they are not the same
 
@@ -776,7 +885,19 @@ number would hide both.
 
 ---
 
-## Sessions 7 to 9 — Axis B
+## Sessions 7 to 9 — Axis B — PARKED on 2026-08-10
+
+**Nobody starts these.** The grilling of 2026-08-10 put axis B out of scope for
+the workspace work, and this line makes that a decision instead of a silence.
+Ticket 11 holds every rule and none of them expires.
+
+Two reasons to leave them. Every ADR from 0004 to 0008 is axis A, and axis B keeps
+its own bar that is never summed with the parity bar, per ticket 11. And the
+numbers in tickets 40 to 45 are counted against a 451-pair seed list that ticket
+55 takes to about 800, so they must be re-stated whenever the stream restarts.
+
+The sittings below are kept as written. They are correct and they are not for
+today.
 
 All 21 classes in the vocabulary are axis A today. There are no coverage
 classes at all. Ticket 11 holds every rule.
@@ -827,6 +948,163 @@ classes, because ticket 58 has landed.
 Ticket 44 is also the nearest owner for spec 32's user story 24: pages whose
 first heading is not an h1 (11 pages), and pages with no h1 (3).
 ```
+
+---
+
+## Session 10 — The log becomes a workspace
+
+Nineteen tickets, 72 to 90, from the grilling of 2026-08-10. Five ADRs, 0004 to
+0008, carry the decisions. **Read the ADR before the ticket.** Axis A only.
+
+The measurement that shaped them: **22,990 shown findings of 33,507, over 448
+reports and 373 comparable pages**, in **8,229** distinct repeats. 116 repeats
+cover a quarter of the corpus and 903 cover half, but **3,925 repeats are
+singletons**. The backlog does not drain: 90% coverage costs about 5,930
+decisions. Progress must read as how much is decided, never as how much is left.
+
+### Session 10A — Ticket 88, the mute. FIRST, and out of order
+
+**Do this before anything else in the whole runbook.** The largest press available
+today hides **173 findings**, asks for no reason and records no section. It
+persists for ever. Ticket 65 counted the table: 45 events, 14 keys, 5 live
+overrides, all dismissals, **no live mute in any store**. The table is
+append-only, so the migration is free today and impossible on the day an editor
+presses the button.
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/88-the-mute-says-what-it-hides.md
+
+Read docs/adr/0008-the-mute-key-carries-the-anchor-heading.md first. Every rule
+is there and none of them is reopened.
+
+The heading goes in the mute key and NOT in the finding id. Ticket 34 kept it out
+of the id and out of the grouping key, and this ticket does not change that. A
+mute may drift when a heading changes; an id may not.
+
+Gate: on nl__terrasoverkapping the pair (text-missing, «Gumax® Heavy Duty»)
+covers 64 of 88 and must leave 24 visible. The page-wide form still works on
+nl__fotogalerij/zonwering, where the section form offers 239 groups.
+
+Record how many live mutes existed before the change. If it is still zero, say
+so, because that is what made the change free.
+```
+
+### Session 10B — The two measurements
+
+After the corpus settles, and not before. Both are research tickets: they write
+numbers, not features.
+
+```
+/clear
+```
+
+```
+/implement Build these two research tickets in one session. Neither writes
+product code.
+
+1. .scratch/content-parity-log/issues/76-the-coverage-curve-without-the-promo-banner.md
+2. .scratch/content-parity-log/issues/89-what-a-one-sided-campaign-rule-would-catch.md
+
+76 restates the coverage curve now that ticket 64 has removed the promo banner,
+which was the head of the distribution. Every number designed against must be
+re-stated before it is designed against.
+
+89 may REFUSE ticket 90. The campaign pattern is Dutch, which is the objection
+ADR 0003 used against a Dutch text anchor, and the banner carries link findings a
+text rule cannot reach. A refusal is a valid outcome and is not a failure.
+```
+
+### Session 10C — The stack, alone
+
+An upgrade that carries a product change cannot be reviewed. Nothing else is in
+this session.
+
+Astro 7.2.0 is current, the documented path from 5.14 is 5 to 6 to 7, and v6
+raises the Node floor to 22.12.0 — for `crawl/` and the re-check service as well
+as the build.
+
+```
+/clear
+```
+
+```
+/implement Build these three in order, in one session. Each is its own commit.
+
+1. .scratch/content-parity-log/issues/72-upgrade-to-astro-6.md
+2. .scratch/content-parity-log/issues/73-upgrade-to-astro-7.md
+3. .scratch/content-parity-log/issues/74-seven-accessible-primitives.md
+
+No product behaviour changes in any of the three. 74 takes shadcn on Base UI for
+BEHAVIOUR only — focus traps and keyboard menus, seven primitives and no more.
+web/src/lib/palette.mjs keeps meaning, and Chips.jsx and Diff.jsx are not rebuilt
+out of library parts. See docs/adr/0007-shadcn-is-taken-for-behaviour-only.md.
+
+Gate: npm test green, npm run build builds the same page count, and no finding
+count moves at any of the three steps.
+```
+
+### Session 10D — The contract
+
+```
+/clear
+```
+
+```
+/implement Build these two in one session:
+
+1. .scratch/content-parity-log/issues/75-class-visibility-replaces-shown.md
+2. .scratch/content-parity-log/issues/77-a-finding-says-when-it-was-first-seen.md
+
+75: read docs/adr/0005-class-visibility-is-one-enum.md. The shown-or-hidden
+boolean becomes work / information / diagnostic. It is NOT a second axis —
+ticket 02 removed that, and the class stays the only axis and the mute key. The
+migration is defined so the denominator does not move on the day it lands. Expect
+no movement at all.
+
+77: read docs/adr/0004-history-is-a-run-log-that-never-re-attaches.md. Ids stay
+content-addressed and they expire, so ticket 01 stands. The word "Changed" is
+refused. A committed index keyed on the finding id records first seen and last
+seen, and git history is the archive.
+
+Gate for 77: a second run over the same corpus moves no first-seen date.
+```
+
+### Session 10E — The workspace
+
+Twelve tickets, in this order. **31 was rewritten, not duplicated**: the grouping
+key it asked for three sessions ago is 81's *repeat*.
+
+```
+78 → 79 → 80 → 81 → 31 → 82 → 83 → 84 → 85 → 86 → 90 → 87
+```
+
+The edges: 78 needs 77. 81 needs 76. 31 needs 81, 88 and 30. 82 needs 81. 85 and
+86 need 75, and 86 also needs 76. 90 needs 89, **and 89 may refuse it**. 87 is
+last so that it is not done twice.
+
+One ticket in each sitting, `/clear` between, exactly as everywhere else:
+
+```
+/clear
+```
+
+```
+/implement .scratch/content-parity-log/issues/<NN>-<slug>.md
+
+Read the ADR the ticket names before you read the ticket.
+```
+
+**Ticket 79 carries the view decision and is the one to read first.** Measured:
+**82% of shown findings are one-sided** — `text-missing` 49.3%, `missing-link`
+21.0%, `image-missing` 12.1% — and `copy`, the only class with a score, is
+**3.4%**. The content view opens on the differences, with runs of equal rows
+collapsed into a context marker. A comparable page holds a median of 37 shown
+findings, 151 at p90 and 399 at worst. See
+`docs/adr/0006-the-content-view-is-the-spine.md`.
 
 ---
 
@@ -881,24 +1159,71 @@ PRODUCTION heading, which cannot resolve on the new site where that heading
 changed. What a finding with no heading gives instead has never been decided.
 ```
 
-### Ticket 31, bulk dismissal
+### Ticket 31, bulk dismissal — moved to session 10E
 
-```
-/clear
-```
+**The ticket was rewritten on 2026-08-10, not duplicated.** The grouping key it
+asked for three sessions ago is ticket 81's **repeat**, so 31 is no longer a
+measurement that might empty itself. It is blocked by 81, 88 and 30, and it runs
+in session 10E. The instruction to measure first is spent.
 
-```
-/implement .scratch/content-parity-log/issues/31-bulk-dismissal.md
-
-Do the measurement first. The ticket says the measurement can make this ticket
-empty.
-```
+Ticket 48 is **not** superseded by 81: 81 groups across pages and 48 groups
+within one page. Its first triage question is answered, though, because
+collapsing is not a view mode and ticket 37 keeps that question.
 
 ### Then triage again
 
 Tickets 16, 20 and 48 come back when their blockers land.
 
 ---
+
+## Where the user stories are
+
+**No ticket holds a user story.** They live in two numbered lists, and a ticket
+points at neither.
+
+- `PRD.md` — stories **1 to 49**, grouped under Finding the work, Deciding,
+  History, Reading a page, Organising, Scope, and Knowing what the tool is blind
+  to. Tickets 72 to 90 and 31 map onto these by topic.
+- `32-scannable-log-and-six-stores.md` — stories **1 to 55**. This is the list the
+  map means by "user story 24" and "story 29".
+- `50-content-page-discriminator.md` holds **no** stories. It is a measurement and
+  a rule.
+
+This matters for one command. `/implement` closes by running `/code-review`,
+whose **Spec** axis reads the diff against what the originating spec asked for.
+With no story reference in the ticket, that axis has nothing to anchor on. It is
+also how spec 32's user story 24 stayed open through three tickets before ticket
+44 was named its owner.
+
+**So name the source in the prompt.** Until each ticket carries a `Stories:`
+line, add it by hand:
+
+```
+/implement .scratch/content-parity-log/issues/81-the-repeat-is-the-queue.md
+
+It implements PRD.md user stories 1 to 6. Review the diff against them.
+```
+
+The known mapping: 81 → PRD 1–6, 82 → 7–8, 80 → 11–13, 31 → 14–19, 77 → 23,
+78 → 25–26, 79 → 29–31, 83 → 35–39, 84 → 40–44, 85 → 45–49.
+
+## What a good acceptance criterion looks like here
+
+The strongest tickets share one grammar, and a new ticket must inherit it. Each
+criterion **names a file or a symbol**, **states an outcome that can be
+observed**, and **ends with a negative invariant and a test that pins it**.
+
+> Muting a section leaves the same class visible elsewhere on the page. Checked
+> on `nl__terrasoverkapping`, where `(text-missing, «Gumax® Heavy Duty»)` covers
+> 64 of 88 and must leave 24 visible.
+
+That is ticket 88, and a test can be written from it before any code is read.
+Compare it with the shape that cannot be built: "a cell clamps to about three
+lines". A criterion with an unchosen number is a decision, and a decision goes to
+`/grill-with-docs` and not to `/implement`.
+
+AGENTS.md says a rule with no test is not a rule. This is the same sentence, one
+level up: **a criterion with no number is not a criterion.**
 
 ## The gate between every session
 
@@ -972,29 +1297,49 @@ crawl, it is a `data` ticket and it runs alone.
 | 63 | Regions excluded at extraction | session 2B | `data` | **done** — resolves 27. The cap is per entry, not a flat 20 |
 | 64 | The promo banner, 11.8% | session 2B | `data` | **done** — 4,055 findings, on 446 of 448 pages. No crawl was needed |
 | 67 | A content unit folds its links | session 2C | `data` | `/implement` — after 66, needs 65 |
-| 68 | The content view survives a fold | session 2C | `web` | `/implement` — after 67 |
+| 68 | The content view survives a fold | session 2C | `talk`, then `web` | **`/grill-with-docs` first** — three numbers are unchosen |
 | 69 | One canonical viewport | session 2D | `compare` | `/implement` — after 64 |
 | 70 | Shared regions by content hash | session 2D | `data` | `/implement` — after 64 and 67 |
-| 51 | Runnable seed pipeline | session 3 | `data` | `/implement` |
-| 52 | Production page list | session 3 | `data` | `/implement` |
-| 53 | Every content page | session 3 | `data` | `/implement` |
-| 54 | French store | session 4 | `data` | `/implement` |
+| 71 | A saved re-check survives a reload | — | — | **done** — resolved 2026-08-07 |
+| 51 | Runnable seed pipeline | session 3 | `data` | **done** — 2026-08-10, `f640567` |
+| 52 | Production page list | session 3 | `data` | **done** — 2026-08-10, `49f71ca` |
+| 53 | Every content page | session 3 | `data` | **done** — 2026-08-10, `e43c125` |
+| 54 | French store | session 4 | `data` | `/implement` — **the next build** |
 | 55 | Five stores | session 5 | `data` **alone** | `/implement` |
 | 56 | An excluded page says why | session 5 | `data` | `/implement` |
 | 04 | Six store page lists | closes with 55 | — | none |
-| 37 | Leesweergave | a lane, any time | `web` | `/implement` |
+| 37 | Leesweergave | after 68 | `web` | `/implement` — moved, 68 rewrites the view |
 | 58 | Head becomes a check | session 6 | `data` **alone** | `/implement` |
-| 39 | Class vocabulary axes | session 7 | `compare` **alone** | `/implement` — the vocabulary. Land it first |
-| 40 | Coverage, missing pages | session 7 | `compare` | `/implement` |
-| 41 | Coverage matrix | session 8 | `web` | `/implement` |
-| 45 | Images across stores | session 8 | `compare` | `/implement` — a lane, after 39 |
-| 42 | Untranslated text | session 9 | `compare` | `/implement` — a lane, after 39 |
-| 43 | Alt language and meta | session 9 | `compare` | `/implement` — a lane, after 39 and 58 |
-| 44 | Heading outline shape | session 9 | `compare` | `/implement` — a lane, after 39 |
+| 88 | The mute says what it hides | **session 10A, first** | `web` | `/implement` — free today, impossible later |
+| 76 | The coverage curve | session 10B | `read` | `/implement` — research |
+| 89 | What a campaign rule would catch | session 10B | `read` | `/implement` — research. **It may refuse 90** |
+| 72 | Astro 6 | session 10C | `web` **alone** | `/implement` |
+| 73 | Astro 7 | session 10C | `web` **alone** | `/implement` — after 72 |
+| 74 | Seven accessible primitives | session 10C | `web` **alone** | `/implement` — after 73 |
+| 75 | Class visibility is one enum | session 10D | `compare` | `/implement` — ADR 0005 |
+| 77 | A finding says when it was first seen | session 10D | `compare` | `/implement` — ADR 0004 |
+| 78 | A closed finding leaves a history note | session 10E | `web` | `/implement` — after 77 |
+| 79 | The content view opens on the differences | session 10E | `web` | `/implement` — ADR 0006 |
+| 80 | Three buckets, and the third is closed | session 10E | `web` | `/implement` |
+| 81 | The repeat is the queue | session 10E | `compare` | `/implement` — after 76 |
+| 31 | Bulk dismissal | session 10E | `web` | `/implement` — after 81, 88 and 30 |
+| 82 | Search reaches the content | session 10E | `web` | `/implement` — after 81 |
+| 83 | A page carries a priority and a note | session 10E | `web` | `/implement` |
+| 84 | A one-sided page carries a decision | session 10E | `web` | `/implement` |
+| 85 | The comparison scope is legible | session 10E | `web` | `/implement` — after 75 |
+| 86 | Heading level becomes information | session 10E | `compare` | `/implement` — after 75 and 76 |
+| 90 | A campaign is a class, not a commit | session 10E | `data` | `/implement` — after 89, which may refuse it |
+| 87 | Three widths | session 10E, **last** | `web` | `/implement` — last, so it is not done twice |
+| 39 | Class vocabulary axes | session 7 | `compare` **alone** | **parked** — the vocabulary. Land it first when it restarts |
+| 40 | Coverage, missing pages | session 7 | `compare` | **parked** |
+| 41 | Coverage matrix | session 8 | `web` | **parked** |
+| 45 | Images across stores | session 8 | `compare` | **parked** |
+| 42 | Untranslated text | session 9 | `compare` | **parked** |
+| 43 | Alt language and meta | session 9 | `compare` | **parked** |
+| 44 | Heading outline shape | session 9 | `compare` | **parked** |
 | 27 | Category page grid | any time, early | — | **done** — resolved, built by 63 |
 | 25 | fotogalerij | any time | `talk` | `/grilling` |
 | 34 | Position, the deep link | last | `talk` | `/grill-with-docs` |
-| 31 | Bulk dismissal | last | `read`, then `web` | `/implement` |
 | 16 | New site page discovery | after 55 | `talk` | `/triage` — edge recorded |
 | 20 | One-sided pages | after 22 and 55 | `talk` | `/grilling` — edge recorded |
 | 48 | Task board | after 37 | `talk` | `/triage` — edge recorded |
