@@ -7,7 +7,24 @@
 // A page is one row across the six stores. Stores do not share url keys: de, fr,
 // uk and be_fr translate the category keys. hreflang is the only thing that links
 // them, so the cluster key is the NL url key from the nl-NL alternate.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+
+import { MaintenanceError, maintenanceReason } from './fetch-page.mjs';
+
+// Both inputs are generated data, and git does not track `data/`. A fresh clone
+// has neither. Name the file and say what it holds, so the reader learns what to
+// put in place instead of reading a raw ENOENT.
+const readInput = (name, holds) => {
+  const file = new URL(`../data/${name}`, import.meta.url);
+  if (!existsSync(file)) {
+    console.error(`Missing input: data/${name}`);
+    console.error(`  It holds ${holds}.`);
+    console.error('  `data/` is generated and git does not track it. Put the file');
+    console.error('  in place, then run this script again.');
+    process.exit(2);
+  }
+  return readFileSync(file, 'utf8');
+};
 
 const PROD_HOST = {
   'www.tuinmaximaal.nl': 'nl',
@@ -37,7 +54,7 @@ const STORES = ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'];
 // be_fr lives under /fr/ on both sides, so the prefix is part of the path.
 const newUrl = (store, path) => `https://${NEW_HOST[store]}/${path}`;
 
-const XML = readFileSync(new URL('../_data/sitemap-prod.xml', import.meta.url), 'utf8');
+const XML = readInput('sitemap-prod.xml', 'the production sitemap for all six stores');
 
 const excluded = { pdp: 0, unknownHost: 0 };
 const entries = [];
@@ -105,7 +122,7 @@ for (const entry of entries) {
 // No such discovery exists for the other five stores - the new site serves no
 // sitemap, so those columns stay short until a crawler finds them.
 const baseline = JSON.parse(
-  readFileSync(new URL('../_data/03-merged.json', import.meta.url), 'utf8')
+  readInput('03-merged.json', 'the NL baseline crawl, including the 48 pages no sitemap declares')
 ).rows;
 
 let addedFromBaseline = 0;
@@ -159,10 +176,11 @@ for (const row of pages.values()) {
 
 // A Magento install in maintenance mode answers the same on every url, and it
 // answers differently depending on how far the bootstrap got: a 500 with an
-// exception before the maintenance page is in place, a 503 after. Either one
-// looks like a broken page, so name it instead of recording a bare 5xx.
-const MAINTENANCE = /the maintenance mode is enabled|Error 503: Service Unavailable/i;
-
+// exception before the maintenance page is in place, a 503 after. This script
+// used to record that as a flag and carry on, which is how 451 phantom status
+// values reached the seed file. `maintenanceReason` is the one rule (ticket 04),
+// and it aborts. The redirect stays manual here, because the seed list records
+// where a url sends the reader.
 const status = async (url) => {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -170,13 +188,17 @@ const status = async (url) => {
         headers: { 'user-agent': 'Mozilla/5.0 (content-parity-seeds; internal)' },
         redirect: 'manual',
       });
+      // 500 and 503 need no body: `maintenanceReason` names them on the status
+      // alone. The body is read for the other 5xx, and cancelled below 500.
       const body = response.status >= 500 ? await response.text() : (await response.body?.cancel(), '');
+      const reason = response.status >= 500 ? maintenanceReason(response.status, body) : null;
+      if (reason) throw new MaintenanceError(url, reason);
       return {
         code: response.status,
         location: response.headers.get('location') ?? '',
-        maintenance: MAINTENANCE.test(body),
       };
     } catch (error) {
+      if (error instanceof MaintenanceError) throw error;
       if (attempt === 2) return { code: 0, location: String(error.cause?.code ?? error.message) };
     }
   }
@@ -187,14 +209,29 @@ const queue = targets.slice();
 const workers = Array.from({ length: 8 }, async () => {
   for (let job = queue.shift(); job; job = queue.shift()) {
     const [cell, side, url] = job;
-    const result = await status(url);
+    let result;
+    try {
+      result = await status(url);
+    } catch (error) {
+      // Maintenance mode is site-wide. Do not ask nine hundred more times.
+      queue.length = 0;
+      throw error;
+    }
     cell[`${side}Status`] = result.code;
     if (result.location) cell[`${side}Redirect`] = result.location;
-    if (result.maintenance) cell[`${side}Maintenance`] = true;
     if (++done % 100 === 0) console.log(`  checked ${done}/${targets.length}`);
   }
 });
-await Promise.all(workers);
+
+const settled = await Promise.allSettled(workers);
+const failure = settled.find((r) => r.status === 'rejected')?.reason;
+if (failure instanceof MaintenanceError) {
+  console.error(`\n${failure.message}`);
+  console.error('The status columns would be phantom, so nothing was written.');
+  console.error('Run this again when the site is up.');
+  process.exit(3);
+}
+if (failure) throw failure;
 
 const rows = [...pages.values()].sort((a, b) => a.page.localeCompare(b.page));
 
@@ -207,20 +244,11 @@ for (const store of STORES) {
     newOk: cells.filter((c) => c.newStatus === 200).length,
     newMissing: cells.filter((c) => c.newStatus === 404).length,
     newRedirect: cells.filter((c) => c.newStatus >= 300 && c.newStatus < 400).length,
-    prodMaintenance: cells.filter((c) => c.prodMaintenance).length,
   };
 }
 
-const maintenance = Object.values(counts).reduce((sum, c) => sum + c.prodMaintenance, 0);
-if (maintenance) {
-  console.error(
-    `\nWARNING: production answered "maintenance mode" on ${maintenance} urls. ` +
-      'The prodStatus column is not a measurement. Re-run when production is up.'
-  );
-}
-
 writeFileSync(
-  new URL('../_data/10-store-seeds.json', import.meta.url),
+  new URL('../data/10-store-seeds.json', import.meta.url),
   JSON.stringify(
     { generated: new Date().toISOString().slice(0, 10), counts, excluded, addedFromBaseline, rows },
     null,
@@ -241,7 +269,7 @@ const cellMark = (cell) => {
 const markdown = [
   '# Seed lists for all six store views',
   '',
-  `Generated ${new Date().toISOString().slice(0, 10)} by \`_scripts/10-store-seeds.mjs\`.`,
+  `Generated ${new Date().toISOString().slice(0, 10)} by \`crawl/10-store-seeds.mjs\`.`,
   'A page is one row across the six stores, keyed on its NL url key. The mark is',
   'the status of the **new** site: `✓` 200, `404` missing, `→` redirect, `·` the',
   'store does not have this page at all.',
@@ -263,7 +291,7 @@ const markdown = [
   '',
 ].join('\n');
 
-writeFileSync(new URL('../store-seeds.md', import.meta.url), markdown);
+writeFileSync(new URL('../data/10-store-seeds.md', import.meta.url), markdown);
 
 console.log('\npages total', rows.length);
 console.table(counts);

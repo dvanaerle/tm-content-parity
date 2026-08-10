@@ -601,6 +601,22 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   ticket 26 built the table. It is not deferred with an owner; if the want comes
   back it is a new ticket against a built screen.
 
+- [51 — A seed pipeline that runs, and output that is tracked](issues/51-runnable-tracked-seed-pipeline.md)
+  — **Resolved 2026-08-10.** The absent `_data/` is gone from every code file;
+  the generator writes `data/` where the five consumers read. The seed list is
+  tracked (`.gitignore` needs `data/*` and then `!data/10-store-seeds.json`, not
+  `data/`), the rest of `data/` stays ignored, and the summary moved from the
+  repository root to `data/10-store-seeds.md`. **The six baseline scripts
+  `01-parse-sitemap` through `06-html` are deleted, not repaired** — none was in
+  a run sequence, none could run, and repaired paths would have left them looking
+  runnable. The generator's private maintenance regex is gone in favour of
+  `maintenanceReason()` and `MaintenanceError`, and it exits 3 before writing.
+  **That guard is wider than the one it replaced**: every 500 and 503 now aborts,
+  where the private regex needed a matching body. Two things stay for
+  [53](issues/53-every-content-page-in-the-seed-list.md): neither generator input
+  has a producer in the tree, so a fresh clone still exits 2, and the committed
+  seed list is the phantom maintenance run of 2026-08-06.
+
 - [22 — Re-measure production status](issues/22-remeasure-prod-status.md)
   — **Folded on 2026-08-07, not closed and not resolved.** Both criteria moved
   into spec 50, because 22 measures the 451-pair seed list that ticket 53 is about
@@ -608,10 +624,11 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   `prodRedirect` and the clearing of the stale `prodMaintenance` flags are in
   [53](issues/53-every-content-page-in-the-seed-list.md); arming ticket 04's
   fail-loudly guard is in [51](issues/51-runnable-tracked-seed-pipeline.md),
-  because `crawl/10-store-seeds.mjs:164-183` holds a **private second copy of the
-  maintenance rule** that records a flag and carries on where
+  because `crawl/10-store-seeds.mjs:164-183` held a **private second copy of the
+  maintenance rule** that recorded a flag and carried on where
   `crawl/fetch-page.mjs` throws. That copy is how 451 phantom `prodStatus` values
-  reached the file. 22 stays open as a `folded` pointer, because ticket 20 follows
+  reached the file. **51 deleted it on 2026-08-10**; the `prodMaintenance` flags
+  in the committed seed file outlive it and are 53's to clear. 22 stays open as a `folded` pointer, because ticket 20 follows
   that edge. Its "do not re-run the whole seed derivation" instruction is
   **overtaken** by ticket 50, which found the page list itself unsound.
 
@@ -979,8 +996,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   [20](issues/20-one-sided-pages-checklist.md). Both count out of the seed list,
   and both re-triage after it.
 
-  Broken into six build tickets, all `ready-for-agent`. **51 and 52 are
-  unblocked and can start together.**
+  Broken into six build tickets. **51 is resolved (2026-08-10); 52 is unblocked
+  and 53 is now unblocked by 51.**
 
   ```
   51 ─┬──> 53 ──> 54 ─┬──> 55

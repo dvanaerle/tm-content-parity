@@ -1,5 +1,8 @@
 node_modules/
-data/
+# Generated data stays out of git, with one exception: the seed list is the
+# input every later stage reads, so it is tracked (ticket 51).
+data/*
+!data/10-store-seeds.json
 dist/
 .astro/
 .env

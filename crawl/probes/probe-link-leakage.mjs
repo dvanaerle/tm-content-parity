@@ -19,7 +19,7 @@ const NEW_HOSTS = new Set([
 const LIVE = /(^|\.)tuinmaximaal\.[a-z.]+$/i;
 
 const seeds = JSON.parse(
-  readFileSync(new URL('../_data/10-store-seeds.json', import.meta.url), 'utf8')
+  readFileSync(new URL('../../data/10-store-seeds.json', import.meta.url), 'utf8')
 );
 
 const jobs = [];
@@ -187,7 +187,7 @@ const report = lines.join('\n');
 console.log(report);
 
 writeFileSync(
-  new URL('../_data/probe-link-leakage.json', import.meta.url),
+  new URL('../../data/probe-link-leakage.json', import.meta.url),
   JSON.stringify(
     {
       generated: new Date().toISOString(),

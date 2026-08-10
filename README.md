@@ -19,7 +19,7 @@ closes itself.
 | `overrides/` | What an editor's ticks add up to. `state.mjs` is pure and tested; `supabase.mjs` is the whole database surface, three functions wide. |
 | `api/` | The local re-check service, which also serves `dist/`. |
 | `web/` | Astro static build, with React islands for the interactive parts. |
-| `data/` | Generated JSON. Not in git. |
+| `data/` | Generated JSON. Not in git, except `10-store-seeds.json`, which every stage reads. |
 | `dist/` | The static build that goes to the webhost. Not in git. |
 | `supabase/` | The schema and the policies for the override log. |
 
@@ -68,8 +68,35 @@ and no `redirect` there. Given an argument, the script prints why and exits 2
 one. The front end gives each store its own dashboard at `/<store>/`, and `/` lists
 them.
 
-`data/` is not in git, so a fresh clone needs the first three commands before the
-front end has anything to show.
+`data/` is not in git, with one exception: `data/10-store-seeds.json` is tracked,
+because every stage above reads it. A fresh clone has the seed list and needs the
+first three commands before the front end has anything to show.
+
+## Rebuild the seed list
+
+```sh
+node crawl/10-store-seeds.mjs   # writes data/10-store-seeds.json and .md
+```
+
+This is not part of a normal run. The seed list is in git, so you only run this
+to change what is in it.
+
+**Neither input is in the tree.** The script needs `data/sitemap-prod.xml` and
+`data/03-merged.json`. It names the absent one and exits 2. Nothing in this repo
+produces them: the scripts that did were the deleted baseline, and their own
+inputs were gone as well. Ticket 53 carries the inputs over.
+
+**The tracked seed list is not reproducible from this tree**, and it is not a
+clean measurement. It is the run of 2026-08-06, made while production was in
+maintenance mode, so its `prodStatus` column is phantom and it still carries the
+`prodMaintenance` flags that the generator no longer writes. It is in git because
+every stage above needs a page list to read, not because it is right. Ticket 53
+rebuilds it.
+
+The generator asks production for every url, and it stops with exit 3 on the
+first 500 or 503, because a status column measured against a maintenance page is
+phantom. That is `maintenanceReason()` from `crawl/fetch-page.mjs`, the one
+maintenance rule (ticket 04).
 
 ## The override log
 
@@ -91,9 +118,12 @@ empty override list as "nobody has done anything".
 ## Status
 
 `crawl/extract.mjs` is the extractor v2 (ticket 07). It gives elements, links,
-images, meta and Markdown in one pass, for one URL. The numbered `0*.mjs`
-scripts are the baseline from the `sitemap-content-overview` survey. They make
-the seed data, and they do not follow the contract.
+images, meta and Markdown in one pass, for one URL.
+
+`crawl/10-store-seeds.mjs` makes the seed data, and it does not follow the
+contract. The six `0*.mjs` scripts beside it were the rest of that
+`sitemap-content-overview` baseline. Ticket 51 deleted them: none was in a run
+sequence, none could run, and they looked runnable. Git history holds them.
 
 The decisions are in `.scratch/content-parity-log/map.md`.
 `CONTEXT.md` holds the words that the code uses.

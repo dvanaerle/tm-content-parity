@@ -1,0 +1,5663 @@
+{
+  "generated": "2026-08-06",
+  "counts": {
+    "nl": {
+      "pages": 181,
+      "prodOk": 0,
+      "newOk": 165,
+      "newMissing": 14,
+      "newRedirect": 2,
+      "prodMaintenance": 177
+    },
+    "be": {
+      "pages": 126,
+      "prodOk": 0,
+      "newOk": 116,
+      "newMissing": 8,
+      "newRedirect": 2,
+      "prodMaintenance": 126
+    },
+    "be_fr": {
+      "pages": 29,
+      "prodOk": 0,
+      "newOk": 25,
+      "newMissing": 4,
+      "newRedirect": 0,
+      "prodMaintenance": 29
+    },
+    "de": {
+      "pages": 45,
+      "prodOk": 0,
+      "newOk": 42,
+      "newMissing": 3,
+      "newRedirect": 0,
+      "prodMaintenance": 45
+    },
+    "fr": {
+      "pages": 28,
+      "prodOk": 0,
+      "newOk": 25,
+      "newMissing": 3,
+      "newRedirect": 0,
+      "prodMaintenance": 28
+    },
+    "uk": {
+      "pages": 42,
+      "prodOk": 0,
+      "newOk": 40,
+      "newMissing": 2,
+      "newRedirect": 0,
+      "prodMaintenance": 41
+    }
+  },
+  "excluded": {
+    "pdp": 26645,
+    "unknownHost": 0
+  },
+  "addedFromBaseline": 48,
+  "rows": [
+    {
+      "page": "(home)",
+      "stores": {
+        "nl": {
+          "path": "",
+          "prodUrl": "https://www.tuinmaximaal.nl/",
+          "newUrl": "https://valanticnl.intern.systems/",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "",
+          "prodUrl": "https://www.tuinmaximaal.be/",
+          "newUrl": "https://valanticbe.intern.systems/",
+          "source": "store-home",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/",
+          "newUrl": "https://valanticbe.intern.systems/fr/",
+          "source": "store-home",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "",
+          "prodUrl": "https://www.tuinmaximaal.de/",
+          "newUrl": "https://valanticde.intern.systems/",
+          "source": "store-home",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "",
+          "prodUrl": "https://www.tuinmaximaal.fr/",
+          "newUrl": "https://valanticfr.intern.systems/",
+          "source": "store-home",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/",
+          "newUrl": "https://valanticuk.intern.systems/",
+          "source": "store-home",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "30000-terrasoverkappingen-en-schuifwanden-per-jaar",
+      "stores": {
+        "nl": {
+          "path": "30000-terrasoverkappingen-en-schuifwanden-per-jaar",
+          "prodUrl": "https://www.tuinmaximaal.nl/30000-terrasoverkappingen-en-schuifwanden-per-jaar",
+          "newUrl": "https://valanticnl.intern.systems/30000-terrasoverkappingen-en-schuifwanden-per-jaar",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "30000-terrasoverkappingen-en-schuifwanden-per-jaar",
+          "prodUrl": "https://www.tuinmaximaal.be/30000-terrasoverkappingen-en-schuifwanden-per-jaar",
+          "newUrl": "https://valanticbe.intern.systems/30000-terrasoverkappingen-en-schuifwanden-per-jaar",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "actievoorwaarden-10-korting-terrasoverkappingen",
+      "stores": {
+        "nl": {
+          "path": "actievoorwaarden-10-korting-terrasoverkappingen",
+          "prodUrl": "https://www.tuinmaximaal.nl/actievoorwaarden-10-korting-terrasoverkappingen",
+          "newUrl": "https://valanticnl.intern.systems/actievoorwaarden-10-korting-terrasoverkappingen",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "actievoorwaarden-10-korting-terrasoverkappingen",
+          "prodUrl": "https://www.tuinmaximaal.be/actievoorwaarden-10-korting-terrasoverkappingen",
+          "newUrl": "https://valanticbe.intern.systems/actievoorwaarden-10-korting-terrasoverkappingen",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "afhalen",
+      "stores": {
+        "nl": {
+          "path": "afhalen",
+          "prodUrl": "https://www.tuinmaximaal.nl/afhalen",
+          "newUrl": "https://valanticnl.intern.systems/afhalen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "afhalen",
+          "prodUrl": "https://www.tuinmaximaal.be/afhalen",
+          "newUrl": "https://valanticbe.intern.systems/afhalen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "afmelden",
+      "stores": {
+        "nl": {
+          "path": "afmelden",
+          "prodUrl": "https://www.tuinmaximaal.nl/afmelden",
+          "newUrl": "https://valanticnl.intern.systems/afmelden",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "afmelden",
+          "prodUrl": "https://www.tuinmaximaal.be/afmelden",
+          "newUrl": "https://valanticbe.intern.systems/afmelden",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "afterpay",
+      "stores": {
+        "nl": {
+          "path": "afterpay",
+          "prodUrl": "https://www.tuinmaximaal.nl/afterpay",
+          "newUrl": "https://valanticnl.intern.systems/afterpay",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "afterpay",
+          "prodUrl": "https://www.tuinmaximaal.be/afterpay",
+          "newUrl": "https://valanticbe.intern.systems/afterpay",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be_fr": {
+          "path": "fr/afterpay",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/afterpay",
+          "newUrl": "https://valanticbe.intern.systems/fr/afterpay",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "de": {
+          "path": "afterpay",
+          "prodUrl": "https://www.tuinmaximaal.de/afterpay",
+          "newUrl": "https://valanticde.intern.systems/afterpay",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "algemene-fotogalerij",
+      "stores": {
+        "nl": {
+          "path": "algemene-fotogalerij",
+          "prodUrl": "https://www.tuinmaximaal.nl/algemene-fotogalerij",
+          "newUrl": "https://valanticnl.intern.systems/algemene-fotogalerij",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "algemene-fotogalerij",
+          "prodUrl": "https://www.tuinmaximaal.be/algemene-fotogalerij",
+          "newUrl": "https://valanticbe.intern.systems/algemene-fotogalerij",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "aluminium-zijwand/productinformatie",
+      "stores": {
+        "nl": {
+          "path": "aluminium-zijwand/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/aluminium-zijwand/productinformatie",
+          "newUrl": "https://valanticnl.intern.systems/aluminium-zijwand/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "aluminium-zijwand/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/aluminium-zijwand/productinformatie",
+          "newUrl": "https://valanticbe.intern.systems/aluminium-zijwand/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "bamboe-vlonder",
+      "stores": {
+        "nl": {
+          "path": "bamboe-vlonder",
+          "prodUrl": "https://www.tuinmaximaal.nl/bamboe-vlonder",
+          "newUrl": "https://valanticnl.intern.systems/bamboe-vlonder",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "bamboe-vlonder",
+          "prodUrl": "https://www.tuinmaximaal.be/bamboe-vlonder",
+          "newUrl": "https://valanticbe.intern.systems/bamboe-vlonder",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "bedrijfsinformatie",
+      "stores": {
+        "nl": {
+          "path": "bedrijfsinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/bedrijfsinformatie",
+          "newUrl": "https://valanticnl.intern.systems/bedrijfsinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "bedrijfsinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/bedrijfsinformatie",
+          "newUrl": "https://valanticbe.intern.systems/bedrijfsinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "beleid-en-regelgeving",
+      "stores": {
+        "nl": {
+          "path": "beleid-en-regelgeving",
+          "prodUrl": "https://www.tuinmaximaal.nl/beleid-en-regelgeving",
+          "newUrl": "https://valanticnl.intern.systems/beleid-en-regelgeving",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "beleid-en-regelgeving",
+          "prodUrl": "https://www.tuinmaximaal.be/beleid-en-regelgeving",
+          "newUrl": "https://valanticbe.intern.systems/beleid-en-regelgeving",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "betaalmethoden",
+      "stores": {
+        "nl": {
+          "path": "betaalmethoden",
+          "prodUrl": "https://www.tuinmaximaal.nl/betaalmethoden",
+          "newUrl": "https://valanticnl.intern.systems/betaalmethoden",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "betaalmethoden",
+          "prodUrl": "https://www.tuinmaximaal.be/betaalmethoden",
+          "newUrl": "https://valanticbe.intern.systems/betaalmethoden",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "blog",
+      "stores": {
+        "nl": {
+          "path": "blog",
+          "prodUrl": "https://www.tuinmaximaal.nl/blog",
+          "newUrl": "https://valanticnl.intern.systems/blog",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "carport",
+      "stores": {
+        "nl": {
+          "path": "carport",
+          "prodUrl": "https://www.tuinmaximaal.nl/carport",
+          "newUrl": "https://valanticnl.intern.systems/carport",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "carport",
+          "prodUrl": "https://www.tuinmaximaal.be/carport",
+          "newUrl": "https://valanticbe.intern.systems/carport",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/carport",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/carport",
+          "newUrl": "https://valanticbe.intern.systems/fr/carport",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "carport",
+          "prodUrl": "https://www.tuinmaximaal.de/carport",
+          "newUrl": "https://valanticde.intern.systems/carport",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "carport",
+          "prodUrl": "https://www.tuinmaximaal.fr/carport",
+          "newUrl": "https://valanticfr.intern.systems/carport",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "carport",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/carport",
+          "newUrl": "https://valanticuk.intern.systems/carport",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "carport/prijzen",
+      "stores": {
+        "nl": {
+          "path": "carport/prijzen",
+          "prodUrl": "https://www.tuinmaximaal.nl/carport/prijzen",
+          "newUrl": "https://valanticnl.intern.systems/carport/prijzen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "carport/productinformatie",
+      "stores": {
+        "nl": {
+          "path": "carport/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/carport/productinformatie",
+          "newUrl": "https://valanticnl.intern.systems/carport/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "carport/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/carport/productinformatie",
+          "newUrl": "https://valanticbe.intern.systems/carport/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "contact/succes",
+      "stores": {
+        "nl": {
+          "path": "contact/succes",
+          "prodUrl": "https://www.tuinmaximaal.nl/contact/succes",
+          "newUrl": "https://valanticnl.intern.systems/contact/succes",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "contact/succes",
+          "prodUrl": "https://www.tuinmaximaal.be/contact/succes",
+          "newUrl": "https://valanticbe.intern.systems/contact/succes",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/contact/succes",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/contact/succes",
+          "newUrl": "https://valanticbe.intern.systems/fr/contact/succes",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "contact/succes",
+          "prodUrl": "https://www.tuinmaximaal.de/contact/succes",
+          "newUrl": "https://valanticde.intern.systems/contact/succes",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "contact/succes",
+          "prodUrl": "https://www.tuinmaximaal.fr/contact/succes",
+          "newUrl": "https://valanticfr.intern.systems/contact/succes",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": null
+      }
+    },
+    {
+      "page": "contactformulier",
+      "stores": {
+        "nl": {
+          "path": "contactformulier",
+          "prodUrl": "https://www.tuinmaximaal.nl/contactformulier",
+          "newUrl": "https://valanticnl.intern.systems/contactformulier",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "copyright",
+      "stores": {
+        "nl": {
+          "path": "copyright",
+          "prodUrl": "https://www.tuinmaximaal.nl/copyright",
+          "newUrl": "https://valanticnl.intern.systems/copyright",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "copyright",
+          "prodUrl": "https://www.tuinmaximaal.be/copyright",
+          "newUrl": "https://valanticbe.intern.systems/copyright",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/copyright",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/copyright",
+          "newUrl": "https://valanticbe.intern.systems/fr/copyright",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "copyright",
+          "prodUrl": "https://www.tuinmaximaal.de/copyright",
+          "newUrl": "https://valanticde.intern.systems/copyright",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "copyright",
+          "prodUrl": "https://www.tuinmaximaal.fr/copyright",
+          "newUrl": "https://valanticfr.intern.systems/copyright",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "copyright",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/copyright",
+          "newUrl": "https://valanticuk.intern.systems/copyright",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "dak-offerte-aanvragen",
+      "stores": {
+        "nl": {
+          "path": "dak-offerte-aanvragen",
+          "prodUrl": "https://www.tuinmaximaal.nl/dak-offerte-aanvragen",
+          "newUrl": "https://valanticnl.intern.systems/dak-offerte-aanvragen",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 302,
+          "newRedirect": "https://valanticnl.intern.systems/"
+        },
+        "be": {
+          "path": "dak-offerte-aanvragen",
+          "prodUrl": "https://www.tuinmaximaal.be/dak-offerte-aanvragen",
+          "newUrl": "https://valanticbe.intern.systems/dak-offerte-aanvragen",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 302,
+          "newRedirect": "https://valanticbe.intern.systems/"
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "disclaimer",
+      "stores": {
+        "nl": {
+          "path": "disclaimer",
+          "prodUrl": "https://www.tuinmaximaal.nl/disclaimer",
+          "newUrl": "https://valanticnl.intern.systems/disclaimer",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "disclaimer",
+          "prodUrl": "https://www.tuinmaximaal.be/disclaimer",
+          "newUrl": "https://valanticbe.intern.systems/disclaimer",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/disclaimer",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/disclaimer",
+          "newUrl": "https://valanticbe.intern.systems/fr/disclaimer",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": null,
+        "fr": {
+          "path": "disclaimer",
+          "prodUrl": "https://www.tuinmaximaal.fr/disclaimer",
+          "newUrl": "https://valanticfr.intern.systems/disclaimer",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "disclaimer",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/disclaimer",
+          "newUrl": "https://valanticuk.intern.systems/disclaimer",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "dop",
+      "stores": {
+        "nl": {
+          "path": "dop",
+          "prodUrl": "https://www.tuinmaximaal.nl/dop",
+          "newUrl": "https://valanticnl.intern.systems/dop",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "dop",
+          "prodUrl": "https://www.tuinmaximaal.be/dop",
+          "newUrl": "https://valanticbe.intern.systems/dop",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/dop",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/dop",
+          "newUrl": "https://valanticbe.intern.systems/fr/dop",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "dop",
+          "prodUrl": "https://www.tuinmaximaal.de/dop",
+          "newUrl": "https://valanticde.intern.systems/dop",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "dop",
+          "prodUrl": "https://www.tuinmaximaal.fr/dop",
+          "newUrl": "https://valanticfr.intern.systems/dop",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "dop",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/dop",
+          "newUrl": "https://valanticuk.intern.systems/dop",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "downloads",
+      "stores": {
+        "nl": {
+          "path": "downloads",
+          "prodUrl": "https://www.tuinmaximaal.nl/downloads",
+          "newUrl": "https://valanticnl.intern.systems/downloads",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "downloads",
+          "prodUrl": "https://www.tuinmaximaal.be/downloads",
+          "newUrl": "https://valanticbe.intern.systems/downloads",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "downloads",
+          "prodUrl": "https://www.tuinmaximaal.de/downloads",
+          "newUrl": "https://valanticde.intern.systems/downloads",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "downloads",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/downloads",
+          "newUrl": "https://valanticuk.intern.systems/downloads",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "enable-cookies",
+      "stores": {
+        "nl": {
+          "path": "enable-cookies",
+          "prodUrl": "https://www.tuinmaximaal.nl/enable-cookies",
+          "newUrl": "https://valanticnl.intern.systems/enable-cookies",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "enable-cookies",
+          "prodUrl": "https://www.tuinmaximaal.be/enable-cookies",
+          "newUrl": "https://valanticbe.intern.systems/enable-cookies",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": {
+          "path": "enable-cookies",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/enable-cookies",
+          "newUrl": "https://valanticuk.intern.systems/enable-cookies",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "faq/bestellen",
+      "stores": {
+        "nl": {
+          "path": "faq/bestellen",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/bestellen",
+          "newUrl": "https://valanticnl.intern.systems/faq/bestellen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "faq/bestellen",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/bestellen",
+          "newUrl": "https://valanticbe.intern.systems/faq/bestellen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "faq/bestellen",
+          "prodUrl": "https://www.tuinmaximaal.de/faq/bestellen",
+          "newUrl": "https://valanticde.intern.systems/faq/bestellen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "faq/betalen",
+      "stores": {
+        "nl": {
+          "path": "faq/betalen",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/betalen",
+          "newUrl": "https://valanticnl.intern.systems/faq/betalen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "faq/betalen",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/betalen",
+          "newUrl": "https://valanticbe.intern.systems/faq/betalen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "faq/kwaliteit",
+      "stores": {
+        "nl": {
+          "path": "faq/kwaliteit",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/kwaliteit",
+          "newUrl": "https://valanticnl.intern.systems/faq/kwaliteit",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "faq/kwaliteit",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/kwaliteit",
+          "newUrl": "https://valanticbe.intern.systems/faq/kwaliteit",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "faq/levering",
+      "stores": {
+        "nl": {
+          "path": "faq/levering",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/levering",
+          "newUrl": "https://valanticnl.intern.systems/faq/levering",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "faq/levering",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/levering",
+          "newUrl": "https://valanticbe.intern.systems/faq/levering",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "faq/montage",
+      "stores": {
+        "nl": {
+          "path": "faq/montage",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/montage",
+          "newUrl": "https://valanticnl.intern.systems/faq/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "faq/montage",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/montage",
+          "newUrl": "https://valanticbe.intern.systems/faq/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/faq/montage",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/faq/montage",
+          "newUrl": "https://valanticbe.intern.systems/fr/faq/montage",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "faq/montage",
+          "prodUrl": "https://www.tuinmaximaal.de/faq/montage",
+          "newUrl": "https://valanticde.intern.systems/faq/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "faq/montage",
+          "prodUrl": "https://www.tuinmaximaal.fr/faq/montage",
+          "newUrl": "https://valanticfr.intern.systems/faq/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": null
+      }
+    },
+    {
+      "page": "faq/offerte",
+      "stores": {
+        "nl": {
+          "path": "faq/offerte",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/offerte",
+          "newUrl": "https://valanticnl.intern.systems/faq/offerte",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 302,
+          "newRedirect": "https://valanticnl.intern.systems/freequote/payment/index/data/offerte/"
+        },
+        "be": {
+          "path": "faq/offerte",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/offerte",
+          "newUrl": "https://valanticbe.intern.systems/faq/offerte",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 302,
+          "newRedirect": "https://valanticbe.intern.systems/freequote/payment/index/data/offerte/"
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "faq/productinformatie",
+      "stores": {
+        "nl": {
+          "path": "faq/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/productinformatie",
+          "newUrl": "https://valanticnl.intern.systems/faq/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "faq/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/productinformatie",
+          "newUrl": "https://valanticbe.intern.systems/faq/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "faq/samplepakket",
+      "stores": {
+        "nl": {
+          "path": "faq/samplepakket",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/samplepakket",
+          "newUrl": "https://valanticnl.intern.systems/faq/samplepakket",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "faq/samplepakket",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/samplepakket",
+          "newUrl": "https://valanticbe.intern.systems/faq/samplepakket",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "faq/service",
+      "stores": {
+        "nl": {
+          "path": "faq/service",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/service",
+          "newUrl": "https://valanticnl.intern.systems/faq/service",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "faq/service",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/service",
+          "newUrl": "https://valanticbe.intern.systems/faq/service",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "faq/service",
+          "prodUrl": "https://www.tuinmaximaal.de/faq/service",
+          "newUrl": "https://valanticde.intern.systems/faq/service",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "faq/service",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/faq/service",
+          "newUrl": "https://valanticuk.intern.systems/faq/service",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "faq/wijzigingen-retour",
+      "stores": {
+        "nl": {
+          "path": "faq/wijzigingen-retour",
+          "prodUrl": "https://www.tuinmaximaal.nl/faq/wijzigingen-retour",
+          "newUrl": "https://valanticnl.intern.systems/faq/wijzigingen-retour",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "faq/wijzigingen-retour",
+          "prodUrl": "https://www.tuinmaximaal.be/faq/wijzigingen-retour",
+          "newUrl": "https://valanticbe.intern.systems/faq/wijzigingen-retour",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "fotogalerij",
+      "stores": {
+        "nl": {
+          "path": "fotogalerij",
+          "prodUrl": "https://www.tuinmaximaal.nl/fotogalerij",
+          "newUrl": "https://valanticnl.intern.systems/fotogalerij",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "fotogalerij",
+          "prodUrl": "https://www.tuinmaximaal.be/fotogalerij",
+          "newUrl": "https://valanticbe.intern.systems/fotogalerij",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "fotogalerij/carport",
+      "stores": {
+        "nl": {
+          "path": "fotogalerij/carport",
+          "prodUrl": "https://www.tuinmaximaal.nl/fotogalerij/carport",
+          "newUrl": "https://valanticnl.intern.systems/fotogalerij/carport",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "fotogalerij/carport",
+          "prodUrl": "https://www.tuinmaximaal.be/fotogalerij/carport",
+          "newUrl": "https://valanticbe.intern.systems/fotogalerij/carport",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "fotogalerij/fotogalerij-zonwering",
+      "stores": {
+        "nl": {
+          "path": "fotogalerij/fotogalerij-zonwering",
+          "prodUrl": "https://www.tuinmaximaal.nl/fotogalerij/fotogalerij-zonwering",
+          "newUrl": "https://valanticnl.intern.systems/fotogalerij/fotogalerij-zonwering",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "fotogalerij/fotogalerij-zonwering",
+          "prodUrl": "https://www.tuinmaximaal.be/fotogalerij/fotogalerij-zonwering",
+          "newUrl": "https://valanticbe.intern.systems/fotogalerij/fotogalerij-zonwering",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "fotogalerij/glazen-schuifwand",
+      "stores": {
+        "nl": {
+          "path": "fotogalerij/glazen-schuifwand",
+          "prodUrl": "https://www.tuinmaximaal.nl/fotogalerij/glazen-schuifwand",
+          "newUrl": "https://valanticnl.intern.systems/fotogalerij/glazen-schuifwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "fotogalerij/glazen-schuifwand",
+          "prodUrl": "https://www.tuinmaximaal.be/fotogalerij/glazen-schuifwand",
+          "newUrl": "https://valanticbe.intern.systems/fotogalerij/glazen-schuifwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "fotogalerij/serre",
+      "stores": {
+        "nl": {
+          "path": "fotogalerij/serre",
+          "prodUrl": "https://www.tuinmaximaal.nl/fotogalerij/serre",
+          "newUrl": "https://valanticnl.intern.systems/fotogalerij/serre",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "fotogalerij/tuinkamer",
+      "stores": {
+        "nl": {
+          "path": "fotogalerij/tuinkamer",
+          "prodUrl": "https://www.tuinmaximaal.nl/fotogalerij/tuinkamer",
+          "newUrl": "https://valanticnl.intern.systems/fotogalerij/tuinkamer",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "fotogalerij/tuinkamer",
+          "prodUrl": "https://www.tuinmaximaal.be/fotogalerij/tuinkamer",
+          "newUrl": "https://valanticbe.intern.systems/fotogalerij/tuinkamer",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "fotogalerij/upload-fotos",
+      "stores": {
+        "nl": {
+          "path": "fotogalerij/upload-fotos",
+          "prodUrl": "https://www.tuinmaximaal.nl/fotogalerij/upload-fotos",
+          "newUrl": "https://valanticnl.intern.systems/fotogalerij/upload-fotos",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "fotogalerij/upload-fotos",
+          "prodUrl": "https://www.tuinmaximaal.be/fotogalerij/upload-fotos",
+          "newUrl": "https://valanticbe.intern.systems/fotogalerij/upload-fotos",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "fotogalerij/verlichting",
+      "stores": {
+        "nl": {
+          "path": "fotogalerij/verlichting",
+          "prodUrl": "https://www.tuinmaximaal.nl/fotogalerij/verlichting",
+          "newUrl": "https://valanticnl.intern.systems/fotogalerij/verlichting",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "fotogalerij/verlichting",
+          "prodUrl": "https://www.tuinmaximaal.be/fotogalerij/verlichting",
+          "newUrl": "https://valanticbe.intern.systems/fotogalerij/verlichting",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "fotogalerij/zonwering",
+      "stores": {
+        "nl": {
+          "path": "fotogalerij/zonwering",
+          "prodUrl": "https://www.tuinmaximaal.nl/fotogalerij/zonwering",
+          "newUrl": "https://valanticnl.intern.systems/fotogalerij/zonwering",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "garantie",
+      "stores": {
+        "nl": {
+          "path": "garantie",
+          "prodUrl": "https://www.tuinmaximaal.nl/garantie",
+          "newUrl": "https://valanticnl.intern.systems/garantie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "garantie",
+          "prodUrl": "https://www.tuinmaximaal.be/garantie",
+          "newUrl": "https://valanticbe.intern.systems/garantie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/garantie",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/garantie",
+          "newUrl": "https://valanticbe.intern.systems/fr/garantie",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "garantie",
+          "prodUrl": "https://www.tuinmaximaal.de/garantie",
+          "newUrl": "https://valanticde.intern.systems/garantie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "garantie",
+          "prodUrl": "https://www.tuinmaximaal.fr/garantie",
+          "newUrl": "https://valanticfr.intern.systems/garantie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": null
+      }
+    },
+    {
+      "page": "garantie/superior-coating",
+      "stores": {
+        "nl": {
+          "path": "garantie/superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.nl/garantie/superior-coating",
+          "newUrl": "https://valanticnl.intern.systems/garantie/superior-coating",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "garantie/superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.be/garantie/superior-coating",
+          "newUrl": "https://valanticbe.intern.systems/garantie/superior-coating",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/garantie/superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/garantie/superior-coating",
+          "newUrl": "https://valanticbe.intern.systems/fr/garantie/superior-coating",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "garantie/superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.de/garantie/superior-coating",
+          "newUrl": "https://valanticde.intern.systems/garantie/superior-coating",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "garantie/superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.fr/garantie/superior-coating",
+          "newUrl": "https://valanticfr.intern.systems/garantie/superior-coating",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": null
+      }
+    },
+    {
+      "page": "gazellen-award",
+      "stores": {
+        "nl": {
+          "path": "gazellen-award",
+          "prodUrl": "https://www.tuinmaximaal.nl/gazellen-award",
+          "newUrl": "https://valanticnl.intern.systems/gazellen-award",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "gazellen-award",
+          "prodUrl": "https://www.tuinmaximaal.be/gazellen-award",
+          "newUrl": "https://valanticbe.intern.systems/gazellen-award",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/gazellen-award",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/gazellen-award",
+          "newUrl": "https://valanticbe.intern.systems/fr/gazellen-award",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "gazellen-award",
+          "prodUrl": "https://www.tuinmaximaal.de/gazellen-award",
+          "newUrl": "https://valanticde.intern.systems/gazellen-award",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "gazellen-award",
+          "prodUrl": "https://www.tuinmaximaal.fr/gazellen-award",
+          "newUrl": "https://valanticfr.intern.systems/gazellen-award",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "gazellen-award",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/gazellen-award",
+          "newUrl": "https://valanticuk.intern.systems/gazellen-award",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "gazellen-awards",
+      "stores": {
+        "nl": {
+          "path": "gazellen-awards",
+          "prodUrl": "https://www.tuinmaximaal.nl/gazellen-awards",
+          "newUrl": "https://valanticnl.intern.systems/gazellen-awards",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "glazen-schuifdeur",
+      "stores": {
+        "nl": {
+          "path": "glazen-schuifdeur",
+          "prodUrl": "https://www.tuinmaximaal.nl/glazen-schuifdeur",
+          "newUrl": "https://valanticnl.intern.systems/glazen-schuifdeur",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "glazen-schuifdeur",
+          "prodUrl": "https://www.tuinmaximaal.be/glazen-schuifdeur",
+          "newUrl": "https://valanticbe.intern.systems/glazen-schuifdeur",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/cloison-coulissante-en-verre",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/cloison-coulissante-en-verre",
+          "newUrl": "https://valanticbe.intern.systems/fr/cloison-coulissante-en-verre",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "glas-schiebetur",
+          "prodUrl": "https://www.tuinmaximaal.de/glas-schiebetur",
+          "newUrl": "https://valanticde.intern.systems/glas-schiebetur",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "cloison-coulissante-en-verre",
+          "prodUrl": "https://www.tuinmaximaal.fr/cloison-coulissante-en-verre",
+          "newUrl": "https://valanticfr.intern.systems/cloison-coulissante-en-verre",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "glass-patio-door",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/glass-patio-door",
+          "newUrl": "https://valanticuk.intern.systems/glass-patio-door",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "glazen-schuifwand",
+      "stores": {
+        "nl": {
+          "path": "glazen-schuifwand",
+          "prodUrl": "https://www.tuinmaximaal.nl/glazen-schuifwand",
+          "newUrl": "https://valanticnl.intern.systems/glazen-schuifwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "glazen-schuifwand",
+          "prodUrl": "https://www.tuinmaximaal.be/glazen-schuifwand",
+          "newUrl": "https://valanticbe.intern.systems/glazen-schuifwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/portes-coulissantes",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/portes-coulissantes",
+          "newUrl": "https://valanticbe.intern.systems/fr/portes-coulissantes",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "glasschiebewand",
+          "prodUrl": "https://www.tuinmaximaal.de/glasschiebewand",
+          "newUrl": "https://valanticde.intern.systems/glasschiebewand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "portes-coulissantes",
+          "prodUrl": "https://www.tuinmaximaal.fr/portes-coulissantes",
+          "newUrl": "https://valanticfr.intern.systems/portes-coulissantes",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "glass-sliding-door",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/glass-sliding-door",
+          "newUrl": "https://valanticuk.intern.systems/glass-sliding-door",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "glazen-schuifwand-monteren",
+      "stores": {
+        "nl": {
+          "path": "glazen-schuifwand-monteren",
+          "prodUrl": "https://www.tuinmaximaal.nl/glazen-schuifwand-monteren",
+          "newUrl": "https://valanticnl.intern.systems/glazen-schuifwand-monteren",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "glazen-schuifwand-monteren",
+          "prodUrl": "https://www.tuinmaximaal.be/glazen-schuifwand-monteren",
+          "newUrl": "https://valanticbe.intern.systems/glazen-schuifwand-monteren",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "glazen-schuifwand/hor-schuifdeur",
+      "stores": {
+        "nl": {
+          "path": "glazen-schuifwand/hor-schuifdeur",
+          "prodUrl": "https://www.tuinmaximaal.nl/glazen-schuifwand/hor-schuifdeur",
+          "newUrl": "https://valanticnl.intern.systems/glazen-schuifwand/hor-schuifdeur",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "glazen-schuifwand/hor-schuifdeur",
+          "prodUrl": "https://www.tuinmaximaal.be/glazen-schuifwand/hor-schuifdeur",
+          "newUrl": "https://valanticbe.intern.systems/glazen-schuifwand/hor-schuifdeur",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "glazen-schuifwand/inmeten",
+      "stores": {
+        "nl": {
+          "path": "glazen-schuifwand/inmeten",
+          "prodUrl": "https://www.tuinmaximaal.nl/glazen-schuifwand/inmeten",
+          "newUrl": "https://valanticnl.intern.systems/glazen-schuifwand/inmeten",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "glazen-schuifwand/inmeten",
+          "prodUrl": "https://www.tuinmaximaal.be/glazen-schuifwand/inmeten",
+          "newUrl": "https://valanticbe.intern.systems/glazen-schuifwand/inmeten",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "glazen-schuifwand/montage",
+      "stores": {
+        "nl": {
+          "path": "glazen-schuifwand/montage",
+          "prodUrl": "https://www.tuinmaximaal.nl/glazen-schuifwand/montage",
+          "newUrl": "https://valanticnl.intern.systems/glazen-schuifwand/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "glazen-schuifwand/montage",
+          "prodUrl": "https://www.tuinmaximaal.be/glazen-schuifwand/montage",
+          "newUrl": "https://valanticbe.intern.systems/glazen-schuifwand/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "glazen-schuifwand/prijzen",
+      "stores": {
+        "nl": {
+          "path": "glazen-schuifwand/prijzen",
+          "prodUrl": "https://www.tuinmaximaal.nl/glazen-schuifwand/prijzen",
+          "newUrl": "https://valanticnl.intern.systems/glazen-schuifwand/prijzen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "glazen-schuifwand/productinformatie",
+      "stores": {
+        "nl": {
+          "path": "glazen-schuifwand/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/glazen-schuifwand/productinformatie",
+          "newUrl": "https://valanticnl.intern.systems/glazen-schuifwand/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "glazen-schuifwand/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/glazen-schuifwand/productinformatie",
+          "newUrl": "https://valanticbe.intern.systems/glazen-schuifwand/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "heavy-duty-terrasoverkapping",
+      "stores": {
+        "nl": {
+          "path": "heavy-duty-terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/heavy-duty-terrasoverkapping",
+          "newUrl": "https://valanticnl.intern.systems/heavy-duty-terrasoverkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "heavy-duty-terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/heavy-duty-terrasoverkapping",
+          "newUrl": "https://valanticbe.intern.systems/heavy-duty-terrasoverkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "herroeping",
+      "stores": {
+        "nl": {
+          "path": "herroeping",
+          "prodUrl": "https://www.tuinmaximaal.nl/herroeping",
+          "newUrl": "https://valanticnl.intern.systems/herroeping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "herroeping",
+          "prodUrl": "https://www.tuinmaximaal.be/herroeping",
+          "newUrl": "https://valanticbe.intern.systems/herroeping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "herroeping/niet-ontvangen",
+      "stores": {
+        "nl": {
+          "path": "herroeping/niet-ontvangen",
+          "prodUrl": "https://www.tuinmaximaal.nl/herroeping/niet-ontvangen",
+          "newUrl": "https://valanticnl.intern.systems/herroeping/niet-ontvangen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "herroeping/niet-ontvangen",
+          "prodUrl": "https://www.tuinmaximaal.be/herroeping/niet-ontvangen",
+          "newUrl": "https://valanticbe.intern.systems/herroeping/niet-ontvangen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "herroeping/niet-ontvangen/annuleren",
+      "stores": {
+        "nl": {
+          "path": "herroeping/niet-ontvangen/annuleren",
+          "prodUrl": "https://www.tuinmaximaal.nl/herroeping/niet-ontvangen/annuleren",
+          "newUrl": "https://valanticnl.intern.systems/herroeping/niet-ontvangen/annuleren",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "herroeping/niet-ontvangen/annuleren",
+          "prodUrl": "https://www.tuinmaximaal.be/herroeping/niet-ontvangen/annuleren",
+          "newUrl": "https://valanticbe.intern.systems/herroeping/niet-ontvangen/annuleren",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "herroeping/niet-ontvangen/wijzigen",
+      "stores": {
+        "nl": {
+          "path": "herroeping/niet-ontvangen/wijzigen",
+          "prodUrl": "https://www.tuinmaximaal.nl/herroeping/niet-ontvangen/wijzigen",
+          "newUrl": "https://valanticnl.intern.systems/herroeping/niet-ontvangen/wijzigen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "herroeping/niet-ontvangen/wijzigen",
+          "prodUrl": "https://www.tuinmaximaal.be/herroeping/niet-ontvangen/wijzigen",
+          "newUrl": "https://valanticbe.intern.systems/herroeping/niet-ontvangen/wijzigen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "herroeping/ontvangen",
+      "stores": {
+        "nl": {
+          "path": "herroeping/ontvangen",
+          "prodUrl": "https://www.tuinmaximaal.nl/herroeping/ontvangen",
+          "newUrl": "https://valanticnl.intern.systems/herroeping/ontvangen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "herroeping/ontvangen",
+          "prodUrl": "https://www.tuinmaximaal.be/herroeping/ontvangen",
+          "newUrl": "https://valanticbe.intern.systems/herroeping/ontvangen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "herroeping/ontvangen/retourneren",
+      "stores": {
+        "nl": {
+          "path": "herroeping/ontvangen/retourneren",
+          "prodUrl": "https://www.tuinmaximaal.nl/herroeping/ontvangen/retourneren",
+          "newUrl": "https://valanticnl.intern.systems/herroeping/ontvangen/retourneren",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "herroeping/ontvangen/retourneren",
+          "prodUrl": "https://www.tuinmaximaal.be/herroeping/ontvangen/retourneren",
+          "newUrl": "https://valanticbe.intern.systems/herroeping/ontvangen/retourneren",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "herroeping/ontvangen/ruilen",
+      "stores": {
+        "nl": {
+          "path": "herroeping/ontvangen/ruilen",
+          "prodUrl": "https://www.tuinmaximaal.nl/herroeping/ontvangen/ruilen",
+          "newUrl": "https://valanticnl.intern.systems/herroeping/ontvangen/ruilen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "herroeping/ontvangen/ruilen",
+          "prodUrl": "https://www.tuinmaximaal.be/herroeping/ontvangen/ruilen",
+          "newUrl": "https://valanticbe.intern.systems/herroeping/ontvangen/ruilen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "home-nl",
+      "stores": {
+        "nl": {
+          "path": "home-nl",
+          "prodUrl": "https://www.tuinmaximaal.nl/home-nl",
+          "newUrl": "https://valanticnl.intern.systems/home-nl",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 301,
+          "prodRedirect": "https://www.tuinmaximaal.nl/"
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": {
+          "path": "home-nl",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/home-nl",
+          "newUrl": "https://valanticuk.intern.systems/home-nl",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 301,
+          "prodRedirect": "https://www.tuinmaximaal.co.uk/"
+        }
+      }
+    },
+    {
+      "page": "inspiratiemagazine",
+      "stores": {
+        "nl": {
+          "path": "inspiratiemagazine",
+          "prodUrl": "https://www.tuinmaximaal.nl/inspiratiemagazine",
+          "newUrl": "https://valanticnl.intern.systems/inspiratiemagazine",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "inspiratiemagazine",
+          "prodUrl": "https://www.tuinmaximaal.be/inspiratiemagazine",
+          "newUrl": "https://valanticbe.intern.systems/inspiratiemagazine",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "klantenservice",
+      "stores": {
+        "nl": {
+          "path": "klantenservice",
+          "prodUrl": "https://www.tuinmaximaal.nl/klantenservice",
+          "newUrl": "https://valanticnl.intern.systems/klantenservice",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "kleine-overkapping-voor-kleine-tuin",
+      "stores": {
+        "nl": {
+          "path": "kleine-overkapping-voor-kleine-tuin",
+          "prodUrl": "https://www.tuinmaximaal.nl/kleine-overkapping-voor-kleine-tuin",
+          "newUrl": "https://valanticnl.intern.systems/kleine-overkapping-voor-kleine-tuin",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "kleine-overkapping-voor-kleine-tuin",
+          "prodUrl": "https://www.tuinmaximaal.be/kleine-overkapping-voor-kleine-tuin",
+          "newUrl": "https://valanticbe.intern.systems/kleine-overkapping-voor-kleine-tuin",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "laagste-prijs-garantie",
+      "stores": {
+        "nl": {
+          "path": "laagste-prijs-garantie",
+          "prodUrl": "https://www.tuinmaximaal.nl/laagste-prijs-garantie",
+          "newUrl": "https://valanticnl.intern.systems/laagste-prijs-garantie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "laagste-prijs-garantie",
+          "prodUrl": "https://www.tuinmaximaal.be/laagste-prijs-garantie",
+          "newUrl": "https://valanticbe.intern.systems/laagste-prijs-garantie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "levergebied",
+      "stores": {
+        "nl": {
+          "path": "levergebied",
+          "prodUrl": "https://www.tuinmaximaal.nl/levergebied",
+          "newUrl": "https://valanticnl.intern.systems/levergebied",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "levergebied",
+          "prodUrl": "https://www.tuinmaximaal.be/levergebied",
+          "newUrl": "https://valanticbe.intern.systems/levergebied",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "lighting-system",
+      "stores": {
+        "nl": {
+          "path": "lighting-system",
+          "prodUrl": "https://www.tuinmaximaal.nl/lighting-system",
+          "newUrl": "https://valanticnl.intern.systems/lighting-system",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "lighting-system",
+          "prodUrl": "https://www.tuinmaximaal.be/lighting-system",
+          "newUrl": "https://valanticbe.intern.systems/lighting-system",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/lighting-system",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/lighting-system",
+          "newUrl": "https://valanticbe.intern.systems/fr/lighting-system",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "lighting-system",
+          "prodUrl": "https://www.tuinmaximaal.de/lighting-system",
+          "newUrl": "https://valanticde.intern.systems/lighting-system",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "lighting-system",
+          "prodUrl": "https://www.tuinmaximaal.fr/lighting-system",
+          "newUrl": "https://valanticfr.intern.systems/lighting-system",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "lighting-system",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/lighting-system",
+          "newUrl": "https://valanticuk.intern.systems/lighting-system",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "lighting-system/montage",
+      "stores": {
+        "nl": {
+          "path": "lighting-system/montage",
+          "prodUrl": "https://www.tuinmaximaal.nl/lighting-system/montage",
+          "newUrl": "https://valanticnl.intern.systems/lighting-system/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "lighting-system/montage",
+          "prodUrl": "https://www.tuinmaximaal.be/lighting-system/montage",
+          "newUrl": "https://valanticbe.intern.systems/lighting-system/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/lighting-system/montage",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/lighting-system/montage",
+          "newUrl": "https://valanticbe.intern.systems/fr/lighting-system/montage",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "lighting-system/montage",
+          "prodUrl": "https://www.tuinmaximaal.de/lighting-system/montage",
+          "newUrl": "https://valanticde.intern.systems/lighting-system/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "lighting-system/montage",
+          "prodUrl": "https://www.tuinmaximaal.fr/lighting-system/montage",
+          "newUrl": "https://valanticfr.intern.systems/lighting-system/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": null
+      }
+    },
+    {
+      "page": "lighting-system/productinformatie",
+      "stores": {
+        "nl": {
+          "path": "lighting-system/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/lighting-system/productinformatie",
+          "newUrl": "https://valanticnl.intern.systems/lighting-system/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "lighting-system/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/lighting-system/productinformatie",
+          "newUrl": "https://valanticbe.intern.systems/lighting-system/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "logo-update",
+      "stores": {
+        "nl": {
+          "path": "logo-update",
+          "prodUrl": "https://www.tuinmaximaal.nl/logo-update",
+          "newUrl": "https://valanticnl.intern.systems/logo-update",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "logo-update",
+          "prodUrl": "https://www.tuinmaximaal.be/logo-update",
+          "newUrl": "https://valanticbe.intern.systems/logo-update",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "logo-update",
+          "prodUrl": "https://www.tuinmaximaal.de/logo-update",
+          "newUrl": "https://valanticde.intern.systems/logo-update",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "logo-update",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/logo-update",
+          "newUrl": "https://valanticuk.intern.systems/logo-update",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "losse-onderdelen",
+      "stores": {
+        "nl": {
+          "path": "losse-onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/losse-onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/losse-onderdelen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "losse-onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.be/losse-onderdelen",
+          "newUrl": "https://valanticbe.intern.systems/losse-onderdelen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/composants",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/composants",
+          "newUrl": "https://valanticbe.intern.systems/fr/composants",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "lose-teile",
+          "prodUrl": "https://www.tuinmaximaal.de/lose-teile",
+          "newUrl": "https://valanticde.intern.systems/lose-teile",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "composants",
+          "prodUrl": "https://www.tuinmaximaal.fr/composants",
+          "newUrl": "https://valanticfr.intern.systems/composants",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "separate-parts",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/separate-parts",
+          "newUrl": "https://valanticuk.intern.systems/separate-parts",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "meettool",
+      "stores": {
+        "nl": {
+          "path": "meettool",
+          "prodUrl": "https://www.tuinmaximaal.nl/meettool",
+          "newUrl": "https://valanticnl.intern.systems/meettool",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "meettool",
+          "prodUrl": "https://www.tuinmaximaal.be/meettool",
+          "newUrl": "https://valanticbe.intern.systems/meettool",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "montagepartner-terrasoverkapping",
+      "stores": {
+        "nl": {
+          "path": "montagepartner-terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/montagepartner-terrasoverkapping",
+          "newUrl": "https://valanticnl.intern.systems/montagepartner-terrasoverkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "montagepartner-terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/montagepartner-terrasoverkapping",
+          "newUrl": "https://valanticbe.intern.systems/montagepartner-terrasoverkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "nieuwsbrief",
+      "stores": {
+        "nl": {
+          "path": "nieuwsbrief",
+          "prodUrl": "https://www.tuinmaximaal.nl/nieuwsbrief",
+          "newUrl": "https://valanticnl.intern.systems/nieuwsbrief",
+          "source": "new-site-crawl",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "no-route",
+      "stores": {
+        "nl": {
+          "path": "no-route",
+          "prodUrl": "https://www.tuinmaximaal.nl/no-route",
+          "newUrl": "https://valanticnl.intern.systems/no-route",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "no-route",
+          "prodUrl": "https://www.tuinmaximaal.be/no-route",
+          "newUrl": "https://valanticbe.intern.systems/no-route",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/no-route",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/no-route",
+          "newUrl": "https://valanticbe.intern.systems/fr/no-route",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "no-route",
+          "prodUrl": "https://www.tuinmaximaal.de/no-route",
+          "newUrl": "https://valanticde.intern.systems/no-route",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "no-route",
+          "prodUrl": "https://www.tuinmaximaal.fr/no-route",
+          "newUrl": "https://valanticfr.intern.systems/no-route",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "no-route",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/no-route",
+          "newUrl": "https://valanticuk.intern.systems/no-route",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "offerte-aanvragen",
+      "stores": {
+        "nl": {
+          "path": "offerte-aanvragen",
+          "prodUrl": "https://www.tuinmaximaal.nl/offerte-aanvragen",
+          "newUrl": "https://valanticnl.intern.systems/offerte-aanvragen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "offerte-aanvragen",
+          "prodUrl": "https://www.tuinmaximaal.be/offerte-aanvragen",
+          "newUrl": "https://valanticbe.intern.systems/offerte-aanvragen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "over-ons",
+      "stores": {
+        "nl": {
+          "path": "over-ons",
+          "prodUrl": "https://www.tuinmaximaal.nl/over-ons",
+          "newUrl": "https://valanticnl.intern.systems/over-ons",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "over-ons",
+          "prodUrl": "https://www.tuinmaximaal.be/over-ons",
+          "newUrl": "https://valanticbe.intern.systems/over-ons",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "overkapping",
+      "stores": {
+        "nl": {
+          "path": "overkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/overkapping",
+          "newUrl": "https://valanticnl.intern.systems/overkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "overkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/overkapping",
+          "newUrl": "https://valanticbe.intern.systems/overkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "ueberdachung",
+          "prodUrl": "https://www.tuinmaximaal.de/ueberdachung",
+          "newUrl": "https://valanticde.intern.systems/ueberdachung",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "canopy",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/canopy",
+          "newUrl": "https://valanticuk.intern.systems/canopy",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "overkapping-laten-plaatsen",
+      "stores": {
+        "nl": {
+          "path": "overkapping-laten-plaatsen",
+          "prodUrl": "https://www.tuinmaximaal.nl/overkapping-laten-plaatsen",
+          "newUrl": "https://valanticnl.intern.systems/overkapping-laten-plaatsen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "overkapping-laten-plaatsen",
+          "prodUrl": "https://www.tuinmaximaal.be/overkapping-laten-plaatsen",
+          "newUrl": "https://valanticbe.intern.systems/overkapping-laten-plaatsen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "polycarbonaat-platen-voor-de-overkapping",
+      "stores": {
+        "nl": {
+          "path": "polycarbonaat-platen-voor-de-overkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/polycarbonaat-platen-voor-de-overkapping",
+          "newUrl": "https://valanticnl.intern.systems/polycarbonaat-platen-voor-de-overkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "polycarbonaat-platen-voor-de-overkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/polycarbonaat-platen-voor-de-overkapping",
+          "newUrl": "https://valanticbe.intern.systems/polycarbonaat-platen-voor-de-overkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "privacy-beleid",
+      "stores": {
+        "nl": {
+          "path": "privacy-beleid",
+          "prodUrl": "https://www.tuinmaximaal.nl/privacy-beleid",
+          "newUrl": "https://valanticnl.intern.systems/privacy-beleid",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "privacy-beleid",
+          "prodUrl": "https://www.tuinmaximaal.be/privacy-beleid",
+          "newUrl": "https://valanticbe.intern.systems/privacy-beleid",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "proefpakket",
+      "stores": {
+        "nl": {
+          "path": "proefpakket",
+          "prodUrl": "https://www.tuinmaximaal.nl/proefpakket",
+          "newUrl": "https://valanticnl.intern.systems/proefpakket",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "proefpakket",
+          "prodUrl": "https://www.tuinmaximaal.be/proefpakket",
+          "newUrl": "https://valanticbe.intern.systems/proefpakket",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "proefpakket/succes",
+      "stores": {
+        "nl": {
+          "path": "proefpakket/succes",
+          "prodUrl": "https://www.tuinmaximaal.nl/proefpakket/succes",
+          "newUrl": "https://valanticnl.intern.systems/proefpakket/succes",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "proefpakket/succes",
+          "prodUrl": "https://www.tuinmaximaal.be/proefpakket/succes",
+          "newUrl": "https://valanticbe.intern.systems/proefpakket/succes",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "quote-error",
+      "stores": {
+        "nl": {
+          "path": "quote-error",
+          "prodUrl": "https://www.tuinmaximaal.nl/quote-error",
+          "newUrl": "https://valanticnl.intern.systems/quote-error",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "quote-error",
+          "prodUrl": "https://www.tuinmaximaal.be/quote-error",
+          "newUrl": "https://valanticbe.intern.systems/quote-error",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/quote-error",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/quote-error",
+          "newUrl": "https://valanticbe.intern.systems/fr/quote-error",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "quote-error",
+          "prodUrl": "https://www.tuinmaximaal.de/quote-error",
+          "newUrl": "https://valanticde.intern.systems/quote-error",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "quote-error",
+          "prodUrl": "https://www.tuinmaximaal.fr/quote-error",
+          "newUrl": "https://valanticfr.intern.systems/quote-error",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "quote-error",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/quote-error",
+          "newUrl": "https://valanticuk.intern.systems/quote-error",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "review-policy",
+      "stores": {
+        "nl": {
+          "path": "review-policy",
+          "prodUrl": "https://www.tuinmaximaal.nl/review-policy",
+          "newUrl": "https://valanticnl.intern.systems/review-policy",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "review-policy",
+          "prodUrl": "https://www.tuinmaximaal.be/review-policy",
+          "newUrl": "https://valanticbe.intern.systems/review-policy",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": {
+          "path": "review-policy",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/review-policy",
+          "newUrl": "https://valanticuk.intern.systems/review-policy",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "reviews",
+      "stores": {
+        "nl": {
+          "path": "reviews",
+          "prodUrl": "https://www.tuinmaximaal.nl/reviews",
+          "newUrl": "https://valanticnl.intern.systems/reviews",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "reviews",
+          "prodUrl": "https://www.tuinmaximaal.be/reviews",
+          "newUrl": "https://valanticbe.intern.systems/reviews",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": {
+          "path": "reviews",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/reviews",
+          "newUrl": "https://valanticuk.intern.systems/reviews",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "samplepakket",
+      "stores": {
+        "nl": {
+          "path": "samplepakket",
+          "prodUrl": "https://www.tuinmaximaal.nl/samplepakket",
+          "newUrl": "https://valanticnl.intern.systems/samplepakket",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "samplepakket",
+          "prodUrl": "https://www.tuinmaximaal.be/samplepakket",
+          "newUrl": "https://valanticbe.intern.systems/samplepakket",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "samplepakket/succes",
+      "stores": {
+        "nl": {
+          "path": "samplepakket/succes",
+          "prodUrl": "https://www.tuinmaximaal.nl/samplepakket/succes",
+          "newUrl": "https://valanticnl.intern.systems/samplepakket/succes",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "samplepakket/succes",
+          "prodUrl": "https://www.tuinmaximaal.be/samplepakket/succes",
+          "newUrl": "https://valanticbe.intern.systems/samplepakket/succes",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifpui",
+      "stores": {
+        "nl": {
+          "path": "schuifpui",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifpui",
+          "newUrl": "https://valanticnl.intern.systems/schuifpui",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "schuifpui",
+          "prodUrl": "https://www.tuinmaximaal.be/schuifpui",
+          "newUrl": "https://valanticbe.intern.systems/schuifpui",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand",
+      "stores": {
+        "nl": {
+          "path": "schuifwand",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "schuifwand",
+          "prodUrl": "https://www.tuinmaximaal.be/schuifwand",
+          "newUrl": "https://valanticbe.intern.systems/schuifwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/paroi-coulissante",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/paroi-coulissante",
+          "newUrl": "https://valanticbe.intern.systems/fr/paroi-coulissante",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "schiebewand",
+          "prodUrl": "https://www.tuinmaximaal.de/schiebewand",
+          "newUrl": "https://valanticde.intern.systems/schiebewand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "paroi-coulissante",
+          "prodUrl": "https://www.tuinmaximaal.fr/paroi-coulissante",
+          "newUrl": "https://valanticfr.intern.systems/paroi-coulissante",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand-van-glas",
+      "stores": {
+        "nl": {
+          "path": "schuifwand-van-glas",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand-van-glas",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand-van-glas",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen/deurmeenemers",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen/deurmeenemers",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen/deurmeenemers",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen/deurmeenemers",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen/extra-onderdelen",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen/extra-onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen/extra-onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen/extra-onderdelen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen/glaspanelen",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen/glaspanelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen/glaspanelen",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen/glaspanelen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen/handgrepen",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen/handgrepen",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen/handgrepen",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen/handgrepen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen/losse-railsystemen",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen/losse-railsystemen",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen/losse-railsystemen",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen/losse-railsystemen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen/losse-railsystemen-met-cassette",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen/losse-railsystemen-met-cassette",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen/losse-railsystemen-met-cassette",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen/losse-railsystemen-met-cassette",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen/spie",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen/spie",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen/spie",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen/spie",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen/strips",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen/strips",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen/strips",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen/strips",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "schuifwand/onderdelen/u-profiel-staanders",
+      "stores": {
+        "nl": {
+          "path": "schuifwand/onderdelen/u-profiel-staanders",
+          "prodUrl": "https://www.tuinmaximaal.nl/schuifwand/onderdelen/u-profiel-staanders",
+          "newUrl": "https://valanticnl.intern.systems/schuifwand/onderdelen/u-profiel-staanders",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "serre",
+      "stores": {
+        "nl": {
+          "path": "serre",
+          "prodUrl": "https://www.tuinmaximaal.nl/serre",
+          "newUrl": "https://valanticnl.intern.systems/serre",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": {
+          "path": "wintergarten",
+          "prodUrl": "https://www.tuinmaximaal.de/wintergarten",
+          "newUrl": "https://valanticde.intern.systems/wintergarten",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "pergola",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/pergola",
+          "newUrl": "https://valanticuk.intern.systems/pergola",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "shading-panel",
+      "stores": {
+        "nl": {
+          "path": "shading-panel",
+          "prodUrl": "https://www.tuinmaximaal.nl/shading-panel",
+          "newUrl": "https://valanticnl.intern.systems/shading-panel",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "shading-panel",
+          "prodUrl": "https://www.tuinmaximaal.be/shading-panel",
+          "newUrl": "https://valanticbe.intern.systems/shading-panel",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/shading-panel",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/shading-panel",
+          "newUrl": "https://valanticbe.intern.systems/fr/shading-panel",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "shading-panel",
+          "prodUrl": "https://www.tuinmaximaal.de/shading-panel",
+          "newUrl": "https://valanticde.intern.systems/shading-panel",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "shading-panel",
+          "prodUrl": "https://www.tuinmaximaal.fr/shading-panel",
+          "newUrl": "https://valanticfr.intern.systems/shading-panel",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "shading-panel",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/shading-panel",
+          "newUrl": "https://valanticuk.intern.systems/shading-panel",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "shading-panel/montage",
+      "stores": {
+        "nl": {
+          "path": "shading-panel/montage",
+          "prodUrl": "https://www.tuinmaximaal.nl/shading-panel/montage",
+          "newUrl": "https://valanticnl.intern.systems/shading-panel/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "shading-panel/montage",
+          "prodUrl": "https://www.tuinmaximaal.be/shading-panel/montage",
+          "newUrl": "https://valanticbe.intern.systems/shading-panel/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/shading-panel/montage",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/shading-panel/montage",
+          "newUrl": "https://valanticbe.intern.systems/fr/shading-panel/montage",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "shading-panel/montage",
+          "prodUrl": "https://www.tuinmaximaal.de/shading-panel/montage",
+          "newUrl": "https://valanticde.intern.systems/shading-panel/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "shading-panel/montage",
+          "prodUrl": "https://www.tuinmaximaal.fr/shading-panel/montage",
+          "newUrl": "https://valanticfr.intern.systems/shading-panel/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": null
+      }
+    },
+    {
+      "page": "shading-panel/onderdelen",
+      "stores": {
+        "nl": {
+          "path": "shading-panel/onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/shading-panel/onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/shading-panel/onderdelen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "shading-panel/productinformatie",
+      "stores": {
+        "nl": {
+          "path": "shading-panel/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/shading-panel/productinformatie",
+          "newUrl": "https://valanticnl.intern.systems/shading-panel/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "shading-panel/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/shading-panel/productinformatie",
+          "newUrl": "https://valanticbe.intern.systems/shading-panel/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "showroom-berlijn",
+      "stores": {
+        "nl": {
+          "path": "showroom-berlijn",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-berlijn",
+          "newUrl": "https://valanticnl.intern.systems/showroom-berlijn",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-berlijn",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-berlijn",
+          "newUrl": "https://valanticbe.intern.systems/showroom-berlijn",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "showroom-bremen",
+      "stores": {
+        "nl": {
+          "path": "showroom-bremen",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-bremen",
+          "newUrl": "https://valanticnl.intern.systems/showroom-bremen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-bremen",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-bremen",
+          "newUrl": "https://valanticbe.intern.systems/showroom-bremen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-bremen",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-bremen",
+          "newUrl": "https://valanticde.intern.systems/showroom-bremen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "showroom-bremen",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-bremen",
+          "newUrl": "https://valanticuk.intern.systems/showroom-bremen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "showroom-contact",
+      "stores": {
+        "nl": {
+          "path": "showroom-contact",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-contact",
+          "newUrl": "https://valanticnl.intern.systems/showroom-contact",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "showroom-contact",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-contact",
+          "newUrl": "https://valanticbe.intern.systems/showroom-contact",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be_fr": {
+          "path": "fr/salle-exposition-contact",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/salle-exposition-contact",
+          "newUrl": "https://valanticbe.intern.systems/fr/salle-exposition-contact",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "de": {
+          "path": "showroom-kontakt",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-kontakt",
+          "newUrl": "https://valanticde.intern.systems/showroom-kontakt",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "fr": {
+          "path": "salle-exposition-contact",
+          "prodUrl": "https://www.tuinmaximaal.fr/salle-exposition-contact",
+          "newUrl": "https://valanticfr.intern.systems/salle-exposition-contact",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "uk": {
+          "path": "showroom-contact",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-contact",
+          "newUrl": "https://valanticuk.intern.systems/showroom-contact",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        }
+      }
+    },
+    {
+      "page": "showroom-crailsheim",
+      "stores": {
+        "nl": {
+          "path": "showroom-crailsheim",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-crailsheim",
+          "newUrl": "https://valanticnl.intern.systems/showroom-crailsheim",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-crailsheim",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-crailsheim",
+          "newUrl": "https://valanticbe.intern.systems/showroom-crailsheim",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-crailsheim",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-crailsheim",
+          "newUrl": "https://valanticde.intern.systems/showroom-crailsheim",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "showroom-crailsheim",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-crailsheim",
+          "newUrl": "https://valanticuk.intern.systems/showroom-crailsheim",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "showroom-eindhoven",
+      "stores": {
+        "nl": {
+          "path": "showroom-eindhoven",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-eindhoven",
+          "newUrl": "https://valanticnl.intern.systems/showroom-eindhoven",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-eindhoven",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-eindhoven",
+          "newUrl": "https://valanticbe.intern.systems/showroom-eindhoven",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-eindhoven",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-eindhoven",
+          "newUrl": "https://valanticde.intern.systems/showroom-eindhoven",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "showroom-eindhoven",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-eindhoven",
+          "newUrl": "https://valanticuk.intern.systems/showroom-eindhoven",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "showroom-heidelberg",
+      "stores": {
+        "nl": {
+          "path": "showroom-heidelberg",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-heidelberg",
+          "newUrl": "https://valanticnl.intern.systems/showroom-heidelberg",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-heidelberg",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-heidelberg",
+          "newUrl": "https://valanticbe.intern.systems/showroom-heidelberg",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-heidelberg",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-heidelberg",
+          "newUrl": "https://valanticde.intern.systems/showroom-heidelberg",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "showroom-heidelberg",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-heidelberg",
+          "newUrl": "https://valanticuk.intern.systems/showroom-heidelberg",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "showroom-ingolstadt",
+      "stores": {
+        "nl": {
+          "path": "showroom-ingolstadt",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-ingolstadt",
+          "newUrl": "https://valanticnl.intern.systems/showroom-ingolstadt",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-ingolstadt",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-ingolstadt",
+          "newUrl": "https://valanticbe.intern.systems/showroom-ingolstadt",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-ingolstadt",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-ingolstadt",
+          "newUrl": "https://valanticde.intern.systems/showroom-ingolstadt",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "showroom-ingolstadt",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-ingolstadt",
+          "newUrl": "https://valanticuk.intern.systems/showroom-ingolstadt",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "showroom-leicester",
+      "stores": {
+        "nl": {
+          "path": "showroom-leicester",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-leicester",
+          "newUrl": "https://valanticnl.intern.systems/showroom-leicester",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-leicester",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-leicester",
+          "newUrl": "https://valanticbe.intern.systems/showroom-leicester",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-leicester",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-leicester",
+          "newUrl": "https://valanticde.intern.systems/showroom-leicester",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "showroom-leicester",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-leicester",
+          "newUrl": "https://valanticuk.intern.systems/showroom-leicester",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "showroom-london",
+      "stores": {
+        "nl": {
+          "path": "showroom-london",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-london",
+          "newUrl": "https://valanticnl.intern.systems/showroom-london",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-london",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-london",
+          "newUrl": "https://valanticbe.intern.systems/showroom-london",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-london",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-london",
+          "newUrl": "https://valanticde.intern.systems/showroom-london",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "showroom-london",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-london",
+          "newUrl": "https://valanticuk.intern.systems/showroom-london",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "showroom-muechen",
+      "stores": {
+        "nl": {
+          "path": "showroom-muechen",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-muechen",
+          "newUrl": "https://valanticnl.intern.systems/showroom-muechen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "showroom-muenchen",
+      "stores": {
+        "nl": {
+          "path": "showroom-muenchen",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-muenchen",
+          "newUrl": "https://valanticnl.intern.systems/showroom-muenchen",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "showroom-muenchen",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-muenchen",
+          "newUrl": "https://valanticbe.intern.systems/showroom-muenchen",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-muenchen",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-muenchen",
+          "newUrl": "https://valanticde.intern.systems/showroom-muenchen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "showroom-uddel",
+      "stores": {
+        "nl": {
+          "path": "showroom-uddel",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-uddel",
+          "newUrl": "https://valanticnl.intern.systems/showroom-uddel",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-uddel",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-uddel",
+          "newUrl": "https://valanticbe.intern.systems/showroom-uddel",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-uddel",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-uddel",
+          "newUrl": "https://valanticde.intern.systems/showroom-uddel",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "showroom-uddel",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-uddel",
+          "newUrl": "https://valanticuk.intern.systems/showroom-uddel",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "showroom-venlo",
+      "stores": {
+        "nl": {
+          "path": "showroom-venlo",
+          "prodUrl": "https://www.tuinmaximaal.nl/showroom-venlo",
+          "newUrl": "https://valanticnl.intern.systems/showroom-venlo",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "showroom-venlo",
+          "prodUrl": "https://www.tuinmaximaal.be/showroom-venlo",
+          "newUrl": "https://valanticbe.intern.systems/showroom-venlo",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "showroom-venlo",
+          "prodUrl": "https://www.tuinmaximaal.de/showroom-venlo",
+          "newUrl": "https://valanticde.intern.systems/showroom-venlo",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "showroom-venlo",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/showroom-venlo",
+          "newUrl": "https://valanticuk.intern.systems/showroom-venlo",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "showrooms",
+      "stores": {
+        "nl": {
+          "path": "showrooms",
+          "prodUrl": "https://www.tuinmaximaal.nl/showrooms",
+          "newUrl": "https://valanticnl.intern.systems/showrooms",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "steel-look-glazen-schuifwand",
+      "stores": {
+        "nl": {
+          "path": "steel-look-glazen-schuifwand",
+          "prodUrl": "https://www.tuinmaximaal.nl/steel-look-glazen-schuifwand",
+          "newUrl": "https://valanticnl.intern.systems/steel-look-glazen-schuifwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "steel-look-glazen-schuifwand",
+          "prodUrl": "https://www.tuinmaximaal.be/steel-look-glazen-schuifwand",
+          "newUrl": "https://valanticbe.intern.systems/steel-look-glazen-schuifwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/porte-coulissante-verre-aspect-acier",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/porte-coulissante-verre-aspect-acier",
+          "newUrl": "https://valanticbe.intern.systems/fr/porte-coulissante-verre-aspect-acier",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "stahl-look-glas-schiebetuer",
+          "prodUrl": "https://www.tuinmaximaal.de/stahl-look-glas-schiebetuer",
+          "newUrl": "https://valanticde.intern.systems/stahl-look-glas-schiebetuer",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "porte-coulissante-verre-aspect-acier",
+          "prodUrl": "https://www.tuinmaximaal.fr/porte-coulissante-verre-aspect-acier",
+          "newUrl": "https://valanticfr.intern.systems/porte-coulissante-verre-aspect-acier",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "steel-look-glass-sliding-door",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/steel-look-glass-sliding-door",
+          "newUrl": "https://valanticuk.intern.systems/steel-look-glass-sliding-door",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "steel-look-glazen-schuifwand/onderdelen",
+      "stores": {
+        "nl": {
+          "path": "steel-look-glazen-schuifwand/onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/steel-look-glazen-schuifwand/onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/steel-look-glazen-schuifwand/onderdelen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "steel-look-glazen-schuifwand/productinformatie",
+      "stores": {
+        "nl": {
+          "path": "steel-look-glazen-schuifwand/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/steel-look-glazen-schuifwand/productinformatie",
+          "newUrl": "https://valanticnl.intern.systems/steel-look-glazen-schuifwand/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "steel-look-glazen-schuifwand/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/steel-look-glazen-schuifwand/productinformatie",
+          "newUrl": "https://valanticbe.intern.systems/steel-look-glazen-schuifwand/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "superior-coating",
+      "stores": {
+        "nl": {
+          "path": "superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.nl/superior-coating",
+          "newUrl": "https://valanticnl.intern.systems/superior-coating",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.be/superior-coating",
+          "newUrl": "https://valanticbe.intern.systems/superior-coating",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/superior-coating",
+          "newUrl": "https://valanticbe.intern.systems/fr/superior-coating",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.de/superior-coating",
+          "newUrl": "https://valanticde.intern.systems/superior-coating",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.fr/superior-coating",
+          "newUrl": "https://valanticfr.intern.systems/superior-coating",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "superior-coating",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/superior-coating",
+          "newUrl": "https://valanticuk.intern.systems/superior-coating",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "terrasoverkapping",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "be": {
+          "path": "terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/terrasoverkapping",
+          "newUrl": "https://valanticbe.intern.systems/terrasoverkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/verandas",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/verandas",
+          "newUrl": "https://valanticbe.intern.systems/fr/verandas",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "terrassenueberdachung",
+          "prodUrl": "https://www.tuinmaximaal.de/terrassenueberdachung",
+          "newUrl": "https://valanticde.intern.systems/terrassenueberdachung",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "verandas",
+          "prodUrl": "https://www.tuinmaximaal.fr/verandas",
+          "newUrl": "https://valanticfr.intern.systems/verandas",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "veranda",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/veranda",
+          "newUrl": "https://valanticuk.intern.systems/veranda",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "terrasoverkapping/gevelisolatie-montagesysteem",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/gevelisolatie-montagesysteem",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/gevelisolatie-montagesysteem",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/gevelisolatie-montagesysteem",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "terrasoverkapping/gevelisolatie-montagesysteem",
+          "prodUrl": "https://www.tuinmaximaal.be/terrasoverkapping/gevelisolatie-montagesysteem",
+          "newUrl": "https://valanticbe.intern.systems/terrasoverkapping/gevelisolatie-montagesysteem",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/montage",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/montage",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/montage",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "terrasoverkapping/montage",
+          "prodUrl": "https://www.tuinmaximaal.be/terrasoverkapping/montage",
+          "newUrl": "https://valanticbe.intern.systems/terrasoverkapping/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/montage/isolatiemateriaal",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/montage/isolatiemateriaal",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/montage/isolatiemateriaal",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/montage/isolatiemateriaal",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "terrasoverkapping/montage/isolatiemateriaal",
+          "prodUrl": "https://www.tuinmaximaal.be/terrasoverkapping/montage/isolatiemateriaal",
+          "newUrl": "https://valanticbe.intern.systems/terrasoverkapping/montage/isolatiemateriaal",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/aluminium-zijwand",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/aluminium-zijwand",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/aluminium-zijwand",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/aluminium-zijwand",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/bladvangers",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/bladvangers",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/bladvangers",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/bladvangers",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/constructie-onderdelen",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/constructie-onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/constructie-onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/constructie-onderdelen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/dak-frame-onderdelen",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/dak-frame-onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/dak-frame-onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/dak-frame-onderdelen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/dak-vervangen",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/dak-vervangen",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/dak-vervangen",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/dak-vervangen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "terrasoverkapping/onderdelen/dak-vervangen",
+          "prodUrl": "https://www.tuinmaximaal.be/terrasoverkapping/onderdelen/dak-vervangen",
+          "newUrl": "https://valanticbe.intern.systems/terrasoverkapping/onderdelen/dak-vervangen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/verandas/components/remplacer-toit",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/verandas/components/remplacer-toit",
+          "newUrl": "https://valanticbe.intern.systems/fr/verandas/components/remplacer-toit",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "de": {
+          "path": "terrassenueberdachung/teile/dach-ersetzen",
+          "prodUrl": "https://www.tuinmaximaal.de/terrassenueberdachung/teile/dach-ersetzen",
+          "newUrl": "https://valanticde.intern.systems/terrassenueberdachung/teile/dach-ersetzen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "verandas/components/remplacer-toit",
+          "prodUrl": "https://www.tuinmaximaal.fr/verandas/components/remplacer-toit",
+          "newUrl": "https://valanticfr.intern.systems/verandas/components/remplacer-toit",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "uk": {
+          "path": "veranda/parts/replace-roof",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/veranda/parts/replace-roof",
+          "newUrl": "https://valanticuk.intern.systems/veranda/parts/replace-roof",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/gevelisolatie-montagesysteem",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/gevelisolatie-montagesysteem",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/gevelisolatie-montagesysteem",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/gevelisolatie-montagesysteem",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/glas-op-maat",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/glas-op-maat",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/glas-op-maat",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/glas-op-maat",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/glazen-dakplaten",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/glazen-dakplaten",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/glazen-dakplaten",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/glazen-dakplaten",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/gootpakketten",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/gootpakketten",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/gootpakketten",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/gootpakketten",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/montagematerialen",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/montagematerialen",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/montagematerialen",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/montagematerialen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/onderhoudsproducten",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/onderhoudsproducten",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/onderhoudsproducten",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/onderhoudsproducten",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/polycarbonaat-dakplaten",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/polycarbonaat-dakplaten",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/polycarbonaat-dakplaten",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/polycarbonaat-dakplaten",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/polycarbonaat-zijwand",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/polycarbonaat-zijwand",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/polycarbonaat-zijwand",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/polycarbonaat-zijwand",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/schoren",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/schoren",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/schoren",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/schoren",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/staanders",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/staanders",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/staanders",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/staanders",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/terrasverwarmer",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/terrasverwarmer",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/terrasverwarmer",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/terrasverwarmer",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/onderdelen/zijplaten",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/onderdelen/zijplaten",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/onderdelen/zijplaten",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/onderdelen/zijplaten",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/prijzen",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/prijzen",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/prijzen",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/prijzen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/productinformatie",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/productinformatie",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "terrasoverkapping/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/terrasoverkapping/productinformatie",
+          "newUrl": "https://valanticbe.intern.systems/terrasoverkapping/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "terrasoverkapping/zijwand",
+      "stores": {
+        "nl": {
+          "path": "terrasoverkapping/zijwand",
+          "prodUrl": "https://www.tuinmaximaal.nl/terrasoverkapping/zijwand",
+          "newUrl": "https://valanticnl.intern.systems/terrasoverkapping/zijwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "terrasoverkapping/zijwand",
+          "prodUrl": "https://www.tuinmaximaal.be/terrasoverkapping/zijwand",
+          "newUrl": "https://valanticbe.intern.systems/terrasoverkapping/zijwand",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "toegankelijkheidsverklaring",
+      "stores": {
+        "nl": {
+          "path": "toegankelijkheidsverklaring",
+          "prodUrl": "https://www.tuinmaximaal.nl/toegankelijkheidsverklaring",
+          "newUrl": "https://valanticnl.intern.systems/toegankelijkheidsverklaring",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "toegankelijkheidsverklaring",
+          "prodUrl": "https://www.tuinmaximaal.be/toegankelijkheidsverklaring",
+          "newUrl": "https://valanticbe.intern.systems/toegankelijkheidsverklaring",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "tuinhuis-met-overkapping",
+      "stores": {
+        "nl": {
+          "path": "tuinhuis-met-overkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/tuinhuis-met-overkapping",
+          "newUrl": "https://valanticnl.intern.systems/tuinhuis-met-overkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "tuinhuis-met-overkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/tuinhuis-met-overkapping",
+          "newUrl": "https://valanticbe.intern.systems/tuinhuis-met-overkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "tuinkamer",
+      "stores": {
+        "nl": {
+          "path": "tuinkamer",
+          "prodUrl": "https://www.tuinmaximaal.nl/tuinkamer",
+          "newUrl": "https://valanticnl.intern.systems/tuinkamer",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "tuinkamer",
+          "prodUrl": "https://www.tuinmaximaal.be/tuinkamer",
+          "newUrl": "https://valanticbe.intern.systems/tuinkamer",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": {
+          "path": "garden-room",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/garden-room",
+          "newUrl": "https://valanticuk.intern.systems/garden-room",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "tuinmaximaal-nieuws",
+      "stores": {
+        "nl": {
+          "path": "tuinmaximaal-nieuws",
+          "prodUrl": "https://www.tuinmaximaal.nl/tuinmaximaal-nieuws",
+          "newUrl": "https://valanticnl.intern.systems/tuinmaximaal-nieuws",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "tuinoverkapping",
+      "stores": {
+        "nl": {
+          "path": "tuinoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/tuinoverkapping",
+          "newUrl": "https://valanticnl.intern.systems/tuinoverkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "tuinoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/tuinoverkapping",
+          "newUrl": "https://valanticbe.intern.systems/tuinoverkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": {
+          "path": "garden-canopy",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/garden-canopy",
+          "newUrl": "https://valanticuk.intern.systems/garden-canopy",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "veelgestelde-vragen",
+      "stores": {
+        "nl": {
+          "path": "veelgestelde-vragen",
+          "prodUrl": "https://www.tuinmaximaal.nl/veelgestelde-vragen",
+          "newUrl": "https://valanticnl.intern.systems/veelgestelde-vragen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "veelgestelde-vragen",
+          "prodUrl": "https://www.tuinmaximaal.be/veelgestelde-vragen",
+          "newUrl": "https://valanticbe.intern.systems/veelgestelde-vragen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "veranda",
+      "stores": {
+        "nl": {
+          "path": "veranda",
+          "prodUrl": "https://www.tuinmaximaal.nl/veranda",
+          "newUrl": "https://valanticnl.intern.systems/veranda",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "veranda",
+          "prodUrl": "https://www.tuinmaximaal.be/veranda",
+          "newUrl": "https://valanticbe.intern.systems/veranda",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": {
+          "path": "veranda",
+          "prodUrl": "https://www.tuinmaximaal.de/veranda",
+          "newUrl": "https://valanticde.intern.systems/veranda",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": null,
+        "uk": {
+          "path": "patio-cover",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/patio-cover",
+          "newUrl": "https://valanticuk.intern.systems/patio-cover",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "veranda-configurator",
+      "stores": {
+        "nl": {
+          "path": "veranda-configurator",
+          "prodUrl": "https://www.tuinmaximaal.nl/veranda-configurator",
+          "newUrl": "https://valanticnl.intern.systems/veranda-configurator",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "veranda/prijzen",
+      "stores": {
+        "nl": {
+          "path": "veranda/prijzen",
+          "prodUrl": "https://www.tuinmaximaal.nl/veranda/prijzen",
+          "newUrl": "https://valanticnl.intern.systems/veranda/prijzen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "verlichting",
+      "stores": {
+        "nl": {
+          "path": "verlichting",
+          "prodUrl": "https://www.tuinmaximaal.nl/verlichting",
+          "newUrl": "https://valanticnl.intern.systems/verlichting",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "verlichting",
+          "prodUrl": "https://www.tuinmaximaal.be/verlichting",
+          "newUrl": "https://valanticbe.intern.systems/verlichting",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/eclairage",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/eclairage",
+          "newUrl": "https://valanticbe.intern.systems/fr/eclairage",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "beleuchtung",
+          "prodUrl": "https://www.tuinmaximaal.de/beleuchtung",
+          "newUrl": "https://valanticde.intern.systems/beleuchtung",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "eclairage",
+          "prodUrl": "https://www.tuinmaximaal.fr/eclairage",
+          "newUrl": "https://valanticfr.intern.systems/eclairage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "lighting",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/lighting",
+          "newUrl": "https://valanticuk.intern.systems/lighting",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "verlichting/onderdelen",
+      "stores": {
+        "nl": {
+          "path": "verlichting/onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/verlichting/onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/verlichting/onderdelen",
+          "source": "new-site-crawl",
+          "prodStatus": 301,
+          "prodRedirect": "https://www.tuinmaximaal.nl/lighting-system/onderdelen",
+          "newStatus": 200
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "verlichting/onderdelen/led-spots",
+      "stores": {
+        "nl": {
+          "path": "verlichting/onderdelen/led-spots",
+          "prodUrl": "https://www.tuinmaximaal.nl/verlichting/onderdelen/led-spots",
+          "newUrl": "https://valanticnl.intern.systems/verlichting/onderdelen/led-spots",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 301,
+          "prodRedirect": "https://www.tuinmaximaal.nl/lighting-system/onderdelen/led-spots"
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "verlichting/onderdelen/lighting-system",
+      "stores": {
+        "nl": {
+          "path": "verlichting/onderdelen/lighting-system",
+          "prodUrl": "https://www.tuinmaximaal.nl/verlichting/onderdelen/lighting-system",
+          "newUrl": "https://valanticnl.intern.systems/verlichting/onderdelen/lighting-system",
+          "source": "new-site-crawl",
+          "prodStatus": 301,
+          "prodRedirect": "https://www.tuinmaximaal.nl/lighting-system/onderdelen/lighting-system",
+          "newStatus": 200
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "vloeren",
+      "stores": {
+        "nl": {
+          "path": "vloeren",
+          "prodUrl": "https://www.tuinmaximaal.nl/vloeren",
+          "newUrl": "https://valanticnl.intern.systems/vloeren",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "vloeren/bamboe",
+      "stores": {
+        "nl": {
+          "path": "vloeren/bamboe",
+          "prodUrl": "https://www.tuinmaximaal.nl/vloeren/bamboe",
+          "newUrl": "https://valanticnl.intern.systems/vloeren/bamboe",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "voordelen",
+      "stores": {
+        "nl": {
+          "path": "voordelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/voordelen",
+          "newUrl": "https://valanticnl.intern.systems/voordelen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "voordelen",
+          "prodUrl": "https://www.tuinmaximaal.be/voordelen",
+          "newUrl": "https://valanticbe.intern.systems/voordelen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "voordelen-van-een-aluminium-terrasoverkapping",
+      "stores": {
+        "nl": {
+          "path": "voordelen-van-een-aluminium-terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/voordelen-van-een-aluminium-terrasoverkapping",
+          "newUrl": "https://valanticnl.intern.systems/voordelen-van-een-aluminium-terrasoverkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "voordelen-van-een-aluminium-terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/voordelen-van-een-aluminium-terrasoverkapping",
+          "newUrl": "https://valanticbe.intern.systems/voordelen-van-een-aluminium-terrasoverkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "vrijstaande-overkapping-aanvragen",
+      "stores": {
+        "nl": {
+          "path": "vrijstaande-overkapping-aanvragen",
+          "prodUrl": "https://www.tuinmaximaal.nl/vrijstaande-overkapping-aanvragen",
+          "newUrl": "https://valanticnl.intern.systems/vrijstaande-overkapping-aanvragen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "vrijstaande-overkapping-aanvragen",
+          "prodUrl": "https://www.tuinmaximaal.be/vrijstaande-overkapping-aanvragen",
+          "newUrl": "https://valanticbe.intern.systems/vrijstaande-overkapping-aanvragen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "vrijstaande-terrasoverkapping",
+      "stores": {
+        "nl": {
+          "path": "vrijstaande-terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/vrijstaande-terrasoverkapping",
+          "newUrl": "https://valanticnl.intern.systems/vrijstaande-terrasoverkapping",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "vrijstaande-terrasoverkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/vrijstaande-terrasoverkapping",
+          "newUrl": "https://valanticbe.intern.systems/vrijstaande-terrasoverkapping",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be_fr": {
+          "path": "fr/veranda-autoportante",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/veranda-autoportante",
+          "newUrl": "https://valanticbe.intern.systems/fr/veranda-autoportante",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "de": {
+          "path": "freistehend-terrassenueberdachung",
+          "prodUrl": "https://www.tuinmaximaal.de/freistehend-terrassenueberdachung",
+          "newUrl": "https://valanticde.intern.systems/freistehend-terrassenueberdachung",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "fr": {
+          "path": "veranda-autoportante",
+          "prodUrl": "https://www.tuinmaximaal.fr/veranda-autoportante",
+          "newUrl": "https://valanticfr.intern.systems/veranda-autoportante",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "uk": {
+          "path": "freestanding-veranda",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/freestanding-veranda",
+          "newUrl": "https://valanticuk.intern.systems/freestanding-veranda",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        }
+      }
+    },
+    {
+      "page": "winactie-terrasverwarmer",
+      "stores": {
+        "nl": {
+          "path": "winactie-terrasverwarmer",
+          "prodUrl": "https://www.tuinmaximaal.nl/winactie-terrasverwarmer",
+          "newUrl": "https://valanticnl.intern.systems/winactie-terrasverwarmer",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": {
+          "path": "winactie-terrasverwarmer",
+          "prodUrl": "https://www.tuinmaximaal.be/winactie-terrasverwarmer",
+          "newUrl": "https://valanticbe.intern.systems/winactie-terrasverwarmer",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "zonwering",
+      "stores": {
+        "nl": {
+          "path": "zonwering",
+          "prodUrl": "https://www.tuinmaximaal.nl/zonwering",
+          "newUrl": "https://valanticnl.intern.systems/zonwering",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "zonwering",
+          "prodUrl": "https://www.tuinmaximaal.be/zonwering",
+          "newUrl": "https://valanticbe.intern.systems/zonwering",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": {
+          "path": "fr/protection-solaire",
+          "prodUrl": "https://www.tuinmaximaal.be/fr/protection-solaire",
+          "newUrl": "https://valanticbe.intern.systems/fr/protection-solaire",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "de": {
+          "path": "sonnenschutz",
+          "prodUrl": "https://www.tuinmaximaal.de/sonnenschutz",
+          "newUrl": "https://valanticde.intern.systems/sonnenschutz",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "fr": {
+          "path": "protection-solaire",
+          "prodUrl": "https://www.tuinmaximaal.fr/protection-solaire",
+          "newUrl": "https://valanticfr.intern.systems/protection-solaire",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "uk": {
+          "path": "sun-shading",
+          "prodUrl": "https://www.tuinmaximaal.co.uk/sun-shading",
+          "newUrl": "https://valanticuk.intern.systems/sun-shading",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        }
+      }
+    },
+    {
+      "page": "zonwering-buiten",
+      "stores": {
+        "nl": {
+          "path": "zonwering-buiten",
+          "prodUrl": "https://www.tuinmaximaal.nl/zonwering-buiten",
+          "newUrl": "https://valanticnl.intern.systems/zonwering-buiten",
+          "source": "new-site-crawl",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "zonwering-prijzen",
+      "stores": {
+        "nl": {
+          "path": "zonwering-prijzen",
+          "prodUrl": "https://www.tuinmaximaal.nl/zonwering-prijzen",
+          "newUrl": "https://valanticnl.intern.systems/zonwering-prijzen",
+          "source": "new-site-crawl",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 404
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "zonwering/buiten",
+      "stores": {
+        "nl": {
+          "path": "zonwering/buiten",
+          "prodUrl": "https://www.tuinmaximaal.nl/zonwering/buiten",
+          "newUrl": "https://valanticnl.intern.systems/zonwering/buiten",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "zonwering/buiten",
+          "prodUrl": "https://www.tuinmaximaal.be/zonwering/buiten",
+          "newUrl": "https://valanticbe.intern.systems/zonwering/buiten",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "zonwering/montage",
+      "stores": {
+        "nl": {
+          "path": "zonwering/montage",
+          "prodUrl": "https://www.tuinmaximaal.nl/zonwering/montage",
+          "newUrl": "https://valanticnl.intern.systems/zonwering/montage",
+          "source": "prod-sitemap",
+          "prodStatus": 503,
+          "prodMaintenance": true,
+          "newStatus": 200
+        },
+        "be": {
+          "path": "zonwering/montage",
+          "prodUrl": "https://www.tuinmaximaal.be/zonwering/montage",
+          "newUrl": "https://valanticbe.intern.systems/zonwering/montage",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "zonwering/onderdelen",
+      "stores": {
+        "nl": {
+          "path": "zonwering/onderdelen",
+          "prodUrl": "https://www.tuinmaximaal.nl/zonwering/onderdelen",
+          "newUrl": "https://valanticnl.intern.systems/zonwering/onderdelen",
+          "source": "new-site-crawl",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": null,
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "zonwering/prijzen",
+      "stores": {
+        "nl": {
+          "path": "zonwering/prijzen",
+          "prodUrl": "https://www.tuinmaximaal.nl/zonwering/prijzen",
+          "newUrl": "https://valanticnl.intern.systems/zonwering/prijzen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "zonwering/prijzen",
+          "prodUrl": "https://www.tuinmaximaal.be/zonwering/prijzen",
+          "newUrl": "https://valanticbe.intern.systems/zonwering/prijzen",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "zonwering/productinformatie",
+      "stores": {
+        "nl": {
+          "path": "zonwering/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.nl/zonwering/productinformatie",
+          "newUrl": "https://valanticnl.intern.systems/zonwering/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "zonwering/productinformatie",
+          "prodUrl": "https://www.tuinmaximaal.be/zonwering/productinformatie",
+          "newUrl": "https://valanticbe.intern.systems/zonwering/productinformatie",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    },
+    {
+      "page": "zwarte-overkapping",
+      "stores": {
+        "nl": {
+          "path": "zwarte-overkapping",
+          "prodUrl": "https://www.tuinmaximaal.nl/zwarte-overkapping",
+          "newUrl": "https://valanticnl.intern.systems/zwarte-overkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be": {
+          "path": "zwarte-overkapping",
+          "prodUrl": "https://www.tuinmaximaal.be/zwarte-overkapping",
+          "newUrl": "https://valanticbe.intern.systems/zwarte-overkapping",
+          "source": "prod-sitemap",
+          "newStatus": 200,
+          "prodStatus": 503,
+          "prodMaintenance": true
+        },
+        "be_fr": null,
+        "de": null,
+        "fr": null,
+        "uk": null
+      }
+    }
+  ]
+}

@@ -16,7 +16,7 @@ const CHROME = [
 const PARSE_OPTIONS = { closeAllByClosing: true };
 
 const seeds = JSON.parse(
-  readFileSync(new URL('../_data/10-store-seeds.json', import.meta.url), 'utf8')
+  readFileSync(new URL('../../data/10-store-seeds.json', import.meta.url), 'utf8')
 );
 
 const jobs = [];
@@ -402,7 +402,7 @@ const report = L.join('\n');
 console.log(report);
 
 writeFileSync(
-  new URL('../_data/probe-images.json', import.meta.url),
+  new URL('../../data/probe-images.json', import.meta.url),
   JSON.stringify({
     generated: new Date().toISOString(),
     store: 'nl',
@@ -428,4 +428,4 @@ writeFileSync(
     })),
   }, null, 2)
 );
-console.log('\nwrote _data/probe-images.json');
+console.log('\nwrote data/probe-images.json');
