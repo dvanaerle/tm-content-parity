@@ -1,7 +1,7 @@
 # 22 — Re-measure production status with production live
 
 Type: task
-Status: folded
+Status: resolved
 Blocked by: —
 Folded into: 51, 53
 Parent: ../map.md
@@ -79,3 +79,20 @@ so it is where a duplicated rule is deleted.
 
 **Ticket 20 still waits on this number**, and it now waits on 53 and 55 through
 this ticket.
+
+## Answered on 2026-08-10, in ticket 53
+
+`crawl/11-page-status.mjs` measured both sides of all **820** store-page pairs of
+the rebuilt list — 1,640 urls. **Not one request failed and not one maintenance
+page answered.** So the old column of 451 zeroes was the maintenance window and
+nothing else.
+
+Production answers 200 on 771 of the 820. Every one of the 49 production 404s is
+a carried row that no sitemap declares, and 39 of them are Dutch pages that exist
+on the new site only. The per-store table is in
+[53](53-every-content-page-in-the-seed-list.md) and the measurement is tracked as
+`data/11-page-status.json`.
+
+The `prodMaintenance` flag is gone. The seed list is a page list and holds no
+status at all: the status pass is a second step and writes its own file. The
+guard is armed in both, and it aborts.

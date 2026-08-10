@@ -21,7 +21,7 @@
  * same field, so rose cannot come apart from the meaning.
  */
 
-/** @typedef {'nl' | 'be' | 'be_fr' | 'de' | 'fr' | 'uk'} Store */
+/** @typedef {import('../shared/stores.mjs').Store} Store */
 
 /** @typedef {'production' | 'new'} Side */
 
@@ -76,5 +76,7 @@ export const FINDING_CLASSES = {
 /** @type {Check[]} */
 export const CHECKS = ['text', 'links', 'images', 'meta'];
 
-/** @type {Store[]} */
-export const STORES = ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'];
+// `crawl/` needs the same list and cannot import `compare/`, so the list lives
+// in `shared/` and this is the re-export the existing readers keep using.
+// ADR 0001.
+export { STORES } from '../shared/stores.mjs';

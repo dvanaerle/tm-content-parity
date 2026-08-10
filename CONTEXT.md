@@ -37,9 +37,12 @@ them are in `.scratch/content-parity-log/map.md`.
 - **Cell** — one store page in a seed row, or `null`. A null cell says that the
   store does not have the page. A cell of a page that answers 404 is a different
   absence, and it is not null.
-- **Provenance** — where a cell came from: the production sitemap, a crawl of the
-  new site, or the hand-seeded store home pages. The NL store has cells that no
-  sitemap declares, so the provenance is part of the data and not a comment.
+- **Provenance** — where a cell came from, and which clause of the rule admitted
+  it: `sitemap-daily`, `sitemap-low-alternates`, or `carried-over` for the 49
+  store pages that no sitemap declares. The NL store has cells that no sitemap
+  declares, so the provenance is part of the data and not a comment. The
+  hand-seeded store home page is retired: all six store roots are in the
+  sitemaps, measured on 2026-08-10.
 - **Content page** and **product page** — production distinguishes them in the
   sitemap only by the count of hreflang alternates and by `changefreq`. A product
   page carries all six alternates. See ticket 50 for the rule.

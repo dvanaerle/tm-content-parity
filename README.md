@@ -19,7 +19,7 @@ closes itself.
 | `overrides/` | What an editor's ticks add up to. `state.mjs` is pure and tested; `supabase.mjs` is the whole database surface, three functions wide. |
 | `api/` | The local re-check service, which also serves `dist/`. |
 | `web/` | Astro static build, with React islands for the interactive parts. |
-| `data/` | Generated JSON. Not in git, except `10-store-seeds.json`, which every stage reads, and the two sitemap evidence files. |
+| `data/` | Generated JSON. Not in git, except `10-store-seeds.json`, which every stage reads, and the three evidence files. |
 | `dist/` | The static build that goes to the webhost. Not in git. |
 | `supabase/` | The schema and the policies for the override log. |
 
@@ -68,10 +68,11 @@ and no `redirect` there. Given an argument, the script prints why and exits 2
 one. The front end gives each store its own dashboard at `/<store>/`, and `/` lists
 them.
 
-`data/` is not in git, with three exceptions. `data/10-store-seeds.json` is
-tracked, because every stage above reads it. The two sitemap evidence files are
-tracked for the reason in the next section. A fresh clone has the seed list and
-needs the first three commands before the front end has anything to show.
+`data/` is not in git, with four exceptions. `data/10-store-seeds.json` is
+tracked, because every stage above reads it. The two sitemap evidence files and
+the status measurement are tracked for the reason in the next sections. A fresh
+clone has the seed list and needs the first three commands before the front end
+has anything to show.
 
 ## The production sitemap evidence
 
@@ -128,24 +129,38 @@ node crawl/10-store-seeds.mjs   # writes data/10-store-seeds.json and .md
 This is not part of a normal run. The seed list is in git, so you only run this
 to change what is in it.
 
-**Neither input is in the tree, and this generator still cannot run.** The script
-needs `data/sitemap-prod.xml` and `data/03-merged.json`. It names the absent one
-and exits 2. Ticket 52 committed the sitemap half as `data/sitemap-extract.json`,
-which is a different shape and a different file name, so the generator does not
-read it yet — ticket 53 rewrites the generator against the extract, and carries
-over the 48 Dutch rows that no sitemap declares.
+Both inputs are tracked, so the run is repeatable from a fresh clone:
+`data/sitemap-extract.json` is the production evidence, and the committed seed
+list carries the 49 store pages that no sitemap declares. Those 49 cannot be made
+again — the generator that first found them read an input that no longer exists —
+so the generator reads its own previous output to keep them. It is stable: a
+second run over the same two inputs gives the same bytes.
 
-**The tracked seed list is not reproducible from this tree**, and it is not a
-clean measurement. It is the run of 2026-08-06, made while production was in
-maintenance mode, so its `prodStatus` column is phantom and it still carries the
-`prodMaintenance` flags that the generator no longer writes. It is in git because
-every stage above needs a page list to read, not because it is right. Ticket 53
-rebuilds it.
+**The generator makes no live request.** It writes a page list and nothing else.
+The rule is in `crawl/seed-list.mjs`, which is pure and which the tests read:
 
-The generator asks production for every url, and it stops with exit 3 on the
-first 500 or 503, because a status column measured against a maintenance page is
-phantom. That is `maintenanceReason()` from `crawl/fetch-page.mjs`, the one
-maintenance rule (ticket 04).
+    (fewer than six hreflang alternates  OR  changefreq=daily in any of the six
+    sitemaps)  AND NOT a product signature
+
+It stops before it writes when a store yields no page, when a count is more than
+15% from the measurement of 2026-08-10, or when its own output does not keep the
+seed schema. A silent short list is the defect ticket 53 exists to fix.
+
+## Measure production and the new site again
+
+```sh
+node crawl/11-page-status.mjs   # ~5 min, 1,640 urls
+```
+
+The status pass is a second step over the finished seed list, and it writes
+`data/11-page-status.json`. Two things in one script is what made the old seed
+file half page list and half stale measurement.
+
+It stops with exit 3 on the first 500 or 503, because a status column measured
+against a maintenance page is phantom. That is `maintenanceReason()` from
+`crawl/fetch-page.mjs`, the one maintenance rule (ticket 04). It also stops when
+a whole side of a store answered nothing at all, which is what a column of 451
+zeroes looked like before anybody read it.
 
 ## The override log
 

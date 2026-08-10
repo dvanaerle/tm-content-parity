@@ -642,6 +642,30 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   the sitemaps**, which contradicts the hand-seeding at
   `crawl/10-store-seeds.mjs:143`.
 
+- [53 — Every content page of every store is in the seed list](issues/53-every-content-page-in-the-seed-list.md)
+  — **Resolved 2026-08-10.** The seed list is **820 store pages over 550 rows**,
+  against 451 over 181. Per store: nl 181, be 131, be_fr 122, de 134, fr 123,
+  uk 129. **NL is 181 to the page** — 133 found by the rule, 48 carried — which is
+  the check that the rule is right and not merely larger. The rule lives in
+  `crawl/seed-list.mjs`, is pure and is tested; the generator makes **no live
+  request** and `crawl/11-page-status.mjs` is the status pass beside it. **Ticket
+  50's product signature is wrong as written** and was measured instead: production
+  names the two kinds on the `<body>`, and a probe over all 876 candidates found
+  **105 `catalog-product-view` pages**. The signature is a measurement token or a
+  colour beside a finish, and it names 105 of 105 with no false positive.
+  `co.uk/black-veranda` is the case that refuses a bare colour clause. **Every
+  production 404 in the list is one of the 49 carried rows**: 39 of the 48 Dutch
+  carried pages do not exist on production at all, so "NL has 181 content pages"
+  was never true of production. Ticket 22 is answered: 1,640 urls, **zero failures
+  and zero maintenance answers**, so the old column of 451 zeroes was the
+  maintenance window and nothing else; `data/11-page-status.json` is tracked so
+  the numbers stay checkable. The page key of an unanchored page is
+  `(store)path`, never a colon, and the 181 anchored keys are byte-identical, so
+  nothing detaches. **Two of ticket 50's statements do not survive the data**: the
+  signature above, and "no other pairing exists" — there are **sixteen** shapes of
+  alternate block, and `{de, nl, uk}` and `{de, uk}` are two of them, which axis B
+  must know. `npm test` green at **412 tests**, 51 new.
+
 - [22 — Re-measure production status](issues/22-remeasure-prod-status.md)
   — **Folded on 2026-08-07, not closed and not resolved.** Both criteria moved
   into spec 50, because 22 measures the 451-pair seed list that ticket 53 is about
@@ -653,8 +677,9 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   maintenance rule** that recorded a flag and carried on where
   `crawl/fetch-page.mjs` throws. That copy is how 451 phantom `prodStatus` values
   reached the file. **51 deleted it on 2026-08-10**; the `prodMaintenance` flags
-  in the committed seed file outlive it and are 53's to clear. 22 stays open as a `folded` pointer, because ticket 20 follows
-  that edge. Its "do not re-run the whole seed derivation" instruction is
+  in the committed seed file outlive it and are 53's to clear. **Resolved on 2026-08-10 by 53**: 1,640 urls over the
+  rebuilt 820-pair list, zero failures and zero maintenance answers, tracked as
+  `data/11-page-status.json`. Ticket 20 follows the edge from here. Its "do not re-run the whole seed derivation" instruction is
   **overtaken** by ticket 50, which found the page list itself unsound.
 
 ### Facts found while charting

@@ -114,7 +114,11 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  *
  * @typedef {object} PageExtract
  * @property {Store} store
- * @property {string} page          The NL url key.
+ * @property {string} page          The page key. It is the NL url key on a page that
+ *                                  production declares in Dutch, and `(store)path` on
+ *                                  a page with no `nl-NL` alternate. More than half of
+ *                                  the pages are of the second kind (ticket 53). Every
+ *                                  reader treats it as an opaque string.
  * @property {Side} side
  * @property {string} url
  * @property {number} status
