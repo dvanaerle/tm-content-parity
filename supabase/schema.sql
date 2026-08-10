@@ -15,7 +15,8 @@
 --
 -- **Running this file whole drops the override log.** The `keepalive` table of
 -- ticket 13 is therefore in `keepalive.sql`, so that the keep-alive can be
--- applied on its own.
+-- applied on its own, and ticket 88's change to a live table is in
+-- `mute-anchor-heading.sql`. This file is what a new project gets.
 
 drop view if exists overrides_current;
 drop table if exists overrides;
@@ -47,6 +48,25 @@ create table overrides (
   -- The class name from compare/vocabulary.mjs. Present when scope = 'page-class'.
   class       text,
 
+  -- ADR 0008: a mute names a section, and the section is the anchor heading. The
+  -- field has three states and two of them are null here, so `names_section`
+  -- carries the difference: false is the page-wide form, and true with a null
+  -- heading is the content before the first heading, which is a real section.
+  anchor_heading text,
+  names_section  boolean not null default false,
+
+  -- The heading part of the mute key, as one value. `anchorHeadingSlot()` in
+  -- compare/contract.mjs is the same expression in JavaScript, and the derivation
+  -- keys on it. The two must agree, or the log shows one thing and the view holds
+  -- another.
+  anchor_heading_slot text generated always as (
+    case
+      when not names_section then '*page'
+      when anchor_heading is null then '*none'
+      else '#' || anchor_heading
+    end
+  ) stored,
+
   -- The observation a `fixed` claim was made against. A claim is contradicted
   -- only by a LATER observation that still gives the finding, so without this
   -- column the button could not work on a frozen snapshot. Ids sort
@@ -74,10 +94,20 @@ create table overrides (
     or (scope = 'page'       and action = 'reviewed')
   ),
 
-  -- A note is required on `dismissed` only. A dismissal accepts a real
-  -- difference for good, so the next reader must be told why; a fix claim is a
-  -- one-line correction and must not cost a sentence of prose.
-  constraint override_note check (action <> 'dismissed' or length(trim(coalesce(note, ''))) > 0)
+  -- Only a mute names a section. Every other row leaves both fields alone.
+  constraint override_anchor_heading check (
+    (names_section = false and anchor_heading is null)
+    or (names_section and scope = 'page-class')
+  ),
+
+  -- A note is required on the two **judgements**, and on nothing else. A
+  -- dismissal accepts a real difference for good and a mute hides a class for
+  -- ever, so the next reader must be told why; a fix claim is a one-line
+  -- correction and must not cost a sentence of prose. Ticket 88 added the mute:
+  -- it was the one override nobody could review later, and it hides the most.
+  constraint override_note check (
+    action not in ('dismissed', 'muted') or length(trim(coalesce(note, ''))) > 0
+  )
 );
 
 create index overrides_page_idx on overrides (store, page);
@@ -92,8 +122,9 @@ create policy "anon can read"   on overrides for select to anon using (true);
 -- The current state: the newest row wins, per key. The history underneath still
 -- answers "who dismissed this, and who cleared it".
 create view overrides_current as
-select distinct on (scope, store, page, coalesce(finding_id, class, ''))
+select distinct on (scope, store, page, coalesce(finding_id, class, ''), anchor_heading_slot)
   id, created_at, editor, scope, action, store, page,
-  finding_id, class, observation_id, finding_set_hash, note
+  finding_id, class, anchor_heading, names_section,
+  observation_id, finding_set_hash, note
 from overrides
-order by scope, store, page, coalesce(finding_id, class, ''), created_at desc, id desc;
+order by scope, store, page, coalesce(finding_id, class, ''), anchor_heading_slot, created_at desc, id desc;

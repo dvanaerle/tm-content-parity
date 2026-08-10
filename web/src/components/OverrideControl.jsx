@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { namesSection } from '../../../compare/contract.mjs';
+import { muteForms } from '../lib/mute.mjs';
 import { ACCENT, INK, PILL } from '../lib/palette.mjs';
 
 /**
@@ -15,6 +17,11 @@ import { ACCENT, INK, PILL } from '../lib/palette.mjs';
  * its menu because a dismissal carries a mandatory note and a checkbox cannot, and
  * mute keeps its menu because it acts on a whole class and a mis-click would take a
  * class off the page.
+ *
+ * Ticket 88 took the one silent press away. *Dempen* was a single button that could
+ * hide 173 findings, asked for no reason and recorded no section. It now opens the
+ * two forms of ADR 0008 — a section and the whole page — each saying how many
+ * findings it covers, and neither can be pressed without a note.
  */
 
 /**
@@ -34,28 +41,48 @@ const STATE = {
   contradicted: { label: 'nog niet opgelost', tone: 'attention' },
 };
 
-export default function OverrideControl({ finding, observationId, append, canWrite }) {
-  const [asking, setAsking] = useState(false);
+/**
+ * `findings` are the derived findings of the whole page. The mute needs them:
+ * ADR 0008 says the count is computed **before** the press, on the snapshot in
+ * front of the editor, and one finding cannot count its own section.
+ */
+export default function OverrideControl({
+  finding, findings = [], observationId, append, canWrite,
+}) {
+  /** @type {['dismiss' | 'mute' | null, Function]} */
+  const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
   const { state, override } = finding;
 
   const act = (partial) => append({ scope: 'finding', findingId: finding.id, ...partial });
 
-  if (asking) {
+  const close = () => { setAsking(null); setNote(''); };
+
+  if (asking === 'mute') {
+    return <MuteForms
+      finding={finding}
+      findings={findings}
+      note={note}
+      setNote={setNote}
+      onCancel={close}
+      onPress={async (key) => {
+        if (await append({ scope: 'page-class', action: 'muted', ...key, note: note.trim() })) close();
+      }}
+    />;
+  }
+
+  if (asking === 'dismiss') {
     return (
       <form
         className="flex flex-wrap items-center gap-1"
         onSubmit={async (submit) => {
           submit.preventDefault();
           if (!note.trim()) return;
-          if (await act({ action: 'dismissed', note: note.trim() })) {
-            setAsking(false);
-            setNote('');
-          }
+          if (await act({ action: 'dismissed', note: note.trim() })) close();
         }}
       >
-        {/* A note is required on a dismissal and only on a dismissal: accepting a
-            real difference for good must tell the next reader why. */}
+        {/* A note is required on the two judgements: accepting a real difference
+            for good, or hiding a class, must tell the next reader why. */}
         <input
           autoFocus
           value={note}
@@ -64,7 +91,7 @@ export default function OverrideControl({ finding, observationId, append, canWri
           className="w-52 rounded border border-slate-300 px-2 py-1 text-xs"
         />
         <Action type="submit" disabled={!note.trim()}>Negeren</Action>
-        <Action onClick={() => setAsking(false)}>Annuleren</Action>
+        <Action onClick={close}>Annuleren</Action>
       </form>
     );
   }
@@ -99,26 +126,70 @@ export default function OverrideControl({ finding, observationId, append, canWri
 
       {canWrite && (state === 'open' || state === 'contradicted') && (
         <>
-          <Action onClick={() => setAsking(true)}>Negeren…</Action>
-          <Action onClick={() => append({
-            scope: 'page-class', action: 'muted', class: finding.class,
-          })}>
-            Klasse dempen
-          </Action>
+          <Action onClick={() => setAsking('dismiss')}>Negeren…</Action>
+          <Action onClick={() => setAsking('mute')}>Dempen…</Action>
         </>
       )}
 
       {/* `fixed` is not here: its own checkbox unticks it. A second control for the
-          same event would let the two disagree about what is on screen. */}
+          same event would let the two disagree about what is on screen.
+
+          A mute is undone on the key that made it, which is the key the derivation
+          handed back. Clearing the page-wide key would leave a section mute
+          standing, and the row would not move. */}
       {canWrite && (state === 'dismissed' || state === 'muted') && (
         <Action onClick={() => append(
           state === 'muted'
-            ? { scope: 'page-class', action: 'cleared', class: finding.class }
+            ? {
+              scope: 'page-class',
+              action: 'cleared',
+              class: finding.class,
+              ...(namesSection(override) ? { anchorHeading: override.anchorHeading } : {}),
+            }
             : { scope: 'finding', action: 'cleared', findingId: finding.id },
         )}>
           Ongedaan maken
         </Action>
       )}
+    </div>
+  );
+}
+
+/**
+ * The two forms of ADR 0008, side by side with their counts, and one note field
+ * over both.
+ *
+ * Neither button submits the form implicitly. A mute is the largest press in the
+ * log, and an editor typing a reason must not be able to hide a section with the
+ * Enter key before they have chosen which one.
+ */
+function MuteForms({ finding, findings, note, setNote, onCancel, onPress }) {
+  const forms = useMemo(() => muteForms(findings, finding), [findings, finding]);
+  const ready = Boolean(note.trim());
+
+  return (
+    <div className="flex flex-col gap-1 rounded border border-slate-200 p-2">
+      <input
+        autoFocus
+        value={note}
+        onChange={(change) => setNote(change.target.value)}
+        placeholder={`Waarom is ${finding.class} hier nooit een defect?`}
+        className="w-64 rounded border border-slate-300 px-2 py-1 text-xs"
+      />
+      {/* The count is the guard, so it is in the button and not beside it. There
+          is no threshold that hides the section form on a page with many
+          headings: the two numbers teach that on their own. */}
+      {forms.map((form, index) => (
+        <Action
+          key={form.where}
+          disabled={!ready}
+          title={ready ? undefined : 'Een demping heeft een reden nodig.'}
+          onClick={() => onPress(form.key)}
+        >
+          {index === 0 ? 'Deze sectie dempen' : 'Hele pagina dempen'} — {form.says}
+        </Action>
+      ))}
+      <Action onClick={onCancel}>Annuleren</Action>
     </div>
   );
 }

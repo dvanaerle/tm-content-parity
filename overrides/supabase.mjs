@@ -17,17 +17,23 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { namesSection } from '../compare/contract.mjs';
 
 const TABLE = 'overrides';
 
 /** The columns, in the order `state.mjs` wants them named. */
-const COLUMNS = 'id, created_at, editor, scope, action, store, page, finding_id, class, observation_id, finding_set_hash, note';
+const COLUMNS = 'id, created_at, editor, scope, action, store, page, finding_id, class, anchor_heading, names_section, observation_id, finding_set_hash, note';
 
 /**
+ * The two mappers are exported for their own test. They are the one place where
+ * the mute's **three** anchor states meet a table with two nulls to say them
+ * with: `names_section` is what tells the page-wide form from the section before
+ * the first heading (ADR 0008).
+ *
  * @param {any} row
  * @returns {import('./state.mjs').OverrideEvent}
  */
-const toEvent = (row) => ({
+export const toEvent = (row) => ({
   id: String(row.id),
   createdAt: row.created_at,
   editor: row.editor,
@@ -37,6 +43,9 @@ const toEvent = (row) => ({
   page: row.page,
   findingId: row.finding_id,
   class: row.class,
+  // Absent, not null. A row from before ticket 88 has no column and reads as the
+  // page-wide form, which is what it was.
+  ...(row.names_section ? { anchorHeading: row.anchor_heading ?? null } : {}),
   observationId: row.observation_id,
   findingSetHash: row.finding_set_hash,
   note: row.note,
@@ -45,7 +54,7 @@ const toEvent = (row) => ({
 /**
  * @param {import('./state.mjs').OverrideEvent} event
  */
-const toRow = (event) => ({
+export const toRow = (event) => ({
   editor: event.editor,
   scope: event.scope,
   action: event.action,
@@ -53,6 +62,8 @@ const toRow = (event) => ({
   page: event.page,
   finding_id: event.findingId ?? null,
   class: event.class ?? null,
+  anchor_heading: event.anchorHeading ?? null,
+  names_section: namesSection(event),
   observation_id: event.observationId ?? null,
   finding_set_hash: event.findingSetHash ?? null,
   note: event.note ?? null,

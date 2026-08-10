@@ -79,12 +79,16 @@ export async function loadReports(store) {
  * the rest away, one file at a time. Ticket 38: the store narrows it again, so a
  * visitor who opens the German store does not download the other five.
  *
- * It keeps a **compact finding index** as well: the id and the class of every
- * finding in a shown class, and nothing else. That is the minimum
- * `deriveStoreState()` needs, so the dashboard can sort on the state after
+ * It keeps a **compact finding index** as well: the id, the class and the anchor
+ * heading of every finding in a shown class, and nothing else. That is the
+ * minimum `deriveStoreState()` needs, so the dashboard can sort on the state after
  * overrides rather than on the raw snapshot — the worst page is then the worst
  * *remaining* page. Hidden classes are left out, because ticket 09 keeps them
  * out of the bar entirely.
+ *
+ * The heading is here because ticket 88 put it in the mute key. Without it a
+ * section mute would read on the dashboard as a mute of the whole class, and the
+ * dashboard would disagree with the page it links to.
  *
  * @typedef {object} PageSummary
  * @property {string} store
@@ -92,7 +96,7 @@ export async function loadReports(store) {
  * @property {boolean} comparable
  * @property {string | null} skipReason
  * @property {import('../../../compare/contract.mjs').ReportSummary} summary
- * @property {{ id: string, class: string }[]} findings
+ * @property {{ id: string, class: string, anchorHeading: string | null }[]} findings
  * @property {string} observationId
  * @property {string} findingSetHash
  * @property {{ production: SideSummary, new: SideSummary }} sides
@@ -116,7 +120,9 @@ export async function loadSummaries(store) {
       summary: report.summary,
       findings: report.findings
         .filter((finding) => FINDING_CLASSES[finding.class]?.shown)
-        .map((finding) => ({ id: finding.id, class: finding.class })),
+        .map((finding) => ({
+          id: finding.id, class: finding.class, anchorHeading: finding.anchorHeading ?? null,
+        })),
       observationId: report.observationId,
       findingSetHash: report.findingSetHash,
       sides: { production: side(report.sides.production), new: side(report.sides.new) },

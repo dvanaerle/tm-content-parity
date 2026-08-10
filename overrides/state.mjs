@@ -11,6 +11,7 @@
  * what they add up to. `contradicted` in particular is derived and never written.
  */
 
+import { muteKey, namesSection } from '../compare/contract.mjs';
 import { FINDING_CLASSES } from '../compare/vocabulary.mjs';
 
 /**
@@ -26,6 +27,9 @@ import { FINDING_CLASSES } from '../compare/vocabulary.mjs';
  * @property {string} page
  * @property {string | null} [findingId]      When `scope === 'finding'`.
  * @property {string | null} [class]          When `scope === 'page-class'`.
+ * @property {string | null} [anchorHeading]  The section a mute names. **Absent
+ *   is the page-wide form**, and `null` is the content before the first heading,
+ *   which is a section of its own (ADR 0008).
  * @property {string | null} [observationId]  What a `fixed` claim was made against.
  * @property {string | null} [findingSetHash] On `reviewed`, for staleness.
  * @property {string | null} [note]           Required on `dismissed`.
@@ -35,16 +39,22 @@ import { FINDING_CLASSES } from '../compare/vocabulary.mjs';
 
 /**
  * The append-only table is keyed on `(scope, store, page, finding_id ?? class)`,
- * and the `overrides_current` view takes the latest row per key. This is the same
- * key, so the derivation agrees with the view.
+ * and on the anchor slot as well when the scope is `page-class`. The
+ * `overrides_current` view takes the latest row per key. This is the same key, so
+ * the derivation agrees with the view.
+ *
+ * The mute half is `muteKey()` from the contract, which is where that key is
+ * written down. Two spellings of one key is how a mute starts hiding something
+ * other than what the interface said it would.
  *
  * @param {OverrideEvent} event
  * @returns {string}
  */
 export function eventKey(event) {
-  const key = event.scope === 'finding' ? event.findingId
-    : event.scope === 'page-class' ? event.class
-      : '';
+  if (event.scope === 'page-class') {
+    return ['page-class', muteKey(/** @type {any} */ (event))].join('|');
+  }
+  const key = event.scope === 'finding' ? event.findingId : '';
   return [event.scope, event.store, event.page, key ?? ''].join('|');
 }
 
@@ -110,7 +120,14 @@ export function derivePageState({ report, events, observationId = report.observa
 
   const findings = report.findings.map((finding) => {
     const own = current.get(eventKey({ ...place, scope: 'finding', findingId: finding.id }));
-    const mute = current.get(eventKey({ ...place, scope: 'page-class', class: finding.class }));
+
+    // Two mute keys can reach one finding: the section it sits in, and the page.
+    // A mute that named a heading the snapshot no longer has reaches nothing, and
+    // that is the whole of ADR 0008's drift rule — there is no fallback to write.
+    const section = current.get(eventKey({
+      ...place, scope: 'page-class', class: finding.class, anchorHeading: finding.anchorHeading ?? null,
+    }));
+    const wide = current.get(eventKey({ ...place, scope: 'page-class', class: finding.class }));
 
     // A finding-scope override is the more specific key, so it beats a class mute.
     // A `cleared` one matches neither branch and falls through to the mute.
@@ -119,7 +136,13 @@ export function derivePageState({ report, events, observationId = report.observa
       const state = isContradicted(own, observationId) ? 'contradicted' : 'fixed';
       return decided(finding, state, own);
     }
-    if (mute?.action === 'muted') return decided(finding, 'muted', mute);
+
+    // The same rule again, one level down, including the fall-through: a cleared
+    // section matches neither branch and lands on the page-wide mute underneath
+    // it. Stopping there instead would leave a section that no press could reach
+    // again, under a page-wide button that had just counted it in.
+    if (section?.action === 'muted') return decided(finding, 'muted', section);
+    if (wide?.action === 'muted') return decided(finding, 'muted', wide);
     return decided(finding, 'open', null);
   });
 
@@ -136,9 +159,44 @@ const decided = (finding, state, override) => ({
   state,
   shown: Boolean(FINDING_CLASSES[finding.class]?.shown),
   override: override
-    ? { action: override.action, editor: override.editor, at: override.createdAt, note: override.note ?? null }
+    ? {
+      action: override.action,
+      editor: override.editor,
+      at: override.createdAt,
+      note: override.note ?? null,
+      // The key that decided this, so *ongedaan maken* can clear that one key and
+      // not a wider one. Absent means the page-wide form, as it does on the event.
+      ...(namesSection(override) ? { anchorHeading: override.anchorHeading } : {}),
+    }
     : null,
 });
+
+/**
+ * How many findings a mute would cover, on the snapshot in front of the editor.
+ *
+ * ADR 0008: the count is the guard. It is what stops a press on the null section
+ * from reading as a press on the page, and it is what teaches an editor that the
+ * section form is the wrong tool on a page of per-photo captions — with no
+ * threshold to argue about.
+ *
+ * The **key is the argument**, in the same shape the press writes, so the number
+ * on the button and the event behind it cannot drift apart. Hidden classes are
+ * left out: they are in no bar, so muting them hides nothing.
+ *
+ * This counts what the mute covers, not what it changes. A finding already
+ * dismissed keeps its dismissal, because the finding key is the more specific
+ * one — so the number is a ceiling, and it never understates the press.
+ *
+ * @param {ReturnType<typeof decided>[]} findings  Derived findings, for `shown`.
+ * @param {{ class: string, anchorHeading?: string | null }} key
+ * @returns {number}
+ */
+export function muteCoverage(findings, key) {
+  const section = namesSection(key);
+  return findings.filter((finding) => finding.shown
+    && finding.class === key.class
+    && (!section || (finding.anchorHeading ?? null) === key.anchorHeading)).length;
+}
 
 /**
  * The page bar, from ticket 09.

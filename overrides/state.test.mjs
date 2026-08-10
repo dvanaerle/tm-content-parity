@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { findingSetHash } from '../compare/contract.mjs';
-import { derivePageState, deriveStoreState, eventKey, latestByKey } from './state.mjs';
+import {
+  derivePageState, deriveStoreState, eventKey, latestByKey, muteCoverage,
+} from './state.mjs';
 
 /**
  * Observation ids sort chronologically by construction, so these three are simply
@@ -18,7 +20,7 @@ let seq = 0;
  * @param {string} [cls] `copy` is shown, `restructured` is hidden (ticket 02).
  * @returns {import('../compare/contract.mjs').Finding}
  */
-const finding = (id, cls = 'copy') => ({
+const finding = (id, cls = 'copy', anchorHeading = null) => ({
   id,
   store: 'nl',
   page: 'overkappingen',
@@ -26,6 +28,7 @@ const finding = (id, cls = 'copy') => ({
   class: cls,
   prod: 'Levering in 5 werkdagen',
   new: 'Levering in vijf werkdagen',
+  anchorHeading,
   occurrences: 1,
   score: null,
 });
@@ -53,7 +56,9 @@ const report = (findings, overrides = {}) => ({
 /** @param {Partial<import('./state.mjs').OverrideEvent>} parts */
 const event = (parts) => ({
   id: String(++seq).padStart(4, '0'),
-  createdAt: `2026-08-06T12:00:${String(seq).padStart(2, '0')}.000Z`,
+  // Ordered by construction. The counter sits in the milliseconds, so a file with
+  // more than sixty events still sorts the way it reads.
+  createdAt: `2026-08-06T12:00:00.${String(seq).padStart(3, '0')}Z`,
   editor: 'Danielle',
   store: 'nl',
   page: 'overkappingen',
@@ -66,7 +71,14 @@ const fix = (id, observationId = CURRENT) => event({
 const dismiss = (id) => event({
   scope: 'finding', action: 'dismissed', findingId: id, note: 'Prijs verschilt per omgeving.',
 });
-const mute = (cls) => event({ scope: 'page-class', action: 'muted', class: cls });
+/** The page-wide form: the same key with the heading absent (ADR 0008). */
+const mute = (cls) => event({
+  scope: 'page-class', action: 'muted', class: cls, note: 'De hele pagina roteert.',
+});
+/** The section form. `null` is a real section: the content before the first heading. */
+const muteSection = (cls, anchorHeading) => event({
+  scope: 'page-class', action: 'muted', class: cls, anchorHeading, note: 'Deze sectie roteert.',
+});
 const clearFinding = (id) => event({ scope: 'finding', action: 'cleared', findingId: id });
 
 /** @param {import('../compare/contract.mjs').PageReport} r */
@@ -155,6 +167,155 @@ describe('latest wins per key', () => {
 
   it('keeps one entry per key', () => {
     expect(latestByKey([dismiss('A'), clearFinding('A'), mute('copy')]).size).toBe(2);
+  });
+});
+
+describe('the mute key carries the anchor heading', () => {
+  // ADR 0008: one key shape, `store | page | class | anchorHeading`, where the
+  // page-wide form is the same key with the heading absent.
+  it('separates two sections of the same class', () => {
+    expect(eventKey(muteSection('copy', 'Gumax® Heavy Duty')))
+      .not.toBe(eventKey(muteSection('copy', 'Zonwering')));
+  });
+
+  it('separates a section mute from the page-wide form', () => {
+    expect(eventKey(muteSection('copy', 'Gumax® Heavy Duty'))).not.toBe(eventKey(mute('copy')));
+  });
+
+  it('separates the null section from the page-wide form, which is the trap', () => {
+    // Both are "no heading" in the payload. They are different judgements: one
+    // covers the content before the first heading, the other covers the page.
+    expect(eventKey(muteSection('copy', null))).not.toBe(eventKey(mute('copy')));
+  });
+
+  it('gives one key to one section, whatever the heading is spelled with', () => {
+    expect(eventKey(muteSection('copy', '*page'))).toBe(eventKey(muteSection('copy', '*page')));
+    expect(eventKey(muteSection('copy', '*page'))).not.toBe(eventKey(mute('copy')));
+  });
+
+  it('leaves the finding key and the page key untouched', () => {
+    expect(eventKey(dismiss('A'))).toBe('finding|nl|overkappingen|A');
+    expect(eventKey(event({ scope: 'page', action: 'reviewed' }))).toBe('page|nl|overkappingen|');
+  });
+});
+
+describe('a mute names a section', () => {
+  // The page of ADR 0008: one heading carries most of the class, and the rest of
+  // the page carries the same class under other headings.
+  const HEAVY = 'Gumax® Heavy Duty';
+  const page = report([
+    finding('A', 'copy', HEAVY),
+    finding('B', 'copy', HEAVY),
+    finding('C', 'copy', 'Zonwering'),
+    finding('D', 'copy', null),
+  ]);
+
+  it('mutes its own section and leaves the same class visible elsewhere', () => {
+    expect(stateOf(page, [muteSection('copy', HEAVY)]))
+      .toEqual({ A: 'muted', B: 'muted', C: 'open', D: 'open' });
+  });
+
+  it('mutes the null section only, and never the page through it', () => {
+    // The null bucket is heterogeneous, so this is the trap ADR 0008 names.
+    expect(stateOf(page, [muteSection('copy', null)]))
+      .toEqual({ A: 'open', B: 'open', C: 'open', D: 'muted' });
+  });
+
+  it('mutes the whole class when the heading is absent', () => {
+    expect(stateOf(page, [mute('copy')]))
+      .toEqual({ A: 'muted', B: 'muted', C: 'muted', D: 'muted' });
+  });
+
+  it('holds a section mute and a page-wide mute at once, on their own keys', () => {
+    const events = [muteSection('copy', HEAVY), mute('casing')];
+    expect(stateOf(page, events)).toEqual({ A: 'muted', B: 'muted', C: 'open', D: 'open' });
+    expect(latestByKey(events).size).toBe(2);
+  });
+
+  it('falls through from a cleared section to the page-wide mute underneath it', () => {
+    // The same fall-through a cleared dismissal already has onto a class mute. An
+    // editor who undoes a section mute and then mutes the page means the page: the
+    // button counted that section in, so it must take it.
+    const events = [
+      muteSection('copy', HEAVY),
+      event({ scope: 'page-class', action: 'cleared', class: 'copy', anchorHeading: HEAVY }),
+      mute('copy'),
+    ];
+    expect(stateOf(page, events)).toEqual({ A: 'muted', B: 'muted', C: 'muted', D: 'muted' });
+  });
+
+  it('leaves a cleared section open when nothing wider is muted', () => {
+    const events = [
+      muteSection('copy', HEAVY),
+      event({ scope: 'page-class', action: 'cleared', class: 'copy', anchorHeading: HEAVY }),
+    ];
+    expect(stateOf(page, events)).toEqual({ A: 'open', B: 'open', C: 'open', D: 'open' });
+  });
+
+  it('stops applying when the heading it named is gone', () => {
+    // ADR 0008: the judgement was about a section that is no longer there, so the
+    // editor is asked again. It must never widen to the page.
+    const renamed = report([finding('A', 'copy', 'Gumax® Heavy Duty Plus')]);
+    expect(stateOf(renamed, [muteSection('copy', HEAVY)]).A).toBe('open');
+  });
+
+  it('takes its own section out of the denominator and no more', () => {
+    expect(derivePageState({ report: page, events: [muteSection('copy', HEAVY)] }).bar)
+      .toMatchObject({ muted: 2, denominator: 2, open: 2, closed: 0 });
+  });
+
+  it('leaves a muted finding shown, because muting is not deleting', () => {
+    const derived = derivePageState({ report: page, events: [muteSection('copy', HEAVY)] });
+    expect(derived.findings.find((f) => f.id === 'A')).toMatchObject({ shown: true, state: 'muted' });
+  });
+
+  it('tells the interface which key muted a finding, so undo can clear that key', () => {
+    const bySection = derivePageState({ report: page, events: [muteSection('copy', HEAVY)] });
+    expect(bySection.findings[0].override).toMatchObject({ anchorHeading: HEAVY });
+
+    const byPage = derivePageState({ report: page, events: [mute('copy')] });
+    expect(byPage.findings[0].override).not.toHaveProperty('anchorHeading');
+  });
+});
+
+describe('what a mute would cover, before the press', () => {
+  const HEAVY = 'Gumax® Heavy Duty';
+  // The shape of nl__terrasoverkapping in ADR 0008, in miniature: one heading
+  // carries most of the class, and the null bucket holds unrelated findings.
+  const findings = derivePageState({
+    report: report([
+      finding('A', 'copy', HEAVY),
+      finding('B', 'copy', HEAVY),
+      finding('C', 'copy', 'Zonwering'),
+      finding('D', 'copy', null),
+      finding('E', 'casing', HEAVY),
+      finding('H', 'restructured', HEAVY),
+    ]),
+    events: [],
+  }).findings;
+
+  it('counts the section the press would take', () => {
+    expect(muteCoverage(findings, { class: 'copy', anchorHeading: HEAVY })).toBe(2);
+  });
+
+  it('counts the whole class when the heading is absent, which is the larger press', () => {
+    expect(muteCoverage(findings, { class: 'copy' })).toBe(4);
+  });
+
+  it('counts the null section as a section and not as the page', () => {
+    expect(muteCoverage(findings, { class: 'copy', anchorHeading: null })).toBe(1);
+  });
+
+  it('counts one class only, because the class is still the only axis', () => {
+    expect(muteCoverage(findings, { class: 'casing', anchorHeading: HEAVY })).toBe(1);
+  });
+
+  it('leaves a hidden class out, because it is in no bar and hiding it hides nothing', () => {
+    expect(muteCoverage(findings, { class: 'restructured', anchorHeading: HEAVY })).toBe(0);
+  });
+
+  it('counts nothing for a heading the snapshot does not have', () => {
+    expect(muteCoverage(findings, { class: 'copy', anchorHeading: 'Weg' })).toBe(0);
   });
 });
 

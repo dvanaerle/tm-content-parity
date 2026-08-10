@@ -887,6 +887,13 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
 - **`structure` is 61% of everything shown**, and it is what the log says when the
   pairing found nothing — a statement about the alignment, not about the sites.
   Ticket 28.
+- **The mute key carries the anchor heading, and a mute says what it hides.**
+  `store | page | class | anchorHeading`, where an absent heading is the page-wide
+  form and a null one is the content before the first heading — a real section, and
+  the third state the key had to spell out. Both forms state their finding count
+  before the press and both require a note. Zero mutes were live when the key
+  changed, so nothing was orphaned. ADR 0008 and ticket
+  [88](issues/88-the-mute-says-what-it-hides.md).
 
 ## Working order
 

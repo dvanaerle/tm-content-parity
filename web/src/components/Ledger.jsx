@@ -43,9 +43,13 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
     [derived, showNoise],
   );
 
+  // `derived` and not `findings`: the mute counts what it would hide on the whole
+  // snapshot, and the noise toggle is a question about the screen, not about the
+  // press. A count that changed with a checkbox would not be the press's count.
   const control = (finding) => (
     <OverrideControl
       finding={finding}
+      findings={derived}
       observationId={observationId}
       append={append}
       canWrite={canWrite}
