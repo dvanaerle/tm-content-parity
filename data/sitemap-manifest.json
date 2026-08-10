@@ -1,0 +1,54 @@
+{
+  "fetchedAt": "2026-08-10",
+  "entries": 876,
+  "sources": [
+    {
+      "file": "nl",
+      "url": "https://www.tuinmaximaal.nl/sitemap.xml",
+      "status": 200,
+      "bytes": 30235358,
+      "locs": 27043,
+      "kept": 493
+    },
+    {
+      "file": "be",
+      "url": "https://www.tuinmaximaal.be/sitemap.xml",
+      "status": 200,
+      "bytes": 30234703,
+      "locs": 27040,
+      "kept": 490
+    },
+    {
+      "file": "be_fr",
+      "url": "https://www.tuinmaximaal.be/fr/sitemap.xml",
+      "status": 200,
+      "bytes": 30210514,
+      "locs": 26994,
+      "kept": 444
+    },
+    {
+      "file": "de",
+      "url": "https://www.tuinmaximaal.de/sitemap.xml",
+      "status": 200,
+      "bytes": 30187160,
+      "locs": 26958,
+      "kept": 408
+    },
+    {
+      "file": "fr",
+      "url": "https://www.tuinmaximaal.fr/sitemap.xml",
+      "status": 200,
+      "bytes": 30208830,
+      "locs": 26992,
+      "kept": 442
+    },
+    {
+      "file": "uk",
+      "url": "https://www.tuinmaximaal.co.uk/sitemap.xml",
+      "status": 200,
+      "bytes": 30094699,
+      "locs": 26845,
+      "kept": 295
+    }
+  ]
+}

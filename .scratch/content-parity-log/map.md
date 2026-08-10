@@ -617,6 +617,31 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   has a producer in the tree, so a fresh clone still exits 2, and the committed
   seed list is the phantom maintenance run of 2026-08-06.
 
+- [52 — The production page list becomes committed evidence](issues/52-production-page-list-as-evidence.md)
+  — **Resolved 2026-08-10.** The six production sitemaps are fetched once and
+  reduced to two tracked files: `data/sitemap-extract.json` (876 entries, 289 KB)
+  and `data/sitemap-manifest.json` (the url, the date, the status, the byte count
+  and the loc count of each of the six). **289 KB against 181 MB of source**, so
+  every page count in the log can now be checked against the production data it
+  came from. **The six sitemap urls were written down nowhere** and were recovered
+  from each host's `robots.txt`. Only five hosts exist, and the Belgian host
+  declares two. That is the sixth. The extract carries **no date**: its bytes are
+  a function of its source alone, and two independent fetches gave identical
+  bytes. The date lives in the manifest, which is the record of the fetch. The
+  rule is ticket 50's first clause **without the product signature**, because an
+  extract that had already applied that signature could not be used to test it.
+  **114 of the 876 entries are in the extract only because one file marks them
+  `daily`**, which measures ticket 50's claim that both clauses are necessary.
+  `alternateConflicts` is **0** over all 876 entries, so "one entry, not six
+  copies" is re-checked by every run instead of assumed. Four failures stop the
+  run and write nothing: a 500 or 503, a 200 with a maintenance page, any other
+  non-200, and a 200 with no `<url>` block. All four were verified against a
+  server that fails, not reasoned about. **Two things go to
+  [53](issues/53-every-content-page-in-the-seed-list.md):** the generator is not
+  wired to the extract and still exits 2, and **all six store home pages are in
+  the sitemaps**, which contradicts the hand-seeding at
+  `crawl/10-store-seeds.mjs:143`.
+
 - [22 — Re-measure production status](issues/22-remeasure-prod-status.md)
   — **Folded on 2026-08-07, not closed and not resolved.** Both criteria moved
   into spec 50, because 22 measures the 451-pair seed list that ticket 53 is about
@@ -996,8 +1021,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   [20](issues/20-one-sided-pages-checklist.md). Both count out of the seed list,
   and both re-triage after it.
 
-  Broken into six build tickets. **51 is resolved (2026-08-10); 52 is unblocked
-  and 53 is now unblocked by 51.**
+  Broken into six build tickets. **51 and 52 are both resolved (2026-08-10), so
+  53 is unblocked and has both of its inputs.**
 
   ```
   51 ─┬──> 53 ──> 54 ─┬──> 55

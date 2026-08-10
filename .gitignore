@@ -1,8 +1,12 @@
 node_modules/
-# Generated data stays out of git, with one exception: the seed list is the
-# input every later stage reads, so it is tracked (ticket 51).
+# Generated data stays out of git, with three exceptions. The seed list is the
+# input every later stage reads (ticket 51). The sitemap extract and its manifest
+# are the production evidence the log's page counts can be checked against, and
+# they are 289 KB against 181 MB of source (ticket 52).
 data/*
 !data/10-store-seeds.json
+!data/sitemap-extract.json
+!data/sitemap-manifest.json
 dist/
 .astro/
 .env
