@@ -159,6 +159,18 @@ element any more: it folds the links inside it. Both the word and the rule are g
   scrolls past agreement. In this state every visible row is a difference, so the
   **row tint carries no signal and it goes**; the class pill carries the class. The
   retired *Diff* tab is what happens without the marker and without that rule.
+- **Clamp** — a row that shows some lines of each side, with a control that opens it.
+  It is about length and not about findings: a row that agrees can be as tall as a row
+  that differs. A clamp holds the two cells of a row at one height, because a row is
+  read across. It shows the lines that hold the first difference, or the first lines
+  when there is no difference. A clamp hides no finding and it moves no count. A jump
+  to a row opens that row.
+- **Uncompared** — a two-sided row that is too large for a word comparison. Both
+  versions are shown in full, and neither one is coloured. It is a budget and not a
+  judgement: the log says that the comparison did not run. It never says that somebody
+  rewrote the text, because size is not similarity. The class stays `copy` and the
+  score stays with it. "Uncompared" is not a class: the class vocabulary stays closed.
+  See `docs/adr/0009-the-word-diff-runs-in-the-browser.md`.
 - **Filter** — a narrowing of what is on screen, by class. It is session-only and it
   moves no bar, no denominator and no count. The content view narrows a page to a
   class and the dashboard narrows the page list to the same class; both say so with
@@ -181,6 +193,11 @@ Three tab names are retired, and the content view is what replaced them.
 nothing. **"Content"** showed two blocks of flat Markdown and no diff. **"Outline"**
 was production's elements indented by heading level, which the content view contains;
 what is left of it is a heading jump-list beside the rows.
+
+One word is reserved. **"Fold"** has two meanings in this list and no more: a content
+unit folds the words of an inline link, and tier 1 folds a character to nothing. A run
+of equal rows **collapses**, and the row that stands for the run is a **context
+marker**. Do not write "fold" for that, and do not write it for a clamp.
 
 ## Identity
 

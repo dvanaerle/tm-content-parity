@@ -145,6 +145,16 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   note becomes mandatory. The heading is in the mute key and not in the finding id,
   because a mute is a judgement and an id is an identity.
   See `docs/adr/0008-the-mute-key-carries-the-anchor-heading.md`.
+- **The word diff runs in the browser, with a trim and a cap.** ADR 0006 made it a cell
+  renderer; this says where it runs. Measured over 448 reports: 14.8 million LCS cells,
+  and **78% of them are rows that already agree** — 8,461 exact matches that the content
+  view diffed because it passed no `equal` prop, and they are the longest rows. Trimming
+  the common prefix and suffix makes one changed word almost free, and a cap of **50,000
+  cells** bounds the tail at 13 rows of 11,847 and no `copy` row. Above the cap the cell
+  is **uncompared**: both versions in full, no colour, class still `copy`, no count
+  moved. Writing the spans at compare time was refused, because a report is already 11 MB
+  across NL and the payload is on the same first-paint path.
+  See `docs/adr/0009-the-word-diff-runs-in-the-browser.md`.
 - **Axis B is out of scope for this work.** Every decision above is axis A. Axis B keeps
   its own tab and its own bar and is never summed, per ticket 11. This is written down
   so the silence in the proposal is not read as a decision.
@@ -914,16 +924,21 @@ The order:
 0. **[88](issues/88-the-mute-says-what-it-hides.md), alone and first.** Out of
    dependency order, for constraint 2.
 1. **The corpus.** One ticket per session, serial:
-   54 → 55 + 56 → 67 → 68 → 58.
+   54 → 55 + 56 → 67 → 58.
 2. **Re-measure.** 76 and 89. Also ticket 38's per-store counts, and the
    re-triage of 04, 16, 20 and 25 that ticket 50 asks for after 55.
 3. **The stack, alone.** 72 → 73 → 74. An upgrade that carries a product change
    cannot be reviewed.
-4. **The contract, then the workspace.** 75 and 77, then 78, 79, 80, 81, 31, 82,
-   83, 84, 85, 86, 90, and 87 last.
+4. **The contract, then the workspace.** 75 and 77, then 78, 79, 68, 37, 80, 81,
+   31, 82, 83, 84, 85, 86, 90, and 87 last.
 
-**Ticket 37 moves to after 68.** It builds modes onto a content view that the
-fold rewrites.
+**Ticket 68 left the corpus stream on 2026-08-10.** It waits on the corpus, but it
+is not corpus work: it is view work, and the grilling sequenced it after 79, whose
+context markers decide which rows a clamp applies to. Three tickets now reshape one
+component in one stream — 79, then 68, then 87 last — which is the order to keep.
+
+**Ticket 37 stays after 68.** It builds modes onto a content view that the fold
+rewrites and the clamp reshapes.
 
 **Axis B is parked.** Tickets 39 to 45 stay a named stream and nobody starts
 them. The grilling of 2026-08-10 put axis B out of scope for the workspace work,
@@ -1011,7 +1026,7 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   [65 count the overrides](issues/65-count-the-overrides-the-fold-detaches.md),
   [66 the rename](issues/66-rename-text-element-to-content-unit.md),
   [67 the fold](issues/67-a-content-unit-folds-its-inline-links.md),
-  [68 the content view](issues/68-the-content-view-survives-a-folded-unit.md),
+  [68 the clamp](issues/68-the-content-view-clamps-a-tall-row.md),
   [69 one viewport](issues/69-one-canonical-viewport.md),
   [70 shared regions](issues/70-shared-regions-by-content-hash.md).
   61, 62, 63, 64, 65 and 66 are resolved. 67 rebuilds every report and detaches

@@ -602,40 +602,36 @@ it.
 /clear
 ```
 
-**Ticket 68 is grilled before it is built.** Three of its six criteria carry a
-number nobody has chosen: "a cell clamps to about three lines", "a cap for the
-genuinely rewritten paragraph", and a first-paint measurement with no target. It
-also says "the worst page" and does not name it, where tickets 79 and 87 both name
-`nl__fotogalerij/zonwering` at 399 findings. An agent asked to build this invents
-all three values, and the review is then of its taste and not of its work.
+**Ticket 68 was grilled on 2026-08-10, and the four numbers are in the ticket.** The
+clamp is four lines, the cap is 50,000 cells of n·m, the diff cost must fall by 70%
+on `nl__privacy-beleid`, and first paint is LCP 2.5 s with TBT 200 ms. Two things the
+grilling found that the runbook had wrong:
+
+- **`nl__fotogalerij/zonwering` is the wrong page for the diff.** It is the worst page
+  by findings and one of the cheapest by diff: 7 two-sided rows and 15 LCS cells,
+  because its new side is nearly empty and a one-sided row costs the diff nothing. The
+  worst page for the diff is `nl__privacy-beleid` at 287,971 cells. Both pages are
+  named in the ticket, each against the claim it tests.
+- **78% of the diff cost is rows that already agree.** `ContentView.jsx` passes no
+  `equal` prop, so the browser builds a full LCS table for 8,461 identical rows. That
+  is a one-prop fix worth more than the trim and the cap together, and it is now the
+  first criterion.
 
 ```
 /clear
 ```
 
 ```
-/grill-with-docs .scratch/content-parity-log/issues/68-the-content-view-survives-a-folded-unit.md
+/implement .scratch/content-parity-log/issues/68-the-content-view-clamps-a-tall-row.md
 
-Settle the three unspecified numbers: the clamp height, the cap for a rewritten
-paragraph, and an acceptable first paint. Name the worst page. Then write them into
-the acceptance criteria.
-
-Nothing clamps a row today, and after 67 one row is 450 to 550 pixels tall on a page
-of up to 288 rows.
+Measure the cell count and first paint on both named pages, before and after, and
+put the numbers in the ticket. Bank the equal-row skip on its own, before the trim
+and the cap land.
 ```
 
-Then, with the numbers in the ticket:
-
-```
-/clear
-```
-
-```
-/implement .scratch/content-parity-log/issues/68-the-content-view-survives-a-folded-unit.md
-
-Measure first paint on the named page before and after, and put both numbers in
-the ticket.
-```
+**68 is now sequenced after 79**, which collapses the runs of equal rows. The map puts
+68 in the corpus stream and 79 in the workspace stream, so that edge crosses two
+streams and the order needs a decision — see the loose end in `WORKLIST.md` step 07.
 
 ---
 
@@ -1297,7 +1293,7 @@ crawl, it is a `data` ticket and it runs alone.
 | 63 | Regions excluded at extraction | session 2B | `data` | **done** — resolves 27. The cap is per entry, not a flat 20 |
 | 64 | The promo banner, 11.8% | session 2B | `data` | **done** — 4,055 findings, on 446 of 448 pages. No crawl was needed |
 | 67 | A content unit folds its links | session 2C | `data` | `/implement` — after 66, needs 65 |
-| 68 | The content view survives a fold | session 2C | `talk`, then `web` | **`/grill-with-docs` first** — three numbers are unchosen |
+| 68 | The content view clamps a tall row | session 2C | `talk`, then `web` | grilled 2026-08-10, four numbers chosen — `/implement`, after 67 and 79 |
 | 69 | One canonical viewport | session 2D | `compare` | `/implement` — after 64 |
 | 70 | Shared regions by content hash | session 2D | `data` | `/implement` — after 64 and 67 |
 | 71 | A saved re-check survives a reload | — | — | **done** — resolved 2026-08-07 |
