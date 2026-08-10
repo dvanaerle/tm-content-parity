@@ -19,6 +19,7 @@ closes itself.
 | `overrides/` | What an editor's ticks add up to. `state.mjs` is pure and tested; `supabase.mjs` is the whole database surface, three functions wide. |
 | `api/` | The local re-check service, which also serves `dist/`. |
 | `web/` | Astro static build, with React islands for the interactive parts. |
+| `web/probes/` | The same, for the front end: what a page costs to render and to paint. Do not build on them. |
 | `data/` | Generated JSON. Not in git, except `10-store-seeds.json`, which every stage reads, and the three evidence files. |
 | `dist/` | The static build that goes to the webhost. Not in git. |
 | `supabase/` | The schema and the policies for the override log. |

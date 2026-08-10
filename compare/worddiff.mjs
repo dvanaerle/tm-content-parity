@@ -23,12 +23,22 @@
  * **The caller gives `norm`, and never `raw`.** Tier 1 folds curly quotes, NBSP,
  * dashes and entities on purpose. Thus a diff of `raw` marks differences that the
  * tool classifies as equal. A copy button gives `raw` to the editor instead.
+ *
+ * **A trim and a cap keep it affordable** (ticket 68, ADR 0009). After ticket 67 a
+ * row holds a whole block, so one cell pair can be 1,250 characters a side. The
+ * shared prefix and the shared suffix leave the table first, which makes one changed
+ * word in a long paragraph almost free, and a pair still over `DIFF_CELL_CAP` is
+ * **uncompared**: no table, both texts in full, and no claim about the content.
  */
 
 /**
  * @typedef {object} DiffSpan
- * @property {'same' | 'removed' | 'added'} type  `removed` is production's, `added` is the
- *                                                new site's. A `same` span belongs to both.
+ * @property {'same' | 'removed' | 'added' | 'uncompared'} type
+ *   `removed` is production's, `added` is the new site's. A `same` span belongs to
+ *   both. `uncompared` is neither side's and both: the pair was over the budget, so
+ *   there are exactly two of them, production's text and the new site's, and no
+ *   other type is in the array. A consumer that does not know the type renders the
+ *   text of a span it cannot colour, which is degraded and never wrong.
  * @property {string} text
  */
 
@@ -37,6 +47,9 @@
  * its own, and is not part of a neighbour token. Thus a join of one side's spans
  * gives that side's input, character for character. A renderer that must put the
  * spaces back cannot know where they were.
+ *
+ * That rejoin is a property of what `wordDiff` returns. `clampedSpans` is a **window**
+ * over it and does not carry it.
  */
 const TOKENS = /[\s/?&=#]+|[^\s/?&=#]+/g;
 
@@ -47,6 +60,83 @@ const TOKENS = /[\s/?&=#]+|[^\s/?&=#]+/g;
 const tokens = (text) => (text ?? '').match(TOKENS) ?? [];
 
 /**
+ * The token count of one side, which is what a measurement of the diff is in. It is
+ * exported so that a probe counts the tokens this module counts, rather than keeping a
+ * second copy of `TOKENS`.
+ *
+ * @param {string | null | undefined} text
+ * @returns {number}
+ */
+export const tokenCount = (text) => tokens(text).length;
+
+/**
+ * The rendering budget, in cells of `n · m` after the trim (ticket 68, ADR 0009).
+ *
+ * It is a **size** limit and never a judgement. Above it the two versions are shown
+ * in full and neither is coloured. The class stays what the comparison said, and no
+ * count moves.
+ *
+ * Measured over 816 reports and 22,571 two-sided rows on 2026-08-10, after the fold:
+ * the worst row costs **44,523 cells after the trim**, so this budget catches **no row
+ * in the log**. That is what it is for. It bounds the tail, where one bad pairing of
+ * two long blocks reaches millions of cells and tens of megabytes of `Int32Array`, and
+ * a number below the observed maximum would be a rendering limit that reaches into text
+ * an editor can read. `web/probes/probe-diff-cost.mjs` is the measurement.
+ */
+export const DIFF_CELL_CAP = 50_000;
+
+/**
+ * The one place the budget is compared against, so `diffCost` and `wordDiff` cannot
+ * come to two answers about one pair.
+ *
+ * @param {number} n @param {number} m
+ */
+const overBudget = (n, m) => n * m > DIFF_CELL_CAP;
+
+/**
+ * How many tokens at the head and at the tail the two sides share.
+ *
+ * The untrimmed table consumed these as `same` itself, because a match is always
+ * taken. Removing them first is therefore a speed-up and not a second opinion.
+ *
+ * @param {string[]} left @param {string[]} right
+ * @returns {{ head: number, tail: number }}
+ */
+function commonEdges(left, right) {
+  const shortest = Math.min(left.length, right.length);
+
+  let head = 0;
+  while (head < shortest && left[head] === right[head]) head += 1;
+
+  let tail = 0;
+  while (
+    tail < shortest - head
+    && left[left.length - 1 - tail] === right[right.length - 1 - tail]
+  ) tail += 1;
+
+  return { head, tail };
+}
+
+/**
+ * What the table for this pair costs, after the trim (ticket 68).
+ *
+ * The probe in `web/probes/` and the cap read one function, so the number a test
+ * holds is the number the corpus was measured with.
+ *
+ * @param {string | null} prod @param {string | null} next
+ * @returns {{ n: number, m: number, cells: number, capped: boolean }}
+ */
+export function diffCost(prod, next) {
+  const left = tokens(prod);
+  const right = tokens(next);
+  const { head, tail } = commonEdges(left, right);
+
+  const n = left.length - head - tail;
+  const m = right.length - head - tail;
+  return { n, m, cells: n * m, capped: overBudget(n, m) };
+}
+
+/**
  * @param {string | null} prod  Production's normalised text.
  * @param {string | null} next  The new site's normalised text.
  * @returns {DiffSpan[]} In reading order. Adjacent tokens of the same type make one
@@ -55,6 +145,7 @@ const tokens = (text) => (text ?? '').match(TOKENS) ?? [];
 export function wordDiff(prod, next) {
   const left = tokens(prod);
   const right = tokens(next);
+  const { head, tail } = commonEdges(left, right);
 
   /** @type {DiffSpan[]} */
   const spans = [];
@@ -65,16 +156,29 @@ export function wordDiff(prod, next) {
     else spans.push({ type, text: token });
   };
 
-  const n = left.length;
-  const m = right.length;
+  const middleLeft = left.slice(head, left.length - tail);
+  const middleRight = right.slice(head, right.length - tail);
+  const n = middleLeft.length;
+  const m = middleRight.length;
+
+  // Above the budget the table is never allocated. One span for each side, so the
+  // information is all there for a consumer that does not know the type.
+  if (overBudget(n, m)) {
+    return [
+      { type: 'uncompared', text: prod ?? '' },
+      { type: 'uncompared', text: next ?? '' },
+    ];
+  }
+
+  for (let at = 0; at < head; at += 1) push('same', left[at]);
 
   // Longest common subsequence, the same backbone `lcsPairs` uses on units, so
   // one inserted word does not report every later word as changed. `table[i][j]`
-  // is the length of the LCS of `left[i..]` and `right[j..]`.
+  // is the length of the LCS of `middleLeft[i..]` and `middleRight[j..]`.
   const table = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
   for (let i = n - 1; i >= 0; i -= 1) {
     for (let j = m - 1; j >= 0; j -= 1) {
-      table[i][j] = left[i] === right[j]
+      table[i][j] = middleLeft[i] === middleRight[j]
         ? table[i + 1][j + 1] + 1
         : Math.max(table[i + 1][j], table[i][j + 1]);
     }
@@ -83,24 +187,75 @@ export function wordDiff(prod, next) {
   let i = 0;
   let j = 0;
   while (i < n && j < m) {
-    if (left[i] === right[j]) {
-      push('same', left[i]);
+    if (middleLeft[i] === middleRight[j]) {
+      push('same', middleLeft[i]);
       i += 1;
       j += 1;
     } else if (table[i + 1][j] >= table[i][j + 1]) {
       // The loss is reported before the addition that replaced it, on every
       // substitution, so production stays the left-hand reference everywhere.
-      push('removed', left[i]);
+      push('removed', middleLeft[i]);
       i += 1;
     } else {
-      push('added', right[j]);
+      push('added', middleRight[j]);
       j += 1;
     }
   }
-  while (i < n) push('removed', left[i++]);
-  while (j < m) push('added', right[j++]);
+  while (i < n) push('removed', middleLeft[i++]);
+  while (j < m) push('added', middleRight[j++]);
+
+  for (let at = right.length - tail; at < right.length; at += 1) push('same', right[at]);
 
   return spans;
+}
+
+/**
+ * How much agreement a clamped cell keeps in front of the first difference, in
+ * characters. About one line at the width the content view gives a cell, which
+ * leaves the other three lines of the clamp for the change itself.
+ */
+export const CLAMP_LEAD = 80;
+
+/**
+ * The spans a **clamped** row shows: the first difference, with a little of the
+ * agreement in front of it (ticket 68).
+ *
+ * The trim already found where the two sides start to differ, so nothing is measured
+ * again here. The window is computed on the **whole** span list and not on one
+ * side's, thus the two cells of a row start at the same words and stay one height.
+ *
+ * A row with no difference is not shortened: the clamp is the stylesheet's four
+ * lines, and a one-sided row and an uncompared row show their first lines.
+ *
+ * @param {DiffSpan[]} spans
+ * @param {number} [lead]
+ * @returns {DiffSpan[]}
+ */
+export function clampedSpans(spans, lead = CLAMP_LEAD) {
+  const first = spans.findIndex((span) => span.type === 'removed' || span.type === 'added');
+  if (first <= 0) return spans;
+
+  const agreement = spans.slice(0, first).map((span) => span.text).join('');
+  if (agreement.length <= lead) return spans;
+
+  // The window starts at a word and never inside one. A cut that lands in the
+  // middle of `terrasoverkapping` reads as a different word.
+  const kept = agreement.slice(-lead).replace(/^\S+/, '').trimStart();
+  if (!kept) return spans;
+
+  return [{ type: 'same', text: `… ${kept}` }, ...spans.slice(first)];
+}
+
+/**
+ * Did the comparison run? A renderer asks this and never reads the fourth type out
+ * of the array, because an uncompared pair is not a list of spans to paint: it is
+ * two texts to show plain.
+ *
+ * @param {DiffSpan[] | null | undefined} spans
+ * @returns {boolean}
+ */
+export function isUncompared(spans) {
+  return spans?.[0]?.type === 'uncompared';
 }
 
 /**

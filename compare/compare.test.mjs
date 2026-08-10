@@ -8,7 +8,7 @@ import { textFragmentUrl } from './locate.mjs';
 import { lcsPairs, mayPair, maskNumbers, similarity, tier2 } from './match.mjs';
 import { metaRows } from './meta.mjs';
 import { classifyPair, diffRows, textFindings } from './text.mjs';
-import { spansFor, wordDiff } from './worddiff.mjs';
+import { clampedSpans, diffCost, isUncompared, spansFor, wordDiff } from './worddiff.mjs';
 
 let seq = 0;
 
@@ -636,6 +636,283 @@ describe('wordDiff', () => {
       .toEqual(['same:een ', 'removed:twee drie ', 'same:vier']);
   });
 });
+
+/**
+ * The trim and the cap (ticket 68, ADR 0009). After ticket 67 a row holds a whole
+ * block, so a 1,250-character paragraph is one cell pair and the table over its
+ * tokens is what the content view costs.
+ */
+describe('the word diff trims and caps', () => {
+  it('costs almost nothing when one word changed in a long paragraph', () => {
+    const body = Array.from({ length: 200 }, (_, at) => `woord${at}`).join(' ');
+
+    // Untrimmed this is 400 × 400 cells. Both sides agree on all of it but one
+    // token, and that token is the only work the diff has.
+    expect(diffCost(`${body} slot`, `${body} einde`)).toEqual({ n: 1, m: 1, cells: 1, capped: false });
+  });
+
+  it('gives the spans the untrimmed diff gives, token for token', () => {
+    // **The test that lets the trim be trusted.** A trim that moves a span is a
+    // second opinion about the content, and the eleven tests above would not see
+    // it. The reference is the implementation from before the trim, kept in this
+    // file, and the pairs are generated with a shared head, a shared tail and a
+    // changed middle, which is the shape the trim exists for. The generator is
+    // seeded: a guard that passes on one seed and fails on the next guards
+    // nothing.
+    //
+    // No word repeats inside one side. That is the condition under which the two
+    // are provably equal — see the test below, which holds the case where it does
+    // repeat.
+    for (const [prod, next] of tiePairs(500)) {
+      expect(wordDiff(prod, next), `${prod} / ${next}`).toEqual(untrimmedWordDiff(prod, next));
+    }
+  });
+
+  it('agrees as much as it can when one word appears twice in a side', () => {
+    // **The limit of the equivalence, found by the test above.** A word that
+    // appears twice gives two alignments of the same length, and the trim takes
+    // the later one where the untrimmed walk took the earlier: on `de` against
+    // `kap de zwart kap de kap de`, both call one `de` shared and they disagree
+    // about which one. Neither reading is better and neither loses a word.
+    //
+    // So the two properties that carry the meaning are asserted instead, over
+    // pairs built from five words that repeat constantly. **The diff stays
+    // optimal** — the same number of words is called shared, so the trim never
+    // reports a change the untrimmed diff did not — and **each side still rejoins
+    // to its own input**.
+    const sameWords = (spans) => spans
+      .filter((span) => span.type === 'same')
+      .reduce((count, span) => count + (span.text.match(/\S+/g) ?? []).length, 0);
+
+    for (const [prod, next] of repeatingPairs(500)) {
+      const spans = wordDiff(prod, next);
+      const note = `${prod} / ${next}`;
+
+      expect(sameWords(spans), note).toBe(sameWords(untrimmedWordDiff(prod, next)));
+      expect(spansFor(spans, 'production').map((span) => span.text).join(''), note).toBe(prod);
+      expect(spansFor(spans, 'new').map((span) => span.text).join(''), note).toBe(next);
+    }
+  });
+
+  it('keeps an identical prefix and suffix as one span each', () => {
+    expect(wordDiff('de kap is zwart en mooi', 'de kap is wit en mooi')).toEqual([
+      { type: 'same', text: 'de kap is ' },
+      { type: 'removed', text: 'zwart' },
+      { type: 'added', text: 'wit' },
+      { type: 'same', text: ' en mooi' },
+    ]);
+  });
+
+  it('reports one side that is a strict prefix of the other as one addition', () => {
+    expect(wordDiff('de kap', 'de kap is zwart')).toEqual([
+      { type: 'same', text: 'de kap' },
+      { type: 'added', text: ' is zwart' },
+    ]);
+  });
+
+  it('compares a pair just under the cap', () => {
+    // 112 words a side is 223 tokens and 49,729 cells. One word fewer than the
+    // test below, and the whole comparison runs.
+    const [prod, next] = wordsApart(112);
+    expect(diffCost(prod, next)).toEqual({ n: 223, m: 223, cells: 49_729, capped: false });
+
+    // Every word differs and every space is shared, so a compared pair reads as
+    // 112 losses and 112 additions between them.
+    const spans = wordDiff(prod, next);
+    expect(spans.filter((span) => span.type === 'removed')).toHaveLength(112);
+    expect(spans.filter((span) => span.type === 'added')).toHaveLength(112);
+  });
+
+  it('refuses a pair just over the cap and gives each side one span', () => {
+    // 113 words a side is 225 tokens a side and 50,625 cells. The cell is
+    // uncompared: both texts in full, and nothing about the content is claimed.
+    const [prod, next] = wordsApart(113);
+    expect(diffCost(prod, next).cells).toBe(50_625);
+    expect(wordDiff(prod, next)).toEqual([
+      { type: 'uncompared', text: prod },
+      { type: 'uncompared', text: next },
+    ]);
+  });
+
+  it('never allocates the table for a pair far over the cap', () => {
+    // Asserted by input size, never by a clock. 3,000 words a side is 36 million
+    // cells, which is 144 MB of `Int32Array` for one cell pair. A run that
+    // allocates it does not finish this test; a run that reads the cap first
+    // returns two spans.
+    const [prod, next] = wordsApart(3_000);
+    expect(diffCost(prod, next).cells).toBe(35_988_001);
+    expect(wordDiff(prod, next)).toHaveLength(2);
+  });
+
+  it('reads the cap after the trim and not before it', () => {
+    // The cap is a budget over the work that is left. A long paragraph both sides
+    // agree on is not too large to compare; it is already compared.
+    const body = Array.from({ length: 3_000 }, (_, at) => `woord${at}`).join(' ');
+    expect(diffCost(body, body)).toEqual({ n: 0, m: 0, cells: 0, capped: false });
+    expect(wordDiff(body, body)).toEqual([{ type: 'same', text: body }]);
+  });
+
+  it('says of a span list whether the comparison ran', () => {
+    // The renderer must not read the fourth type out of the array itself. A cell
+    // that shows an uncompared pair shows both texts plain, and the question it
+    // asks is this one.
+    expect(isUncompared(wordDiff(...wordsApart(113)))).toBe(true);
+    expect(isUncompared(wordDiff('de kap', 'de tuin'))).toBe(false);
+    expect(isUncompared([])).toBe(false);
+    expect(isUncompared(null)).toBe(false);
+  });
+});
+
+/**
+ * The clamp (ticket 68). A clamped row is four lines, and those four lines have to
+ * hold the first difference: a clamp that shows the first four lines of a 24-line
+ * paragraph hides the one thing the row exists to show.
+ *
+ * The height is the stylesheet's work. **Which words the four lines start at** is a
+ * rule with judgement in it, so it is a pure function here and not a measuring pass
+ * over 288 rows in a component.
+ */
+describe('clampedSpans', () => {
+  it('drops the agreement in front of a late difference', () => {
+    const lead = Array.from({ length: 40 }, (_, at) => `woord${at}`).join(' ');
+    const spans = wordDiff(`${lead} zwart`, `${lead} wit`);
+
+    expect(clampedSpans(spans, 20)).toEqual([
+      { type: 'same', text: '… woord38 woord39 ' },
+      { type: 'removed', text: 'zwart' },
+      { type: 'added', text: 'wit' },
+    ]);
+  });
+
+  it('leaves a row alone when the difference is already in the first lines', () => {
+    const spans = wordDiff('de kap is zwart', 'de kap is wit');
+    expect(clampedSpans(spans)).toEqual(spans);
+  });
+
+  it('starts the window at a word and never inside one', () => {
+    const spans = wordDiff('aaaaaaaaaa bbbbbbbbbb zwart', 'aaaaaaaaaa bbbbbbbbbb wit');
+    expect(clampedSpans(spans, 15)[0].text).toBe('… bbbbbbbbbb ');
+  });
+
+  it('leaves a row alone when the agreement in front is one long word', () => {
+    // There is no word boundary to start at, so a window would cut inside the
+    // word. The row shows its first lines instead.
+    const long = `${'a'.repeat(200)}zwart`;
+    const spans = wordDiff(long, `${'a'.repeat(200)}wit`);
+    expect(clampedSpans(spans, 20)).toEqual(spans);
+  });
+
+  it('leaves a row with no difference alone', () => {
+    const body = Array.from({ length: 100 }, (_, at) => `woord${at}`).join(' ');
+    expect(clampedSpans(wordDiff(body, body), 20)).toEqual([{ type: 'same', text: body }]);
+  });
+
+  it('leaves an uncompared row alone', () => {
+    const spans = wordDiff(...wordsApart(113));
+    expect(clampedSpans(spans, 20)).toEqual(spans);
+  });
+});
+
+/**
+ * Two strings that share no word, so the trim removes nothing and `n · m` is the
+ * whole product. One word and one separator run each, thus `2 · count - 1` tokens a
+ * side.
+ *
+ * @param {number} count
+ * @returns {[string, string]}
+ */
+function wordsApart(count) {
+  return [
+    Array.from({ length: count }, (_, at) => `woord${at}`).join(' '),
+    Array.from({ length: count }, (_, at) => `ander${at}`).join(' '),
+  ];
+}
+
+/**
+ * Pairs over five words, so a word repeats in almost every one of them. This is the
+ * corpus shape: Dutch prose reuses `de`, `en` and `van`, and every separator run is
+ * one space.
+ *
+ * @param {number} count
+ * @returns {[string, string][]}
+ */
+function repeatingPairs(count) {
+  const words = ['de', 'kap', 'zwart', 'wit', 'groot'];
+  let seed = 12_345;
+  const step = () => (seed = (seed * 1_103_515 + 12_345) % 2_147_483_648);
+  const sentence = () => Array.from({ length: step() % 9 }, () => words[step() % words.length]).join(' ');
+
+  return Array.from({ length: count }, () => [sentence(), sentence()]);
+}
+
+/**
+ * Pairs with a shared head, a changed middle and a shared tail, and **no word twice
+ * inside one side**. Every word is unique, so the two sides can be aligned in one
+ * best way only.
+ *
+ * @param {number} count
+ * @returns {[string, string][]}
+ */
+function tiePairs(count) {
+  let seed = 12_345;
+  const step = () => (seed = (seed * 1_103_515 + 12_345) % 2_147_483_648);
+
+  let word = 0;
+  const run = (length) => Array.from({ length }, () => `woord${word++}`);
+
+  return Array.from({ length: count }, () => {
+    const head = run(step() % 5);
+    const tail = run(step() % 5);
+    const left = run(step() % 4);
+    const right = run(step() % 4);
+    return [
+      [...head, ...left, ...tail].join(' '),
+      [...head, ...right, ...tail].join(' '),
+    ];
+  });
+}
+
+/**
+ * `wordDiff` as it was before ticket 68: one table over every token of both sides,
+ * no edges removed and no cap. It exists so that the trim has something to be equal
+ * to. It is a test fixture and never an export.
+ *
+ * @param {string | null} prod @param {string | null} next
+ */
+function untrimmedWordDiff(prod, next) {
+  const split = (text) => (text ?? '').match(/[\s/?&=#]+|[^\s/?&=#]+/g) ?? [];
+  const left = split(prod);
+  const right = split(next);
+
+  const spans = [];
+  const push = (type, token) => {
+    const last = spans.at(-1);
+    if (last?.type === type) last.text += token;
+    else spans.push({ type, text: token });
+  };
+
+  const n = left.length;
+  const m = right.length;
+  const table = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      table[i][j] = left[i] === right[j]
+        ? table[i + 1][j + 1] + 1
+        : Math.max(table[i + 1][j], table[i][j + 1]);
+    }
+  }
+
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (left[i] === right[j]) { push('same', left[i]); i += 1; j += 1; }
+    else if (table[i + 1][j] >= table[i][j + 1]) { push('removed', left[i]); i += 1; }
+    else { push('added', right[j]); j += 1; }
+  }
+  while (i < n) push('removed', left[i++]);
+  while (j < m) push('added', right[j++]);
+  return spans;
+}
 
 const newUrl = 'https://valanticnl.intern.systems/overkappingen';
 

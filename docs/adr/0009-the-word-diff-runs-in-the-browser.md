@@ -62,14 +62,25 @@ for the reason `CONTEXT.md` retires the word "changed": the tool cannot know tha
 
 ## Consequences
 
-- The cap number rests on a corpus measured **before** ticket 67 folds inline links, so
-  it understates the sizes that will exist. The words the leaf rule discards are in no
-  stored file, so the post-fold sizes cannot be measured until the crawl is re-run.
-  Ticket 68 carries that re-measurement as its own criterion. The fold shipped on
-  2026-08-10, so the block on that measurement is lifted: the nl store went from 9,293
-  production units to 7,424 on the same 179 pages, and one `/overkapping` paragraph
-  went from 35 compared characters to 1,232.
+- ~~The cap number rests on a corpus measured **before** ticket 67 folds inline links, so
+  it understates the sizes that will exist.~~ **Re-measured after the fold**, by
+  `web/probes/probe-diff-cost.mjs` over 816 reports on 2026-08-10. The corpus is
+  **32.1 million cells** before the three savings and **789 thousand** after them, a
+  fall of **97.5%**. The blocks got larger exactly as expected — the median row is 49
+  untrimmed cells against 7 tokens a side before, and the worst row is 170,569 — and
+  the trim absorbs it: **44,523 cells is the worst row after the trim, over the whole
+  corpus**. The cap of 50,000 therefore fires on **nothing** in the log today, which is
+  what a budget for the tail should do. **It stays at 50,000**, because the observed
+  maximum is 89% of it and a number below the corpus maximum would be a rendering limit
+  that reaches into what an editor can read.
 - `DiffSpan` gains a fourth type, `uncompared`. A consumer that does not know the type
   renders text rather than failing, and `spansFor` is unchanged.
 - The trim must be provably a speed-up and nothing else, so the test that matters is
-  equivalence: the trimmed diff equals the untrimmed diff.
+  equivalence: the trimmed diff equals the untrimmed diff. **It is equal token for
+  token while no word repeats inside one side, and that is the whole of what can be
+  claimed.** The test found the limit: a word that appears twice gives two alignments of
+  the same length, and the suffix trim takes the later one where the untrimmed walk took
+  the earlier. On `de` against `kap de zwart kap de kap de` both call one `de` shared and
+  they disagree about which. So the guard is three properties — identical spans without
+  a repeat, **the same number of words called shared** with one, and the lossless rejoin
+  of each side — and the exact-equality claim is retired here rather than in a comment.

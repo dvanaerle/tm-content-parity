@@ -6,6 +6,7 @@ import {
   outlineFrom,
   pagesWithClasses,
   prepareRows,
+  rowKeyFromHash,
   toggleClass,
   toggleIn,
 } from './view.mjs';
@@ -21,12 +22,19 @@ import {
  * assert that shape as well as the behaviour.
  */
 
-/** @param {Partial<{ tag: string, kind: string, level: number | null, raw: string }>} part */
+/**
+ * `index` is ticket 34's shared counter: the position of the unit in the document,
+ * over the images and the links as well. It is deliberately not the position in the
+ * `elements` array here, because the anchor key must read the document and not the
+ * array.
+ *
+ * @param {Partial<{ tag: string, kind: string, level: number | null, raw: string, index: number }>} part
+ */
 const unit = (part) => ({
   tag: 'p', kind: 'text', level: null, raw: part.raw ?? 'tekst', norm: part.raw ?? 'tekst', ...part,
 });
 
-const heading = (raw, level = 2) => unit({ tag: `h${level}`, kind: 'heading', level, raw });
+const heading = (raw, level = 2, index = 0) => unit({ tag: `h${level}`, kind: 'heading', level, raw, index });
 
 /**
  * Production: a heading, a paragraph that changed, a paragraph that matches, and a
@@ -34,8 +42,17 @@ const heading = (raw, level = 2) => unit({ tag: `h${level}`, kind: 'heading', le
  */
 const fixture = () => ({
   elements: {
-    production: [heading('Kleuren'), unit({ raw: 'Verkrijgbaar in drie kleuren' }), unit({ raw: 'Gelijk' }), unit({ raw: 'Weg' })],
-    new: [heading('Kleuren'), unit({ raw: 'Beschikbare kleuren' }), unit({ raw: 'Gelijk' })],
+    production: [
+      heading('Kleuren', 2, 3),
+      unit({ raw: 'Verkrijgbaar in drie kleuren', index: 5 }),
+      unit({ raw: 'Gelijk', index: 8 }),
+      unit({ raw: 'Weg', index: 11 }),
+    ],
+    new: [
+      heading('Kleuren', 2, 2),
+      unit({ raw: 'Beschikbare kleuren', index: 4 }),
+      unit({ raw: 'Gelijk', index: 6 }),
+    ],
   },
   rows: [
     { class: null, prod: 0, new: 0, score: null, finding: null },
@@ -47,6 +64,28 @@ const fixture = () => ({
     { id: 'copy1', class: 'copy', shown: true, state: 'open', occurrences: 1 },
     { id: 'lost1', class: 'text-missing', shown: true, state: 'open', occurrences: 1 },
   ],
+});
+
+/**
+ * A jump is a request to read one row, so the row it lands on opens (ticket 68).
+ * This is the rule at the seam: the browser holds the hash, and the view has to know
+ * which row that hash names — and which hash names no row at all.
+ */
+describe('rowKeyFromHash', () => {
+  it('names the row a hash link jumps to', () => {
+    expect(rowKeyFromHash('#p11')).toBe('p11');
+    expect(rowKeyFromHash('#n4')).toBe('n4');
+  });
+
+  it('names no row when the hash is not a row anchor', () => {
+    // A page carries other anchors. A hash that is not one of ours must open
+    // nothing rather than open the first row.
+    expect(rowKeyFromHash('')).toBeNull();
+    expect(rowKeyFromHash('#')).toBeNull();
+    expect(rowKeyFromHash('#taken')).toBeNull();
+    expect(rowKeyFromHash('#r3')).toBeNull();
+    expect(rowKeyFromHash(undefined)).toBeNull();
+  });
 });
 
 describe('prepareRows', () => {
@@ -112,6 +151,42 @@ describe('prepareRows', () => {
 
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(3);
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(4);
+  });
+
+  it('says of a row that the two sides are already equal', () => {
+    // Ticket 68, and the largest saving in the content view: 78% of the whole word
+    // diff over 448 reports was rows that agree, because the view asked for a diff
+    // of two identical strings. They are also the longest rows, because they hold
+    // the untouched paragraphs.
+    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+
+    expect(rows.map((row) => row.equal)).toEqual([true, false, true, false]);
+  });
+
+  it('keys a row on the position of its unit in the document', () => {
+    // Ticket 68. The key was the index in the row list, so a row that appeared
+    // above this one — a paragraph the new site invented — renamed every anchor
+    // below it and carried every hash link to the wrong row. Ticket 79 changes
+    // which rows the view holds, so the key has to name something the view does
+    // not decide: where the unit is in the document.
+    const before = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+
+    const withInvented = fixture();
+    withInvented.rows.unshift({ class: 'text-added', prod: null, new: 0, score: null, finding: null });
+    const after = prepareRows({ ...withInvented, filter: NO_FILTER, showNoise: true });
+
+    const keyOf = (rows, raw) => rows.find((row) => row.prod?.raw === raw).key;
+    expect(keyOf(after.rows, 'Weg')).toBe(keyOf(before.rows, 'Weg'));
+  });
+
+  it('keeps a production key and a new-site key apart', () => {
+    // A row the new site invented has no production position, and the two
+    // documents count on their own. Two rows must never take one anchor.
+    const base = fixture();
+    base.rows.push({ class: 'text-added', prod: null, new: 0, score: null, finding: null });
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: true });
+    expect(new Set(rows.map((row) => row.key)).size).toBe(rows.length);
   });
 
   it('reports how much of the page is on screen, so a filter is never invisible', () => {

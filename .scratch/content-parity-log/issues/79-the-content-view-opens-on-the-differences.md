@@ -62,6 +62,13 @@ answer it. That is why the rows collapse instead of leaving.
       The equal **rows** stay, behind the markers.
 - [ ] Checked on `nl__fotogalerij/zonwering`, the worst page at 399 shown findings, and
       on a page with two findings, where collapsing must not look broken.
+- [ ] **A jump opens the collapsed run that holds the row**, and the row inside it.
+      Handed over by [68](68-the-content-view-clamps-a-tall-row.md), which built the
+      other half on 2026-08-10: a jump already opens the clamped row it lands on, and
+      `rowKeyFromHash()` in `web/src/lib/view.mjs` is the rule that names it. A run that
+      holds that key must open with it, or a hash link lands on a marker. 68 ran before
+      79 rather than after it, against the order in the map, so this is the one criterion
+      of 68 that could not be finished.
 
 ## Traps
 

@@ -31,11 +31,16 @@ the layout.
 - **Node ESM**, `.mjs`, no build step outside `web/`.
 - **Vitest** for tests. `npm test`. The comparison rules are the crown jewels:
   a rule with no test is not a rule.
+- **Write tests in vertical slices.** One test, then the implementation that makes
+  it pass, then the next test. Each test is a **tracer bullet**: it answers what
+  the last cycle taught you. The `tdd` skill gives the loop and the anti-patterns.
 - **Write prose in ASD-STE100 Simplified Technical English.** Short sentences,
   one idea in each.
 - **Comments explain why, not what.** No comment is the default.
 - `crawl/probes/` holds one-time measurements that are kept as evidence. Read
-  them for the numbers. Do not import them.
+  them for the numbers. Do not import them. `web/probes/` is the same for the
+  front end: what a page costs to render and what it costs to paint. A probe
+  measures the stage it sits in.
 
 ## Agent skills
 

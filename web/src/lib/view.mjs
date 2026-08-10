@@ -74,8 +74,12 @@ export function toggleClass(filter, cls) {
  * @typedef {import('../../../compare/contract.mjs').ContentUnit} ContentUnit
  *
  * @typedef {object} ContentRow
- * @property {string} key
+ * @property {string} key               The anchor. `p<n>` is production's document
+ *                                     position, `n<n>` the new site's on a row that
+ *                                     exists there only. See `anchorKey()`.
  * @property {string | null} class
+ * @property {boolean} equal            Both sides are present and their `norm` is the
+ *                                     same string. The renderer must not diff it.
  * @property {number | null} score
  * @property {object | null} finding    The **derived** finding, with `state` and `shown`.
  * @property {ContentUnit | null} prod
@@ -98,7 +102,7 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
 
   /** @type {ContentRow[]} */
   const onThePage = [];
-  for (const [index, row] of rows.entries()) {
+  for (const row of rows) {
     const finding = row.finding ? byId.get(row.finding) ?? null : null;
 
     // A muted finding stays visible behind the toggle: muting is not deleting, and
@@ -106,13 +110,21 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
     const noise = Boolean(row.class) && !(finding?.shown && finding.state !== 'muted');
     if (noise && !showNoise) continue;
 
+    const prod = row.prod === null ? null : elements.production[row.prod] ?? null;
+    const next = row.new === null ? null : elements.new[row.new] ?? null;
+
     onThePage.push({
-      key: `r${index}`,
+      key: anchorKey(prod, next),
+      // The word diff is the cost of this view, and two identical strings are the
+      // largest part of it (ticket 68). The comparison of the two `norm` strings is
+      // the whole rule: a row can hold `heading-level` or `tag-changed` and still
+      // agree about every word, and that row is not worth a table either.
+      equal: prod !== null && next !== null && prod.norm === next.norm,
       class: row.class,
       score: row.score,
       finding,
-      prod: row.prod === null ? null : elements.production[row.prod] ?? null,
-      new: row.new === null ? null : elements.new[row.new] ?? null,
+      prod,
+      new: next,
     });
   }
 
@@ -123,6 +135,46 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
     total: onThePage.length,
     classes: classCounts(onThePage),
   };
+}
+
+/**
+ * A row's anchor, and what a hash link in the log points at (ticket 68).
+ *
+ * It names **where the unit is in the document**, from ticket 34's shared counter,
+ * and never where the row is in the row list. A row list is a view: a filter, a
+ * collapsed run of equal rows, or one paragraph the new site invented above this one
+ * all move a position in it, and every one of them would carry a saved link to the
+ * wrong row.
+ *
+ * Production is the reference here as everywhere, so a two-sided row takes
+ * production's position. The two documents count on their own, thus a row that
+ * exists on the new site only takes the other letter and the two can never collide.
+ *
+ * @param {ContentUnit | null} prod
+ * @param {ContentUnit | null} next
+ * @returns {string}
+ */
+function anchorKey(prod, next) {
+  return prod ? `p${prod.index}` : `n${next?.index}`;
+}
+
+/** The shape `anchorKey()` writes, and nothing else. */
+const ROW_ANCHOR = /^[pn]\d+$/;
+
+/**
+ * The row a hash link names, or null (ticket 68).
+ *
+ * **A jump is a request to read that one row**, so the row it lands on opens. The
+ * clamp is what makes a jump land somewhere legible, and a reader who followed a
+ * link to a row and then found four lines of it would have to open it by hand every
+ * time.
+ *
+ * @param {string | null | undefined} hash  `location.hash`, with the `#`.
+ * @returns {string | null}
+ */
+export function rowKeyFromHash(hash) {
+  const key = (hash ?? '').replace(/^#/, '');
+  return ROW_ANCHOR.test(key) ? key : null;
 }
 
 /**

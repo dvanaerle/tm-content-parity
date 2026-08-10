@@ -1047,8 +1047,25 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   [68 the clamp](issues/68-the-content-view-clamps-a-tall-row.md),
   [69 one viewport](issues/69-one-canonical-viewport.md),
   [70 shared regions](issues/70-shared-regions-by-content-hash.md).
-  61, 62, 63, 64, 65, 66 and 67 are resolved. 70 needs the new environment, which
+  61, 62, 63, 64, 65, 66, 67 and 68 are resolved. 70 needs the new environment, which
   answered HTTP 500 on all six hosts while this was written.
+
+  **68 is resolved**, 2026-08-10, and it ran **before 79 rather than after it**. A row
+  clamps to four lines, so the rows on `nl__privacy-beleid` are **105 pixels at the
+  median** where they were 450 to 550, and a 900-pixel screen carries eight of them. The
+  word diff over 816 reports fell from **32.1 million LCS cells to 789 thousand,
+  −97.5%**: 20,380 of 22,571 two-sided rows agree and are no longer compared at all
+  (−83.4% on its own), the trim takes one changed word in a long paragraph to almost
+  nothing, and the cap of 50,000 **fires on no row in the log** — the worst row after
+  the trim is 44,523 cells, so the cap stays where the tail is and not where the reader
+  is. A row's anchor is the unit's document position now (`p11`, `n4`), because the row
+  index moved whenever the row list did. Unthrottled first paint meets both targets on
+  both pages and `fotogalerij/zonwering` met neither before; under a 4× CPU throttle TBT
+  is 1 to 2 seconds before **and** after, which is hydration and payload and not the
+  diff. Two findings: **exact trim equivalence is not true** — a repeated word gives two
+  alignments of one length and the trim takes the later — so ADR 0009 now claims
+  optimality and the lossless rejoin instead; and the **collapsed run** half of the jump
+  criterion is 79's, which now carries it as a criterion of its own.
 
   **67 is resolved**, 2026-08-10. A content unit is a block, and a block folds the
   `a` and the `button` inside it; a nested block still breaks it. The nl store went

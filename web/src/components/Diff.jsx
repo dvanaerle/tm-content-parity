@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
-import { spansFor, wordDiff } from '../../../compare/worddiff.mjs';
+import { clampedSpans, isUncompared, spansFor, wordDiff } from '../../../compare/worddiff.mjs';
 import { SURFACE, TOKEN } from '../lib/palette.mjs';
 
 /**
@@ -23,6 +23,12 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
  * Colour is not the only indication. A removed word is a `<del>`, and an added word
  * is an `<ins>`. Thus the strike-through and the underline also show the change.
  *
+ * **A third state, and it is neither layer.** A pair over the rendering budget is
+ * **uncompared** (ticket 68, ADR 0009): both versions in full, no word layer, no
+ * tint, and a line that says the comparison did not run. It is not a row-level state,
+ * because both sides have the content; it is not a word-level state, because no word
+ * was compared.
+ *
  * **`mono` is for a machine string, and not for prose.** A url, an image path and a
  * `<head>` value align character by character, and an editor reads them for the one
  * character that changed. A content cell holds Dutch prose. On a long paragraph,
@@ -44,6 +50,7 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
  * @param {boolean} [props.strong]
  * @param {boolean} [props.equal]  The caller compared the two sides and got equal, on
  *                                 values it does not show. Both cells stay plain.
+ * @param {boolean} [props.clamped]  Show four lines, starting at the first difference.
  * @returns Two `<td>`s, for a caller that owns the `<tr>`.
  */
 export function DiffCells({
@@ -56,6 +63,7 @@ export function DiffCells({
   mono = false,
   strong = false,
   equal = false,
+  clamped = false,
 }) {
   // The diff is computed on `norm` and `norm` is what is rendered. Tier 1 folds
   // curly quotes, NBSP, dashes and entities deliberately, so diffing `raw` would
@@ -66,37 +74,66 @@ export function DiffCells({
   // then shows the hostnames, because an editor reading a canonical wants them. On
   // 18 of 179 nl pages that is the whole of the difference, and a diff of what is
   // on screen would paint it — the same defect one paragraph up.
-  const spans = useMemo(() => (equal ? null : wordDiff(prod, next)), [prod, next, equal]);
   const oneSided = prod === null || next === null;
+
+  // Two identical strings and a string against nothing are the two pairs that need
+  // no table (ticket 68). Together they were 78% of the word diff over the whole
+  // corpus, and the content view asked for both.
+  const spans = useMemo(
+    () => (equal || oneSided ? null : wordDiff(prod, next)),
+    [prod, next, equal, oneSided],
+  );
+
+  const uncompared = isUncompared(spans);
+  const shown = useMemo(
+    () => (spans && !uncompared && clamped ? clampedSpans(spans) : spans),
+    [spans, uncompared, clamped],
+  );
 
   return (
     <>
       <Cell
         side="production"
         value={prod}
-        spans={oneSided ? null : spans}
+        spans={uncompared ? null : shown}
         tint={!equal && next === null ? SURFACE.lost : null}
         prefix={prodPrefix}
         raw={prodRaw}
         mono={mono}
         strong={strong}
+        clamped={clamped}
+        note={uncompared ? UNCOMPARED : null}
       />
       <Cell
         side="new"
         value={next}
-        spans={oneSided ? null : spans}
+        spans={uncompared ? null : shown}
         tint={!equal && prod === null ? SURFACE.added : null}
         prefix={newPrefix}
         raw={newRaw}
         mono={mono}
         strong={strong}
+        clamped={clamped}
+        note={uncompared ? UNCOMPARED : null}
       />
     </>
   );
 }
 
+/**
+ * What an **uncompared** cell says. It is about the comparison and never about the
+ * content: the cap is a size, so a paragraph with five scattered edits and a score of
+ * 0.97 reaches it as well as a rewrite does. *Herschreven* is refused for the reason
+ * `CONTEXT.md` retires "changed" — the tool cannot know it.
+ *
+ * It does not promise the whole text on the screen either. The cell holds both versions
+ * whole, and the clamp is still over it until the row is opened, so a sentence saying
+ * *beide versies staan er volledig* would be false for four lines of every row.
+ */
+const UNCOMPARED = 'Dit blok is te groot voor de woordvergelijking. Er is niets vergeleken.';
+
 /** @param {{ spans: import('../../../compare/worddiff.mjs').DiffSpan[] | null }} props */
-function Cell({ side, value, spans, tint, prefix, raw, mono, strong }) {
+function Cell({ side, value, spans, tint, prefix, raw, mono, strong, clamped, note }) {
   if (value === null || value === '') {
     return <td className="px-2 py-3 align-top text-sm italic text-slate-400">niet aanwezig</td>;
   }
@@ -104,7 +141,8 @@ function Cell({ side, value, spans, tint, prefix, raw, mono, strong }) {
   return (
     <td className={`break-words px-2 py-3 align-top ${tint ?? ''} ${mono ? 'font-mono text-xs' : 'text-sm'}`}>
       {prefix}
-      <span className={strong ? 'font-semibold' : undefined}>
+      {note && <p className="mb-1 text-xs italic text-slate-500">{note}</p>}
+      <span className={`${strong ? 'font-semibold' : ''} ${clamped ? 'line-clamp-4' : ''}`}>
         {spans ? <Spans spans={spansFor(spans, side)} /> : value}
       </span>
       {raw !== null && raw !== value && <CopyButton text={raw} />}
