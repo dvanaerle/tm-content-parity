@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
+import { dropReason, unknownDropRules } from '../shared/drop-rules.mjs';
 import {
   EXPECTED_PAGES,
   HREFLANG_STORE,
@@ -310,12 +311,82 @@ describe('the seed list', () => {
     );
   });
 
-  it('names every url that leaves the list, with the reason', () => {
+  it('names every url that leaves the list, with the rule that took it', () => {
     const { dropped } = buildSeedList({ entries, carriedRows: [] });
     expect(dropped).toEqual([
-      { loc: url('spuitbus-mat-wit'), why: 'product signature' },
-      { loc: 'https://www.example.com/veranda', why: 'host is not one of the five' },
+      {
+        loc: url('spuitbus-mat-wit'),
+        store: 'nl',
+        path: 'spuitbus-mat-wit',
+        rule: 'product-signature',
+      },
+      {
+        loc: 'https://www.example.com/veranda',
+        store: null,
+        path: 'veranda',
+        rule: 'foreign-host',
+      },
     ]);
+  });
+
+  it('gives every drop a rule the vocabulary explains', () => {
+    // Ticket 56: the dashboard shows the reason. A rule with no reason is the
+    // silent exclusion this ticket ends, so the producer cannot invent one.
+    const { dropped } = buildSeedList({ entries, carriedRows: [] });
+    expect(unknownDropRules(dropped)).toEqual([]);
+    for (const entry of dropped) expect(dropReason(entry)).toBeTruthy();
+  });
+
+  it('says which page a collision lost to, because one sentence cannot hold it', () => {
+    // Two locs of one store that claim the same NL counterpart. The reason for
+    // the loser names the winner, so the reader does not have to find it.
+    // Both German locs declare the same Dutch counterpart, so both want the row
+    // `overkapping`. The nl store cannot collide this way: an nl loc is keyed on
+    // its own path and never on an alternate.
+    const twice = [
+      candidate({
+        loc: 'https://www.tuinmaximaal.de/ueberdachung',
+        alternates: { 'nl-NL': url('overkapping') },
+      }),
+      candidate({
+        loc: 'https://www.tuinmaximaal.de/ueberdachung-alt',
+        alternates: { 'nl-NL': url('overkapping') },
+      }),
+    ];
+    const [drop] = buildSeedList({ entries: twice, carriedRows: [] }).dropped;
+
+    expect(drop.loc).toBe('https://www.tuinmaximaal.de/ueberdachung-alt');
+    expect(drop.rule).toBe('duplicate-in-store');
+    expect(dropReason(drop)).toContain('https://www.tuinmaximaal.de/ueberdachung');
+  });
+
+  it('re-admits a page the rule drops, when the committed list holds a row for it', () => {
+    // Ticket 56: a wrong exclusion is reversed by editing a list, never by
+    // crawling again. `spuitbus-mat-wit` matches the product signature and the
+    // rule drops its loc. A row put back into `data/10-store-seeds.json` by hand
+    // is carried over by the next run, so the correction survives.
+    const carriedRows = [
+      {
+        page: 'spuitbus-mat-wit',
+        stores: {
+          nl: {
+            path: 'spuitbus-mat-wit',
+            prodUrl: url('spuitbus-mat-wit'),
+            newUrl: '',
+            provenance: 'sitemap-daily',
+          },
+          be: null,
+          be_fr: null,
+          de: null,
+          fr: null,
+          uk: null,
+        },
+      },
+    ];
+    const { rows, dropped } = buildSeedList({ entries, carriedRows });
+
+    expect(dropped.map((entry) => entry.loc)).toContain(url('spuitbus-mat-wit'));
+    expect(rows.find((r) => r.page === 'spuitbus-mat-wit').stores.nl.provenance).toBe('carried-over');
   });
 
   it('carries a page that no sitemap declares, and marks it as carried', () => {
@@ -400,6 +471,14 @@ describe('the count guard', () => {
 describe('the seed schema', () => {
   const good = () => ({
     generated: '2026-08-10',
+    dropped: [
+      {
+        loc: url('spuitbus-mat-wit'),
+        store: 'nl',
+        path: 'spuitbus-mat-wit',
+        rule: 'product-signature',
+      },
+    ],
     rows: [
       {
         page: 'garantie',
@@ -474,6 +553,49 @@ describe('the seed schema', () => {
     const seeds = good();
     seeds.rows.push(structuredClone(seeds.rows[0]));
     expect(schemaDisagreements(seeds)).toContain('garantie: two rows hold this key');
+  });
+
+  // Ticket 56. The drop list is the surface: it is what the dashboard shows for
+  // the pages the seed rule never admitted, so it keeps a schema of its own.
+  it('refuses a drop count where the drop list belongs', () => {
+    const seeds = good();
+    seeds.dropped = 105;
+    expect(schemaDisagreements(seeds)).toContain(
+      '`dropped` is not an array. It is the list of URLs that left the list.'
+    );
+  });
+
+  it('refuses a drop whose rule no vocabulary explains', () => {
+    const seeds = good();
+    seeds.dropped[0].rule = 'looked-wrong';
+    expect(schemaDisagreements(seeds)).toContain(
+      `${url('spuitbus-mat-wit')}: no reason for rule \`looked-wrong\``
+    );
+  });
+
+  it('refuses a drop that names no path', () => {
+    const seeds = good();
+    delete seeds.dropped[0].path;
+    expect(schemaDisagreements(seeds)).toContain('a drop has no `path`');
+  });
+
+  it('refuses a drop whose store is not one of the six', () => {
+    const seeds = good();
+    seeds.dropped[0].store = 'nl-NL';
+    expect(schemaDisagreements(seeds)).toContain(
+      `${url('spuitbus-mat-wit')}: \`store\` is not one of the six, and not null`
+    );
+  });
+
+  it('accepts a drop of no store, because a foreign host belongs to none', () => {
+    const seeds = good();
+    seeds.dropped[0] = {
+      loc: 'https://www.example.com/veranda',
+      store: null,
+      path: 'veranda',
+      rule: 'foreign-host',
+    };
+    expect(schemaDisagreements(seeds)).toEqual([]);
   });
 });
 

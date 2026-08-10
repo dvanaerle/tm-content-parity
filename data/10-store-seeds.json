@@ -36,7 +36,638 @@
     }
   },
   "candidates": 876,
-  "dropped": 105,
+  "dropped": [
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/aerosol-anthacite-mat",
+      "store": "be_fr",
+      "path": "fr/aerosol-anthacite-mat",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/aerosol-blanc-mat",
+      "store": "be_fr",
+      "path": "fr/aerosol-blanc-mat",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/aerosol-noir-mat",
+      "store": "be_fr",
+      "path": "fr/aerosol-noir-mat",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/couper-une-plaque-de-toit-de-verre-2500mm-x-700mm-sur-mesure",
+      "store": "be_fr",
+      "path": "fr/couper-une-plaque-de-toit-de-verre-2500mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/couper-une-plaque-de-toit-de-verre-3000mm-x-700mm-sur-mesure",
+      "store": "be_fr",
+      "path": "fr/couper-une-plaque-de-toit-de-verre-3000mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/couper-une-plaque-de-toit-de-verre-3500mm-x-700mm-sur-mesure",
+      "store": "be_fr",
+      "path": "fr/couper-une-plaque-de-toit-de-verre-3500mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/couper-une-plaque-de-toit-de-verre-4000mm-x-700mm-sur-mesure",
+      "store": "be_fr",
+      "path": "fr/couper-une-plaque-de-toit-de-verre-4000mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/couper-une-plaque-de-toit-de-verre-opale-2500mm-x-700mm-sur-mesure",
+      "store": "be_fr",
+      "path": "fr/couper-une-plaque-de-toit-de-verre-opale-2500mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/couper-une-plaque-de-toit-de-verre-opale-3000mm-x-700mm-sur-mesure",
+      "store": "be_fr",
+      "path": "fr/couper-une-plaque-de-toit-de-verre-opale-3000mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/couper-une-plaque-de-toit-de-verre-opale-3500mm-x-700mm-sur-mesure",
+      "store": "be_fr",
+      "path": "fr/couper-une-plaque-de-toit-de-verre-opale-3500mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/couper-une-plaque-de-toit-de-verre-opale-4000mm-x-700mm-sur-mesure",
+      "store": "be_fr",
+      "path": "fr/couper-une-plaque-de-toit-de-verre-opale-4000mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/plaque-toit-en-verre-non-durcie-2500mm-x-700mm",
+      "store": "be_fr",
+      "path": "fr/plaque-toit-en-verre-non-durcie-2500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/plaque-toit-en-verre-non-durcie-3000mm-x-700mm",
+      "store": "be_fr",
+      "path": "fr/plaque-toit-en-verre-non-durcie-3000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/plaque-toit-en-verre-non-durcie-3500mm-x-700mm",
+      "store": "be_fr",
+      "path": "fr/plaque-toit-en-verre-non-durcie-3500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/plaque-toit-en-verre-non-durcie-4000mm-x-700mm",
+      "store": "be_fr",
+      "path": "fr/plaque-toit-en-verre-non-durcie-4000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/plaque-toit-en-verre-opale-non-durcie-2500mm-x-700mm",
+      "store": "be_fr",
+      "path": "fr/plaque-toit-en-verre-opale-non-durcie-2500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/plaque-toit-en-verre-opale-non-durcie-3000mm-x-700mm",
+      "store": "be_fr",
+      "path": "fr/plaque-toit-en-verre-opale-non-durcie-3000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/plaque-toit-en-verre-opale-non-durcie-3500mm-x-700mm",
+      "store": "be_fr",
+      "path": "fr/plaque-toit-en-verre-opale-non-durcie-3500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/fr/plaque-toit-en-verre-opale-non-durcie-4000mm-x-700mm",
+      "store": "be_fr",
+      "path": "fr/plaque-toit-en-verre-opale-non-durcie-4000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/glazen-dakplaat-2500mm-x700mm-op-maat-snijden",
+      "store": "be",
+      "path": "glazen-dakplaat-2500mm-x700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/glazen-dakplaat-3000mm-x-700mm-op-maat-snijden",
+      "store": "be",
+      "path": "glazen-dakplaat-3000mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/glazen-dakplaat-3500mm-x-700mm-op-maat-snijden",
+      "store": "be",
+      "path": "glazen-dakplaat-3500mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/glazen-dakplaat-4000mm-x-700mm-op-maat-snijden",
+      "store": "be",
+      "path": "glazen-dakplaat-4000mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/glazen-dakplaat-ongehard-2500mm-x-700mm",
+      "store": "be",
+      "path": "glazen-dakplaat-ongehard-2500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/glazen-dakplaat-ongehard-3000mm-x-700mm",
+      "store": "be",
+      "path": "glazen-dakplaat-ongehard-3000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/glazen-dakplaat-ongehard-3500mm-x-700mm",
+      "store": "be",
+      "path": "glazen-dakplaat-ongehard-3500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/glazen-dakplaat-ongehard-4000mm-x-700mm",
+      "store": "be",
+      "path": "glazen-dakplaat-ongehard-4000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/melkglas-dakplaat-ongehard-2500-mm-x-700-mm",
+      "store": "be",
+      "path": "melkglas-dakplaat-ongehard-2500-mm-x-700-mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/melkglas-dakplaat-ongehard-3000-mm-x-700-mm",
+      "store": "be",
+      "path": "melkglas-dakplaat-ongehard-3000-mm-x-700-mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/melkglas-dakplaat-ongehard-3500-mm-x-700-mm",
+      "store": "be",
+      "path": "melkglas-dakplaat-ongehard-3500-mm-x-700-mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/melkglas-dakplaat-ongehard-4000-mm-x-700-mm",
+      "store": "be",
+      "path": "melkglas-dakplaat-ongehard-4000-mm-x-700-mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/melkglazen-dakplaat-2500mm-x-700mm-op-maat-snijden",
+      "store": "be",
+      "path": "melkglazen-dakplaat-2500mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/melkglazen-dakplaat-3000mm-x-700mm-op-maat-snijden",
+      "store": "be",
+      "path": "melkglazen-dakplaat-3000mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/melkglazen-dakplaat-3500mm-x-700mm-op-maat-snijden",
+      "store": "be",
+      "path": "melkglazen-dakplaat-3500mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/melkglazen-dakplaat-4000mm-x-700mm-op-maat-snijden",
+      "store": "be",
+      "path": "melkglazen-dakplaat-4000mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/spuitbus-mat-antraciet",
+      "store": "be",
+      "path": "spuitbus-mat-antraciet",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/spuitbus-mat-wit",
+      "store": "be",
+      "path": "spuitbus-mat-wit",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.be/spuitbus-mat-zwart",
+      "store": "be",
+      "path": "spuitbus-mat-zwart",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/50-metre-roll-of-black-rubber-for-beams",
+      "store": "uk",
+      "path": "50-metre-roll-of-black-rubber-for-beams",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/54-metre-roll-black-wall-rubber",
+      "store": "uk",
+      "path": "54-metre-roll-black-wall-rubber",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/sun-shading-screen-housing-set-of-2-5m-matt-anthracite-2023",
+      "store": "uk",
+      "path": "sun-shading-screen-housing-set-of-2-5m-matt-anthracite-2023",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/sun-shading-screen-housing-set-of-2-5m-matt-white",
+      "store": "uk",
+      "path": "sun-shading-screen-housing-set-of-2-5m-matt-white",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/sun-shading-screen-housing-set-of-3-5m-matt-anthracite-2023",
+      "store": "uk",
+      "path": "sun-shading-screen-housing-set-of-3-5m-matt-anthracite-2023",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/sun-shading-screen-housing-set-of-3-5m-matt-white",
+      "store": "uk",
+      "path": "sun-shading-screen-housing-set-of-3-5m-matt-white",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/sun-shading-screen-housing-set-of-3m-matt-anthracite-2023",
+      "store": "uk",
+      "path": "sun-shading-screen-housing-set-of-3m-matt-anthracite-2023",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/sun-shading-screen-housing-set-of-3m-matt-white-2023",
+      "store": "uk",
+      "path": "sun-shading-screen-housing-set-of-3m-matt-white-2023",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/sun-shading-screen-housing-set-of-4m-matt-anthracite-2023",
+      "store": "uk",
+      "path": "sun-shading-screen-housing-set-of-4m-matt-anthracite-2023",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.co.uk/sun-shading-screen-housing-set-of-4m-matt-white-2023",
+      "store": "uk",
+      "path": "sun-shading-screen-housing-set-of-4m-matt-white-2023",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/glas-dachplatte-nicht-gehartet-2500mm-x-700mm",
+      "store": "de",
+      "path": "glas-dachplatte-nicht-gehartet-2500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/glas-dachplatte-nicht-gehartet-3000mm-x-700mm",
+      "store": "de",
+      "path": "glas-dachplatte-nicht-gehartet-3000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/glas-dachplatte-nicht-gehartet-3500mm-x-700mm",
+      "store": "de",
+      "path": "glas-dachplatte-nicht-gehartet-3500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/glas-dachplatte-nicht-gehartet-4000mm-x-700mm",
+      "store": "de",
+      "path": "glas-dachplatte-nicht-gehartet-4000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/glasdachplatte-2500mm-x-700mm-auf-mass-schneiden",
+      "store": "de",
+      "path": "glasdachplatte-2500mm-x-700mm-auf-mass-schneiden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/glasdachplatte-3000mm-x-700mm-auf-mass-schneiden",
+      "store": "de",
+      "path": "glasdachplatte-3000mm-x-700mm-auf-mass-schneiden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/glasdachplatte-3500mm-x-700mm-auf-mass-schneiden",
+      "store": "de",
+      "path": "glasdachplatte-3500mm-x-700mm-auf-mass-schneiden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/glasdachplatte-4000mm-x-700mm-auf-mass-schneiden",
+      "store": "de",
+      "path": "glasdachplatte-4000mm-x-700mm-auf-mass-schneiden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/milch-glasdachplatte-2500mm-x-700mm-auf-mass-schneiden",
+      "store": "de",
+      "path": "milch-glasdachplatte-2500mm-x-700mm-auf-mass-schneiden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/milch-glasdachplatte-3000mm-x-700mm-auf-mass-schneiden",
+      "store": "de",
+      "path": "milch-glasdachplatte-3000mm-x-700mm-auf-mass-schneiden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/milch-glasdachplatte-3500mm-x-700mm-auf-mass-schneiden",
+      "store": "de",
+      "path": "milch-glasdachplatte-3500mm-x-700mm-auf-mass-schneiden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/milch-glasdachplatte-4000mm-x-700mm-auf-mass-schneiden",
+      "store": "de",
+      "path": "milch-glasdachplatte-4000mm-x-700mm-auf-mass-schneiden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/milchglas-dachplatte-nicht-gehartet-2500mm-x-700mm",
+      "store": "de",
+      "path": "milchglas-dachplatte-nicht-gehartet-2500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/milchglas-dachplatte-nicht-gehartet-3000mm-x-700mm",
+      "store": "de",
+      "path": "milchglas-dachplatte-nicht-gehartet-3000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/milchglas-dachplatte-nicht-gehartet-3500mm-x-700mm",
+      "store": "de",
+      "path": "milchglas-dachplatte-nicht-gehartet-3500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/milchglas-dachplatte-nicht-gehartet-4000mm-x-700mm",
+      "store": "de",
+      "path": "milchglas-dachplatte-nicht-gehartet-4000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/spruhdose-matt-anthrazit",
+      "store": "de",
+      "path": "spruhdose-matt-anthrazit",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/spruhdose-matt-schwarz",
+      "store": "de",
+      "path": "spruhdose-matt-schwarz",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.de/spruhdose-matt-weiss",
+      "store": "de",
+      "path": "spruhdose-matt-weiss",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/aerosol-anthacite-mat",
+      "store": "fr",
+      "path": "aerosol-anthacite-mat",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/aerosol-blanc-mat",
+      "store": "fr",
+      "path": "aerosol-blanc-mat",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/aerosol-noir-mat",
+      "store": "fr",
+      "path": "aerosol-noir-mat",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/couper-une-plaque-de-toit-de-verre-2500mm-x-700mm-sur-mesure",
+      "store": "fr",
+      "path": "couper-une-plaque-de-toit-de-verre-2500mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/couper-une-plaque-de-toit-de-verre-3000mm-x-700mm-sur-mesure",
+      "store": "fr",
+      "path": "couper-une-plaque-de-toit-de-verre-3000mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/couper-une-plaque-de-toit-de-verre-3500mm-x-700mm-sur-mesure",
+      "store": "fr",
+      "path": "couper-une-plaque-de-toit-de-verre-3500mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/couper-une-plaque-de-toit-de-verre-4000mm-x-700mm-sur-mesure",
+      "store": "fr",
+      "path": "couper-une-plaque-de-toit-de-verre-4000mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/couper-une-plaque-de-toit-de-verre-opale-2500mm-x-700mm-sur-mesure",
+      "store": "fr",
+      "path": "couper-une-plaque-de-toit-de-verre-opale-2500mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/couper-une-plaque-de-toit-de-verre-opale-3000mm-x-700mm-sur-mesure",
+      "store": "fr",
+      "path": "couper-une-plaque-de-toit-de-verre-opale-3000mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/couper-une-plaque-de-toit-de-verre-opale-3500mm-x-700mm-sur-mesure",
+      "store": "fr",
+      "path": "couper-une-plaque-de-toit-de-verre-opale-3500mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/couper-une-plaque-de-toit-de-verre-opale-4000mm-x-700mm-sur-mesure",
+      "store": "fr",
+      "path": "couper-une-plaque-de-toit-de-verre-opale-4000mm-x-700mm-sur-mesure",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/plaque-toit-en-verre-non-durcie-2500mm-x-700mm",
+      "store": "fr",
+      "path": "plaque-toit-en-verre-non-durcie-2500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/plaque-toit-en-verre-non-durcie-3000mm-x-700mm",
+      "store": "fr",
+      "path": "plaque-toit-en-verre-non-durcie-3000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/plaque-toit-en-verre-non-durcie-3500mm-x-700mm",
+      "store": "fr",
+      "path": "plaque-toit-en-verre-non-durcie-3500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/plaque-toit-en-verre-non-durcie-4000mm-x-700mm",
+      "store": "fr",
+      "path": "plaque-toit-en-verre-non-durcie-4000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/plaque-toit-en-verre-opale-non-durcie-2500mm-x-700mm",
+      "store": "fr",
+      "path": "plaque-toit-en-verre-opale-non-durcie-2500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/plaque-toit-en-verre-opale-non-durcie-3000mm-x-700mm",
+      "store": "fr",
+      "path": "plaque-toit-en-verre-opale-non-durcie-3000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/plaque-toit-en-verre-opale-non-durcie-3500mm-x-700mm",
+      "store": "fr",
+      "path": "plaque-toit-en-verre-opale-non-durcie-3500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.fr/plaque-toit-en-verre-opale-non-durcie-4000mm-x-700mm",
+      "store": "fr",
+      "path": "plaque-toit-en-verre-opale-non-durcie-4000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/glazen-dakplaat-2500mm-x700mm-op-maat-snijden",
+      "store": "nl",
+      "path": "glazen-dakplaat-2500mm-x700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/glazen-dakplaat-3000mm-x-700mm-op-maat-snijden",
+      "store": "nl",
+      "path": "glazen-dakplaat-3000mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/glazen-dakplaat-3500mm-x-700mm-op-maat-snijden",
+      "store": "nl",
+      "path": "glazen-dakplaat-3500mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/glazen-dakplaat-4000mm-x-700mm-op-maat-snijden",
+      "store": "nl",
+      "path": "glazen-dakplaat-4000mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/glazen-dakplaat-ongehard-2500mm-x-700mm",
+      "store": "nl",
+      "path": "glazen-dakplaat-ongehard-2500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/glazen-dakplaat-ongehard-3000mm-x-700mm",
+      "store": "nl",
+      "path": "glazen-dakplaat-ongehard-3000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/glazen-dakplaat-ongehard-3500mm-x-700mm",
+      "store": "nl",
+      "path": "glazen-dakplaat-ongehard-3500mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/glazen-dakplaat-ongehard-4000mm-x-700mm",
+      "store": "nl",
+      "path": "glazen-dakplaat-ongehard-4000mm-x-700mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/melkglas-dakplaat-ongehard-2500-mm-x-700-mm",
+      "store": "nl",
+      "path": "melkglas-dakplaat-ongehard-2500-mm-x-700-mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/melkglas-dakplaat-ongehard-3000-mm-x-700-mm",
+      "store": "nl",
+      "path": "melkglas-dakplaat-ongehard-3000-mm-x-700-mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/melkglas-dakplaat-ongehard-3500-mm-x-700-mm",
+      "store": "nl",
+      "path": "melkglas-dakplaat-ongehard-3500-mm-x-700-mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/melkglas-dakplaat-ongehard-4000-mm-x-700-mm",
+      "store": "nl",
+      "path": "melkglas-dakplaat-ongehard-4000-mm-x-700-mm",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/melkglazen-dakplaat-2500mm-x-700mm-op-maat-snijden",
+      "store": "nl",
+      "path": "melkglazen-dakplaat-2500mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/melkglazen-dakplaat-3000mm-x-700mm-op-maat-snijden",
+      "store": "nl",
+      "path": "melkglazen-dakplaat-3000mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/melkglazen-dakplaat-3500mm-x-700mm-op-maat-snijden",
+      "store": "nl",
+      "path": "melkglazen-dakplaat-3500mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/melkglazen-dakplaat-4000mm-x-700mm-op-maat-snijden",
+      "store": "nl",
+      "path": "melkglazen-dakplaat-4000mm-x-700mm-op-maat-snijden",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/spuitbus-mat-antraciet",
+      "store": "nl",
+      "path": "spuitbus-mat-antraciet",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/spuitbus-mat-wit",
+      "store": "nl",
+      "path": "spuitbus-mat-wit",
+      "rule": "product-signature"
+    },
+    {
+      "loc": "https://www.tuinmaximaal.nl/spuitbus-mat-zwart",
+      "store": "nl",
+      "path": "spuitbus-mat-zwart",
+      "rule": "product-signature"
+    }
+  ],
   "carried": 49,
   "rows": [
     {

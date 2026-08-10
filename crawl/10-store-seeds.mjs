@@ -70,7 +70,12 @@ const seeds = {
   },
   counts,
   candidates: extract.entries.length,
-  dropped: dropped.length,
+  // Ticket 56: the list, and not the count it used to be. The dashboard shows
+  // every page the log found and does not compare, and it can only name a
+  // reason that something upstream wrote down. The file is tracked by git, so
+  // a wrong exclusion is reversed by editing this list: add the row back and
+  // the next run carries it over, because the generator reads its own output.
+  dropped,
   carried,
   rows,
 };
@@ -130,9 +135,12 @@ const markdown = [
   '',
   `${dropped.length} of ${extract.entries.length} candidates.`,
   '',
-  '| URL | Why |',
-  '| --- | --- |',
-  ...dropped.map((entry) => `| ${entry.loc} | ${entry.why} |`),
+  '| URL | Store | Rule |',
+  '| --- | --- | --- |',
+  ...dropped.map((entry) => `| ${entry.loc} | ${entry.store ?? '·'} | ${entry.rule} |`),
+  '',
+  'The words of each rule are in `shared/drop-rules.mjs`, and the dashboard',
+  'shows them beside the page.',
   '',
 ].join('\n');
 
@@ -141,7 +149,7 @@ writeFileSync(new URL('../data/10-store-seeds.md', import.meta.url), markdown);
 console.log(`\npages total ${rows.length} rows, ${extract.entries.length} candidates`);
 console.table(counts);
 console.log(`dropped ${dropped.length}, carried over ${carried}`);
-for (const entry of dropped) console.log(`  drop ${entry.loc} (${entry.why})`);
+for (const entry of dropped) console.log(`  drop ${entry.loc} (${entry.rule})`);
 if (collisions.length) {
   console.log(`\n${collisions.length} pages hold two locs of one store:`);
   for (const clash of collisions) {

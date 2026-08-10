@@ -13,6 +13,7 @@
  */
 
 import { HOME, unanchoredKey, unsafeReason } from '../shared/page-key.mjs';
+import { unknownDropRules } from '../shared/drop-rules.mjs';
 import { STORES } from '../shared/stores.mjs';
 
 /** @typedef {import('../shared/stores.mjs').Store} Store */
@@ -88,6 +89,22 @@ export function storePageOf(loc) {
   const store = host === 'be' && path.startsWith(BE_FR_PREFIX) ? 'be_fr' : host;
   return { store: /** @type {Store} */ (store), path };
 }
+
+/**
+ * The path of any URL, including one of a host the log does not know. A drop
+ * record carries a path even when it carries no store, so the reader of the
+ * dashboard sees a page name and not only a hostname.
+ *
+ * @param {string} loc
+ * @returns {string}
+ */
+const pathOf = (loc) => {
+  try {
+    return new URL(loc).pathname.replace(/^\//, '');
+  } catch {
+    return loc;
+  }
+};
 
 /** The store root, which is that store's home page. */
 export const homePath = (/** @type {Store} */ store) => (store === 'be_fr' ? BE_FR_PREFIX : '');
@@ -239,6 +256,27 @@ const emptyRow = (/** @type {string} */ page) => ({
 });
 
 /**
+ * One URL that left the list, and the rule that took it.
+ *
+ * The rule is a **name**, and `shared/drop-rules.mjs` holds its words. The
+ * dashboard shows the reason, so the reason must be correctable without a new
+ * seed list: the name in the committed data does not move when the sentence is
+ * rewritten. `detail` is what one sentence cannot hold, such as which page a
+ * collision lost to.
+ *
+ * The store is on the record, because the dashboard is per store (ticket 38). A
+ * URL of a host that is not one of the five belongs to no store, and its store
+ * is `null`.
+ *
+ * @typedef {object} DropRecord
+ * @property {string} loc
+ * @property {Store | null} store
+ * @property {string} path
+ * @property {string} rule A key of `DROP_RULES`.
+ * @property {string} [detail]
+ */
+
+/**
  * Build the seed list.
  *
  * @param {object} input
@@ -249,7 +287,7 @@ const emptyRow = (/** @type {string} */ page) => ({
  *   find them again.
  * @returns {{
  *   rows: SeedRow[],
- *   dropped: { loc: string, why: string }[],
+ *   dropped: DropRecord[],
  *   collisions: { page: string, store: Store, kept: string, dropped: string }[],
  *   carried: number,
  * }}
@@ -265,13 +303,20 @@ export function buildSeedList({ entries, carriedRows = [] }) {
   for (const entry of entries) {
     const page = storePageOf(entry.loc);
     if (!page) {
-      dropped.push({ loc: entry.loc, why: 'host is not one of the five' });
+      dropped.push({
+        loc: entry.loc,
+        store: null,
+        path: pathOf(entry.loc),
+        rule: 'foreign-host',
+      });
       continue;
     }
     if (!isContentPage(entry)) {
       dropped.push({
         loc: entry.loc,
-        why: isProductPage(page.path) ? 'product signature' : 'six alternates and never daily',
+        store: page.store,
+        path: page.path,
+        rule: isProductPage(page.path) ? 'product-signature' : 'six-alternates-never-daily',
       });
       continue;
     }
@@ -295,7 +340,13 @@ export function buildSeedList({ entries, carriedRows = [] }) {
         kept: seated.prodUrl,
         dropped: cell.prodUrl,
       });
-      dropped.push({ loc: entry.loc, why: `${page.store} already holds ${key}` });
+      dropped.push({
+        loc: entry.loc,
+        store: page.store,
+        path: page.path,
+        rule: 'duplicate-in-store',
+        detail: `The ${page.store} store already holds \`${key}\`, at ${seated.prodUrl}.`,
+      });
       continue;
     }
     row.stores[page.store] = cell;
@@ -405,6 +456,23 @@ export function schemaDisagreements(seeds) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(seeds.generated ?? '')) {
     said.push('`generated` is not an ISO date');
   }
+  // Ticket 56: the drop list is data and not a count, so the schema check holds
+  // it to the same promise the rows keep. A drop that names no rule, or a rule
+  // that no vocabulary explains, is a page excluded without a reason.
+  if (!Array.isArray(seeds.dropped)) {
+    said.push('`dropped` is not an array. It is the list of URLs that left the list.');
+  } else {
+    for (const entry of seeds.dropped) {
+      for (const field of ['loc', 'path', 'rule']) {
+        if (typeof entry?.[field] !== 'string') said.push(`a drop has no \`${field}\``);
+      }
+      if (entry?.store !== null && !STORES.includes(entry?.store)) {
+        said.push(`${entry?.loc}: \`store\` is not one of the six, and not null`);
+      }
+    }
+    said.push(...unknownDropRules(seeds.dropped.filter((entry) => typeof entry?.rule === 'string')));
+  }
+
   if (!Array.isArray(seeds.rows)) return [...said, '`rows` is not an array'];
 
   const seen = new Set();

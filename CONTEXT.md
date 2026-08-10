@@ -52,9 +52,21 @@ them are in `.scratch/content-parity-log/map.md`.
   page is outside the log by definition, and it is named in a committed list with
   its reason. It is not a one-sided page: a one-sided page waits for somebody to
   rebuild or retire it, while an application page waits for nothing.
-- **Not checked** — the list of pages that the log deliberately leaves out, each
-  with the reason. An excluded page says why it is excluded; it is never silently
-  absent.
+- **Not checked** — the list of pages that the log found and does not compare,
+  each with the reason. A page on it says why; it is never silently absent, and
+  it is counted in the store total. It has three kinds, because a reader acts on
+  a decision and on an accident differently (ticket 56):
+  - **Dropped by rule** — the seed rule never admitted the URL, so it never
+    became a store page. The rule is a **name** in `data/10-store-seeds.json` and
+    its words are in `shared/drop-rules.mjs`.
+  - **Excluded page** — a store page whose key is in `shared/excluded-pages.mjs`.
+    The crawler fetches nothing for it. An application page is of this kind.
+  - **Not crawled** — the seed list has the page on both sides and no report
+    exists. Nothing decided it; the fetch failed. It is the one kind that is not
+    a decision, and the next crawl can still bring it in.
+
+  Do not say "not compared" for any of these. **Uncompared** is taken, and it is
+  a row inside a page and not a page (see below).
 
 ## Extraction
 

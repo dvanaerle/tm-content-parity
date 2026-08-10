@@ -317,7 +317,16 @@ to about **800**.
 
 ---
 
-### ☐ Step 04 — Ticket 56, an excluded page says why
+### ☑ Step 04 — Ticket 56, an excluded page says why
+
+**Done 2026-08-10.** The gate below read right: the surface was the **105** seed
+drops, not the report folder's 1. `crawl/` now emits the drop list instead of
+counting it, `data/10-store-seeds.json` carries all 105 with a named rule, and
+the dashboard states `pagina's gevonden` with the not-checked pages inside the
+total. All 105 are `product-signature`; none of the seven kinds the ticket named
+is in the corpus, because the sitemaps never declared them. The three uncrawled
+pages are a third kind now and no longer silently absent. `npm test` 472 → 507.
+
 
 touches `web`. Blocked by 54. **Was to be the same sitting as step 03, and it was
 not.** Step 03 was run on its own, so this step is still open and it is now the

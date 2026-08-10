@@ -2,7 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { EXCLUDED_PAGES } from '../../../shared/excluded-pages.mjs';
 import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
-import { cellWithBothSides } from '../../../shared/seed-rows.mjs';
+import { notCheckedInStore } from './not-checked.mjs';
 import { CoverageTally } from '../../../compare/region-coverage.mjs';
 import { storeOfFile } from '../../../compare/contract.mjs';
 import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
@@ -215,35 +215,20 @@ export async function regionsChangedInLog() {
 }
 
 /**
- * The excluded pages **this** store has. `veranda-configurator` is nl only, so a
- * German dashboard that reported one page "niet gecontroleerd" would be counting
- * another store's page (ticket 38).
+ * Every page of this store the log found and does not check, with its reason
+ * (ticket 56). Three things leave a page out and `not-checked.mjs` gives the
+ * three words; this function only reads the two files they need.
  *
- * The store has the page when the cell has both sides, which is the crawler's
- * condition and not a second one. Ticket 38's review found this asking for the
- * production url alone: a page with production and no counterpart was excluded
- * here and never excluded by the crawler, so the two counts could disagree.
- *
- * @param {import('../../../shared/seed-rows.mjs').SeedRow[]} rows
- * @param {string} store
- * @returns {typeof EXCLUDED_PAGES}
- */
-export function excludedInStore(rows, store) {
-  const inStore = new Set(
-    rows.filter((row) => cellWithBothSides(row, store)).map((row) => row.page),
-  );
-  return EXCLUDED_PAGES.filter((entry) => inStore.has(entry.page));
-}
-
-/**
- * A missing seed file reports no excluded page rather than failing the build, for
- * the same reason an empty `data/reports/` builds an empty log: a fresh clone has
- * neither, and it must still build.
+ * A missing seed file reports nothing rather than failing the build, for the same
+ * reason an empty `data/reports/` builds an empty log: a fresh clone has neither,
+ * and it must still build.
  *
  * @param {string} store
- * @returns {Promise<typeof EXCLUDED_PAGES>}
+ * @param {{ page: string }[]} crawled The pages that have a report, which is what
+ *   `loadSummaries(store)` returns.
+ * @returns {Promise<import('./not-checked.mjs').NotChecked[]>}
  */
-export async function excludedFor(store) {
+export async function notCheckedFor(store, crawled = []) {
   let seeds;
   try {
     seeds = JSON.parse(await readFile(SEEDS, 'utf8'));
@@ -251,5 +236,13 @@ export async function excludedFor(store) {
     if (/** @type {any} */ (error).code === 'ENOENT') return [];
     throw error;
   }
-  return excludedInStore(seeds.rows, store);
+  return notCheckedInStore({
+    rows: seeds.rows ?? [],
+    // A seed list written before this ticket holds a count here and not a list.
+    // It then reports the exclusions it can name and none it cannot, which is
+    // what an older file honestly knows.
+    dropped: Array.isArray(seeds.dropped) ? seeds.dropped : [],
+    crawled: crawled.map((page) => page.page),
+    store,
+  });
 }

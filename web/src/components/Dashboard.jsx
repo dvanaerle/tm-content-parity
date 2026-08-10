@@ -5,6 +5,7 @@ import { CHECK_LABEL } from '../lib/classes.mjs';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
+import { groupNotChecked } from '../lib/not-checked.mjs';
 import { pagesWithClasses, toggleIn } from '../lib/view.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
@@ -19,7 +20,8 @@ const CHECKS = ['text', 'links', 'images'];
  * summed with this one, and ticket 23 owns its store-level view.
  */
 export default function Dashboard({
-  pages, excluded, regions = [], regionsChanged = { store: null, reason: null, changes: [] },
+  pages, notChecked = [], regions = [],
+  regionsChanged = { store: null, reason: null, changes: [] },
 }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('worst');
@@ -95,7 +97,11 @@ export default function Dashboard({
           label="eenzijdig"
           title="Een van de twee kanten antwoordt geen 200. Ticket 20 beslist wat hiermee gebeurt."
         />
-        <Chip value={excluded.length} label="niet gecontroleerd" />
+        <Chip
+          value={notChecked.length}
+          label="niet gecontroleerd"
+          title="Gevonden en zichtbaar, maar er is niets te vergelijken. Elke pagina zegt onderaan waarom."
+        />
       </section>
 
       <section className="rounded border border-slate-200 bg-white">
@@ -191,15 +197,23 @@ export default function Dashboard({
       </Aside>
 
       <Aside
-        title={`Niet gecontroleerd (${excluded.length})`}
-        note="Bewust buiten het log (ticket 19). Zichtbaar uitgesloten, niet stil weggelaten."
+        title={`Niet gecontroleerd (${notChecked.length})`}
+        note="Gevonden, geteld en zichtbaar, maar er is niets te vergelijken (ticket 56). De reden staat er per groep bij. Zichtbaar uitgesloten, niet stil weggelaten."
       >
-        {excluded.map((entry) => (
-          <li key={entry.page} className="py-1">
-            <strong className="font-medium">{entry.page}</strong>
-            <span className="text-slate-500"> — {entry.reason}</span>
+        {groupNotChecked(notChecked).map((group) => (
+          <li key={group.key} className="border-t border-slate-100 py-2 first:border-0">
+            <strong className="font-medium">
+              {NOT_CHECKED_KIND[group.kind] ?? group.kind} ({group.pages.length})
+            </strong>
+            <span className="block text-slate-500">{group.reason}</span>
+            <span className="mt-1 block text-slate-600">
+              {group.pages.map((entry) => entry.page).join(', ')}
+            </span>
           </li>
         ))}
+        {notChecked.length === 0 && (
+          <li className="py-1 text-slate-500">Elke gevonden pagina van deze winkel wordt gecontroleerd.</li>
+        )}
       </Aside>
 
       <Aside
@@ -278,6 +292,17 @@ const REGION_VERDICT = {
     + 'De vorige snapshot heeft er geen getal voor.',
   'left-the-list': (change) => 'staat niet meer in de lijst. Weggehaald op '
     + `${change.was.pages} pagina's in de vorige snapshot.`,
+};
+
+/**
+ * The three ways a page is not checked, in the language the dashboard speaks.
+ * Two of them are decisions and one is an accident, and an editor acts on them
+ * differently, so they never share a word.
+ */
+const NOT_CHECKED_KIND = {
+  'dropped-by-rule': 'Geen contentpagina',
+  'excluded-page': 'Bewust buiten het log',
+  'not-crawled': 'Niet opgehaald',
 };
 
 /** The two words of the vocabulary, in the language the dashboard speaks. */

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
 import {
-  excludedInStore, regionsChangedInLog, regionsRemovedInStore, storesFromFilenames,
+  notCheckedFor, regionsChangedInLog, regionsRemovedInStore, storesFromFilenames,
 } from './reports.mjs';
 
 /**
@@ -35,34 +35,24 @@ describe('storesFromFilenames', () => {
 });
 
 /**
- * Which excluded page belongs to which store. One rule, and it must be the
- * crawler's rule: an excluded page the crawler never saw would be counted *niet
- * gecontroleerd* on a store that does not have it.
+ * Ticket 56. The rule is `not-checked.mjs` and its own tests hold it. What is
+ * tested here is the **read**: the dashboard gets the drop list out of the
+ * committed seed file.
  */
-describe('excludedInStore', () => {
-  const both = { prodUrl: 'https://prod/veranda-configurator', newUrl: 'https://new/veranda-configurator' };
-  const rows = (stores) => [{ page: 'veranda-configurator', stores }];
-
-  it('gives the excluded page to a store that has both sides', () => {
-    expect(excludedInStore(rows({ nl: both }), 'nl')).toHaveLength(1);
-    expect(excludedInStore(rows({ nl: both }), 'nl')[0].page).toBe('veranda-configurator');
+describe('notCheckedFor', () => {
+  it('reads the committed drop list, and gives the British store its ten', async () => {
+    const found = await notCheckedFor('uk', []);
+    expect(found.filter((entry) => entry.kind === 'dropped-by-rule')).toHaveLength(10);
   });
 
-  it('gives nothing to a store the page is absent from', () => {
-    // `veranda-configurator` is nl only. A German dashboard that reported it
-    // would be counting another store's page.
-    expect(excludedInStore(rows({ nl: both, de: null }), 'de')).toEqual([]);
+  it('gives every entry a reason, because that is the whole of this ticket', async () => {
+    for (const entry of await notCheckedFor('nl', [])) expect(entry.reason).toBeTruthy();
   });
 
-  it('gives nothing to a store that has production and no counterpart', () => {
-    // The crawler needs both sides before it calls a page excluded. This asked
-    // for the production url alone until ticket 38's review, so the two could
-    // disagree on the same page.
-    expect(excludedInStore(rows({ de: { prodUrl: 'https://prod/x' } }), 'de')).toEqual([]);
-  });
-
-  it('gives nothing for a page that is not excluded', () => {
-    expect(excludedInStore([{ page: 'overkappingen', stores: { nl: both } }], 'nl')).toEqual([]);
+  it('leaves out a page that has a report, so a crawled page is never listed', async () => {
+    const [first] = await notCheckedFor('nl', []);
+    const again = await notCheckedFor('nl', [{ page: first.page }]);
+    expect(again.some((entry) => entry.page === first.page && entry.kind === 'not-crawled')).toBe(false);
   });
 });
 

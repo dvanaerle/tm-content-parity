@@ -10,7 +10,9 @@
  * carries the reason, because the next reader will ask.
  *
  * The web build lists these under "Not checked" with the reason, so an
- * excluded page is visibly excluded rather than silently absent.
+ * excluded page is visibly excluded rather than silently absent. Ticket 56 put
+ * two more kinds in that list beside this one, and
+ * `web/src/lib/not-checked.mjs` does the merge.
  */
 export const EXCLUDED_PAGES = [
   {

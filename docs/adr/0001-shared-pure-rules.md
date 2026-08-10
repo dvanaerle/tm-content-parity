@@ -91,6 +91,18 @@ count moved, which is what a move must do.
 They break no arrow, so the rule above applies unchanged: they move when a change
 has a reason to open them.
 
+### A fifth resident, 2026-08-10
+
+Ticket 56 needed the words for each rule that drops a URL from the seed list.
+`crawl/seed-list.mjs` writes the rule **name** into `data/10-store-seeds.json`
+and `web/` reads the name back to show the reason, so two stages read one pure
+rule and `crawl/` cannot import `web/`. It is `shared/drop-rules.mjs`.
+
+The merge that builds the *Not checked* list did **not** come with it. Only
+`web/` needs it, so it is `web/src/lib/not-checked.mjs`. The first draft of that
+ticket put both in `shared/`, and the rule above is what sent the second half
+back: `shared/` is for pure code that two stages read, not for pure code.
+
 ### A fourth resident, 2026-08-10
 
 `shared/page-key.mjs` was born here for the same reason `excluded-regions.mjs`
