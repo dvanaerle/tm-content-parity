@@ -43,33 +43,6 @@ git add .scratch/content-parity-log/RUNBOOK.md .scratch/content-parity-log/WORKL
 git commit -m "The runbook is revised, and the worklist gives the order"
 ```
 
-### 00b — Decide the half-applied Astro upgrade
-
-`web/package.json` in the working tree carries `astro ^5.14.0 → ^7.2.0` and
-`@astrojs/react ^4.4.0 → ^6.0.2`, with a matching lockfile change. Nobody
-recorded it.
-
-This is session 10C work, it is out of order, and it **skips ticket 72's Astro 6
-step**. Two upgrades in one diff cannot be reviewed, which is the whole reason
-10C exists.
-
-**Recommended: revert it, and build 72 then 73 at step 14 and step 15.**
-
-```powershell
-git checkout web/package.json web/package-lock.json
-```
-
-If you keep it instead, rewrite tickets 72 and 73 to say that the two steps
-became one, and record why.
-
----
-
-## The corpus stream — steps 01 to 11
-
-`data/` has one writer. No two of these steps may be in flight together.
-
----
-
 ### ☐ Step 01 — Ticket 88, the mute says what it hides
 
 **FIRST, and out of dependency order.** touches `web`. Blocked by nothing.
