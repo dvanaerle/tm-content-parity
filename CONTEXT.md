@@ -101,14 +101,26 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Tier 2** — visible difference: letter case, trailing punctuation. Report as
   a `casing` finding.
 - **Check** — a family of comparisons: `text`, `links`, `images`, `meta`.
-- **Class** — why the two sides are different. The class vocabulary is closed,
-  each class has a shown or hidden default, and the class is also the mute key.
-  See `compare/contract.mjs`.
+- **Class** — why the two sides are different. The class vocabulary is closed, and
+  the class is also the mute key. See `compare/contract.mjs`.
+- **Visibility** — what a class is for. One of three words, and each class has
+  exactly one. **Work** is migration work: it counts. **Information** is a
+  difference an editor may want to read: it is rendered and it does not count.
+  **Diagnostic** tells the author of a rule what the rule saw: it stays behind the
+  noise toggle. Visibility is not a second axis; it replaced a shown-or-hidden
+  boolean, and the class stays the only axis. "Excluded from comparison" is not a
+  visibility: an excluded region leaves at extraction and never reaches a class.
+  See `docs/adr/0005-class-visibility-is-one-enum.md`.
 - **Finding** — one actionable difference. The tool never makes a finding that
   it then hides. A row that is equal after tier-1 normalisation is not a
   finding.
 - **Occurrence count** — how many times the same difference is on the page. It
   is not part of the finding id.
+- **Repeat** — every finding in **one store** with the same class, the same two
+  texts and the same detail. It is the unit of a bulk decision, and it is not a
+  thing the data holds: it is a grouping the interface makes. A repeat never
+  crosses a store, because the stores translate the text, so the same defect in
+  six stores is six repeats and not one.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
   `heading-level` or a `tag-changed` finding, and null on every other class. It is
   part of the finding id, because without it two different demotions of the same
@@ -135,10 +147,18 @@ element any more: it folds the links inside it. Both the word and the rule are g
 ## The interface
 
 - **Content view** — the whole store page in document order, production and the new
-  site side by side, with a row for each content unit. It is the spine of the log:
-  a matched row and a changed row are both in it, so the colour on a changed row
-  carries a signal. Markdown is an export beside it and never the spine, because
-  Markdown flattens the element identity the finding id needs.
+  site side by side, with a row for each content unit. It is the spine of the log,
+  because most findings are one-sided and the question they ask is where the text
+  belongs, which only document order answers. The word diff is a cell renderer
+  inside it and not the interface. Markdown is an export beside it and never the
+  spine, because Markdown flattens the element identity the finding id needs.
+  See `docs/adr/0006-the-content-view-is-the-spine.md`.
+- **Context marker** — one row that stands for a run of equal rows and says how
+  many blocks it holds. It expands. The content view shows the differing rows by
+  default and collapses the rest into markers, so position survives and nobody
+  scrolls past agreement. In this state every visible row is a difference, so the
+  **row tint carries no signal and it goes**; the class pill carries the class. The
+  retired *Diff* tab is what happens without the marker and without that rule.
 - **Filter** — a narrowing of what is on screen, by class. It is session-only and it
   moves no bar, no denominator and no count. The content view narrows a page to a
   class and the dashboard narrows the page list to the same class; both say so with
@@ -173,6 +193,23 @@ what is left of it is a heading jump-list beside the rows.
   more specific than the class. A consequence: if a re-check gives a finding a
   different class, the id changes and a dismissal detaches.
 
+## History
+
+- **Run log** — the record of which findings each observation saw. It is keyed on the
+  finding id alone, and it holds three facts: when an id was first seen, whether it is
+  in the current snapshot, and when it was last seen. It holds no text, no decision
+  and no relation between two ids.
+- The run log **never re-attaches**. It cannot say that a new finding is an old
+  finding with edited text, and it must not try: a matcher that is wrong carries a
+  dismissal onto text that nobody dismissed, and it fails silently. An expired id
+  asks a question twice, which is the failure that is visible and cheap. See
+  `docs/adr/0004-history-is-a-run-log-that-never-re-attaches.md`.
+- **No longer seen** — an id that the current snapshot does not hold. It is not a
+  decision and nobody made it.
+- One word is refused. **"Changed"** named a finding that the tool believed to be an
+  older finding with new text. The tool cannot know that. The history note is what is
+  left of the idea.
+
 ## Overrides
 
 A finding has **no state**. It has overrides. An **override** is an editor's
@@ -189,9 +226,15 @@ who wins against re-check.
   content, thus on the finding id, so it expires when either side changes. This
   is correct behaviour: the judgement is stale, and the tool must ask again. A
   note is necessary.
-- **Mute** — a judgement about a class on a page: "this class is never a defect
-  here." Keyed on store, page and class. It persists. Muted findings stay visible
-  behind a toggle.
+- **Mute** — a judgement about a class in one place: "this class is never a defect
+  here." Keyed on store, page, class and **anchor heading**, so it names a section.
+  A **page-wide mute** is the same judgement with the heading left out; it stays
+  available for a page whose headings are content, such as a gallery. A mute persists,
+  and muted findings stay visible behind a toggle. A mute **says how many findings it
+  hides before it is made**, and it needs a note: it is the one judgement that never
+  expires, so it is the one that must be auditable. The anchor heading is in the mute
+  key and not in the finding id, because a mute is a judgement and an id is an
+  identity. See `docs/adr/0008-the-mute-key-carries-the-anchor-heading.md`.
 - **Page review** — "a human looked at this whole page." Keyed on store and page.
   It covers what the tool cannot see: layout, tone, an image that agrees by name
   and shows something else. It never expires; it becomes **stale**.
@@ -203,15 +246,39 @@ who wins against re-check.
 - **Stale** — a page review made against a page whose findings changed after it.
   The interface says **"changed since review"**, not "needs review", because a
   page also becomes stale when an editor corrects things.
+- **Migration decision** — an override on a one-sided page: **migrate**,
+  **not migrated**, **replaced** or **redirected**. Every one except *migrate* needs
+  a note. *Replaced* and *redirected* are claims of fact, so they lose to re-check
+  in the same manner as a fix claim: a page claimed as redirected that still answers
+  404 is contradicted. *Not migrated* is a judgement, and it beats re-check. A
+  migration decision is scope work, so it stays out of the progress bar.
+- **Priority** and **Note** — two annotations on a page. Priority is one of a closed
+  list of words; a note is free text. Both describe a page and neither describes a
+  finding, because a finding carries its own decision. There is no **owner**: with a
+  name in `localStorage` and no login, an owner field cannot mean what it says.
+- **History note** — a line beside a new finding, saying that a finding of the same
+  class closed on the same page in the same run, and what was decided about it. It
+  is a display-only difference. It asserts no identity, it is never counted, and it
+  is never offered as a decision to accept.
 - **Editor** — a name that the browser keeps in `localStorage`. There is no
   login.
 
 Two words are retired. **"Resolved"** hid the difference between a claim and a
 judgement. **"Reopened"** describes nothing: a finding is in the snapshot or it
-is not.
+is not. "Resolved" stays retired, and the third bucket is named **Closed**, which
+this list already defines.
 
 ## Progress
 
+- **Bucket** — one of the three groups a finding is in. There are three and no more:
+  **Open**, **Needs attention** and **Closed**. A bucket is a grouping of the derived
+  states, and it is not a state itself. Nothing is stored on a finding to put it in
+  one.
+- **Open** — a finding that waits for a decision.
+- **Needs attention** — a finding that is **contradicted**, and nothing else. A page
+  review that went stale is a fact about a page, so it is a badge on the page and
+  never a finding in this bucket. Two scopes in one bucket would count one thing
+  twice.
 - **Closed** — a finding that is absent from the snapshot, or dismissed, or
   claimed fixed and not contradicted.
 - **Denominator** — the findings in **shown** classes on this snapshot. A mute

@@ -105,6 +105,58 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   and the dashboard speak two languages, and it compares only two runs of the same
   scope. Ticket 64, which needs it: its anchor is campaign-specific by construction.
 
+From the grilling of 2026-08-10, which read a product proposal against the code. Five
+ADRs, and each one amends a resolved ticket rather than replacing it.
+
+- **Finding history is a run log, and it never re-attaches.** Ids stay
+  content-addressed and expire, so ticket 01 stands. A committed index keyed on the
+  finding id alone records first seen and last seen, and **git history is the archive**.
+  The word **"Changed"** is refused: a label chosen by how strong a historical relation
+  looks is a matcher with a threshold, and a wrong match carries a dismissal onto text
+  nobody dismissed, silently. What is left of the idea is a display-only **history
+  note**. See `docs/adr/0004-history-is-a-run-log-that-never-re-attaches.md`.
+- **A class says what it is for, in one field.** `work`, `information`, `diagnostic`,
+  replacing the shown-or-hidden boolean. It is **not** a second axis: ticket 02 removed
+  that, and the class stays the only axis and the mute key. `shown: false` said two
+  things at once — information for an editor, and a diagnostic for a rule author. The
+  migration is defined so the denominator does not move on the day it lands.
+  "Excluded from comparison" is not a value, because a region leaves at extraction.
+  See `docs/adr/0005-class-visibility-is-one-enum.md`.
+- **The content view is the spine, and the word diff is a cell renderer.** Measured:
+  **82% of shown findings are one-sided** — `text-missing` 49.3%, `missing-link` 21.0%,
+  `image-missing` 12.1% — and `copy`, the only class with a score, is **3.4%**. A word
+  diff of a string against nothing is a deletion block, and the unanswered question is
+  position: gone, or moved. The view opens on the differences with runs of equal rows
+  collapsed into a **context marker**, because a comparable page holds a median of 37
+  shown findings, 151 at p90 and 399 at worst. The row tint goes in that state, because
+  a tint on every visible row says nothing — which is why ticket 12 retired the *Diff*
+  tab. See `docs/adr/0006-the-content-view-is-the-spine.md`.
+- **shadcn on Base UI is taken for behaviour only.** Seven primitives, for focus traps
+  and keyboard menus. `web/src/lib/palette.mjs` keeps meaning, and `Chips.jsx` and
+  `Diff.jsx` are not rebuilt out of library parts. Two runtime dependencies become about
+  nine, bounded by the list of seven.
+  See `docs/adr/0007-shadcn-is-taken-for-behaviour-only.md`.
+- **The mute key carries the anchor heading, and a mute says what it hides.** One press
+  of *Klasse dempen* can hide **173 findings** today, with no reason asked and no author
+  to review, for ever. Measured: `page + class` gives 2,101 groups at a median of 4 and
+  a p90 of 25; adding the heading gives 7,639 groups at a median of 1. **The page-wide
+  form stays**, because on a gallery page the headings are per-photo captions and the
+  section form turns 4 decisions into 239. The count is stated before the press and a
+  note becomes mandatory. The heading is in the mute key and not in the finding id,
+  because a mute is a judgement and an id is an identity.
+  See `docs/adr/0008-the-mute-key-carries-the-anchor-heading.md`.
+- **Axis B is out of scope for this work.** Every decision above is axis A. Axis B keeps
+  its own tab and its own bar and is never summed, per ticket 11. This is written down
+  so the silence in the proposal is not read as a decision.
+- **Two proposed removals were refused, and both became different tickets.** Class mute
+  is not removed — it is the only override that survives a text change, and its problem
+  was the key, so the key narrows. The hard-coded campaign exclusion is not handed to
+  editors as search-and-dismiss: it was **4,055 findings, 11.8% of the corpus**, and a
+  dismissal expires whenever the campaign copy changes. The durable answer is that the
+  campaign rule fires one-sided, so a campaign classifies itself with no commit — the
+  current selector anchors on this campaign's option ids and needs a new commit every
+  campaign.
+
 ### Resolved tickets
 
 - [01 — Finding identity: stable ids across re-crawls](issues/01-finding-identity.md)
@@ -836,7 +888,100 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   pairing found nothing — a statement about the alignment, not about the sites.
   Ticket 28.
 
+## Working order
+
+Settled on 2026-08-10. 46 of the 90 tickets are closed. About 44 are open, and
+they are five streams and not one queue. Three constraints give the order.
+
+1. **`data/` has one writer.** Tickets 54, 55, 58 and 67 each rebuild the corpus.
+   Two of them must never be in flight together.
+2. **Ticket 88 is free today and impossible tomorrow.** Ticket 65 measured the
+   override table: no mute is live in any store. The table is append-only, so a
+   mute written under the old key can never be repaired.
+3. **A measurement before the corpus settles is a measurement done twice.**
+   Tickets 76 and 89 count the corpus that ticket 55 takes from 451 pairs to
+   about 800.
+
+The order:
+
+0. **[88](issues/88-the-mute-says-what-it-hides.md), alone and first.** Out of
+   dependency order, for constraint 2.
+1. **The corpus.** One ticket per session, serial:
+   54 → 55 + 56 → 67 → 68 → 58.
+2. **Re-measure.** 76 and 89. Also ticket 38's per-store counts, and the
+   re-triage of 04, 16, 20 and 25 that ticket 50 asks for after 55.
+3. **The stack, alone.** 72 → 73 → 74. An upgrade that carries a product change
+   cannot be reviewed.
+4. **The contract, then the workspace.** 75 and 77, then 78, 79, 80, 81, 31, 82,
+   83, 84, 85, 86, 90, and 87 last.
+
+**Ticket 37 moves to after 68.** It builds modes onto a content view that the
+fold rewrites.
+
+**Axis B is parked.** Tickets 39 to 45 stay a named stream and nobody starts
+them. The grilling of 2026-08-10 put axis B out of scope for the workspace work,
+and this line makes that a decision instead of a silence. Nothing about the
+tickets changes, and the edges in the axis B section below still hold.
+
+Three items want a human and not an agent: [30](issues/30-wire-the-supabase-project.md)
+is one click, ticket 34's deep link wants a grilling before it wants code, and
+[48](issues/48-open-and-done-board.md) re-triages after 37.
+
 ## Ready to build
+
+- **The log becomes a workspace** — nineteen tickets from the grilling session of
+  2026-08-10, which read a product proposal against the code and the corpus. Five ADRs
+  carry the decisions; see **Decisions so far**. Axis A only.
+
+  The measurement that shaped them: **22,990 shown findings of 33,507, over 448 reports
+  and 373 comparable pages**, in **8,229** distinct repeats. 116 repeats covered a
+  quarter of the corpus and 903 covered half — but **3,925 repeats are singletons**, so
+  **the backlog is not drained**: 90% coverage costs about 5,930 decisions. Progress must
+  read as how much is decided and never as how much is left. The head of that
+  distribution was the promo banner, which ticket 64 has since excluded, so ticket 76
+  restates the curve before anything is designed against it.
+
+  The stack goes first, alone, because an upgrade that carries a product change cannot be
+  reviewed:
+  [72 Astro 6](issues/72-upgrade-to-astro-6.md),
+  [73 Astro 7](issues/73-upgrade-to-astro-7.md),
+  [74 seven primitives](issues/74-seven-accessible-primitives.md).
+  Astro 7.2.0 is current, the documented path from 5.14 is 5 → 6 → 7, and v6 raises the
+  Node floor to 22.12.0 for the crawl and the re-check service as well as the build.
+
+  Then the contract and the measurements, all unblocked:
+  [75 class visibility](issues/75-class-visibility-replaces-shown.md),
+  [76 the coverage curve](issues/76-the-coverage-curve-without-the-promo-banner.md),
+  [77 the run log](issues/77-a-finding-says-when-it-was-first-seen.md),
+  [88 the mute](issues/88-the-mute-says-what-it-hides.md),
+  [89 what a campaign rule would catch](issues/89-what-a-one-sided-campaign-rule-would-catch.md).
+  **88 is urgent while it is free.** Ticket 65 counted the table: no mute is live in any
+  store, the table is append-only, and a mute written under the old key can never be
+  repaired.
+
+  Then the interface and the rest:
+  [78 the history note](issues/78-a-closed-finding-leaves-a-history-note.md),
+  [79 the context marker](issues/79-the-content-view-opens-on-the-differences.md),
+  [80 three buckets](issues/80-three-buckets-and-the-third-is-closed.md),
+  [81 the repeat is the queue](issues/81-the-repeat-is-the-queue.md),
+  [31 one reason, many findings](issues/31-bulk-dismissal.md),
+  [82 search](issues/82-search-reaches-the-content.md),
+  [83 priority and note](issues/83-a-page-carries-a-priority-and-a-note.md),
+  [84 migration decisions](issues/84-a-one-sided-page-carries-a-migration-decision.md),
+  [85 the comparison scope](issues/85-the-comparison-scope-is-legible.md),
+  [86 heading level](issues/86-heading-level-becomes-information.md),
+  [90 a campaign is a class](issues/90-a-campaign-is-a-class-not-a-commit.md),
+  [87 three widths](issues/87-three-widths.md).
+
+  78 needs 77. 81 needs 76. 31 needs 81 and 88, and 30. 82 needs 81. 85 and 86 need 75,
+  and 86 needs 76. 90 needs 89, **and 89 may refuse it** — the pattern is Dutch, which is
+  the objection ADR 0003 used against a Dutch text anchor, and the banner carries link
+  findings a text rule cannot reach. 87 is last so it is not done twice.
+  [31](issues/31-bulk-dismissal.md) was rewritten rather than duplicated: the grouping
+  key it asked for three sessions ago is 81's **repeat**.
+  [48](issues/48-open-and-done-board.md) is **not** superseded — 81 groups across pages,
+  48 groups within one page — but its first triage question is answered, because
+  collapsing is not a view mode and 37 keeps that question.
 
 - **The content unit, and the regions that leave the log** — ten tickets from the
   grilling session of 2026-08-07, which started from two reports of findings on text
@@ -1046,8 +1191,8 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   [20](issues/20-one-sided-pages-checklist.md). Both count out of the seed list,
   and both re-triage after it.
 
-  Broken into six build tickets. **51 and 52 are both resolved (2026-08-10), so
-  53 is unblocked and has both of its inputs.**
+  Broken into six build tickets. **51, 52 and 53 are all resolved (2026-08-10),
+  so 54 is unblocked and is the go/no-go.**
 
   ```
   51 ─┬──> 53 ──> 54 ─┬──> 55

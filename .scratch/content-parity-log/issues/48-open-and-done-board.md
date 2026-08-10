@@ -64,3 +64,29 @@ six.
 
 Re-triage after 37 lands. This may still be no ticket at all — it is a want, not
 a defect.
+
+## The first question is answered, from the grilling of 2026-08-10
+
+[ADR 0006](../../../docs/adr/0006-the-content-view-is-the-spine.md) and
+[ticket 79](79-the-content-view-opens-on-the-differences.md) settle
+**"does the grouping replace document order, or is it a third view mode?"** — for
+collapsing, at least. The content view stays **one** order. 79 opens on the
+differences and folds each run of equal rows into a **context marker** that expands.
+No row moves, so collapsing is not a mode and 37 keeps the mode question to itself.
+
+That narrows this ticket rather than closing it. **A board still reorders**, and a
+fold is not a reorder, so the question stays live for grouping by done and not-done.
+
+**The other two questions are untouched.** What counts as *afgerond* when a fix claim
+can be contradicted, and whether a `×6` finding is one task or six.
+
+One thing did move in this ticket's favour. [80](80-three-buckets-and-the-third-is-closed.md)
+names the three buckets — Open, Needs attention, Closed — and puts a contradicted claim
+in **Needs attention**, which answers the sub-question this ticket asked as "where does
+a contradicted claim sit — it is ticked and it is open". So *afgerond* has a candidate
+definition now: the Closed bucket. Whether the content view should group by it is still
+the open want.
+
+**This ticket is not superseded by [81](81-the-repeat-is-the-queue.md).** 81 groups
+findings **across pages** by identical text. This ticket groups rows **within one page**
+by what is done. Different problems, and 81 does not deliver this one.
