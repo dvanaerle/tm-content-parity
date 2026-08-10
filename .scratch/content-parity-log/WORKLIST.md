@@ -32,36 +32,40 @@ Work the steps from the top. Each step is one sitting.
 
 ---
 
-## Step 00 — Two loose ends. **YOU, not an agent**
+## Step 00 — Three loose ends. **YOU, not an agent**
 
-Neither is a ticket. Both fell out of step 01 and neither can be done by an agent.
+None is a ticket. All three fell out of step 01 and none can be done by an agent.
 
-### ☐ 00a — Apply the mute migration. **The log is broken until you do**
+### ☑ 00a — The mute migration is applied
 
-Step 01 changed the override table, and `supabase/mute-anchor-heading.sql` has
-**not** been applied. This is not only about mutes: `overrides/supabase.mjs`
-**selects** `anchor_heading` and `names_section`, so every override read fails
-against the live project today.
+`supabase/mute-anchor-heading.sql` ran on 2026-08-10. `select anchor_heading,
+names_section from overrides limit 1` returns a row, and the log reads again.
 
-```
-{"code":"42703","message":"column overrides.anchor_heading does not exist"}
-```
+It exposed a defect that no test could catch, now fixed: the mute key had been put
+in `compare/contract.mjs`, which imports `node:crypto`, so **the React island
+stopped building and every control in it died** — including *Je naam*, which has
+nothing to do with mutes. The key is `shared/mute-key.mjs` now, per ADR 0001. The
+lesson is in the gate below: a green `npm test` says nothing about the bundle.
 
-A read that fails throws by design, so every page shows the error banner and
-`canWrite` is false. **No dismissal, no fix tick and no review can be written**
-until this runs. The 5 live dismissals are unreadable, not lost.
+**Reload a store page after any change that moves an import.** The island either
+hydrates or it does not, and only a browser can say which.
 
-Open the Supabase SQL editor and run `supabase/mute-anchor-heading.sql` whole.
-The anon key cannot run DDL, which is why no agent can do it. It is written for a
-**live** table and keeps the log; `schema.sql` is the whole-file version and
-running that one drops it.
+### ☐ 00b — Make the first real mute. **Nobody has made one yet**
 
-**Gate.** `select anchor_heading, names_section from overrides limit 1` returns a
-row. Then, on `nl/terrasoverkapping`, mute `text-missing` under «Gumax® Heavy
-Duty», check that **64** go and **22** stay, and press *Ongedaan maken* to check
-they come back. Nobody has yet made a real mute under the new key.
+The control renders and the log writes, but no mute has been pressed under the new
+key. The table is append-only, so the first press is permanent — which is why this
+is a deliberate step and not a thing to try in passing.
 
-### ☐ 00b — Repair `web/node_modules`
+On `nl/terrasoverkapping`, *Dempen…* on a `text-missing` finding under «Gumax®
+Heavy Duty».
+
+**Gate.** The section button reads **64 bevindingen onder "Gumax® Heavy Duty"** and
+the page button reads **86 bevindingen op de hele pagina**. Neither can be pressed
+until a reason is typed. After the section press, **64** go and **22** stay. Then
+*Ongedaan maken* brings them back, and the row it wrote is `cleared` with the
+heading on it.
+
+### ☐ 00c — Repair `web/node_modules`
 
 Reverting the half-applied Astro upgrade left `web/node_modules` on the newer
 tree, so `npm --prefix web run build` fails on a missing Astro file. `npm test`
@@ -104,7 +108,7 @@ that section open for ever, under a button that had just counted it in. A cleare
 section now falls through to the page-wide mute, which is the fall-through a
 cleared dismissal already has onto a class mute. Both directions are tested.
 
-**Step 00a is the unfinished half of this step.**
+**Step 00b is the unfinished half of this step.** Nobody has pressed a mute yet.
 
 ---
 
@@ -696,7 +700,7 @@ connected.
 ### ☐ Step 24 — Ticket 31, one reason, many findings
 
 touches `web`. Blocked by 30, 76, 81 and 88 — steps 23, 12, 22, and 88 is
-**done**. It also needs step 00a applied, or no override can be written at all.
+**done**.
 
 **It was rewritten on 2026-08-10, not duplicated.** The grouping key it asked for
 three sessions ago is ticket 81's *repeat*, so it is no longer a measurement that

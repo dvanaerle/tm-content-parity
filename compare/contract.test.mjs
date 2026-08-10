@@ -4,7 +4,6 @@ import {
   CHECKS,
   FINDING_CLASSES,
   findingId,
-  muteKey,
   newObservationId,
   reportFilename,
   storeOfFile,
@@ -89,30 +88,6 @@ describe('findingId', () => {
   });
 });
 
-describe('muteKey', () => {
-  const place = { store: 'nl', page: 'overkappingen', class: 'price' };
-
-  it('is store, page, class and the section, and holds no content', () => {
-    expect(muteKey({ ...place, anchorHeading: 'Prijzen' })).toBe(
-      'nl|overkappingen|price|#Prijzen',
-    );
-  });
-
-  it('is the same key with the heading absent for the page-wide form', () => {
-    expect(muteKey(place)).toBe('nl|overkappingen|price|*page');
-  });
-
-  it('gives the content before the first heading a slot of its own', () => {
-    // ADR 0008: a null anchor heading is a real section, and it must not read as
-    // the whole page. Both are "no heading" in the payload.
-    expect(muteKey({ ...place, anchorHeading: null })).toBe('nl|overkappingen|price|*none');
-    expect(muteKey({ ...place, anchorHeading: null })).not.toBe(muteKey(place));
-  });
-
-  it('cannot be reached by a heading spelled like a slot', () => {
-    expect(muteKey({ ...place, anchorHeading: '*page' })).not.toBe(muteKey(place));
-  });
-});
 
 /**
  * The report filename carries the store, and `web/` reads it back out. That makes

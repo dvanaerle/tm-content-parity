@@ -81,7 +81,7 @@ note.
 
 ### The key has three states, and two of them look empty
 
-`muteKey()` in `compare/contract.mjs` is the one place the key is written down, and
+`muteKey()` in `shared/mute-key.mjs` is the one place the key is written down, and
 `eventKey()` in `overrides/state.mjs` uses it. The trap the ADR names is that
 **absent** (the page-wide form) and **null** (the content before the first heading)
 are both "no heading" in a payload, so they cannot both encode to nothing:
@@ -100,6 +100,21 @@ the page-wide slot, and there is a test for exactly that. `anchor_heading_slot` 
 `namesSection()` beside `muteKey()` is the one place the difference between an absent
 heading and a null one is decided. The key, the port, the count and the undo button
 all ask it, rather than each re-deciding it with an `undefined` check of its own.
+
+### Why the key is in `shared/` and not in the contract
+
+It went to `compare/contract.mjs` first, which is where `muteKey()` had always lived
+and which AGENTS.md calls the contract. That **broke the whole interface**, and no
+test caught it: `contract.mjs` imports `node:crypto` for `findingId()`, its own header
+warns that "a Vite build of an island that reaches this file fails on that import",
+and ticket 88 is the change that made the mute key run in the browser. The island
+stopped hydrating, so every control in it died — including the *Je naam* field, which
+has nothing to do with mutes.
+
+The key is a pure rule that three stages read, so ADR 0001 puts it in `shared/`. It is
+**not** re-exported from the contract: a second import path is the same trap again.
+`shared/mute-key.test.mjs` asserts the file imports nothing, which is the only part of
+this a unit test can hold.
 
 The port is the other place the two nulls meet: `names_section` is the column that
 tells them apart, and `overrides/supabase.test.mjs` exists only to hold that mapping
@@ -168,7 +183,8 @@ directions are tested.
 
 | file | what changed |
 | --- | --- |
-| `compare/contract.mjs` | `muteKey()` gained the section, and is the key's one home |
+| `shared/mute-key.mjs` | the key's one home: `muteKey`, `namesSection`, the slot |
+| `compare/contract.mjs` | `muteKey()` **left**, and a comment says where it went |
 | `overrides/state.mjs` | the derivation reads both keys; `muteCoverage()` is new |
 | `overrides/supabase.mjs` | `anchor_heading` and `names_section` cross the port |
 | `supabase/schema.sql` | the columns, the slot, and the note constraint |

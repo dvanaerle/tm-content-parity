@@ -17,7 +17,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { namesSection } from '../compare/contract.mjs';
+import { namesSection } from '../shared/mute-key.mjs';
 
 const TABLE = 'overrides';
 

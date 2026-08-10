@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { namesSection } from '../../../compare/contract.mjs';
+import { namesSection } from '../../../shared/mute-key.mjs';
 import { muteForms } from '../lib/mute.mjs';
 import { ACCENT, INK, PILL } from '../lib/palette.mjs';
 

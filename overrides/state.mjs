@@ -11,8 +11,8 @@
  * what they add up to. `contradicted` in particular is derived and never written.
  */
 
-import { muteKey, namesSection } from '../compare/contract.mjs';
 import { FINDING_CLASSES } from '../compare/vocabulary.mjs';
+import { muteKey, namesSection } from '../shared/mute-key.mjs';
 
 /**
  * One row of the append-only `overrides` table, in the shape the port hands over.
