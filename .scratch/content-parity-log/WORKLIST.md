@@ -6,8 +6,11 @@ This file answers one question: **what do I do next?** `RUNBOOK.md` says *why*
 the order is what it is, and `map.md` stays the map. If this file and the map
 disagree, the map wins.
 
-**45 of the 90 tickets are closed.** 34 steps are below. Seven tickets are
-parked and they are at the end.
+**46 of the 90 tickets are closed.** 34 steps are below and **step 01 is done**.
+Seven tickets are parked and they are at the end.
+
+The steps are **not renumbered** as they close. Step 24 says "blocked by step 22"
+and a renumbering would make every such line a lie.
 
 ## How to use it
 
@@ -29,53 +32,85 @@ Work the steps from the top. Each step is one sitting.
 
 ---
 
-## Step 00 — Housekeeping. Two loose ends before any ticket
+## Step 00 — Two loose ends. **YOU, not an agent**
 
-Neither is a ticket. Both are uncommitted work that can be lost.
+Neither is a ticket. Both fell out of step 01 and neither can be done by an agent.
 
-### 00a — Commit the runbook revision
+### ☐ 00a — Apply the mute migration. **The log is broken until you do**
 
-`.scratch/` is under version control in this repo. The 2026-08-10 revision of
-`RUNBOOK.md` is still only in the working tree.
+Step 01 changed the override table, and `supabase/mute-anchor-heading.sql` has
+**not** been applied. This is not only about mutes: `overrides/supabase.mjs`
+**selects** `anchor_heading` and `names_section`, so every override read fails
+against the live project today.
+
+```
+{"code":"42703","message":"column overrides.anchor_heading does not exist"}
+```
+
+A read that fails throws by design, so every page shows the error banner and
+`canWrite` is false. **No dismissal, no fix tick and no review can be written**
+until this runs. The 5 live dismissals are unreadable, not lost.
+
+Open the Supabase SQL editor and run `supabase/mute-anchor-heading.sql` whole.
+The anon key cannot run DDL, which is why no agent can do it. It is written for a
+**live** table and keeps the log; `schema.sql` is the whole-file version and
+running that one drops it.
+
+**Gate.** `select anchor_heading, names_section from overrides limit 1` returns a
+row. Then, on `nl/terrasoverkapping`, mute `text-missing` under «Gumax® Heavy
+Duty», check that **64** go and **22** stay, and press *Ongedaan maken* to check
+they come back. Nobody has yet made a real mute under the new key.
+
+### ☐ 00b — Repair `web/node_modules`
+
+Reverting the half-applied Astro upgrade left `web/node_modules` on the newer
+tree, so `npm --prefix web run build` fails on a missing Astro file. `npm test`
+is unaffected and green, and the dev server runs, so this bites only at a build
+gate. `npm install` cannot repair it while the dev server holds the file locks.
 
 ```powershell
-git add .scratch/content-parity-log/RUNBOOK.md .scratch/content-parity-log/WORKLIST.md
-git commit -m "The runbook is revised, and the worklist gives the order"
+# stop the running `astro dev` first
+Set-Location web; npm install
 ```
 
-### ☐ Step 01 — Ticket 88, the mute says what it hides
+**Gate.** `npm --prefix web run build` builds the same page count as before.
 
-**FIRST, and out of dependency order.** touches `web`. Blocked by nothing.
+---
 
-**Why now.** The largest press available today hides 173 findings, asks for no
-reason and records no section, and it persists for ever. Ticket 65 counted the
-table: 45 events, 14 keys, 5 live overrides, all dismissals, **no live mute in
-any store**. The table is append-only, so a mute written under the old key can
-never be repaired, only superseded. The migration is free today and impossible
-on the day an editor presses the button.
+### ☑ Step 01 — Ticket 88, the mute says what it hides — **DONE**
 
-```
-/clear
-```
+Resolved 2026-08-10. `Status: resolved`. Commit `b8c8538`.
 
-```
-/implement .scratch/content-parity-log/issues/88-the-mute-says-what-it-hides.md
+*Klasse dempen* is gone. *Dempen…* offers the section form first and the
+page-wide form second, each stating its finding count, and neither can be pressed
+without a note. The mute key is `store | page | class | anchorHeading`, with an
+absent heading for the page-wide form and `null` for the content before the first
+heading — a real section, and the third state the key had to spell out.
 
-Read docs/adr/0008-the-mute-key-carries-the-anchor-heading.md first. Every rule
-is there and none of them is reopened.
+**Live mutes before the change: zero**, measured on the day and not quoted from
+ticket 65. Four live `page-class` keys, every one of them `cleared`. Nothing was
+orphaned, so the migration was free, exactly as ADR 0008 predicted.
 
-The heading goes in the mute key and NOT in the finding id. Ticket 34 kept it out
-of the id and out of the grouping key, and this ticket does not change that. A
-mute may drift when a heading changes; an id may not.
+**The gate held, with one number corrected.** `(text-missing, «Gumax® Heavy
+Duty»)` covers **64**, as predicted. The page-wide total is **86** today where
+ADR 0008 measured 88, so the section press leaves **22** visible and not 24: two
+findings left the snapshot between the two measurements. `nl__fotogalerij/zonwering`
+reproduces exactly — 399 shown, 4 class groups, **239** heading groups at 1.7
+each, so the page-wide form is still the only usable one there.
 
-Record how many live mutes existed before the change. If it is still zero, say
-so, because that is what made the change free.
-```
+**One defect was caught in review, not in test.** The first draft stopped at the
+section key, so clearing a section and then pressing *Hele pagina dempen* left
+that section open for ever, under a button that had just counted it in. A cleared
+section now falls through to the page-wide mute, which is the fall-through a
+cleared dismissal already has onto a class mute. Both directions are tested.
 
-**Gate.** On `nl__terrasoverkapping` the pair `(text-missing, «Gumax® Heavy
-Duty»)` covers **64 of 88** and must leave **24** visible. The page-wide form
-still works on `nl__fotogalerij/zonwering`, where the section form offers 239
-groups.
+**Step 00a is the unfinished half of this step.**
+
+---
+
+## The corpus stream — steps 02 to 11
+
+`data/` has one writer. No two of these steps may be in flight together.
 
 ---
 
@@ -645,6 +680,10 @@ hours late is usual and is not a fault.
 
 Then apply the schema and the two public env values to `web/.env`.
 
+**`schema.sql` drops the override log.** It is the whole-file version, for a new
+project. The live project already holds dismissals, so if step 00a has run this
+step must not re-apply `schema.sql` over it.
+
 **Gate.** `overrides` has exactly **two** RLS policies: insert for `anon` and
 select for `anon`. No update and no delete. The connected bundle is
 `_astro/overrides.*.js` at about **228 KB**, against about 11 KB when it is not
@@ -656,7 +695,8 @@ connected.
 
 ### ☐ Step 24 — Ticket 31, one reason, many findings
 
-touches `web`. Blocked by 30, 76, 81 and 88 — steps 23, 12, 22 and 01.
+touches `web`. Blocked by 30, 76, 81 and 88 — steps 23, 12, 22, and 88 is
+**done**. It also needs step 00a applied, or no override can be written at all.
 
 **It was rewritten on 2026-08-10, not duplicated.** The grouping key it asked for
 three sessions ago is ticket 81's *repeat*, so it is no longer a measurement that
