@@ -1,0 +1,11 @@
+# The committed evidence in `data/` is compared **byte for byte** against what the
+# pipeline writes — `crawl/sitemap-extract.test.mjs` asserts "the file was not
+# edited by hand" by rebuilding it and comparing the string.
+#
+# The writers emit LF. A Windows checkout with `core.autocrlf=true` rewrites the
+# working copy to CRLF, so the bytes on disk stop being the bytes the reduction
+# gives, and that test fails on Windows while it passes on CI. The file in git was
+# always LF; it was the checkout that changed it.
+#
+# `eol=lf` pins the working copy, so the evidence is the same bytes everywhere.
+data/*.json text eol=lf

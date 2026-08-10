@@ -1009,6 +1009,14 @@ node compare/measure.mjs nl
 A step that adds no rule must not move a number. This check found every real
 defect in the project so far.
 
+**The baseline is 452 tests green, 0 failing**, as of 2026-08-10. It is worth
+stating because it was not true until that day: `crawl/sitemap-extract.test.mjs`
+failed on every Windows checkout. The committed evidence is compared byte for
+byte, `core.autocrlf=true` rewrote the working copy to CRLF, and the bytes on
+disk stopped being the bytes the reduction gives. `.gitattributes` pins `data/`
+to LF. A red suite that everyone learns to ignore is how the next real defect
+gets through.
+
 The full pipeline, when a step needs fresh data:
 
 ```powershell
