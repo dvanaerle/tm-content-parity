@@ -6,17 +6,27 @@ This file answers one question: **what do I do next?** `RUNBOOK.md` says *why*
 the order is what it is, and `map.md` stays the map. If this file and the map
 disagree, the map wins.
 
-**47 of the 90 tickets are closed**, counted from the `Status:` line of every
-ticket file on 2026-08-10. 43 are open. 34 steps are below and **steps 01, 02, 03
-and 06 are done**. Seven tickets are parked and they are at the end.
+**49 of the 90 tickets are closed**, counted from the `Status:` line of every
+ticket file on 2026-08-10. 41 are open. 35 steps are below and **steps 01 to 06
+are done**, except that step 05 shipped its rule without its crawl, so **step 05b
+is the next step**. Seven tickets are parked and they are at the end.
 
-The count went 46 to 47 and not to 48: tickets **54** and **55** closed, and
-ticket **49** re-opened. A closed ticket that comes back is why this line is
-counted and never incremented by hand.
+The count went 47 to 49: tickets **56** and **67** closed. A closed ticket that
+comes back is why this line is counted and never incremented by hand.
+
+**Count 90 in two folders.** 89 ticket files sit in `issues/` and the ninetieth,
+ticket **49**, sits in `issues/.out-of-scope/`. A count that reads one folder
+gives 89 and misses an open ticket.
 
 **The corpus is 816 store pages**, from 451, since step 03 landed on 2026-08-10.
 Every count taken against 448 reports or 451 pairs is stale, and steps 12 and 13
 exist to restate them.
+
+**⚠ The reports on disk are older than the extractor. Read no number until they
+are rebuilt.** Step 05 changed how a content unit is extracted on 2026-08-10 and
+**did not re-crawl**. So `data/extract/` and `data/reports/` still hold the
+pre-fold corpus, and `node compare/measure.mjs nl` answers with numbers no
+current code produces. Step 05b is that rebuild and it is the next step.
 
 The steps are **not renumbered** as they close. Step 24 says "blocked by step 22"
 and a renumbering would make every such line a lie.
@@ -87,8 +97,9 @@ hold and it waits for a person.
 `CONTEXT.md` and `docs/adr/` are the four files that both sessions want. The
 first session owns them. The second session reports, and you write the tick.
 
-**Rule 2. Nothing measures while a crawl runs.** Steps **05, 10 and 11** rewrite
-`data/` — 02 and 03 did and are done. A number read in the middle of a crawl looks
+**Rule 2. Nothing measures while a crawl runs.** Steps **05b, 10 and 11** rewrite
+`data/` — 02 and 03 did and are done, and 05 shipped a rule without a crawl, which
+is why 05b exists. A number read in the middle of a crawl looks
 correct and is not. While a crawl runs, the second session talks. It does not
 measure.
 
@@ -394,7 +405,103 @@ three of the four are done already:
 
 ---
 
-### ☐ Step 05 — Ticket 67, a content unit folds its inline links
+### ☑ Step 05 — Ticket 67, a content unit folds its inline links — **CODE DONE, CORPUS NOT REBUILT**
+
+Resolved 2026-08-10. `Status: resolved`. Commit `79b9985`. `npm test` 507 → **512**.
+
+A content unit is the block an editor edits. A block folds the `a` and the
+`button` inside it, and a nested block still breaks it. `kind: 'cta'` reads the
+content and not the tag that emitted the unit, and `mayPair()` permits `cta`
+against `text`.
+
+**The gate held on the part that matters and its override number was wrong.**
+
+- **The `/overkapping` paragraph is one `<p>` on each side**, 190 words against
+  188, and the `6063-T6` against `6036-T6` difference is a **shown `copy`**
+  finding. The log compared 35 of that paragraph's 1,232 characters before.
+  `crawl/probes/probe-overkapping-fold.mjs` asserts both halves and exits
+  non-zero when either fails, so this is evidence and not a claim.
+- **Seven live judgements detached, not one.** The gate said "exactly 1
+  dismissal", which was ticket 65's 2026-08-07 measurement. Re-run on 2026-08-10
+  before the extractor changed: **33 live judgements**, of which 4 dismissals and
+  3 fix claims detach. Three more were expiring anyway, because an editor had
+  changed the text. No page review went stale and no muted class moved. The
+  worklist's own rule earned its keep here: the log is written to daily, so a
+  number in a ticket is a number from the day it was taken.
+- **The fold recovers a fifth of production.** nl went from 9,293 content units
+  to **7,424** on the same 179 pages, and the new site from 6,855 to 6,486.
+
+**One thing it broke that it did not fix.** `ABSOLUTE_MAX_UNITS` is 100, and
+ticket 63 justified it as above the widest entry (50) and below a near-miss of
+139 units on `/overkapping`. After the fold that near-miss measures **91**, under
+the ceiling. `/downloads` is still excluded, at 190. The ceiling is a resolved
+ticket's decision, so it is recorded in `shared/excluded-regions.mjs` and not
+moved. **It needs a ticket** — see the loose end below.
+
+The original step is kept below.
+
+---
+
+### ☐ Step 05b — Rebuild the corpus the fold changed. **The next step**
+
+touches `data` **alone**. Blocked by nothing. It is the second half of step 05.
+
+**Why it is its own step.** Ticket 67 changed the extractor and every extract on
+disk was written by the old rule. Nothing downstream is readable until the crawl
+runs again: the reports, the finding ids, the shown counts and the override
+attachments all come from `data/`. Step 05 shipped the rule and left the numbers,
+which is why the two numbers the ticket asked for — the one-sided rows that go and
+the copy differences that arrive — are still uncounted.
+
+It is a full six-store crawl with `--force`, so it collides with everything.
+
+```
+/clear
+```
+
+```
+Rebuild the corpus for ticket 67's fold. No code changes.
+
+Crawl all six stores with --force, because every extract on disk was written by
+the leaf rule that ticket 67 replaced. Check the five valantic hosts answer 200
+first.
+
+Then report TWO numbers separately, which is what ticket 67 asked for and step 05
+could not answer: how many one-sided rows GO, because a discarded paragraph no
+longer makes them, and how many copy differences ARRIVE, because a markup
+difference was hiding them. One net number hides both.
+
+Expect the shown count to RISE. Ticket 67's note says so: the log becoming
+honest, not a regression.
+```
+
+**Gate.** Every store re-crawled and re-compared, and the two numbers are
+recorded separately in ticket 67. The nl baseline **must move** here — it is the
+one step in the corpus stream that is expected to, and the fold's 9,293 → 7,424
+unit change is the reason. Seven overrides detach and the interface shows them as
+open findings again.
+
+**The dated note goes out with this**, not with step 05:
+`notes/2026-08-07-the-fold-and-your-judgements.md` carries the 2026-08-10 numbers
+already. It is written in the language of the repository and **the interface is
+Dutch, so it needs translating before it goes to an editor.**
+
+---
+
+### ☐ Loose end from step 05 — the region ceiling needs a ticket
+
+touches `talk`. Nobody owns it yet, and it is not a step.
+
+`ABSOLUTE_MAX_UNITS = 100` rests on a near-miss that the fold moved from 139 to
+**91**. The ceiling now admits the wrong selector it was written to refuse. Three
+outcomes are possible and none is this step's to pick: lower the ceiling, re-anchor
+it on `/downloads` at 190, or accept that the near-miss is no longer the bound.
+The product-grid entry declares `maxUnits: 80`, so any new ceiling must stay above
+80. **Step 28 gates on this number**, so it should be decided before step 28.
+
+---
+
+#### Step 05 as it was written, kept for the record
 
 touches `data`. Blocked by 66 — **done**. Needs ticket 65's number — **measured**.
 
@@ -492,8 +599,8 @@ stream and goes beside 79, or 79 comes forward, or the two are decoupled. Ticket
 touches `web`. Blocked by 68.
 
 **Why here.** It moved. It was a free `web` lane, and it is not one any more: it
-builds view modes onto a content view that ticket 67's fold rewrites and ticket
-68 clamps.
+builds view modes onto a content view that ticket 67's fold has now rewritten and
+that ticket 68 clamps.
 
 ```
 /clear
@@ -538,7 +645,8 @@ them in the banner. Closing the ticket is a valid outcome.
 
 ### ☐ Step 10 — Ticket 70, shared regions by content hash
 
-touches `data`. Blocked by 64 — **done** — and 67, step 05.
+touches `data`. Blocked by 64 — **done** — and 67, step 05 — **done**. It reads
+the corpus, so it waits for step 05b as well.
 
 ```
 /clear
@@ -611,6 +719,12 @@ became **816**, 373 comparable pages became **722**, and 34,559 findings with
 23,570 shown became **54,723 and 37,329**. Every gate in this file that quotes a
 number over 448 reports or 373 comparable pages is stale until these two steps run.
 Steps 11, 29 and 32 each carry one, and each says so.
+
+**Step 05 moved the numbers again, and nothing has counted it yet.** The fold takes
+the unit corpus down by a fifth on the production side, and it turns hidden markup
+differences into shown copy differences. So the 54,723 and 37,329 above are already
+history too. **Both of these steps are worthless before step 05b**, for the same
+reason they were worthless before step 11: they read `data/`.
 
 ---
 
@@ -1033,6 +1147,11 @@ It implements PRD.md user stories 45 to 49. Review the diff against them.
 **Gate.** A selector plus **3** page keys returns live unit counts, for each side
 and for each page. A proposed `maxUnits` is **never above the ceiling of 100**.
 
+**The ceiling is in question, and this step gates on it.** Ticket 67 took the
+near-miss that justified 100 down to 91, so the ceiling now admits the selector it
+was written to refuse. See the loose end under step 05. Read the decision before
+building the check, or the check enforces a number nobody believes.
+
 ---
 
 ### ☐ Step 29 — Ticket 86, heading level becomes information
@@ -1262,8 +1381,14 @@ node compare/measure.mjs nl
 A step that adds no rule must not move a number. This check found every real
 defect in the project so far.
 
-**The baseline is 472 tests green in 20 files, 0 failing**, measured on 2026-08-10
-after commit `baac5d8`. Ticket 54 took it from 452, and ticket 55 added none: it
+**`measure.mjs` answers from `data/`, so it is not a gate until step 05b runs.**
+Ticket 67 changed the extractor and left the reports as they were. Until the crawl
+runs again, the second command reads a corpus the code cannot reproduce, and "the
+number did not move" would prove only that nothing re-read the site.
+
+**The baseline is 512 tests green in 22 files, 0 failing**, measured on 2026-08-10
+after commit `79b9985`. Ticket 56 took it from 472 to 507 and ticket 67 added 5.
+Ticket 54 took it from 452, and ticket 55 added none: it
 runs the pipeline the earlier tickets built and adds no rule. It is worth
 stating because it was not true until that day: `crawl/sitemap-extract.test.mjs`
 failed on every Windows checkout. The committed evidence is compared byte for
