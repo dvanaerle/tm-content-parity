@@ -17,7 +17,7 @@
 
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 /**
  * A git-tracked file that only the repo root holds. `package.json` would not do:
@@ -46,17 +46,13 @@ function findRoot(from) {
  * missing report — it is a broken build, and the silence is what cost ticket 72 a
  * build that looked like it worked.
  */
-export const ROOT = findRoot(import.meta.url);
+const ROOT = findRoot(import.meta.url);
 
 /**
+ * A trailing separator survives, so a caller that needs a `file:` directory URL
+ * can still pass the result to `pathToFileURL` and then to `new URL(name, dir)`.
+ *
  * @param {string} path A repo-root-relative path, `/`-separated.
  * @returns {string} An absolute filesystem path.
  */
 export const fromRoot = (path) => join(ROOT, path);
-
-/**
- * The same, as a `file:` URL, for the callers that read with one.
- *
- * @param {string} path A repo-root-relative path, `/`-separated.
- */
-export const urlFromRoot = (path) => pathToFileURL(fromRoot(path));
