@@ -6,6 +6,8 @@ import {
   outlineFrom,
   pagesWithClasses,
   prepareRows,
+  repeatsInStore,
+  repeatsWithClasses,
   rowKeyFromHash,
   toggleClass,
   toggleIn,
@@ -337,5 +339,106 @@ describe('pagesWithClasses', () => {
   it('drops a page whose count for the class is zero rather than absent', () => {
     const zero = [{ page: 'd', summary: { byClass: { copy: 0 } } }];
     expect(pagesWithClasses(zero, ['copy'])).toEqual([]);
+  });
+});
+
+/**
+ * Ticket 81. A repeat is every finding in **one store** with the same class, the same
+ * two texts and the same detail. It is a grouping the interface makes and never a
+ * thing the data holds, so the whole of it is these tests and the function they pin.
+ */
+describe('repeatsInStore', () => {
+  /**
+   * @param {string} id
+   * @param {Partial<{ class: string, prod: string | null, new: string | null, detail: string | null, occurrences: number }>} part
+   */
+  const finding = (id, part) => ({
+    id, class: 'text-missing', prod: 'Montage', new: null, detail: null, occurrences: 1, ...part,
+  });
+
+  const page = (store, name, findings) => ({ store, page: name, findings });
+
+  it('is one row for the same class, the same two texts and the same detail', () => {
+    // The want in one sentence: one footer line wrong on three pages is one row,
+    // and the editor meets it once instead of three times.
+    const repeats = repeatsInStore([
+      page('nl', 'afhalen', [finding('a', {})]),
+      page('nl', 'garantie', [finding('b', {})]),
+      page('nl', 'montage', [finding('c', {})]),
+    ]);
+
+    expect(repeats).toHaveLength(1);
+    expect(repeats[0].on.map((entry) => entry.page)).toEqual(['afhalen', 'garantie', 'montage']);
+  });
+
+  it('never crosses a store, because the stores translate the text', () => {
+    // The measured reason: the promo banner is one Magento block and it reaches the
+    // log as language-specific tuples, so a key on the literal text multiplies by
+    // six — and an element carries no DOM path to key on instead (tickets 01, 34).
+    const repeats = repeatsInStore([
+      page('nl', 'afhalen', [finding('a', {})]),
+      page('be', 'afhalen', [finding('b', {})]),
+    ]);
+
+    expect(repeats).toHaveLength(2);
+    expect(repeats.map((repeat) => repeat.store).sort()).toEqual(['be', 'nl']);
+  });
+
+  it('is worst-first by the number of pages', () => {
+    const repeats = repeatsInStore([
+      page('nl', 'a', [finding('a1', { prod: 'Zelden' }), finding('a2', { prod: 'Vaak' })]),
+      page('nl', 'b', [finding('b1', { prod: 'Vaak' })]),
+      page('nl', 'c', [finding('c1', { prod: 'Vaak' })]),
+    ]);
+
+    expect(repeats.map((repeat) => repeat.prod)).toEqual(['Vaak', 'Zelden']);
+    expect(repeats.map((repeat) => repeat.on.length)).toEqual([3, 1]);
+  });
+
+  it('sums the occurrences without letting them become the page count', () => {
+    // The trap this ticket names: `occurrences` counts the same difference on **one
+    // page**, and the page count counts pages. A row that says 5 when it means 2 is
+    // the failure. Both numbers are here, and they have two names.
+    const repeats = repeatsInStore([
+      page('nl', 'afhalen', [finding('a', { occurrences: 3 })]),
+      page('nl', 'garantie', [finding('b', { occurrences: 2 })]),
+    ]);
+
+    expect(repeats[0].on.length).toBe(2);
+    expect(repeats[0].occurrences).toBe(5);
+  });
+
+  it('returns the grouping and nothing a bar could be built from', () => {
+    // The same rule that governs `prepareRows`: this module says what is on screen
+    // and never what it adds up to. No open count, no closed count, no denominator.
+    //
+    // There is no finding count beside the page count either, and that is not an
+    // omission. `page` is a term of the finding id, so one page can hold at most one
+    // finding with this key — measured over the whole corpus, 25,657 repeats and not
+    // one exception. The shape says it: an entry in `on` is a page **and** its
+    // finding, so the two numbers cannot come apart.
+    const [repeat] = repeatsInStore([page('nl', 'afhalen', [finding('a', {})])]);
+
+    expect(Object.keys(repeat).sort())
+      .toEqual(['class', 'detail', 'key', 'new', 'occurrences', 'on', 'prod', 'store']);
+    expect(Object.keys(repeat.on[0]).sort()).toEqual(['id', 'occurrences', 'page']);
+  });
+});
+
+describe('repeatsWithClasses', () => {
+  const repeats = [{ class: 'copy', on: [{}, {}] }, { class: 'casing', on: [{}] }];
+
+  it('is every repeat when no class pill is on', () => {
+    expect(repeatsWithClasses(repeats, [])).toHaveLength(2);
+  });
+
+  it('is what a class pill opens, so no second quick-filter surface is needed', () => {
+    // A pill that lists its findings directly **is** this view with a class
+    // pre-selected. That is the whole of the quick-filter want.
+    expect(repeatsWithClasses(repeats, ['copy'])).toEqual([repeats[0]]);
+  });
+
+  it('moves no count: it narrows a list and returns the rows it was given', () => {
+    expect(repeatsWithClasses(repeats, ['copy', 'casing'])).toEqual(repeats);
   });
 });

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { metaRows } from '../../../compare/meta.mjs';
-import { Detail, Occurrences, Section } from './Annotations.jsx';
-import { Chip, ClassPill } from './Chips.jsx';
+import { Detail, Occurrences, Section, onePageTitle } from './Annotations.jsx';
+import { ClassPill } from './Chips.jsx';
 import ContentView from './ContentView.jsx';
 import { DiffCells } from './Diff.jsx';
 import OverrideControl from './OverrideControl.jsx';
@@ -11,7 +11,7 @@ import { BANNER, CHROME, INK } from '../lib/palette.mjs';
 /**
  * A tabbed ledger, production and the new site side by side.
  *
- * **Five tabs** since ticket 36, and Inhoud lands first. Diff and Content were two
+ * **Four tabs** since ticket 81, and Inhoud lands first. Diff and Content were two
  * tabs answering half a question each, and Outline was production's unit list
  * indented by heading level — which the merged content view now contains, and which
  * returns there as navigation. That closes ticket 12's question about the tab count.
@@ -20,10 +20,18 @@ import { BANNER, CHROME, INK } from '../lib/palette.mjs';
  * unexplained differences. An editor who lands on a task list has to take the
  * tool's word for it.
  *
+ * **Taken is gone.** It was every finding of the page in one list, grouped by check,
+ * and each of its three groups is a tab that shows the same findings with better
+ * context: Inhoud puts a text finding in document order, and Links and Afbeeldingen
+ * word-diff the two targets. Its one remaining claim was *work down a page without
+ * changing tabs*, and it answered that by removing the context the other tabs add.
+ * The grouped reading of the work is now the store's repeat list, which groups
+ * across pages, which is where the repetition actually is.
+ *
  * Coverage is absent: Axis B is ticket 24, and ticket 11 forbids summing its bar
- * with this one. It arrives as a sixth tab, not as extra rows in these.
+ * with this one. It arrives as a fifth tab, not as extra rows in these.
  */
-const TABS = ['Inhoud', 'Links', 'Afbeeldingen', 'Meta', 'Taken'];
+const TABS = ['Inhoud', 'Links', 'Afbeeldingen', 'Meta'];
 
 /**
  * `findings` are the **derived** findings from `derivePageState()` — the same
@@ -65,7 +73,6 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
     Inhoud: findings.filter((finding) => finding.check === 'text').length,
     Links: findings.filter((finding) => finding.check === 'links').length,
     Afbeeldingen: findings.filter((finding) => finding.check === 'images').length,
-    Taken: findings.length,
   };
 
   if (!report.comparable) {
@@ -123,7 +130,6 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
         {tab === 'Links' && <FindingTable findings={findings} check="links" control={control} sides={report.sides} />}
         {tab === 'Afbeeldingen' && <FindingTable findings={findings} check="images" control={control} sides={report.sides} />}
         {tab === 'Meta' && <MetaTable production={production} next={next} />}
-        {tab === 'Taken' && <Tasks findings={findings} control={control} sides={report.sides} />}
       </div>
     </section>
   );
@@ -147,8 +153,8 @@ function FindingTable({ findings, check, control, sides }) {
           <tr key={finding.id} className="border-b border-slate-100 align-top last:border-0">
             <td className="px-2 py-2">
               <ClassPill class={finding.class} />
-              <Detail finding={finding} />
-              <Occurrences finding={finding} />
+              <Detail detail={finding.detail} />
+              <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
               {/* A target key and an alt text are not words on the page, so the
                   heading above them is the only thing a browser can scroll to. */}
               <Section anchorHeading={finding.anchorHeading} sides={sides} />
@@ -210,52 +216,6 @@ function MetaTable({ production, next }) {
         </tbody>
       </table>
     </>
-  );
-}
-
-/**
- * The one place the three checks are unified, and now the one place an editor
- * can work down a page without leaving a tab.
- */
-function Tasks({ findings, control, sides }) {
-  const byCheck = useMemo(() => {
-    const groups = new Map();
-    for (const finding of findings) {
-      if (!groups.has(finding.check)) groups.set(finding.check, []);
-      groups.get(finding.check).push(finding);
-    }
-    return [...groups];
-  }, [findings]);
-
-  if (!findings.length) return <Empty>Deze pagina is gelijk aan productie.</Empty>;
-
-  return (
-    <div className="space-y-4">
-      {byCheck.map(([check, group]) => (
-        <div key={check}>
-          <h3 className="mb-1 flex items-center gap-2 font-semibold">
-            {CHECK_LABEL[check]}
-            <Chip value={group.length} label="open" />
-          </h3>
-          <ul className="text-sm">
-            {group.map((finding) => (
-              <li key={finding.id} className="flex flex-wrap items-start gap-2 border-b border-slate-100 py-1.5 last:border-0">
-                <ClassPill class={finding.class} />
-                <Detail finding={finding} />
-                <span className="min-w-48 flex-1 break-words">
-                  {finding.prod ?? '—'}
-                  <span className="mx-1 text-slate-400">→</span>
-                  {finding.new ?? '—'}
-                  <Section anchorHeading={finding.anchorHeading} sides={sides} />
-                </span>
-                <Occurrences finding={finding} />
-                {control(finding)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
   );
 }
 

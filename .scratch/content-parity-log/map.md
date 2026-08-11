@@ -826,6 +826,28 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   `data/11-page-status.json`. Ticket 20 follows the edge from here. Its "do not re-run the whole seed derivation" instruction is
   **overtaken** by ticket 50, which found the page list itself unsound.
 
+- [81 — The repeat is the queue](issues/81-the-repeat-is-the-queue.md)
+  — **Built 2026-08-11, and one acceptance criterion refused.** The dashboard holds two
+  views over one derivation: *Verschillen*, the store's repeats worst-first, and
+  *Pagina's*, the page list it always had. One class-pill set filters both, so the
+  quick-filter want is the repeat list with a class pre-selected and not a second
+  surface. The `Taken` tab is gone and nothing it held is unreachable.
+
+  **Refused: a repeat has no finding count separate from its page count.** `page` is a
+  term of the finding id, so one page carries at most one finding of one repeat —
+  measured, 25,657 repeats and zero exceptions. The row states pages, and
+  `occurrences` is named apart as what it is.
+
+  **The measurement in *Ready to build* below is superseded.** It describes 448
+  reports. The disk holds **816 reports, 722 comparable, 35,503 shown findings**, and
+  the per-store table is in ticket 81's answer. The shape of the answer holds and the
+  scale of the win does not: `nl` is **6,004 findings in 4,152 repeats**, its largest
+  repeat is on **22 pages**, **78.8%** of its repeats are singletons, and the first
+  fifty rows cover **9.6%**. Grouping saves 31% of the reading and none of the
+  deciding. That is worth the screen and it is not the thirty-page footer line the
+  ticket imagined, so the interface says so under the list. It also argues against
+  ticket 31: a 22-page maximum is a click-through, not a bulk tool.
+
 ### Facts found while charting
 
 - Production emits 9 `data-content-type` attributes on a page where the new site
@@ -1056,6 +1078,13 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   read as how much is decided and never as how much is left. The head of that
   distribution was the promo banner, which ticket 64 has since excluded, so ticket 76
   restates the curve before anything is designed against it.
+
+  **These numbers are superseded — do not design against them.** Ticket 81 measured the
+  816 reports now on disk: **35,503 shown findings, 25,657 repeats across the six
+  stores**, and the head is flat — the largest repeat in the largest store is on 22
+  pages, and 79% to 91% of every store's repeats are singletons. 76's own accusation
+  applies to its table. The current per-store curve is in
+  [81's answer](issues/81-the-repeat-is-the-queue.md).
 
   The stack goes first, alone, because an upgrade that carries a product change cannot be
   reviewed:

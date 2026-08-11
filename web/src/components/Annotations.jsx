@@ -21,10 +21,15 @@ export const Tag = ({ unit }) => (
  * Ticket 33. On `heading-level` and `tag-changed` the two text columns are equal,
  * so without this the row reads as a finding about nothing. The content view needs
  * no such thing: it prints the tag of each unit next to the words.
+ *
+ * It takes the detail and not the finding, because ticket 81 gives it a second
+ * caller that is not a finding: `detail` is a term of the repeat grouping key, so a
+ * repeat row wears the same mark. A prop named `finding` there would be a lie about
+ * the one distinction that ticket keeps.
  */
-export const Detail = ({ finding }) => (
-  finding.detail
-    ? <span className="ml-2 font-mono text-[11px] text-slate-500">{finding.detail}</span>
+export const Detail = ({ detail }) => (
+  detail
+    ? <span className="ml-2 font-mono text-[11px] text-slate-500">{detail}</span>
     : null
 );
 
@@ -54,19 +59,26 @@ export const Section = ({ anchorHeading, sides = null }) => (
  * One rename repeated six times is one finding, and the tick acts on all six. The
  * badge is on every one of those rows, so an editor who ticks the first and watches
  * the other five tick with it learns the rule from the interface (ticket 36).
+ *
+ * It takes the count and the sentence, not the finding, because ticket 81 gives it a
+ * second caller that counts a different thing: a repeat sums the occurrences over the
+ * pages it is on. The mark is the same mark and the two sentences are not the same
+ * sentence, and confusing the two counts is that ticket's named trap — so the caller
+ * that knows which count it holds is the caller that writes the words.
  */
-export const Occurrences = ({ finding }) => (
-  finding && finding.occurrences > 1
+export const Occurrences = ({ count, title }) => (
+  count > 1
     ? (
-      <span
-        className="ml-2 rounded bg-slate-900 px-1.5 text-[11px] text-white"
-        title={`Deze bevinding staat ${finding.occurrences} keer op de pagina. Eén vinkje vinkt ze alle ${finding.occurrences} af.`}
-      >
-        ×{finding.occurrences}
+      <span className="ml-2 rounded bg-slate-900 px-1.5 text-[11px] text-white" title={title}>
+        ×{count}
       </span>
     )
     : null
 );
+
+/** What the badge means on a finding: the same difference, several times on this page. */
+export const onePageTitle = (count) => `Deze bevinding staat ${count} keer op de pagina. `
+  + `Eén vinkje vinkt ze alle ${count} af.`;
 
 /**
  * Opens the live page scrolled to this text, with a `#:~:text=` fragment the

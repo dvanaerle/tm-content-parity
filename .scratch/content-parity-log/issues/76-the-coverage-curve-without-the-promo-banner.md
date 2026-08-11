@@ -5,6 +5,20 @@ Status: ready-for-agent
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
+> **Partly overtaken, 2026-08-11.** Ticket 81 was built without waiting for this one and
+> measured the corpus itself, because by then the disk held **816 reports** and not the
+> 448 this ticket is written against — tickets 50 and 54 landed in between, so this
+> ticket's own accusation had come to apply to its own table. The per-store curve, the
+> repeat counts and the singleton shares are in
+> [81's answer](81-the-repeat-is-the-queue.md). **Every number below the line is stale.**
+>
+> What is left for this ticket is the part 81 did not need: the corpus-wide coverage
+> curve at 25/50/75/90, the before-and-after of the promo-banner removal, the
+> distribution of findings per page, and the bulk-dismissal verdict for ticket 31. On
+> that last one 81's numbers already argue **no**: the largest repeat in the largest
+> store is on 22 pages and 79–91% of every store's repeats are singletons, so a bulk
+> tool would idle.
+
 **What to answer:** how many decisions does an editor have to make to close a quarter,
 a half and three quarters of the work, once the promo banner is out of the corpus?
 

@@ -99,9 +99,11 @@ measured **twice**, and both numbers go in the answer.
       mentions ticket 21. An absent control is not a statement, so the two
       display-only rows still need to be framed as uncounted.
 - [ ] The Meta tab carries a count badge.
-- [ ] A meta finding rendered in **Taken** says **in de `<head>`** where a text
-      finding says *onder «heading»*. A silent blank would spend what ticket 34
-      bought.
+- [ ] ~~A meta finding rendered in **Taken** says **in de `<head>`** where a text
+      finding says *onder «heading»*.~~ **Ticket 81 removed the Taken tab.** The want
+      survives and it moves: a meta finding reached through the dashboard's
+      *Verschillen* list says **in de `<head>`** where a text finding says
+      *onder «heading»*. A silent blank would spend what ticket 34 bought.
 - [ ] Meta findings do **not** appear in the content view.
 - [ ] The field labels live in the shared label module, and that module's comment
       stops claiming it holds only Dutch labels.

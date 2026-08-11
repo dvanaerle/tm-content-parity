@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Locate, Occurrences, Tag } from './Annotations.jsx';
+import { Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
 import { CHROME } from '../lib/palette.mjs';
@@ -234,7 +234,7 @@ function Rows({ rows, control, sides }) {
                 : <span className="text-xs text-slate-400">gelijk</span>}
               {row.score !== null && <span className="ml-2 text-xs text-slate-400">{row.score}</span>}
               <ClampControl open={open.has(row.key)} onToggle={() => toggle(row.key)} />
-              <Occurrences finding={row.finding} />
+              <Occurrences count={row.finding?.occurrences} title={onePageTitle(row.finding?.occurrences)} />
               {row.finding && <div className="mt-1">{control(row.finding)}</div>}
             </td>
             <DiffCells

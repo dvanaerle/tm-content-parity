@@ -4,8 +4,10 @@ import { muteForms } from '../lib/mute.mjs';
 import { ACCENT, INK, PILL } from '../lib/palette.mjs';
 
 /**
- * The one action control. Spec 29: one control, one place in the code, four call
- * sites — Inhoud, Links, Afbeeldingen and Taken.
+ * The one action control. Spec 29: one control, one place in the code, three call
+ * sites — Inhoud, Links and Afbeeldingen. It was four until ticket 81 removed the
+ * Taken tab; the control it wore was the same one these three wear, which is the
+ * point of there being one.
  *
  * The two powers are deliberately unequal, and the inequality is the design:
  * a **judgement** (negeren, dempen) beats a re-check, a **claim of fact**
@@ -25,6 +27,11 @@ import { ACCENT, INK, PILL } from '../lib/palette.mjs';
  */
 
 /**
+ * The one word for each state, and the tone it wears. Every surface that names a
+ * state reads it from here — `CONTEXT.md` gives each of these words one meaning in
+ * the code and in the interface, and a second copy of this map is how a state comes
+ * to be called two things.
+ *
  * Ticket 35 took the colours out of here. `opgelost` was green and
  * `nog niet opgelost` was red, which spent both diff hues on a work state — an
  * editor scanning a page would have read "done" and "lost content" in the same
@@ -33,7 +40,7 @@ import { ACCENT, INK, PILL } from '../lib/palette.mjs';
  *
  * @type {Record<string, { label: string, tone: import('../lib/palette.mjs').Tone }>}
  */
-const STATE = {
+export const STATE = {
   open: { label: 'open', tone: 'neutral' },
   fixed: { label: 'opgelost', tone: 'info' },
   dismissed: { label: 'genegeerd', tone: 'neutral' },

@@ -1,20 +1,31 @@
 import { useMemo, useState } from 'react';
 import { Bar, Chip, ClassFilterPills, FilterBanner } from './Chips.jsx';
 import { LogBanner } from './Progress.jsx';
+import Repeats from './Repeats.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
-import { pagesWithClasses, toggleIn } from '../lib/view.mjs';
+import { pagesWithClasses, repeatsInStore, repeatsWithClasses, toggleIn } from '../lib/view.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
 
 /**
- * Every page of **one store** on one screen. A store is what an editor is
- * responsible for (ticket 38). Even one store is too many rows to read top to
- * bottom, so the list is sorted worst-first and filterable — the question this
- * view answers is "which page do I open next", not "what is on page 84".
+ * One store's work on one screen. A store is what an editor is responsible for
+ * (ticket 38).
+ *
+ * **Two views over one derivation** since ticket 81, and the toggle between them is
+ * the whole of the difference:
+ *
+ * - *Verschillen* lists the store's **repeats**: one row for one difference, saying
+ *   how many pages carry it. It answers "what do I decide next".
+ * - *Pagina's* lists the store's pages, worst-first. It answers "which page do I
+ *   open next", which is what this dashboard has always answered.
+ *
+ * Neither is a second surface. The class pills, the search box and the counts above
+ * are one set, and both views read the same filter — so a pill that lists its
+ * findings directly is *Verschillen* with a class pre-selected.
  *
  * Axis A only. Ticket 11 gave the coverage axis its own bar, which must never be
  * summed with this one, and ticket 23 owns its store-level view.
@@ -25,6 +36,9 @@ export default function Dashboard({
 }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('worst');
+  // Which of the two views is on screen. *Verschillen* lands first: it is the
+  // question an editor arrives with, and the page list is one click away.
+  const [view, setView] = useState('repeats');
   // Ticket 36 gives the class pills the same semantics the content view's filter
   // has: a pure view filter, session-only, that moves no bar and no roll-up. The
   // chips above the table keep counting every comparable page.
@@ -49,6 +63,21 @@ export default function Dashboard({
       sort === 'worst' ? openOf(b) - openOf(a) : a.page.localeCompare(b.page)
     ));
   }, [comparable, classes, query, sort, log.byPage]);
+
+  // The store's differences, grouped. It is derived from the **summaries the page
+  // list already holds**, so the two views are two readings of one array and no text
+  // crosses the wire twice.
+  const repeats = useMemo(() => repeatsInStore(comparable), [comparable]);
+  const shownRepeats = useMemo(() => repeatsWithClasses(repeats, classes), [repeats, classes]);
+
+  /** Every derived finding of the store by id, so a repeat row can say what is decided. */
+  const byFinding = useMemo(() => {
+    const index = new Map();
+    for (const page of log.derived.pages) {
+      for (const finding of page.findings) index.set(finding.id, finding);
+    }
+    return index;
+  }, [log.derived]);
 
   const totals = useMemo(() => {
     const byClass = {};
@@ -112,34 +141,55 @@ export default function Dashboard({
               .map(([cls, count]) => ({ class: cls, count }))}
             selected={classes}
             onToggle={(cls) => setClasses(toggleIn(classes, cls))}
-            title={(cls) => `Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`}
+            title={(cls) => (view === 'repeats'
+              ? `Toon alleen de verschillen van soort ${cls}. De getallen hierboven veranderen niet.`
+              : `Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`)}
           />
           <div className="flex items-center gap-2">
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Zoek een pagina"
-              className="rounded border border-slate-300 px-2 py-1 text-sm"
-            />
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value)}
-              className="rounded border border-slate-300 px-2 py-1 text-sm"
-            >
-              <option value="worst">Meeste verschillen eerst</option>
-              <option value="name">Op naam</option>
-            </select>
+            {/* The two views, and the controls that belong to one of them only. A
+                search box over a list it cannot narrow would say one thing while the
+                view does another, so it is drawn with the list it searches. */}
+            <ViewSwitch view={view} onChange={setView} />
+            {view === 'pages' && (
+              <>
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Zoek een pagina"
+                  className="rounded border border-slate-300 px-2 py-1 text-sm"
+                />
+                <select
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value)}
+                  className="rounded border border-slate-300 px-2 py-1 text-sm"
+                >
+                  <option value="worst">Meeste verschillen eerst</option>
+                  <option value="name">Op naam</option>
+                </select>
+              </>
+            )}
           </div>
         </header>
 
         {classes.length > 0 && (
           <FilterBanner onClear={() => setClasses([])} className="border-b px-4 py-2">
             <strong>Gefilterd op {classes.join(', ')}.</strong>
-            {rows.length} van {comparable.length} pagina's. De getallen hierboven tellen alle pagina's.
+            {view === 'repeats'
+              ? `${shownRepeats.length} van ${repeats.length} verschillen.`
+              : `${rows.length} van ${comparable.length} pagina's.`}
+            {' '}De getallen hierboven tellen alles.
           </FilterBanner>
         )}
 
+        {view === 'repeats' && (
+          // Keyed on the filter, so a narrowed list starts at the top of its own
+          // rendering budget and with its rows closed. A budget carried over from the
+          // wider list would say *100 van 100 getekend* over a list of 12.
+          <Repeats key={classes.join(',')} repeats={shownRepeats} byFinding={byFinding} />
+        )}
+
+        {view === 'pages' && (
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-[11px] uppercase tracking-wide text-slate-500">
@@ -179,7 +229,8 @@ export default function Dashboard({
             ))}
           </tbody>
         </table>
-        {rows.length === 0 && (
+        )}
+        {view === 'pages' && rows.length === 0 && (
           <p className="px-4 py-6 text-sm text-slate-500">Geen pagina gevonden.</p>
         )}
       </section>
@@ -238,6 +289,43 @@ export default function Dashboard({
     </div>
   );
 }
+
+/**
+ * The two readings of one store, and the tooltip that says what each one answers.
+ * It is a switch and not a tab strip: a tab strip carries a badge per tab, and a
+ * count of repeats beside a count of pages would read as two amounts of work.
+ */
+function ViewSwitch({ view, onChange }) {
+  return (
+    <div className="flex rounded border border-slate-300 text-sm">
+      {Object.entries(VIEW_LABEL).map(([name, { label, title }], index) => (
+        <button
+          key={name}
+          type="button"
+          aria-pressed={view === name}
+          title={title}
+          onClick={() => onChange(name)}
+          className={`px-2 py-1 ${index ? 'border-l border-slate-300' : ''} ${
+            view === name ? `${CHROME.button} text-white` : 'text-slate-600'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const VIEW_LABEL = {
+  repeats: {
+    label: 'Verschillen',
+    title: 'Eén regel per verschil, met de pagina\'s waarop het staat. Wat beslis ik hierna?',
+  },
+  pages: {
+    label: "Pagina's",
+    title: 'Elke pagina van deze winkel, meeste verschillen eerst. Welke pagina open ik hierna?',
+  },
+};
 
 /**
  * Ticket 64: the coverage of this run against the run before it. One entry is

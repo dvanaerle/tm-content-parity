@@ -80,16 +80,25 @@ export async function loadReports(store) {
  * the rest away, one file at a time. Ticket 38: the store narrows it again, so a
  * visitor who opens the German store does not download the other five.
  *
- * It keeps a **compact finding index** as well: the id, the class and the anchor
- * heading of every finding in a shown class, and nothing else. That is the
- * minimum `deriveStoreState()` needs, so the dashboard can sort on the state after
- * overrides rather than on the raw snapshot — the worst page is then the worst
- * *remaining* page. Hidden classes are left out, because ticket 09 keeps them
- * out of the bar entirely.
+ * It keeps a **compact finding index** as well: every finding in a shown class,
+ * with what the dashboard has a use for and nothing else. Hidden classes are left
+ * out, because ticket 09 keeps them out of the bar entirely.
  *
- * The heading is here because ticket 88 put it in the mute key. Without it a
- * section mute would read on the dashboard as a mute of the whole class, and the
- * dashboard would disagree with the page it links to.
+ * Three groups of fields, and each one is here for a named reason:
+ *
+ * - `id` and `class` are the minimum `deriveStoreState()` needs, so the dashboard
+ *   can sort on the state after overrides rather than on the raw snapshot — the
+ *   worst page is then the worst *remaining* page.
+ * - `anchorHeading` is here because ticket 88 put it in the mute key. Without it a
+ *   section mute would read on the dashboard as a mute of the whole class, and the
+ *   dashboard would disagree with the page it links to.
+ * - `prod`, `new`, `detail` and `occurrences` are the repeat grouping (ticket 81).
+ *   They are the one costly part of this index: the two texts of every shown
+ *   finding in the store now cross the wire. Measured on `nl`, 6,004 shown
+ *   findings: the index goes from 118 kB to 228 kB gzipped. It is paid once — the
+ *   repeat list is derived in the browser from **this** array, so no second copy
+ *   of the same text is serialised beside it, and a repeat is exactly the case
+ *   that compresses well.
  *
  * @typedef {object} PageSummary
  * @property {string} store
@@ -97,7 +106,16 @@ export async function loadReports(store) {
  * @property {boolean} comparable
  * @property {string | null} skipReason
  * @property {import('../../../compare/contract.mjs').ReportSummary} summary
- * @property {{ id: string, class: string, anchorHeading: string | null }[]} findings
+ * @property {IndexedFinding[]} findings
+ *
+ * @typedef {object} IndexedFinding
+ * @property {string} id
+ * @property {string} class
+ * @property {string | null} anchorHeading
+ * @property {string | null} prod
+ * @property {string | null} new
+ * @property {string | null} detail
+ * @property {number} occurrences
  * @property {string} observationId
  * @property {string} findingSetHash
  * @property {{ production: SideSummary, new: SideSummary }} sides
@@ -122,7 +140,13 @@ export async function loadSummaries(store) {
       findings: report.findings
         .filter((finding) => FINDING_CLASSES[finding.class]?.shown)
         .map((finding) => ({
-          id: finding.id, class: finding.class, anchorHeading: finding.anchorHeading ?? null,
+          id: finding.id,
+          class: finding.class,
+          anchorHeading: finding.anchorHeading ?? null,
+          prod: finding.prod ?? null,
+          new: finding.new ?? null,
+          detail: finding.detail ?? null,
+          occurrences: finding.occurrences ?? 1,
         })),
       observationId: report.observationId,
       findingSetHash: report.findingSetHash,

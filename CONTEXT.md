@@ -133,6 +133,13 @@ element any more: it folds the links inside it. Both the word and the rule are g
   thing the data holds: it is a grouping the interface makes. A repeat never
   crosses a store, because the stores translate the text, so the same defect in
   six stores is six repeats and not one.
+  A repeat is measured in **pages**, and there is no second number beside it. The
+  page is a term of the finding id, so one page carries at most one finding of one
+  repeat — measured over the corpus, 25,657 repeats and no exception. "How many
+  findings" and "how many pages" are one number, and printing both would be the
+  doubled figure this list exists to stop. **Occurrences** is the number that does
+  differ, and it is a different question: the same difference more than once on a
+  single page.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
   `heading-level` or a `tag-changed` finding, and null on every other class. It is
   part of the finding id, because without it two different demotions of the same
@@ -187,10 +194,15 @@ element any more: it folds the links inside it. Both the word and the rule are g
   moves no bar, no denominator and no count. The content view narrows a page to a
   class and the dashboard narrows the page list to the same class; both say so with
   an amber strip for as long as the filter is on.
-- **Dashboard** — every page of **one store** on one screen, sorted worst-first.
-  It is the store's own page, at `/<store>/`, and it carries only that store's
-  summaries and only that store's progress numbers. There is no all-stores
-  dashboard: a store is the unit an editor is responsible for.
+- **Dashboard** — one store's work on one screen, at `/<store>/`. It carries only
+  that store's summaries and only that store's progress numbers. There is no
+  all-stores dashboard: a store is the unit an editor is responsible for.
+  It holds **two views over one derivation**, and one filter serves both.
+  **Verschillen** is the store's repeats, worst-first by pages, and it answers
+  *what do I decide next*; opening a row lists its pages, and a page name opens the
+  whole content view for that page and never a fragment of it. **Pagina's** is the
+  store's pages, worst-first, and it answers *which page do I open next*. There is
+  no all-stores repeat view, for the reason there is no all-stores dashboard.
 - **Doorway** — the root, `/`. It lists the stores and waits. It is not a dashboard
   and it holds no numbers, because there is no all-stores dashboard for it to be.
 - **Store switcher** — the six store ids in the shell header, each a link to that
@@ -200,11 +212,20 @@ element any more: it folds the links inside it. Both the word and the rule are g
   **not** a filter: it belongs to the whole log, and *filter wissen* does not clear
   it. An editor who asked to see the muted rows did not ask a question about classes.
 
-Three tab names are retired, and the content view is what replaced them.
+Four tab names are retired, and the content view is what replaced the first three.
 **"Diff"** showed the differing rows only, so once every row was tinted the tint said
 nothing. **"Content"** showed two blocks of flat Markdown and no diff. **"Outline"**
 was production's elements indented by heading level, which the content view contains;
 what is left of it is a heading jump-list beside the rows.
+
+**"Taken"** was every finding of one page in one list, grouped by check. Each of its
+three groups is a tab that shows the same findings with more context, so it was the
+one reading of the work that had to strip the context to exist. The grouped reading
+now lives on the dashboard as *Verschillen*, which groups **across** pages — where the
+repetition is. Nothing it offered is unreachable: a text finding is a row of the
+content view, a link and an image finding are rows of Links and Afbeeldingen, and all
+four carry the same override control, the same class pill, the same detail and the
+same section line.
 
 One word is reserved. **"Fold"** has two meanings in this list and no more: a content
 unit folds the words of an inline link, and tier 1 folds a character to nothing. A run

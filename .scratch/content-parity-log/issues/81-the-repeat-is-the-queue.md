@@ -1,7 +1,7 @@
 # 81 — The repeat is the queue
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-11 — built, and one acceptance criterion refused. See the answer.
 Blocked by: 76
 Parent: ../map.md
 
@@ -85,3 +85,101 @@ and never as how much is left.
   and not-done. That is a different want and this ticket does not answer it.
 - Ticket 54 raises `fr` from 28 pages to about 126 and ticket 55 does the other four
   thin stores. The list must not assume a store is small.
+
+## Answer — 2026-08-11
+
+Built. `repeatsInStore()` and `repeatsWithClasses()` in `web/src/lib/view.mjs`,
+`web/src/components/Repeats.jsx` beside the page list on the store dashboard, and the
+`Taken` tab is gone.
+
+### One acceptance criterion is refused
+
+> *The list is worst-first by finding count, and each row states both the finding count
+> and the page count. They are different numbers and both matter.*
+
+**They are the same number, always, and not by accident.** The finding id is
+`sha256(store | page | check | rule | prodNorm | newNorm | detail)`. `page` is a term of
+it and the grouping key is a subset of the rest, so two findings on one page with the
+same key would be the same finding. Measured over the whole corpus: **25,657 repeats,
+zero exceptions**.
+
+So a row states its size in **pages** and prints no second figure. Printing both would
+be the doubled number this ticket's own third trap warns about, one step over. The
+number that genuinely differs is `occurrences` — the same difference more than once on
+a single page — and the row names it apart, only when it exceeds the page count.
+`CONTEXT.md`'s *Repeat* entry now carries the proof so nobody re-asks.
+
+The list is worst-first **by pages**, which is worst-first by findings.
+
+### Measured — and ticket 76's table is superseded, not restated
+
+Ticket 76 is still `ready-for-agent` and its numbers describe **448 reports**. The disk
+now holds **816 reports, 722 comparable, 35,503 shown findings** — tickets 50 and 54
+landed in between. Measuring against 76's table would have measured a corpus that no
+longer exists, in exactly the way 76 accuses the pre-64 numbers of doing. So the
+numbers below come from the shipped function over the reports on disk.
+
+| store | shown findings | repeats | singleton share | top 50 rows cover | top 100 | largest repeat |
+| --- | --- | --- | --- | --- | --- | --- |
+| `nl` | 6,004 | **4,152** | 78.8% | **9.6%** | 15.8% | 22 pages |
+| `be` | 5,412 | 4,115 | 91.4% | 10.5% | 17.4% | 22 |
+| `be_fr` | 6,225 | 4,399 | 88.5% | 9.6% | 16.7% | 23 |
+| `de` | 5,743 | 4,125 | 83.1% | 10.0% | 15.6% | 22 |
+| `fr` | 6,175 | 4,388 | 88.7% | 9.7% | 16.7% | 22 |
+| `uk` | 5,944 | 4,478 | 90.7% | 10.3% | 16.6% | 30 |
+
+The two figures this ticket asked for: **the `nl` list holds 4,152 repeats, and its
+first fifty rows cover 9.6% of `nl`'s 6,004 shown findings.**
+
+**The premise is weaker than the ticket assumed, and the design must not oversell it.**
+The opening sentence imagines a footer line wrong on thirty pages; the largest repeat
+in the largest store is on **22**, and 78.8% of `nl`'s repeats are singletons. Grouping
+turns 6,004 rows into 4,152 — a 31% saving in reading, and none in deciding. The head
+that 76 predicted would be flat after the banner exclusion is flat. That is not a
+reason not to build this — 31% fewer rows and the top 100 covering a sixth of the store
+is worth the screen — but it is a reason the interface says, in the sentence under the
+list, that the grouping saves reading and not work, and that the list does not empty.
+
+This also answers most of what 76 was for. What it still owes is the bulk-dismissal
+verdict for ticket 31, and these numbers argue against it: a 22-page maximum is a
+manageable click-through, and 88% singletons means a bulk tool would idle.
+
+### Where each of `Taken`'s affordances went
+
+| In `Taken` | Now |
+| --- | --- |
+| every text finding | **Inhoud**, in document order, beside the production text — which is the question a one-sided finding asks |
+| every link finding | **Links**, with the two targets word-diffed |
+| every image finding | **Afbeeldingen**, the same |
+| the override control on each | on every row of all three tabs, unchanged |
+| the class pill, `detail`, `×occurrences`, the section line | on every row of all three tabs, unchanged |
+| *work down a page without changing tabs* | **not replaced, and deliberately.** It bought that by removing the context the other three add. The grouped reading of the work is the dashboard's *Verschillen*, which groups across pages — which is where the repetition actually is |
+
+Nothing an editor could reach through `Taken` is unreachable. The badge counts moved
+with the findings: `Inhoud`, `Links` and `Afbeeldingen` each counted their own check
+already, and `Taken`'s badge was their sum.
+
+### The other criteria
+
+- The grouping is a pure function with a test that pins the key and pins that the
+  return holds nothing a bar could be built from — the same rule `prepareRows` obeys.
+  A test asserts two identical strings in two stores are two repeats.
+- A repeat opens to its pages; a page name opens `/<store>/<page>/`, the whole content
+  view, with no filter or fragment on it.
+- The class pills are the entry points and there is no second surface: one pill set,
+  one filter, both views. `repeatsWithClasses()` narrows the list and moves no count,
+  and the existing *a filter moves no count* tests pass unchanged.
+- Progress reads as how much is **decided**: each row says *N van M afgehandeld* from
+  `barOf()` — the page bar's own four rules, now exported rather than restated — and the
+  sentence under the list says the list does not empty.
+
+### Two costs, stated
+
+- **Wire.** The repeat grouping needs the two texts, so `loadSummaries()` now carries
+  `prod`, `new`, `detail` and `occurrences` in its finding index. On `nl` that takes the
+  index from **118 kB to 228 kB gzipped**. It is paid once: the repeat list is derived
+  in the browser from that array, so no second copy of the text is serialised.
+- **Rows.** 4,152 rows is more React than a dashboard should mount at once, so 100 are
+  drawn and a button draws the next 100. It is a rendering budget in the manner of the
+  clamp — the count above it says how many rows there are, so no row is hidden, only
+  not yet drawn.

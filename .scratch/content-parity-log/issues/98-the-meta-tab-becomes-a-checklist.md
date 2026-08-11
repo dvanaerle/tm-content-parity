@@ -62,9 +62,11 @@ write the implementation. Do not plan across all six.
       reads as "nothing to do here" rather than "this is not counted".
 - [ ] 4 The Meta tab carries a count badge. The content view is the body in document
       order, so the badge is the only place a head count can live.
-- [ ] 5 A meta finding rendered in **Taken** says **in de `<head>`** where a text
-      finding says *onder «heading»*. A silent blank would spend what ticket 34
-      bought.
+- [ ] 5 ~~A meta finding rendered in **Taken** says **in de `<head>`** where a text
+      finding says *onder «heading»*.~~ **Ticket 81 removed the Taken tab.** The want
+      survives and it moves: a meta finding reached through the dashboard's
+      *Verschillen* list says **in de `<head>`** where a text finding says
+      *onder «heading»*. A silent blank would spend what ticket 34 bought.
 - [ ] 6 Meta findings do **not** appear in the content view.
 
 ## The distortion, accepted

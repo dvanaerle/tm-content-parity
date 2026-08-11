@@ -146,7 +146,7 @@ export function derivePageState({ report, events, observationId = report.observa
     return decided(finding, 'open', null);
   });
 
-  return { findings, bar: bar(findings), review: review(current, report) };
+  return { findings, bar: barOf(findings), review: review(current, report) };
 }
 
 /**
@@ -213,9 +213,14 @@ export function muteCoverage(findings, key) {
  * corrected difference leaves the snapshot altogether, so the same page can have
  * fewer open findings and the same percentage.
  *
+ * It is exported because ticket 81 draws a bar over a **repeat** — the findings of
+ * one difference across the pages it is on. That is a different set of findings and
+ * the same four rules, so the rules stay in one place rather than being restated in
+ * a component where they could drift from this one.
+ *
  * @param {ReturnType<typeof decided>[]} findings
  */
-function bar(findings) {
+export function barOf(findings) {
   const shown = findings.filter((finding) => finding.shown);
   const count = (/** @type {FindingState} */ state) => shown.filter((f) => f.state === state).length;
 

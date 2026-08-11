@@ -236,3 +236,92 @@ export function pagesWithClasses(pages, classes) {
   if (classes.length === 0) return pages;
   return pages.filter((page) => classes.some((cls) => (page.summary.byClass[cls] ?? 0) > 0));
 }
+
+/**
+ * A store's work listed as differences rather than as pages (ticket 81).
+ *
+ * A **repeat** is every finding in **one store** with the same class, the same two
+ * texts and the same detail. One footer line that is wrong on thirty pages is one row
+ * here, and an editor meets it once instead of thirty times.
+ *
+ * A repeat never crosses a store, because the stores translate the text: the same
+ * defect in six stores is six repeats. There is nothing better to key on — an element
+ * carries no DOM path (tickets 01 and 34), so a key on the literal text is the only
+ * key there is, and it multiplies by six.
+ *
+ * **A repeat is not a finding.** It has no id, no override and no history, and every
+ * decision on it is still N decisions on N findings. `key` is the grouping made
+ * printable, for React and for the row an editor opened; it expires with the text in
+ * the same way a finding id does.
+ *
+ * The row states **pages** and never a separate finding count. `page` is a term of
+ * `sha256(store | page | check | rule | prodNorm | newNorm | detail)`, so one page can
+ * hold at most one finding with this key — measured over the corpus, 25,657 repeats
+ * and no exception. `on` says it in its shape: one entry is a page and its finding.
+ *
+ * The caller decides which findings reach here. `loadSummaries()` keeps the shown
+ * classes only, so a hidden class is out of this list for the same reason ticket 09
+ * keeps it out of the bar.
+ *
+ * @typedef {object} Repeat
+ * @property {string} key       The grouping, printable. Not an identity.
+ * @property {string} store
+ * @property {string} class
+ * @property {string | null} prod
+ * @property {string | null} new
+ * @property {string | null} detail
+ * @property {number} occurrences  Summed over the pages. **Not** the page count: a
+ *                                 page can hold the same difference several times,
+ *                                 and `on.length` is what counts pages.
+ * @property {{ page: string, id: string, occurrences: number }[]} on
+ *
+ * @param {{ store: string, page: string, findings: { id: string, class: string, prod: string | null, new: string | null, detail: string | null, occurrences?: number }[] }[]} pages
+ * @returns {Repeat[]}
+ */
+export function repeatsInStore(pages) {
+  /** @type {Map<string, Repeat>} */
+  const groups = new Map();
+
+  for (const page of pages) {
+    for (const finding of page.findings) {
+      const key = JSON.stringify([page.store, finding.class, finding.prod, finding.new, finding.detail]);
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          store: page.store,
+          class: finding.class,
+          prod: finding.prod,
+          new: finding.new,
+          detail: finding.detail,
+          occurrences: 0,
+          on: [],
+        });
+      }
+      const repeat = groups.get(key);
+      const occurrences = finding.occurrences ?? 1;
+      repeat.occurrences += occurrences;
+      repeat.on.push({ page: page.page, id: finding.id, occurrences });
+    }
+  }
+
+  // Worst-first, which here is the repeat on the most pages. The tie-break is the
+  // key, so two repeats of equal size never swap places between two renders.
+  return [...groups.values()].sort((a, b) => b.on.length - a.on.length || a.key.localeCompare(b.key));
+}
+
+/**
+ * The class filter over the repeat list, and the same rule as everywhere: it narrows
+ * what is on screen and it moves no count.
+ *
+ * This is where the quick-filter want lands. A class pill that lists its findings
+ * directly **is** the repeat list with a class pre-selected, so no second surface is
+ * added (ticket 81).
+ *
+ * @param {Repeat[]} repeats
+ * @param {string[]} classes  Empty means every class.
+ * @returns {Repeat[]}
+ */
+export function repeatsWithClasses(repeats, classes) {
+  if (classes.length === 0) return repeats;
+  return repeats.filter((repeat) => classes.includes(repeat.class));
+}
