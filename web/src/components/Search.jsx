@@ -18,7 +18,9 @@ import { searchNotes, searchStore } from '../lib/search.mjs';
  * search row and a repeats row are the same row with the same marks and the same bar. It
  * is one derivation on screen twice and not a second surface.
  */
-export default function Search({ store, term, byFinding, events, includeClosed, onIncludeClosed }) {
+export default function Search({
+  store, pages, term, byFinding, events, includeClosed, onIncludeClosed,
+}) {
   const { index, error } = useSearchIndex(store);
 
   const result = useMemo(
@@ -34,6 +36,16 @@ export default function Search({ store, term, byFinding, events, includeClosed, 
   );
 
   const notes = useMemo(() => searchNotes({ events, term }), [events, term]);
+
+  // The pages whose **name** holds the term, which the removed box used to narrow the
+  // page list down to. A page with no open finding is in no result above — it is clean,
+  // and clean is the point — so without this list a page could be reached by name before
+  // this ticket and not after it. That is a capability the search had to keep, not a
+  // second answer: it is the by-page reading of the same term.
+  const named = useMemo(() => {
+    const needle = term.trim().toLowerCase();
+    return pages.filter((page) => page.page.toLowerCase().includes(needle));
+  }, [pages, term]);
 
   if (error) {
     return (
@@ -51,14 +63,22 @@ export default function Search({ store, term, byFinding, events, includeClosed, 
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-100 px-4 py-3">
         <p className="text-sm">
           {/* The count of the result and nothing else. Search narrows and moves no
-              count, so the chips above still count every comparable page. */}
+              count, so the chips above still count every comparable page.
+
+              The finding count is drawn only when the result holds more than one
+              difference. Inside one repeat the page is a term of the finding id, so
+              *how many findings* and *how many pages* are one number, and printing
+              both is the doubled figure CONTEXT.md forbids. A one-difference result
+              says what its own row says: how many pages. */}
           <strong className="font-medium">
-            {result.total} bevindingen op {result.pages} pagina's
+            {result.repeats.length === 1
+              ? `1 verschil op ${result.pages} pagina's`
+              : `${result.total} bevindingen op ${result.pages} pagina's`}
           </strong>
           <span className="text-slate-500">
-            {' '}in {result.repeats.length} verschillen. Uit de snapshot van{' '}
-            {new Date(index.builtAt).toLocaleDateString('nl-NL')} — de getallen bovenaan
-            veranderen niet mee.
+            {result.repeats.length > 1 && ` in ${result.repeats.length} verschillen`}
+            . Uit de snapshot van {new Date(index.builtAt).toLocaleDateString('nl-NL')} —
+            de getallen bovenaan veranderen niet mee.
           </span>
         </p>
 
@@ -76,7 +96,8 @@ export default function Search({ store, term, byFinding, events, includeClosed, 
         ? <p className="px-4 py-6 text-sm text-slate-500">Geen verschil met deze woorden.</p>
         : <Repeats key={`${term}|${includeClosed}`} repeats={result.repeats} byFinding={byFinding} />}
 
-      <Notes store={store} notes={notes.notes} />
+      <Named store={store} pages={named} />
+      <Notes notes={notes.notes} />
     </>
   );
 }
@@ -90,7 +111,44 @@ export default function Search({ store, term, byFinding, events, includeClosed, 
  * sentences an editor gave when dismissing or muting something, which are the notes there
  * are to search.
  */
-function Notes({ store, notes }) {
+/**
+ * The pages of this store whose name holds the term, as links to open.
+ *
+ * This is what the removed box did, kept: it matched a page name and narrowed the page
+ * list so an editor could open one. A clean page appears in no finding result, so this is
+ * the only block that can carry it, and losing it would have made a page unreachable by
+ * name. No count beside a name — the page list is where a page's numbers are.
+ */
+function Named({ store, pages }) {
+  if (pages.length === 0) return null;
+
+  return (
+    <section className="border-t border-slate-200 px-4 py-3">
+      <h3 className="text-sm font-medium">
+        {pages.length} {pages.length === 1 ? 'pagina heet' : "pagina's heten"} zo
+      </h3>
+      <ul className="mt-1 flex flex-wrap gap-x-3 text-sm">
+        {pages.map((page) => (
+          <li key={page.page}>
+            <a className={`hover:underline ${CHROME.link}`} href={pageHref(store, page.page)}>
+              {page.page}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * The notes are drawn whatever *inclusief afgesloten* says, and that is deliberate: a note
+ * is the sentence required when **dismissing** or muting something, so nearly every note
+ * there is hangs off work that is already closed. Hiding them by default would leave the
+ * option switching on a half of the answer that is empty until it is pressed, which is not
+ * what *active work by default* is protecting — that rule is about which findings are
+ * offered as work.
+ */
+function Notes({ notes }) {
   if (notes.length === 0) return null;
 
   return (
@@ -105,7 +163,10 @@ function Notes({ store, notes }) {
       <ul className="text-sm">
         {notes.map((note) => (
           <li key={`${note.createdAt}|${note.page}|${note.findingId ?? note.class ?? ''}`} className="py-0.5">
-            <a className={`hover:underline ${CHROME.link}`} href={pageHref(store, note.page)}>
+            {/* The event's own store and page, and not the component's: an event
+                carries where it was written, and reading it is what keeps the link
+                honest if the two ever disagree. */}
+            <a className={`hover:underline ${CHROME.link}`} href={pageHref(note.store, note.page)}>
               {note.page}
             </a>
             <span className="ml-2 text-slate-700">{note.note}</span>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   NO_FILTER,
+  findingsIn,
   isNarrowed,
   onlyDifferencesState,
   outlineFrom,
@@ -440,5 +441,17 @@ describe('repeatsWithClasses', () => {
 
   it('moves no count: it narrows a list and returns the rows it was given', () => {
     expect(repeatsWithClasses(repeats, ['copy', 'casing'])).toEqual(repeats);
+  });
+});
+
+describe('findingsIn', () => {
+  const repeats = [{ class: 'copy', on: [{}, {}] }, { class: 'casing', on: [{}] }];
+
+  it('counts the findings of the list it is given, and of no other list', () => {
+    // Two callers ask this — the repeats footer and a search result — and one of them
+    // asking differently is how a row count and a finding count start to disagree.
+    expect(findingsIn(repeats)).toBe(3);
+    expect(findingsIn(repeatsWithClasses(repeats, ['casing']))).toBe(1);
+    expect(findingsIn([])).toBe(0);
   });
 });

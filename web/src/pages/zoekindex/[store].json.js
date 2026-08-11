@@ -17,6 +17,7 @@ export async function getStaticPaths() {
   return stores.map((store) => ({ params: { store } }));
 }
 
+/** @param {{ params: { store: string } }} context */
 export async function GET({ params }) {
   return new Response(JSON.stringify(await loadSearchIndex(params.store)), {
     headers: { 'content-type': 'application/json' },

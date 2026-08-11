@@ -1,8 +1,8 @@
 # 82 — Search reaches the content
 
 Type: task
-Status: resolved 2026-08-11 — built. One criterion is met against notes that are not the
-ones it names, because the feature it names does not exist. See the answer.
+Status: resolved 2026-08-11 — built, and one acceptance criterion is left open for 83:
+the page note it searches for does not exist yet. See the answer.
 Blocked by: 81
 Parent: ../map.md
 
@@ -41,8 +41,12 @@ already loads.
 - [x] The result says how many findings on how many pages, and groups by page.
 - [x] Closed findings are excluded by default, and an `inclusief afgesloten` option
       includes them.
-- [x] A page note matching the term is found, and the result makes clear that the note
+- [ ] A page note matching the term is found, and the result makes clear that the note
       half is live while the finding half is from the snapshot.
+      **The second half is done and the first waits on [83](83-a-page-carries-a-priority-and-a-note.md),**
+      which is the ticket that creates a page note and already names "the note reaching
+      search through 82" as its own scope. Notes are searched, live and apart from the
+      snapshot — over the notes that exist today, which are the ones on override events.
 - [x] No search dependency is added. The answer records the index size per store and the
       time a worst-case query takes on the largest store.
 - [x] The dashboard's page-name box either becomes this search or is removed. Two search
@@ -131,13 +135,23 @@ two functions rather than one merged list so that no caller can present two mome
 one by accident. On screen they are two blocks under two sentences: the findings dated by
 `builtAt`, the notes marked as read from the log just now.
 
-**The criterion about page notes is met against notes that are not the ones it names.**
-There is no page-note feature: `CONTEXT.md` has the vocabulary, but nothing writes one,
-and `overrides` has no column for it. What exists is `note` — the sentence an editor gives
-when dismissing or muting, and one a page review can carry. Those are the notes there are,
-so those are the notes searched, filtered through `latestByKey()` so a withdrawn note is
-not offered as a live reason. A real page-note feature will need its own ticket, and this
-search will find its notes the day the column exists.
+**The criterion about page notes is left open, and 83 closes it.** There is no page note
+to find: `CONTEXT.md` has the vocabulary, but nothing writes one and `overrides` has no
+column for it — and ticket 83 is the one that creates it, already naming "the note reaching
+search through 82" as its own scope. Ticking this criterion here would have claimed a
+subject that ships in 83.
+
+What is built is the mechanism the criterion asks for, over the notes that exist today:
+`note`, the sentence an editor gives when dismissing or muting, and the one a page review
+can carry. They are filtered live from the events the store page has already loaded —
+in memory, not indexed, exactly as the spec body says — through `latestByKey()`, so a
+withdrawn note is never offered as a live reason. The day 83's column exists, its notes
+are found by the same function with no change here.
+
+The notes are shown whatever *inclusief afgesloten* says. A note is required when
+dismissing, so nearly every note there is hangs off closed work; hiding them by default
+would leave the option switching on a half of the answer that is empty until pressed.
+*Active work by default* is a rule about which **findings** are offered as work.
 
 ### Two things that were nearly bugs
 
@@ -153,3 +167,33 @@ path cannot grow a second, divergent merge.
 
 `node compare/measure.mjs nl` still reads 6,004 shown findings on 124 comparable pages,
 and the index's own numbers agree with it exactly. No count moved; 571 tests pass.
+
+### What the review changed
+
+`/code-review` ran two axes over the eight commits and found one hard breach and one real
+capability loss. Both are fixed:
+
+- **The doubled figure.** The result header printed *N bevindingen op M pagina's*
+  unconditionally, and on a result holding **one** repeat those two numbers are provably
+  the same — the pairing `CONTEXT.md` forbids, printed on the screen of the ticket that
+  forbade it. The finding count is now drawn only when the result holds more than one
+  difference; a single-difference result says what its own row says.
+- **A clean page could no longer be reached by name.** Removing the page-name filter was
+  sanctioned by the criterion, but a page with no open finding appears in no finding
+  result, so typing its name found nothing at all. The result now carries a *pagina's
+  heten zo* block, which is the by-page reading of the same term and the one place a clean
+  page can appear.
+- **`fields` was computed and never drawn.** Three docblock decisions defended output no
+  component read. A repeat row reached by a search now says *in het linkdoel*, *in het
+  kopje* and so on — which is the point of the field split, since a row can hold words
+  that do not contain what was typed.
+- `store` is now a prop from the route rather than dug out of row 0, which fetched
+  `/zoekindex/undefined.json` on a store with no comparable page. A note links through its
+  own `store`. `findingsIn()` in `view.mjs` is the one finding counter the repeats footer
+  and a search result both ask.
+
+Two findings were left standing on purpose. `search.mjs` holds a build-time half and a
+browser half, which is a fair *Divergent Change* reading — but they are one feature and
+splitting them would put the index's shape in one file and its only reader in another.
+And the result groups by repeat and not by page: the trap asks for repeat **first**, then
+page, and `repeat.on` is that second level.

@@ -38,7 +38,7 @@ const CHECKS = ['text', 'links', 'images'];
  * summed with this one, and ticket 23 owns its store-level view.
  */
 export default function Dashboard({
-  pages, notChecked = [], regions = [],
+  store, pages, notChecked = [], regions = [],
   regionsChanged = { store: null, reason: null, changes: [] },
 }) {
   const [query, setQuery] = useState('');
@@ -191,7 +191,8 @@ export default function Dashboard({
 
         {searching && (
           <Search
-            store={comparable[0]?.store}
+            store={store}
+            pages={comparable}
             term={query}
             byFinding={byFinding}
             events={log.events}

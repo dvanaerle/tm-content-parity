@@ -325,3 +325,19 @@ export function repeatsWithClasses(repeats, classes) {
   if (classes.length === 0) return repeats;
   return repeats.filter((repeat) => classes.includes(repeat.class));
 }
+
+/**
+ * How many findings a list of repeats holds.
+ *
+ * Counted off the list it is given and never from elsewhere, so a number beside a list
+ * cannot disagree with it — a filtered row count over an unfiltered finding count is
+ * exactly the mismatched pair ticket 81 exists to stop. Two callers ask (the repeats
+ * footer and a search result), and one of them asking differently is how they would drift.
+ *
+ * It is not a count of *work*: a repeat is a grouping, so this says how much the rows add
+ * up to and never how much is left to do.
+ *
+ * @param {Repeat[]} repeats
+ * @returns {number}
+ */
+export const findingsIn = (repeats) => repeats.reduce((sum, repeat) => sum + repeat.on.length, 0);

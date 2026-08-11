@@ -5,6 +5,7 @@ import { ClassPill } from './Chips.jsx';
 import { STATE } from './OverrideControl.jsx';
 import { CHROME, INK, PILL } from '../lib/palette.mjs';
 import { pageHref } from '../lib/page-url.mjs';
+import { findingsIn } from '../lib/view.mjs';
 
 /**
  * A store's work listed as differences rather than as pages (ticket 81).
@@ -33,7 +34,7 @@ export default function Repeats({ repeats, byFinding }) {
   // Both numbers come from **this** list, so they cannot disagree about what they
   // are counting. A filtered row count over an unfiltered finding count would be
   // exactly the mismatched pair this ticket exists to stop.
-  const findings = repeats.reduce((sum, repeat) => sum + repeat.on.length, 0);
+  const findings = findingsIn(repeats);
 
   if (repeats.length === 0) {
     return <p className="px-4 py-6 text-sm text-slate-500">Geen verschil gevonden.</p>;
@@ -105,6 +106,7 @@ function Row({ repeat, byFinding }) {
         <span className="mt-0.5 shrink-0">
           <ClassPill class={repeat.class} />
           <Detail detail={repeat.detail} />
+          <MatchedFields fields={repeat.fields} />
         </span>
 
         <span className="min-w-48 flex-1 break-words">
@@ -151,6 +153,37 @@ function Row({ repeat, byFinding }) {
     </li>
   );
 }
+
+/**
+ * Where the searched words were found, on a row a search put on screen (ticket 82).
+ *
+ * A row reached by four different fields is four different reasons to look at it, and the
+ * two texts are not the only place a term can hit: on a links check the same two columns
+ * hold the target instead. Without this the row shows words that do not contain what was
+ * typed — because what was typed is in the link, the heading or the page name.
+ *
+ * Nothing here when there are no fields, which is the *Verschillen* view: it lists every
+ * difference and no term was typed, so there is nowhere a match could have been.
+ */
+const MatchedFields = ({ fields }) => (
+  fields?.length
+    ? (
+      <span className="ml-2 text-[11px] text-slate-500">
+        in {fields.map((field) => FIELD_LABEL[field]).join(', ')}
+      </span>
+    )
+    : null
+);
+
+/** The six searchable fields, in the language the dashboard speaks. */
+const FIELD_LABEL = {
+  page: 'de paginanaam',
+  prodText: 'de tekst op productie',
+  newText: 'de tekst op de nieuwe site',
+  linkTarget: 'het linkdoel',
+  linkText: 'de linktekst',
+  anchorHeading: 'het kopje',
+};
 
 /**
  * What is decided about this finding, in **the log's own words for it** — the map

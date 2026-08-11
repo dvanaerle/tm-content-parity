@@ -54,7 +54,7 @@
 
 import { latestByKey } from '../../../overrides/state.mjs';
 import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
-import { repeatsInStore } from './view.mjs';
+import { findingsIn, repeatsInStore } from './view.mjs';
 
 /**
  * One finding, cut to what a search reads.
@@ -68,7 +68,7 @@ import { repeatsInStore } from './view.mjs';
  * @property {string} id            The finding. A repeat has none, so this is the only
  *                                 identity in the file.
  * @property {string} page          The page key. Opaque, and it can hold a slash.
- * @property {string} class
+ * @property {keyof FINDING_CLASSES} class
  * @property {string | null} prod
  * @property {string | null} new
  * @property {string | null} detail
@@ -210,7 +210,7 @@ export const SEARCH_FIELDS = ['page', 'prodText', 'newText', 'linkTarget', 'link
  * @returns {string[]} A subset of `SEARCH_FIELDS`, in that order. Empty on no match.
  */
 export function matchedFields(entry, term) {
-  const needle = term.trim().toLowerCase();
+  const needle = fold(term);
   if (!needle) return [];
 
   const holds = (/** @type {string | null} */ value) =>
@@ -286,14 +286,10 @@ export function searchStore({ index, term, stateOf = () => 'open', includeClosed
     ),
   }));
 
-  // Both numbers are counted off **this** list, so they cannot disagree about what
-  // they are counting — the same reason `Repeats.jsx` sums its own rows rather than
-  // taking a total from elsewhere.
-  return {
-    repeats,
-    total: repeats.reduce((sum, repeat) => sum + repeat.on.length, 0),
-    pages: byPage.size,
-  };
+  // Both numbers are counted off **this** list, so they cannot disagree about what they
+  // are counting. `findingsIn` is the counter the repeats footer uses, asked here rather
+  // than rewritten, for the same reason the grouping is.
+  return { repeats, total: findingsIn(repeats), pages: byPage.size };
 }
 
 /**
@@ -320,7 +316,7 @@ export function searchStore({ index, term, stateOf = () => 'open', includeClosed
  * @returns {{ live: true, notes: import('../../../overrides/state.mjs').OverrideEvent[] }}
  */
 export function searchNotes({ events, term }) {
-  const needle = term.trim().toLowerCase();
+  const needle = fold(term);
   if (!needle) return { live: true, notes: [] };
 
   // Only the events that still stand. The table is append-only, so the words an editor
@@ -348,5 +344,20 @@ export function searchNotes({ events, term }) {
  */
 const isActive = (state) => state === 'open' || state === 'contradicted';
 
-/** Whether `prod` and `new` on this class hold a link target rather than words. */
-const isAboutALink = (/** @type {string} */ cls) => FINDING_CLASSES[cls]?.check === 'links';
+/**
+ * A term and a field, folded to the one form they are compared in.
+ *
+ * The two searches fold the same way because they answer about the same typing. An empty
+ * string is what an untouched box holds, and both callers read it as *no search* rather
+ * than as a term that matches everything.
+ *
+ * @param {string} text
+ */
+const fold = (text) => text.trim().toLowerCase();
+
+/**
+ * Whether `prod` and `new` on this class hold a link target rather than words.
+ *
+ * @param {keyof FINDING_CLASSES} cls
+ */
+const isAboutALink = (cls) => FINDING_CLASSES[cls]?.check === 'links';
