@@ -202,5 +202,63 @@ export function matchedFields(entry, term) {
   });
 }
 
+/**
+ * What one store's index answers about a term.
+ *
+ * The rows are **repeats** and not findings, which is this ticket's second trap: a term
+ * matching one difference that is on 329 pages must not read as 329 unrelated results.
+ * The grouping is ticket 81's `repeatsInStore()`, reused rather than written a second
+ * time, so a search row and a repeats row are the same row.
+ *
+ * The two numbers are a count of the result and nothing more: how many findings, on how
+ * many pages. Search narrows and moves no count, so there is no bar here, no denominator
+ * and no closed count.
+ *
+ * @param {object} args
+ * @param {SearchIndex} args.index
+ * @param {string} args.term
+ * @returns {{
+ *   repeats: (import('./view.mjs').Repeat & { fields: string[] })[],
+ *   total: number,
+ *   pages: number,
+ * }}
+ */
+export function searchStore({ index, term }) {
+  /** @type {Map<string, IndexEntry[]>} */
+  const byPage = new Map();
+  /** @type {Map<string, string[]>} */
+  const fieldsById = new Map();
+
+  for (const entry of index.findings) {
+    const fields = matchedFields(entry, term);
+    if (fields.length === 0) continue;
+    fieldsById.set(entry.id, fields);
+    const held = byPage.get(entry.page);
+    if (held) held.push(entry);
+    else byPage.set(entry.page, [entry]);
+  }
+
+  const pages = [...byPage].map(([page, findings]) => ({ store: index.store, page, findings }));
+
+  // The matched fields ride **on the repeat** — decision 3. The union over its
+  // findings, because the page key is a searchable field and the members differ in
+  // exactly that one: a term can be in one page's key and not another's.
+  const repeats = repeatsInStore(pages).map((repeat) => ({
+    ...repeat,
+    fields: SEARCH_FIELDS.filter(
+      (field) => repeat.on.some((one) => fieldsById.get(one.id)?.includes(field)),
+    ),
+  }));
+
+  // Both numbers are counted off **this** list, so they cannot disagree about what
+  // they are counting — the same reason `Repeats.jsx` sums its own rows rather than
+  // taking a total from elsewhere.
+  return {
+    repeats,
+    total: repeats.reduce((sum, repeat) => sum + repeat.on.length, 0),
+    pages: byPage.size,
+  };
+}
+
 /** Whether `prod` and `new` on this class hold a link target rather than words. */
 const isAboutALink = (/** @type {string} */ cls) => FINDING_CLASSES[cls]?.check === 'links';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SEARCH_FIELDS, indexStore, matchedFields } from './search.mjs';
+import { SEARCH_FIELDS, indexStore, matchedFields, searchStore } from './search.mjs';
 
 /**
  * Ticket 82. An editor types the words and sees every finding that holds them, across
@@ -194,5 +194,59 @@ describe('matchedFields', () => {
     // explains itself; naming only the first would hide half the reason it is there.
     const both = entry({ prod: 'Montage inbegrepen', anchorHeading: 'Montage' });
     expect(matchedFields(both, 'montage')).toEqual(['prodText', 'anchorHeading']);
+  });
+});
+
+describe('searchStore', () => {
+  /** An index over the entries given, as the store page would have loaded it. */
+  const index = (findings) => ({ store: 'nl', pages: 3, builtAt: '2026-08-11T00:00:00Z', findings });
+
+  it('groups the hits by repeat, so one difference on many pages is one row', () => {
+    // The ticket's second trap: a term matching one repeat of many findings must not
+    // read as many unrelated results. The grouping is ticket 81's `repeatsInStore()`,
+    // reused and not rewritten — one footer line wrong on three pages is one row.
+    const result = searchStore({
+      index: index([
+        entry({ id: 'a', page: 'afhalen' }),
+        entry({ id: 'b', page: 'garantie' }),
+        entry({ id: 'c', page: 'montage' }),
+      ]),
+      term: 'deals',
+    });
+
+    expect(result.repeats).toHaveLength(1);
+    expect(result.repeats[0].on.map((one) => one.page)).toEqual(['afhalen', 'garantie', 'montage']);
+  });
+
+  it('says how many findings on how many pages', () => {
+    // A count *of the result* and nothing else. Search narrows; it moves no count, so
+    // there is no bar here, no denominator and no closed count — the rule ticket 36
+    // pinned, which `view.mjs` obeys in the same words.
+    const result = searchStore({
+      index: index([
+        entry({ id: 'a', page: 'afhalen' }),
+        entry({ id: 'b', page: 'afhalen', anchorHeading: 'Levering' }),
+        entry({ id: 'c', page: 'garantie' }),
+        entry({ id: 'd', page: 'montage', prod: 'Gratis montage' }),
+      ]),
+      term: 'deals',
+    });
+
+    expect(result.total).toBe(3);
+    expect(result.pages).toBe(2);
+  });
+
+  it('says which fields matched on the repeat, and leaves its pages untouched', () => {
+    // Decision 3. `view.test.mjs` pins the keys of a `Repeat.on` entry to exactly
+    // `['id', 'occurrences', 'page']`, so a search that hung the matched field there
+    // would break ticket 81's derivation for the view that has nothing to do with
+    // search. The row is what matched; the pages are only where it is.
+    const result = searchStore({
+      index: index([entry({ prod: 'Montage inbegrepen', anchorHeading: 'Montage' })]),
+      term: 'montage',
+    });
+
+    expect(result.repeats[0].fields).toEqual(['prodText', 'anchorHeading']);
+    expect(Object.keys(result.repeats[0].on[0]).sort()).toEqual(['id', 'occurrences', 'page']);
   });
 });
