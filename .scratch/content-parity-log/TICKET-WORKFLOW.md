@@ -253,8 +253,9 @@ human. That leaves **nine**, and they are not one group. Read on 2026-08-11.
 | 50 | `map.md`: *"Done on 2026-08-10 by ticket 55. The spec is delivered and the number is 816."* | close it |
 
 Both hold a `Status:` value that `docs/agents/triage-labels.md` does not define —
-**`merged`** and **`claimed`**. Ticket 04 holds **`reopened`**, which is also not in the
-vocabulary. So a count of open tickets reads three tickets wrongly.
+**`merged`** and **`claimed`**. Ticket 04 held **`reopened`**, which was also not in
+the vocabulary; it now reads `resolved — superseded by 50, 53, 55, 57`, closed on
+2026-08-11. So a count of open tickets read three tickets wrongly.
 
 `WORKLIST.md` already guards the count against a second folder. This is the same fault
 through the status line. **Use the five words, or the count is not a measurement.**

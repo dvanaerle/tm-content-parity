@@ -275,12 +275,15 @@ who wins against re-check.
 - **Stale** — a page review made against a page whose findings changed after it.
   The interface says **"changed since review"**, not "needs review", because a
   page also becomes stale when an editor corrects things.
-- **Migration decision** — an override on a one-sided page: **migrate**,
-  **not migrated**, **replaced** or **redirected**. Every one except *migrate* needs
-  a note. *Replaced* and *redirected* are claims of fact, so they lose to re-check
-  in the same manner as a fix claim: a page claimed as redirected that still answers
-  404 is contradicted. *Not migrated* is a judgement, and it beats re-check. A
-  migration decision is scope work, so it stays out of the progress bar.
+- **Migration decision** — ~~an override on a one-sided page: **migrate**,
+  **not migrated**, **replaced** or **redirected**~~. **Withdrawn from the vocabulary
+  2026-08-11.** It never existed in the code: the override actions are
+  `fixed | dismissed | muted | reviewed | cleared` and nothing else. The four values came
+  from a superseded draft, were refused by the user — *usually, every page needs to be
+  built*, so a verb per page names a decision already made — and their tickets are parked
+  `wontfix` in `.scratch/content-parity-log/issues/.out-of-scope/` (20 and 84). Do not
+  reason from this term. It is kept struck through rather than deleted because `PRD.md`
+  stories 40 to 42 and 44 still refer to it.
 - **Priority** and **Note** — two annotations on a page. Priority is one of a closed
   list of words; a note is free text. Both describe a page and neither describes a
   finding, because a finding carries its own decision. There is no **owner**: with a
@@ -328,8 +331,17 @@ this list already defines.
 - **New-only page** — a store page on the new site that gives 404 on production.
 
 Neither can make a finding, because the comparison needs 200 on both sides. They
-are scope decisions and not editor work, so they stay out of the progress bar and
-have their own migration checklist.
+are scope decisions and not editor work, so they stay out of the progress bar.
+
+**There is no migration checklist, and none is planned.** One-sided pages are *shown* and
+not *decided*: the `eenzijdig` chip, the store header sentence and a read-only aside naming
+each page with its `skipReason`. The default answer for a legacy-only page is to build it,
+which needs no vocabulary, so the checklist and its verbs were parked `wontfix` on
+2026-08-11 — see `issues/.out-of-scope/20-one-sided-pages-checklist.md` for the reasoning and
+the condition that would re-open it. Two cautions survive the park: this population is **not
+a census**, because a page created on the new site since 2024 appears in no source at all, so
+no "0 remaining" reading is ever true; and a legacy-only page that production **redirects** to
+a surviving page is renamed rather than missing.
 
 ## Axes
 

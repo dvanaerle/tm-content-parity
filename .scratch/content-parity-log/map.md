@@ -166,6 +166,31 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   campaign rule fires one-sided, so a campaign classifies itself with no commit — the
   current selector anchors on this campaign's option ids and needs a new commit every
   campaign.
+- **The one-sided campaign rule is refused, and the region entry stays.** Ticket 89
+  measured it over the 816 reports on disk: 938 shown `text-missing`/`copy` findings
+  carry `PROMO` on production and not on the new side, **880 banner and 58 editorial**
+  — 26 of them the price label `Nu vanaf`, 22 the substring in *ideal* / *ideale*, and
+  four of them `copy` rows with real lost sentences. Worse, the pattern is Dutch: it
+  matches **0** banner lines in `de`, `fr` and `be_fr` and one per page in `uk`, which
+  is the objection ADR 0003 already sustained. And it cannot reach links: the banner
+  makes **1,175 shown link findings** against 880 text ones, so a text rule removes
+  less than half of it. The one-sided image rule shows the failure mode already — 24
+  of its 530 findings are `ontwerp_je_ideale_overkapping.jpg`, hidden unnoticed. The
+  hand-written entry is kept as the primary mechanism. See
+  [89](issues/89-what-a-one-sided-campaign-rule-would-catch.md).
+- **The campaign anchor is an id, and the per-campaign commit is gone.** The banner block
+  is editable in the Magento admin, so production marks it with `id="campaign-banner"` and
+  the entry anchors on that instead of on the option ids `6039,6040`. Measured **identical
+  to the retired selector in matches, units, links and images on 48 page-store pairs** —
+  2 matches on production, 8 units in nl and 7 in the other five, 0 on the new site. That
+  is 48 pairs and **not** the 816-page corpus: the corpus-wide probe last ran against the
+  old selector. The entry's reason now names no campaign, no percentage and no year, and a test
+  refuses one. This is the outcome ticket 90 wanted by a mechanism it did not propose: not
+  a class, not a commit, a hook. The text rule stays refused on 89's evidence. Two things
+  it does **not** solve, both of them 89's findings: the `IMAGE_CAMPAIGN` collateral is
+  live, and a committed entry that matches **nothing** still fails silently at the crawl
+  and is only reported one run later by ticket 64's coverage line. See
+  [90](issues/90-a-campaign-is-a-class-not-a-commit.md).
 
 ### Resolved tickets
 
@@ -250,6 +275,45 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   undifferentiated number. Found on the way: the new site serves **no sitemap**, no
   store home is in the production sitemap, and production was in **maintenance
   mode** all session, so `prodStatus` is not yet a measurement.
+
+  **Closed 2026-08-11, and three of the numbers above are wrong.** Read them as
+  the 2026-08-06 record, not as facts. The seed list holds **550 rows**, not 181:
+  `de`, `fr` and `be_fr` went to 134/123/122 once `isContentPage()` stopped
+  needing `changefreq=daily`, so the sitemap did **not** yield exactly the
+  hreflang counts. **283 clusters have no NL member**, so "no non-NL page lacks an
+  NL counterpart" is false — those rows carry the unanchored `(store)path` key
+  that ticket 57 added. The 26,645-in-one-number exclusion is gone: 105 drops,
+  each with a `rule` from `shared/drop-rules.mjs`. What held: the plain host swap,
+  and the translated category keys. The work is in
+  [50](issues/50-content-page-discriminator.md),
+  [53](issues/53-every-content-page-in-the-seed-list.md),
+  [55](issues/55-five-stores-show-all-their-pages.md) and
+  [57](issues/57-retire-the-nl-url-key-assumption.md). The one thread 04 left open
+  was [16](issues/16-new-site-page-discovery.md), and that closed the same day —
+  see its entry below.
+
+- [16 — Discovering non-NL pages that only exist on the new site](issues/16-new-site-page-discovery.md)
+  — **Closed 2026-08-11 by a decision: production is the source of truth, and the
+  new site is expected to match it.** So a page only the new site has is not content
+  to preserve, it is a deletion candidate. The production sitemap **is** the seed by
+  definition, no crawl of the new site is owed, and **`orphan-page` never gets a
+  producer** — it was a migration-completeness worry, not a defect class.
+  Two premises of the ticket were measured false first. **The new site does serve a
+  sitemap**, declared in `robots.txt` at `/media/siteindex/<locale>/siteindex.xml`,
+  which the 2026-08-06 probe missed by trying three standard paths instead of reading
+  `robots.txt`; production serves none of those paths. It is **rejected as a source**
+  anyway: generated once, 2024 content, and of the 35 urls it adds to the seed list
+  **21 are already 404 on the new site too**. And "no non-NL page lacks an NL
+  counterpart" was already false — 283 clusters have no NL member.
+  What it found: **14 pages live on the new side and 404 on production**, thirteen of
+  them non-nl, which contradicts step 33's "the new-only population is entirely nl".
+  They are 2024 pages the clone kept, handed to
+  [20](issues/.out-of-scope/20-one-sided-pages-checklist.md) as a third population for the
+  one-sided checklist. A fuller sweep needs no new requests — `data/extract`'s
+  `.new.links[].url` holds 2,270 internal targets in no seed row, about 238 of them
+  plausible content pages — but extraction is `<main>`-scoped, so nav and footer
+  anchors were never captured. Re-open only if a new-site page appears that
+  production never had and somebody wants to keep.
 
 - [05 — Link checking rules](issues/05-link-checking-rules.md)
   — The Links tab compares **targets only**; anchor text belongs to the content view.
@@ -946,7 +1010,7 @@ The order:
 2. **Re-measure.** 76 and 89. Also ticket 38's per-store counts, and the
    re-triage of 04, 16, 20 and 25 that ticket 50 asks for after 55.
 3. **The stack, alone.** 72 → 73 → 74. An upgrade that carries a product change
-   cannot be reviewed.
+   cannot be reviewed. **72 and 73 are resolved (2026-08-11); only 74 is left.**
 4. **The contract, then the workspace.** 75 and 77, then 78, 79, 68, 37, 80, 81,
    31, 82, 83, 84, 85, 86, 90, and 87 last.
 
@@ -955,12 +1019,20 @@ is not corpus work: it is view work, and the grilling sequenced it after 79, who
 context markers decide which rows a clamp applies to. Three tickets now reshape one
 component in one stream — 79, then 68, then 87 last — which is the order to keep.
 
-**Ticket 37 is on hold, and it was built once.** It was sequenced after 68 and that
-order held: the build was clean and it is on the stash
-`ticket 37 Leesweergave: built 2026-08-11, reverted pending a value decision`. It came
-out on 2026-08-11 on one question the code cannot answer — whether a second reading of
-the same page earns the surface it costs. Nothing was wrong with it. The ticket holds
-what it cost and what it would take to bring it back.
+**Ticket 37 is parked, and it was built once.** It was sequenced after 68 and that
+order held: the build was clean. It came out on 2026-08-11 on one question the code
+cannot answer — whether a second reading of the same page earns the surface it costs.
+Nothing was wrong with it. **Parked `wontfix` the same day**, into
+[.out-of-scope/37](issues/.out-of-scope/37-leesweergave.md): the feature may or may
+not be wanted, and that is a brainstorm rather than a triage. The ticket holds what
+it cost, its re-open triggers, and how to bring the code back.
+
+The build is on the branch **`park/ticket-37-leesweergave`**, promoted from the stash so a
+`git stash drop` cannot lose it. Restore it with `git stash apply
+park/ticket-37-leesweergave` — **not** `git checkout`, because five of the nine files are
+new and live on the ref's third parent. Ticket
+[48](issues/48-open-and-done-board.md) was blocked by 37; that edge is **void** and
+cleared, and 48 inherits the mode question 37 would have answered.
 
 **Axis B is parked.** Tickets 39 to 45 stay a named stream and nobody starts
 them. The grilling of 2026-08-10 put axis B out of scope for the workspace work,
@@ -987,11 +1059,16 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
 
   The stack goes first, alone, because an upgrade that carries a product change cannot be
   reviewed:
-  [72 Astro 6](issues/72-upgrade-to-astro-6.md),
-  [73 Astro 7](issues/73-upgrade-to-astro-7.md),
+  [72 Astro 6](issues/72-upgrade-to-astro-6.md) — **resolved 2026-08-11**,
+  [73 Astro 7](issues/73-upgrade-to-astro-7.md) — **resolved 2026-08-11**,
   [74 seven primitives](issues/74-seven-accessible-primitives.md).
   Astro 7.2.0 is current, the documented path from 5.14 is 5 → 6 → 7, and v6 raises the
   Node floor to 22.12.0 for the crawl and the re-check service as well as the build.
+
+  **73 was upgraded by hand, outside a ticket**, so it did not run its gate. 72 closed on
+  a byte-identical build of all 823 pages; 73 has no such line, and the whitespace
+  difference its own criteria predicted from the new `compressHTML` default is
+  unmeasured. 74 is unblocked either way — it builds on top of whatever the tree is.
 
   Then the contract and the measurements, all unblocked:
   [75 class visibility](issues/75-class-visibility-replaces-shown.md),
@@ -1011,16 +1088,16 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   [31 one reason, many findings](issues/31-bulk-dismissal.md),
   [82 search](issues/82-search-reaches-the-content.md),
   [83 priority and note](issues/83-a-page-carries-a-priority-and-a-note.md),
-  [84 migration decisions](issues/84-a-one-sided-page-carries-a-migration-decision.md),
+  [84 migration decisions](issues/.out-of-scope/84-a-one-sided-page-carries-a-migration-decision.md),
   [85 the comparison scope](issues/85-the-comparison-scope-is-legible.md),
   [86 heading level](issues/86-heading-level-becomes-information.md),
   [90 a campaign is a class](issues/90-a-campaign-is-a-class-not-a-commit.md),
   [87 three widths](issues/87-three-widths.md).
 
   78 needs 77. 81 needs 76. 31 needs 81 and 88, and 30. 82 needs 81. 85 and 86 need 75,
-  and 86 needs 76. 90 needs 89, **and 89 may refuse it** — the pattern is Dutch, which is
-  the objection ADR 0003 used against a Dutch text anchor, and the banner carries link
-  findings a text rule cannot reach. 87 is last so it is not done twice.
+  and 86 needs 76. **89 and 90 are both closed**: 89 refused 90's rule on exactly the
+  objection ADR 0003 used against a Dutch text anchor, and 90 then got its outcome from
+  an id production puts on the banner block. 87 is last so it is not done twice.
   [31](issues/31-bulk-dismissal.md) was rewritten rather than duplicated: the grouping
   key it asked for three sessions ago is 81's **repeat**.
   [48](issues/48-open-and-done-board.md) is **not** superseded — 81 groups across pages,
@@ -1257,9 +1334,9 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   `crawl/fetch-page.mjs`. The status pass is a second step over the finished list,
   not part of the generator — 53's "the generator makes no live request" stands.
 
-  **Two tickets now wait on 55**, the rollout sitting:
-  [16](issues/16-new-site-page-discovery.md) and
-  [20](issues/20-one-sided-pages-checklist.md). Both count out of the seed list,
+  **Two tickets now wait on 55** — 16 has since closed, 2026-08-11 — the rollout
+  sitting: [16](issues/16-new-site-page-discovery.md) and
+  [20](issues/.out-of-scope/20-one-sided-pages-checklist.md). Both count out of the seed list,
   and both re-triage after it. **55 landed on 2026-08-10, so both are unblocked**,
   and so is [04](issues/04-six-store-page-lists.md).
   [49](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md) is **re-opened**:
@@ -1395,11 +1472,14 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
 
   - [35 — One visual language: brand tokens and a real diff](issues/35-diff-rendering-and-design-system.md)
   - [36 — The content view: the whole page, filtered, tickable](issues/36-merged-content-view.md)
-  - [37 — Leesweergave: the page as a reader sees it](issues/37-leesweergave.md)
+  - [37 — Leesweergave: the page as a reader sees it](issues/.out-of-scope/37-leesweergave.md)
+    — **parked `wontfix` on 2026-08-11**, built once and kept on the branch
+    `park/ticket-37-leesweergave`.
   - [38 — Six stores, not one](issues/38-six-stores.md) — **resolved**, above.
   - [48 — Openstaande en afgeronde taken: the content view as a board](issues/48-open-and-done-board.md)
-    — `needs-triage`, and **blocked by 37**. 37 makes the content view a thing
-    with modes, and 48's first question is whether a board is a third mode.
+    — `needs-triage`, and **no longer blocked**: 37 was parked, so that edge is void.
+    48 now inherits the mode question — whether a board is a mode at all, and if so
+    what a mode may do to document order.
   - [49 — The be/be_fr shared-host blind spot, measured](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md)
     — **closed `wontfix`** on 2026-08-07 and moved to `issues/.out-of-scope/`.
   - [59 — `link-status.mjs` erases the other stores](issues/59-link-status-overwrite.md)
@@ -1518,6 +1598,22 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   categories are excluded today.
 
 ## Out of scope
+
+- **A decision vocabulary for one-sided pages** — parked `wontfix` 2026-08-11, both
+  halves: the question,
+  [20 — Pages that exist on only one side](issues/.out-of-scope/20-one-sided-pages-checklist.md),
+  and its build,
+  [84 — A one-sided page carries a migration decision](issues/.out-of-scope/84-a-one-sided-page-carries-a-migration-decision.md).
+  A `/grilling` resolved 20 and `/prototype` built three variants of the surface; the user
+  refused both, on the grounds that the store dashboards already show these pages and
+  **usually every page needs to be built**, so a verb per page models a decision that is
+  already made. The four verbs trace to `content-parity-product-improvements.md` §14 — a
+  draft whose own header says "do not build from it" — by way of `PRD.md` stories 40–44,
+  and no measurement or person ever asked for them. One-sided pages **stay visible**: the
+  `eenzijdig` chip, the store header sentence and the read-only aside are untouched. What
+  is given up is recording a decision, and that is 20's re-open trigger. Numbers worth
+  keeping are in 20: the strict cross-tab is **50, not 53**, and **41** is the defensible
+  new-only count.
 
 - **CRO recommendations** — the log says "make new match prod"; CRO advice says
   "make new beat prod". Opposite instructions on the same page destroy trust in

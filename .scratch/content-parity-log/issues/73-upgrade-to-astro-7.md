@@ -1,7 +1,9 @@
 # 73 — Astro 7, and nothing else
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-11 — upgraded by hand, outside a ticket. `web/package.json`
+is on Astro `^7.2.0`. The acceptance criteria below were not walked one by one, so the
+build comparison and the Markdown-export check are unrecorded rather than passed.
 Blocked by: 72
 Parent: ../map.md
 

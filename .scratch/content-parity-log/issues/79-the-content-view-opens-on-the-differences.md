@@ -53,9 +53,11 @@ answer it. That is why the rows collapse instead of leaving.
 - [ ] `Alleen verschillen` stops being a filter and becomes the expand-all control, or
       it goes. Whichever is chosen, no control remains that narrows the view and could
       be mistaken for one that moves a count.
-- [ ] **This is not a view mode.** [37](37-leesweergave.md) owns modes on this tab and
-      is unbuilt. Collapsing is one order with a fold in it, and the answer states that
-      distinction plainly so 37 is not pre-empted.
+- [ ] **This is not a view mode.** Collapsing is one order with a fold in it, and the
+      answer states that distinction plainly. [37](.out-of-scope/37-leesweergave.md)
+      held the mode question and was **parked on 2026-08-11**, so there is no longer a
+      ticket to pre-empt — which makes stating the distinction more important, not
+      less: nothing else defines what a mode may do to document order.
 - [ ] No count moves. `web/src/lib/view.mjs` still decides what is on screen, and the
       test that pins "a filter never moves a count" still passes unchanged.
 - [ ] The dashboard's `pagina's gelijk` chip goes. It counts a thing nobody works on.

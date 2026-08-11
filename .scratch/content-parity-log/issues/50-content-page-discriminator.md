@@ -158,7 +158,7 @@ answer. They are not open work here.
 
 Four tickets re-triage against the new number rather than the old one:
 [04](04-six-store-page-lists.md), [16](16-new-site-page-discovery.md),
-[20](20-one-sided-pages-checklist.md) and
+[20](.out-of-scope/20-one-sided-pages-checklist.md) and
 [25](25-fotogalerij-worst-case-page.md). That is in **What this ticket reopens** below,
 and `map.md` § Working order carries it.
 

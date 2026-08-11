@@ -44,9 +44,13 @@ and do not open them again in a later ticket.
    axes with one click. Give axis B its own class, or make `axis` a list. A
    separate class is the recommendation: the mute key makes one shared class a
    trap, and the two findings do not mean the same thing.
-2. **`orphan-page` has no producer.** Ticket 04 found no page that is only in a
-   non-NL store, and ticket 16 owns the crawl that could find one. Declare the
-   class, build no producer, and say so in the ticket.
+2. **`orphan-page` has no producer, and on 2026-08-11 it stopped being owed one.**
+   Declare the class, build no producer, and say so in the ticket. The reason is no
+   longer "no known instances": ticket [16](16-new-site-page-discovery.md) closed
+   because **production is the source of truth**, so a page only the new site has is
+   a deletion candidate on the one-sided-page checklist
+   ([20](.out-of-scope/20-one-sided-pages-checklist.md)) and not a finding class. Do not build a
+   producer for it on the strength of the older prose in tickets 11, 23, 24 or 41.
 3. **Axis B reports must not go in `data/reports/`.** `web/src/lib/reports.mjs`
    reads that directory with one flat listing and gives every file to the axis A
    dashboard. A sibling directory keeps the two apart.

@@ -2,7 +2,7 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: 73
+Blocked by: None — can start immediately. 72 and 73 are resolved.
 Parent: ../map.md
 
 **What to build:** the interface gains seven interactive primitives that behave

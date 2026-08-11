@@ -6,13 +6,30 @@ This file answers one question: **what do I do next?** `RUNBOOK.md` says *why*
 the order is what it is, and `map.md` stays the map. If this file and the map
 disagree, the map wins.
 
-**52 of the 90 tickets are closed**, counted from the `Status:` line of every
-ticket file on 2026-08-11. 38 are open. 35 steps are below and **steps 01 to 07
-and step 05b are done**. Seven tickets are parked and they are at the end.
+**60 of the 100 tickets are closed or parked**, counted from the `Status:` line of
+every ticket file on 2026-08-11 — 96 in `issues/` and 4 in `issues/.out-of-scope/`.
+**40 are open**, and seven of those are the parked axis-B stream (39 to 45) at the
+end of this file, so **33 are buildable**. 35 steps are below and **steps 01 to 07,
+step 05b, and steps 14 and 15 are done**; steps 08 and 27 are dropped.
 
-The count went 50 to 52. Tickets **50**, **57** and **25** closed and ticket **37**
-re-opened to `needs-triage`. A closed ticket that comes back is why this line is
-counted and never incremented by hand.
+The count went 50 to 52 to 56 to 58 to 60. Tickets **72** and **73**, the Astro
+stack, closed on 2026-08-11 — 73 by hand rather than through step 15. Tickets
+**50**, **57** and **25** closed; ticket
+**37** re-opened to `needs-triage` and was then **parked** on 2026-08-11; tickets
+**04** and **16** closed on 2026-08-11 by the re-triage at step 33; tickets **20** and
+**84** were **parked together** on 2026-08-11 after the user refused the migration-decision
+vocabulary and the prototype of its surface. A closed ticket that comes back is why this
+line is counted and never incremented by hand.
+
+The rule for the count: not-open is a `Status:` line holding `resolved`, `closed` or
+`wontfix`. Everything else is open, whatever else the line goes on to say.
+
+**The line comes in two shapes, and a count that reads one is wrong by sixteen.**
+Twenty-one ticket files write `**Status:** …` in bold instead of bare `Status:` —
+33, 34, 35, 36, 38, 48, 50, 59 and 60 to 70, plus 37 and 49 in the parked folder.
+Grepping `^Status:` alone sees only the other 79 files and finds 44 not-open.
+Match `^\*{0,2}Status:` and the count is the 60 above. Unbolding the twenty-one
+would be the better repair; until someone does, the pattern is the rule.
 
 **Two of those were already done and the word hid it.** Ticket 50 read `claimed`
 and ticket 57 read `merged`, and neither word is one the tracker defines, so a
@@ -26,9 +43,10 @@ that needed ticket 79 is handed to step 20 rather than half-built. The order in
 this file is still the order; this was the one step that could leave it and lose
 nothing.
 
-**Count 90 in two folders.** 89 ticket files sit in `issues/` and the ninetieth,
-ticket **49**, sits in `issues/.out-of-scope/`. A count that reads one folder
-gives 89 and misses an open ticket.
+**Count 100 in two folders.** 96 ticket files sit in `issues/` and four sit in
+`issues/.out-of-scope/` — ticket **49**, which is re-opened, and tickets **37**, **20** and
+**84**, all parked on 2026-08-11. A count that reads one folder gives 96 and misses an open
+ticket, because 49 is `needs-triage` while sitting in the parked folder.
 
 **The corpus is 816 store pages**, from 451, since step 03 landed on 2026-08-10.
 Every count taken against 448 reports or 451 pairs is stale, and steps 12 and 13
@@ -39,8 +57,9 @@ reports were older than the extractor. They are not, and it was measured on
 2026-08-11: `data/reports/` holds **816 files written 2026-08-10 12:09**, and the
 last commit to touch extraction is `79b9985`, ticket 67's fold, before them. Ticket
 68 then measured 22,571 two-sided rows over those same 816 reports, which no
-pre-fold corpus could produce. Ticket 37's build was reverted to the stash, so
-`crawl/extract.mjs` writes what it wrote on 2026-08-10.
+pre-fold corpus could produce. Ticket 37's build was reverted — it is on the branch
+`park/ticket-37-leesweergave` now, not the stash — so `crawl/extract.mjs` writes what it
+wrote on 2026-08-10.
 
 The steps are **not renumbered** as they close. Step 24 says "blocked by step 22"
 and a renumbering would make every such line a lie.
@@ -98,7 +117,7 @@ What can run in the second session today:
 | step | what | why it is safe |
 | --- | --- | --- |
 | **32** | Ticket 34, the deep link | `talk`. No blocker. It writes one ticket file. |
-| **33** | The re-triage of 04, 16, 20 and 48 | `talk`. **Joined on 2026-08-10**, when step 03 landed. |
+| **33** | The re-triage of 20 and 48 — 04 and 16 closed on 2026-08-11 | `talk`. **Joined on 2026-08-10**, when step 03 landed. |
 | **13** | Ticket 89, the campaign rule | `read`. No blocker. It **reads** `data/`, so see rule 2. |
 | **00b** | The first real mute | A browser. Nothing in git. |
 | **23** | Ticket 30, wire Supabase | A browser and `web/.env`. Nothing in git. |
@@ -410,7 +429,7 @@ that surface between them. The code comment in `compare/30-compare.mjs` says so.
 **After steps 03 and 04, four things fall out.** Step 03 landed on 2026-08-10 and
 three of the four are done already:
 
-- Ticket **04** closes. **Still open** — it goes to step 33 with the other three.
+- Ticket **04** closes — **done on 2026-08-11**, at step 33.
 - Ticket **49** gets its probe again — **done**. Its trigger fired and it is
   re-opened as `needs-triage`: 1 in-scope anchor became **12**.
 - Tickets **16** and **20** come back for triage. That is step 33.
@@ -628,7 +647,8 @@ there is no collapsed run yet. Step 20 carries it.
 
 **The cross-stream loose end is spent.** 68 was sequenced after 79 and it ran first, on
 its own, and nothing was lost: the equal-row skip is in `prepareRows`, so it covers
-whatever rows 79 renders. Ticket 37, at step 08, is unblocked now.
+whatever rows 79 renders. Ticket 37, at step 08, was unblocked by this — and then
+parked on 2026-08-11, so step 08 is dropped.
 
 `web/probes/` is new, and it is the front-end half of `crawl/probes/`: what a page costs
 to render and what it costs to paint. **A first-paint probe needs a server** — `node
@@ -649,27 +669,24 @@ absorbed into an unrelated one.
 
 ---
 
-### ☐ Step 08 — Ticket 37, leesweergave
+### ☒ Step 08 — Ticket 37, leesweergave — **dropped: the ticket is parked**
 
-touches `web`. Blocked by 68 — **done**, step 07.
+**Do not run this step.** Ticket 37 was built on 2026-08-11, reverted the same day,
+and **parked `wontfix`** into
+[.out-of-scope/37-leesweergave.md](issues/.out-of-scope/37-leesweergave.md). Nothing
+was wrong with the build; what is unsettled is whether the feature is wanted, and
+that is a brainstorm and not a step. The code is on the branch
+`park/ticket-37-leesweergave` — restore with `git stash apply park/ticket-37-leesweergave`, not
+`git checkout`, because five of the nine files sit on the ref's third parent.
 
-**Why here.** It moved. It was a free `web` lane, and it is not one any more: it
-builds view modes onto a content view that ticket 67's fold has now rewritten and
-that ticket 68 clamps.
+The gate it carried is worth keeping wherever this returns: three distinct alt
+renderings — an alt with content, an alt that is present but empty, and an absent alt
+attribute with a visible marker. Production carries **50** images with no alt
+attribute, and nothing else in the tool tells them apart.
 
-```
-/clear
-```
-
-```
-/implement .scratch/content-parity-log/issues/37-leesweergave.md
-```
-
-**Gate.** Three distinct alt renderings: an alt with content, an alt that is
-present but empty, and an absent alt attribute with a visible marker. Production
-carries **50** images with no alt attribute.
-
-**Ticket 48 unblocks here**, and it goes to triage at step 33.
+**Ticket 48 no longer unblocks here** — its edge on 37 is void and already cleared in
+the ticket. It still goes to triage at step 33, and it now inherits the mode question
+37 would have answered.
 
 ---
 
@@ -841,7 +858,10 @@ page count, and **no finding count moves at any of the three**.
 
 ---
 
-### ☐ Step 14 — Ticket 72, Astro 6
+### ☑ Step 14 — Ticket 72, Astro 6 — **DONE**
+
+Done 2026-08-11, on Astro 6.4.8. All 823 pages built byte-identical against the
+Astro 5 build, so the gate held with nothing waved through.
 
 touches `web` **alone**. Blocked by nothing.
 
@@ -858,7 +878,16 @@ crawl scripts and the re-check service still run on it.
 
 ---
 
-### ☐ Step 15 — Ticket 73, Astro 7
+### ☑ Step 15 — Ticket 73, Astro 7 — **DONE BY HAND, GATE NOT RUN**
+
+Done 2026-08-11, outside this worklist: the upgrade was run manually rather than
+through the step below, and `web/package.json` now reads `"astro": "^7.2.0"`.
+**The gate was not walked.** No build comparison against the Astro 6 build was
+recorded, so the whitespace difference ticket 73 predicted from the new
+`compressHTML: 'jsx'` default is unmeasured, and the Markdown export was not
+checked against the new Rust Markdown processor. Neither is known broken. If
+step 16 turns up something odd in the built output, this is the first place to
+look.
 
 touches `web` **alone**. Blocked by 72.
 
@@ -1176,24 +1205,27 @@ page. A partial failure reports how many were written.
 
 ---
 
-### ☐ Step 27 — Ticket 84, a one-sided page carries a migration decision
+### ☒ Step 27 — Ticket 84, a migration decision — **dropped: both tickets are parked**
 
-touches `web`. Blocked by nothing.
+**Do not run this step.** Ticket 84 and its question, ticket 20, were **parked `wontfix`**
+on 2026-08-11 into
+[.out-of-scope/84-…](issues/.out-of-scope/84-a-one-sided-page-carries-a-migration-decision.md)
+and
+[.out-of-scope/20-…](issues/.out-of-scope/20-one-sided-pages-checklist.md).
+A `/grilling` resolved 20 and `/prototype` built three variants of the surface; the user
+refused both. The grounds: the store dashboards already show one-sided pages, and **usually
+every page needs to be built**, so a verb per page models a decision that is already made.
+The four values trace to `content-parity-product-improvements.md` §14 — a draft marked "do
+not build from it" — by way of PRD stories 40–44, with no requester anywhere in the chain.
 
-```
-/clear
-```
+**PRD stories 40 to 44 are therefore unbuilt and stay that way.** They are annotated as
+parked in `PRD.md`, not withdrawn. No other step claims them, so nothing downstream breaks.
 
-```
-/implement .scratch/content-parity-log/issues/84-a-one-sided-page-carries-a-migration-decision.md
-
-It implements PRD.md user stories 40 to 44. Review the diff against them.
-```
-
-**Gate.** A fifth page-scope override kind with **4** values: migrate, not
-migrated, replaced, redirected. A page claimed *redirected* or *replaced* whose
-new-side status is still **404** reads as contradicted, and it names the claimer.
-The derivation is pure and tested.
+Nothing regresses: the `eenzijdig` chip, the store header sentence and the read-only aside
+are untouched. The gate this step carried is void — do not keep it, because the vocabulary
+it gated is the thing that was rejected. What is worth keeping is in ticket 20: the strict
+"production 200 and new site 404" cross-tab is **50, not 53**, and **41** is the defensible
+new-only count.
 
 ---
 
@@ -1250,27 +1282,44 @@ first.
 
 ---
 
-### ☐ Step 30 — Ticket 90, a campaign is a class, not a commit
+### ☑ Step 30 — Ticket 90, a campaign is a class, not a commit
 
-touches `data`. Blocked by 89, step 13. **Step 13 may have deleted this step.**
+**Done 2026-08-11, and not as written. Do not run this step.**
 
-If ticket 89 found more than about 200 non-banner matches, ticket 90 is refused.
-Read 89's answer before you start.
+Step 13 refused the rule this step was going to build: `PROMO` one-sided sweeps 58
+editorial findings, matches **0** banner lines in `de`, `fr` and `be_fr`, and leaves
+1,175 shown link findings behind.
 
-```
-/clear
-```
+What shipped instead is a one-line swap. Production marks the banner block in the
+Magento admin with `id="campaign-banner"`, and `shared/excluded-regions.mjs` anchors on
+that rather than on the campaign option ids. Measured identical to the retired selector
+in matches, units, links and images on **48 page-store pairs** — six stores, four pages
+and four controls — so the corpus is **not expected** to move and no recrawl is owed.
+That expectation rests on 48 pairs, not on the 816-page corpus:
+`probe-promo-banner-corpus.mjs` would close the gap and last ran against the old
+selector. The per-campaign commit is gone, which was the point of the step;
+`compare/text.mjs` is untouched.
 
-```
-/implement .scratch/content-parity-log/issues/90-a-campaign-is-a-class-not-a-commit.md
+Two follow-ups it leaves, both of them ticket 89's findings:
 
-Read docs/adr/0003-regions-are-excluded-at-extraction.md first.
-```
+- [101](issues/101-the-image-campaign-rule-hides-editorial-images.md) — `IMAGE_CAMPAIGN`
+  in `compare/images.mjs` hides 24 findings on `ontwerp_je_ideale_overkapping.jpg`, an
+  editorial image caught because `ideale` contains `deal`. Live today, unnoticed because
+  the class is hidden, and unrelated to the banner: it predates this step and survives it.
+- **No ticket, deliberately.** A committed region entry that matches **nothing** fails
+  silently: `capBreachMessage` stops the crawl when an entry matches too much and there is
+  no guard the other way, while the hook now depends on whoever builds the next CMS block.
+  Ticket 64 already reports it — `stopped-matching`, in one line, with words that name this
+  cause — just a run late, at compare time rather than at the crawl. That gap is recorded
+  in ADR 0003 and judged not worth a ticket.
 
-**Gate.** Per-store totals are recorded before and after. Findings move between
-classes, but **the total number of findings must not change**. Retiring the
-region entry re-adds about **4,055** findings, and the new rule must take all of
-them back.
+**The gate this step carried does not apply, and is recorded rather than deleted.** It
+read: *per-store totals before and after, findings move between classes but the total
+must not change, and retiring the region entry re-adds about 4,055 findings that the new
+rule must take back.* That gate was written for the classification rule. Nothing was
+retired and no finding changed class, so there is no before-and-after to record — the
+entry cuts the same units it cut yesterday. The gate that **did** apply is the one in the
+ADR: the same matches, units, links and images as the anchor it replaced.
 
 ---
 
@@ -1334,14 +1383,39 @@ heading gives instead has never been decided.
 
 ### ☐ Step 33 — Triage again: tickets 16, 20, 48 and 04
 
+**Three of the four are settled. What is left of this step is 48.** 04 and 16 closed on
+2026-08-11, and 20 was **parked `wontfix`** the same day, with its build ticket 84.
+
 touches `talk`. Each one waited for a blocker that has now landed.
 
-- **04** — **step 03 has landed, so it closes here.** `Status: reopened` today.
-- **16** — unblocked by 55, step 03 — **done**. Its premise needs correcting
-  first: 283 clusters have no NL member, so ticket 04's "no page exists without an
-  NL counterpart" is false.
-- **20** — unblocked by 22 and 55, both **done**. **Both populations are
-  re-measured**, over 816 pairs instead of 451:
+- **04** — **closed 2026-08-11**, `resolved — superseded by 50, 53, 55, 57`.
+  Nothing was left to build: the six-store list, the per-store PDP strip, the
+  guarded counts and the per-drop reasons all exist under `crawl/`. Its three
+  unsound conclusions are corrected in the ticket and in `map.md`, and the one
+  thread it leaves open is 16.
+- **16** — **closed 2026-08-11.** Not by answering the grilling: the premise was
+  retired. **Production is the source of truth and the new site is expected to
+  match it**, so a page only the new site has is a deletion candidate, not content
+  to discover — the production sitemap is the seed by definition and no crawl is
+  owed. `orphan-page` never gets a producer; ticket 39 item 2 is updated. The new
+  site does serve a sitemap (`robots.txt` → `/media/siteindex/<locale>/`), rejected
+  as a source because its content is from 2024 and 21 of the 35 urls it adds are
+  already 404. The 14 pages it found that are live on the new side and 404 on
+  production went to **20** as a third population. Thirteen of the 14 are non-nl,
+  so the "entirely nl" claim below is not a measurement.
+- **20** — **parked `wontfix` 2026-08-11**, in
+  [.out-of-scope/20-…](issues/.out-of-scope/20-one-sided-pages-checklist.md), together with
+  its build ticket **84**. It was unblocked and fully grilled; what killed it was the
+  answer, not the blockers. The user refused the decision vocabulary — *"usually, every page
+  needs to be built"* — and the prototype of the surface it needed, because the store
+  dashboards already show these pages. The four verbs came from
+  `content-parity-product-improvements.md` §14, a draft marked "do not build from it". **Do
+  not re-triage this at this step.** The measurements below stand and are the reason the
+  ticket is kept rather than deleted; two of them are corrected in the ticket (the strict
+  cross-tab is **50, not 53**, and **41** is the defensible new-only count).
+
+  It was unblocked by 22 and 55, both **done**, and **both populations are re-measured**,
+  over 816 pairs instead of 451:
 
   | population | was | is |
   | --- | --- | --- |
@@ -1349,16 +1423,22 @@ touches `talk`. Each one waited for a blocker that has now landed.
   | nl pages that exist only on the new site | 42 of 181 | **41 of 179** |
   | non-comparable pairs, all six stores | — | **94 of 816** |
 
-  New-side 404s by store: nl 14, de 11, be 8, be_fr 7, uk 7, fr 6. **The new-only
-  population is entirely nl** — all 41 of it, and no other store has a single one.
-  That is worth a sentence in the re-triage: it says the 41 are the carried-over
-  pages that no sitemap declares any more, and not a migration surplus.
+  New-side 404s by store: nl 14, de 11, be 8, be_fr 7, uk 7, fr 6. ~~**The new-only
+  population is entirely nl** — all 41 of it, and no other store has a single one.~~
+  **Retracted 2026-08-11 by ticket 16.** The 41 are the carried-over pages that no
+  sitemap declares any more, and not a migration surplus — that part stands. But the
+  zero for the other five stores was the shape of an nl-only crawl, not a
+  measurement: 14 pages are live on the new side and 404 on production, and 13 of
+  them are non-nl. The list is in ticket 20.
 
   It also owns half of the missing surface for `no-declared-alternate`. Step 04
   says which half.
-- **48** — blocked by 37, step 08. Question one is answered already by ADR 0006
-  and ticket 79. Two are left: what counts as *afgerond*, and whether a `×6`
-  finding is one task or six.
+- **48** — **no longer blocked**: 37 was parked on 2026-08-11, so waiting on it
+  would wait forever, and the edge is cleared in the ticket. Question one is
+  answered already by ADR 0006 and ticket 79. Two are left: what counts as
+  *afgerond*, and whether a `×6` finding is one task or six. It also **inherits the
+  mode question** 37 would have settled — the ticket argues for answering it as a
+  filter or a fold, which needs no mode mechanism.
 
 ```
 /clear
@@ -1370,9 +1450,9 @@ touches `talk`. Each one waited for a blocker that has now landed.
 Re-triage these four. Each one's blocker has landed, and each number in them was
 counted against a corpus that has since moved.
 
-- 04-six-store-page-lists.md — closes with 55
-- 16-new-site-page-discovery.md — unblocked by 55
-- 20-one-sided-pages-checklist.md — unblocked by 22 and 55
+- 04-six-store-page-lists.md — **already closed on 2026-08-11**, skip it
+- 16-new-site-page-discovery.md — **already closed on 2026-08-11**, skip it
+- 20-one-sided-pages-checklist.md — **already parked `wontfix` on 2026-08-11**, skip it
 - 48-open-and-done-board.md — unblocked by 37
 
 Ticket 49 is re-opened already. Ticket 55 re-ran its probe on 2026-08-10: be_fr is

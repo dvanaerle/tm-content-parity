@@ -158,6 +158,19 @@ Three rules hold the shape:
 
 ### Scope
 
+> **Stories 40, 41, 42 and 44 are parked, 2026-08-11.** Tickets
+> [20](issues/.out-of-scope/20-one-sided-pages-checklist.md) and
+> [84](issues/.out-of-scope/84-a-one-sided-page-carries-a-migration-decision.md) closed
+> `wontfix` together. The four decisions in story 40 came from
+> `content-parity-product-improvements.md` §14 — a draft whose own header says "do not
+> build from it" — and were restated here as wants of a "migration lead" in the same pass
+> that invented the role. No person and no measurement asked for them. The user refused
+> both the vocabulary (*"usually, every page needs to be built"*) and the prototype of the
+> surface, because the store dashboards already show one-sided pages. The stories are kept,
+> not withdrawn, because other tickets cite story numbers. **Story 43 is unaffected and
+> already holds**: `web/src/components/Dashboard.jsx:33-36` keeps one-sided pages out of the
+> bar, with a test.
+
 40. As a migration lead, I want a one-sided page to carry a decision — migrate, not
     migrated, replaced or redirected — so that scope work has a record.
 41. As a migration lead, I want a page claimed as redirected that still answers 404 to

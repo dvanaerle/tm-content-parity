@@ -59,3 +59,17 @@ exist, and the word stays retired.
 - The proposal listed "Fix not verified" beside contradicted as if they were two things.
   They are one thing: a fix claim the current snapshot disagrees with. Do not create a
   second name for it.
+
+## Comments
+
+- Runnable look prototype (throwaway): `/prototype/three-buckets?variant=A|B|C`, from
+  `web/src/pages/prototype/three-buckets.astro`. Three variants over the real NL corpus with
+  **invented** override events — deterministic, hashed from the finding id — fed through the
+  real `overrides/state.mjs`, so no variant can show a grouping the derivation would refuse.
+  Dashboard and ledger sit on one route, because the question is whether one grouping reads the
+  same on both. A: three stacked counts, Gesloten as a disclosure. B: one compact line per page,
+  Gesloten as a segmented filter. C: Aandacht nodig hoisted out of the list, Gesloten on a rail.
+- Open question the prototype raised: **no palette tone fits Aandacht nodig.** `severe` means
+  "the new site is wrong on its own terms", which a contradicted claim is not, and amber has
+  only two weights. Either the palette gains a meaning or Aandacht nodig shares `attention`
+  with Open and leans on position instead.

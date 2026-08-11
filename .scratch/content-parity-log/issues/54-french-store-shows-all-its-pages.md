@@ -386,7 +386,7 @@ five were fixed in the same sitting.
   vergelijken* panel before any finding renders, so on the six one-sided French
   pages nothing can show it, and on a comparable page it sits behind the hidden-class
   filter. The record must exist before a view can read it, and the one-sided page
-  surface belongs to tickets [20](20-one-sided-pages-checklist.md) and
+  surface belongs to tickets [20](.out-of-scope/20-one-sided-pages-checklist.md) and
   [56](56-an-excluded-page-says-why.md). **The code comment that called a one-sided
   page "the case most likely to need the sentence" overstated what ships.**
 - **The 35.3% row is thinner evidence than the 90.2% row.** The probe measures the

@@ -49,7 +49,7 @@ generated site should be the same site. Use it.
       the override controls are untouched in this diff.
 - [x] Nothing else is in the commit.
 
-## Resolved 2026-08-11
+## Answer
 
 Astro 5.14 → **6.4.8**, with `@astrojs/react` 4.4 → **5.0.7** (the integration major
 that shipped the same day as Astro 6.0.0; `@astrojs/react@6` belongs to Astro 7).
@@ -59,15 +59,21 @@ test changed.
 **The comparison holds.** All **823** pages are byte-identical between the Astro 5
 and Astro 6 builds once three values that are nondeterministic on any version are
 normalised: asset content hashes, `astro-island uid`, and the `blob:nodedata:` UUIDs
-on the Markdown download links. The stylesheet is a superset by 44 utility classes
-and 6 custom properties, and every one of them traces to untracked prototype
-sources that appeared in `web/src/` during the session, not to the upgrade — the
-tracked sources contain none of them. Tailwind was already 4.3.3 on both sides, so
-the `@tailwindcss/vite` trap did not fire across the Vite major. Client JS
-excluding the prototype chunk is 458,413 bytes against 459,454; `palette.js` is a
-re-chunked shared React runtime, not new code. Astro 6 no longer writes the legacy
+on the Markdown download links. Astro 6 no longer writes the legacy
 content-collection artefacts (`content-modules.mjs`, `data-store.json`,
 `settings.json`) into `outDir`; this project declares no collections.
+
+Untracked prototype sources appeared under `web/src/` while this ran, so the first
+Astro 6 build had one page and one stylesheet more than the Astro 5 baseline had
+sources for. That would have left the stylesheet difference argued rather than
+measured, so the comparison was re-run from a **`git worktree` at HEAD** — tracked
+files only, the same `data/`, the same env. Numbers below are from that build.
+
+Tailwind was already 4.3.3 on both sides, so the `@tailwindcss/vite` trap did not
+fire across the Vite major.
+
+**The Zod 4 trap does not apply.** No source in this repo imports `zod`; it arrives
+only as a transitive dependency of Astro, and nothing in the build validates with it.
 
 **One real regression, found and fixed.** Astro 6 bundles server modules into
 `web/.astro/.prerender/chunks/`, so `../../../data/` against `import.meta.url` — a

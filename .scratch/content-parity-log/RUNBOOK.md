@@ -144,7 +144,8 @@ The order:
 1. **The corpus.** 54, then 55 and 56, then 67, then 68, then 58. One ticket, one
    gate. Sessions 4, 5, 2C and 6.
 2. **Re-measure.** 76 and 89. Also ticket 38's per-store counts, and the
-   re-triage of 04, 16, 20 and 25. Session 10B.
+   re-triage of 20 — 04, 16 and 25 are closed, and **20 is parked** with 84 since
+   2026-08-11. Session 10B.
 3. **The stack, alone.** 72, 73, 74. An upgrade that carries a product change
    cannot be reviewed. Session 10C.
 4. **The contract, then the workspace.** 75 and 77, then 78 to 87 and 90.
@@ -755,9 +756,11 @@ argument itself, and this warning is then a reminder and not the only guard.
 
 After this sitting:
 
-- Ticket 04 closes.
+- Ticket 04 closes. **Closed 2026-08-11.**
 - Ticket 49 gets its probe again.
-- Tickets 16 and 20 come back for triage.
+- Tickets 16 and 20 come back for triage. **16 closed 2026-08-11**, its premise
+  retired: production is the source of truth. **20 was parked `wontfix` 2026-08-11**,
+  with its build ticket 84: it was grilled to completion and the answer was refused.
 - Ticket 38's counts for each store need a new measurement.
 
 ---
@@ -779,6 +782,10 @@ a ticket writes, and it decides whether a lane needs a corpus of its own.
 | `data` | the one corpus, and the hosts | **nothing**. It runs alone |
 
 ### A `web` lane
+
+**Ticket 37 was parked on 2026-08-11**, so this lane has no work in it today. The
+recipe stays as the example of a `web` lane, and the branch name below is still free
+— the parked build sits on `park/ticket-37-leesweergave`, not on this name.
 
 Ticket 37 changes `web/` only, so it cannot collide with a crawl.
 
@@ -1168,7 +1175,8 @@ collapsing is not a view mode and ticket 37 keeps that question.
 
 ### Then triage again
 
-Tickets 16, 20 and 48 come back when their blockers land.
+Tickets 16, 20 and 48 come back when their blockers land. **16 and 20 are settled** —
+16 closed and 20 parked, both 2026-08-11. Only 48 is still owed a triage.
 
 ---
 
@@ -1304,7 +1312,7 @@ crawl, it is a `data` ticket and it runs alone.
 | 55 | Five stores | session 5 | `data` **alone** | `/implement` |
 | 56 | An excluded page says why | session 5 | `data` | `/implement` |
 | 04 | Six store page lists | closes with 55 | — | none |
-| 37 | Leesweergave | after 68 | `web` | `/implement` — moved, 68 rewrites the view |
+| 37 | Leesweergave | after 68 | `web` | **parked 2026-08-11** — built once, kept on `park/ticket-37-leesweergave` |
 | 58 | Head becomes a check | session 6 | `data` **alone** | `/implement` |
 | 88 | The mute says what it hides | **session 10A, first** | `web` | `/implement` — free today, impossible later |
 | 76 | The coverage curve | session 10B | `read` | `/implement` — research |
@@ -1321,7 +1329,7 @@ crawl, it is a `data` ticket and it runs alone.
 | 31 | Bulk dismissal | session 10E | `web` | `/implement` — after 81, 88 and 30 |
 | 82 | Search reaches the content | session 10E | `web` | `/implement` — after 81 |
 | 83 | A page carries a priority and a note | session 10E | `web` | `/implement` |
-| 84 | A one-sided page carries a decision | session 10E | `web` | `/implement` |
+| 84 | A one-sided page carries a decision | session 10E | `web` | **parked `wontfix` 2026-08-11** with 20 — do not build |
 | 85 | The comparison scope is legible | session 10E | `web` | `/implement` — after 75 |
 | 86 | Heading level becomes information | session 10E | `compare` | `/implement` — after 75 and 76 |
 | 90 | A campaign is a class, not a commit | session 10E | `data` | `/implement` — after 89, which may refuse it |
@@ -1337,6 +1345,6 @@ crawl, it is a `data` ticket and it runs alone.
 | 25 | fotogalerij | any time | `talk` | `/grilling` |
 | 34 | Position, the deep link | last | `talk` | `/grill-with-docs` |
 | 16 | New site page discovery | after 55 | `talk` | `/triage` — edge recorded |
-| 20 | One-sided pages | after 22 and 55 | `talk` | `/grilling` — edge recorded |
+| 20 | One-sided pages | after 22 and 55 | `talk` | **parked `wontfix` 2026-08-11** — grilled, answer refused |
 | 48 | Task board | after 37 | `talk` | `/triage` — edge recorded |
 | 32, 50 | The two specs | not work | — | none |
