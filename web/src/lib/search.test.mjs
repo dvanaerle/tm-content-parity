@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SEARCH_FIELDS, indexStore, matchedFields, searchStore } from './search.mjs';
+import { SEARCH_FIELDS, indexStore, matchedFields, searchNotes, searchStore } from './search.mjs';
 
 /**
  * Ticket 82. An editor types the words and sees every finding that holds them, across
@@ -298,5 +298,44 @@ describe('searchStore', () => {
     expect(searchStore({ ...both, includeClosed: true }).repeats[0].on.map((one) => one.page))
       .toEqual(['afhalen', 'garantie']);
     expect(searchStore(both).total).toBe(1);
+  });
+});
+
+/** An override event, as the log appends them. */
+const event = (part) => ({
+  createdAt: '2026-08-10T09:00:00Z', editor: 'Dennis', scope: 'finding', action: 'dismissed',
+  store: 'nl', page: 'afhalen', findingId: 'a', note: 'Bekijk deals staat er bewust nog',
+  ...part,
+});
+
+describe('searchNotes', () => {
+  it('finds a note by its words, and says it is live', () => {
+    // The other half of the answer, and the other freshness. A note lives in the log
+    // and is not in the index — it is filtered from the events the store page already
+    // loaded, so it is as new as the last read and not as old as the last build. The
+    // flag is on the result because a caller drawing one list has to be able to say
+    // which half it is drawing.
+    const result = searchNotes({ events: [event({}), event({ findingId: 'b', note: 'Wacht op copy' })], term: 'deals' });
+
+    expect(result.live).toBe(true);
+    expect(result.notes.map((one) => one.findingId)).toEqual(['a']);
+  });
+
+  it('finds only the note that still stands, not the one written over', () => {
+    // The table is append-only, so the words an editor withdrew are still in it. A
+    // search that returned them would offer a reason for a decision that has since
+    // been taken back. The filter is `latestByKey()` — the log's own answer to *which
+    // event counts* — so a cleared finding has no note to find either.
+    const result = searchNotes({
+      events: [
+        event({ note: 'Bekijk deals staat er bewust nog' }),
+        event({ createdAt: '2026-08-11T09:00:00Z', action: 'cleared', note: null }),
+        event({ findingId: 'b', createdAt: '2026-08-09T09:00:00Z', note: 'deals: oude reden' }),
+        event({ findingId: 'b', createdAt: '2026-08-11T10:00:00Z', note: 'deals: nieuwe reden' }),
+      ],
+      term: 'deals',
+    });
+
+    expect(result.notes.map((one) => one.note)).toEqual(['deals: nieuwe reden']);
   });
 });

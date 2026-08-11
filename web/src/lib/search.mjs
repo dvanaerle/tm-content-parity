@@ -52,6 +52,7 @@
  * and never on its per-page entries.
  */
 
+import { latestByKey } from '../../../overrides/state.mjs';
 import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
 import { repeatsInStore } from './view.mjs';
 
@@ -263,6 +264,44 @@ export function searchStore({ index, term, stateOf = () => 'open', includeClosed
     total: repeats.reduce((sum, repeat) => sum + repeat.on.length, 0),
     pages: byPage.size,
   };
+}
+
+/**
+ * The notes in the log that hold the term — the other half of the answer, and the other
+ * freshness.
+ *
+ * A note is not in the index and cannot be: it is written in the log after the build, so
+ * indexing it would be indexing a moment that has already passed. It is filtered from the
+ * events the store page has already loaded, which makes this half as new as the last read
+ * while the finding half is as old as the last build.
+ *
+ * That is why it is a second function and not a merged list. `live` is on the result so a
+ * caller drawing both halves has to say which is which — presenting them as one moment is
+ * what this ticket forbids, and a shape that cannot describe itself is how it would happen
+ * by accident.
+ *
+ * There is no page-note feature in the log yet: `note` is the sentence an editor gives
+ * when dismissing or muting, and a page review can carry one too. Those are the notes
+ * there are, so those are the notes searched.
+ *
+ * @param {object} args
+ * @param {import('../../../overrides/state.mjs').OverrideEvent[]} args.events
+ * @param {string} args.term
+ * @returns {{ live: true, notes: import('../../../overrides/state.mjs').OverrideEvent[] }}
+ */
+export function searchNotes({ events, term }) {
+  const needle = term.trim().toLowerCase();
+  if (!needle) return { live: true, notes: [] };
+
+  // Only the events that still stand. The table is append-only, so the words an editor
+  // withdrew are still in it, and returning them would offer a reason for a decision
+  // that has since been taken back. `latestByKey()` is the log's own answer to which
+  // event counts, so search asks it rather than deciding for itself.
+  const notes = [...latestByKey(events).values()]
+    .filter((one) => one.note?.toLowerCase().includes(needle))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  return { live: true, notes };
 }
 
 /**
