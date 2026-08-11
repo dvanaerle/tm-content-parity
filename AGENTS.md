@@ -1,47 +1,5 @@
 # AGENTS.md
 
-## What this repo is
-
-The content parity log for the Tuinmaximaal storefront. See `README.md` for the
-layout and `CONTEXT.md` for the words the code uses. Read `CONTEXT.md` before
-you name anything.
-
-This repo is **not** the Magento storefront. The storefront is
-`Desktop/gitlab/devdva02`, and it stays untouched.
-
-## Where the decisions are
-
-`.scratch/content-parity-log/map.md` is the map, and `issues/NN-*.md` next to it
-hold the detail. Do not decide again what a resolved ticket decided. If you must
-go against a resolved ticket, say so in the ticket.
-
-The map and the tickets moved here from `devdva02` on 2026-08-06. They are in
-**this** repo now, and `.scratch/` here is **not** gitignored, so they are under
-version control with the code they describe. `docs/agents/issue-tracker.md` gives
-the layout.
-
-## Rules
-
-- **`compare/contract.mjs` is the contract.** `crawl/` writes it, `compare/`
-  and `web/` read it. Change the contract in that file first, then the code.
-- **The arrow points one way**, from `crawl/` to `compare/` to `web/`. Do not add
-  an import back up it. A pure rule that two stages need goes in `shared/`, which
-  imports from no stage. ADR 0001 gives the three questions to ask, and it names
-  the two back-arrows that are still open.
-- **Node ESM**, `.mjs`, no build step outside `web/`.
-- **Vitest** for tests. `npm test`. The comparison rules are the crown jewels:
-  a rule with no test is not a rule.
-- **Write tests in vertical slices.** One test, then the implementation that makes
-  it pass, then the next test. Each test is a **tracer bullet**: it answers what
-  the last cycle taught you. The `tdd` skill gives the loop and the anti-patterns.
-- **Write prose in ASD-STE100 Simplified Technical English.** Short sentences,
-  one idea in each.
-- **Comments explain why, not what.** No comment is the default.
-- `crawl/probes/` holds one-time measurements that are kept as evidence. Read
-  them for the numbers. Do not import them. `web/probes/` is the same for the
-  front end: what a page costs to render and what it costs to paint. A probe
-  measures the stage it sits in.
-
 ## Agent skills
 
 ### Issue tracker
