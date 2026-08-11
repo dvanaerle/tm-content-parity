@@ -249,4 +249,54 @@ describe('searchStore', () => {
     expect(result.repeats[0].fields).toEqual(['prodText', 'anchorHeading']);
     expect(Object.keys(result.repeats[0].on[0]).sort()).toEqual(['id', 'occurrences', 'page']);
   });
+
+  it('leaves out what the log has closed, because the default is active work', () => {
+    // The state comes from the derivation the dashboard already holds, so search reads
+    // the log's own answer about a finding and never a second opinion on it.
+    const result = searchStore({
+      index: index([entry({ id: 'a', page: 'afhalen' }), entry({ id: 'b', page: 'garantie' })]),
+      term: 'deals',
+      stateOf: (id) => (id === 'b' ? 'dismissed' : 'open'),
+    });
+
+    expect(result.repeats[0].on.map((one) => one.page)).toEqual(['afhalen']);
+    expect(result.total).toBe(1);
+    expect(result.pages).toBe(1);
+  });
+
+  it('reads a contradicted claim as open, the rule the bar already obeys', () => {
+    // `fixed` is closed; `contradicted` is a fix the newest observation did not agree
+    // with, and the log counts it as open. Search does not get a fifth opinion — it
+    // asks the same question `barOf` asks, so a finding cannot be open in the bar and
+    // gone from the search that is meant to find it.
+    const states = { b: 'fixed', c: 'contradicted', d: 'muted' };
+    const result = searchStore({
+      index: index([
+        entry({ id: 'a', page: 'afhalen' }),
+        entry({ id: 'b', page: 'garantie' }),
+        entry({ id: 'c', page: 'montage' }),
+        entry({ id: 'd', page: 'levering' }),
+      ]),
+      term: 'deals',
+      stateOf: (id) => states[id] ?? 'open',
+    });
+
+    expect(result.repeats[0].on.map((one) => one.page)).toEqual(['afhalen', 'montage']);
+  });
+
+  it('includes what is closed when asked to, without moving a count', () => {
+    // *Inclusief afgesloten*. The two numbers are counts of the result, so they grow
+    // with the result — that is search narrowing and widening what is on screen, and
+    // not a count of the store's work changing. Nothing here reports on the store.
+    const both = {
+      index: index([entry({ id: 'a', page: 'afhalen' }), entry({ id: 'b', page: 'garantie' })]),
+      term: 'deals',
+      stateOf: (id) => (id === 'b' ? 'fixed' : 'open'),
+    };
+
+    expect(searchStore({ ...both, includeClosed: true }).total).toBe(2);
+    expect(searchStore({ ...both, includeClosed: true }).repeats[0].on.map((one) => one.page))
+      .toEqual(['afhalen', 'garantie']);
+    expect(searchStore(both).total).toBe(1);
+  });
 });

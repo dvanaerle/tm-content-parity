@@ -217,13 +217,17 @@ export function matchedFields(entry, term) {
  * @param {object} args
  * @param {SearchIndex} args.index
  * @param {string} args.term
+ * @param {(id: string) => import('../../../overrides/state.mjs').FindingState} [args.stateOf]
+ *   The log's answer about one finding. It defaults to `open`, which is what an
+ *   unconnected log knows: no decision has been read, so nothing is closed yet.
+ * @param {boolean} [args.includeClosed] *Inclusief afgesloten*.
  * @returns {{
  *   repeats: (import('./view.mjs').Repeat & { fields: string[] })[],
  *   total: number,
  *   pages: number,
  * }}
  */
-export function searchStore({ index, term }) {
+export function searchStore({ index, term, stateOf = () => 'open', includeClosed = false }) {
   /** @type {Map<string, IndexEntry[]>} */
   const byPage = new Map();
   /** @type {Map<string, string[]>} */
@@ -232,6 +236,7 @@ export function searchStore({ index, term }) {
   for (const entry of index.findings) {
     const fields = matchedFields(entry, term);
     if (fields.length === 0) continue;
+    if (!includeClosed && !isActive(stateOf(entry.id))) continue;
     fieldsById.set(entry.id, fields);
     const held = byPage.get(entry.page);
     if (held) held.push(entry);
@@ -259,6 +264,20 @@ export function searchStore({ index, term }) {
     pages: byPage.size,
   };
 }
+
+/**
+ * Whether this finding is still work, in the log's own terms.
+ *
+ * `dismissed` and `fixed` are what `barOf` counts as closed, and `muted` is what it
+ * takes out of the denominator — none of the three is work an editor is looking for.
+ * A `contradicted` claim is a fix the newest observation did not agree with, and the bar
+ * reads it as open, so search does too. It asks the same question rather than forming a
+ * fifth opinion: a finding that is open in the bar must be findable by the search meant
+ * to find it.
+ *
+ * @param {import('../../../overrides/state.mjs').FindingState} state
+ */
+const isActive = (state) => state === 'open' || state === 'contradicted';
 
 /** Whether `prod` and `new` on this class hold a link target rather than words. */
 const isAboutALink = (/** @type {string} */ cls) => FINDING_CLASSES[cls]?.check === 'links';
