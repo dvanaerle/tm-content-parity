@@ -104,33 +104,57 @@ import { repeatsInStore } from './view.mjs';
  * @returns {SearchIndex}
  */
 export function indexStore(store, reports) {
-  /** @type {IndexEntry[]} */
-  const findings = [];
-  let builtAt = '';
+  return reports.reduce(addPage, emptyIndex(store));
+}
 
-  for (const report of reports) {
-    if (report.builtAt > builtAt) builtAt = report.builtAt;
-    const linkText = linkTextByKey(report);
+/**
+ * An index with nothing in it yet, to add pages to.
+ *
+ * The emitter cannot hold a store's reports at once — a full report carries both
+ * extracts, and reading them all is the thing `loadSummaries()` refuses to do — so it
+ * reads one file, adds it, and lets it go. `indexStore()` is the same accumulator over an
+ * array, and one test pins the two paths equal so the streaming one cannot grow a second,
+ * divergent merge.
+ *
+ * @param {string} store
+ * @returns {SearchIndex}
+ */
+export const emptyIndex = (store) => ({ store, pages: 0, builtAt: '', findings: [] });
 
-    for (const finding of report.findings) {
-      if (!FINDING_CLASSES[finding.class]?.shown) continue;
-      findings.push({
-        id: finding.id,
-        page: report.page,
-        class: finding.class,
-        prod: finding.prod ?? null,
-        new: finding.new ?? null,
-        detail: finding.detail ?? null,
-        anchorHeading: finding.anchorHeading ?? null,
-        occurrences: finding.occurrences ?? 1,
-        linkText: isAboutALink(finding.class)
-          ? [finding.prod, finding.new].flatMap((key) => linkText.get(key) ?? [])
-          : [],
-      });
-    }
+/**
+ * One report's searchable findings, added to the index.
+ *
+ * `builtAt` is the newest report's, because the whole index is only as fresh as its
+ * freshest part is old: a result says *from the snapshot*, and the sentence has to be
+ * true of every row in it.
+ *
+ * @param {SearchIndex} index
+ * @param {import('../../../compare/contract.mjs').PageReport} report
+ * @returns {SearchIndex}
+ */
+export function addPage(index, report) {
+  const linkText = linkTextByKey(report);
+
+  for (const finding of report.findings) {
+    if (!FINDING_CLASSES[finding.class]?.shown) continue;
+    index.findings.push({
+      id: finding.id,
+      page: report.page,
+      class: finding.class,
+      prod: finding.prod ?? null,
+      new: finding.new ?? null,
+      detail: finding.detail ?? null,
+      anchorHeading: finding.anchorHeading ?? null,
+      occurrences: finding.occurrences ?? 1,
+      linkText: isAboutALink(finding.class)
+        ? [finding.prod, finding.new].flatMap((key) => linkText.get(key) ?? [])
+        : [],
+    });
   }
 
-  return { store, pages: reports.length, builtAt, findings };
+  index.pages += 1;
+  if (report.builtAt > index.builtAt) index.builtAt = report.builtAt;
+  return index;
 }
 
 /**

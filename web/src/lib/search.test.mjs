@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { SEARCH_FIELDS, indexStore, matchedFields, searchNotes, searchStore } from './search.mjs';
+import {
+  SEARCH_FIELDS, addPage, emptyIndex, indexStore, matchedFields, searchNotes, searchStore,
+} from './search.mjs';
 
 /**
  * Ticket 82. An editor types the words and sees every finding that holds them, across
@@ -107,6 +109,18 @@ describe('indexStore', () => {
     // An empty list and not `null`: every reader then scans the same shape, and no
     // caller has to remember which findings carry the field.
     expect(indexStore('nl', [report()]).findings[0].linkText).toEqual([]);
+  });
+
+  it('builds the same index one report at a time as it does from all of them', () => {
+    // The build cannot hold a store's reports at once: a full report carries both
+    // extracts, 11 MB over the NL store on disk and several times that parsed, which is
+    // the very reason `loadSummaries()` reads one file and throws the rest away. So the
+    // emitter streams, and the accumulator is the seam it streams into. Pinning the two
+    // paths equal is what stops the streaming one growing a second, divergent merge.
+    const pages = [report({ page: 'afhalen' }), report({ page: 'garantie' })];
+    const streamed = pages.reduce(addPage, emptyIndex('nl'));
+
+    expect(streamed).toEqual(indexStore('nl', pages));
   });
 
   it('says when the snapshot was built, because the finding half is not live', () => {

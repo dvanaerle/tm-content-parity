@@ -4,6 +4,7 @@ import { fromRoot } from './repo-root.mjs';
 import { EXCLUDED_PAGES } from '../../../shared/excluded-pages.mjs';
 import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
 import { notCheckedInStore } from './not-checked.mjs';
+import { addPage, emptyIndex } from './search.mjs';
 import { CoverageTally } from '../../../compare/region-coverage.mjs';
 import { storeOfFile } from '../../../compare/contract.mjs';
 import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
@@ -154,6 +155,26 @@ export async function loadSummaries(store) {
     });
   }
   return out;
+}
+
+/**
+ * One store's search index, read the way summaries are read: one file at a time, keeping
+ * the small projection and letting the report go (ticket 82).
+ *
+ * It reads **full** reports where `loadSummaries()` would do, and it has to: the words on
+ * a link live in the extract, and the extract is the half a summary throws away. That one
+ * field is why the index is emitted by the build rather than derived in the browser from
+ * the array the dashboard already holds.
+ *
+ * @param {string} store
+ * @returns {Promise<import('./search.mjs').SearchIndex>}
+ */
+export async function loadSearchIndex(store) {
+  const index = emptyIndex(store);
+  for (const name of await reportFiles(store)) {
+    addPage(index, JSON.parse(await readFile(join(DIR, name), 'utf8')));
+  }
+  return index;
 }
 
 /**
