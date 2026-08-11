@@ -6,13 +6,19 @@ This file answers one question: **what do I do next?** `RUNBOOK.md` says *why*
 the order is what it is, and `map.md` stays the map. If this file and the map
 disagree, the map wins.
 
-**49 of the 90 tickets are closed**, counted from the `Status:` line of every
-ticket file on 2026-08-10. 41 are open. 35 steps are below and **steps 01 to 06
+**50 of the 90 tickets are closed**, counted from the `Status:` line of every
+ticket file on 2026-08-10. 40 are open. 35 steps are below and **steps 01 to 07
 are done**, except that step 05 shipped its rule without its crawl, so **step 05b
 is the next step**. Seven tickets are parked and they are at the end.
 
-The count went 47 to 49: tickets **56** and **67** closed. A closed ticket that
-comes back is why this line is counted and never incremented by hand.
+The count went 49 to 50: ticket **68** closed. A closed ticket that comes back is
+why this line is counted and never incremented by hand.
+
+**Step 07 ran before step 05b and before step 20.** Ticket 68 is a `web` ticket
+that reads no report, so the stale corpus did not block it, and the one criterion
+that needed ticket 79 is handed to step 20 rather than half-built. The order in
+this file is still the order; this was the one step that could leave it and lose
+nothing.
 
 **Count 90 in two folders.** 89 ticket files sit in `issues/` and the ninetieth,
 ticket **49**, sits in `issues/.out-of-scope/`. A count that reads one folder
@@ -566,37 +572,59 @@ code**: nothing above the table is sticky, so the row height was the whole compl
 
 ---
 
-### ☐ Step 07 — Ticket 68, the build
+### ☑ Step 07 — Ticket 68, the build — **DONE**
 
-touches `web`. Blocked by step 06 and **by 79**.
+Resolved 2026-08-10. `Status: resolved`. Commit `13e4565`. `npm test` 512 → **533**,
+`npm --prefix web run build` **823 pages**, and `node compare/measure.mjs nl` did not
+move: 9,635 / 6,747 / median 37. **The ticket's own "## Resolved 2026-08-10" section
+holds every number and every decision.** Do not re-derive them.
 
-```
-/clear
-```
+**The gate held.** A row clamps to four lines with one control in the status cell, the
+cap fires at 50,000 cells and reports the cell as **uncompared** without touching a
+class, and the LCS cell count on `nl__privacy-beleid` fell by more than the 70% asked
+for. The equal-row skip was banked on its own before the trim and the cap landed, as
+the prompt required: it was 78% of the cost by itself.
 
-```
-/implement .scratch/content-parity-log/issues/68-the-content-view-clamps-a-tall-row.md
+**No number moved, and there is a reason.** `compare/worddiff.mjs` is read by the
+browser and by the tests and by nothing in `compare/`, so the diff cannot reach a
+count. Keep it that way.
 
-Measure the cell count and first paint on both named pages, before and after, and
-put the numbers in the ticket. Bank the equal-row skip on its own, before the trim
-and the cap land.
-```
+**Trim equivalence is false and that is settled.** A repeated word gives two
+equally-long alignments, so the trimmed diff is not byte-identical to the untrimmed
+one. It cannot be repaired. `docs/adr/0009-the-word-diff-runs-in-the-browser.md`
+carries the amended consequences and says what the guard is instead.
 
-**Gate.** A row clamps to four lines with one control, the cap fires at 50,000 cells
-and reports the cell as uncompared without touching a class, and the total LCS cell
-count on `nl__privacy-beleid` has fallen by 70% or more.
+**One criterion is half done and step 20 owns the other half.** A jump opens the row —
+verified in the browser, the row's top at 16 px, which is the `scroll-mt-4` and nothing
+else. "And it opens the collapsed run that holds it" cannot be built before 79, because
+there is no collapsed run yet. Step 20 carries it.
 
-**A loose end this step cannot decide.** 68 is sequenced after 79, and `map.md` puts 68
-in the corpus stream (`54 → 55 + 56 → 67 → 68 → 58`) with 79 in the workspace stream
-that runs two streams later. The edge crosses the streams. Either 68 leaves the corpus
-stream and goes beside 79, or 79 comes forward, or the two are decoupled. Ticket 37 is
-"after 68", so it moves with whatever is chosen.
+**The cross-stream loose end is spent.** 68 was sequenced after 79 and it ran first, on
+its own, and nothing was lost: the equal-row skip is in `prepareRows`, so it covers
+whatever rows 79 renders. Ticket 37, at step 08, is unblocked now.
+
+`web/probes/` is new, and it is the front-end half of `crawl/probes/`: what a page costs
+to render and what it costs to paint. **A first-paint probe needs a server** — `node
+api/server.mjs 4321` in the background, then `node web/probes/probe-first-paint.mjs
+http://127.0.0.1:4321/<path>`. It drives Chrome over CDP with Node's own `WebSocket`.
+**No Playwright** (ticket 19).
+
+---
+
+### ☐ Loose end from step 07 — the content view's TBT needs a ticket
+
+touches `talk`. Nobody owns it yet, and it is not a step.
+
+The content view spends **1 to 2 s of TBT at 4× CPU**, and step 07 measured that it is
+**hydration and payload, not the diff**. It did not regress and the unthrottled targets
+are met, so 68 closed without it. It belongs to a ticket of its own and it must not be
+absorbed into an unrelated one.
 
 ---
 
 ### ☐ Step 08 — Ticket 37, leesweergave
 
-touches `web`. Blocked by 68.
+touches `web`. Blocked by 68 — **done**, step 07.
 
 **Why here.** It moved. It was a free `web` lane, and it is not one any more: it
 builds view modes onto a content view that ticket 67's fold has now rewritten and
@@ -961,10 +989,24 @@ median of 37 shown findings, 151 at p90 and 399 at worst.
 Read docs/adr/0006-the-content-view-is-the-spine.md first.
 
 It implements PRD.md user stories 29 to 31. Review the diff against them.
+
+It inherits one criterion from ticket 68: a jump must OPEN the collapsed run that
+holds the row. rowKeyFromHash() in web/src/lib/view.mjs is the rule that names the
+row. A run holding that key opens with it, or a hash link lands on a marker.
 ```
 
 **Gate.** Checked on `nl__fotogalerij/zonwering`, the worst page at **399** shown
 findings, and on a page with **2** findings.
+
+**It carries half of ticket 68's jump criterion.** Step 07 built the jump and could
+not build the run, because there is no collapsed run before this step. It is one line:
+a run that holds `rowKeyFromHash(location.hash)` opens with the row. Ticket 68's
+"Resolved" section states it and this step closes it.
+
+**Do not promote the diff.** Step 07's cap is a rendering budget and never a class,
+because `rule` is the class and a new one would detach every dismissal it touched.
+The equal-row skip lives in `prepareRows`, so **opening a run cannot bring the 11.5
+million cells back** — keep it there.
 
 ---
 
@@ -1224,6 +1266,11 @@ dashboard, on `nl__fotogalerij/zonwering` at **399** shown findings, on a
 two-finding page and on a non-comparable page. Tables scroll, they are not
 compressed.
 
+**This is the step that can break ticket 68.** Step 07 added nothing for a scroll
+offset, and that holds only while **nothing above the table is sticky**. If this step
+makes a header sticky, the jump lands under it and the offset becomes this step's to
+add. Ticket 68 names 87 as the ticket that could break it.
+
 ---
 
 ## The debt — steps 32 to 34
@@ -1386,8 +1433,13 @@ Ticket 67 changed the extractor and left the reports as they were. Until the cra
 runs again, the second command reads a corpus the code cannot reproduce, and "the
 number did not move" would prove only that nothing re-read the site.
 
-**The baseline is 512 tests green in 22 files, 0 failing**, measured on 2026-08-10
-after commit `79b9985`. Ticket 56 took it from 472 to 507 and ticket 67 added 5.
+**The baseline is 533 tests green in 22 files, 0 failing**, measured on 2026-08-10
+after commit `13e4565`. Ticket 56 took it from 472 to 507, ticket 67 added 5 and
+ticket 68 added 21 in two files that already existed.
+
+**`npm test` says nothing about the bundle**, and step 00a is where that was learnt.
+Step 07 also built for the browser: `npm --prefix web run build` gives **823 pages**,
+and **the build writes to `dist/` at the repo root**, not `web/dist/`.
 Ticket 54 took it from 452, and ticket 55 added none: it
 runs the pipeline the earlier tickets built and adds no rule. It is worth
 stating because it was not true until that day: `crawl/sitemap-extract.test.mjs`
