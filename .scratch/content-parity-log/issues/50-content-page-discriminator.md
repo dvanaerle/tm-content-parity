@@ -7,7 +7,7 @@ list holds 28.
 
 **Blocked by:** None.
 
-**Status:** claimed
+**Status:** resolved 2026-08-10 — built by 55
 
 **Type:** task
 
@@ -144,6 +144,23 @@ Each miss is absent from all six sitemaps: `/blog` and its posts, `/newsletter`,
 and `/Separate-parts`. The sitemap is complete for the pages an editor can
 change. A navigation crawl is a floor and not an answer: 11 pages in the new set
 are in no navigation and no footer.
+
+## Resolved 2026-08-10
+
+**Ticket [55](55-five-stores-show-all-their-pages.md) built it.** The seed generator
+finds every content page of every store. The corpus is **816 store pages**, from 451,
+and the French store holds **123** against the 28 this ticket opened on.
+
+The items below were delivered by [51](51-runnable-tracked-seed-pipeline.md),
+[54](54-french-store-shows-all-its-pages.md), 55 and [38](38-six-stores.md). They are
+left unticked because this ticket did not tick them: the ticket that did holds the
+answer. They are not open work here.
+
+Four tickets re-triage against the new number rather than the old one:
+[04](04-six-store-page-lists.md), [16](16-new-site-page-discovery.md),
+[20](20-one-sided-pages-checklist.md) and
+[25](25-fotogalerij-worst-case-page.md). That is in **What this ticket reopens** below,
+and `map.md` § Working order carries it.
 
 ## What to build
 

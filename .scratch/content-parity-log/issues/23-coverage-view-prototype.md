@@ -1,7 +1,7 @@
 # 23 — The store-level Coverage view: how does a 181 × 6 matrix read?
 
 Type: prototype
-Status: closed — folded into 41
+Status: resolved — folded into 41
 Blocked by: 11
 Parent: ../map.md
 

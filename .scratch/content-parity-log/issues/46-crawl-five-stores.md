@@ -1,7 +1,7 @@
 # 46 — Crawl the other five stores
 
 Type: task
-Status: closed — duplicate of 38
+Status: resolved — duplicate of 38
 Blocked by: —
 Parent: ../map.md
 

@@ -1,7 +1,7 @@
 # 16 — Discovering non-NL pages that only exist on the new site
 
 Type: grilling
-Status: open
+Status: needs-triage
 Blocked by: 55
 Parent: ../map.md
 

@@ -1,7 +1,7 @@
 # 24 — Build the Axis B compare stage
 
 Type: task
-Status: closed — superseded by 39, 40, 42, 43, 44, 45
+Status: resolved — superseded by 39, 40, 42, 43, 44, 45
 Blocked by: 07, 11
 Parent: ../map.md
 

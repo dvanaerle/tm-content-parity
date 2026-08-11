@@ -1,7 +1,7 @@
 # 20 — Pages that exist on only one side: the migration checklist
 
 Type: grilling
-Status: open
+Status: needs-triage
 Blocked by: 22, 55
 Parent: ../map.md
 

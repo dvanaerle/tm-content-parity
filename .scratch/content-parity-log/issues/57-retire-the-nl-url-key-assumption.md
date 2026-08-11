@@ -1,7 +1,7 @@
 # 57 — Retire the Dutch-url-key assumption
 
 Type: task
-Status: merged
+Status: resolved 2026-08-07 — merged into 54 and 55
 Assignee: —
 Blocked by: 55, 56
 Parent: 50-content-page-discriminator.md

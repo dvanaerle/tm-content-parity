@@ -1,7 +1,7 @@
 # 04 — Seed lists for all six store views
 
 Type: task
-Status: reopened
+Status: needs-triage
 Assignee: d.aerle
 
 > **Reopened 2026-08-07 by [50](50-content-page-discriminator.md).** Three
