@@ -1,13 +1,15 @@
 /**
- * THROWAWAY probe, kept as evidence. Ticket 64.
+ * THROWAWAY probe, kept as evidence. Ticket 64, re-pointed by ticket 90.
  *
  * It answers the four questions the ADR asks of a new entry in
  * `shared/excluded-regions.mjs`, for the promo banner, plus the two the ticket
  * adds:
  *
  * 1. Does one selector match the banner in **all six stores**? The banner has no
- *    stable class and no stable text, so the anchor is the campaign option ids in
- *    a link target.
+ *    stable class and no stable text — the wrapper class is a generated hash and
+ *    the copy is translated — so the anchor is the id production puts on the
+ *    block. This is the question to re-ask on the next campaign: the entry no
+ *    longer names one, so the probe is how it stays honest.
  * 2. How many content units does it remove on each side? The new site has no
  *    banner, so the answer on that side must be zero — that is what `legacy-only`
  *    means, and it is the entry's own evidence.
@@ -23,7 +25,7 @@
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
-import { ABSOLUTE_MAX_UNITS } from '../../shared/excluded-regions.mjs';
+import { ABSOLUTE_MAX_UNITS, EXCLUDED_REGIONS } from '../../shared/excluded-regions.mjs';
 import { comparePage } from '../../compare/30-compare.mjs';
 import { extractPage } from '../extract.mjs';
 import { fetchPage } from '../fetch-page.mjs';
@@ -32,19 +34,18 @@ const SEEDS = new URL('../../data/10-store-seeds.json', import.meta.url);
 const OUT = new URL('../../data/probe-promo-banner.json', import.meta.url);
 
 /**
- * The campaign is `10% korting op terrasoverkappingen en carports`, and its
- * option ids are 6039 and 6040. Both encodings of the comma occur in the live
- * markup on one page, so both are asked for: `[href*=]` reads the raw attribute
- * and is not encoding-insensitive the way `linkKey()` is.
+ * Read from the committed list, never retyped, so re-running this probe measures
+ * the entry that ships rather than a copy of it that can drift.
  *
- * A single id is **not** enough. `/overkapping` carries an editorial filter link
- * to `?terrasoverkapping_model=6039` with the text `Authentiek`. The pair is the
- * campaign; one id is a model.
+ * It used to be a pair of option ids written out here. Ticket 90 replaced that
+ * with the hook production puts on the block, so the probe no longer names a
+ * campaign either — which is the point of re-running it on the next one.
  */
-const SELECTOR = [
-  '.mgz-element-section:has(a[href*="_model=6039,6040"])',
-  '.mgz-element-section:has(a[href*="_model=6039%2C6040"])',
-].join(', ');
+const BANNER = EXCLUDED_REGIONS.filter((entry) => entry.kind === 'legacy-only');
+
+if (BANNER.length !== 1) throw new Error(`Expected one legacy-only entry, found ${BANNER.length}.`);
+
+const SELECTOR = BANNER[0].selector;
 
 const STORES = ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'];
 

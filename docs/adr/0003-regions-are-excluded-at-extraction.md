@@ -122,14 +122,35 @@ The list will grow. Each new entry needs all four:
 - The promo banner removes **4,055 findings, 11.8% of the corpus of 34,488, on 446
   of 448 pages**. Ticket 64 measured this. The estimate before it was 2,698 of
   34,910 on 371 pages, and it was low on all three numbers.
-- The banner anchor uses the campaign option ids in a link href
-  (`_model=6039,6040`, and the same ids as `6039%2C6040`). Magento attribute codes
-  and option ids are global, so the signal is the same in every store. It is
-  **campaign-specific**: the next campaign changes the ids, the entry stops
-  matching, and the banner returns as findings. The list needs an owner.
-- An anchor on a link href reads the **raw attribute**. It is not
-  encoding-insensitive the way `linkKey()` is, so an anchor of this shape asks for
-  every encoding the markup uses.
+- **The banner anchor is an id production puts on the block**, `#campaign-banner`,
+  the same shape as the product grid's. It is not campaign-specific: the next
+  campaign changes its copy, its links and its option ids but keeps the hook, so the
+  entry keeps matching and needs no commit. Measured 2026-08-11 as **identical to the
+  anchor it replaced** — matches, units, links and images — on **48 page-store pairs**
+  across all six stores. Not on the corpus: the corpus-wide probe last ran against the
+  old selector. Ticket 90.
+- **This reverses an earlier consequence of this ADR, recorded here rather than
+  dropped.** The anchor used to be the campaign option ids in a link href
+  (`_model=6039,6040`, and the same ids as `6039%2C6040`), chosen because Magento
+  option ids read the same in every store while the block carried no stable class and
+  no stable text. That anchor was campaign-specific by construction and the list was
+  said to need an owner for exactly that reason. What changed is not the reasoning but
+  the input: the block is editable in the Magento admin, so a stable hook could be
+  **created** rather than found. Two consequences of the old anchor go with it — an
+  anchor on a link href read the **raw attribute** and so had to ask for every
+  encoding of the comma, and it had to name a **pair** of ids because a single id also
+  appears on an editorial filter link. An id on the block has neither problem.
+- **The rejected text anchor above stays rejected, and it was re-measured.** Ticket 89
+  ran the one-sided `PROMO` pattern over 816 reports: it matches **0** banner lines in
+  `de`, `fr` and `be_fr` and one per page in `uk`, sweeps 58 editorial findings, and
+  cannot reach the **1,175 shown link findings** the banner carries. The "blind in four
+  stores" objection recorded here held under measurement.
+- **The failure mode moved, and it is silent.** The hook lives in a CMS block this repo
+  cannot see, so a future campaign built as a fresh block without it makes the entry
+  match nothing and the banner returns as findings. That is the over-reporting
+  direction and it is safe, but `capBreachMessage` only fails the crawl when an entry
+  matches **too much**; nothing fires when a committed entry matches **nothing**, and
+  the coverage line below reports it a run later rather than at the crawl.
 - Excluded-region coverage is compared against the last snapshot. If a region was
   removed on 446 pages and is now removed on none, the log says so in one line. The
   reader must not have to infer it from the 4,055 rows that came back.

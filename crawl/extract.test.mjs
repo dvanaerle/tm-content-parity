@@ -693,8 +693,14 @@ describe('the committed region list', () => {
 });
 
 /**
- * Ticket 64. The banner anchor is the one selector in the list that is not a
- * class or an id, so what it does and does not match is a rule of its own.
+ * Ticket 64, rewritten by ticket 90. The banner anchor **was** the one selector
+ * in the list that read a link target, because the block carried no stable class
+ * and no stable text. Production now marks the block with `id="campaign-banner"`,
+ * so the anchor is an id like the product grid's, and the entry stops naming a
+ * campaign.
+ *
+ * That is the whole rule under test here: the same entry must cut the next
+ * campaign's banner, whatever its copy, its language and its option ids.
  *
  * The entry is read from the committed list, never retyped, so a test cannot
  * drift from the selector that ships.
@@ -703,9 +709,13 @@ describe('the promo banner entry', () => {
   const BANNER = EXCLUDED_REGIONS.filter((entry) => entry.kind === 'legacy-only');
   const only = (main) => extractPage(page(main), { ...CONTEXT, excludedRegions: BANNER });
 
-  /** The two responsive versions, as production nests them: siblings in one wrapper. */
+  /**
+   * The two responsive versions, as production nests them: siblings in one
+   * wrapper, each carrying the hook. The id repeats on the page — the desktop
+   * and the mobile copy of one block — so the selector must count both.
+   */
   const section = (href, copy) => `
-    <div class="tfix5k1 mgz-element mgz-element-section w-full">
+    <div id="campaign-banner" class="tfix5k1 mgz-element mgz-element-section w-full">
       <div class="mgz-element-inner">
         <div class="y1842ri mgz-element mgz-element-section grow">
           <p>${copy}</p><a href="${href}">Bekijk alle deals</a>
@@ -716,10 +726,45 @@ describe('the promo banner entry', () => {
   const DESKTOP = section('/terrasoverkapping?terrasoverkapping_model=6039,6040#productbuilder', 'Nu 10% korting.');
   const MOBILE = section('/terrasoverkapping?terrasoverkapping_model=6039%2C6040#productbuilder', 'Nu 10% korting.');
 
-  it('is one entry, legacy-only, and it names its campaign and its date', () => {
+  it('is one entry, legacy-only, anchored on the hook production puts on the block', () => {
     expect(BANNER).toHaveLength(1);
-    expect(BANNER[0].reason).toMatch(/10% korting/);
-    expect(BANNER[0].reason).toMatch(/augustus 2026/);
+    expect(BANNER[0].selector).toBe('#campaign-banner');
+  });
+
+  it('names no campaign, so the entry outlives the campaign it was written for', () => {
+    // The point of the change. An entry that carries option ids, a campaign name
+    // or a month stops being true the day the campaign does, and the next one
+    // needs a commit. Nothing here may date.
+    const entry = `${BANNER[0].selector} ${BANNER[0].reason}`;
+
+    // One rule, not an enumeration of the things it must not say: every dated
+    // thing this entry used to carry — the option ids `6039,6040`, the `10%`, the
+    // year — is a digit, and the prose it needs has none (`alle zes de winkels`
+    // is spelled). An enumeration would keep needing another entry; this does not.
+    expect(entry).not.toMatch(/\d/);
+    expect(entry).not.toMatch(/_model=/);
+    // A month is the one dated thing that can be written without a digit. The
+    // list is Dutch because the reason is; a campaign named in another language
+    // is not covered, which is why the digit rule above carries the weight.
+    expect(entry).not.toMatch(
+      /januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december/i,
+    );
+  });
+
+  it('cuts the next campaign, whatever its copy, its language and its option ids', () => {
+    // The claim the ticket rests on. Different ids, different words, a store the
+    // Dutch pattern is blind in — and the same entry still takes the block.
+    const next = `
+      <div id="campaign-banner" class="a7xk2 mgz-element mgz-element-section w-full">
+        <p>15% Rabatt auf alle Modelle.</p>
+        <a href="/terrassenueberdachung?modell=7104%2C7105">Alle Angebote ansehen</a>
+      </div>`;
+    const extract = only(`<h1>Kop</h1>${next}`);
+    const [cut] = extract.diagnostics.regionsExcluded;
+
+    expect(cut.matches).toBe(1);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Kop']);
+    expect(extract.links).toEqual([]);
   });
 
   it('takes both responsive versions, because one entry counts all its matches', () => {
@@ -730,17 +775,19 @@ describe('the promo banner entry', () => {
     expect(extract.elements.map((unit) => unit.raw)).toEqual(['Kop']);
   });
 
-  it('reads both encodings of the comma, because one page sends both', () => {
-    // `[href*=]` reads the raw attribute. It is not encoding-insensitive the way
-    // `linkKey()` is, so a selector on one encoding is blind to the other.
-    expect(only(`<h1>Kop</h1>${DESKTOP}`).diagnostics.regionsExcluded[0].matches).toBe(1);
-    expect(only(`<h1>Kop</h1>${MOBILE}`).diagnostics.regionsExcluded[0].matches).toBe(1);
+  it('counts a repeated id as two matches, because production ships it twice', () => {
+    // A duplicate id is invalid HTML and `getElementById` would see one of the
+    // two. The extractor reads all of them, and the banner needs that: the
+    // mobile copy is the second one and it is not optional.
+    const [cut] = only(`<h1>Kop</h1>${DESKTOP}${MOBILE}`).diagnostics.regionsExcluded;
+
+    expect(cut.matches).toBe(2);
   });
 
-  it('leaves a filter link on one option id alone, because the pair is the campaign', () => {
+  it('leaves an editorial filter link alone, because the entry no longer reads link targets', () => {
     // `/overkapping` carries an editorial filter link to `?terrasoverkapping_model=6039`
-    // with the anchor text `Authentiek`. An anchor on one id would delete the
-    // section that holds it.
+    // with the anchor text `Authentiek`. The old anchor had to exclude it by hand,
+    // with a pair of ids. An id on the block cannot reach it at all.
     const editorial = `
       <div class="p9crveb mgz-element mgz-element-section">
         <p>Kies een model: <a href="/overkapping?terrasoverkapping_model=6039">Authentiek</a>.</p>
@@ -752,6 +799,17 @@ describe('the promo banner entry', () => {
     // unit of their own. The link keeps its own record either way.
     expect(extract.elements.map((unit) => unit.raw)).toContain('Kies een model: Authentiek.');
     expect(extract.links.map((link) => link.text)).toContain('Authentiek');
+  });
+
+  it('leaves the campaign link alone when it sits outside the block', () => {
+    // The mirror of the above, and the cost of the change: the entry now cuts a
+    // region and not a link. A campaign target in editorial prose stays in the
+    // log, which is the over-reporting direction.
+    const inline = '<p>Lees de <a href="/actievoorwaarden?terrasoverkapping_model=6039,6040">voorwaarden</a>.</p>';
+    const extract = only(`<h1>Kop</h1>${inline}`);
+
+    expect(extract.diagnostics.regionsExcluded).toEqual([]);
+    expect(extract.links.map((link) => link.text)).toContain('voorwaarden');
   });
 
   it('measures zero on the new site, because that is what legacy-only means', () => {

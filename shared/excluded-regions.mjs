@@ -86,42 +86,51 @@ export const EXCLUDED_REGIONS = [
     maxUnits: 80,
   },
   {
-    // The campaign option ids in a link target (ticket 64). The banner has no
-    // stable class — its wrapper class is a generated hash, and a different hash
-    // in each store — and no stable text, because it is translated per store.
-    // Magento attribute codes and option ids are global, so the ids are the one
-    // signal that reads the same in all six stores.
+    // The hook production puts on the block itself (ticket 90).
     //
-    // Both encodings of the comma are asked for. One production page sends the
-    // same target as `6039,6040` and as `6039%2C6040`, and `[href*=]` reads the
-    // raw attribute: it is not encoding-insensitive the way `linkKey()` is.
+    // This entry used to anchor on the campaign option ids in a link target,
+    // because the block carried no stable class — its wrapper class is a
+    // generated hash, and a different hash in each store — and no stable text,
+    // because it is translated per store. That anchor worked and it dated: the
+    // next campaign has different ids, the entry stops matching, and the banner
+    // returns as findings. Ticket 89 measured the alternative, a one-sided text
+    // pattern, and refused it: the pattern is Dutch, so it is blind in `de`,
+    // `fr` and `be_fr`, and it cannot reach the links at all.
     //
-    // The **pair** is the campaign. A single id is not enough: `/overkapping`
-    // carries an editorial filter link to `?terrasoverkapping_model=6039` with
-    // the anchor text `Authentiek`, and an anchor on one id would take the
-    // section that holds it.
-    selector:
-      '.mgz-element-section:has(a[href*="_model=6039,6040"]), '
-      + '.mgz-element-section:has(a[href*="_model=6039%2C6040"])',
+    // The cheap fix was neither. Production marks the block in the Magento CMS,
+    // and an id is the same signal in all six stores that the option ids were,
+    // without naming a campaign. It is the product grid's kind of anchor.
+    //
+    // The id repeats on the page — the desktop and the mobile copy of one block
+    // — so it is invalid HTML that the extractor reads with `querySelectorAll`
+    // semantics and therefore counts twice. A class would be correct markup and
+    // would need no other change here.
+    selector: '#campaign-banner',
     kind: 'legacy-only',
     reason:
-      'De campagnebanner "10% korting op terrasoverkappingen en carports", de '
-      + 'campagne van augustus 2026. Eén gedeeld Magento-blok, in alle zes de '
-      + 'winkels, op bijna elke pagina. Een redacteur schrijft de banner wel, dus '
+      'De campagnebanner. Eén gedeeld Magento-blok, in alle zes de winkels, op '
+      + 'bijna elke pagina. Een redacteur schrijft de banner wel, dus '
       + 'niet-redactioneel is het niet. Maar de nieuwe site krijgt hem niet, en '
       + 'daardoor maakt hetzelfde blok op elke pagina dezelfde bevindingen die '
-      + 'niemand kan oplossen. Het ankerpunt is de optie-ids van de campagne '
-      + '(6039 en 6040) in een linkdoel, want de banner heeft geen vaste class en '
-      + 'geen vaste tekst. Het anker is dus campagnespecifiek: de volgende '
-      + 'campagne heeft andere ids, deze regel past dan niet meer, en de banner '
-      + 'komt terug als bevindingen. Deze lijst heeft een eigenaar nodig.',
-    // Measured 2026-08-07 by `crawl/probes/probe-promo-banner.mjs` and re-measured
-    // 2026-08-10 after ticket 67 folded inline links. Two matches on production —
-    // the desktop and the mobile version of one banner — on every page, in every
-    // store, and zero matches on the new site. `production: 8` is the nl count; the
-    // five other stores remove 7. The fold took one unit off each: the banner holds
-    // a line of copy with the campaign link inside it. The new side is 0 because the
-    // banner is not there, which is what `legacy-only` means.
+      + 'niemand kan oplossen. Productie markeert het blok zelf, dus het anker is '
+      + 'niet campagnespecifiek: de volgende campagne heeft andere teksten, andere '
+      + 'links en een andere looptijd, maar houdt dezelfde haak, en deze regel '
+      + 'blijft passen zonder commit. De haak zit in het CMS-blok. Wie een nieuw '
+      + 'blok bouwt zonder haak laat de banner terugkomen als bevindingen, en de '
+      + 'dekkingscontrole meldt dat in één regel.',
+    // Measured 2026-08-11 against live production by
+    // `crawl/probes/probe-promo-banner.mjs`: six stores, the three pages below
+    // plus `overkapping` and four controls, so **48 page-store pairs and not the
+    // corpus**. Two matches on production on every pair — the desktop and the
+    // mobile version of one banner — and zero on the new site, which is what
+    // `legacy-only` means. `production: 8` is the nl count; the five other stores
+    // remove 7.
+    //
+    // Identical to the option-id selector it replaces in every column — matches,
+    // units, links and images — on all 48, so the swap is not believed to move any
+    // number. The corpus-wide probe that would raise that from 48 to 816,
+    // `probe-promo-banner-corpus.mjs`, last ran 2026-08-10 against the **old**
+    // selector and has not been re-run.
     measured: {
       pages: ['carport', 'terrasoverkapping', '(home)'],
       production: 8,
