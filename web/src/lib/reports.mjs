@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { fromRoot } from './repo-root.mjs';
 import { EXCLUDED_PAGES } from '../../../shared/excluded-pages.mjs';
 import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
 import { notCheckedInStore } from './not-checked.mjs';
@@ -15,7 +16,7 @@ import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
  * @typedef {import('../../../compare/contract.mjs').PageReport} PageReport
  */
 
-const DIR = fileURLToPath(new URL('../../../data/reports/', import.meta.url));
+const DIR = fromRoot('data/reports');
 
 /**
  * @param {string} [store] Only this store's reports. Omit for every store.
@@ -70,7 +71,7 @@ export function storesInLog() {
  */
 export async function loadReports(store) {
   const names = await reportFiles(store);
-  return Promise.all(names.map(async (name) => JSON.parse(await readFile(DIR + name, 'utf8'))));
+  return Promise.all(names.map(async (name) => JSON.parse(await readFile(join(DIR, name), 'utf8'))));
 }
 
 /**
@@ -111,7 +112,7 @@ export async function loadSummaries(store) {
   const out = [];
   for (const name of await reportFiles(store)) {
     /** @type {PageReport} */
-    const report = JSON.parse(await readFile(DIR + name, 'utf8'));
+    const report = JSON.parse(await readFile(join(DIR, name), 'utf8'));
     out.push({
       store: report.store,
       page: report.page,
@@ -183,8 +184,8 @@ export function regionsRemovedInStore(pages) {
   return EXCLUDED_REGIONS.map((entry) => ({ ...entry, removedOn: counted.get(entry.selector) }));
 }
 
-const SEEDS = fileURLToPath(new URL('../../../data/10-store-seeds.json', import.meta.url));
-const SNAPSHOT = fileURLToPath(new URL('../../../data/snapshot.json', import.meta.url));
+const SEEDS = fromRoot('data/10-store-seeds.json');
+const SNAPSHOT = fromRoot('data/snapshot.json');
 
 /**
  * Ticket 64: the excluded-region coverage of the last run, against the run before

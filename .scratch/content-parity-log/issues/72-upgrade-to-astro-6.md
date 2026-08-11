@@ -1,7 +1,7 @@
 # 72 — Astro 6, and nothing else
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-11 — on Astro 6.4.8; all 823 pages byte-identical.
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
@@ -37,17 +37,60 @@ generated site should be the same site. Use it.
 
 ## Acceptance criteria
 
-- [ ] `web/package.json` is on Astro 6, and `npm test` passes with no test changed.
-- [ ] The built site is compared against a build from before the upgrade, and the
+- [x] `web/package.json` is on Astro 6, and `npm test` passes with no test changed.
+- [x] The built site is compared against a build from before the upgrade, and the
       difference is recorded in the answer. A difference is allowed; an unexplained
       difference is not.
-- [ ] The Node floor is stated where a contributor will look for it, and the crawl
+- [x] The Node floor is stated where a contributor will look for it, and the crawl
       scripts and the re-check service both still run on it.
-- [ ] The two `PUBLIC_` environment reads still produce strings, and a missing key
+- [x] The two `PUBLIC_` environment reads still produce strings, and a missing key
       still degrades to read-only rather than throwing.
-- [ ] No product behaviour changes. The dashboard, the content view, the ledger and
+- [x] No product behaviour changes. The dashboard, the content view, the ledger and
       the override controls are untouched in this diff.
-- [ ] Nothing else is in the commit.
+- [x] Nothing else is in the commit.
+
+## Resolved 2026-08-11
+
+Astro 5.14 → **6.4.8**, with `@astrojs/react` 4.4 → **5.0.7** (the integration major
+that shipped the same day as Astro 6.0.0; `@astrojs/react@6` belongs to Astro 7).
+Vite 7.3.6, Zod 4.4.3, Shiki 4.4.3 came with it. 533 tests pass in 22 files, and no
+test changed.
+
+**The comparison holds.** All **823** pages are byte-identical between the Astro 5
+and Astro 6 builds once three values that are nondeterministic on any version are
+normalised: asset content hashes, `astro-island uid`, and the `blob:nodedata:` UUIDs
+on the Markdown download links. The stylesheet is a superset by 44 utility classes
+and 6 custom properties, and every one of them traces to untracked prototype
+sources that appeared in `web/src/` during the session, not to the upgrade — the
+tracked sources contain none of them. Tailwind was already 4.3.3 on both sides, so
+the `@tailwindcss/vite` trap did not fire across the Vite major. Client JS
+excluding the prototype chunk is 458,413 bytes against 459,454; `palette.js` is a
+re-chunked shared React runtime, not new code. Astro 6 no longer writes the legacy
+content-collection artefacts (`content-modules.mjs`, `data-store.json`,
+`settings.json`) into `outDir`; this project declares no collections.
+
+**One real regression, found and fixed.** Astro 6 bundles server modules into
+`web/.astro/.prerender/chunks/`, so `../../../data/` against `import.meta.url` — a
+count that was only ever true of the source file — resolved to `web/data/`. Every
+route asked for reports, `reportFiles()` swallowed the ENOENT as an empty list, and
+**the build produced 1 page instead of 823 while exiting 0**. `web/src/lib/repo-root.mjs`
+now *finds* the root by walking up to the one ancestor holding `compare/contract.mjs`,
+which is right from a source file, from a bundled chunk and from a test.
+
+Node floor **22.12.0**, in both `engines` fields and in the README's Install
+section. The re-check service serves `dist/` and answers `/api/health` 200,
+`/api/recheck/nl/veranda` 404 `{"reason":"Geen bewaarde hercontrole."}`.
+
+Both `PUBLIC_` reads inline as quoted strings, byte-identical to the Astro 5 build.
+With the keys removed the build still exits 0 and every page server-renders
+*"Geen verbinding met het afvinklogboek"* — read-only, not a throw.
+
+### Left for a follow-up ticket
+
+`reportFiles()` treats ENOENT as an empty list, which is what let a 1-page build go
+green. That silence is the reason this regression was invisible, and a build that
+finds no reports at all is never a real state. Not changed here: it is behaviour,
+and this diff carries none.
 
 ## Traps
 

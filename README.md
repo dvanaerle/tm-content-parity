@@ -26,6 +26,11 @@ closes itself.
 
 ## Install
 
+**Node 22.12.0 or newer**, for everything here and not only for `web/`: Astro 6
+dropped Node 18 and 20, and the crawl scripts, the compare stage and the re-check
+service share the one runtime. Both `engines` fields say so, but npm only warns on
+a mismatch unless `engine-strict` is set — so read the warning.
+
 ```sh
 npm install          # crawl, compare, api
 npm install --prefix web   # the Astro front end
