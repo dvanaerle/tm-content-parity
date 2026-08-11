@@ -1,7 +1,8 @@
 # 82 — Search reaches the content
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-11 — built. One criterion is met against notes that are not the
+ones it names, because the feature it names does not exist. See the answer.
 Blocked by: 81
 Parent: ../map.md
 
@@ -33,21 +34,21 @@ already loads.
 
 ## Acceptance criteria
 
-- [ ] One index file per store is emitted by the build, holding the searchable fields
+- [x] One index file per store is emitted by the build, holding the searchable fields
       and the finding ids — not the whole report.
-- [ ] Searching finds a finding by production text, by new-site text, by link text, by
+- [x] Searching finds a finding by production text, by new-site text, by link text, by
       link target, by anchor heading and by page key. Each of the six has a test.
-- [ ] The result says how many findings on how many pages, and groups by page.
-- [ ] Closed findings are excluded by default, and an `inclusief afgesloten` option
+- [x] The result says how many findings on how many pages, and groups by page.
+- [x] Closed findings are excluded by default, and an `inclusief afgesloten` option
       includes them.
-- [ ] A page note matching the term is found, and the result makes clear that the note
+- [x] A page note matching the term is found, and the result makes clear that the note
       half is live while the finding half is from the snapshot.
-- [ ] No search dependency is added. The answer records the index size per store and the
+- [x] No search dependency is added. The answer records the index size per store and the
       time a worst-case query takes on the largest store.
-- [ ] The dashboard's page-name box either becomes this search or is removed. Two search
+- [x] The dashboard's page-name box either becomes this search or is removed. Two search
       boxes on one screen is the duplication ticket 12 already cleaned up once.
-- [ ] No count moves, and the existing test for that rule passes unchanged.
-- [ ] The hosted build carries the index and needs no service for search to work.
+- [x] No count moves, and the existing test for that rule passes unchanged.
+- [x] The hosted build carries the index and needs no service for search to work.
 
 ## Traps
 
@@ -61,3 +62,94 @@ already loads.
 - A page key can hold a slash. Matching on the key must not split on it.
 - The corpus grows to about 800 store-pages under tickets 50 and 55, and the thin stores
   roughly triple. Record the index size so the next person can see the trend.
+
+## Answer
+
+The box on the dashboard searches the content. `web/src/lib/search.mjs` holds the whole
+of the rule — the index, the matching, the grouping and the notes — and its module
+docblock carries the three decisions that are not visible in the code. The build writes
+`/zoekindex/<store>.json`, the browser fetches it on the first keystroke, and a linear
+pass answers. No dependency was added and none is warranted; the numbers are below.
+
+### The six fields are four names over two columns
+
+A finding has `prod` and `new`, and on a `links` check **those two hold the target** —
+`linkKey()`'s host-folded string, not words. So which field a hit is reported under is
+decided by the class's check: `SEARCH_FIELDS` is
+`page, prodText, newText, linkTarget, linkText, anchorHeading`, and `matchedFields()`
+splits on `FINDING_CLASSES[cls].check === 'links'`. The test for it caught the mistake on
+its first run: without the split, typing a URL claimed a match in *production text*.
+
+**`linkText` is the whole reason the index is emitted at build time.** Every other
+searchable field is already in `loadSummaries()`'s array, which the dashboard has in
+memory. The anchor text is on no finding — it is on `report.sides.*.links[].text`, in the
+extract, which is the half a summary throws away. A browser cannot derive it. It costs
+10.2 kB gzipped on `nl` and it is what a search is for: an editor types the words they
+read on the page, and on a link those words are nowhere else.
+
+Matching is a plain lowercased substring. That keeps the slash trap shut for free — a page
+key is one opaque string and a substring never splits on it — and it is why `Bekijk deals
+>` works as typed. That phrase finds nothing in this snapshot, because those words are not
+in the NL store; the ticket's example was illustrative.
+
+### One index per store, and what it costs
+
+Measured by `web/probes/probe-search-index.mjs` on the emitted files, 2026-08-11:
+
+| store | pages | findings | raw | gzip |
+| --- | --- | --- | --- | --- |
+| be | 122 | 5,412 | 1,540,803 | 232,553 |
+| be_fr | 115 | 6,225 | 1,897,282 | 263,997 |
+| de | 123 | 5,743 | 1,722,247 | 249,633 |
+| fr | 117 | 6,175 | 1,861,608 | 263,715 |
+| nl | 124 | 6,004 | 1,706,627 | 248,465 |
+| uk | 121 | 5,944 | 1,671,459 | 243,933 |
+| **total** | **722** | **35,503** | **10,400,026** | **1,502,296** |
+
+About 250 kB gzipped a store, downloaded one store at a time, against the 228 kB
+`loadSummaries()` index the `reports.mjs` comment records. Search roughly **doubles** a
+store's payload rather than multiplying it, which is the trend the next person should
+watch when tickets 50 and 55 grow the corpus.
+
+The largest store by indexed findings is **`be_fr`** (6,225) and not `nl`, which the
+ticket assumed. Worst case is the term that matches *everything*, because matching has no
+early exit and is a constant across terms, so the only variable left is the grouping the
+matches then pay for. Twenty timed runs, `searchStore()` end to end:
+
+- `be_fr`, single letter `e` — 6,224 hits, 4,399 repeats: **37.8 ms** median.
+- `nl`, single letter `e` — 5,996 hits, 4,149 repeats: **27.4 ms** median.
+- A realistic term on either store: **3–4 ms**. A term that matches nothing: **~3 ms**,
+  which is the pure scan over 6,000 entries.
+
+A library would buy back tens of milliseconds on the one query shape nobody waits on. The
+index size is the real cost, and no library reduces it.
+
+### The two halves stay two halves
+
+`searchStore()` answers about the snapshot and `searchNotes()` about the log, and they are
+two functions rather than one merged list so that no caller can present two moments as
+one by accident. On screen they are two blocks under two sentences: the findings dated by
+`builtAt`, the notes marked as read from the log just now.
+
+**The criterion about page notes is met against notes that are not the ones it names.**
+There is no page-note feature: `CONTEXT.md` has the vocabulary, but nothing writes one,
+and `overrides` has no column for it. What exists is `note` — the sentence an editor gives
+when dismissing or muting, and one a page review can carry. Those are the notes there are,
+so those are the notes searched, filtered through `latestByKey()` so a withdrawn note is
+not offered as a live reason. A real page-note feature will need its own ticket, and this
+search will find its notes the day the column exists.
+
+### Two things that were nearly bugs
+
+**A one-sided page is now out of the index.** Nineteen of them in this corpus still carry a
+finding, and their ids are in no derived state the dashboard holds — `Repeats.jsx` is
+written to *throw* on a missing one rather than quietly shrink a denominator, so a search
+that returned them would have crashed the row it drew.
+
+**The emitter streams.** `emptyIndex`/`addPage` exist because a full report carries both
+extracts and reading a store's worth at once is the thing `loadSummaries()` refuses to do.
+One test pins the streamed index equal to the one built from an array, so the streaming
+path cannot grow a second, divergent merge.
+
+`node compare/measure.mjs nl` still reads 6,004 shown findings on 124 comparable pages,
+and the index's own numbers agree with it exactly. No count moved; 571 tests pass.
