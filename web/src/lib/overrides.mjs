@@ -186,6 +186,10 @@ export function useStoreOverrides({ pages }) {
   return {
     derived,
     byPage,
+    // The events themselves, for the one reader that needs the log and not the state
+    // derived from it: searching the **notes** (ticket 82). A note is a sentence an
+    // editor wrote, and the derivation keeps the decision and drops the words.
+    events: events ?? [],
     ready: events !== null,
     error,
     connected: Boolean(port),

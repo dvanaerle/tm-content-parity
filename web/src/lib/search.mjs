@@ -133,6 +133,12 @@ export const emptyIndex = (store) => ({ store, pages: 0, builtAt: '', findings: 
  * @returns {SearchIndex}
  */
 export function addPage(index, report) {
+  // A one-sided page is out of the bar from the first day (ticket 20) and 19 of them in
+  // this corpus still carry a finding. Indexing those would put ids in a result the
+  // dashboard's derived state has never heard of, and a repeat row is written to throw on
+  // a missing one rather than quietly shrink its denominator.
+  if (!report.comparable) return index;
+
   const linkText = linkTextByKey(report);
 
   for (const finding of report.findings) {

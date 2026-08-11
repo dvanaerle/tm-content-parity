@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Bar, Chip, ClassFilterPills, FilterBanner } from './Chips.jsx';
 import { LogBanner } from './Progress.jsx';
 import Repeats from './Repeats.jsx';
+import Search from './Search.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { useStoreOverrides } from '../lib/overrides.mjs';
@@ -27,6 +28,12 @@ const CHECKS = ['text', 'links', 'images'];
  * are one set, and both views read the same filter — so a pill that lists its
  * findings directly is *Verschillen* with a class pre-selected.
  *
+ * The box **searches the content** since ticket 82, and typing in it puts the result in
+ * place of either view. It used to match a page name, which is now one of the six fields
+ * it searches, so the old question is still asked by the one box that is left. The result
+ * draws repeat rows through the same component *Verschillen* draws, which keeps this a
+ * third reading of one derivation rather than a third surface.
+ *
  * Axis A only. Ticket 11 gave the coverage axis its own bar, which must never be
  * summed with this one, and ticket 23 owns its store-level view.
  */
@@ -36,6 +43,10 @@ export default function Dashboard({
 }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('worst');
+  // *Inclusief afgesloten*, which belongs to the search and not to the two views: the
+  // views answer about the work that is left, and only a search is ever asked to look
+  // back at what was decided.
+  const [includeClosed, setIncludeClosed] = useState(false);
   // Which of the two views is on screen. *Verschillen* lands first: it is the
   // question an editor arrives with, and the page list is one click away.
   const [view, setView] = useState('repeats');
@@ -55,14 +66,17 @@ export default function Dashboard({
   const openOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar.open ?? page.summary.shown;
   const barOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar;
 
+  // A typed term puts the search on screen in place of either view. It answers past both
+  // of them — a finding anywhere in the store, with the pages it is on — so narrowing one
+  // of the two lists as well would be two answers to one question.
+  const searching = query.trim().length > 0;
+
   const rows = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    const found = pagesWithClasses(comparable, classes)
-      .filter((page) => !needle || page.page.toLowerCase().includes(needle));
+    const found = pagesWithClasses(comparable, classes);
     return [...found].sort((a, b) => (
       sort === 'worst' ? openOf(b) - openOf(a) : a.page.localeCompare(b.page)
     ));
-  }, [comparable, classes, query, sort, log.byPage]);
+  }, [comparable, classes, sort, log.byPage]);
 
   // The store's differences, grouped. It is derived from the **summaries the page
   // list already holds**, so the two views are two readings of one array and no text
@@ -146,33 +160,47 @@ export default function Dashboard({
               : `Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`)}
           />
           <div className="flex items-center gap-2">
-            {/* The two views, and the controls that belong to one of them only. A
-                search box over a list it cannot narrow would say one thing while the
-                view does another, so it is drawn with the list it searches. */}
-            <ViewSwitch view={view} onChange={setView} />
-            {view === 'pages' && (
-              <>
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Zoek een pagina"
-                  className="rounded border border-slate-300 px-2 py-1 text-sm"
-                />
-                <select
-                  value={sort}
-                  onChange={(event) => setSort(event.target.value)}
-                  className="rounded border border-slate-300 px-2 py-1 text-sm"
-                >
-                  <option value="worst">Meeste verschillen eerst</option>
-                  <option value="name">Op naam</option>
-                </select>
-              </>
+            {/* One box, and it searches the content (ticket 82). It used to match a page
+                name and nothing else, and it lived with the page list because that was
+                the only list it could narrow. The page key is one of the six fields it
+                now searches, so the old question is still asked — and there is one box
+                on the screen rather than the two ticket 12 already cleaned up once. */}
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Zoek in de inhoud"
+              title="Zoekt de teksten, de links, de kopjes en de paginanamen van deze winkel."
+              className="w-56 rounded border border-slate-300 px-2 py-1 text-sm"
+            />
+            {/* The switch belongs to the two views, and a search answers past both of
+                them, so it steps aside while one is on screen. */}
+            {!searching && <ViewSwitch view={view} onChange={setView} />}
+            {!searching && view === 'pages' && (
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value)}
+                className="rounded border border-slate-300 px-2 py-1 text-sm"
+              >
+                <option value="worst">Meeste verschillen eerst</option>
+                <option value="name">Op naam</option>
+              </select>
             )}
           </div>
         </header>
 
-        {classes.length > 0 && (
+        {searching && (
+          <Search
+            store={comparable[0]?.store}
+            term={query}
+            byFinding={byFinding}
+            events={log.events}
+            includeClosed={includeClosed}
+            onIncludeClosed={setIncludeClosed}
+          />
+        )}
+
+        {!searching && classes.length > 0 && (
           <FilterBanner onClear={() => setClasses([])} className="border-b px-4 py-2">
             <strong>Gefilterd op {classes.join(', ')}.</strong>
             {view === 'repeats'
@@ -182,14 +210,14 @@ export default function Dashboard({
           </FilterBanner>
         )}
 
-        {view === 'repeats' && (
+        {!searching && view === 'repeats' && (
           // Keyed on the filter, so a narrowed list starts at the top of its own
           // rendering budget and with its rows closed. A budget carried over from the
           // wider list would say *100 van 100 getekend* over a list of 12.
           <Repeats key={classes.join(',')} repeats={shownRepeats} byFinding={byFinding} />
         )}
 
-        {view === 'pages' && (
+        {!searching && view === 'pages' && (
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-[11px] uppercase tracking-wide text-slate-500">
@@ -230,7 +258,7 @@ export default function Dashboard({
           </tbody>
         </table>
         )}
-        {view === 'pages' && rows.length === 0 && (
+        {!searching && view === 'pages' && rows.length === 0 && (
           <p className="px-4 py-6 text-sm text-slate-500">Geen pagina gevonden.</p>
         )}
       </section>

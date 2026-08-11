@@ -21,10 +21,12 @@ const finding = (part) => ({
  * extracts are the large half — 54 MB over the corpus — and the point of the index is
  * that it holds none of them.
  */
-const report = ({ page = 'afhalen', store = 'nl', findings = [finding({})], links = {} } = {}) => ({
+const report = ({
+  page = 'afhalen', store = 'nl', findings = [finding({})], links = {}, comparable = true,
+} = {}) => ({
   store,
   page,
-  comparable: true,
+  comparable,
   skipReason: null,
   findings,
   rows: [{ prod: 0, new: null, class: 'text-missing', score: null, finding: 'a' }],
@@ -109,6 +111,17 @@ describe('indexStore', () => {
     // An empty list and not `null`: every reader then scans the same shape, and no
     // caller has to remember which findings carry the field.
     expect(indexStore('nl', [report()]).findings[0].linkText).toEqual([]);
+  });
+
+  it('leaves out a page there was nothing to compare on', () => {
+    // A one-sided page is out of the bar from the first day (ticket 20), and 19 of them
+    // in this corpus still carry a finding. Indexing those would put ids in a result
+    // that the dashboard's derived state has never heard of — and the repeat row is
+    // written to throw on a missing one rather than quietly shrink its denominator.
+    const index = indexStore('nl', [report({ page: 'weg', comparable: false }), report()]);
+
+    expect(index.findings.map((one) => one.page)).toEqual(['afhalen']);
+    expect(index.pages).toBe(1);
   });
 
   it('builds the same index one report at a time as it does from all of them', () => {
