@@ -955,8 +955,12 @@ is not corpus work: it is view work, and the grilling sequenced it after 79, who
 context markers decide which rows a clamp applies to. Three tickets now reshape one
 component in one stream — 79, then 68, then 87 last — which is the order to keep.
 
-**Ticket 37 stays after 68.** It builds modes onto a content view that the fold
-rewrites and the clamp reshapes.
+**Ticket 37 is on hold, and it was built once.** It was sequenced after 68 and that
+order held: the build was clean and it is on the stash
+`ticket 37 Leesweergave: built 2026-08-11, reverted pending a value decision`. It came
+out on 2026-08-11 on one question the code cannot answer — whether a second reading of
+the same page earns the surface it costs. Nothing was wrong with it. The ticket holds
+what it cost and what it would take to bring it back.
 
 **Axis B is parked.** Tickets 39 to 45 stay a named stream and nobody starts
 them. The grilling of 2026-08-10 put axis B out of scope for the workspace work,
