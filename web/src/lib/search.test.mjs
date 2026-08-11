@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { indexStore } from './search.mjs';
+import { SEARCH_FIELDS, indexStore, matchedFields } from './search.mjs';
 
 /**
  * Ticket 82. An editor types the words and sees every finding that holds them, across
@@ -113,5 +113,86 @@ describe('indexStore', () => {
     // Two sources, two freshnesses. The index is as old as the last build and the
     // notes are live, so the index has to be able to say which moment it is.
     expect(indexStore('nl', [report()]).builtAt).toBe('2026-08-11T00:00:00Z');
+  });
+});
+
+/** One index entry, as `indexStore` emits it. */
+const entry = (part) => ({
+  id: 'a', page: 'afhalen', class: 'text-missing', prod: 'Bekijk deals >', new: null,
+  detail: null, anchorHeading: 'Montage', occurrences: 1, linkText: [], ...part,
+});
+
+describe('matchedFields', () => {
+  it('names six fields and no more', () => {
+    // The ticket asks for six, and the answer says which of the six matched. A
+    // seventh name would be a field an editor was never told they could search.
+    expect(SEARCH_FIELDS).toEqual(
+      ['page', 'prodText', 'newText', 'linkTarget', 'linkText', 'anchorHeading'],
+    );
+  });
+
+  it('finds a finding by its production text', () => {
+    expect(matchedFields(entry({ prod: 'Bekijk deals >' }), 'bekijk deals >')).toEqual(['prodText']);
+  });
+
+  it('finds a finding by its new-site text', () => {
+    expect(matchedFields(entry({ prod: null, new: 'Bekijk aanbiedingen' }), 'aanbiedingen'))
+      .toEqual(['newText']);
+  });
+
+  it('finds a finding by the link target, and does not call that production text', () => {
+    // Decision 1: on a links check `prod` and `new` hold `linkKey()`'s host-folded
+    // target and not words. Reporting a URL hit as *production text* would tell an
+    // editor a sentence is on the page when what is on the page is a link.
+    const links = entry({ class: 'link-target', prod: 'self/terrasoverkapping', new: null });
+    expect(matchedFields(links, 'terrasoverkapping')).toEqual(['linkTarget']);
+  });
+
+  it('finds a finding by the words on the link', () => {
+    // The field only the build can fill, and the reason the index is emitted at all.
+    const links = entry({
+      class: 'link-target', prod: 'self/deals', new: null, linkText: ['Bekijk deals >'],
+    });
+    expect(matchedFields(links, 'bekijk')).toEqual(['linkText']);
+  });
+
+  it('finds a finding by the heading it sits under', () => {
+    expect(matchedFields(entry({ prod: null, anchorHeading: 'Montage' }), 'montage'))
+      .toEqual(['anchorHeading']);
+  });
+
+  it('finds a finding by its page key', () => {
+    expect(matchedFields(entry({ prod: null, anchorHeading: null }), 'afhal')).toEqual(['page']);
+  });
+
+  it('matches a page key that holds a slash, without splitting on it', () => {
+    // The named trap. A key like `blog/montage-tips` is one opaque string, so the term
+    // is matched against the whole of it and the slash is an ordinary letter. Plain
+    // substring gets this for free — the test is here to stop a later tokeniser
+    // breaking it, not because the first attempt failed.
+    const nested = entry({ page: 'blog/montage-tips', prod: null, anchorHeading: null });
+    expect(matchedFields(nested, 'blog/montage')).toEqual(['page']);
+    expect(matchedFields(nested, 'montage-tips')).toEqual(['page']);
+  });
+
+  it('matches the words as typed, ignoring case and keeping punctuation', () => {
+    // `Bekijk deals >` is what an editor reads on the page, so it is what they type,
+    // and the `>` has to survive being searched for. Not tokens: two words with
+    // something between them are not a match for the pair.
+    expect(matchedFields(entry({}), 'DEALS >')).toEqual(['prodText']);
+    expect(matchedFields(entry({}), 'deals montage')).toEqual([]);
+  });
+
+  it('matches nothing on an empty term, because an empty box is not a search', () => {
+    // Without this every finding in the store would match, and the result would read
+    // as a search that found everything rather than as a box nobody has typed in.
+    expect(matchedFields(entry({}), '  ')).toEqual([]);
+  });
+
+  it('names every field that matched, in the order the fields are listed', () => {
+    // One word can hit the text and the heading at once. Naming both is how a result
+    // explains itself; naming only the first would hide half the reason it is there.
+    const both = entry({ prod: 'Montage inbegrepen', anchorHeading: 'Montage' });
+    expect(matchedFields(both, 'montage')).toEqual(['prodText', 'anchorHeading']);
   });
 });

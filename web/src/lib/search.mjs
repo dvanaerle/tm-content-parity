@@ -157,5 +157,50 @@ function linkTextByKey(report) {
   return byKey;
 }
 
+/**
+ * The fields a term is matched against, and the names a result reports a hit under.
+ *
+ * Six, as the ticket asks, over the index's two text columns — see decision 1 above.
+ * The order is the order a result lists them in: the page first, because it is where
+ * the words are, then the words themselves.
+ */
+export const SEARCH_FIELDS = ['page', 'prodText', 'newText', 'linkTarget', 'linkText', 'anchorHeading'];
+
+/**
+ * Which of the six fields on this entry hold the term.
+ *
+ * Plain lowercased substring, not tokens: `Bekijk deals >` is what an editor reads on
+ * the page, so it is what they type, and the `>` has to survive being searched for. It
+ * is also what keeps the named trap shut — a page key can hold a slash, and a substring
+ * match over the whole opaque key never splits on one.
+ *
+ * @param {IndexEntry} entry
+ * @param {string} term Folded by this function, so folding it twice is harmless.
+ * @returns {string[]} A subset of `SEARCH_FIELDS`, in that order. Empty on no match.
+ */
+export function matchedFields(entry, term) {
+  const needle = term.trim().toLowerCase();
+  if (!needle) return [];
+
+  const holds = (/** @type {string | null} */ value) =>
+    typeof value === 'string' && value.toLowerCase().includes(needle);
+
+  // The two columns are read under one name or two, by the class's check. This is
+  // decision 1, and it is the whole reason the field list is six names and not four.
+  const target = isAboutALink(entry.class);
+
+  return SEARCH_FIELDS.filter((field) => {
+    switch (field) {
+      case 'page': return holds(entry.page);
+      case 'prodText': return !target && holds(entry.prod);
+      case 'newText': return !target && holds(entry.new);
+      case 'linkTarget': return target && (holds(entry.prod) || holds(entry.new));
+      case 'linkText': return entry.linkText.some(holds);
+      case 'anchorHeading': return holds(entry.anchorHeading);
+      default: return false;
+    }
+  });
+}
+
 /** Whether `prod` and `new` on this class hold a link target rather than words. */
 const isAboutALink = (/** @type {string} */ cls) => FINDING_CLASSES[cls]?.check === 'links';
