@@ -6,13 +6,19 @@ This file answers one question: **what do I do next?** `RUNBOOK.md` says *why*
 the order is what it is, and `map.md` stays the map. If this file and the map
 disagree, the map wins.
 
-**50 of the 90 tickets are closed**, counted from the `Status:` line of every
-ticket file on 2026-08-10. 40 are open. 35 steps are below and **steps 01 to 07
-are done**, except that step 05 shipped its rule without its crawl, so **step 05b
-is the next step**. Seven tickets are parked and they are at the end.
+**52 of the 90 tickets are closed**, counted from the `Status:` line of every
+ticket file on 2026-08-11. 38 are open. 35 steps are below and **steps 01 to 07
+and step 05b are done**. Seven tickets are parked and they are at the end.
 
-The count went 49 to 50: ticket **68** closed. A closed ticket that comes back is
-why this line is counted and never incremented by hand.
+The count went 50 to 52. Tickets **50**, **57** and **25** closed and ticket **37**
+re-opened to `needs-triage`. A closed ticket that comes back is why this line is
+counted and never incremented by hand.
+
+**Two of those were already done and the word hid it.** Ticket 50 read `claimed`
+and ticket 57 read `merged`, and neither word is one the tracker defines, so a
+count of the `Status:` line read them as open. The folder held ten values against
+five on 2026-08-11. `resolved` is the one word for done, because 44 tickets already
+used it. **A status value the tracker does not define makes this count wrong.**
 
 **Step 07 ran before step 05b and before step 20.** Ticket 68 is a `web` ticket
 that reads no report, so the stale corpus did not block it, and the one criterion
@@ -28,11 +34,13 @@ gives 89 and misses an open ticket.
 Every count taken against 448 reports or 451 pairs is stale, and steps 12 and 13
 exist to restate them.
 
-**⚠ The reports on disk are older than the extractor. Read no number until they
-are rebuilt.** Step 05 changed how a content unit is extracted on 2026-08-10 and
-**did not re-crawl**. So `data/extract/` and `data/reports/` still hold the
-pre-fold corpus, and `node compare/measure.mjs nl` answers with numbers no
-current code produces. Step 05b is that rebuild and it is the next step.
+**The corpus is current. Read the numbers.** This line replaced a warning that the
+reports were older than the extractor. They are not, and it was measured on
+2026-08-11: `data/reports/` holds **816 files written 2026-08-10 12:09**, and the
+last commit to touch extraction is `79b9985`, ticket 67's fold, before them. Ticket
+68 then measured 22,571 two-sided rows over those same 816 reports, which no
+pre-fold corpus could produce. Ticket 37's build was reverted to the stash, so
+`crawl/extract.mjs` writes what it wrote on 2026-08-10.
 
 The steps are **not renumbered** as they close. Step 24 says "blocked by step 22"
 and a renumbering would make every such line a lie.
@@ -448,7 +456,26 @@ The original step is kept below.
 
 ---
 
-### ☐ Step 05b — Rebuild the corpus the fold changed. **The next step**
+### ☑ Step 05b — Rebuild the corpus the fold changed — **DONE**
+
+**The crawl ran on 2026-08-10 and this step was never ticked.** `data/reports/` holds
+816 files written at 12:09, after ticket 67's fold commit `79b9985`, and ticket 68
+measured 22,571 two-sided rows over them. Confirmed by measurement on 2026-08-11.
+
+**Its gate was not met, and one half of it cannot be met now.** The step asked for
+**two numbers recorded separately in ticket 67** — the one-sided rows that go, and
+the copy differences that arrive. Ticket 67 is `resolved` and holds neither. The
+pre-fold corpus was overwritten by the crawl, so the two numbers cannot be taken
+from disk any more.
+
+What survives is in ticket 68's own resolved section, banked for a different
+purpose: **20,380 of 22,571 two-sided rows agree, 90%, against 71% before the
+fold.** That says the fold made the agreeing rows bigger and did not make them
+differ. It is not the go-and-arrive split, and nothing on disk can give that.
+
+**Do not re-crawl to recover it.** A crawl now measures today against today. If the
+split is still wanted it is a new ticket against a kept pre-fold sample, and
+nobody has asked for one.
 
 touches `data` **alone**. Blocked by nothing. It is the second half of step 05.
 
@@ -674,7 +701,7 @@ them in the banner. Closing the ticket is a valid outcome.
 ### ☐ Step 10 — Ticket 70, shared regions by content hash
 
 touches `data`. Blocked by 64 — **done** — and 67, step 05 — **done**. It reads
-the corpus, so it waits for step 05b as well.
+the corpus, and step 05b is **done** as well, so nothing gates it.
 
 ```
 /clear
@@ -751,8 +778,9 @@ Steps 11, 29 and 32 each carry one, and each says so.
 **Step 05 moved the numbers again, and nothing has counted it yet.** The fold takes
 the unit corpus down by a fifth on the production side, and it turns hidden markup
 differences into shown copy differences. So the 54,723 and 37,329 above are already
-history too. **Both of these steps are worthless before step 05b**, for the same
-reason they were worthless before step 11: they read `data/`.
+history too. Both of these steps read `data/`, so they were worthless before step
+05b — and **step 05b is done**, so they are worth running now. The 54,723 and the
+37,329 are still history: nothing has re-counted them.
 
 ---
 
@@ -1428,7 +1456,8 @@ node compare/measure.mjs nl
 A step that adds no rule must not move a number. This check found every real
 defect in the project so far.
 
-**`measure.mjs` answers from `data/`, so it is not a gate until step 05b runs.**
+**`measure.mjs` answers from `data/`, and step 05b has run, so it is a gate again.**
+The paragraph below is why it was not one, and it is kept as the reason.
 Ticket 67 changed the extractor and left the reports as they were. Until the crawl
 runs again, the second command reads a corpus the code cannot reproduce, and "the
 number did not move" would prove only that nothing re-read the site.

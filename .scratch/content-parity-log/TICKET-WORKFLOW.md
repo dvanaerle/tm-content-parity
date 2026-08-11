@@ -117,35 +117,49 @@ may contain, and that belongs in this repository.
 /writing-for-agents
 ```
 
-### Why the rule does not go in `AGENTS.md` alone
+### Two files do not change
 
-`AGENTS.md` already holds the rule:
+- **`AGENTS.md` is kept clean and gains nothing.** It is read at the start of every
+  session, so every line in it is paid for in every window.
 
-> **Write tests in vertical slices.** One test, then the implementation that makes it
-> pass, then the next test. Each test is a **tracer bullet**.
+  Until 2026-08-11 it held the rule *"Write tests in vertical slices. One test, then
+  the implementation that makes it pass, then the next test."* That rule was correct
+  and it still lost, which is the point: **a standing rule competes with a work
+  order, and the work order wins.** An agent that reads sixteen checkboxes plans
+  across sixteen checkboxes. More prose in `AGENTS.md` would not have fixed it.
 
-It is correct, and it loses. A standing rule competes with a work order, and the work
-order wins: an agent that reads sixteen checkboxes plans across sixteen checkboxes.
+- **`docs/agents/triage-labels.md` is generated** by
+  `mattpocock-skills:setup-matt-pocock-skills`. Anything written there is lost on the
+  next run. It cannot hold a repo-local label.
 
-So the rules split by what each document is for.
+So the rules go where they are read at the moment they apply.
 
 | where | what it holds | why there |
 | --- | --- | --- |
-| `AGENTS.md` | what a ticket may contain | checked before the work starts |
-| `docs/agents/issue-tracker.md` | the ticket template | `AGENTS.md` already points at it |
+| `docs/agents/issue-tracker.md` | the ticket template, and the status vocabulary | not generated; `AGENTS.md` already points at it |
 | the ticket file itself | the red-green cadence | it is read at the moment the agent plans |
 
-### 0.1 `AGENTS.md` gains four lines
-
-Under **Rules**, beside the vertical-slices rule that is already there.
+### 0.1 `docs/agents/issue-tracker.md` gains the ticket rules
 
 ```markdown
-- **A build ticket carries its numbers.** It holds no criterion that starts with
-  *measure*, *re-run*, *count* or *verify in the browser*. That criterion is a
-  measure ticket, and it runs first.
-- **A build ticket holds six acceptance criteria at most**, and it names the three
-  to five files it may read. A ticket that breaks either rule is refused, not
-  absorbed. `docs/agents/issue-tracker.md` holds the template.
+## What a build ticket may contain
+
+- It carries its numbers. No criterion starts with *measure*, *re-run*, *count* or
+  *verify in the browser*. That criterion is a measure ticket, and it runs first.
+- Six acceptance criteria at most.
+- It names the three to five files it may read.
+
+A ticket that breaks one of these is refused, not absorbed.
+
+## Status vocabulary
+
+`triage-labels.md` is generated and defines five words. It carries no terminal state
+for work that **was** actioned — `wontfix` says the opposite — so this repo adds one:
+
+    resolved <date> — <reason>
+
+`resolved` is the only word for done. `closed`, `merged` and `claimed` are retired.
+A status value outside this list makes the ticket count wrong.
 ```
 
 ### 0.2 `docs/agents/issue-tracker.md` gains the template

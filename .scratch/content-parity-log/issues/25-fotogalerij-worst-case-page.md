@@ -1,7 +1,7 @@
 # 25 — `fotogalerij`: the worst-case page
 
 Type: grilling
-Status: needs-info
+Status: resolved 2026-08-11 — the migration is unfinished
 Blocked by: —
 Parent: ../map.md
 
@@ -191,9 +191,41 @@ one snapshot can.
 Do not mute anything in the meantime. A mute on `image-missing` would hide
 exactly the number that we want to watch.
 
+## Resolved 2026-08-11 — the gallery will be re-uploaded
+
+**The image migration is not finished.** The gallery is to be uploaded again. That
+is the one question this ticket was on hold for, and it is answered by the owner of
+the work and not by a crawl.
+
+`to-questionnaire-fotogalerij-migration.md` was written on 2026-08-11 to ask it. Its
+first question is *"Is the image migration for the `fotogalerij` pages complete, or
+is work still outstanding?"*, and it says that if the answer is "still outstanding",
+most of the rest can wait. It can. The questionnaire is **not answered** and it is
+kept as the list of questions to ask when the upload is done.
+
+**So the images are neither a defect to raise nor noise to hide.** They are a
+migration in progress, and the count is the thing that watches it.
+
+- **Do not mute `image-missing` on these pages.** The instruction in **Why it is on
+  hold** stands, and it now has a reason with a date on it.
+- **Do not read the image numbers as a parity result.** 81 → 38 on `fotogalerij` and
+  81 → 16 on `fotogalerij/zonwering` describe an unfinished upload, and the two facts
+  in **Two facts that make the counts unreliable** still apply on top of that.
+- **The text half is settled and unchanged.** It is a deliberate redesign to hub
+  pages, decided on 2026-08-07 and recorded in **Settled: the text is a redesign, not
+  a loss**. This resolution does not touch it.
+- **Re-check after the upload**, and ask the questionnaire then. The empty `alt` on
+  every new image of `zonwering` and `carport` is the one plausible regression, and
+  it is unreadable until the images are final.
+
+**The follow-ups below stay unfiled.** They depend on the *finished* shape of the
+gallery, which does not exist yet. This ticket resolving is not the trigger; the
+upload is.
+
 ### Follow-ups, not filed
 
-Do not file these until this ticket resolves. They all depend on its answer.
+Do not file these until the gallery is uploaded again. They all depend on its final
+shape.
 
 - An empty-alt rule for unpaired new-side images.
 - A second image pairing pass for the leftovers, so a rename does not score
