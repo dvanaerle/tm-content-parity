@@ -172,6 +172,39 @@ const decided = (finding, state, override) => ({
 });
 
 /**
+ * The one event that revokes one decision (ticket 110, round two).
+ *
+ * It lives beside `decided()` because the key does: that function attaches the key that
+ * decided a finding **so that clearing can aim at that one key**, and how to read it back
+ * belongs next to how it was written. Two callers ask — `OverrideControl.jsx` for the
+ * single finding in front of an editor, and `bulk.mjs` for the ticked pages of a
+ * difference — and neither may answer it for itself, or a change to how a mute is cleared
+ * lands in one of the two and not the other.
+ *
+ * A dismissal is keyed on the finding, so it is cleared on the finding. A mute is cleared
+ * on the key that made it, section or page-wide: clearing the section where a page-wide
+ * mute is what decided the finding would leave that mute standing, and the row would not
+ * move.
+ *
+ * `store` and `page` are the caller's to add — the single control's hook puts the page it
+ * is on into every event, and the bulk press names the page per row.
+ *
+ * @param {ReturnType<typeof decided>} finding  A finding the derivation has decided.
+ */
+export function clearedEventFor(finding) {
+  if (finding.state !== 'muted') {
+    return { scope: 'finding', action: 'cleared', findingId: finding.id };
+  }
+
+  return {
+    scope: 'page-class',
+    action: 'cleared',
+    class: finding.class,
+    ...(namesSection(finding.override) ? { anchorHeading: finding.override.anchorHeading } : {}),
+  };
+}
+
+/**
  * How many findings a mute would cover, on the snapshot in front of the editor.
  *
  * ADR 0008: the count is the guard. It is what stops a press on the null section

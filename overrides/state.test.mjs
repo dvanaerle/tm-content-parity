@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { findingSetHash } from '../compare/contract.mjs';
 import {
-  derivePageState, deriveStoreState, eventKey, latestByKey, muteCoverage,
+  clearedEventFor, derivePageState, deriveStoreState, eventKey, latestByKey, muteCoverage,
 } from './state.mjs';
 
 /**
@@ -275,6 +275,40 @@ describe('a mute names a section', () => {
 
     const byPage = derivePageState({ report: page, events: [mute('copy')] });
     expect(byPage.findings[0].override).not.toHaveProperty('anchorHeading');
+  });
+});
+
+/**
+ * The one event that revokes one decision, asked of the derivation that made it.
+ *
+ * It lives here because the key is here: `decided()` above attaches the key that decided
+ * a finding *so that clearing can aim at that one key*, and the rule for reading it back
+ * belongs beside the rule that wrote it. Two callers ask — the single control on a page
+ * and the bulk press on a difference — and neither may answer it for itself, or a change
+ * to how a mute is cleared lands in one of the two.
+ */
+describe('the event that clears one decision', () => {
+  it('clears a dismissal on the finding it was made on', () => {
+    expect(clearedEventFor({ id: 'f1', state: 'dismissed', class: 'copy', override: {} }))
+      .toEqual({ scope: 'finding', action: 'cleared', findingId: 'f1' });
+  });
+
+  // A mute is cleared on **the key that made it**, which is the key `decided()` handed
+  // back. Clearing the section where a page-wide mute is what decided the finding would
+  // leave that mute standing, and the row would not move.
+  it('clears a section mute on its section and a page-wide mute on neither', () => {
+    const muted = { id: 'f1', state: 'muted', class: 'copy' };
+
+    expect(clearedEventFor({ ...muted, override: { anchorHeading: 'Afmetingen' } }))
+      .toEqual({ scope: 'page-class', action: 'cleared', class: 'copy', anchorHeading: 'Afmetingen' });
+
+    // The content before the first heading is a real section, and `null` names it.
+    expect(clearedEventFor({ ...muted, override: { anchorHeading: null } }))
+      .toEqual({ scope: 'page-class', action: 'cleared', class: 'copy', anchorHeading: null });
+
+    // The page-wide form names no section, and neither may the event that clears it.
+    expect(clearedEventFor({ ...muted, override: {} }))
+      .toEqual({ scope: 'page-class', action: 'cleared', class: 'copy' });
   });
 });
 

@@ -91,14 +91,14 @@ const pressAndWait = (element) => act(async () => { element.click(); });
  */
 const type = (value) => userEvent.fill(document.querySelector('[data-slot="input"]'), value);
 
-/** The row that opens the difference, which is the trigger and no longer the whole row. */
+/** The row that opens the difference, which is the whole row again since round two. */
 const differenceRow = () => document.querySelector('[data-slot="collapsible-trigger"]');
 
-/** The tick that belongs to the difference itself, found the way a screen reader finds it. */
-const selectAll = () => document.querySelector('[aria-label^="Kies de"]');
+/** The tick in the selection column's header, which is where the select-all lives. */
+const selectAll = () => document.querySelector('thead [data-slot="checkbox"]');
 
-/** The page checkboxes, which are the ones inside the table. */
-const pageTicks = () => [...document.querySelectorAll('table [data-slot="checkbox"]')];
+/** The page checkboxes, which are the ones on the rows and not the one in the header. */
+const pageTicks = () => [...document.querySelectorAll('tbody [data-slot="checkbox"]')];
 
 afterEach(() => { document.body.innerHTML = ''; });
 
@@ -181,23 +181,23 @@ describe('the selection on a difference', () => {
   });
 
   /**
-   * The trap this ticket names as its own: the difference row used to be a
-   * `CollapsibleTrigger` from edge to edge, so a checkbox drawn inside it is swallowed —
-   * the click opens the difference instead of ticking it, or does both. The tick is a
-   * control of its own beside the trigger, which is also the only markup that is valid:
-   * both are buttons, and a button inside a button is not.
+   * Round one put the select-all on the difference row, so a closed difference could be
+   * ticked whole. It bought a checkbox inside a `CollapsibleTrigger` — a button inside a
+   * button, which is neither valid nor clickable — and a press an editor could arm over
+   * pages they had never seen. **A selection is made in the list of things being
+   * selected**, so the tick is the selection column's header and the row is a trigger
+   * from edge to edge again.
    */
-  it('selects every page from the difference row without opening it', () => {
+  it('carries the select-all in the table header and nothing on the difference row', () => {
     const { unmount } = mount();
 
+    // Closed, there is no tick anywhere: nothing to select until the list is on screen.
+    expect(document.querySelector('[data-slot="checkbox"]')).toBeNull();
+
+    press(differenceRow());
+
+    expect(selectAll()).not.toBeNull();
     press(selectAll());
-
-    // Still closed: the tick ticked, and the click never reached the trigger.
-    expect(document.querySelector('table')).toBeNull();
-    expect(differenceRow().getAttribute('aria-expanded')).toBe('false');
-
-    // And it selected the pages the row says it is on, seen or not. That is the point of
-    // it, and it is why the bar states a count and the difference it belongs to.
     expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 van 3 pagina's");
     unmount();
   });
@@ -221,51 +221,56 @@ describe('the selection on a difference', () => {
     unmount();
   });
 
-  it('leaves a page a colleague already decided out of the select-all', () => {
+  /**
+   * Round one ticked only the pages a dismissal could act on, and left a decided one
+   * unticked — while that same row stayed tickable by hand. One control refusing what the
+   * other allows, on the same rows, for no reason an editor can see. The ticks say *these
+   * pages*; what each press does with them is the press's own business, and it says so.
+   */
+  it('ticks every page, including one a colleague already decided', () => {
     const { unmount } = mount({ byFinding: byFinding({ f2: { state: 'dismissed' } }) });
 
-    press(selectAll());
     press(differenceRow());
-
-    // Two of the three, and the decided one is drawn with its state instead.
-    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("2 van 3 pagina's");
-    expect(pageTicks().map((tick) => tick.getAttribute('aria-checked')))
-      .toEqual(['true', 'false', 'true']);
-    expect(document.querySelector('table').textContent).toContain('genegeerd');
-
-    // And it reads *mixed*, because a page of this difference is not ticked. Saying
-    // *ticked* over an unticked row would be the one thing a tri-state exists to avoid.
-    expect(selectAll().getAttribute('aria-checked')).toBe('mixed');
-
-    // From mixed, the tick clears — it is a control and never a summary, so it must never
-    // be a control that cannot be pressed back.
     press(selectAll());
-    expect(document.querySelector('[data-slot="bulk-bar"]')).toBeNull();
+
+    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 van 3 pagina's");
+    expect(pageTicks().map((tick) => tick.getAttribute('aria-checked')))
+      .toEqual(['true', 'true', 'true']);
+    expect(selectAll().getAttribute('aria-checked')).toBe('true');
+
+    // The decided page is still drawn with its state, and the dismissal still leaves it
+    // alone: two of the three, not three.
+    expect(document.querySelector('table').textContent).toContain('genegeerd');
+    expect(button("Negeren op 2 pagina's")).toBeDefined();
     unmount();
   });
 
   /**
-   * A difference whose every finding is decided has nothing left to dismiss, and a mute is
-   * still a live judgement there: it is about the class in the section rather than about
-   * these two strings, and it is the one that does not expire. A select-all that ticked
-   * nothing would take the mute off screen in exactly the place it is the only tool left —
-   * the failure ticket 31 already fixed once, and the reason the rule bends here.
+   * A difference whose every finding is decided has nothing left to dismiss, and the other
+   * two presses are both live there: a mute is about the class in the section rather than
+   * about these two strings, and an undo is what a decided page is *for*. The three are
+   * offered independently, so the one that is spent does not take the others with it.
    */
-  it('ticks every page of a difference that is already decided throughout', () => {
+  it('offers the presses that are live on a difference that is decided throughout', () => {
     const { unmount } = mount({
       byFinding: byFinding({
-        f1: { state: 'dismissed' }, f2: { state: 'dismissed' }, f3: { state: 'fixed' },
+        f1: { state: 'dismissed', override: { action: 'dismissed' } },
+        f2: { state: 'dismissed', override: { action: 'dismissed' } },
+        f3: { state: 'fixed', override: { action: 'fixed' } },
       }),
     });
 
+    press(differenceRow());
     press(selectAll());
 
     expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 van 3 pagina's");
     expect(selectAll().getAttribute('aria-checked')).toBe('true');
 
-    // Nothing to dismiss, and the mute is on screen.
     expect(button('Negeren')).toBeUndefined();
     expect(button("Dempen op 3 pagina's")).toBeDefined();
+    // Two of the three: a claim of fact is not this control's to take back — `fixed` has
+    // its own checkbox on the page, and two controls for one event would let them disagree.
+    expect(button("Ongedaan maken op 2 pagina's")).toBeDefined();
     unmount();
   });
 
@@ -314,6 +319,54 @@ describe('the selection on a difference', () => {
 
     // No refusal left, so the note field is on screen and the press is a press.
     expect(document.querySelector('[data-slot="input"]')).not.toBeNull();
+    unmount();
+  });
+
+  /**
+   * If one press can put ten pages in a state, something has to take them out of it. Round
+   * one drew the state badge and stopped, so a bulk dismissal was a one-way door and the
+   * way back was ten pages — the work this ticket exists to remove.
+   */
+  it('clears a decision on the ticked pages that carry one', async () => {
+    const { bulk, unmount } = mount({
+      byFinding: byFinding({
+        f1: { state: 'dismissed', override: { action: 'dismissed' } },
+        f2: { state: 'muted', override: { action: 'muted', anchorHeading: 'Afmetingen' } },
+      }),
+    });
+
+    press(differenceRow());
+    press(selectAll());
+
+    // Over the ticked pages it can act on: the third is open and has nothing to undo.
+    await pressAndWait(button("Ongedaan maken op 2 pagina's"));
+
+    expect(bulk.calls).toHaveLength(1);
+    // No note and no second press: a `cleared` event carries no reason, and the single
+    // control it mirrors asks for none either.
+    expect(bulk.calls[0]).toEqual([
+      {
+        scope: 'finding', action: 'cleared', store: 'nl', page: 'overkapping', findingId: 'f1',
+      },
+      {
+        scope: 'page-class',
+        action: 'cleared',
+        store: 'nl',
+        page: 'veranda',
+        class: 'copy',
+        anchorHeading: 'Afmetingen',
+      },
+    ]);
+    unmount();
+  });
+
+  it('offers no undo where nothing is decided', () => {
+    const { unmount } = mount();
+
+    press(differenceRow());
+    press(selectAll());
+
+    expect(button('Ongedaan maken')).toBeUndefined();
     unmount();
   });
 
@@ -385,18 +438,6 @@ describe('the selection on a difference', () => {
     all.unmount();
   });
 
-  // And the bar says it too, because the select-all works on a **closed** row: an editor
-  // can arm a press on ten matching pages having seen no page list at all, and the caption
-  // under a table nobody opened is the silent sentence the trap names.
-  it('says so in the bar as well, where a closed row was ticked', () => {
-    const { unmount } = mount({ searched: true });
-
-    press(selectAll());
-
-    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain('zoekterm');
-    unmount();
-  });
-
   /**
    * One selection, two presses, two eligibilities. A dismissal may not touch a finding a
    * colleague decided; a mute's coverage deliberately **includes** it, because
@@ -415,7 +456,7 @@ describe('the selection on a difference', () => {
 
     const bar = document.querySelector('[data-slot="bulk-bar"]');
     expect(bar.textContent).toContain('1 van deze');
-    expect(bar.textContent).toContain('telt dempen die mee');
+    expect(bar.textContent).toContain('negeren slaat die over, dempen telt die mee');
     unmount();
   });
 

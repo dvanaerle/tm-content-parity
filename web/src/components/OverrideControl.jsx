@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { namesSection } from '../../../shared/mute-key.mjs';
+import { clearedEventFor } from '../../../overrides/state.mjs';
 import { muteForms } from '../lib/mute.mjs';
 import { INK, PILL } from '../lib/palette.mjs';
 import { Badge } from './ui/badge.jsx';
@@ -143,20 +143,14 @@ export default function OverrideControl({
       {/* `fixed` is not here: its own checkbox unticks it. A second control for the
           same event would let the two disagree about what is on screen.
 
-          A mute is undone on the key that made it, which is the key the derivation
-          handed back. Clearing the page-wide key would leave a section mute
-          standing, and the row would not move. */}
+          Which event this is, is `clearedEventFor()`'s to say — a mute is cleared on
+          the key that made it, and clearing the page-wide key would leave a section
+          mute standing with the row unmoved. It was written out here until ticket 110
+          gave the same press to a whole difference; two copies of that rule would be
+          two places for the next change to the mute key to land, and it would land in
+          one of them. */}
       {canWrite && (state === 'dismissed' || state === 'muted') && (
-        <Action onClick={() => append(
-          state === 'muted'
-            ? {
-              scope: 'page-class',
-              action: 'cleared',
-              class: finding.class,
-              ...(namesSection(override) ? { anchorHeading: override.anchorHeading } : {}),
-            }
-            : { scope: 'finding', action: 'cleared', findingId: finding.id },
-        )}>
+        <Action onClick={() => append(clearedEventFor(finding))}>
           Ongedaan maken
         </Action>
       )}

@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collap
 import {
   Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,
 } from './ui/table.jsx';
-import { offersDismissal, refusesMute } from '../lib/bulk.mjs';
+import { refusesMute } from '../lib/bulk.mjs';
 import { CHROME, INK, PILL } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
@@ -277,10 +277,13 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
     return next;
   });
 
-  /** The pages a select-all ticks, held once: the tick reads it and the press arms on it. */
-  const selectable = useMemo(() => selectableOf(repeat, byFinding), [repeat, byFinding]);
-
-  const tickAll = (on) => setSelected(on ? new Set(selectable) : new Set());
+  /**
+   * All of them or none of them. Round one ticked only the pages a dismissal could act on
+   * and left a decided one out — while that row stayed tickable by hand, so one control
+   * refused what the other allowed. The ticks say *these pages*; each press then filters
+   * to what it can act on and says what it did, which is the only place that rule belongs.
+   */
+  const tickAll = (on) => setSelected(on ? new Set(repeat.on.map((entry) => entry.id)) : new Set());
 
   /**
    * The pages of this difference a bulk mute cannot be pressed on — the same rule the
@@ -302,63 +305,53 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
 
   return (
     <li className="border-b border-border last:border-0">
-      {/* The trigger was the whole row until ticket 110 and it is now the row **beside
-          the tick**. That is the one place in this ticket where the obvious markup is
-          wrong: a checkbox inside the trigger is swallowed — the click opens the
-          difference instead of ticking it, or does both — and it is not even valid, since
-          both are buttons and a button inside a button is not one. So the two are
-          siblings, the hover moves to the pair, and each keeps its own keyboard: Space and
-          Enter on the row mean *open*, Space on the tick means *tick*.
+      {/* The trigger is the whole row, as it was before ticket 110 and is again since its
+          round two. Round one put the select-all here, which meant a checkbox inside a
+          `CollapsibleTrigger` — a button inside a button, which is neither valid nor
+          clickable — and it let an editor arm a press over pages they had never seen. The
+          tick moved to the header of the list it selects, and the trap moved with it.
 
-          `Collapsible` is still what writes the `aria-expanded` this markup used to carry
-          by hand — the state below decides, and the library draws it. */}
+          `Collapsible` is what writes the `aria-expanded` this markup used to carry by
+          hand — the state below decides, and the library draws it. */}
       <Collapsible
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
           // Closing the difference puts the selection down: it is a question about one
-          // press and not a state of the queue. A tick made **while** it is closed
-          // survives, because no close happened — that is the row-level tick doing what
-          // it is for.
+          // press and not a state of the queue.
           if (!next) setSelected(new Set());
         }}
       >
-        <div className="flex w-full items-start gap-2 px-4 py-2 hover:bg-muted">
+        <CollapsibleTrigger className="flex w-full flex-wrap items-start gap-2 px-4 py-2 text-left hover:bg-muted">
           <span className="mt-0.5 shrink-0">
-            <SelectAll repeat={repeat} selected={selected} onTickAll={tickAll} />
+            <ClassPill class={repeat.class} />
+            <Detail detail={repeat.detail} />
+            <MatchedFields fields={repeat.fields} />
           </span>
 
-          <CollapsibleTrigger className="flex flex-1 flex-wrap items-start gap-2 text-left">
-            <span className="mt-0.5 shrink-0">
-              <ClassPill class={repeat.class} />
-              <Detail detail={repeat.detail} />
-              <MatchedFields fields={repeat.fields} />
-            </span>
+          <span className="min-w-48 flex-1 break-words">
+            {repeat.prod ?? '—'}
+            <span className="mx-1 text-muted-foreground">→</span>
+            {repeat.new ?? '—'}
+          </span>
 
-            <span className="min-w-48 flex-1 break-words">
-              {repeat.prod ?? '—'}
-              <span className="mx-1 text-muted-foreground">→</span>
-              {repeat.new ?? '—'}
+          <span className="shrink-0 text-right text-xs">
+            {/* The page count is the size of the difference. There is no separate
+                finding count beside it: the page is inside the finding id, so one page
+                carries one finding of this difference and the two numbers are one
+                number. `occurrences` is the number that genuinely differs — the same
+                difference several times on a single page — and it is named apart. */}
+            <span className="tabular-nums font-medium">op {repeat.on.length} pagina's</span>
+            {/* Drawn only when it exceeds the page count, so the mark appears exactly
+                when it says something the page count does not. */}
+            {repeat.occurrences > repeat.on.length && (
+              <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
+            )}
+            <span className={cn('ml-2 tabular-nums', bar.closed ? INK.info : 'text-muted-foreground')}>
+              {bar.closed} van {bar.denominator} afgehandeld
             </span>
-
-            <span className="shrink-0 text-right text-xs">
-              {/* The page count is the size of the difference. There is no separate
-                  finding count beside it: the page is inside the finding id, so one page
-                  carries one finding of this difference and the two numbers are one
-                  number. `occurrences` is the number that genuinely differs — the same
-                  difference several times on a single page — and it is named apart. */}
-              <span className="tabular-nums font-medium">op {repeat.on.length} pagina's</span>
-              {/* Drawn only when it exceeds the page count, so the mark appears exactly
-                  when it says something the page count does not. */}
-              {repeat.occurrences > repeat.on.length && (
-                <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
-              )}
-              <span className={cn('ml-2 tabular-nums', bar.closed ? INK.info : 'text-muted-foreground')}>
-                {bar.closed} van {bar.denominator} afgehandeld
-              </span>
-            </span>
-          </CollapsibleTrigger>
-        </div>
+          </span>
+        </CollapsibleTrigger>
 
         <CollapsibleContent>
           <PageTable
@@ -367,6 +360,7 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
             link={link}
             selected={selected}
             onTick={tick}
+            onTickAll={tickAll}
             refuses={refuses}
             searched={searched}
           />
@@ -378,9 +372,11 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
           nothing for an action to act on, and a bar carrying buttons that would write
           nothing is worse than no bar.
 
-          It is outside the collapsible on purpose. The tick on the difference row selects
-          pages an editor has not necessarily seen — the row can be closed — and a press
-          that lives inside the panel would then be armed and invisible. */}
+          It sits under the difference rather than inside the opened panel so it does not
+          push the page list about as the selection grows: the list is what is being
+          selected, and a toolbar that moved it would be a toolbar in the way. Closing the
+          difference clears the selection, so the bar cannot outlive the list it belongs
+          to. */}
       {selected.size > 0 && (
         <BulkControl
           repeat={repeat}
@@ -388,7 +384,6 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
           bulk={bulk}
           selected={selected}
           onClear={() => setSelected(new Set())}
-          searched={searched}
         />
       )}
     </li>
@@ -403,10 +398,10 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
  * reports also changes. `aria-checked="mixed"` is what a screen reader is told, which is
  * the whole of the third state's meaning.
  *
- * It selects the pages a dismissal is offered on and leaves a colleague's decision alone,
- * through `offersDismissal()` — the rule the press then applies, asked once. A page that
- * is already decided stays tickable by hand: a mute is still a live judgement there, since
- * it is about the class in the section rather than about these two strings.
+ * It ticks **every** page of the difference, decided or not. Round one ticked only the
+ * pages a dismissal was offered on, which refused by select-all what the row-level tick
+ * allowed by hand — and a decided page is not a page with nothing left to do: a mute is
+ * still live there, and since round two so is an undo.
  *
  * Its label says **kies** and never *afgehandeld*. The ledger already spends a checkbox on
  * the tri-state *Opgelost* control, which genuinely is a decision (tickets 36 and 48), so
@@ -428,26 +423,11 @@ function SelectAll({ repeat, selected, onTickAll }) {
       // there, which would re-tick the same rows and leave the control stuck at mixed —
       // a control that cannot be pressed back is not a control.
       onCheckedChange={(ticked) => onTickAll(some ? false : ticked)}
-      aria-label={`Kies de open pagina's van dit verschil (${repeat.on.length} in totaal)`}
-      title="Kiest de pagina's waarop dit verschil nog open staat; al besliste pagina's blijven ongekozen. Kiezen legt niets vast."
+      aria-label={`Kies alle ${repeat.on.length} pagina's van dit verschil`}
+      title="Kiest elke pagina van dit verschil. Kiezen legt niets vast."
     />
   );
 }
-
-/**
- * The pages a select-all ticks, as finding ids: the ones the dismissal is offered on, so
- * the tick and the press it arms read one rule and a colleague's decision is left alone.
- *
- * **Unless there is no such page.** A difference whose every finding is decided has
- * nothing left to dismiss, and a mute is still live there — it is about the class in the
- * section and not about these two strings. Ticking nothing would take the bulk mute off
- * screen in the one place it is the only tool left, which is the failure ticket 31 fixed
- * once already. Where the rule protects nothing, it stands aside.
- */
-const selectableOf = (repeat, byFinding) => {
-  const offered = repeat.on.filter((entry) => offersDismissal(byFinding.get(entry.id)));
-  return (offered.length > 0 ? offered : repeat.on).map((entry) => entry.id);
-};
 
 /**
  * The pages of one difference, with a tick each (ticket 110).
@@ -470,7 +450,7 @@ const selectableOf = (repeat, byFinding) => {
  * which group was open — that is session state by the rule `groupRepeatsByClass()` states,
  * and a pill that is on re-opens its own group anyway.
  */
-function PageTable({ repeat, byFinding, link, selected, onTick, refuses, searched }) {
+function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, refuses, searched }) {
   return (
     <div className="border-t border-border bg-muted px-4 py-2 text-sm">
       <Table>
@@ -486,7 +466,13 @@ function PageTable({ repeat, byFinding, link, selected, onTick, refuses, searche
         )}
         <TableHeader>
           <TableRow>
-            <TableHead className="w-8">Kies</TableHead>
+            {/* The header word is drawn for a screen reader and not for an eye. A header
+                cell holding nothing but a checkbox announces nothing, and *Kies* beside
+                the tick would be a word repeated in every label under it. */}
+            <TableHead className="w-8">
+              <SelectAll repeat={repeat} selected={selected} onTickAll={onTickAll} />
+              <span className="sr-only">Kies</span>
+            </TableHead>
             <TableHead>Pagina</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>

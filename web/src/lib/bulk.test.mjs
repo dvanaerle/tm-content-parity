@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bulkDismissal, bulkMute, offersDismissal, refusesMute } from './bulk.mjs';
+import { bulkClear, bulkDismissal, bulkMute, refusesMute } from './bulk.mjs';
 
 /** A repeat as `repeatsInStore()` returns it, narrowed to what this file reads. */
 const repeat = (on) => ({
@@ -329,16 +329,32 @@ describe('a press narrowed to the ticked pages', () => {
     expect(marks.get('f3')).toBe('unknown');
   });
 
-  // The select-all ticks what a dismissal is offered on, so the checkbox and the press
-  // read one rule. A page a colleague decided is drawn with its state and left alone.
-  it('agrees with the dismissal about which findings a select-all may tick', () => {
-    expect(offersDismissal({ state: 'open' })).toBe(true);
-    expect(offersDismissal({ state: 'contradicted' })).toBe(true);
-    expect(offersDismissal({ state: 'dismissed' })).toBe(false);
-    expect(offersDismissal({ state: 'fixed' })).toBe(false);
-    // A finding the log has not decided, which is what a search result is before the log
-    // has an answer about it.
-    expect(offersDismissal(undefined)).toBe(true);
+  // The select-all ticks every page since round two, so the press is the only place the
+  // rule lives — and these are the states it lets through. `contradicted` is one of them:
+  // a colleague claimed it fixed and the re-check disagreed, so it is open work again.
+  it('presses on the two states it is offered on and on no others', () => {
+    const decision = bulkDismissal({
+      repeat: repeat([on('a', 'f1'), on('b', 'f2'), on('c', 'f3'), on('d', 'f4'), on('e', 'f5')]),
+      byFinding: byFinding({
+        f1: 'open', f2: 'contradicted', f3: 'dismissed', f4: 'fixed', f5: 'muted',
+      }),
+      note: 'geen defect',
+    });
+
+    expect(decision.events.map((event) => event.page)).toEqual(['a', 'b']);
+    expect(decision.decided).toBe(3);
+  });
+
+  // A finding the log has no answer about reads as open, which is what a search result is
+  // before the derivation has caught up with it.
+  it('reads a finding it has never heard of as open', () => {
+    const decision = bulkDismissal({
+      repeat: repeat([on('overkapping', 'f1')]),
+      byFinding: new Map(),
+      note: 'geen defect',
+    });
+
+    expect(decision.covers).toBe(1);
   });
 
   // An empty set is a selection and not a missing one, so it narrows to nothing. The bar
@@ -363,6 +379,104 @@ describe('a press narrowed to the ticked pages', () => {
 });
 
 /**
+ * Taking a bulk press back (ticket 110, round two).
+ *
+ * `OverrideControl.jsx` has offered *Ongedaan maken* on a dismissed or muted finding since
+ * ticket 29, and the bulk press offered nothing at all there. If one press can put ten
+ * pages in a state, something has to be able to take them out of it — otherwise the bulk
+ * tool is a one-way door and the way back is ten pages, which is the work this whole
+ * ticket exists to remove.
+ */
+describe('bulkClear', () => {
+  it('clears a dismissal on the finding it was made on', () => {
+    const { events } = bulkClear({
+      repeat: repeat([on('overkapping', 'f1')]),
+      byFinding: new Map([['f1', {
+        id: 'f1', state: 'dismissed', class: 'copy', override: { action: 'dismissed' },
+      }]]),
+    });
+
+    expect(events).toEqual([{
+      scope: 'finding', action: 'cleared', store: 'nl', page: 'overkapping', findingId: 'f1',
+    }]);
+  });
+
+  /**
+   * A mute is undone on **the key that made it**, which is the key the derivation handed
+   * back — not on the section the finding happens to sit in now. Clearing the section key
+   * where a page-wide mute is what decided the finding would leave that mute standing and
+   * the row would not move; the single control has said so since ticket 29, and this is
+   * the same rule through the same function rather than a second copy of it.
+   */
+  it('clears a mute on the key that made it, section or page-wide', () => {
+    const { events } = bulkClear({
+      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
+      byFinding: new Map([
+        ['f1', {
+          id: 'f1',
+          state: 'muted',
+          class: 'copy',
+          override: { action: 'muted', anchorHeading: 'Afmetingen' },
+        }],
+        // Decided by the page-wide form: its key names no section, and neither may the
+        // event that clears it.
+        ['f2', { id: 'f2', state: 'muted', class: 'copy', override: { action: 'muted' } }],
+      ]),
+    });
+
+    expect(events).toEqual([
+      {
+        scope: 'page-class',
+        action: 'cleared',
+        store: 'nl',
+        page: 'overkapping',
+        class: 'copy',
+        anchorHeading: 'Afmetingen',
+      },
+      {
+        scope: 'page-class', action: 'cleared', store: 'nl', page: 'veranda', class: 'copy',
+      },
+    ]);
+  });
+
+  /**
+   * Three eligibilities on one selection now, and this is the third. An open page has
+   * nothing to undo and a claim of fact is not this control's to take back — `fixed` has
+   * its own checkbox on the page, and a second control for one event would let the two
+   * disagree about what is on screen. So the count is over the ticked pages this press can
+   * act on, the way the other two report theirs.
+   */
+  it('counts the ticked pages it can act on, and leaves the rest alone', () => {
+    const input = {
+      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2'), on('carport', 'f3')]),
+      byFinding: new Map([
+        ['f1', { id: 'f1', state: 'dismissed', class: 'copy', override: { action: 'dismissed' } }],
+        ['f2', { id: 'f2', state: 'open', class: 'copy', override: null }],
+        ['f3', { id: 'f3', state: 'fixed', class: 'copy', override: { action: 'fixed' } }],
+      ]),
+    };
+
+    expect(bulkClear(input).covers).toBe(1);
+    expect(bulkClear({ ...input, selected: new Set(['f2', 'f3']) }))
+      .toMatchObject({ covers: 0, events: [] });
+  });
+
+  // No note, unlike the other two presses, and the same as the single control it mirrors:
+  // a `cleared` event carries no reason. Inventing a mandatory one here would make taking
+  // ten decisions back harder than taking one back.
+  it('writes without a note, because a cleared event has none to carry', () => {
+    const { events } = bulkClear({
+      repeat: repeat([on('overkapping', 'f1')]),
+      byFinding: new Map([['f1', {
+        id: 'f1', state: 'dismissed', class: 'copy', override: { action: 'dismissed' },
+      }]]),
+    });
+
+    expect(events[0]).not.toHaveProperty('note');
+  });
+});
+
+/**
  * Ticket 09 and ticket 31 both say it: a bulk write is N **ordinary** events. No
  * site-wide scope, no "repeat" scope — a repeat is a grouping the interface makes and it
  * has no identity to key on — and no new action. The table gains N rows and nothing else.
@@ -371,7 +485,7 @@ describe('the vocabulary a bulk press writes in', () => {
   const SCOPES = ['finding', 'page-class', 'page'];
   const ACTIONS = ['fixed', 'dismissed', 'muted', 'reviewed', 'cleared'];
 
-  const both = [
+  const all = [
     bulkDismissal({
       repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
       byFinding: byFinding({ f1: 'open', f2: 'open' }),
@@ -383,15 +497,27 @@ describe('the vocabulary a bulk press writes in', () => {
       findingsByPage: new Map([['nl/overkapping', [finding('f1', 'copy', 'Afmetingen')]]]),
       note: 'een reden',
     }),
+    bulkClear({
+      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
+      byFinding: new Map([
+        ['f1', { id: 'f1', state: 'dismissed', class: 'copy', override: { action: 'dismissed' } }],
+        ['f2', {
+          id: 'f2',
+          state: 'muted',
+          class: 'copy',
+          override: { action: 'muted', anchorHeading: 'Afmetingen' },
+        }],
+      ]),
+    }),
   ].flatMap((decision) => decision.events);
 
   it('writes nothing outside the scopes the table already has', () => {
-    expect(both.length).toBeGreaterThan(0);
-    for (const event of both) expect(SCOPES).toContain(event.scope);
+    expect(all.length).toBeGreaterThan(0);
+    for (const event of all) expect(SCOPES).toContain(event.scope);
   });
 
   it('writes nothing outside the actions the table already has', () => {
-    for (const event of both) expect(ACTIONS).toContain(event.action);
+    for (const event of all) expect(ACTIONS).toContain(event.action);
   });
 
   it('uses only the finding scope and the dismissed action for a bulk dismissal', () => {

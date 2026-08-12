@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { INK } from '../lib/palette.mjs';
-import { bulkDismissal, bulkMute } from '../lib/bulk.mjs';
+import { bulkClear, bulkDismissal, bulkMute } from '../lib/bulk.mjs';
 import { sectionName } from '../lib/mute.mjs';
 import { cn } from '../lib/utils.js';
 
@@ -23,22 +23,23 @@ import { cn } from '../lib/utils.js';
  * deleting.
  *
  * So it is drawn only when something is ticked, and it is drawn **below** the difference
- * rather than inside its opened panel: the tick on the difference row selects pages an
- * editor has not necessarily seen, and a press that lived in the panel would then be armed
- * and out of sight.
+ * rather than inside its opened panel, so it does not push the page list about as the
+ * selection grows.
  *
- * Every sentence here exists because the press is easy to misread:
+ * **Three presses since round two**, and the third is the way back: `OverrideControl.jsx`
+ * has offered *Ongedaan maken* on one decided finding since ticket 29, and this offered
+ * nothing at all there. A press that can put ten pages in a state and cannot take them out
+ * of it is a one-way door with a ten-page way back, which is the work this ticket exists
+ * to remove.
  *
- * - **It says how big it is before it is pressed**, in findings and in pages.
- * - **It says the decision expires with the text**, because each of the N dismissals is
- *   keyed on a finding id. A page that appears in a later crawl is not covered by any of
- *   them, and tickets 54 and 55 take the corpus from 451 to about 800 store-pages.
- * - **It says the real size of a repeat.** Ticket 81 measured the corpus: the largest
- *   repeat in the largest store is on 22 pages, and 79 to 91 per cent of every store's
- *   repeats are on one page. This control is not the thirty-page tool its ticket opened
- *   by describing, and it must not imply that it is.
+ * It is a **toolbar**: one strip, the selection on the left and what can be done with it
+ * on the right. Round one ran the count, the buttons and three paragraphs down the page,
+ * and round two found the paragraphs unread. What is left is what changes a press — the
+ * counts, the refusals, the one line on how the two judgements differ, and the sentence
+ * saying why the buttons are absent. The corpus statistics that argued for the design went
+ * with the rest of the prose.
  */
-export default function BulkControl({ repeat, byFinding, bulk, selected, onClear, searched }) {
+export default function BulkControl({ repeat, byFinding, bulk, selected, onClear }) {
   /** @type {['dismiss' | 'mute' | null, Function]} */
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
@@ -57,6 +58,16 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
     [repeat, byFinding, bulk?.findingsByPage, note, selected],
   );
 
+  /**
+   * The third press, and the only one that writes on the first click: a `cleared` event
+   * carries no reason, so there is no note to ask for and no form to open. It mirrors the
+   * single control, which has taken one decision back with one press since ticket 29.
+   */
+  const cleared = useMemo(
+    () => bulkClear({ repeat, byFinding, selected }),
+    [repeat, byFinding, selected],
+  );
+
   const close = () => { setAsking(null); setNote(''); };
 
   /**
@@ -73,50 +84,83 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
   };
 
   return (
-    <div data-slot="bulk-bar" className="border-t border-border px-4 py-2">
-      <Selection repeat={repeat} count={selected.size} onClear={onClear} searched={searched} />
+    <div
+      data-slot="bulk-bar"
+      className="flex flex-col gap-2 border-t border-border bg-muted/40 px-4 py-2"
+    >
+      {/* One strip: what is selected on the left, what can be done with it on the right.
+          Round one ran the count, the presses and three paragraphs of explanation down the
+          page, and what an editor could *do* was buried in prose. It is not a
+          `role="toolbar"`: that role promises arrow-key navigation between its controls,
+          and these are ordinary tab stops in the order the selection was made. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <Selection repeat={repeat} count={selected.size} />
+
+        <div className="flex flex-wrap items-center gap-1">
+          {/* Three buttons and never one. A dismissal expires with the text, a mute does
+              not, and an undo takes one of the two back — an editor choosing between them
+              is choosing between those behaviours, and a single *afhandelen* control would
+              make the choice for them.
+
+              They are offered **independently**. A difference whose every finding is
+              decided has nothing left to dismiss, and both of the others are live there.
+              Gating them on the dismissal's eligibility took the mute off screen exactly
+              where it was the only tool left. */}
+          {bulk?.canWrite && asking === null && (
+            <>
+              {dismissal.covers > 0 && (
+                <Button variant="outline" size="xs" onClick={() => setAsking('dismiss')}>
+                  Negeren op {dismissal.covers === 1 ? 'deze pagina' : `${dismissal.covers} pagina's`}…
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => setAsking('mute')}
+                // The denominator rule is `CONTEXT.md`'s own — gedempt werk is uit de
+                // balk, niet afgehandeld — and it is background rather than instruction,
+                // so it is here rather than in a paragraph above the button.
+                title={mute.offered
+                  ? 'Dempt de soort in die sectie. Vervalt niet, en haalt het werk uit de noemer.'
+                  : 'Kan hier niet in bulk.'}
+              >
+                Dempen op {mute.pages === 1 ? 'deze pagina' : `${mute.pages} pagina's`}…
+              </Button>
+              {/* No ellipsis, because there is nothing further to ask: this one writes on
+                  the first press, the way the single control's *Ongedaan maken* does. A
+                  `cleared` event carries no reason, so there is no note to type — and it
+                  is the one press here whose label has to carry *Bezig…* itself, since it
+                  has no form to show it in. */}
+              {cleared.covers > 0 && (
+                <Button
+                  variant="outline"
+                  size="xs"
+                  disabled={bulk.busy}
+                  onClick={() => press(cleared.events)}
+                  title={clearTitle(cleared)}
+                >
+                  {bulk.busy
+                    ? 'Bezig…'
+                    : `Ongedaan maken op ${cleared.covers === 1 ? 'deze pagina' : `${cleared.covers} pagina's`}`}
+                </Button>
+              )}
+            </>
+          )}
+
+          {!bulk?.canWrite && <NotWriting reason={bulk?.notWritingReason} />}
+
+          {/* Unticking ten rows one at a time is the work this control exists to remove,
+              so putting the selection down costs one press as well. It is offered whether
+              or not the log can be written to: it is not a decision. */}
+          <Button type="button" variant="outline" size="xs" onClick={onClear}>
+            Selectie wissen
+          </Button>
+        </div>
+      </div>
 
       {report && <Report {...report} />}
 
-      {!bulk?.canWrite && <NotWriting reason={bulk?.notWritingReason} />}
-
-      {/* Two buttons and never one. A dismissal expires with the text and a mute does
-          not, and an editor choosing between them is choosing between those two
-          behaviours — a single *afhandelen* control would make that choice for them.
-
-          They are also offered **independently**. A repeat whose every finding is already
-          decided has nothing left to dismiss, and a mute is still a live judgement there:
-          it is about the class in the section rather than about these two strings, and it
-          is the one that does not expire. Gating both on the dismissal's eligibility took
-          the mute off screen exactly where it is the only tool left. */}
-      {bulk?.canWrite && asking === null && (
-        <>
-          <div className="flex flex-wrap items-center gap-1">
-            {dismissal.covers > 0 && (
-              <Button variant="outline" size="xs" onClick={() => setAsking('dismiss')}>
-                Negeren op {dismissal.covers === 1 ? 'deze pagina' : `${dismissal.covers} pagina's`}…
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="xs"
-              onClick={() => setAsking('mute')}
-              title={mute.offered
-                ? 'Dempt de soort in deze sectie op elke pagina. Vervalt niet.'
-                : 'Kan hier niet in bulk.'}
-            >
-              Dempen op {mute.pages === 1 ? 'deze pagina' : `${mute.pages} pagina's`}…
-            </Button>
-          </div>
-          {dismissal.covers === 0 && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Elke bevinding van dit verschil is al beslist, dus er is niets te negeren.
-              Een beslissing terugdraaien gaat per pagina, op de pagina zelf.
-            </p>
-          )}
-          <Choice canDismiss={dismissal.covers > 0} />
-        </>
-      )}
+      {bulk?.canWrite && asking === null && <Choice canDismiss={dismissal.covers > 0} />}
 
       {bulk?.canWrite && dismissal.covers > 0 && asking === 'dismiss' && (
         <form
@@ -173,65 +217,36 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
 /**
  * What is ticked, and **which difference** it is ticked on (ticket 110).
  *
- * The second half is not decoration. A tick on the difference row selects pages an editor
- * has not necessarily seen, several differences can carry ticks at once, and a bar that
- * said only *2 geselecteerd* would be a number with no subject. So it repeats the words of
- * its own difference, in one line, the way the row above it states them.
+ * The second half is not decoration. Several differences can carry ticks at once, and a
+ * bar that said only *2 geselecteerd* would be a number with no subject. So it repeats the
+ * words of its own difference, in one line, the way the row above it states them.
  */
-const Selection = ({ repeat, count, onClear, searched }) => (
-  <>
-    <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-      <span>
-        <strong className="font-medium tabular-nums text-foreground">
-          {count} van {repeat.on.length} {repeat.on.length === 1 ? 'pagina' : "pagina's"}
-        </strong>{' '}
-        geselecteerd op <ClassWord class={repeat.class} />{' '}
-        <span className="text-foreground">{repeat.prod ?? '—'} → {repeat.new ?? '—'}</span>
-      </span>
-      {/* Unticking ten rows one at a time is the work this control exists to remove, so
-          putting it down costs one press as well. */}
-      <Button type="button" variant="outline" size="xs" onClick={onClear}>Selectie wissen</Button>
-    </p>
-
-    {/* Said here and not only under the page list, because the tick on the difference row
-        works on a **closed** row: an editor can arm a press on ten matching pages having
-        seen no page list at all, and a caption under a table nobody opened is silence. */}
-    {searched && (
-      <p className="text-xs text-muted-foreground">
-        Dit zijn de pagina&rsquo;s waarop de zoekterm is gevonden. Dit verschil kan op meer
-        pagina&rsquo;s staan; die staan hier niet en worden niet mee beslist.
-      </p>
-    )}
-  </>
+const Selection = ({ repeat, count }) => (
+  <p className="text-xs text-muted-foreground">
+    <strong className="font-medium tabular-nums text-foreground">
+      {count} van {repeat.on.length} {repeat.on.length === 1 ? 'pagina' : "pagina's"}
+    </strong>{' '}
+    geselecteerd op <ClassWord class={repeat.class} />{' '}
+    <span className="text-foreground">{repeat.prod ?? '—'} → {repeat.new ?? '—'}</span>
+  </p>
 );
 
 /**
- * What the two buttons differ in, said where the editor chooses between them.
+ * What the presses differ in, in one line, where the editor chooses between them.
  *
  * The choice is not *how much* — it is which judgement is being made. A dismissal says
- * "these two exact strings are acceptable" and dies with the text; a mute says "this
- * class is never a defect in this section" and lives for ever. Offering one where the
- * editor wanted the other is the failure ticket 31 names as its own.
- *
- * The measured size of a repeat is here too, and not only in the form. Ticket 31 opens by
- * describing a difference on thirty pages; ticket 81 measured the corpus and the largest
- * repeat in the largest store is on 22 pages, with 79 to 91 per cent of every store's
- * repeats on a single page. A control that let an editor believe otherwise would be
- * selling a tool that mostly idles.
+ * "these two exact strings are acceptable" and dies with the text; a mute says "this class
+ * is never a defect in this section" and lives for ever. Offering one where the editor
+ * wanted the other is the failure ticket 31 names as its own, so the difference is said —
+ * and it is said in a sentence, because round two found an essay here and nobody reads an
+ * essay above a button. What is left out is background rather than instruction: the
+ * corpus statistics argued for the design and told an editor nothing.
  */
 const Choice = ({ canDismiss }) => (
-  <p className="mt-1 text-xs text-muted-foreground">
-    {canDismiss && (
-      <>
-        <strong className="font-medium">Negeren</strong> geldt voor deze twee teksten en
-        vervalt zodra een van de twee verandert.{' '}
-      </>
-    )}
-    <strong className="font-medium">Dempen</strong> geldt voor de soort in die sectie en
-    vervalt nooit. {canDismiss ? 'Geen van beide dekt een' : 'Het dekt geen'} pagina die
-    bij een volgende crawl bijkomt. Ter maat: het grootste verschil in de grootste winkel
-    staat op 22 pagina&rsquo;s, en 79 tot 91 procent van de verschillen per winkel staat
-    op één pagina.
+  <p className="text-xs text-muted-foreground">
+    {canDismiss
+      ? 'Negeren vervalt zodra een van de twee teksten verandert; dempen vervalt niet.'
+      : 'Elke bevinding hier is al beslist, dus er is niets te negeren. Dempen vervalt niet.'}
   </p>
 );
 
@@ -244,9 +259,8 @@ const Choice = ({ canDismiss }) => (
  * is the doubled figure the repeat list exists to stop. The row header above says pages;
  * so does this.
  *
- * The second half is the half that is easy to leave out, and it is why this ticket exists
- * twice: a dismissal is keyed on the finding id, so it dies the day either text changes,
- * and it says nothing about a page the next crawl finds.
+ * What it does **not** say any more is what `Choice` above already said: that a dismissal
+ * dies the day either text changes. Round two cut the repetition, not the fact.
  */
 function Covers({ dismissal }) {
   // The total is the seam's own two numbers added, and never the repeat's size or a second
@@ -260,10 +274,8 @@ function Covers({ dismissal }) {
         {dismissal.covers} {dismissal.covers === 1 ? 'pagina' : "pagina's"}
       </strong>
       {dismissal.decided > 0
-        ? ` van de ${pages} — de andere ${dismissal.decided} zijn al beslist en blijven zoals ze zijn. `
-        : '. '}
-      Alleen deze: verandert een van de twee teksten, dan vervalt die beslissing en komt
-      het verschil terug. Een pagina die bij een volgende crawl bijkomt valt er niet onder.
+        ? ` van de ${pages}: de andere ${dismissal.decided} ${dismissal.decided === 1 ? 'is' : 'zijn'} al beslist.`
+        : '.'}
     </p>
   );
 }
@@ -345,10 +357,8 @@ function MuteForm({ mute, repeat, decided, note, setNote, busy, onCancel, onPres
           {mute.covers} {mute.covers === 1 ? 'bevinding' : 'bevindingen'}
         </strong>
         {mute.covers > mute.difference
-          ? `, waarvan ${mute.difference} van dit verschil — de rest is ander werk van dezelfde soort in dezelfde sectie. `
-          : '. '}
-        Dempen vervalt niet en verlaagt de noemer: gedempt werk is uit de balk, niet
-        afgehandeld.
+          ? `, waarvan ${mute.difference} van dit verschil. De rest is ander werk van dezelfde soort in dezelfde sectie.`
+          : '.'}
       </p>
 
       <TwoEligibilities decided={decided} />
@@ -394,12 +404,27 @@ const TwoEligibilities = ({ decided }) => (
   decided > 0
     ? (
       <p className="text-xs text-muted-foreground">
-        {decided} van deze pagina&rsquo;s {decided === 1 ? 'draagt' : 'dragen'} een
-        bevinding die al beslist is. Negeren slaat die over; hier telt dempen die mee, want
-        het dempt de soort in die sectie en niet deze twee teksten.
+        {decided} van deze pagina&rsquo;s is al beslist: negeren slaat die over, dempen
+        telt die mee.
       </p>
     )
     : null
+);
+
+/**
+ * Why this press is on fewer pages than are ticked, said where the gap is (ticket 110).
+ *
+ * The other two presses have a form to state their two numbers in; this one writes on the
+ * first click and has only its own label. So the count it leaves alone lives in the
+ * `title`, which is where round two put everything that explains a number already on
+ * screen rather than changing what an editor presses.
+ */
+const clearTitle = ({ covers, skipped }) => (
+  'Haalt de beslissing weg en zet het verschil terug op open.'
+  + (skipped > 0
+    ? ` ${skipped} van de ${covers + skipped} gekozen pagina's blijft zoals het is: daar is`
+      + ' niets beslist, of het is een claim die met het vinkje Opgelost teruggaat.'
+    : '')
 );
 
 /**

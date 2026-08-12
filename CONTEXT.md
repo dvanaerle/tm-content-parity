@@ -324,12 +324,16 @@ who wins against re-check.
 - **Bulk decision** — one press that writes **N ordinary events**, one per page, each
   carrying the editor and the same note. It is not a scope and it never will be: a
   repeat is a grouping the interface makes and has no identity to key on, so the table
-  gains N rows and no column. The two bulk presses have **different selection units**,
-  which is the whole of the difference between them — a bulk **dismissal** takes a
-  repeat and expires with the text; a bulk **mute** takes pages × class × section and
-  does not expire. Neither covers a page that a later crawl finds. A partial failure is
-  reported as *N of M saved*: the table is append-only, so what was written stands and
-  the interface says how far it got. See ticket 31.
+  gains N rows and no column. **The pages are ticked**: a difference is a list with a
+  checkbox per row and one in the column header, and every count follows the ticks. The
+  three bulk presses have **different eligibilities on one selection**, and that is the
+  whole of the difference between them — a bulk **dismissal** expires with the text and
+  skips a finding a colleague decided; a bulk **mute** takes pages × class × section, does
+  not expire, and counts a decided finding it does not change; a bulk **clearing** revokes
+  a dismissal or a mute and touches nothing else. Do not make them agree: they are not
+  measuring the same thing. Neither of the first two covers a page that a later crawl
+  finds. A partial failure is reported as *N of M saved*: the table is append-only, so what
+  was written stands and the interface says how far it got. See tickets 31 and 110.
 - **Page review** — "a human looked at this whole page." Keyed on store and page.
   It covers what the tool cannot see: layout, tone, an image that agrees by name
   and shows something else. It never expires; it becomes **stale**.

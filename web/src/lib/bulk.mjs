@@ -1,4 +1,4 @@
-import { muteCoverage } from '../../../overrides/state.mjs';
+import { clearedEventFor, muteCoverage } from '../../../overrides/state.mjs';
 
 /**
  * What one press on a repeat row would write, and what it covers (ticket 31).
@@ -74,16 +74,15 @@ const ticked = (repeat, selected) => (
 const OFFERED = new Set(['open', 'contradicted']);
 
 /**
- * Whether a dismissal is offered on one finding — the rule above, asked about a single
- * one (ticket 110).
+ * Whether a dismissal is offered on one finding — the rule above, asked about a single one.
  *
- * The select-all checkbox needs it: it ticks the pages this press can act on and leaves
- * a colleague's decision alone, and it has to be **the same** rule the press then applies
- * or the tick would promise a write that never happens.
+ * It was exported for the select-all in round one of ticket 110, which ticked only the
+ * pages this press could act on. Round two ticks every page, so the rule has one reader
+ * again: the press. A tick says *this page*; what the press does with it, the press says.
  *
  * @param {{ state?: string } | undefined} finding  The derivation's answer, or none.
  */
-export const offersDismissal = (finding) => OFFERED.has(finding?.state ?? 'open');
+const offersDismissal = (finding) => OFFERED.has(finding?.state ?? 'open');
 
 /**
  * The N mutes of the pages one repeat is on.
@@ -169,6 +168,50 @@ export function bulkMute({ repeat, byFinding, findingsByPage, note, selected }) 
     events,
   };
 }
+
+/**
+ * The N clearings of the pages one repeat is on (ticket 110, round two).
+ *
+ * The word is **cleared** and not *undo*: `CONTEXT.md` gives that one action the job of
+ * revoking the last override on a key, and it says there are no `un-` words. The button an
+ * editor presses says *Ongedaan maken*, which is the same word the single control has worn
+ * since ticket 29 — the Dutch label and the vocabulary are two different things.
+ *
+ * The event itself comes from `clearedEventFor()`, beside the derivation that attached the
+ * key. This press does not know how a mute is cleared and must not learn: the single
+ * control asks the same function, so the two cannot come to disagree.
+ *
+ * @param {object} input
+ * @param {import('./view.mjs').Repeat} input.repeat
+ * @param {Map<string, { state: string, class: string, override?: object }>} input.byFinding
+ * @param {Set<string>} [input.selected]  The ticked pages, as finding ids.
+ */
+export function bulkClear({ repeat, byFinding, selected }) {
+  const chosen = ticked(repeat, selected);
+  const on = chosen.filter((entry) => offersClear(byFinding.get(entry.id)));
+
+  const events = on.map((entry) => ({
+    store: repeat.store,
+    page: entry.page,
+    ...clearedEventFor(byFinding.get(entry.id)),
+  }));
+
+  // Both numbers over the **selection**, the way the dismissal states its two: a ticked
+  // page this press leaves alone is a page the editor aimed at and did not hit, and the
+  // gap between the count on the strip and the count on the button is not self-evident.
+  return { covers: on.length, skipped: chosen.length - on.length, events };
+}
+
+/**
+ * The two states a clearing is offered on, which are `OverrideControl.jsx`'s two.
+ *
+ * `fixed` is not among them, and that is the same refusal the single control makes: a
+ * claim of fact has its own checkbox, and a second control for one event would let the two
+ * disagree about what is on screen.
+ */
+const CLEARABLE = new Set(['dismissed', 'muted']);
+
+const offersClear = (finding) => CLEARABLE.has(finding?.state);
 
 /**
  * The pages of a repeat a bulk mute cannot be pressed on, and **why** (ticket 110).
