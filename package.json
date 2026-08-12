@@ -13,6 +13,7 @@
     "compare": "node compare/30-compare.mjs",
     "build": "npm --prefix web run build",
     "build:ci": "npm --prefix web ci && npm --prefix web run build",
+    "deploy": "npm run build && wrangler deploy",
     "serve": "node api/server.mjs",
     "start": "npm run build && npm run serve"
   },
@@ -21,6 +22,7 @@
     "node-html-parser": "^9.0.1"
   },
   "devDependencies": {
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wrangler": "^4.121.0"
   }
 }
