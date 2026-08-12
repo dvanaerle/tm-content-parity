@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Repeats from './Repeats.jsx';
+import { Checkbox } from './ui/checkbox.jsx';
+import { Label } from './ui/label.jsx';
+import { Separator } from './ui/separator.jsx';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { pageHref } from '../lib/page-url.mjs';
+import { cn } from '../lib/utils.js';
 import { searchNotes, searchStore } from '../lib/search.mjs';
 
 /**
@@ -49,14 +53,14 @@ export default function Search({
 
   if (error) {
     return (
-      <p className="px-4 py-6 text-sm text-slate-500">
+      <p className="px-4 py-6 text-sm text-muted-foreground">
         De zoekindex van deze winkel is niet gelezen ({error}). Zoeken werkt weer na een
         nieuwe build.
       </p>
     );
   }
 
-  if (!result) return <p className="px-4 py-6 text-sm text-slate-500">Zoekindex wordt geladen…</p>;
+  if (!result) return <p className="px-4 py-6 text-sm text-muted-foreground">Zoekindex wordt geladen…</p>;
 
   return (
     <>
@@ -75,25 +79,24 @@ export default function Search({
               ? `1 verschil op ${result.pages} pagina's`
               : `${result.total} bevindingen op ${result.pages} pagina's`}
           </strong>
-          <span className="text-slate-500">
+          <span className="text-muted-foreground">
             {result.repeats.length > 1 && ` in ${result.repeats.length} verschillen`}
             . Uit de snapshot van {new Date(index.builtAt).toLocaleDateString('nl-NL')} —
             de getallen bovenaan veranderen niet mee.
           </span>
         </p>
 
-        <label className="flex items-center gap-1 text-sm text-slate-600">
-          <input
-            type="checkbox"
+        <Label className="gap-1 text-sm font-normal text-muted-foreground">
+          <Checkbox
             checked={includeClosed}
-            onChange={(event) => onIncludeClosed(event.target.checked)}
+            onCheckedChange={(checked) => onIncludeClosed(checked)}
           />
           Inclusief afgesloten
-        </label>
+        </Label>
       </div>
 
       {result.repeats.length === 0
-        ? <p className="px-4 py-6 text-sm text-slate-500">Geen verschil met deze woorden.</p>
+        ? <p className="px-4 py-6 text-sm text-muted-foreground">Geen verschil met deze woorden.</p>
         : <Repeats key={`${term}|${includeClosed}`} repeats={result.repeats} byFinding={byFinding} />}
 
       <Named store={store} pages={named} />
@@ -123,20 +126,23 @@ function Named({ store, pages }) {
   if (pages.length === 0) return null;
 
   return (
-    <section className="border-t border-slate-200 px-4 py-3">
-      <h3 className="text-sm font-medium">
-        {pages.length} {pages.length === 1 ? 'pagina heet' : "pagina's heten"} zo
-      </h3>
-      <ul className="mt-1 flex flex-wrap gap-x-3 text-sm">
-        {pages.map((page) => (
-          <li key={page.page}>
-            <a className={`hover:underline ${CHROME.link}`} href={pageHref(store, page.page)}>
-              {page.page}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <>
+      <Separator />
+      <section className="px-4 py-3">
+        <h3 className="text-sm font-medium">
+          {pages.length} {pages.length === 1 ? 'pagina heet' : "pagina's heten"} zo
+        </h3>
+        <ul className="mt-1 flex flex-wrap gap-x-3 text-sm">
+          {pages.map((page) => (
+            <li key={page.page}>
+              <a className={cn('hover:underline', CHROME.link)} href={pageHref(store, page.page)}>
+                {page.page}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
   );
 }
 
@@ -152,31 +158,34 @@ function Notes({ notes }) {
   if (notes.length === 0) return null;
 
   return (
-    <section className="border-t border-slate-200 bg-slate-50 px-4 py-3">
-      <h3 className="text-sm font-medium">
-        {notes.length} {notes.length === 1 ? 'notitie' : 'notities'} met deze woorden
-      </h3>
-      <p className={`mb-2 text-xs ${INK.info}`}>
-        Nu uit het log gelezen, niet uit de snapshot. Deze helft is dus actueel en de
-        bevindingen hierboven zijn zo oud als de laatste build.
-      </p>
-      <ul className="text-sm">
-        {notes.map((note) => (
-          <li key={`${note.createdAt}|${note.page}|${note.findingId ?? note.class ?? ''}`} className="py-0.5">
-            {/* The event's own store and page, and not the component's: an event
-                carries where it was written, and reading it is what keeps the link
-                honest if the two ever disagree. */}
-            <a className={`hover:underline ${CHROME.link}`} href={pageHref(note.store, note.page)}>
-              {note.page}
-            </a>
-            <span className="ml-2 text-slate-700">{note.note}</span>
-            <span className="ml-2 text-xs text-slate-400">
-              {note.editor}, {new Date(note.createdAt).toLocaleDateString('nl-NL')}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <>
+      <Separator />
+      <section className="bg-muted px-4 py-3">
+        <h3 className="text-sm font-medium">
+          {notes.length} {notes.length === 1 ? 'notitie' : 'notities'} met deze woorden
+        </h3>
+        <p className={cn('mb-2 text-xs', INK.info)}>
+          Nu uit het log gelezen, niet uit de snapshot. Deze helft is dus actueel en de
+          bevindingen hierboven zijn zo oud als de laatste build.
+        </p>
+        <ul className="text-sm">
+          {notes.map((note) => (
+            <li key={`${note.createdAt}|${note.page}|${note.findingId ?? note.class ?? ''}`} className="py-0.5">
+              {/* The event's own store and page, and not the component's: an event
+                  carries where it was written, and reading it is what keeps the link
+                  honest if the two ever disagree. */}
+              <a className={cn('hover:underline', CHROME.link)} href={pageHref(note.store, note.page)}>
+                {note.page}
+              </a>
+              <span className="ml-2 text-muted-foreground">{note.note}</span>
+              <span className="ml-2 text-xs text-muted-foreground">
+                {note.editor}, {new Date(note.createdAt).toLocaleDateString('nl-NL')}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
   );
 }
 

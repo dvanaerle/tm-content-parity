@@ -42,11 +42,11 @@ const totals = storeTotals({ pages, notChecked });
 <Shell title={`Overzicht — ${store}`} store={store}>
   <header class="mb-4">
     <h1 class="text-xl font-semibold">Pariteit met productie</h1>
-    <p class="text-sm text-slate-600">
+    <p class="text-sm text-muted-foreground">
       Productie is de bron van waarheid, dus elk verschil is een defect op de
       nieuwe site. Winkel: <strong>{store}</strong> — {STORE_NAME[store]}.
     </p>
-    <p class="text-sm text-slate-600">
+    <p class="text-sm text-muted-foreground">
       <strong>{totals.found}</strong> pagina's gevonden: {totals.crawled} gecrawld, waarvan {totals.comparable} te
       vergelijken.{
         totals.oneSided > 0 && ` De andere ${totals.oneSided} zijn eenzijdig: de nieuwe site antwoordt daar geen 200. Ze staan onderaan.`

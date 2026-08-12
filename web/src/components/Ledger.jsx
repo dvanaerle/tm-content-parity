@@ -5,9 +5,27 @@ import { ClassPill } from './Chips.jsx';
 import ContentView from './ContentView.jsx';
 import { DiffCells } from './Diff.jsx';
 import OverrideControl from './OverrideControl.jsx';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert.jsx';
+import { Badge } from './ui/badge.jsx';
+import { Card, CardContent } from './ui/card.jsx';
+import { Checkbox } from './ui/checkbox.jsx';
+import { Empty as EmptyState, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
+import { Label } from './ui/label.jsx';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
 import { BANNER, CHROME, INK } from '../lib/palette.mjs';
+
+/**
+ * The column heads of both tables here and of the content view are the same small
+ * capitals. `TableHead` ships `text-foreground`, which a plain class beside it cannot
+ * beat, so the tone is written as a descendant selector on the header instead — an
+ * attribute-free `[&_th]` still outranks the component's own class. This is the same
+ * shape of problem as `CHROME.tabActive` below, and the same answer: the palette, or
+ * in this case the muted neutral the whole interface already uses, has to be declared
+ * somewhere that outranks shadcn rather than somewhere that ties with it.
+ */
+const HEAD_TONE = '[&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground';
 
 /**
  * A tabbed ledger, production and the new site side by side.
@@ -78,20 +96,39 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
 
   if (!report.comparable) {
     return (
-      <section className={`rounded border p-4 ${BANNER.attention}`}>
-        <h2 className="font-semibold">Niet te vergelijken</h2>
-        <p className="text-sm">{report.skipReason}</p>
-        <p className="mt-2 text-sm">
-          Ticket 07 laat de vergelijking alleen doorgaan bij status 200 aan beide kanten:
-          een 404-pagina heeft ook een <code>&lt;main&gt;</code> en levert anders honderden
-          verschillen op waar niemand iets mee kan.
-        </p>
-      </section>
+      /* The tone is `BANNER.attention` and not Alert's own `destructive` variant. An
+         uncomparable page is a status, and palette rule 2 keeps status out of the diff
+         hues; Alert's `destructive` reads from `--destructive`, which this repo has
+         already pointed at the amber ink for exactly that reason. */
+      <Alert className={`p-4 ${BANNER.attention}`}>
+        <AlertTitle className="font-semibold">Niet te vergelijken</AlertTitle>
+        <AlertDescription className="text-current">
+          <p className="text-sm">{report.skipReason}</p>
+          <p className="mt-2 text-sm">
+            Ticket 07 laat de vergelijking alleen doorgaan bij status 200 aan beide kanten:
+            een 404-pagina heeft ook een <code>&lt;main&gt;</code> en levert anders honderden
+            verschillen op waar niemand iets mee kan.
+          </p>
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <section className="rounded border border-slate-200 bg-white">
+    /*
+     * `py-0 gap-0` because this Card's first child is a tab strip that has to sit
+     * flush against the top edge and draw its own bottom rule. Card's default vertical
+     * padding would float the strip inside the card, which is the one place the strip
+     * must not be.
+     *
+     * `overflow-visible` is not cosmetic. Card ships `overflow-hidden` to clip an image
+     * to its corners, and an `overflow` other than `visible` on any ancestor silently
+     * stops `position: sticky` working in the descendant. The Inhoud panel's outline
+     * nav is `lg:sticky lg:top-4` and it navigates a table up to 288 rows long, so
+     * clipping this card would have cost the one piece of furniture that makes a long
+     * page usable — and cost it quietly, with nothing on screen to show for it.
+     */
+    <Card className="gap-0 overflow-visible py-0">
       {/*
         The tab strip is shadcn on Base UI since ticket 74, and it is the only
         thing in this component the library touches. What it buys is the roving
@@ -115,7 +152,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
         variable and a palette token disagree, the palette wins".
       */}
       <Tabs value={tab} onValueChange={setTab} className="gap-0">
-        <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 px-2">
+        <div className="flex flex-wrap items-center gap-1 border-b px-2">
           <TabsList variant="line" className="h-auto flex-wrap gap-1 p-0">
             {TABS.map((name) => (
               <TabsTrigger
@@ -124,29 +161,32 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
                 className={`h-auto flex-none gap-2 rounded-none px-3 py-2 text-sm after:hidden ${
                   name === tab
                     ? `-mb-px border-x-0 border-t-0 border-b-2 font-semibold ${CHROME.tabActive}`
-                    : 'text-slate-600'
+                    : 'text-muted-foreground'
                 }`}
               >
                 <span className={name === tab ? CHROME.tabActive : undefined}>{name}</span>
                 {badges[name] !== undefined && (
-                  <span className="rounded bg-slate-100 px-1.5 text-xs tabular-nums text-slate-600">
+                  <Badge variant="secondary" className="tabular-nums">
                     {badges[name]}
-                  </span>
+                  </Badge>
                 )}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          <label className="ml-auto flex items-center gap-2 py-2 text-sm text-slate-600">
-            <input type="checkbox" checked={showNoise} onChange={(event) => setShowNoise(event.target.checked)} />
+          {/* Base UI's Checkbox is not an `<input>`, so the state arrives as the
+              value rather than as an event: `onCheckedChange` and not
+              `event.target.checked`. */}
+          <Label className="ml-auto py-2 font-normal text-muted-foreground">
+            <Checkbox checked={showNoise} onCheckedChange={setShowNoise} />
             Ruis en gedempt tonen ({hiddenCount})
-          </label>
+          </Label>
         </div>
 
         {/* The padding is on the wrapper and not on each panel: exactly one panel
             is mounted at a time, so four copies of `p-4` would be four chances to
             let one tab sit differently from the other three. */}
-        <div className="p-4">
+        <CardContent className="p-4">
           <TabsContent value="Inhoud">
             <ContentView report={report} findings={derived} showNoise={showNoise} control={control} />
           </TabsContent>
@@ -159,9 +199,9 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
           <TabsContent value="Meta">
             <MetaTable production={production} next={next} />
           </TabsContent>
-        </div>
+        </CardContent>
       </Tabs>
-    </section>
+    </Card>
   );
 }
 
@@ -170,18 +210,24 @@ function FindingTable({ findings, check, control, sides }) {
   if (!rows.length) return <Empty>Geen bevindingen voor {CHECK_LABEL[check]}.</Empty>;
 
   return (
-    <table className="w-full table-fixed text-sm">
-      <thead>
-        <tr className="border-b border-slate-200 text-left text-[11px] uppercase tracking-wide text-slate-500">
-          <th className="w-56 px-2 py-2 font-medium">Soort</th>
-          <th className="px-2 py-2 font-medium">Productie</th>
-          <th className="px-2 py-2 font-medium">Nieuw</th>
-        </tr>
-      </thead>
-      <tbody>
+    /* `table-fixed` survives the swap. shadcn's Table is auto-layout and wraps itself
+       in an `overflow-x-auto` container, which is right for a wide dashboard row and
+       wrong here: these three columns hold prose of wildly different lengths, and an
+       auto layout would let the two comparison columns change width from row to row,
+       which is the one thing a diff must not do. The scroll container stays and simply
+       never fires. */
+    <Table className="table-fixed">
+      <TableHeader className={HEAD_TONE}>
+        <TableRow>
+          <TableHead className="w-56">Soort</TableHead>
+          <TableHead>Productie</TableHead>
+          <TableHead>Nieuw</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {rows.map((finding) => (
-          <tr key={finding.id} className="border-b border-slate-100 align-top last:border-0">
-            <td className="px-2 py-2">
+          <TableRow key={finding.id} className="align-top">
+            <TableCell className="px-2 py-2 align-top whitespace-normal">
               <ClassPill class={finding.class} />
               <Detail detail={finding.detail} />
               <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
@@ -189,14 +235,14 @@ function FindingTable({ findings, check, control, sides }) {
                   heading above them is the only thing a browser can scroll to. */}
               <Section anchorHeading={finding.anchorHeading} sides={sides} />
               <div className="mt-1">{control(finding)}</div>
-            </td>
+            </TableCell>
             {/* The same component the content rows use. A link finding word-diffs
                 two target keys, which makes a changed path segment jump out. */}
             <DiffCells prod={finding.prod} new={finding.new} mono />
-          </tr>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 
@@ -217,16 +263,20 @@ function MetaTable({ production, next }) {
 
   return (
     <>
-      <p className="mb-3 rounded bg-slate-50 p-2 text-sm text-slate-600">
-        Alleen weergave, zonder afvinken. Ticket 21 beslist nog wat in de{' '}
-        <code>&lt;head&gt;</code> een pariteitsdefect is, dus hier komen geen bevindingen
-        uit en deze regels staan niet in de teller.
-      </p>
-      <table className="w-full table-fixed text-sm">
-        <tbody>
+      <Alert className="mb-3">
+        <AlertDescription>
+          Alleen weergave, zonder afvinken. Ticket 21 beslist nog wat in de{' '}
+          <code>&lt;head&gt;</code> een pariteitsdefect is, dus hier komen geen bevindingen
+          uit en deze regels staan niet in de teller.
+        </AlertDescription>
+      </Alert>
+      <Table className="table-fixed">
+        <TableBody>
           {rows.map((row) => (
-            <tr key={row.field} className="border-b border-slate-100 align-top">
-              <th className="w-40 px-2 py-3 text-left font-medium text-slate-500">
+            <TableRow key={row.field} className="align-top">
+              {/* A `<th>` in the body, not a `<td>`: this row's first cell names what
+                  the two cells beside it hold, which is what a row header is. */}
+              <TableHead className="w-40 py-3 align-top font-medium whitespace-normal text-muted-foreground">
                 {row.field}
                 {/* The one loud case. Production has no canonical on 147 of 179 nl
                     pages and those rows are gone, so the 2 pages where the new
@@ -236,17 +286,28 @@ function MetaTable({ production, next }) {
                     de nieuwe site heeft er geen
                   </span>
                 )}
-              </th>
+              </TableHead>
               {/* `state` is the tool's answer, and the cells must not contradict it:
                   a canonical that differs by hostname alone is `same`, and the
                   hostname on screen is not a difference an editor can act on. */}
               <DiffCells prod={row.prod} new={row.new} mono equal={row.state === 'same'} />
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </>
   );
 }
 
-const Empty = ({ children }) => <p className="py-6 text-sm text-slate-500">{children}</p>;
+/**
+ * shadcn's `Empty` with no media and no action. There is no icon because there is
+ * nothing wrong: a tab with no findings is the outcome the editor is working towards,
+ * and an illustration of an empty box would read as a failure to load.
+ */
+const Empty = ({ children }) => (
+  <EmptyState className="py-6">
+    <EmptyHeader>
+      <EmptyDescription>{children}</EmptyDescription>
+    </EmptyHeader>
+  </EmptyState>
+);

@@ -1,7 +1,11 @@
 import { useMemo, useState } from 'react';
 import { namesSection } from '../../../shared/mute-key.mjs';
 import { muteForms } from '../lib/mute.mjs';
-import { ACCENT, INK, PILL } from '../lib/palette.mjs';
+import { INK, PILL } from '../lib/palette.mjs';
+import { Badge } from './ui/badge.jsx';
+import { Button } from './ui/button.jsx';
+import { Checkbox } from './ui/checkbox.jsx';
+import { Input } from './ui/input.jsx';
 
 /**
  * The one action control. Spec 29: one control, one place in the code, three call
@@ -90,12 +94,12 @@ export default function OverrideControl({
       >
         {/* A note is required on the two judgements: accepting a real difference
             for good, or hiding a class, must tell the next reader why. */}
-        <input
+        <Input
           autoFocus
           value={note}
           onChange={(change) => setNote(change.target.value)}
           placeholder="Waarom is dit geen defect?"
-          className="w-52 rounded border border-slate-300 px-2 py-1 text-xs"
+          className="w-52"
         />
         <Action type="submit" disabled={!note.trim()}>Negeren</Action>
         <Action onClick={close}>Annuleren</Action>
@@ -115,9 +119,7 @@ export default function OverrideControl({
           : act({ action: 'cleared' }))}
       />
 
-      <span className={`rounded px-1.5 py-0.5 text-[11px] ${PILL[STATE[state].tone]}`}>
-        {STATE[state].label}
-      </span>
+      <Badge className={PILL[STATE[state].tone]}>{STATE[state].label}</Badge>
 
       {state === 'contradicted' && (
         <span className={`text-[11px] ${INK.attention}`}>
@@ -125,7 +127,7 @@ export default function OverrideControl({
         </span>
       )}
       {(state === 'fixed' || state === 'dismissed' || state === 'muted') && (
-        <span className="text-[11px] text-slate-500" title={override.note ?? undefined}>
+        <span className="text-[11px] text-muted-foreground" title={override.note ?? undefined}>
           {override.editor}
           {override.note ? ` — ${override.note}` : ''}
         </span>
@@ -175,13 +177,13 @@ function MuteForms({ finding, findings, note, setNote, onCancel, onPress }) {
   const ready = Boolean(note.trim());
 
   return (
-    <div className="flex flex-col gap-1 rounded border border-slate-200 p-2">
-      <input
+    <div className="flex flex-col gap-1 rounded border p-2">
+      <Input
         autoFocus
         value={note}
         onChange={(change) => setNote(change.target.value)}
         placeholder={`Waarom is ${finding.class} hier nooit een defect?`}
-        className="w-64 rounded border border-slate-300 px-2 py-1 text-xs"
+        className="w-64"
       />
       {/* The count is the guard, so it is in the button and not beside it. There
           is no threshold that hides the section form on a page with many
@@ -213,6 +215,10 @@ function MuteForms({ finding, findings, note, setNote, onCancel, onPress }) {
  * A dismissal and a mute also close a finding, and neither is a claim of fact.
  * Their checkbox is disabled rather than ticked: ticking it would say the editor
  * corrected something they in fact accepted.
+ *
+ * It is shadcn's checkbox on Base UI since the library came in, and no longer a
+ * native `<input type="checkbox">`. That is why the tone below is a fill and no
+ * longer an `accent-*` utility.
  */
 function FixCheckbox({ finding, canWrite, onTick }) {
   const { state, occurrences } = finding;
@@ -224,12 +230,11 @@ function FixCheckbox({ finding, canWrite, onTick }) {
   const grouped = occurrences > 1 ? ` Eén vinkje vinkt alle ${occurrences} regels af.` : '';
 
   return (
-    <input
-      type="checkbox"
-      className={`size-4 shrink-0 disabled:opacity-40 ${contradicted ? ACCENT.attention : ACCENT.info}`}
+    <Checkbox
+      className={contradicted ? TICK.attention : TICK.info}
       checked={state === 'fixed' || contradicted}
       disabled={!canWrite || closedByJudgement}
-      onChange={(change) => onTick(change.target.checked)}
+      onCheckedChange={(ticked) => onTick(ticked)}
       aria-label={`Opgelost — ${finding.class}`}
       title={
         contradicted
@@ -240,12 +245,32 @@ function FixCheckbox({ finding, canWrite, onTick }) {
   );
 }
 
+/**
+ * The ticked tone of the checkbox above, and the one place in these two files where
+ * the palette has to out-shout shadcn rather than merely sit beside it.
+ *
+ * shadcn paints its own ticked state with `data-checked:bg-primary`. An attribute
+ * selector outranks a plain class, so a palette value handed over as `bg-info-ink`
+ * would lose, and `tailwind-merge` cannot dedupe the pair either — the two carry
+ * different variant modifiers and it reads them as different properties. So the
+ * tone is written with the **same** `data-checked:` prefix, and it wins on
+ * source order.
+ *
+ * The two entries are literals for the reason `palette.mjs` gives: Tailwind reads
+ * class names out of the source text, and a prefix assembled around a palette value
+ * at runtime is not in the source text. Their meaning is `ACCENT`'s — `info` for a
+ * claim that stands, `attention` for one a later observation contradicted — and
+ * they name the same two colours it names. `ACCENT` itself is now unused, and stays
+ * where it is: `palette.test.mjs` pins its keys, and `CHROME.headerMuted` is
+ * already an export nothing reads.
+ */
+const TICK = {
+  info: 'data-checked:border-info-ink data-checked:bg-info-ink data-checked:text-white dark:data-checked:bg-info-ink',
+  attention: 'data-checked:border-attention-fill data-checked:bg-attention-fill data-checked:text-attention-ink dark:data-checked:bg-attention-fill',
+};
+
 const Action = ({ children, ...props }) => (
-  <button
-    type="button"
-    {...props}
-    className="rounded border border-slate-300 px-1.5 py-0.5 text-[11px] text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-  >
+  <Button variant="outline" size="xs" {...props}>
     {children}
-  </button>
+  </Button>
 );

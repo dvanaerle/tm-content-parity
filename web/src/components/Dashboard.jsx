@@ -1,10 +1,18 @@
 import { useMemo, useState } from 'react';
 import { Bar, Chip, ClassFilterPills, FilterBanner } from './Chips.jsx';
 import { LogBanner } from './Progress.jsx';
-import Repeats from './Repeats.jsx';
+import { RepeatSections } from './Repeats.jsx';
 import Search from './Search.jsx';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
+import { Input } from './ui/input.jsx';
+import {
+  Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,
+} from './ui/select.jsx';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
 import { CHROME, INK } from '../lib/palette.mjs';
+import { cn } from '../lib/utils.js';
 import { useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
@@ -147,8 +155,8 @@ export default function Dashboard({
         />
       </section>
 
-      <section className="rounded border border-slate-200 bg-white">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+      <Card className="gap-0 py-0">
+        <CardHeader className="flex flex-wrap items-center justify-between gap-3 border-b py-3">
           <ClassFilterPills
             counts={Object.entries(totals.byClass)
               .sort((a, b) => b[1] - a[1])
@@ -165,104 +173,123 @@ export default function Dashboard({
                 the only list it could narrow. The page key is one of the six fields it
                 now searches, so the old question is still asked — and there is one box
                 on the screen rather than the two ticket 12 already cleaned up once. */}
-            <input
+            <Input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Zoek in de inhoud"
               title="Zoekt de teksten, de links, de kopjes en de paginanamen van deze winkel."
-              className="w-56 rounded border border-slate-300 px-2 py-1 text-sm"
+              className="w-56"
             />
             {/* The switch belongs to the two views, and a search answers past both of
                 them, so it steps aside while one is on screen. */}
             {!searching && <ViewSwitch view={view} onChange={setView} />}
             {!searching && view === 'pages' && (
-              <select
-                value={sort}
-                onChange={(event) => setSort(event.target.value)}
-                className="rounded border border-slate-300 px-2 py-1 text-sm"
-              >
-                <option value="worst">Meeste verschillen eerst</option>
-                <option value="name">Op naam</option>
-              </select>
+              // A native select works without JavaScript and this one does not. Nothing is
+              // lost: the control and its state already live inside a `client:load` island,
+              // so the sort was inert without JavaScript before this swap as well.
+              <Select value={sort} onValueChange={setSort} items={SORT_LABEL}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {Object.entries(SORT_LABEL).map(([name, label]) => (
+                      <SelectItem key={name} value={name}>{label}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             )}
           </div>
-        </header>
+        </CardHeader>
+        <CardContent className="px-0">
+          {searching && (
+            <Search
+              store={store}
+              pages={comparable}
+              term={query}
+              byFinding={byFinding}
+              events={log.events}
+              includeClosed={includeClosed}
+              onIncludeClosed={setIncludeClosed}
+            />
+          )}
 
-        {searching && (
-          <Search
-            store={store}
-            pages={comparable}
-            term={query}
-            byFinding={byFinding}
-            events={log.events}
-            includeClosed={includeClosed}
-            onIncludeClosed={setIncludeClosed}
-          />
-        )}
+          {!searching && classes.length > 0 && (
+            <FilterBanner onClear={() => setClasses([])} className="border-b px-4 py-2">
+              <strong>Gefilterd op {classes.join(', ')}.</strong>
+              {view === 'repeats'
+                ? `${shownRepeats.length} van ${repeats.length} verschillen.`
+                : `${rows.length} van ${comparable.length} pagina's.`}
+              {' '}De getallen hierboven tellen alles.
+            </FilterBanner>
+          )}
 
-        {!searching && classes.length > 0 && (
-          <FilterBanner onClear={() => setClasses([])} className="border-b px-4 py-2">
-            <strong>Gefilterd op {classes.join(', ')}.</strong>
-            {view === 'repeats'
-              ? `${shownRepeats.length} van ${repeats.length} verschillen.`
-              : `${rows.length} van ${comparable.length} pagina's.`}
-            {' '}De getallen hierboven tellen alles.
-          </FilterBanner>
-        )}
+          {!searching && view === 'repeats' && (
+            // Keyed on the filter, so a narrowed list starts at the top of its own
+            // rendering budget, with its sections open on the pills that narrowed it.
+            // A budget carried over from the wider list would say *100 van 100
+            // getekend* over a list of 12.
+            //
+            // Ticket 100: the rows arrive in sections by class. The list is already
+            // narrowed to the pills here, and the classes go along so the sections can
+            // draw the selected ones only — the same filter said once, to two things
+            // that must agree about it.
+            <RepeatSections
+              key={classes.join(',')}
+              repeats={shownRepeats}
+              classes={classes}
+              byFinding={byFinding}
+            />
+          )}
 
-        {!searching && view === 'repeats' && (
-          // Keyed on the filter, so a narrowed list starts at the top of its own
-          // rendering budget and with its rows closed. A budget carried over from the
-          // wider list would say *100 van 100 getekend* over a list of 12.
-          <Repeats key={classes.join(',')} repeats={shownRepeats} byFinding={byFinding} />
-        )}
-
-        {!searching && view === 'pages' && (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-left text-[11px] uppercase tracking-wide text-slate-500">
-              <th className="px-4 py-2 font-medium">Pagina</th>
-              <th className="w-40 px-4 py-2 font-medium">Open</th>
-              {CHECKS.map((check) => (
-                <th key={check} className="w-24 px-2 py-2 font-medium">{CHECK_LABEL[check]}</th>
-              ))}
-              <th className="w-24 px-4 py-2 font-medium">Verborgen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((page) => (
-              <tr key={`${page.store}/${page.page}`} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                <td className="px-4 py-2">
-                  <a className={`font-medium hover:underline ${CHROME.link}`} href={pageHref(page.store, page.page)}>
-                    {page.page}
-                  </a>
-                  <span className="ml-2 text-xs text-slate-400">{page.sides.production.units} blokken</span>
-                </td>
-                <td className="px-4 py-2">
-                  <Bar shown={openOf(page)} units={page.sides.production.units} />
-                  <span className={`ml-2 tabular-nums ${openOf(page) ? 'font-semibold' : INK.info}`}>
-                    {openOf(page)}
-                  </span>
-                  {barOf(page)?.closed > 0 && (
-                    <span className={`ml-1 text-xs ${INK.info}`}>+{barOf(page).closed} af</span>
-                  )}
-                </td>
+          {!searching && view === 'pages' && (
+          <Table>
+            <TableHeader>
+              <TableRow className="text-[11px] uppercase tracking-wide">
+                <TableHead className="px-4 text-muted-foreground">Pagina</TableHead>
+                <TableHead className="w-40 px-4 text-muted-foreground">Open</TableHead>
                 {CHECKS.map((check) => (
-                  <td key={check} className="px-2 py-2 tabular-nums text-slate-600">
-                    {page.summary.byCheck[check] ?? '—'}
-                  </td>
+                  <TableHead key={check} className="w-24 text-muted-foreground">{CHECK_LABEL[check]}</TableHead>
                 ))}
-                <td className="px-4 py-2 tabular-nums text-slate-400">{page.summary.hidden}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        )}
-        {!searching && view === 'pages' && rows.length === 0 && (
-          <p className="px-4 py-6 text-sm text-slate-500">Geen pagina gevonden.</p>
-        )}
-      </section>
+                <TableHead className="w-24 px-4 text-muted-foreground">Verborgen</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((page) => (
+                <TableRow key={`${page.store}/${page.page}`}>
+                  <TableCell className="px-4">
+                    <a className={cn('font-medium hover:underline', CHROME.link)} href={pageHref(page.store, page.page)}>
+                      {page.page}
+                    </a>
+                    <span className="ml-2 text-xs text-muted-foreground">{page.sides.production.units} blokken</span>
+                  </TableCell>
+                  <TableCell className="px-4">
+                    <Bar shown={openOf(page)} units={page.sides.production.units} />
+                    <span className={cn('ml-2 tabular-nums', openOf(page) ? 'font-semibold' : INK.info)}>
+                      {openOf(page)}
+                    </span>
+                    {barOf(page)?.closed > 0 && (
+                      <span className={cn('ml-1 text-xs', INK.info)}>+{barOf(page).closed} af</span>
+                    )}
+                  </TableCell>
+                  {CHECKS.map((check) => (
+                    <TableCell key={check} className="tabular-nums text-muted-foreground">
+                      {page.summary.byCheck[check] ?? '—'}
+                    </TableCell>
+                  ))}
+                  <TableCell className="px-4 tabular-nums text-muted-foreground">{page.summary.hidden}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          )}
+          {!searching && view === 'pages' && rows.length === 0 && (
+            <p className="px-4 py-6 text-sm text-muted-foreground">Geen pagina gevonden.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Aside
         title={`Eenzijdige pagina's (${oneSided.length})`}
@@ -271,7 +298,7 @@ export default function Dashboard({
         {oneSided.map((page) => (
           <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
             <a className={`hover:underline ${CHROME.link}`} href={pageHref(page.store, page.page)}>{page.page}</a>
-            <span className="text-slate-500">{page.skipReason}</span>
+            <span className="text-muted-foreground">{page.skipReason}</span>
           </li>
         ))}
       </Aside>
@@ -281,18 +308,18 @@ export default function Dashboard({
         note="Gevonden, geteld en zichtbaar, maar er is niets te vergelijken (ticket 56). De reden staat er per groep bij. Zichtbaar uitgesloten, niet stil weggelaten."
       >
         {groupNotChecked(notChecked).map((group) => (
-          <li key={group.key} className="border-t border-slate-100 py-2 first:border-0">
+          <li key={group.key} className="border-t py-2 first:border-0">
             <strong className="font-medium">
               {NOT_CHECKED_KIND[group.kind] ?? group.kind} ({group.pages.length})
             </strong>
-            <span className="block text-slate-500">{group.reason}</span>
-            <span className="mt-1 block text-slate-600">
+            <span className="block text-muted-foreground">{group.reason}</span>
+            <span className="mt-1 block text-muted-foreground">
               {group.pages.map((entry) => entry.page).join(', ')}
             </span>
           </li>
         ))}
         {notChecked.length === 0 && (
-          <li className="py-1 text-slate-500">Elke gevonden pagina van deze winkel wordt gecontroleerd.</li>
+          <li className="py-1 text-muted-foreground">Elke gevonden pagina van deze winkel wordt gecontroleerd.</li>
         )}
       </Aside>
 
@@ -303,8 +330,8 @@ export default function Dashboard({
         {regions.map((region) => (
           <li key={region.selector} className="py-1">
             <code className="font-medium">{region.selector}</code>
-            <span className="text-slate-500"> — {REGION_KIND[region.kind] ?? region.kind}. {region.reason}</span>
-            <span className="block text-slate-500">
+            <span className="text-muted-foreground"> — {REGION_KIND[region.kind] ?? region.kind}. {region.reason}</span>
+            <span className="block text-muted-foreground">
               {region.removedOn.production.pages === 0 && region.removedOn.new.pages === 0
                 ? 'In deze snapshot nergens weggehaald. Drie mogelijke oorzaken: deze winkel heeft de regio niet, de selector past niet meer, of de snapshot is ouder dan deze regel.'
                 : `Weggehaald op ${region.removedOn.production.pages} pagina's op productie `
@@ -323,25 +350,54 @@ export default function Dashboard({
  * The two readings of one store, and the tooltip that says what each one answers.
  * It is a switch and not a tab strip: a tab strip carries a badge per tab, and a
  * count of repeats beside a count of pages would read as two amounts of work.
+ *
+ * It is a single-selection `ToggleGroup`, which is what buys the arrow keys and the
+ * one Tab stop the hand-rolled row of buttons never had. A group with one value can
+ * be emptied by pressing the selected button, and a view that is neither of the two
+ * is not a state this screen has, so an empty change is ignored.
+ *
+ * Colour is still the palette's. shadcn tints the pressed item with `bg-muted` under
+ * an `aria-pressed:` prefix, which outranks a plain class, so that prefix is spent on
+ * `bg-transparent` and `CHROME.button` is left to draw the selected tone.
  */
+/**
+ * The selected segment's ground, written with the **same** `aria-pressed:` prefix that
+ * shadcn writes `aria-pressed:bg-muted` with, so `tailwind-merge` sees one group and
+ * the last one wins. Countering the grey with `aria-pressed:bg-transparent` and letting
+ * `CHROME.button` paint underneath does not work and is worth saying why: an attribute
+ * selector outranks a plain class, so the transparent ground beat the brand green and
+ * the white label was drawn on white. It was invisible, not wrong-coloured.
+ *
+ * The hexes are `CHROME.button`'s, transcribed rather than interpolated, because a
+ * prefix assembled around a palette value at runtime is a class name Tailwind never
+ * sees in the source text. `CHROME.button` stays the source of the meaning, and this
+ * constant has to move with it — the same bargain `OverrideControl.jsx` strikes for a
+ * checked box.
+ */
+const PRESSED_TONE = 'aria-pressed:bg-brand-green aria-pressed:hover:bg-brand-medium-green';
+
 function ViewSwitch({ view, onChange }) {
   return (
-    <div className="flex rounded border border-slate-300 text-sm">
-      {Object.entries(VIEW_LABEL).map(([name, { label, title }], index) => (
-        <button
+    <ToggleGroup
+      variant="outline"
+      spacing={0}
+      value={[view]}
+      onValueChange={(next) => next.length > 0 && onChange(next[0])}
+    >
+      {Object.entries(VIEW_LABEL).map(([name, { label, title }]) => (
+        <ToggleGroupItem
           key={name}
-          type="button"
-          aria-pressed={view === name}
+          value={name}
           title={title}
-          onClick={() => onChange(name)}
-          className={`px-2 py-1 ${index ? 'border-l border-slate-300' : ''} ${
-            view === name ? `${CHROME.button} text-white` : 'text-slate-600'
-          }`}
+          className={cn(
+            PRESSED_TONE,
+            view === name ? 'text-white hover:text-white' : 'text-muted-foreground',
+          )}
         >
           {label}
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
 
@@ -354,6 +410,12 @@ const VIEW_LABEL = {
     label: "Pagina's",
     title: 'Elke pagina van deze winkel, meeste verschillen eerst. Welke pagina open ik hierna?',
   },
+};
+
+/** The two orders the page list is read in, and the words the closed control shows. */
+const SORT_LABEL = {
+  worst: 'Meeste verschillen eerst',
+  name: 'Op naam',
 };
 
 /**
@@ -373,12 +435,12 @@ function RegionCoverage({ store, reason, changes }) {
 
   const scope = store ? `winkel ${store}` : 'alle winkels';
   return (
-    <li className="mt-2 border-t border-slate-200 pt-2">
+    <li className="mt-2 border-t pt-2">
       <strong className="font-medium">Vergeleken met de vorige snapshot ({scope})</strong>
       {reason
-        ? <span className="block text-slate-500">Niet vergeleken. {REGION_VERDICT_REASON}</span>
+        ? <span className="block text-muted-foreground">Niet vergeleken. {REGION_VERDICT_REASON}</span>
         : moved.map((change) => (
-          <span key={change.selector} className="block text-slate-500">
+          <span key={change.selector} className="block text-muted-foreground">
             <code>{change.selector}</code>
             {' — '}
             {REGION_VERDICT[change.verdict](change)}
@@ -430,10 +492,16 @@ const REGION_KIND = {
 
 function Aside({ title, note, children }) {
   return (
-    <section className="rounded border border-slate-200 bg-white p-4">
-      <h2 className="font-semibold">{title}</h2>
-      <p className="mb-2 text-sm text-slate-500">{note}</p>
-      <ul className="text-sm">{children}</ul>
-    </section>
+    <Card>
+      <CardHeader className="gap-2">
+        {/* `CardTitle` renders a div, and the heading is what puts these three panels
+            in the page's outline, so the h2 stays inside it. */}
+        <CardTitle><h2 className="font-semibold">{title}</h2></CardTitle>
+        <p className="text-sm text-muted-foreground">{note}</p>
+      </CardHeader>
+      <CardContent>
+        <ul className="text-sm">{children}</ul>
+      </CardContent>
+    </Card>
   );
 }

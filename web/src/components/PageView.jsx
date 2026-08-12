@@ -1,8 +1,11 @@
 import Ledger from './Ledger.jsx';
 import { EditorPrompt, LogBanner, PageBar, ReviewControl } from './Progress.jsx';
+import { Alert, AlertDescription } from './ui/alert.jsx';
+import { Button } from './ui/button.jsx';
 import { BANNER, CHROME } from '../lib/palette.mjs';
 import { useEditor, useOverrides } from '../lib/overrides.mjs';
 import { usePageReport, useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
+import { cn } from '../lib/utils.js';
 
 /**
  * The island that owns one store page.
@@ -41,14 +44,13 @@ export default function PageView({ report: built }) {
 
         {/* Feature detection: absent on the webhost, never broken. */}
         {recheckAvailable && (
-          <button
-            type="button"
+          <Button
             disabled={recheck.running}
             onClick={() => recheck.run(report.store, report.page)}
-            className={`rounded px-3 py-1.5 text-sm text-white disabled:opacity-50 ${CHROME.button}`}
+            className={cn('text-white', CHROME.button)}
           >
             {recheck.running ? 'Bezig met hercontrole…' : 'Hercontroleer'}
-          </button>
+          </Button>
         )}
 
         <EditorPrompt editor={editor} save={save} />
@@ -61,18 +63,29 @@ export default function PageView({ report: built }) {
         error={log.error}
       />
 
+      {/* An `Alert` and not the library's `variant="destructive"`: the tone of a
+          message is the palette's to say, and this one is `attention` — a condition
+          an editor decides about, not a loss. */}
       {recheck.error && (
-        <p className={`rounded border px-3 py-2 text-sm ${BANNER.attention}`}>
-          <strong>De hercontrole is niet uitgevoerd.</strong> {recheck.error} De pagina is
-          onveranderd gebleven.
-        </p>
+        <Alert className={BANNER.attention}>
+          {/* `text-current` because `AlertDescription` hard-codes `text-muted-foreground`,
+              which would repaint the banner's ink in the interface's grey and lose the
+              tone. The structure is worth keeping over dropping the description entirely:
+              it is what puts the message in the alert's accessible name. */}
+          <AlertDescription className="text-current">
+            <strong>De hercontrole is niet uitgevoerd.</strong> {recheck.error} De pagina is
+            onveranderd gebleven.
+          </AlertDescription>
+        </Alert>
       )}
 
       {log.connected && !editor && (
-        <p className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          Vul je naam in om af te vinken. Elke actie krijgt een naam, zodat niemand het
-          oordeel van een collega omgooit zonder te weten van wie het was.
-        </p>
+        <Alert className="bg-muted">
+          <AlertDescription>
+            Vul je naam in om af te vinken. Elke actie krijgt een naam, zodat niemand het
+            oordeel van een collega omgooit zonder te weten van wie het was.
+          </AlertDescription>
+        </Alert>
       )}
 
       <Ledger
@@ -84,7 +97,7 @@ export default function PageView({ report: built }) {
       />
 
       {/* A restored re-check must not look like a crawl result. */}
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         {source === 'recheck' ? 'Hercontrole van ' : 'Momentopname van '}
         {new Date(report.builtAt).toLocaleString('nl-NL')}
         {' · '}waarneming <code>{report.observationId}</code>

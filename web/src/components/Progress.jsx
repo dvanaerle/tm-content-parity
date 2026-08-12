@@ -8,6 +8,11 @@
  */
 
 import { BANNER, CHROME, FILL, INK, PILL } from '../lib/palette.mjs';
+import { Alert, AlertDescription } from './ui/alert.jsx';
+import { Badge } from './ui/badge.jsx';
+import { Button } from './ui/button.jsx';
+import { Input } from './ui/input.jsx';
+import { cn } from '../lib/utils.js';
 
 export function PageBar({ bar, ready }) {
   const percent = bar.denominator === 0 ? 100 : Math.round((bar.closed / bar.denominator) * 100);
@@ -22,24 +27,28 @@ export function PageBar({ bar, ready }) {
           afgehandeld` is the empty-read lie in another shape. The denominator is
           the snapshot's own and is true either way.
         */}
-        <span className="tabular-nums text-slate-600">
+        <span className="tabular-nums text-muted-foreground">
           {ready ? `${bar.closed} van ${bar.denominator} afgehandeld` : `${bar.denominator} verschillen`}
         </span>
-        {ready && <span className="tabular-nums text-slate-500">{bar.open} open</span>}
+        {ready && <span className="tabular-nums text-muted-foreground">{bar.open} open</span>}
         {ready && bar.contradicted > 0 && (
-          <span className={`tabular-nums ${INK.attention}`}>{bar.contradicted} nog niet opgelost</span>
+          <span className={cn('tabular-nums', INK.attention)}>{bar.contradicted} nog niet opgelost</span>
         )}
         {ready && bar.muted > 0 && (
           // A mute leaves the denominator, so it is reported beside the bar and
           // never inside it: "this is not a defect here" is not work done.
-          <span className="tabular-nums text-slate-400">{bar.muted} gedempt (buiten de teller)</span>
+          <span className="tabular-nums text-muted-foreground">{bar.muted} gedempt (buiten de teller)</span>
         )}
       </div>
-      <div className="h-2 w-full overflow-hidden rounded bg-slate-200">
+      {/* The bar stays hand-rolled. shadcn's `Progress` builds its own track and
+          indicator inside itself and exposes a `className` for the root only, so
+          `FILL.info` has nowhere to land — and the fill colour is the whole reason
+          this bar is here rather than a plain number. */}
+      <div className="h-2 w-full overflow-hidden rounded bg-muted">
         {/* Blue, not green. Work done is status, and ticket 35 keeps green for
             "the new site added this" and nothing else. */}
         <div
-          className={`h-full ${FILL.info} transition-[width]`}
+          className={cn('h-full transition-[width]', FILL.info)}
           style={{ width: ready ? `${percent}%` : '0%' }}
         />
       </div>
@@ -57,26 +66,28 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
   if (review) {
     return (
       <div className="flex items-center gap-2 text-xs">
-        <span className={`rounded px-2 py-1 ${review.fresh ? PILL.info : PILL.attention}`}>
+        <Badge className={review.fresh ? PILL.info : PILL.attention}>
           {review.fresh ? 'gecontroleerd' : 'gewijzigd sinds controle'} · {review.editor}
-        </span>
+        </Badge>
         {canWrite && (
-          <button
-            type="button"
+          <Button
+            variant="link"
+            size="xs"
             onClick={() => append({ scope: 'page', action: 'cleared' })}
-            className="text-slate-500 hover:underline"
+            className="px-0 text-muted-foreground"
           >
             intrekken
-          </button>
+          </Button>
         )}
         {canWrite && !review.fresh && (
-          <button
-            type="button"
+          <Button
+            variant="link"
+            size="xs"
             onClick={() => append({ scope: 'page', action: 'reviewed', findingSetHash })}
-            className={`hover:underline ${CHROME.link}`}
+            className={cn('px-0', CHROME.link)}
           >
             opnieuw markeren
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -84,13 +95,13 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
 
   if (!canWrite) return null;
   return (
-    <button
-      type="button"
+    <Button
+      variant="outline"
+      size="xs"
       onClick={() => append({ scope: 'page', action: 'reviewed', findingSetHash })}
-      className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
     >
       Pagina gecontroleerd
-    </button>
+    </Button>
   );
 }
 
@@ -105,15 +116,17 @@ export function EditorPrompt({ editor, save }) {
         if (String(value).trim()) save(String(value));
       }}
     >
-      <input
+      <Input
         name="editor"
         defaultValue={editor}
         placeholder="Je naam"
-        className="w-36 rounded border border-slate-300 px-2 py-1 text-xs"
+        className="w-36"
       />
-      <button type="submit" className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">
+      {/* Base UI's button is a `type="button"` by default, so the submit is
+          declared here rather than assumed. */}
+      <Button type="submit" variant="outline" size="xs">
         {editor ? 'Naam wijzigen' : 'Opslaan'}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -159,6 +172,14 @@ export function LogBanner({ connected, notConnectedReason, ready, error }) {
   return null;
 }
 
+/*
+ * shadcn's `Alert` gives the shape; the tone is `BANNER`'s, as ADR 0007 requires,
+ * so no `variant` is asked for here. `AlertDescription` paints itself
+ * `text-muted-foreground`, which would swallow the banner's own ink, so it is told
+ * to inherit instead.
+ */
 const Banner = ({ tone, children }) => (
-  <p className={`rounded border px-3 py-2 text-sm ${BANNER[tone]}`}>{children}</p>
+  <Alert className={BANNER[tone]}>
+    <AlertDescription className="text-inherit">{children}</AlertDescription>
+  </Alert>
 );

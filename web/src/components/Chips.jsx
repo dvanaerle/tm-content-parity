@@ -1,5 +1,21 @@
 import { classInfo } from '../lib/classes.mjs';
+import { cn } from '../lib/utils.js';
+import { Alert } from './ui/alert.jsx';
+import { Badge } from './ui/badge.jsx';
+import { Button } from './ui/button.jsx';
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
 import { BANNER, FILL, SOLID, severityTone } from '../lib/palette.mjs';
+
+/*
+ * Every chip in this file is a shadcn `Badge` for its shape and a palette token for
+ * its colour. Badge's own variants — `default`, `secondary`, `destructive` — are
+ * refused on purpose: they read from `--primary` and `--destructive`, and a class tone
+ * is not a brand colour and is not a status. `SOLID`, `PILL` and `FILL` are the only
+ * things that know what a class means, so they arrive through `className` and win.
+ *
+ * That is a deliberate breach of shadcn's own guidance that `className` is for layout
+ * and never for colour. ADR 0007 outranks it: the palette decides tone.
+ */
 
 /**
  * The count row from the won prototype: a number in bold, its label beside it.
@@ -8,10 +24,10 @@ import { BANNER, FILL, SOLID, severityTone } from '../lib/palette.mjs';
  */
 export function Chip({ value, label, tone = 'neutral', title }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs ${SOLID[tone]}`} title={title}>
+    <Badge className={cn('h-auto gap-1.5 px-2 py-1', SOLID[tone])} title={title}>
       <strong className="font-semibold">{value}</strong>
       <span className="opacity-80">{label}</span>
-    </span>
+    </Badge>
   );
 }
 
@@ -19,12 +35,12 @@ export function Chip({ value, label, tone = 'neutral', title }) {
 export function ClassPill({ class: cls }) {
   const info = classInfo(cls);
   return (
-    <span
-      className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wide ${info.pill}`}
+    <Badge
+      className={cn('h-auto px-1.5 py-0.5 text-[11px] uppercase tracking-wide', info.pill)}
       title={info.meaning}
     >
       {cls}
-    </span>
+    </Badge>
   );
 }
 
@@ -40,24 +56,46 @@ export function ClassPill({ class: cls }) {
  */
 export function ClassFilterPills({ counts, selected, onToggle, title }) {
   return (
-    <div className="flex flex-wrap items-center gap-1">
-      {counts.map(({ class: cls, count }) => {
-        const on = selected.includes(cls);
-        return (
-          <button
-            key={cls}
-            type="button"
-            aria-pressed={on}
-            onClick={() => onToggle(cls)}
-            title={title(cls, count)}
-            className={`inline-flex items-center gap-1 rounded ${on ? 'ring-2 ring-brand-lighter-green' : 'opacity-70 hover:opacity-100'}`}
-          >
-            <ClassPill class={cls} />
-            <span className="pr-1 text-xs tabular-nums text-slate-500">{count}</span>
-          </button>
-        );
-      })}
-    </div>
+    /*
+     * A `ToggleGroup` and not a row of buttons. The filter is a set — an editor may
+     * hold two classes at once — so `toggleMultiple` is on, and the group answers the
+     * arrow keys, which a row of separate buttons did not.
+     *
+     * `onToggle` still takes one class and the caller still owns the array. The group
+     * hands back the whole next selection, and the one class that moved is the
+     * difference between the two; deriving it here keeps every caller of this
+     * component unchanged.
+     */
+    <ToggleGroup
+      toggleMultiple
+      value={selected}
+      onValueChange={(next) => {
+        const moved = next.find((cls) => !selected.includes(cls)) ?? selected.find((cls) => !next.includes(cls));
+        if (moved !== undefined) onToggle(moved);
+      }}
+      className="flex-wrap"
+      spacing={1}
+    >
+      {counts.map(({ class: cls, count }) => (
+        <ToggleGroupItem
+          key={cls}
+          value={cls}
+          title={title(cls, count)}
+          className={cn(
+            'h-auto gap-1 px-0.5 py-0',
+            // The ring is the brand's, so it is written as a literal from the same
+            // place `CHROME` takes it. Base UI marks the pressed item with
+            // `data-pressed`, but the tone is chosen here rather than in a
+            // `data-pressed:` prefix, because the prefix would have to be assembled
+            // around a palette value at runtime and Tailwind cannot see such a name.
+            selected.includes(cls) ? 'ring-2 ring-brand-lighter-green' : 'opacity-70 hover:opacity-100',
+          )}
+        >
+          <ClassPill class={cls} />
+          <span className="pr-1 text-xs tabular-nums text-muted-foreground">{count}</span>
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 }
 
@@ -68,16 +106,16 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
  */
 export function FilterBanner({ onClear, className = '', children }) {
   return (
-    <p className={`flex flex-wrap items-center gap-2 text-sm ${BANNER.attention} ${className}`}>
+    /* `Alert` for the shape and `BANNER.attention` for the tone. Alert's `destructive`
+       variant is refused for the reason above: a live filter is a status, and status
+       never wears a diff hue. `border-current` on the button keeps the outline in the
+       banner's own ink rather than the interface's border grey. */
+    <Alert className={cn('flex flex-wrap items-center gap-2 text-sm', BANNER.attention, className)}>
       {children}
-      <button
-        type="button"
-        onClick={onClear}
-        className="rounded border border-current px-1.5 py-0.5 text-xs"
-      >
+      <Button variant="outline" size="xs" onClick={onClear} className="border-current bg-transparent">
         Filter wissen
-      </button>
-    </p>
+      </Button>
+    </Alert>
   );
 }
 
@@ -92,7 +130,16 @@ export function Bar({ shown, units }) {
   const scale = Math.max(units, shown, 1);
   const share = Math.min(1, shown / scale);
   return (
-    <span className="inline-flex h-1.5 w-24 overflow-hidden rounded bg-slate-200 align-middle">
+    /*
+     * The one thing in this file that stays hand-rolled, and the reason is the palette
+     * again. shadcn's `Progress` composes its own track and indicator internally and
+     * paints the indicator `bg-primary`; the fill here is `FILL[severityTone(share)]`,
+     * chosen per row, and there is no prop that reaches the indicator. Wrapping the
+     * palette class in a descendant selector would build the class name at runtime,
+     * which Tailwind cannot see. It is also not a progress bar: it is a 24-pixel
+     * sparkline sitting inline in a table cell, with no label and no value.
+     */
+    <span className="inline-flex h-1.5 w-24 overflow-hidden rounded bg-muted align-middle">
       <span
         className={`h-full ${FILL[severityTone(share)]}`}
         style={{ width: `${Math.round(share * 100)}%` }}

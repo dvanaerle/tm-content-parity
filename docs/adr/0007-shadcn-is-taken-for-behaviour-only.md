@@ -35,6 +35,39 @@ is for.
 - The repo is npm. Every shadcn command in the documentation is written with
   `pnpm dlx`, and here it is `npx`.
 
+## Amendment: shape is taken too, and tone still is not
+
+The first reading of this decision was too narrow, and the interface showed it. With
+seven primitives installed and one in use, the application still looked exactly as it
+had: hand-rolled tables, three accidental button shapes, native inputs, and a dozen
+panels that each redefined a border and a corner. "Behaviour only" had been read as
+"behaviour and nothing else", and the result was a library carried as a dependency and
+paid for in nothing.
+
+So the line moves, and it moves once: **shadcn owns shape and structure; the palette
+owns tone.** Every table, button, input, select, badge, panel, banner, divider and
+empty state is a shadcn primitive. Every colour that carries meaning is still a token
+from `palette.mjs`, handed to the primitive through `className`.
+
+This is not the rejected option below. The rejected option put shadcn's variables in
+charge of what a class tone means. Here they are in charge of what a border radius is,
+which is a question they can answer, and the three palette rules are untouched.
+
+Two things follow from it and are worth writing down:
+
+- **`className` carries colour, and shadcn's own guidance says it must not.** The
+  shadcn skill's first styling rule is that `className` is for layout and never for
+  a component's colour, and that a status colour should be a variant. Here it is
+  the opposite: `<Badge className={PILL[tone]}>` and `<Alert className={BANNER[tone]}>`
+  are the normal form. The rule exists to stop a design system fragmenting into
+  one-off colours. This repo has the same goal and already has a stricter mechanism
+  for it — a tested palette with three rules — so the rule is met by other means.
+- **A variant is refused wherever it would smuggle in a hue.** `Alert` and `Badge`
+  both ship a `destructive` variant. Nothing here uses it. A parity tool has red and
+  green already spent on *production has this* and *the new site added this*, and
+  palette rule 2 keeps them off status. Amber says look at this, and it comes from
+  `BANNER.attention`.
+
 ## Considered options
 
 - **Full adoption, shadcn's theme as the source of truth.** Rejected. It would
@@ -59,7 +92,21 @@ is for.
 - Custom UI stays custom for the content-parity concepts: the finding diff, the page
   group, the repeat, the history note and the bulk selection. No library has them, and
   the failure mode of adopting shadcn is rebuilding the diff out of parts that are
-  there.
+  there. The amendment above does not weaken this: `Diff.jsx` still decides what a
+  changed word looks like, and what it gained is a `TableCell` to sit in.
+- **The primitive list grew from seven to nineteen** when the amendment landed, adding
+  Badge, Input, Label, Card, Alert, Separator, Toggle, ToggleGroup, Collapsible,
+  Progress, Empty and Field. Each is a shape the interface was already drawing by
+  hand, and none of them is a decision about meaning. The count of npm packages did
+  not move: these are source files, and they arrived on the dependencies the seven
+  already brought.
+- **One thing stays hand-rolled inside a component that otherwise did not.** The
+  parity bar in `Chips.jsx` is not a shadcn `Progress`, because `Progress` composes
+  its own indicator and paints it `bg-primary`, and the fill here is chosen per row
+  from `FILL[severityTone(share)]`. There is no prop that reaches the indicator, and
+  wrapping the palette class in a descendant selector would assemble a class name at
+  runtime, which Tailwind cannot see. It is also a 24-pixel sparkline in a table cell
+  rather than a progress bar.
 
 ## Scope
 

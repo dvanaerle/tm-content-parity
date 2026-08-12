@@ -16,7 +16,7 @@ const stores = await storesInLog();
 <Shell title="Winkels">
   {
     stores.length === 0 ? (
-      <p class="text-slate-600">
+      <p class="text-muted-foreground">
         Nog geen rapporten in <code>data/reports/</code>. Draai
         <code>node crawl/21-crawl-store.mjs nl</code> en daarna
         <code>node compare/30-compare.mjs nl</code>.
@@ -24,14 +24,14 @@ const stores = await storesInLog();
     ) : (
       <>
         <h1 class="mb-2 text-xl font-semibold">Kies een winkel</h1>
-        <p class="mb-4 text-sm text-slate-600">
+        <p class="mb-4 text-sm text-muted-foreground">
           Elke winkel heeft zijn eigen overzicht en zijn eigen voortgang.
         </p>
         <ul class="space-y-1 text-sm">
           {stores.map((store) => (
             <li>
               <a class={`font-medium hover:underline ${CHROME.link}`} href={`/${store}/`}>{store}</a>
-              <span class="text-slate-500"> — {STORE_NAME[store]}</span>
+              <span class="text-muted-foreground"> — {STORE_NAME[store]}</span>
             </li>
           ))}
         </ul>

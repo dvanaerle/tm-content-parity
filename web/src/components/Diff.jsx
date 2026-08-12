@@ -1,5 +1,8 @@
 import { Fragment, useMemo, useState } from 'react';
 import { clampedSpans, isUncompared, spansFor, wordDiff } from '../../../compare/worddiff.mjs';
+import { cn } from '../lib/utils.js';
+import { Button } from './ui/button.jsx';
+import { TableCell } from './ui/table.jsx';
 import { SURFACE, TOKEN } from '../lib/palette.mjs';
 
 /**
@@ -51,7 +54,7 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
  * @param {boolean} [props.equal]  The caller compared the two sides and got equal, on
  *                                 values it does not show. Both cells stay plain.
  * @param {boolean} [props.clamped]  Show four lines, starting at the first difference.
- * @returns Two `<td>`s, for a caller that owns the `<tr>`.
+ * @returns Two `TableCell`s, for a caller that owns the `TableRow`.
  */
 export function DiffCells({
   prod,
@@ -134,19 +137,28 @@ const UNCOMPARED = 'Dit blok is te groot voor de woordvergelijking. Er is niets 
 
 /** @param {{ spans: import('../../../compare/worddiff.mjs').DiffSpan[] | null }} props */
 function Cell({ side, value, spans, tint, prefix, raw, mono, strong, clamped, note }) {
+  // `TableCell` defaults to `whitespace-nowrap align-middle`, which is right for a
+  // dashboard row and wrong for every cell here: these hold a paragraph of Dutch
+  // prose or a long url, and both must wrap and both must sit at the top of a row
+  // whose other cell may be four times as tall. The three overrides below are
+  // layout, and `cn()` resolves each of them against the default in the same group.
+  const shape = 'px-2 py-3 align-top whitespace-normal';
+
   if (value === null || value === '') {
-    return <td className="px-2 py-3 align-top text-sm italic text-slate-400">niet aanwezig</td>;
+    return <TableCell className={`${shape} text-sm italic text-muted-foreground`}>niet aanwezig</TableCell>;
   }
 
   return (
-    <td className={`break-words px-2 py-3 align-top ${tint ?? ''} ${mono ? 'font-mono text-xs' : 'text-sm'}`}>
+    <TableCell
+      className={cn(shape, 'break-words', tint, mono ? 'font-mono text-xs' : 'text-sm')}
+    >
       {prefix}
-      {note && <p className="mb-1 text-xs italic text-slate-500">{note}</p>}
+      {note && <p className="mb-1 text-xs italic text-muted-foreground">{note}</p>}
       <span className={`${strong ? 'font-semibold' : ''} ${clamped ? 'line-clamp-4' : ''}`}>
         {spans ? <Spans spans={spansFor(spans, side)} /> : value}
       </span>
       {raw !== null && raw !== value && <CopyButton text={raw} />}
-    </td>
+    </TableCell>
   );
 }
 
@@ -188,17 +200,18 @@ function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="xs"
       title={text}
       onClick={async () => {
         await navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 1200);
       }}
-      className="ml-2 align-middle text-[11px] text-slate-400 hover:text-slate-700"
+      className="ml-2 align-middle text-[11px] text-muted-foreground"
     >
       {copied ? 'gekopieerd' : 'kopieer letterlijk'}
-    </button>
+    </Button>
   );
 }

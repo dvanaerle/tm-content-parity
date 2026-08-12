@@ -1,6 +1,7 @@
 ---
 import PageView from '../../components/PageView.jsx';
 import Shell from '../../layouts/Shell.astro';
+import { Badge } from '../../components/ui/badge.jsx';
 import { loadReports } from '../../lib/reports.mjs';
 import { CHROME, PILL } from '../../lib/palette.mjs';
 
@@ -31,18 +32,22 @@ const { production, new: next } = report.sides;
 
     {/* The two count chips are gone: the bar in the island replaces them, because
         a count that ignores the overrides contradicts the one beside it. */}
+    {/* `Badge` with no `client:` directive. Astro renders a React component to static
+        HTML at build time unless one is given, so these three chips get the shadcn
+        shape and ship no JavaScript at all — which is what the rest of this header
+        already does. */}
     <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
-      <span class="rounded bg-slate-100 px-2 py-1 text-slate-600">
+      <Badge variant="secondary" className="h-auto gap-1 px-2 py-1">
         productie <strong>{production.status}</strong> · {production.elements.length} blokken
-      </span>
-      <span class="rounded bg-slate-100 px-2 py-1 text-slate-600">
+      </Badge>
+      <Badge variant="secondary" className="h-auto gap-1 px-2 py-1">
         nieuw <strong>{next.status}</strong> · {next.elements.length} blokken
-      </span>
+      </Badge>
       {
         (production.boundary !== 'main' || next.boundary !== 'main') && (
-          <span class={`rounded px-2 py-1 ${PILL.attention}`}>
+          <Badge className={`h-auto px-2 py-1 ${PILL.attention}`}>
             grens: productie {production.boundary}, nieuw {next.boundary}
-          </span>
+          </Badge>
         )
       }
     </div>

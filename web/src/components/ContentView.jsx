@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
+import { Button } from './ui/button.jsx';
+import { Checkbox } from './ui/checkbox.jsx';
+import { Empty, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
+import { Label } from './ui/label.jsx';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
+import { cn } from '../lib/utils.js';
 import { CHROME } from '../lib/palette.mjs';
 import {
   NO_FILTER,
@@ -69,7 +75,13 @@ export default function ContentView({ report, findings, showNoise, control }) {
         )}
 
         {rows.length === 0
-          ? <p className="py-6 text-sm text-slate-500">Geen regels in deze filter.</p>
+          ? (
+            <Empty className="py-6">
+              <EmptyHeader>
+                <EmptyDescription>Geen regels in deze filter.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )
           : <Rows rows={rows} control={control} sides={report.sides} />}
       </div>
     </div>
@@ -98,22 +110,24 @@ function Controls({ classes, filter, setFilter, production, next, page, store })
 
       {/* The inverse control. Matched rows are the default, because a tint only
           reads as a signal against untinted baseline. */}
-      <label
-        className={`flex items-center gap-2 text-sm ${differences.disabled ? 'text-slate-400' : 'text-slate-600'}`}
+      {/* Base UI's Checkbox hands back the value, not an event. The `peer` on the
+          control is what lets `Label` dim itself when the box is disabled, so the
+          conditional ink here only has to say what "enabled" looks like. */}
+      <Label
+        className={cn('font-normal', differences.disabled ? 'text-muted-foreground/60' : 'text-muted-foreground')}
         title={differences.disabled
           ? 'Een klassefilter toont altijd alleen verschillen.'
           : undefined}
       >
-        <input
-          type="checkbox"
+        <Checkbox
           checked={differences.checked}
           disabled={differences.disabled}
-          onChange={(event) => setFilter({ ...filter, onlyDifferences: event.target.checked })}
+          onCheckedChange={(checked) => setFilter({ ...filter, onlyDifferences: checked })}
         />
         Alleen verschillen
-      </label>
+      </Label>
 
-      <span className="ml-auto flex items-center gap-2 text-xs text-slate-500">
+      <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
         Markdown:
         <Export markdown={production.markdown} name={`${store}-${slug(page)}-productie.md`}>productie</Export>
         <Export markdown={next.markdown} name={`${store}-${slug(page)}-nieuw.md`}>nieuwe site</Export>
@@ -159,7 +173,7 @@ function Outline({ entries }) {
       aria-label="Koppen op deze pagina"
       className="max-h-[80vh] shrink-0 self-start overflow-auto lg:sticky lg:top-4 lg:w-56"
     >
-      <h3 className="mb-1 text-[11px] uppercase tracking-wide text-slate-500">Koppen</h3>
+      <h3 className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Koppen</h3>
       <ol className="space-y-0.5 text-sm">
         {entries.map((entry) => (
           <li key={entry.key} style={{ paddingLeft: `${(entry.level - 1) * 10}px` }}>
@@ -211,32 +225,35 @@ function Rows({ rows, control, sides }) {
   });
 
   return (
-    <table className="w-full table-fixed text-sm">
-      <thead>
-        <tr className="border-b border-slate-200 text-left text-[11px] uppercase tracking-wide text-slate-500">
-          <th className="w-56 px-2 py-2 font-medium">Status</th>
-          <th className="px-2 py-2 font-medium">
-            Productie <span className="normal-case text-slate-400">— bron van waarheid</span>
-          </th>
-          <th className="px-2 py-2 font-medium">Nieuwe site</th>
-        </tr>
-      </thead>
-      <tbody>
+    /* `table-fixed`, for the reason `Ledger.jsx` gives: an auto layout would let the
+       two comparison columns change width from row to row, and a diff whose columns
+       move is a diff a reader cannot scan. */
+    <Table className="table-fixed">
+      <TableHeader className="[&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
+        <TableRow>
+          <TableHead className="w-56">Status</TableHead>
+          <TableHead>
+            Productie <span className="normal-case opacity-70">— bron van waarheid</span>
+          </TableHead>
+          <TableHead>Nieuwe site</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {rows.map((row) => (
-          <tr
+          <TableRow
             key={row.key}
             id={row.key}
-            className="border-b border-slate-100 align-top scroll-mt-4 last:border-0"
+            className="align-top scroll-mt-4"
           >
-            <td className="px-2 py-3">
+            <TableCell className="px-2 py-3 align-top whitespace-normal">
               {row.class
                 ? <ClassPill class={row.class} />
-                : <span className="text-xs text-slate-400">gelijk</span>}
-              {row.score !== null && <span className="ml-2 text-xs text-slate-400">{row.score}</span>}
+                : <span className="text-xs text-muted-foreground">gelijk</span>}
+              {row.score !== null && <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>}
               <ClampControl open={open.has(row.key)} onToggle={() => toggle(row.key)} />
               <Occurrences count={row.finding?.occurrences} title={onePageTitle(row.finding?.occurrences)} />
               {row.finding && <div className="mt-1">{control(row.finding)}</div>}
-            </td>
+            </TableCell>
             <DiffCells
               prod={row.prod?.norm ?? null}
               new={row.new?.norm ?? null}
@@ -248,10 +265,10 @@ function Rows({ rows, control, sides }) {
               equal={row.equal}
               clamped={!open.has(row.key)}
             />
-          </tr>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 
@@ -271,15 +288,16 @@ function Rows({ rows, control, sides }) {
  */
 function ClampControl({ open, onToggle }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="xs"
       onClick={onToggle}
       aria-expanded={open}
       title={open ? 'Toon vier regels van dit blok' : 'Toon dit blok helemaal'}
-      className="ml-2 text-xs text-slate-400 hover:text-slate-700"
+      className="ml-2 text-xs font-normal text-muted-foreground"
     >
       {open ? 'vier regels' : 'hele blok'}
-    </button>
+    </Button>
   );
 }
 
