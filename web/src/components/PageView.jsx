@@ -29,7 +29,7 @@ export default function PageView({ report: built }) {
   const { derived, append, canWrite } = log;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 p-6">
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-64 flex-1">
           <PageBar bar={derived.bar} ready={log.ready} />

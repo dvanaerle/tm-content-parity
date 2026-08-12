@@ -181,7 +181,7 @@ function Spans({ spans }) {
     return (
       <Fragment key={index}>
         {before}
-        <Tag className={`rounded px-0.5 ${TOKEN[tone]}`}>{core}</Tag>
+        <Tag className={`rounded p-1 ${TOKEN[tone]}`}>{core}</Tag>
         {after}
       </Fragment>
     );

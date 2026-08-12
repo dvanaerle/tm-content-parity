@@ -7,10 +7,9 @@
  * Both are behaviour made visible, which is the whole reason ADR 0007 takes the
  * library at all.
  *
- * Fonts are self-hosted under `web/public/fonts/`, not fetched at runtime: this
+ * Fonts are self-hosted under `web/public/fonts/`, not fetched from a CDN: this
  * build is opened from outside the network. Articulat CF marks a changed word
- * (`ins` / `del`); Geist Mono (the Google Font) is the monospaced family for
- * machine strings.
+ * (`ins` / `del`); Geist Mono is the monospaced family for machine strings.
  */
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -106,7 +105,7 @@
   /* --- Brand ------------------------------------------------------------- */
   --color-brand: #003017;
   --color-brand-dark: #001a13;
-  --color-on-brand: #ffffff;
+  --color-on-brand: #fff;
 
   /*
    * --- Primary ------------------------------------------------------------ *
@@ -126,7 +125,7 @@
    * meanings get two names, and this is the one the styleguide means.
    */
   --color-brand-accent: #ff8000;
-  --color-on-brand-accent: #ffffff;
+  --color-on-brand-accent: #fff;
 
   /*
    * --- Surface ------------------------------------------------------------ *
@@ -141,7 +140,7 @@
   --color-on-surface: #003017;
 
   /* --- Text --------------------------------------------------------------- */
-  --color-text: #003017;
+  --color-text: var(--color-brand);
   --color-text-muted: #636363;
 
   /*
@@ -170,10 +169,10 @@
    * under `on-warning` is the quiet one, and solid `warning` under white is the loud
    * one. `palette.mjs` calls them `attention` and `severe`.
    */
-  --color-warning-subtle: #fffbeb;
-  --color-warning: #d97706;
-  --color-warning-text: #b45309;
-  --color-on-warning: #78350f;
+  --color-warning-subtle: var(--color-amber-50);
+  --color-warning: var(--color-amber-600);
+  --color-warning-text: var(--color-amber-700);
+  --color-on-warning: var(--color-amber-900);
 
   /*
    * --- Danger and Success ------------------------------------------------- *
@@ -184,14 +183,15 @@
    * cell. The word layer has to stay legible against the cell layer it sits inside,
    * which is the only reason there are three.
    */
-  --color-danger-subtle: #fef2f2;
-  --color-danger: #dc2626;
-  --color-danger-text: #b91c1c;
-  --color-on-danger-subtle: #7f1d1d;
-  --color-success-subtle: #f0fdf4;
-  --color-success: #16a34a;
-  --color-success-text: #15803d;
-  --color-on-success-subtle: #14532d;
+  --color-danger-subtle: var(--color-red-50);
+  --color-danger: var(--color-red-600);
+  --color-danger-text: var(--color-red-700);
+  --color-on-danger-subtle: var(--color-red-900);
+
+  --color-success-subtle: var(--color-green-50);
+  --color-success: var(--color-green-600);
+  --color-success-text: var(--color-green-700);
+  --color-on-success-subtle: var(--color-green-900);
 
   /*
    * --- Info --------------------------------------------------------------- *
@@ -199,16 +199,15 @@
    * for. A reader cannot read it as a direction, which is why it and not green
    * marks a resolved finding.
    */
-  --color-info-subtle: #f0f9ff;
-  --color-info: #0284c7;
-  --color-info-text: #0369a1;
-  --color-on-info-subtle: #0c4a6e;
+  --color-info-subtle: var(--color-sky-50);
+  --color-info: var(--color-sky-600);
+  --color-info-text: var(--color-sky-700);
+  --color-on-info-subtle: var(--color-sky-900);
 
   /*
    * The comparison cells. The styleguide has no monospaced family. Two strings that
-   * are almost the same align only in a monospaced family. Geist Mono is the Google
-   * Font, self-hosted under `public/fonts/` so a reader offline still gets it; the
-   * device stack behind it covers a missing file.
+   * are almost the same align only in a monospaced family. Geist Mono is self-hosted
+   * under `public/fonts/`; the device stack behind it covers a missing file.
    */
   --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'SF Mono',
     Menlo, Consolas, monospace;
@@ -275,11 +274,11 @@
    * Reading it as a breach of rule 1 would be the wrong reading: the rule keeps brand
    * colour off *findings*, and body ink is not a finding.
    */
-  --background: #fff5ed; /* Surface/surface */
+  --background: #fff; /* Surface/surface */
   --foreground: #003017; /* Text/text */
-  --card: #fff5ed; /* Surface/surface */
+  --card: #fff; /* Surface/surface */
   --card-foreground: #003017; /* Text/text */
-  --popover: #fff5ed; /* Surface/surface */
+  --popover: #fff; /* Surface/surface */
   --popover-foreground: #003017; /* Text/text */
 
   /*
@@ -288,8 +287,8 @@
    * this slot is the button. `Brand/brand` is `--color-brand` above and the chrome in
    * `palette.mjs` reads it from there.
    */
-  --primary: #809700; /* Primary/primary */
-  --primary-foreground: #ffffff; /* Primary/on-primary */
+  --primary: #003017; /* Primary/primary */
+  --primary-foreground: #fff; /* Primary/on-primary */
 
   /* See the block comment: a status, so amber and not red. */
   --destructive: #78350f; /* Warning/on-warning */
@@ -303,12 +302,12 @@
    * the same hex as the sand the header's muted ink uses, and that is not a collision
    * to fix — the styleguide spends one value on both jobs.
    */
-  --secondary: #f5e6d7; /* Surface/surface-raised */
-  --secondary-foreground: #003017; /* Surface/on-surface */
-  --muted: #f5e6d7; /* Surface/surface-raised */
-  --muted-foreground: #636363; /* Text/text-muted */
-  --accent: #f5e6d7; /* Surface/surface-raised */
-  --accent-foreground: #003017; /* Surface/on-surface */
+   --secondary: oklch(0.97 0 0);
+   --secondary-foreground: oklch(0.205 0 0);
+   --muted: oklch(0.97 0 0);
+   --muted-foreground: oklch(0.556 0 0);
+   --accent: oklch(0.97 0 0);
+   --accent-foreground: oklch(0.205 0 0);
 
   /* The border every table, card and panel in this interface wears. */
   --border: #e3e3e3; /* Border/border */

@@ -65,7 +65,7 @@ export function PageBar({ bar, ready }) {
 export function ReviewControl({ review, findingSetHash, append, canWrite }) {
   if (review) {
     return (
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
         <Badge className={review.fresh ? PILL.info : PILL.attention}>
           {review.fresh ? 'gecontroleerd' : 'gewijzigd sinds controle'} · {review.editor}
         </Badge>

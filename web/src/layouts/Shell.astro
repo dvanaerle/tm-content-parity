@@ -21,20 +21,26 @@ const stores = await storesInLog();
     <title>{title} — Content parity log</title>
     <slot name="head" />
   </head>
-  <body class="bg-muted text-foreground">
+  <body>
     {/*
       The one place brand colour is spent in the shell. Ticket 35: the header
       says "this is a Tuinmaximaal tool" and nothing about a finding, so the
       brand green stops at the bottom border of this element. The colours come
       from `CHROME`, because a literal here is a second place to change one.
     */}
-    <header class={`px-5 h-16 flex items-center ${CHROME.header}`}>
+    {/*
+      The inset gives way before the switcher does. Six store pills and a logo are a
+      fixed cost in a fixed-height bar — nothing here can wrap without breaking the
+      `h-16` — so on the narrowest phones the 20 pixels of padding are what yields.
+      At 320 the row overshot by 2 pixels and took the whole document sideways for it.
+    */}
+    <header class={`px-3 sm:px-5 h-16 flex items-center ${CHROME.header}`}>
       <a href={store ? `/${store}/` : '/'} aria-label="Content parity log" class="inline-block">
         <BrandLogo />
       </a>
       <StoreSwitcher stores={stores} store={store} />
     </header>
-    <main class="px-6 py-6">
+    <main>
       <slot />
     </main>
   </body>

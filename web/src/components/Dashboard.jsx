@@ -165,7 +165,7 @@ export default function Dashboard({
   }, [comparable, log.derived]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <LogBanner
         connected={log.connected}
         notConnectedReason={log.notConnectedReason}
@@ -189,8 +189,8 @@ export default function Dashboard({
       <section className="flex flex-wrap items-center gap-2">
         <Chip value={comparable.length} label="pagina's vergeleken" tone="dark" />
         <Chip value={totals.open} label="verschillen open" tone="attention" />
-        <Chip value={totals.closed} label="afgehandeld" tone="info" />
-        <Chip value={totals.clean} label="pagina's gelijk" tone="info" />
+        <Chip value={totals.closed} label="afgehandeld" tone="added" />
+        <Chip value={totals.clean} label="pagina's gelijk" tone="added" />
         {totals.contradicted > 0 && (
           <Chip
             value={totals.contradicted}

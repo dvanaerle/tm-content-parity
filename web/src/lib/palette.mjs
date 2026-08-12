@@ -53,10 +53,10 @@
 export const PILL = {
   lost: 'bg-danger-subtle text-danger-text',
   added: 'bg-success-subtle text-success-text',
-  severe: 'bg-warning text-white',
+  severe: 'bg-warning-subtle text-on-warning',
   attention: 'bg-warning-subtle text-on-warning',
   info: 'bg-info-subtle text-info-text',
-  neutral: 'bg-surface-strong text-text-muted',
+  neutral: 'bg-secondary text-secondary-foreground',
   dark: 'bg-border-strong text-white',
 };
 
@@ -143,8 +143,8 @@ export const SURFACE = {
  * needs no colour the styleguide does not publish.
  */
 export const TOKEN = {
-  lost: 'bg-danger-text text-white',
-  added: 'bg-success-text text-white',
+  lost: 'bg-danger-subtle text-on-danger-subtle',
+  added: 'bg-success-subtle text-on-success-subtle',
 };
 
 /**

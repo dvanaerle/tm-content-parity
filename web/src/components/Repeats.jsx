@@ -499,7 +499,7 @@ function SelectAll({ repeat, selected, onTickAll }) {
  */
 function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, refuses, searched }) {
   return (
-    <div className="border-t border-border bg-muted/50 px-4 py-2 text-sm">
+    <div className="border-t border-border bg-muted px-4 py-2 text-sm">
       <Table>
         {/* Under a search these are the **matching** pages and a difference may be on
             more: `searchStore()` builds its repeats out of matched findings only, and a

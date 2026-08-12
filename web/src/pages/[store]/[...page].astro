@@ -21,7 +21,7 @@ const { production, new: next } = report.sides;
 ---
 
 <Shell title={`${report.store} — ${report.page}`} store={report.store}>
-  <header class="mb-4">
+  <header class="p-6 bg-surface">
     <!-- Where this page sits, and the way back out of it (ticket 109). It replaces the
          lone *← alle pagina's van nl* link, which pointed at the bare store and so threw
          away the pills, the view and the search term. It is a `client:load` island only
@@ -43,10 +43,10 @@ const { production, new: next } = report.sides;
         shape and ship no JavaScript at all — which is what the rest of this header
         already does. */}
     <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
-      <Badge variant="secondary" className="h-auto gap-1 px-2 py-1">
+      <Badge variant="outline" className="h-auto gap-1 px-2 py-1">
         productie <strong>{production.status}</strong> · {production.elements.length} blokken
       </Badge>
-      <Badge variant="secondary" className="h-auto gap-1 px-2 py-1">
+      <Badge variant="outline" className="h-auto gap-1 px-2 py-1">
         nieuw <strong>{next.status}</strong> · {next.elements.length} blokken
       </Badge>
       {

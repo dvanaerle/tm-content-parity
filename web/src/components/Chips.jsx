@@ -4,7 +4,7 @@ import { Alert } from './ui/alert.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
-import { BANNER, FILL, SOLID, severityTone } from '../lib/palette.mjs';
+import { BANNER, FILL, PILL, SOLID, severityTone } from '../lib/palette.mjs';
 
 /*
  * Every chip in this file is a shadcn `Badge` for its shape and a palette token for
@@ -24,7 +24,7 @@ import { BANNER, FILL, SOLID, severityTone } from '../lib/palette.mjs';
  */
 export function Chip({ value, label, tone = 'neutral', title }) {
   return (
-    <Badge className={cn('h-auto gap-1.5 px-2 py-1', SOLID[tone])} title={title}>
+    <Badge className={cn('h-auto gap-1.5 px-2 py-1', PILL[tone])} title={title}>
       <strong className="font-semibold">{value}</strong>
       <span className="opacity-80">{label}</span>
     </Badge>
