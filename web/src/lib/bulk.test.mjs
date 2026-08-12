@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bulkDismissal, bulkMute } from './bulk.mjs';
+import { bulkDismissal, bulkMute, offersDismissal, refusesMute } from './bulk.mjs';
 
 /** A repeat as `repeatsInStore()` returns it, narrowed to what this file reads. */
 const repeat = (on) => ({
@@ -215,6 +215,150 @@ describe('bulkMute', () => {
     expect(decision.events).toEqual([]);
     expect(decision.offered).toBe(true);
     expect(decision.covers).toBe(1);
+  });
+});
+
+/**
+ * Ticket 110: the press covers the pages that were ticked, and the seam below the
+ * component line is one narrowed list of pages.
+ *
+ * `selected` is a set of **finding ids** and not of page names. A page name is unique
+ * within a repeat, but the id is what a row is keyed on and what an event is aimed at, so
+ * keying the selection on it is one lookup fewer between the tick and the write.
+ *
+ * An absent `selected` still means every page of the repeat. That is not a fallback for
+ * the interface — nothing there presses without a selection any more — it is what keeps
+ * the twelve tests above about the same functions these are about.
+ */
+describe('a press narrowed to the ticked pages', () => {
+  const three = repeat([on('overkapping', 'f1'), on('veranda', 'f2'), on('carport', 'f3')]);
+  const open3 = byFinding({ f1: 'open', f2: 'open', f3: 'open' });
+
+  it('dismisses the ticked pages and no others', () => {
+    const decision = bulkDismissal({
+      repeat: three,
+      byFinding: open3,
+      note: 'geen defect',
+      selected: new Set(['f1', 'f3']),
+    });
+
+    expect(decision.covers).toBe(2);
+    expect(decision.events.map((event) => event.page)).toEqual(['overkapping', 'carport']);
+  });
+
+  // The second number is counted over the **selection** and not over the repeat: it says
+  // how many of the pages this press was aimed at are already decided, so it has to be
+  // out of the same total the first number is.
+  it('counts the already-decided against the selection, not against the repeat', () => {
+    const decision = bulkDismissal({
+      repeat: three,
+      byFinding: byFinding({ f1: 'open', f2: 'dismissed', f3: 'muted' }),
+      note: 'geen defect',
+      selected: new Set(['f1', 'f2']),
+    });
+
+    expect(decision.covers).toBe(1);
+    expect(decision.decided).toBe(1);
+  });
+
+  it('mutes only the sections the ticked pages carry it under', () => {
+    const decision = bulkMute({
+      repeat: three,
+      byFinding: new Map([
+        ['f1', { id: 'f1', state: 'open', shown: true, class: 'copy', anchorHeading: 'Afmetingen' }],
+        ['f2', { id: 'f2', state: 'open', shown: true, class: 'copy', anchorHeading: 'Levering' }],
+        ['f3', { id: 'f3', state: 'open', shown: true, class: 'copy', anchorHeading: 'Montage' }],
+      ]),
+      findingsByPage: new Map([
+        ['nl/overkapping', [finding('f1', 'copy', 'Afmetingen')]],
+        ['nl/veranda', [finding('f2', 'copy', 'Levering')]],
+        ['nl/carport', [finding('f3', 'copy', 'Montage')]],
+      ]),
+      note: 'hoort hier niet',
+      selected: new Set(['f1', 'f2']),
+    });
+
+    expect(decision.pages).toBe(2);
+    expect(decision.covers).toBe(2);
+    expect(decision.sections).toEqual(['Afmetingen', 'Levering']);
+    expect(decision.events.map((event) => event.page)).toEqual(['overkapping', 'veranda']);
+    // The gap between the two numbers is what makes a mute a mute, and both halves of it
+    // are over the selection: the unticked third page is neither hidden nor counted.
+    expect(decision.difference).toBe(2);
+  });
+
+  // The wall ticket 110 exists to turn into *not this page*: one page of twelve carries
+  // the difference before the first heading and refuses the mute for all twelve. Unticking
+  // exactly that page offers the press.
+  it('offers a mute the unticked page was refusing', () => {
+    const input = {
+      repeat: three,
+      byFinding: new Map([
+        ['f1', { id: 'f1', state: 'open', shown: true, class: 'copy', anchorHeading: 'Afmetingen' }],
+        ['f2', { id: 'f2', state: 'open', shown: true, class: 'copy', anchorHeading: null }],
+        ['f3', { id: 'f3', state: 'open', shown: true, class: 'copy', anchorHeading: 'Montage' }],
+      ]),
+      findingsByPage: new Map(),
+      note: 'hoort hier niet',
+    };
+
+    expect(bulkMute(input).offered).toBe(false);
+    expect(bulkMute({ ...input, selected: new Set(['f1', 'f3']) }).offered).toBe(true);
+  });
+
+  // The refusal names a count and the list has to name the rows, or *untick the ones that
+  // refuse* is a puzzle. It is asked over the whole repeat and not over the selection: the
+  // mark is on a row of the list, and the row is there whether it is ticked or not.
+  //
+  // It is keyed on the finding id, like the selection beside it, and it carries **which**
+  // of the two obstacles the row has. `bulkMute()` refuses the two in different words
+  // because they call for different work — a reload against a judgement made per page —
+  // and a mark that merged them would tell one of the two rows something untrue.
+  it('names the pages that refuse a mute and why, so the list can mark them', () => {
+    const marks = refusesMute({
+      repeat: three,
+      byFinding: new Map([
+        ['f1', { id: 'f1', anchorHeading: 'Afmetingen' }],
+        ['f2', { id: 'f2', anchorHeading: null }],
+        // `f3` is absent: the screen is older than the log, so its section is unknown.
+      ]),
+    });
+
+    expect(marks.get('f1')).toBeUndefined();
+    expect(marks.get('f2')).toBe('headless');
+    expect(marks.get('f3')).toBe('unknown');
+  });
+
+  // The select-all ticks what a dismissal is offered on, so the checkbox and the press
+  // read one rule. A page a colleague decided is drawn with its state and left alone.
+  it('agrees with the dismissal about which findings a select-all may tick', () => {
+    expect(offersDismissal({ state: 'open' })).toBe(true);
+    expect(offersDismissal({ state: 'contradicted' })).toBe(true);
+    expect(offersDismissal({ state: 'dismissed' })).toBe(false);
+    expect(offersDismissal({ state: 'fixed' })).toBe(false);
+    // A finding the log has not decided, which is what a search result is before the log
+    // has an answer about it.
+    expect(offersDismissal(undefined)).toBe(true);
+  });
+
+  // An empty set is a selection and not a missing one, so it narrows to nothing. The bar
+  // above it is not drawn at all in that state, and this is what makes that safe rather
+  // than merely tidy: were it to read as *no selection given*, an editor unticking their
+  // last page would arm a press over the whole repeat.
+  it('presses nothing at all on an empty selection', () => {
+    const empty = new Set();
+
+    expect(bulkDismissal({
+      repeat: three, byFinding: open3, note: 'geen defect', selected: empty,
+    })).toMatchObject({ covers: 0, decided: 0, events: [] });
+
+    expect(bulkMute({
+      repeat: three,
+      byFinding: open3,
+      findingsByPage: new Map(),
+      note: 'hoort hier niet',
+      selected: empty,
+    })).toMatchObject({ pages: 0, covers: 0, events: [] });
   });
 });
 

@@ -14,10 +14,18 @@ import { cn } from '../lib/utils.js';
  * scope: a repeat is a grouping the interface makes, it has no identity to key on, and
  * ticket 09 settled that a bulk write is N page-scoped events. The table gains nothing.
  *
- * It lives in the **opened** repeat and never in its header row, for two reasons. The
- * header is entirely a `CollapsibleTrigger`, so a button inside it would be swallowed by
- * the toggle. And the pages this decision covers are listed directly above it — an editor
- * reads the list, then decides about it, which is the order the decision is made in.
+ * **On the pages that were ticked** since ticket 110, and only on those. It was
+ * all-or-nothing before: the buttons were always on screen and always meant *all ten*, so
+ * an editor who disagreed about one page had to abandon the bulk press and decide ten
+ * pages one at a time. This is the same press with a selection in front of it, and it
+ * **replaces** the whole-repeat one rather than sitting beside it — two ways to press one
+ * thing, differing only in whether you ticked first, is the doubling this project keeps
+ * deleting.
+ *
+ * So it is drawn only when something is ticked, and it is drawn **below** the difference
+ * rather than inside its opened panel: the tick on the difference row selects pages an
+ * editor has not necessarily seen, and a press that lived in the panel would then be armed
+ * and out of sight.
  *
  * Every sentence here exists because the press is easy to misread:
  *
@@ -30,7 +38,7 @@ import { cn } from '../lib/utils.js';
  *   repeats are on one page. This control is not the thirty-page tool its ticket opened
  *   by describing, and it must not imply that it is.
  */
-export default function BulkControl({ repeat, byFinding, bulk }) {
+export default function BulkControl({ repeat, byFinding, bulk, selected, onClear, searched }) {
   /** @type {['dismiss' | 'mute' | null, Function]} */
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
@@ -38,13 +46,15 @@ export default function BulkControl({ repeat, byFinding, bulk }) {
   const [report, setReport] = useState(/** @type {null | { written: number, total: number, failedOn: string | null }} */ (null));
 
   const dismissal = useMemo(
-    () => bulkDismissal({ repeat, byFinding, note }),
-    [repeat, byFinding, note],
+    () => bulkDismissal({ repeat, byFinding, note, selected }),
+    [repeat, byFinding, note, selected],
   );
 
   const mute = useMemo(
-    () => bulkMute({ repeat, byFinding, findingsByPage: bulk?.findingsByPage ?? new Map(), note }),
-    [repeat, byFinding, bulk?.findingsByPage, note],
+    () => bulkMute({
+      repeat, byFinding, findingsByPage: bulk?.findingsByPage ?? new Map(), note, selected,
+    }),
+    [repeat, byFinding, bulk?.findingsByPage, note, selected],
   );
 
   const close = () => { setAsking(null); setNote(''); };
@@ -63,7 +73,9 @@ export default function BulkControl({ repeat, byFinding, bulk }) {
   };
 
   return (
-    <div className="border-t border-border px-4 py-2">
+    <div data-slot="bulk-bar" className="border-t border-border px-4 py-2">
+      <Selection repeat={repeat} count={selected.size} onClear={onClear} searched={searched} />
+
       {report && <Report {...report} />}
 
       {!bulk?.canWrite && <NotWriting reason={bulk?.notWritingReason} />}
@@ -111,7 +123,7 @@ export default function BulkControl({ repeat, byFinding, bulk }) {
           className="flex flex-col gap-2"
           onSubmit={(submit) => { submit.preventDefault(); press(dismissal.events); }}
         >
-          <Covers dismissal={dismissal} pages={repeat.on.length} />
+          <Covers dismissal={dismissal} />
           <div className="flex flex-wrap items-center gap-1">
             <Input
               autoFocus
@@ -146,6 +158,7 @@ export default function BulkControl({ repeat, byFinding, bulk }) {
         <MuteForm
           mute={mute}
           repeat={repeat}
+          decided={dismissal.decided}
           note={note}
           setNote={setNote}
           busy={bulk.busy}
@@ -156,6 +169,41 @@ export default function BulkControl({ repeat, byFinding, bulk }) {
     </div>
   );
 }
+
+/**
+ * What is ticked, and **which difference** it is ticked on (ticket 110).
+ *
+ * The second half is not decoration. A tick on the difference row selects pages an editor
+ * has not necessarily seen, several differences can carry ticks at once, and a bar that
+ * said only *2 geselecteerd* would be a number with no subject. So it repeats the words of
+ * its own difference, in one line, the way the row above it states them.
+ */
+const Selection = ({ repeat, count, onClear, searched }) => (
+  <>
+    <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <span>
+        <strong className="font-medium tabular-nums text-foreground">
+          {count} van {repeat.on.length} {repeat.on.length === 1 ? 'pagina' : "pagina's"}
+        </strong>{' '}
+        geselecteerd op <ClassWord class={repeat.class} />{' '}
+        <span className="text-foreground">{repeat.prod ?? '—'} → {repeat.new ?? '—'}</span>
+      </span>
+      {/* Unticking ten rows one at a time is the work this control exists to remove, so
+          putting it down costs one press as well. */}
+      <Button type="button" variant="outline" size="xs" onClick={onClear}>Selectie wissen</Button>
+    </p>
+
+    {/* Said here and not only under the page list, because the tick on the difference row
+        works on a **closed** row: an editor can arm a press on ten matching pages having
+        seen no page list at all, and a caption under a table nobody opened is silence. */}
+    {searched && (
+      <p className="text-xs text-muted-foreground">
+        Dit zijn de pagina&rsquo;s waarop de zoekterm is gevonden. Dit verschil kan op meer
+        pagina&rsquo;s staan; die staan hier niet en worden niet mee beslist.
+      </p>
+    )}
+  </>
+);
 
 /**
  * What the two buttons differ in, said where the editor chooses between them.
@@ -200,7 +248,12 @@ const Choice = ({ canDismiss }) => (
  * twice: a dismissal is keyed on the finding id, so it dies the day either text changes,
  * and it says nothing about a page the next crawl finds.
  */
-function Covers({ dismissal, pages }) {
+function Covers({ dismissal }) {
+  // The total is the seam's own two numbers added, and never the repeat's size or a second
+  // reading of the selection: the sentence has to count the same pages the events do
+  // (ticket 110), and one arithmetic in one place is how it cannot drift.
+  const pages = dismissal.covers + dismissal.decided;
+
   return (
     <p className="text-xs text-muted-foreground">
       <strong className="font-medium tabular-nums text-foreground">
@@ -268,7 +321,7 @@ function Report({ written, total, failedOn, error }) {
  * When the mute is refused it draws the refusal and nothing else: `bulkMute()` decides
  * that, and its two sentences name the two different obstacles.
  */
-function MuteForm({ mute, repeat, note, setNote, busy, onCancel, onPress }) {
+function MuteForm({ mute, repeat, decided, note, setNote, busy, onCancel, onPress }) {
   if (!mute.offered) {
     return (
       <div className="flex flex-col gap-2">
@@ -298,6 +351,8 @@ function MuteForm({ mute, repeat, note, setNote, busy, onCancel, onPress }) {
         afgehandeld.
       </p>
 
+      <TwoEligibilities decided={decided} />
+
       <div className="flex flex-wrap items-center gap-1">
         <Input
           autoFocus
@@ -323,6 +378,29 @@ function MuteForm({ mute, repeat, note, setNote, busy, onCancel, onPress }) {
     </div>
   );
 }
+
+/**
+ * One selection, two presses, two eligibilities — said out loud where the two disagree
+ * (ticket 110).
+ *
+ * A dismissal may not touch a finding a colleague decided, and it skips it. A mute's
+ * coverage deliberately **includes** it, because `muteCoverage()` counts what a key covers
+ * and not what it changes (ADR 0008). So the same ticked row is left alone by one press
+ * and counted by the other, and the honest thing is to name the gap rather than close it:
+ * the two are not measuring the same thing, and making them agree would make one of them
+ * wrong.
+ */
+const TwoEligibilities = ({ decided }) => (
+  decided > 0
+    ? (
+      <p className="text-xs text-muted-foreground">
+        {decided} van deze pagina&rsquo;s {decided === 1 ? 'draagt' : 'dragen'} een
+        bevinding die al beslist is. Negeren slaat die over; hier telt dempen die mee, want
+        het dempt de soort in die sectie en niet deze twee teksten.
+      </p>
+    )
+    : null
+);
 
 /**
  * The class named inside a sentence, in words rather than as a pill. The pill is a

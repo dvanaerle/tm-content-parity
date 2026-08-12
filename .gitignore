@@ -20,3 +20,6 @@ dist/
 skills-lock.json
 # Snapshots and console logs the browser tooling writes while a page is driven.
 .playwright-mcp/
+# What the browser vitest project writes when a component test fails. It is an
+# artefact of one run, not evidence: the test that produced it is the record.
+__screenshots__/

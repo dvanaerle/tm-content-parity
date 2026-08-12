@@ -6,7 +6,12 @@ import { ClassPill } from './Chips.jsx';
 import { STATE } from './OverrideControl.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
+import { Checkbox } from './ui/checkbox.jsx';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible.jsx';
+import {
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,
+} from './ui/table.jsx';
+import { offersDismissal, refusesMute } from '../lib/bulk.mjs';
 import { CHROME, INK, PILL } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
@@ -34,12 +39,18 @@ import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
  * decision on a repeat is still one decision per finding — every number here says how
  * much is *decided*, and none of them counts down to an empty list.
  */
-export default function Repeats({ repeats, byFinding, bulk, link }) {
+export default function Repeats({ repeats, byFinding, bulk, link, searched = false }) {
   if (repeats.length === 0) return <NoRepeats />;
 
   return (
     <>
-      <RowList repeats={repeats} byFinding={byFinding} bulk={bulk} link={link} />
+      <RowList
+        repeats={repeats}
+        byFinding={byFinding}
+        bulk={bulk}
+        link={link}
+        searched={searched}
+      />
       <Total repeats={repeats} />
     </>
   );
@@ -141,7 +152,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, 
   return (
     <li className="border-b border-border last:border-0">
       <Collapsible open={open} onOpenChange={onToggle}>
-        <CollapsibleTrigger className="flex w-full items-center gap-2 bg-muted/40 px-4 py-2 text-left text-sm hover:bg-muted">
+        <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-muted">
           <span aria-hidden className="w-3 text-muted-foreground">{open ? '▾' : '▸'}</span>
           <ClassPill class={group.class} />
           {/* The count is this group's own rows and nothing summed from elsewhere.
@@ -181,7 +192,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, 
  * which is the flat list a search draws. A list that is never taken off screen cannot lose
  * its paging, so there is nothing above it to hold.
  */
-function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw }) {
+function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw, searched = false }) {
   const [held, setHeld] = useState(PAGE_SIZE);
   const drawn = given ?? held;
   const draw = (next) => (onDraw ? onDraw(next) : setHeld(next));
@@ -190,7 +201,14 @@ function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw }) {
     <>
       <ul className="text-sm">
         {repeats.slice(0, drawn).map((repeat) => (
-          <Row key={repeat.key} repeat={repeat} byFinding={byFinding} bulk={bulk} link={link} />
+          <Row
+            key={repeat.key}
+            repeat={repeat}
+            byFinding={byFinding}
+            bulk={bulk}
+            link={link}
+            searched={searched}
+          />
         ))}
       </ul>
 
@@ -241,8 +259,36 @@ const PAGE_SIZE = 100;
 const acrossPagesTitle = (repeat) => `${repeat.occurrences} keer in totaal, op ${repeat.on.length} `
   + "pagina's. Op sommige van die pagina's staat het verschil meer dan één keer.";
 
-function Row({ repeat, byFinding, bulk, link }) {
+function Row({ repeat, byFinding, bulk, link, searched }) {
   const [open, setOpen] = useState(false);
+
+  /**
+   * The ticked pages, as finding ids (ticket 110).
+   *
+   * A difference opens with nothing ticked: selection is something an editor does and
+   * never something they arrive at, and a press pre-aimed at ten pages is the all-or-
+   * nothing control this replaces.
+   */
+  const [selected, setSelected] = useState(() => new Set());
+
+  const tick = (id, on) => setSelected((held) => {
+    const next = new Set(held);
+    if (on) next.add(id); else next.delete(id);
+    return next;
+  });
+
+  /** The pages a select-all ticks, held once: the tick reads it and the press arms on it. */
+  const selectable = useMemo(() => selectableOf(repeat, byFinding), [repeat, byFinding]);
+
+  const tickAll = (on) => setSelected(on ? new Set(selectable) : new Set());
+
+  /**
+   * The pages of this difference a bulk mute cannot be pressed on — the same rule the
+   * press applies, asked so the list can mark them. One page of twelve refuses the mute
+   * for all twelve, and *untick the ones that refuse* is only an instruction if the rows
+   * say which they are.
+   */
+  const refuses = useMemo(() => refusesMute({ repeat, byFinding }), [repeat, byFinding]);
 
   // The same four rules the page bar obeys, over this difference's findings: a mute
   // leaves the denominator, a dismissal enters the numerator, and a contradicted
@@ -256,77 +302,257 @@ function Row({ repeat, byFinding, bulk, link }) {
 
   return (
     <li className="border-b border-border last:border-0">
-      {/* The trigger is the whole row, and `Collapsible` is what writes the
-          `aria-expanded` this markup used to carry by hand — the state below still
-          decides, and the library only draws it. */}
-      <Collapsible open={open} onOpenChange={(next) => setOpen(next)}>
-        <CollapsibleTrigger className="flex w-full flex-wrap items-start gap-2 px-4 py-2 text-left hover:bg-muted">
+      {/* The trigger was the whole row until ticket 110 and it is now the row **beside
+          the tick**. That is the one place in this ticket where the obvious markup is
+          wrong: a checkbox inside the trigger is swallowed — the click opens the
+          difference instead of ticking it, or does both — and it is not even valid, since
+          both are buttons and a button inside a button is not one. So the two are
+          siblings, the hover moves to the pair, and each keeps its own keyboard: Space and
+          Enter on the row mean *open*, Space on the tick means *tick*.
+
+          `Collapsible` is still what writes the `aria-expanded` this markup used to carry
+          by hand — the state below decides, and the library draws it. */}
+      <Collapsible
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          // Closing the difference puts the selection down: it is a question about one
+          // press and not a state of the queue. A tick made **while** it is closed
+          // survives, because no close happened — that is the row-level tick doing what
+          // it is for.
+          if (!next) setSelected(new Set());
+        }}
+      >
+        <div className="flex w-full items-start gap-2 px-4 py-2 hover:bg-muted">
           <span className="mt-0.5 shrink-0">
-            <ClassPill class={repeat.class} />
-            <Detail detail={repeat.detail} />
-            <MatchedFields fields={repeat.fields} />
+            <SelectAll repeat={repeat} selected={selected} onTickAll={tickAll} />
           </span>
 
-          <span className="min-w-48 flex-1 break-words">
-            {repeat.prod ?? '—'}
-            <span className="mx-1 text-muted-foreground">→</span>
-            {repeat.new ?? '—'}
-          </span>
-
-          <span className="shrink-0 text-right text-xs">
-            {/* The page count is the size of the difference. There is no separate
-                finding count beside it: the page is inside the finding id, so one page
-                carries one finding of this difference and the two numbers are one
-                number. `occurrences` is the number that genuinely differs — the same
-                difference several times on a single page — and it is named apart. */}
-            <span className="tabular-nums font-medium">op {repeat.on.length} pagina's</span>
-            {/* Drawn only when it exceeds the page count, so the mark appears exactly
-                when it says something the page count does not. */}
-            {repeat.occurrences > repeat.on.length && (
-              <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
-            )}
-            <span className={cn('ml-2 tabular-nums', bar.closed ? INK.info : 'text-muted-foreground')}>
-              {bar.closed} van {bar.denominator} afgehandeld
+          <CollapsibleTrigger className="flex flex-1 flex-wrap items-start gap-2 text-left">
+            <span className="mt-0.5 shrink-0">
+              <ClassPill class={repeat.class} />
+              <Detail detail={repeat.detail} />
+              <MatchedFields fields={repeat.fields} />
             </span>
-          </span>
-        </CollapsibleTrigger>
+
+            <span className="min-w-48 flex-1 break-words">
+              {repeat.prod ?? '—'}
+              <span className="mx-1 text-muted-foreground">→</span>
+              {repeat.new ?? '—'}
+            </span>
+
+            <span className="shrink-0 text-right text-xs">
+              {/* The page count is the size of the difference. There is no separate
+                  finding count beside it: the page is inside the finding id, so one page
+                  carries one finding of this difference and the two numbers are one
+                  number. `occurrences` is the number that genuinely differs — the same
+                  difference several times on a single page — and it is named apart. */}
+              <span className="tabular-nums font-medium">op {repeat.on.length} pagina's</span>
+              {/* Drawn only when it exceeds the page count, so the mark appears exactly
+                  when it says something the page count does not. */}
+              {repeat.occurrences > repeat.on.length && (
+                <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
+              )}
+              <span className={cn('ml-2 tabular-nums', bar.closed ? INK.info : 'text-muted-foreground')}>
+                {bar.closed} van {bar.denominator} afgehandeld
+              </span>
+            </span>
+          </CollapsibleTrigger>
+        </div>
 
         <CollapsibleContent>
-          <ul className="border-t border-border bg-muted px-4 py-2 text-sm">
-            {/* A page name opens the **whole** content view for that page, and not a
-                fragment of it filtered to this difference. The question a one-sided
-                difference asks is where the text belongs, and only document order
-                answers it (ADR 0006).
+          <PageTable
+            repeat={repeat}
+            byFinding={byFinding}
+            link={link}
+            selected={selected}
+            onTick={tick}
+            refuses={refuses}
+            searched={searched}
+          />
+        </CollapsibleContent>
+      </Collapsible>
 
-                Since ticket 109 the link also **names this finding**, and the page lands
-                on it: the row opens, the view scrolls to it, and it is marked. That is not
-                a filter and it narrows nothing — it is the difference between arriving at
-                the row and arriving at the top of a page 399 rows long. The link carries
-                the dashboard back as well, so both Back and the header link return to this
-                screen: its view, its pills and its search term. **Not** which group was
-                open — that is session state by the rule `groupRepeatsByClass()` states,
-                and a pill that is on re-opens its own group anyway. */}
-            {repeat.on.map((entry) => (
-              <li key={entry.id} className="flex flex-wrap items-baseline gap-2 py-0.5">
+      {/* One reason, many findings (ticket 31), on the pages that were ticked (ticket
+          110). It is drawn **only** when something is ticked: an empty selection has
+          nothing for an action to act on, and a bar carrying buttons that would write
+          nothing is worse than no bar.
+
+          It is outside the collapsible on purpose. The tick on the difference row selects
+          pages an editor has not necessarily seen — the row can be closed — and a press
+          that lives inside the panel would then be armed and invisible. */}
+      {selected.size > 0 && (
+        <BulkControl
+          repeat={repeat}
+          byFinding={byFinding}
+          bulk={bulk}
+          selected={selected}
+          onClear={() => setSelected(new Set())}
+          searched={searched}
+        />
+      )}
+    </li>
+  );
+}
+
+/**
+ * The tick that belongs to the difference itself (ticket 110).
+ *
+ * It is **tri-state**, and it is a control before it is a summary: ticked when all its
+ * pages are, unticked when none are, indeterminate in between — and the same click that
+ * reports also changes. `aria-checked="mixed"` is what a screen reader is told, which is
+ * the whole of the third state's meaning.
+ *
+ * It selects the pages a dismissal is offered on and leaves a colleague's decision alone,
+ * through `offersDismissal()` — the rule the press then applies, asked once. A page that
+ * is already decided stays tickable by hand: a mute is still a live judgement there, since
+ * it is about the class in the section rather than about these two strings.
+ *
+ * Its label says **kies** and never *afgehandeld*. The ledger already spends a checkbox on
+ * the tri-state *Opgelost* control, which genuinely is a decision (tickets 36 and 48), so
+ * two checkboxes with two meanings share this screen and each has to say which it is.
+ */
+function SelectAll({ repeat, selected, onTickAll }) {
+  // Over **every** page of the difference and not over the ones it ticks: it says
+  // *ticked* only when no row of the list is left out, because a reader who is told
+  // *ticked* while a row is unticked has been told the one thing this control exists to
+  // get right.
+  const all = repeat.on.every((entry) => selected.has(entry.id));
+  const some = selected.size > 0 && !all;
+
+  return (
+    <Checkbox
+      checked={all}
+      indeterminate={some}
+      // From the mixed state a press **clears**. Base UI would otherwise answer `true`
+      // there, which would re-tick the same rows and leave the control stuck at mixed —
+      // a control that cannot be pressed back is not a control.
+      onCheckedChange={(ticked) => onTickAll(some ? false : ticked)}
+      aria-label={`Kies de open pagina's van dit verschil (${repeat.on.length} in totaal)`}
+      title="Kiest de pagina's waarop dit verschil nog open staat; al besliste pagina's blijven ongekozen. Kiezen legt niets vast."
+    />
+  );
+}
+
+/**
+ * The pages a select-all ticks, as finding ids: the ones the dismissal is offered on, so
+ * the tick and the press it arms read one rule and a colleague's decision is left alone.
+ *
+ * **Unless there is no such page.** A difference whose every finding is decided has
+ * nothing left to dismiss, and a mute is still live there — it is about the class in the
+ * section and not about these two strings. Ticking nothing would take the bulk mute off
+ * screen in the one place it is the only tool left, which is the failure ticket 31 fixed
+ * once already. Where the rule protects nothing, it stands aside.
+ */
+const selectableOf = (repeat, byFinding) => {
+  const offered = repeat.on.filter((entry) => offersDismissal(byFinding.get(entry.id)));
+  return (offered.length > 0 ? offered : repeat.on).map((entry) => entry.id);
+};
+
+/**
+ * The pages of one difference, with a tick each (ticket 110).
+ *
+ * It was a list until this ticket and it is a table now, because a tick is a column and a
+ * column wants a header word. That word is the whole reason the table is here: the ledger
+ * already spends a checkbox on the tri-state *Opgelost* control, which **is** a decision,
+ * and two checkboxes with two meanings on one screen have to say which is which. This one
+ * says *Kies*, and every tick repeats it in its label.
+ *
+ * A page name opens the **whole** content view for that page, and not a fragment of it
+ * filtered to this difference. The question a one-sided difference asks is where the text
+ * belongs, and only document order answers it (ADR 0006).
+ *
+ * Since ticket 109 the link also **names this finding**, and the page lands on it: the row
+ * opens, the view scrolls to it, and it is marked. That is not a filter and it narrows
+ * nothing — it is the difference between arriving at the row and arriving at the top of a
+ * page 399 rows long. The link carries the dashboard back as well, so both Back and the
+ * header link return to this screen: its view, its pills and its search term. **Not**
+ * which group was open — that is session state by the rule `groupRepeatsByClass()` states,
+ * and a pill that is on re-opens its own group anyway.
+ */
+function PageTable({ repeat, byFinding, link, selected, onTick, refuses, searched }) {
+  return (
+    <div className="border-t border-border bg-muted px-4 py-2 text-sm">
+      <Table>
+        {/* Under a search these are the **matching** pages and a difference may be on
+            more: `searchStore()` builds its repeats out of matched findings only, and a
+            term can be in one page's key and not another's. Ticking all of them is then a
+            press on the matches, which is right — and unsayable if this line is missing. */}
+        {searched && (
+          <TableCaption className="mt-2 text-left text-xs">
+            Dit zijn de pagina&rsquo;s waarop de zoekterm is gevonden. Dit verschil kan op
+            meer pagina&rsquo;s staan; die staan hier niet en worden niet mee beslist.
+          </TableCaption>
+        )}
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-8">Kies</TableHead>
+            <TableHead>Pagina</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {repeat.on.map((entry) => (
+            <TableRow key={entry.id} data-state={selected.has(entry.id) ? 'selected' : undefined}>
+              <TableCell>
+                <Checkbox
+                  checked={selected.has(entry.id)}
+                  onCheckedChange={(ticked) => onTick(entry.id, ticked)}
+                  aria-label={`Kies ${entry.page}`}
+                />
+              </TableCell>
+              <TableCell className="whitespace-normal">
                 <a className={cn('hover:underline', CHROME.link)} href={link(repeat.store, entry.page, entry.id)}>
                   {entry.page}
                 </a>
                 <Occurrences count={entry.occurrences} title={onePageTitle(entry.occurrences)} />
+              </TableCell>
+              <TableCell>
                 <FindingState finding={byFinding.get(entry.id)} />
-              </li>
-            ))}
-          </ul>
-
-          {/* One reason, many findings (ticket 31). It is **below** the page list on
-              purpose: those are the pages the decision covers, and an editor reads them
-              before deciding about them. It cannot go in the header, which is entirely
-              the collapsible's trigger. */}
-          <BulkControl repeat={repeat} byFinding={byFinding} bulk={bulk} />
-        </CollapsibleContent>
-      </Collapsible>
-    </li>
+                {/* On the row and not on the *ticked* row. An editor ticking one page at
+                    a time has to see which page will block the mute before they tick it,
+                    or *untick exactly those* is an instruction they can only follow
+                    backwards. The mark costs two words and only ever appears inside an
+                    opened difference. */}
+                <NoMute reason={refuses.get(entry.id)} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
+
+/**
+ * The row that is holding the bulk mute back, said on the row itself.
+ *
+ * The refusal above the button gives the count and the reason; this gives the address.
+ * Only the mute is refused — a dismissal on this page is untouched — so the words name
+ * the one press they are about and not the selection.
+ */
+const NoMute = ({ reason }) => (
+  reason
+    ? (
+      <span className={cn('ml-2 text-[11px]', INK.attention)} title={WHY_NO_MUTE[reason]}>
+        niet te dempen
+      </span>
+    )
+    : null
+);
+
+/**
+ * The two obstacles, kept apart. A section this screen does not know is a screen older
+ * than the log and a reload answers it; a difference before the first heading is a real
+ * fact about the page, and muting there is a judgement to make one page at a time. Saying
+ * one of these where the other is true sends an editor to the wrong work.
+ */
+const WHY_NO_MUTE = {
+  unknown: 'Van deze pagina is hier niet bekend onder welk kopje dit verschil staat — dit '
+    + 'scherm is ouder dan het logboek. Herlaad de pagina. Negeren kan wel.',
+  headless: 'Dit verschil staat hier vóór de eerste kop, dus dempen zou hier alles vóór de '
+    + 'eerste kop verbergen. Dat gaat per pagina, op de pagina zelf. Negeren kan wel.',
+};
 
 /**
  * Where the searched words were found, on a row a search put on screen (ticket 82).

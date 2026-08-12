@@ -17,16 +17,18 @@ import { muteCoverage } from '../../../overrides/state.mjs';
  * @param {Map<string, { state: string }>} input.byFinding  The derivation's answer per id.
  * @param {string} input.note  Mandatory: the SQL constraint refuses a dismissal without
  *   one, and one note copied to all N rows is the correct shape.
+ * @param {Set<string>} [input.selected]  The ticked pages, as finding ids (ticket 110).
  */
-export function bulkDismissal({ repeat, byFinding, note }) {
+export function bulkDismissal({ repeat, byFinding, note, selected }) {
   const reason = note.trim();
+  const chosen = ticked(repeat, selected);
 
   // The findings this press is allowed to touch: the two states the single control
   // offers *Negeren…* on, and no others. A finding a colleague dismissed, muted or
   // claimed fixed keeps their decision — the bar has to move by exactly the number
   // dismissed and by nothing else, and overwriting a `fixed` claim would turn a claim
   // of fact into somebody else's judgement while moving no number at all.
-  const on = repeat.on.filter((entry) => OFFERED.has(byFinding.get(entry.id)?.state ?? 'open'));
+  const on = chosen.filter((entry) => offersDismissal(byFinding.get(entry.id)));
 
   // Counted off the repeat and never off the events: the interface states the size
   // **before** the press, and until a reason is typed there are no events to count.
@@ -41,8 +43,28 @@ export function bulkDismissal({ repeat, byFinding, note }) {
     }))
     : [];
 
-  return { covers: on.length, decided: repeat.on.length - on.length, events };
+  // Both numbers over the **selection**: *4 pagina's van de 6* is a sentence about the
+  // press that is about to be made, and taking its total off the repeat would report a
+  // remainder the press was never aimed at.
+  return { covers: on.length, decided: chosen.length - on.length, events };
 }
+
+/**
+ * The pages a press is aimed at: the ticked ones (ticket 110).
+ *
+ * The selection is a set of **finding ids** and not of page names. A page name is unique
+ * within a repeat, so either would identify a row, but the id is what the row is keyed on
+ * and what the event is aimed at — keying on it puts no lookup between the tick and the
+ * write.
+ *
+ * No selection means every page. Nothing in the interface presses without one since
+ * ticket 110, so this is not a fallback an editor can reach: it is what lets a caller
+ * that has no selection to make — a test, a future caller with a whole repeat in hand —
+ * ask the same question of the same function.
+ */
+const ticked = (repeat, selected) => (
+  selected ? repeat.on.filter((entry) => selected.has(entry.id)) : repeat.on
+);
 
 /**
  * The states a dismissal is offered on, which are `OverrideControl.jsx`'s two. An
@@ -50,6 +72,18 @@ export function bulkDismissal({ repeat, byFinding, note }) {
  * decided.
  */
 const OFFERED = new Set(['open', 'contradicted']);
+
+/**
+ * Whether a dismissal is offered on one finding — the rule above, asked about a single
+ * one (ticket 110).
+ *
+ * The select-all checkbox needs it: it ticks the pages this press can act on and leaves
+ * a colleague's decision alone, and it has to be **the same** rule the press then applies
+ * or the tick would promise a write that never happens.
+ *
+ * @param {{ state?: string } | undefined} finding  The derivation's answer, or none.
+ */
+export const offersDismissal = (finding) => OFFERED.has(finding?.state ?? 'open');
 
 /**
  * The N mutes of the pages one repeat is on.
@@ -70,16 +104,18 @@ const OFFERED = new Set(['open', 'contradicted']);
  *   across six of them. It is what the coverage of a mute is counted over: ADR 0008 has
  *   the count computed before the press, on the snapshot in front of the editor.
  * @param {string} input.note
+ * @param {Set<string>} [input.selected]  The ticked pages, as finding ids (ticket 110).
  */
-export function bulkMute({ repeat, byFinding, findingsByPage, note }) {
+export function bulkMute({ repeat, byFinding, findingsByPage, note, selected }) {
   const reason = note.trim();
+  const chosen = ticked(repeat, selected);
 
   // `anchorHeading` is read off the derivation, which is the same snapshot the coverage
   // is counted over, so the section on the button and the section in the event cannot
   // disagree. A finding the derivation does not hold is `undefined` here and stays
   // `undefined`: *I do not know which section this is* and *this is the content before
   // the first heading* are two different answers, and `?? null` would merge them.
-  const on = repeat.on.map((entry) => ({
+  const on = chosen.map((entry) => ({
     page: entry.page,
     anchorHeading: byFinding.get(entry.id)?.anchorHeading,
   }));
@@ -121,13 +157,56 @@ export function bulkMute({ repeat, byFinding, findingsByPage, note }) {
     refusal,
     covers,
     pages: on.length,
-    /** The findings of the difference itself, so the gap between the two is readable. */
-    difference: repeat.on.length,
+    /**
+     * The findings of the difference itself, so the gap between the two is readable. Over
+     * the ticked pages, like everything beside it: an unticked page is neither hidden by
+     * this press nor counted by it, and leaving it in this half alone would shrink the
+     * very gap the sentence exists to show.
+     */
+    difference: on.length,
     /** The sections named, so the press says where it lands and not only how much. */
     sections: [...new Set(on.map((entry) => entry.anchorHeading))],
     events,
   };
 }
+
+/**
+ * The pages of a repeat a bulk mute cannot be pressed on, and **why** (ticket 110).
+ *
+ * `bulkMute()` already refuses those pages and says how many there are; this names them,
+ * so the page list can mark the rows and *untick the ones that refuse* is a thing an
+ * editor can see rather than work out. One rule, asked twice, and never written twice: a
+ * second copy of *which heading is mutable* would be the copy that ages.
+ *
+ * The reason travels with the row because the two obstacles are two different answers and
+ * call for different work — `refusalFor()` below spends two sentences on exactly that — so
+ * a mark that said one thing for both would tell one of the two rows something untrue.
+ *
+ * It is asked over the whole repeat and not over a selection, because the mark belongs to
+ * a row of the list and the row is drawn whether it is ticked or not. It is keyed on the
+ * finding id, like the selection it is drawn beside: one row, one identity.
+ *
+ * @param {{ repeat: import('./view.mjs').Repeat, byFinding: Map<string, { anchorHeading?: string | null }> }} input
+ * @returns {Map<string, 'unknown' | 'headless'>} By finding id, for the refusing rows only.
+ */
+export function refusesMute({ repeat, byFinding }) {
+  return new Map(repeat.on
+    .map((entry) => [entry.id, refusalOn(byFinding.get(entry.id)?.anchorHeading)])
+    .filter(([, reason]) => reason !== null));
+}
+
+/**
+ * Why one page refuses a bulk mute, or `null` when it does not.
+ *
+ * `undefined` is *I do not know which section this is* and `null` is *this is before the
+ * first heading*: two different answers, two different refusals, and neither of them is a
+ * section to mute.
+ */
+const refusalOn = (anchorHeading) => {
+  if (anchorHeading === undefined) return 'unknown';
+  if (anchorHeading === null) return 'headless';
+  return null;
+};
 
 /**
  * Why a bulk mute is not offered, in the words that name the actual obstacle.

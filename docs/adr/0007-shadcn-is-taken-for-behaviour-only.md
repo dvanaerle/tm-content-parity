@@ -108,6 +108,15 @@ Two things follow from it and are worth writing down:
   runtime, which Tailwind cannot see. It is also a 24-pixel sparkline in a table cell
   rather than a progress bar.
 
+- **A registry file is edited in place, once** (ticket 110). `ui/checkbox.jsx` draws
+  the same tick for a checked box and for an indeterminate one, because its indicator
+  hard-codes `CheckIcon` and renders for both states. A tri-state selection needs
+  *some of them* to look unlike *all of them*, so the wrapper takes `indeterminate`
+  and swaps in `MinusIcon`. It is behaviour-shaped rather than tone-shaped — no
+  palette token is involved, and `lucide-react` was already a dependency — but it is
+  a hand edit inside `ui/`, so a `shadcn add checkbox` will overwrite it. It is
+  recorded here because that is the only place a re-add would be caught.
+
 ## Scope
 
 The upgrade to Astro 7 is a separate decision and a separate pair of tickets, and it

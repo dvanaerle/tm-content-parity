@@ -103,6 +103,7 @@ export default function Search({
             byFinding={byFinding}
             bulk={bulk}
             link={link}
+            searched
           />
         )}
 
