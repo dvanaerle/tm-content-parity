@@ -133,7 +133,11 @@ export default function BulkControl({ repeat, byFinding, bulk }) {
                 ? 'Bezig…'
                 : `Negeren op ${dismissal.covers} ${dismissal.covers === 1 ? 'pagina' : "pagina's"}`}
             </Button>
-            <Button variant="outline" size="xs" onClick={close}>Annuleren</Button>
+            {/* `type="button"` and not the default. A button inside a form submits it, so
+                without this the cancel *presses* the decision it is there to abandon:
+                `close()` runs, the submit fires behind it, and N rows land in an
+                append-only table that has nothing to undo them with. */}
+            <Button type="button" variant="outline" size="xs" onClick={close}>Annuleren</Button>
           </div>
         </form>
       )}
@@ -243,6 +247,89 @@ function Report({ written, total, failedOn, error }) {
     </p>
   );
 }
+
+/**
+ * The bulk mute, which is a different judgement from the dismissal and not a bigger one.
+ *
+ * Three things make it its own form:
+ *
+ * - **It states two numbers, and it must.** `Covers` above states one, because for a
+ *   dismissal the page is a term of the finding id and the two counts are one number.
+ *   A mute is keyed on the class and the section, so it hides every finding of that class
+ *   there — `covers` is genuinely larger than `difference`, and the gap is the thing an
+ *   editor has to see before pressing (ADR 0008). Suppressing the second number here
+ *   would hide the only fact that distinguishes this press from the other one.
+ * - **It names the sections.** `sectionName()` is `mute.mjs`'s phrase, imported rather
+ *   than restated, so the single mute on a page and this press describe one concept in
+ *   one wording.
+ * - **It is not a `<form>`.** A mute never expires, and Enter in a note field is how a
+ *   permanent decision gets made by accident. The press is a press.
+ *
+ * When the mute is refused it draws the refusal and nothing else: `bulkMute()` decides
+ * that, and its two sentences name the two different obstacles.
+ */
+function MuteForm({ mute, repeat, note, setNote, busy, onCancel, onPress }) {
+  if (!mute.offered) {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className={cn('text-xs', INK.attention)}>{mute.refusal}</p>
+        <div>
+          <Button type="button" variant="outline" size="xs" onClick={onCancel}>Terug</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-xs text-muted-foreground">
+        Dempt <ClassWord class={repeat.class} /> {mute.sections.map(sectionName).join(', ')} op{' '}
+        <strong className="font-medium tabular-nums text-foreground">
+          {mute.pages} {mute.pages === 1 ? 'pagina' : "pagina's"}
+        </strong>
+        . Dat verbergt daar{' '}
+        <strong className="font-medium tabular-nums text-foreground">
+          {mute.covers} {mute.covers === 1 ? 'bevinding' : 'bevindingen'}
+        </strong>
+        {mute.covers > mute.difference
+          ? `, waarvan ${mute.difference} van dit verschil — de rest is ander werk van dezelfde soort in dezelfde sectie. `
+          : '. '}
+        Dempen vervalt niet en verlaagt de noemer: gedempt werk is uit de balk, niet
+        afgehandeld.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-1">
+        <Input
+          autoFocus
+          value={note}
+          onChange={(change) => setNote(change.target.value)}
+          placeholder="Waarom hoort deze soort hier niet?"
+          className="w-64"
+        />
+        {/* Ticket 88: the one decision that never expires is the one that has to be
+            auditable, so the note is as mandatory here as on a dismissal. */}
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          disabled={mute.events.length === 0 || busy}
+          onClick={onPress}
+          title={mute.events.length === 0 ? 'Een beslissing heeft een reden nodig.' : undefined}
+        >
+          {busy ? 'Bezig…' : `Dempen op ${mute.pages} ${mute.pages === 1 ? 'pagina' : "pagina's"}`}
+        </Button>
+        <Button type="button" variant="outline" size="xs" onClick={onCancel}>Annuleren</Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The class named inside a sentence, in words rather than as a pill. The pill is a
+ * label on a row; here the class is the grammatical object of "dempt", and a coloured
+ * chip mid-sentence reads as a second control.
+ */
+const ClassWord = ({ class: cls }) => <span className="font-medium text-foreground">{cls}</span>;
 
 /** Why the buttons are absent, which is never nothing at all. */
 const NotWriting = ({ reason }) => (

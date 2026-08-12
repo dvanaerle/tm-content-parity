@@ -195,3 +195,52 @@ one page at a time.
 - **A press that claimed success.** Closing the form on `failedOn === null` cleared it after
   a press that wrote nothing and named no page - the no-name case, reachable because the
   name field is on the same screen. Success is now `written === total` and no error.
+
+### What only the browser caught, and why nothing else could
+
+The first commit shipped a `BulkControl` that referenced `MuteForm` and **never defined
+it**. Pressing *Dempen…* threw `ReferenceError: MuteForm is not defined`, and because the
+throw happens during a React render it took the whole dashboard island down with it — the
+screen went back to the static header, so an editor lost the page list, the class groups
+and the chips, not merely the button they pressed.
+
+Nothing in the pipeline could see it. There is no lint step and no typecheck step in this
+repo, an undefined JSX identifier is legal JavaScript until it is evaluated, and the 823-page
+build renders the island's *first* paint, in which the mute form is unmounted behind a closed
+`CollapsibleContent`. 628 unit tests passed and the build was clean, and both facts were
+true and worthless: every decision in this feature lives in `bulk.mjs`, so the tests proved
+the decisions and said nothing about whether the component that draws them exists.
+
+The same pass caught a second defect of the same kind — invisible to tests, one click deep:
+
+- **The cancel button submitted the form.** *Annuleren* carried no `type`, so it defaulted
+  to `submit`. `close()` ran on the click and the form's `onSubmit` fired behind it, which
+  means cancelling a filled-in dismissal would have written N rows to an append-only table
+  with nothing to undo them. It survived the first browser pass only because an empty note
+  yields zero events and `press([])` returns early. Both cancels are now `type="button"`.
+
+The lesson is a seam, not a slip: this project keeps its decisions in `.mjs` precisely
+because there was no DOM test environment, and that bargain silently assumed the `.jsx`
+holding those decisions was *trivially* correct. Existing is not trivial. A `browser`
+vitest project now exists (added alongside this work), and a single mounted-and-clicked
+test per control is what would have caught both of these in a second rather than in a
+commit.
+
+### Verified in a browser, against the live log
+
+On `nl`, name filled in, dev server:
+
+- A three-page `copy` repeat offers both presses and states *op 3 pagina's*.
+- The dismissal form states *3 pagina's* and what the decision does not cover.
+- The mute form states the class, all three section names, *3 pagina's*, and **6
+  bevindingen, waarvan 3 van dit verschil** — the gap ADR 0008 exists to show.
+- A twelve-page `text-missing` repeat **refuses** the bulk mute: *1 van deze 12 pagina's
+  draagt dit verschil in de inhoud vóór de eerste kop.* The refusal is real traffic, not a
+  fixture.
+- A repeat whose every finding is already decided offers the mute alone and says why there
+  is nothing to ignore.
+- No console errors.
+
+**No row has been written.** Every path up to the press is exercised; the press itself is
+unpressed, because the target is the live log with 511 real rows in it and a bulk press
+writes up to 22 at once.
