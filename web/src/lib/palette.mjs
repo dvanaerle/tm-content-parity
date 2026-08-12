@@ -26,6 +26,23 @@
  * same reason. A third loud hue must be the brand orange, and brand colour is
  * for chrome only.
  *
+ * **This file is where a tone becomes a styleguide colour.** Since the palette was
+ * rebuilt from the Figma styleguide, `app.css` holds styleguide names only —
+ * `danger-subtle`, `on-warning`, `info-text` — and the tone names above are this
+ * tool's, not the styleguide's. The translation happens here and nowhere else, so
+ * the answer to "which styleguide colour is `attention`?" is one grep away. The
+ * mapping is:
+ *
+ * | tone        | styleguide group                                    |
+ * |-------------|-----------------------------------------------------|
+ * | `lost`      | `Danger` — spent on direction, not on status        |
+ * | `added`     | `Success` — likewise                                |
+ * | `severe`    | `Warning`, solid step                               |
+ * | `attention` | `Warning`, subtle step                              |
+ * | `info`      | `Info`                                              |
+ * | `neutral`   | `Surface/surface-strong` ground, `Text/text-muted`  |
+ * | `dark`      | `Border/border-strong`                              |
+ *
  * Tailwind finds class names in the source text. Therefore each value in this
  * file is a literal, and no value is assembled from parts.
  */
@@ -34,35 +51,42 @@
 
 /** A tinted label. The default shape for a class name or a state. */
 export const PILL = {
-  lost: 'bg-lost-surface text-lost',
-  added: 'bg-added-surface text-added',
-  severe: 'bg-severe text-white',
-  attention: 'bg-attention text-attention-ink',
-  info: 'bg-info text-info-ink',
-  neutral: 'bg-slate-100 text-slate-600',
-  dark: 'bg-slate-900 text-white',
+  lost: 'bg-danger-subtle text-danger-text',
+  added: 'bg-success-subtle text-success-text',
+  severe: 'bg-warning text-white',
+  attention: 'bg-warning-subtle text-on-warning',
+  info: 'bg-info-subtle text-info-text',
+  neutral: 'bg-surface-strong text-text-muted',
+  dark: 'bg-border-strong text-white',
 };
 
 /** A filled chip. Use it for a number that must be legible at a distance. */
 export const SOLID = {
-  lost: 'bg-lost text-white',
-  added: 'bg-added text-white',
-  severe: 'bg-severe text-white',
-  attention: 'bg-attention text-attention-ink',
-  info: 'bg-info-ink text-white',
-  neutral: 'bg-slate-100 text-slate-700',
-  dark: 'bg-slate-900 text-white',
+  lost: 'bg-danger text-white',
+  added: 'bg-success text-white',
+  severe: 'bg-warning text-white',
+  attention: 'bg-warning-subtle text-on-warning',
+  info: 'bg-info text-white',
+  neutral: 'bg-surface-strong text-text-muted',
+  dark: 'bg-border-strong text-white',
 };
 
-/** A bar fill or a dot. One flat colour, no ink. */
+/**
+ * A bar fill or a dot. One flat colour, no ink.
+ *
+ * `severe` takes `warning-text` and `attention` takes `warning`, which is the one
+ * place the two amber weights run darker rather than lighter. With no ink on top,
+ * the subtle step is invisible against the page, so the pair has to come from the
+ * other end of the ramp — and the deeper of the two is still the louder of the two.
+ */
 export const FILL = {
-  lost: 'bg-lost',
-  added: 'bg-added',
-  severe: 'bg-severe',
-  attention: 'bg-attention-fill',
-  info: 'bg-info-ink',
-  neutral: 'bg-slate-300',
-  dark: 'bg-slate-900',
+  lost: 'bg-danger',
+  added: 'bg-success',
+  severe: 'bg-warning-text',
+  attention: 'bg-warning',
+  info: 'bg-info',
+  neutral: 'bg-border',
+  dark: 'bg-border-strong',
 };
 
 /**
@@ -74,13 +98,13 @@ export const FILL = {
  * tell which of the two they have.
  */
 export const BANNER = {
-  lost: 'border-lost-token bg-lost-surface text-lost',
-  added: 'border-added-token bg-added-surface text-added',
-  severe: 'border-severe bg-attention-fill text-attention-ink',
-  attention: 'border-attention-fill bg-attention text-attention-ink',
-  info: 'border-info bg-info text-info-ink',
-  neutral: 'border-slate-200 bg-slate-50 text-slate-600',
-  dark: 'border-slate-900 bg-slate-900 text-white',
+  lost: 'border-danger bg-danger-subtle text-danger-text',
+  added: 'border-success bg-success-subtle text-success-text',
+  severe: 'border-warning-text bg-warning text-white',
+  attention: 'border-warning bg-warning-subtle text-on-warning',
+  info: 'border-info bg-info-subtle text-info-text',
+  neutral: 'border-border bg-surface text-text-muted',
+  dark: 'border-border-strong bg-border-strong text-white',
 };
 
 /**
@@ -91,9 +115,9 @@ export const BANNER = {
  * entry is added when a component needs it.
  */
 export const INK = {
-  lost: 'text-lost',
-  attention: 'text-attention-ink',
-  info: 'text-info-ink',
+  lost: 'text-danger-text',
+  attention: 'text-on-warning',
+  info: 'text-info-text',
 };
 
 /**
@@ -103,18 +127,24 @@ export const INK = {
  * missing on the other side, and only `lost` and `added` make that claim.
  */
 export const SURFACE = {
-  lost: 'bg-lost-surface',
-  added: 'bg-added-surface',
+  lost: 'bg-danger-subtle',
+  added: 'bg-success-subtle',
 };
 
 /**
  * The word layer of the diff: a changed token inside a cell that is otherwise
  * calm. Stronger than `SURFACE` so the two layers stay apart when one sits inside
  * the other.
+ *
+ * It used to be a mid tint under dark ink, which the styleguide has no step for —
+ * its ramps go subtle → solid → text → on-subtle, and nothing in between. So the
+ * word inverts instead: the `*-text` step as a ground, white on top. That reads
+ * louder than the tinted cell around it, which is what the layer is for, and it
+ * needs no colour the styleguide does not publish.
  */
 export const TOKEN = {
-  lost: 'bg-lost-token text-lost',
-  added: 'bg-added-token text-added',
+  lost: 'bg-danger-text text-white',
+  added: 'bg-success-text text-white',
 };
 
 /**
@@ -126,8 +156,8 @@ export const TOKEN = {
  * wears the diff hues.
  */
 export const ACCENT = {
-  info: 'accent-info-ink',
-  attention: 'accent-attention-fill',
+  info: 'accent-info',
+  attention: 'accent-warning',
 };
 
 /**
@@ -135,16 +165,25 @@ export const ACCENT = {
  * reads a colour from here shows structure, and not a finding.
  */
 export const CHROME = {
-  header: 'bg-brand-green text-white',
-  headerMuted: 'text-brand-sand',
-  link: 'text-brand-green hover:text-brand-lighter-green',
-  tabActive: 'border-brand-lighter-green text-brand-green',
-  button: 'bg-brand-green hover:bg-brand-medium-green',
+  header: 'bg-brand text-on-brand',
+  headerMuted: 'text-surface-raised',
+  // `Link/link` and not `Brand/brand`: the styleguide publishes a link colour, and
+  // it is a step darker than `Primary/primary` because `#809700` on white is 3.0:1.
+  link: 'text-link hover:text-link-hover',
+  tabActive: 'border-primary text-brand',
+  button: 'bg-primary hover:bg-primary-strong',
   // The store switcher sits on the green header, so both of its states are chrome
   // (ticket 38). The current store reads as ink on white. The other stores are
   // sand on green, which is `headerMuted` given a hover.
-  storeCurrent: 'bg-white text-brand-green',
-  storeOther: 'text-brand-sand hover:bg-brand-medium-green hover:text-white',
+  storeCurrent: 'bg-background text-brand',
+  storeOther: 'text-surface-raised hover:bg-brand-dark hover:text-on-brand',
+  // The row a link landed on (ticket 101). It is chrome and not a finding: it says
+  // *this is the one you clicked*, which is a fact about the navigation and not a
+  // claim about the content — so it must not borrow a diff hue, and it must not
+  // borrow `attention` either, which would read as a condition to decide about. An
+  // outline and not a ground, because the cells inside it carry the diff tints and a
+  // second ground would sit underneath them and change what they print.
+  landed: 'outline outline-2 -outline-offset-2 outline-primary',
 };
 
 /**

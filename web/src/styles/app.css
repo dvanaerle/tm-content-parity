@@ -25,74 +25,154 @@
 /*
  * The one place a colour is defined (ticket 35).
  *
- * The storefront's own Tailwind config cannot be imported: it is Tailwind 3
- * CommonJS, it calls `hyvaModules.mergeTailwindConfig()` at require-time, and it
- * uses v3 entry syntax. So the brand hexes are transcribed by hand from
- * `devdva02/app/design/frontend/Valantic/base/web/tailwind/tailwind.config.js`.
- * That file holds 22 self-contained values, and nothing else in it is a source
- * for this tool.
+ * **Source of truth: the Hyvä UI styleguide in Figma**, file `8WE3hlEnJrPzVr50VkmhFw`,
+ * node `6767-34310`, where the new website's colours are published as named
+ * variables. Every name below is a styleguide name and every hex is transcribed
+ * from that node. The tool-specific vocabulary that used to live here —
+ * `brand-green`, `brand-medium-green`, `brand-lighter-green`, `brand-sand`,
+ * `lost`, `added`, `attention`, `attention-ink`, `attention-fill`, `severe`,
+ * `info-ink` — is gone. Those names put a second vocabulary on top of a palette
+ * that already had one, so `palette.mjs` was the only place you could learn that
+ * `attention-ink` meant `Warning/on-warning`. Now the name is the answer.
  *
- * Four of the 22 are transcribed here, because brand colour is chrome and the
- * chrome is a header, a link, a tab and a button. `@theme` makes a utility class
- * for every value it declares, so a value no component wears is dead CSS. Read
- * the storefront config, cited above, for the other 18.
+ * **All twelve groups are transcribed whole**, including steps no component wears
+ * today: `Brand`, `Primary`, `Accent`, `Surface`, `Text`, `Link`, `Ring`, `Border`,
+ * `Warning`, `Danger`, `Success` and `Info`. A group is a set — `*-subtle` means
+ * nothing without the `on-*-subtle` meant to sit on it — and half a group is a trap
+ * for whoever reaches for the missing half. Tailwind v4 emits only the theme
+ * variables a utility class references, so an unworn step costs nothing in the built
+ * stylesheet. The styleguide's own words for this, printed at the top of the node:
+ * *we use semantic color tokens, not raw hex values, because tokens carry meaning and
+ * stay consistent across theme changes.*
  *
- * Three rules hold this palette together. Each rule is about meaning, and not about
- * taste:
+ * A warning about how this node is read. `get_variable_defs` returns the variables
+ * **bound to layers** in a node, and the node's own header banner is built from two
+ * ramps — `Cosmos` (blue) and `Nimbus` (grey) — that are page chrome and are not in
+ * the palette at all. They do not appear on any swatch row. Neither is transcribed
+ * here, and neither belongs in this interface. Read the swatch rows, not the tool
+ * output, when this file is next checked against Figma.
  *
- * 1. **Brand colour is for chrome only**: the header, the tab bar and links. The
- *    brand colour shows that this is a Tuinmaximaal tool. It shows nothing about a
- *    finding.
- * 2. **Red and green are for diff meaning, and never for status.** The brand
- *    primary is dark green and the accent is orange. If green also means "the new
- *    site added this", one hue has two meanings eight pixels apart. Status is amber
- *    and blue.
- * 3. **Stock neutral greys make the table surface.** The storefront's neutral ramp
- *    has five steps, and it has no step for a table border, a zebra stripe or a
- *    hover state. Therefore `slate-*` makes the surface, and the brand greys do
- *    not.
+ * Two rules survive the rename, and both are about meaning rather than taste:
+ *
+ * 1. **Brand colour is for chrome only**: the header, the tab bar and links. Brand
+ *    colour shows that this is a Tuinmaximaal tool. It shows nothing about a finding.
+ * 2. **`danger` and `success` are spent on diff direction, and never on status.**
+ *    The styleguide groups them for status, and here they are not: red means
+ *    "production has this and the new site does not" and nothing else. If green also
+ *    meant "this went well", one hue would carry two meanings eight pixels apart.
+ *    Status is `warning` and `info`. `palette.mjs` is where that mapping is written.
+ *
+ * The third rule — "stock `slate-*` makes the table surface" — is retired. It existed
+ * because the old source had five neutral steps and no step for a border or a quiet
+ * ground. The styleguide names them all — `Surface/surface`, `surface-raised`,
+ * `surface-strong`, `Border/border`, `Border/border-strong`, `Ring/ring`,
+ * `Text/text-muted` — so nothing is left for a stock ramp to do, and no `slate-*`
+ * class remains in the interface.
  */
 @theme {
-  /* --- The storefront's brand hexes, transcribed ------------------------- */
-  /* primary: the header ground, the button hover, and the link and tab accent */
-  --color-brand-green: #003017;
-  --color-brand-medium-green: #002e21;
-  --color-brand-lighter-green: #809700;
-  /* secondary: the muted ink on the header ground */
-  --color-brand-sand: #f5e6d7;
+  /* --- Brand ------------------------------------------------------------- */
+  --color-brand: #003017;
+  --color-brand-dark: #001a13;
+  --color-on-brand: #ffffff;
 
   /*
-   * --- Diff meaning ------------------------------------------------------ *
-   * One red and one green, each in three weights: the ink, the tint of a whole cell
-   * in a one-sided row, and the stronger tint of a changed **word** in a neutral
-   * row. The two tints must stay different when one is inside the other. That is
-   * the only reason for two tints.
+   * --- Primary ------------------------------------------------------------ *
+   * `Primary/primary` is also shadcn's `--primary` slot, so it is declared once, in
+   * the `:root` block below, and reaches utility classes through `@theme inline`.
+   * Declaring `--color-primary` here as well would give one styleguide name two
+   * definitions, which is the exact failure this rewrite removes.
+   */
+  --color-primary-subtle: #f8fce6;
+  --color-primary-strong: #6d8005;
+
+  /*
+   * --- Accent ------------------------------------------------------------- *
+   * `Accent/accent` is the brand orange. It is **not** `--color-accent`: shadcn
+   * spends that slot on hover and highlight grounds, so taking the styleguide name
+   * literally would turn every row hover in the interface solid orange. The two
+   * meanings get two names, and this is the one the styleguide means.
+   */
+  --color-brand-accent: #ff8000;
+  --color-on-brand-accent: #ffffff;
+
+  /*
+   * --- Surface ------------------------------------------------------------ *
+   * Three grounds in one warm ramp, palest first. `surface` is the ground a card
+   * sits on, `surface-raised` the ground a card is, `surface-strong` the quietest
+   * thing that still reads as a fill. All three carry `on-surface`, which is the
+   * same hex as `Text/text`.
+   */
+  --color-surface: #fff5ed;
+  --color-surface-raised: #f5e6d7;
+  --color-surface-strong: #e0d2c5;
+  --color-on-surface: #003017;
+
+  /* --- Text --------------------------------------------------------------- */
+  --color-text: #003017;
+  --color-text-muted: #636363;
+
+  /*
+   * --- Link --------------------------------------------------------------- *
+   * A darker green than `Primary/primary`, and that is the point: `#809700` on white
+   * is 3.0:1, which is under AA for body text, and a link is body text.
+   */
+  --color-link: #5c6b08;
+  --color-link-hover: #4b570a;
+
+  /*
+   * --- Border -------------------------------------------------------------- *
+   * `Border/border` is also shadcn's `--border` slot and `Ring/ring` is its `--ring`
+   * slot, so both are declared once, in `:root`, and reach utility classes through
+   * `@theme inline`. `border-strong` collides with nothing and is declared here.
    *
-   * The values are stock Tailwind red and emerald. No colour in the storefront is a
-   * diff colour. Thus a brand-adjacent hex here shows an origin that it does not
-   * have.
+   * `Ring/ring` is worth a second look when this file is checked: the styleguide
+   * value is `#63636380`, which is `Text/text-muted` at half alpha and not the opaque
+   * `#a1a1a1` a flattening read of the node reports.
    */
-  --color-lost: #b91c1c;
-  --color-lost-surface: #fef2f2;
-  --color-lost-token: #fecaca;
-  --color-added: #047857;
-  --color-added-surface: #ecfdf5;
-  --color-added-token: #a7f3d0;
+  --color-border-strong: #636363;
 
   /*
-   * --- Status ------------------------------------------------------------ *
-   * Amber shows that an editor must look at this. Blue shows that this is done, or
-   * that this is information. A reader cannot read either hue as a direction.
+   * --- Warning ------------------------------------------------------------ *
+   * Status. Amber says an editor must look at this. Two weights: `warning-subtle`
+   * under `on-warning` is the quiet one, and solid `warning` under white is the loud
+   * one. `palette.mjs` calls them `attention` and `severe`.
    */
-  --color-attention: #fef3c7;
-  --color-attention-ink: #78350f;
-  --color-attention-fill: #fcd34d;
-  --color-severe: #f59e0b;
-  --color-info: #dbeafe;
-  --color-info-ink: #1d4ed8;
+  --color-warning-subtle: #fffbeb;
+  --color-warning: #d97706;
+  --color-warning-text: #b45309;
+  --color-on-warning: #78350f;
 
   /*
-   * The comparison cells. The storefront has no monospaced family. Two strings that
+   * --- Danger and Success ------------------------------------------------- *
+   * Diff direction, per rule 2. `danger` is a unit production has and the new site
+   * does not; `success` is a unit the new site invented. Each is used in three
+   * weights: `*-subtle` tints a whole cell that exists on one side only, `*-text` is
+   * the ink, and the solid step grounds a changed **word** inside an otherwise calm
+   * cell. The word layer has to stay legible against the cell layer it sits inside,
+   * which is the only reason there are three.
+   */
+  --color-danger-subtle: #fef2f2;
+  --color-danger: #dc2626;
+  --color-danger-text: #b91c1c;
+  --color-on-danger-subtle: #7f1d1d;
+  --color-success-subtle: #f0fdf4;
+  --color-success: #16a34a;
+  --color-success-text: #15803d;
+  --color-on-success-subtle: #14532d;
+
+  /*
+   * --- Info --------------------------------------------------------------- *
+   * Status. Blue says this is done, or this is information the editor did not ask
+   * for. A reader cannot read it as a direction, which is why it and not green
+   * marks a resolved finding.
+   */
+  --color-info-subtle: #f0f9ff;
+  --color-info: #0284c7;
+  --color-info-text: #0369a1;
+  --color-on-info-subtle: #0c4a6e;
+
+  /*
+   * The comparison cells. The styleguide has no monospaced family. Two strings that
    * are almost the same align only in a monospaced family. There is no webfont: the
    * build is static, and a reader opens it from outside the network.
    */
@@ -101,31 +181,26 @@
 }
 
 /*
- * --- shadcn's surface, defined from the palette above (ticket 74) ---------- *
+ * --- shadcn's slots, filled from the styleguide (ticket 74) ---------------- *
  *
- * **This block is the mechanism by which the palette wins.** shadcn's primitives
- * read their colour from `--primary`, `--destructive`, `--ring` and friends, and a
- * shadcn install writes those as its own literal values. Here not one of them is a
- * literal. Every entry that carries meaning is `var(--color-…)` from the `@theme`
- * above, so the palette holds the only definition and the primitives inherit it.
- * Where the two disagreed, the palette's value is what is written: shadcn's
- * `--primary` was a neutral near-black and is the brand green.
+ * shadcn's primitives read colour two ways: through utility classes like
+ * `bg-primary`, and — in `button.jsx` and `select.jsx` — through raw
+ * `var(--secondary)` inside a `color-mix()`. Both have to work, so each slot is a
+ * bare custom property in `:root` and `@theme inline` republishes it as
+ * `--color-*` for the class. That is why a styleguide name that lands on a shadcn
+ * slot is declared here and not in the `@theme` block above: one name, one
+ * definition, reachable both ways.
  *
- * `--destructive` is the interesting one, and it is **not** red. shadcn spends it
- * on an error and an `aria-invalid` ring, which is a status; palette rule 2 says
- * red and green are for diff meaning and never for status. So it takes the amber
- * ink, which is the palette's word for "an editor must look at this". Handing it
- * `--color-lost` would have been the same mistake in the other direction: red
- * would then mean both "production has this and the new site does not" and "this
- * control is wrong", eight pixels apart.
+ * `--destructive` is the interesting one, and it is **not** red. shadcn spends it on
+ * an error and an `aria-invalid` ring, which is a status; rule 2 says `danger` is
+ * spent on diff direction and never on status. So it takes `Warning/on-warning`, the
+ * styleguide's word for "an editor must look at this". Handing it `--color-danger`
+ * would have been the same mistake in the other direction: red would then mean both
+ * "production has this and the new site does not" and "this control is wrong", eight
+ * pixels apart.
  *
- * The neutrals are stock Tailwind `slate` hexes, per palette rule 3, and they are
- * written as hexes rather than as `var(--color-slate-200)` because Tailwind's own
- * default theme variables are pruned when unused and these are read from CSS, not
- * from a class name.
- *
- * shadcn's `sidebar-*` and `chart-*` variables are dropped. The seven primitives
- * use neither, and a variable no component reads is a colour with no meaning.
+ * shadcn's `sidebar-*` and `chart-*` variables are dropped. The primitives in use
+ * read neither, and the styleguide has no name for either.
  */
 @theme inline {
   --color-background: var(--background);
@@ -155,31 +230,55 @@
 }
 
 :root {
-  /* Surface. White cards on the slate ground `Shell.astro` already sets. */
-  --background: #ffffff;
-  --foreground: #0f172a; /* slate-900, the body ink */
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  /*
+   * Surface. `Surface/surface` is the palest step of the warm ramp and it is what a
+   * card is made of; `Shell.astro` sets the page under it to `surface-raised`. White
+   * is not a surface in this styleguide — the only `#ffffff` it publishes is `on-brand`,
+   * `on-primary` and `on-accent`, which are inks and not grounds.
+   *
+   * The body ink is `Text/text`, which the styleguide sets to the brand green rather
+   * than to a near-black. That is the new site's decision and it is taken whole.
+   * Reading it as a breach of rule 1 would be the wrong reading: the rule keeps brand
+   * colour off *findings*, and body ink is not a finding.
+   */
+  --background: #fff5ed; /* Surface/surface */
+  --foreground: #003017; /* Text/text */
+  --card: #fff5ed; /* Surface/surface */
+  --card-foreground: #003017; /* Text/text */
+  --popover: #fff5ed; /* Surface/surface */
+  --popover-foreground: #003017; /* Text/text */
 
-  /* Meaning. Both of these come from the palette and neither is a hex. */
-  --primary: var(--color-brand-green);
-  --primary-foreground: #ffffff;
-  --destructive: var(--color-attention-ink);
-  --ring: var(--color-brand-lighter-green);
+  /*
+   * The primary action. The styleguide separates `Brand/brand`, which is what the
+   * header is made of, from `Primary/primary`, which is what a button is made of, and
+   * this slot is the button. `Brand/brand` is `--color-brand` above and the chrome in
+   * `palette.mjs` reads it from there.
+   */
+  --primary: #809700; /* Primary/primary */
+  --primary-foreground: #ffffff; /* Primary/on-primary */
 
-  /* Quiet grounds: a hover, a muted row, a table footer. */
-  --secondary: #f1f5f9; /* slate-100 */
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b; /* slate-500 */
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  /* See the block comment: a status, so amber and not red. */
+  --destructive: #78350f; /* Warning/on-warning */
+  /* Half-alpha, per the styleguide. shadcn already dilutes it again for a focus ring
+     (`ring-ring/50`), which is why the ring reads as a hint and not as a border. */
+  --ring: #63636380; /* Ring/ring */
 
-  /* The border every table, card and panel in this interface already wears. */
-  --border: #e2e8f0; /* slate-200 */
-  --input: #cbd5e1; /* slate-300, the border a form control already wears */
+  /*
+   * Quiet grounds: a hover, a muted row, a table footer. `Surface/surface-raised` is
+   * the styleguide's only light ground above white, so all three slots take it. It is
+   * the same hex as the sand the header's muted ink uses, and that is not a collision
+   * to fix — the styleguide spends one value on both jobs.
+   */
+  --secondary: #f5e6d7; /* Surface/surface-raised */
+  --secondary-foreground: #003017; /* Surface/on-surface */
+  --muted: #f5e6d7; /* Surface/surface-raised */
+  --muted-foreground: #636363; /* Text/text-muted */
+  --accent: #f5e6d7; /* Surface/surface-raised */
+  --accent-foreground: #003017; /* Surface/on-surface */
+
+  /* The border every table, card and panel in this interface wears. */
+  --border: #e3e3e3; /* Border/border */
+  --input: #e3e3e3; /* Border/border-strong */
 
   /* `rounded`, matching the corner the rest of the interface has. */
   --radius: 0.25rem;

@@ -88,7 +88,7 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
             // `data-pressed`, but the tone is chosen here rather than in a
             // `data-pressed:` prefix, because the prefix would have to be assembled
             // around a palette value at runtime and Tailwind cannot see such a name.
-            selected.includes(cls) ? 'ring-2 ring-brand-lighter-green' : 'opacity-70 hover:opacity-100',
+            selected.includes(cls) ? 'ring-2 ring-primary' : 'opacity-70 hover:opacity-100',
           )}
         >
           <ClassPill class={cls} />

@@ -250,7 +250,7 @@ function FixCheckbox({ finding, canWrite, onTick }) {
  * the palette has to out-shout shadcn rather than merely sit beside it.
  *
  * shadcn paints its own ticked state with `data-checked:bg-primary`. An attribute
- * selector outranks a plain class, so a palette value handed over as `bg-info-ink`
+ * selector outranks a plain class, so a palette value handed over as `bg-info`
  * would lose, and `tailwind-merge` cannot dedupe the pair either — the two carry
  * different variant modifiers and it reads them as different properties. So the
  * tone is written with the **same** `data-checked:` prefix, and it wins on
@@ -265,8 +265,8 @@ function FixCheckbox({ finding, canWrite, onTick }) {
  * already an export nothing reads.
  */
 const TICK = {
-  info: 'data-checked:border-info-ink data-checked:bg-info-ink data-checked:text-white dark:data-checked:bg-info-ink',
-  attention: 'data-checked:border-attention-fill data-checked:bg-attention-fill data-checked:text-attention-ink dark:data-checked:bg-attention-fill',
+  info: 'data-checked:border-info data-checked:bg-info data-checked:text-white dark:data-checked:bg-info',
+  attention: 'data-checked:border-warning data-checked:bg-warning data-checked:text-white dark:data-checked:bg-warning',
 };
 
 const Action = ({ children, ...props }) => (
