@@ -7,12 +7,45 @@
  * Both are behaviour made visible, which is the whole reason ADR 0007 takes the
  * library at all.
  *
- * The font import shadcn writes here is **not** kept. This build is opened from
- * outside the network, which is why the mono stack below is a device stack and not
- * a webfont, and a webfont for the body would contradict that in the same file.
+ * Fonts are self-hosted under `web/public/fonts/`, not fetched at runtime: this
+ * build is opened from outside the network. Articulat CF marks a changed word
+ * (`ins` / `del`); Geist Mono (the Google Font) is the monospaced family for
+ * machine strings.
  */
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+
+@font-face {
+  font-family: 'Articulat CF';
+  src: url('/fonts/Articulat_CF/articulatcf-medium-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Articulat CF';
+  src: url('/fonts/Articulat_CF/articulatcf-demibold-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/Geist_Mono/GeistMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/Geist_Mono/GeistMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
 
 /*
  * shadcn's primitives carry `dark:` classes and this interface has no dark mode.
@@ -173,11 +206,12 @@
 
   /*
    * The comparison cells. The styleguide has no monospaced family. Two strings that
-   * are almost the same align only in a monospaced family. There is no webfont: the
-   * build is static, and a reader opens it from outside the network.
+   * are almost the same align only in a monospaced family. Geist Mono is the Google
+   * Font, self-hosted under `public/fonts/` so a reader offline still gets it; the
+   * device stack behind it covers a missing file.
    */
-  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'SF Mono', Menlo,
-    Consolas, monospace;
+  --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'SF Mono',
+    Menlo, Consolas, monospace;
 }
 
 /*
@@ -282,6 +316,15 @@
 
   /* `rounded`, matching the corner the rest of the interface has. */
   --radius: 0.25rem;
+
+  /*
+   * A changed word inside a diff cell (`ins` / `del`). Articulat CF is the brand
+   * sans from the measuring tool; medium is the lightest cut we ship (there is no
+   * regular), so a mark that does not ask for bold still lands on a real face.
+   * Declared here rather than in `@theme`: Tailwind only emits theme keys a utility
+   * class references, and nothing wears a `font-diff` class.
+   */
+  --font-diff: 'Articulat CF', ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -299,5 +342,16 @@
    */
   * {
     @apply border-border outline-ring/50;
+  }
+
+  /*
+   * Word-level diff marks. Colour and decoration already say what changed; the
+   * brand sans separates the edit from the surrounding cell text (which stays on
+   * the UI stack, including Geist Mono when the cell is a machine string).
+   */
+  del,
+  ins {
+    font-family: var(--font-diff);
+    font-weight: 500;
   }
 }
