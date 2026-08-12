@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import { barOf } from '../../../overrides/state.mjs';
 import { Detail, Occurrences, onePageTitle } from './Annotations.jsx';
 import BulkControl from './BulkControl.jsx';
@@ -43,7 +43,7 @@ export default function Repeats({ repeats, byFinding, bulk, link, searched = fal
   if (repeats.length === 0) return <NoRepeats />;
 
   return (
-    <>
+    <OneSelection>
       <RowList
         repeats={repeats}
         byFinding={byFinding}
@@ -52,9 +52,48 @@ export default function Repeats({ repeats, byFinding, bulk, link, searched = fal
         searched={searched}
       />
       <Total repeats={repeats} />
-    </>
+    </OneSelection>
   );
 }
+
+/**
+ * The ticked pages, held for the whole list rather than per difference (ticket 110, round
+ * three).
+ *
+ * Each difference kept its own set while the bar was a strip drawn under it: two
+ * differences could carry ticks at once, and each strip said whose ticks it was drawing.
+ * The bar floats now, fixed to one place at the bottom of the screen, and two of those are
+ * one bar on top of another. So there is **one** selection, it knows which difference it
+ * belongs to, and ticking in a second difference takes it — which is also the plainer rule
+ * to hold in your head: what is ticked is what the bar at the bottom is about.
+ *
+ * Emptying it is how the bar goes away, and it is emptied only by its **owner**: a
+ * difference closing elsewhere in the list must not put down a selection that is not its
+ * own.
+ */
+function OneSelection({ children }) {
+  const [held, setHeld] = useState(/** @type {null | { key: string, ids: Set<string> }} */(null));
+
+  const selection = useMemo(() => ({
+    of: (key) => (held?.key === key ? held.ids : NOTHING),
+    put: (key, ids) => setHeld((last) => {
+      if (ids.size > 0) return { key, ids };
+      return last?.key === key ? null : last;
+    }),
+  }), [held]);
+
+  return <SelectionContext.Provider value={selection}>{children}</SelectionContext.Provider>;
+}
+
+const SelectionContext = createContext(/** @type {null | { of: Function, put: Function }} */(null));
+
+/**
+ * One frozen empty set for every difference that is not holding the selection. A fresh
+ * `new Set()` per read would be a new identity on every render, and the presses below are
+ * memoised on exactly that value — every unticked difference in the list would recompute
+ * its three seams each time anything on the screen moved.
+ */
+const NOTHING = new Set();
 
 /**
  * The same repeats, in a **class group** for each class (ticket 100).
@@ -104,7 +143,7 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
   if (repeats.length === 0) return <NoRepeats />;
 
   return (
-    <>
+    <OneSelection>
       <ul>
         {groups.map((group) => (
           <ClassGroupRow
@@ -121,7 +160,7 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
         ))}
       </ul>
       <Total repeats={repeats} />
-    </>
+    </OneSelection>
   );
 }
 
@@ -263,19 +302,25 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
   const [open, setOpen] = useState(false);
 
   /**
-   * The ticked pages, as finding ids (ticket 110).
+   * The ticked pages of **this** difference, as finding ids (ticket 110).
    *
    * A difference opens with nothing ticked: selection is something an editor does and
    * never something they arrive at, and a press pre-aimed at ten pages is the all-or-
    * nothing control this replaces.
+   *
+   * The set is the list's since round three and not this row's — there is one floating bar
+   * and so there is one selection. A row that is not holding it reads an empty set, which
+   * is exactly what an unticked difference had before.
    */
-  const [selected, setSelected] = useState(() => new Set());
+  const selection = useContext(SelectionContext);
+  const selected = selection.of(repeat.key);
+  const put = (ids) => selection.put(repeat.key, ids);
 
-  const tick = (id, on) => setSelected((held) => {
-    const next = new Set(held);
+  const tick = (id, on) => {
+    const next = new Set(selected);
     if (on) next.add(id); else next.delete(id);
-    return next;
-  });
+    put(next);
+  };
 
   /**
    * All of them or none of them. Round one ticked only the pages a dismissal could act on
@@ -283,7 +328,7 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
    * refused what the other allowed. The ticks say *these pages*; each press then filters
    * to what it can act on and says what it did, which is the only place that rule belongs.
    */
-  const tickAll = (on) => setSelected(on ? new Set(repeat.on.map((entry) => entry.id)) : new Set());
+  const tickAll = (on) => put(on ? new Set(repeat.on.map((entry) => entry.id)) : new Set());
 
   /**
    * The pages of this difference a bulk mute cannot be pressed on — the same rule the
@@ -318,8 +363,9 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
         onOpenChange={(next) => {
           setOpen(next);
           // Closing the difference puts the selection down: it is a question about one
-          // press and not a state of the queue.
-          if (!next) setSelected(new Set());
+          // press and not a state of the queue. `put` is keyed, so a difference closing
+          // over here cannot clear ticks made over there.
+          if (!next) put(new Set());
         }}
       >
         <CollapsibleTrigger className="flex w-full flex-wrap items-start gap-2 px-4 py-2 text-left hover:bg-muted">
@@ -372,18 +418,19 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
           nothing for an action to act on, and a bar carrying buttons that would write
           nothing is worse than no bar.
 
-          It sits under the difference rather than inside the opened panel so it does not
-          push the page list about as the selection grows: the list is what is being
-          selected, and a toolbar that moved it would be a toolbar in the way. Closing the
-          difference clears the selection, so the bar cannot outlive the list it belongs
-          to. */}
+          It **floats** since round three — fixed to the bottom of the screen, drawn over
+          the queue rather than in it, so the list it selects neither moves under the
+          editor nor scrolls the presses away. It is still rendered here, by the difference
+          that owns the selection, because that is what makes the bar's words its own; the
+          selection is the list's, so only one difference can be holding it. Closing the
+          difference clears it, so the bar cannot outlive the list it belongs to. */}
       {selected.size > 0 && (
         <BulkControl
           repeat={repeat}
           byFinding={byFinding}
           bulk={bulk}
           selected={selected}
-          onClear={() => setSelected(new Set())}
+          onClear={() => put(new Set())}
         />
       )}
     </li>
@@ -452,7 +499,7 @@ function SelectAll({ repeat, selected, onTickAll }) {
  */
 function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, refuses, searched }) {
   return (
-    <div className="border-t border-border bg-muted px-4 py-2 text-sm">
+    <div className="border-t border-border bg-muted/50 px-4 py-2 text-sm">
       <Table>
         {/* Under a search these are the **matching** pages and a difference may be on
             more: `searchStore()` builds its repeats out of matched findings only, and a

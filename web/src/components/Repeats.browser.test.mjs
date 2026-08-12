@@ -31,6 +31,18 @@ const repeat = {
   ],
 };
 
+/** A second difference in the same list, for the questions that need two of them. */
+const other = {
+  key: '["nl","copy","links","rechts",null]',
+  store: 'nl',
+  class: 'copy',
+  prod: 'links',
+  new: 'rechts',
+  detail: null,
+  occurrences: 1,
+  on: [{ page: 'tuinhuis', id: 'g1', occurrences: 1 }],
+};
+
 const derived = (id, extra = {}) => ({
   id, state: 'open', shown: true, class: 'copy', anchorHeading: 'Afmetingen', occurrences: 1, ...extra,
 });
@@ -116,6 +128,58 @@ describe('the selection on a difference', () => {
     // offered. A bar carrying buttons that would write nothing is the thing this replaces.
     expect(button('Negeren')).toBeUndefined();
     expect(button('Dempen')).toBeUndefined();
+    unmount();
+  });
+
+  /**
+   * The bar floats over the screen and does not sit in the list (ticket 110, round three).
+   *
+   * It was a strip below the difference, which pushed everything under it down the moment a
+   * tick was made and scrolled off the top as soon as the editor read further into a long
+   * page list — the presses gone while the selection they act on is still on screen.
+   *
+   * The rule is read off the class list because **no stylesheet is loaded here**: this
+   * project mounts components without the app's CSS, so `getComputedStyle` answers `static`
+   * for every element in it and would pass whatever this said.
+   */
+  it('floats the bar at the bottom of the screen rather than in the list', () => {
+    const { unmount } = mount();
+
+    press(differenceRow());
+    press(pageTicks()[0]);
+
+    const bar = document.querySelector('[data-slot="bulk-bar"]');
+    expect(bar.className).toContain('fixed');
+    expect(bar.className).toContain('bottom-');
+    unmount();
+  });
+
+  /**
+   * One selection in the whole list, because there is one place for the bar to be.
+   *
+   * Two differences could each hold ticks while the bar was a strip under each of them, and
+   * each strip said which difference it belonged to. Fixed to the bottom of the screen,
+   * two of them are one bar on top of another — so ticking in a second difference takes the
+   * selection, and the first puts its ticks down.
+   */
+  it('holds one selection across the list, and the newest difference takes it', () => {
+    const map = new Map([...byFinding(), ['g1', derived('g1')]]);
+    const { unmount } = mount({ repeats: [repeat, other], byFinding: map });
+
+    const rows = () => [...document.querySelectorAll('[data-slot="collapsible-trigger"]')];
+    press(rows()[0]);
+    press(rows()[1]);
+
+    press(pageTicks()[0]);
+    expect(document.querySelectorAll('[data-slot="bulk-bar"]')).toHaveLength(1);
+
+    // The fourth tick is the other difference's only page: three above it, then this one.
+    press(pageTicks()[3]);
+
+    const bars = document.querySelectorAll('[data-slot="bulk-bar"]');
+    expect(bars).toHaveLength(1);
+    expect(bars[0].textContent).toContain('links');
+    expect(pageTicks()[0].getAttribute('aria-checked')).toBe('false');
     unmount();
   });
 
@@ -370,12 +434,18 @@ describe('the selection on a difference', () => {
     unmount();
   });
 
+  /**
+   * Putting the selection down costs one press, and on a floating bar that press is the
+   * cross at its end — the one control every bar of this kind puts there. It is a glyph, so
+   * the words it would have said are its label: a button whose accessible name is `✕` names
+   * nothing.
+   */
   it('clears the selection from the bar', () => {
     const { unmount } = mount();
 
     press(differenceRow());
     press(pageTicks()[0]);
-    press(button('Selectie wissen'));
+    press(document.querySelector('[aria-label="Selectie wissen"]'));
 
     expect(document.querySelector('[data-slot="bulk-bar"]')).toBeNull();
     expect(pageTicks().every((tick) => tick.getAttribute('aria-checked') === 'false')).toBe(true);

@@ -22,9 +22,12 @@ import { cn } from '../lib/utils.js';
  * thing, differing only in whether you ticked first, is the doubling this project keeps
  * deleting.
  *
- * So it is drawn only when something is ticked, and it is drawn **below** the difference
- * rather than inside its opened panel, so it does not push the page list about as the
- * selection grows.
+ * So it is drawn only when something is ticked, and since round three it **floats**: fixed
+ * to the bottom of the viewport, over the queue rather than in it. Round two put it in the
+ * flow under the difference, which moved the whole list down the moment a tick was made and
+ * took the presses off screen as soon as the editor scrolled into a long page list. There
+ * is one of it, because there is one place for it to be — `Repeats.jsx` holds the selection
+ * for the whole list, and ticking in a second difference takes it.
  *
  * **Three presses since round two**, and the third is the way back: `OverrideControl.jsx`
  * has offered *Ongedaan maken* on one decided finding since ticket 29, and this offered
@@ -84,16 +87,30 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
   };
 
   return (
+    /* It **floats**, fixed to the bottom of the viewport and centred (round three).
+       Round two made it a strip under the difference, which is where a selection's
+       toolbar goes wrong twice: it pushed the rest of the queue down the instant a tick
+       was made, and it scrolled away with the difference it belonged to — so an editor
+       reading page forty of a repeat had the presses off screen while the pages they act
+       on were in front of them. Fixed, it is where the selection is, for as long as the
+       selection is.
+
+       `w-fit` with a max: the bar is as wide as its own words, up to the width of the
+       page, so a two-page selection does not draw a strip across an empty screen. It
+       stops at the viewport edge and wraps rather than being clipped. */
     <div
       data-slot="bulk-bar"
-      className="flex flex-col gap-2 border-t border-border bg-muted/40 px-4 py-2"
+      className={cn(
+        'fixed inset-x-4 bottom-4 z-50 mx-auto flex w-fit max-w-[min(64rem,calc(100vw-2rem))]',
+        'flex-col gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-lg',
+      )}
     >
       {/* One strip: what is selected on the left, what can be done with it on the right.
           Round one ran the count, the presses and three paragraphs of explanation down the
           page, and what an editor could *do* was buried in prose. It is not a
           `role="toolbar"`: that role promises arrow-key navigation between its controls,
           and these are ordinary tab stops in the order the selection was made. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <Selection repeat={repeat} count={selected.size} />
 
         <div className="flex flex-wrap items-center gap-1">
@@ -149,13 +166,27 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
 
           {!bulk?.canWrite && <NotWriting reason={bulk?.notWritingReason} />}
 
-          {/* Unticking ten rows one at a time is the work this control exists to remove,
-              so putting the selection down costs one press as well. It is offered whether
-              or not the log can be written to: it is not a decision. */}
-          <Button type="button" variant="outline" size="xs" onClick={onClear}>
-            Selectie wissen
-          </Button>
         </div>
+
+        {/* Unticking ten rows one at a time is the work this control exists to remove, so
+            putting the selection down costs one press as well. It is offered whether or not
+            the log can be written to: it is not a decision.
+
+            It is the cross at the end of the bar, behind a rule, where a floating bar of
+            this kind puts it — and never a word among the presses, where *wissen* sits one
+            tab stop from *dempen* and reads like a fourth thing to decide. A glyph names
+            nothing, so the words it replaced are its label. */}
+        <span aria-hidden className="ml-auto h-4 w-px bg-border" />
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          onClick={onClear}
+          aria-label="Selectie wissen"
+          title="Selectie wissen"
+        >
+          <span aria-hidden>✕</span>
+        </Button>
       </div>
 
       {report && <Report {...report} />}
@@ -217,17 +248,31 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
 /**
  * What is ticked, and **which difference** it is ticked on (ticket 110).
  *
- * The second half is not decoration. Several differences can carry ticks at once, and a
- * bar that said only *2 geselecteerd* would be a number with no subject. So it repeats the
- * words of its own difference, in one line, the way the row above it states them.
+ * The second half is not decoration, and it matters more now that the bar floats: the
+ * difference it belongs to can be scrolled off the screen entirely, and *2 geselecteerd*
+ * pinned to the bottom of a queue of four thousand is a number with no subject. So it
+ * repeats the words of its own difference, in one line, the way the row states them.
  */
 const Selection = ({ repeat, count }) => (
-  <p className="text-xs text-muted-foreground">
-    <strong className="font-medium tabular-nums text-foreground">
-      {count} van {repeat.on.length} {repeat.on.length === 1 ? 'pagina' : "pagina's"}
-    </strong>{' '}
-    geselecteerd op <ClassWord class={repeat.class} />{' '}
-    <span className="text-foreground">{repeat.prod ?? '—'} → {repeat.new ?? '—'}</span>
+  <p className="flex items-center gap-2 text-xs text-muted-foreground">
+    {/* The count as a mark rather than as the first word of a sentence: the bar floats
+        over the page now, and what it is *about* has to be readable before the sentence
+        is. The sentence still carries the denominator — one page ticked of forty is a
+        different press from forty of forty. */}
+    <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-medium tabular-nums text-primary-foreground">
+      {count}
+    </span>
+    {/* An explicit space, so the count and the sentence are one string when read aloud —
+        *2van 3 pagina's* is what adjacent boxes concatenate to. A whitespace-only run is
+        not rendered as a flex item, so it costs nothing beside the gap. */}
+    {' '}
+    <span>
+      <strong className="font-medium tabular-nums text-foreground">
+        van {repeat.on.length} {repeat.on.length === 1 ? 'pagina' : "pagina's"}
+      </strong>{' '}
+      geselecteerd op <ClassWord class={repeat.class} />{' '}
+      <span className="text-foreground">{repeat.prod ?? '—'} → {repeat.new ?? '—'}</span>
+    </span>
   </p>
 );
 

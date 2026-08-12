@@ -200,8 +200,11 @@ can be done is visible without reading a paragraph.
 - [x] The actions stay **worded**. An icon-only toolbar is refused for the reason round one
       gives: an icon cannot carry the difference between a decision that expires with the
       text and one that never does.
-- [x] It is in flow, under the difference, so it covers nothing and does not push the page
-      list about as the selection grows. It carries **no** `role="toolbar"`: that role
+- [x] ~~It is in flow, under the difference, so it covers nothing and does not push the page
+      list about as the selection grows.~~ *Overturned by round three, R6: in flow was the
+      wrong reading of "covers nothing" — a strip under the difference pushes the queue down
+      the instant a tick is made and scrolls away from the selection it acts on. It floats.*
+      It carries **no** `role="toolbar"`: that role
       promises arrow-key navigation between its controls, and these are ordinary tab stops
       in the order the selection was made in. Claiming the role without the keyboard would
       be the worse of the two.
@@ -246,3 +249,38 @@ no reason the editor can see.
 - [x] `offersDismissal()` stops being exported with the select-all that needed it. The rule
       has one reader again — the press — and the states it lets through are pinned through
       `bulkDismissal()` rather than through a second entry point.
+
+## Round three — the toolbar floats
+
+R3 asked for a toolbar and got a strip in the flow of the page. That is a toolbar in the
+sense of *the buttons are together*, and not in the sense the ask was about: a bar that is
+where the work is, for as long as the selection is. The reference is the bottom-centred
+selection bar every list of this kind has — a count, the presses, a cross.
+
+### R6 — the bar is fixed to the bottom of the screen
+
+- [x] The bar is `position: fixed`, centred at the bottom of the viewport, above the page
+      and never in it. It is as wide as its own words up to the width of the screen, so a
+      two-page selection does not draw a strip across an empty row.
+- [x] It is still rendered by the difference that owns the selection, so it keeps saying
+      **whose** ticks it is counting. Nothing about the words changes: the presses stay
+      worded for the reason R3 gives, and the counts stay the ticked counts.
+- [x] The count leads the bar as a mark rather than as the first word of a sentence, and
+      the sentence keeps the denominator behind it — one of forty ticked is a different
+      press from forty of forty.
+- [x] *Selectie wissen* becomes the cross at the end of the bar, behind a rule. A word
+      among the presses reads as a fourth thing to decide; a glyph names nothing, so the
+      words it replaced are its `aria-label` and its `title`.
+
+### R7 — one selection in the list, because there is one place for the bar
+
+Two differences could each hold ticks while the bar was drawn under each of them. Fixed to
+one place, two of those are one bar on top of another — a bug the flow layout was hiding.
+
+- [x] The selection is held once for the whole list, keyed by the difference that owns it.
+      Ticking in a second difference takes it, and the first puts its ticks down.
+- [x] Emptying it is the owner's to do: a difference closing elsewhere in the list must not
+      put down a selection that is not its own.
+- [x] Both list roots — the flat list a search draws and the class groups — provide it, so
+      the rule holds in either reading. Only one of the two is on screen at a time.
+- [x] Walked in the browser project with two differences open and ticks made in both.
