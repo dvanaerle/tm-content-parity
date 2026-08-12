@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { metaRows } from '../../../compare/meta.mjs';
 import { Detail, Occurrences, Section, onePageTitle } from './Annotations.jsx';
 import { ClassPill } from './Chips.jsx';
@@ -14,7 +14,10 @@ import { Label } from './ui/label.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
+import { findingAnchor, landingFor, useLandOn } from '../lib/landing.mjs';
+import { findingInSearch } from '../lib/page-url.mjs';
 import { BANNER, CHROME, INK } from '../lib/palette.mjs';
+import { cn } from '../lib/utils.js';
 
 /**
  * The column heads of both tables here and of the content view are the same small
@@ -57,17 +60,48 @@ const TABS = ['Inhoud', 'Links', 'Afbeeldingen', 'Meta'];
  * records with a `state` and an `override` attached. The Ledger never re-derives
  * anything; it renders what the pure function decided.
  */
-export default function Ledger({ report, findings: derived, append, canWrite, observationId }) {
-  const [tab, setTab] = useState('Inhoud');
+export default function Ledger({ report, findings: derived, append, canWrite, observationId, settled }) {
+  const [chosenTab, setChosenTab] = useState('Inhoud');
   const [showNoise, setShowNoise] = useState(false);
+
+  /*
+   * The difference a link named, and what this ledger has to do about it (ticket 109).
+   *
+   * The id arrives in an **effect** and not in the initial state: this island is
+   * rendered to static HTML at build time, so a first render that read `location` would
+   * render one thing on the server and another in the browser.
+   *
+   * `taken` is the reader taking the controls back. The landing is not a one-shot,
+   * because a finding's `state` arrives with the log a beat after the tab has to be
+   * chosen — so it holds until the reader touches the tab strip or the noise box, and
+   * from then on their choice stands. The mark on the row stays either way: switching
+   * tabs to look at something else is not a reason to lose where you came from.
+   */
+  const [focus, setFocus] = useState(/** @type {string | null} */ (null));
+  const [readerChose, setReaderChose] = useState(false);
+  useEffect(() => setFocus(findingInSearch(window.location.search)), []);
+
+  const asked = useMemo(() => landingFor({ findings: derived, focus }), [derived, focus]);
+
+  const tab = !readerChose && asked.tab ? asked.tab : chosenTab;
+  const noise = showNoise || (!readerChose && asked.needsNoise);
+
+  const chooseTab = (name) => { setReaderChose(true); setChosenTab(name); };
+  const chooseNoise = (on) => { setReaderChose(true); setShowNoise(on); };
+
+  /**
+   * The landing, as the one thing the two tables below need: `focus` says which row and
+   * `settled` says when. They never travel apart, so they travel as one.
+   */
+  const landing = useMemo(() => ({ focus, settled }), [focus, settled]);
 
   const { production, new: next } = report.sides;
 
   // A muted finding stays **visible behind the toggle**: muting is not deleting,
   // and an editor who muted a class by mistake must be able to find it again.
   const findings = useMemo(
-    () => derived.filter((finding) => showNoise || (finding.shown && finding.state !== 'muted')),
-    [derived, showNoise],
+    () => derived.filter((finding) => noise || (finding.shown && finding.state !== 'muted')),
+    [derived, noise],
   );
 
   // `derived` and not `findings`: the mute counts what it would hide on the whole
@@ -115,20 +149,37 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
   }
 
   return (
-    /*
-     * `py-0 gap-0` because this Card's first child is a tab strip that has to sit
-     * flush against the top edge and draw its own bottom rule. Card's default vertical
-     * padding would float the strip inside the card, which is the one place the strip
-     * must not be.
-     *
-     * `overflow-visible` is not cosmetic. Card ships `overflow-hidden` to clip an image
-     * to its corners, and an `overflow` other than `visible` on any ancestor silently
-     * stops `position: sticky` working in the descendant. The Inhoud panel's outline
-     * nav is `lg:sticky lg:top-4` and it navigates a table up to 288 rows long, so
-     * clipping this card would have cost the one piece of furniture that makes a long
-     * page usable — and cost it quietly, with nothing on screen to show for it.
-     */
-    <Card className="gap-0 overflow-visible py-0">
+    <>
+      {/* A finding id is a term of the text, so it expires the moment the text does: a
+          link sent last week can name a difference this snapshot no longer has, because
+          it was fixed or the page was measured again. That is not a failure and it is not
+          nothing either, and a reader who followed the link has to be told — otherwise
+          the page simply does not move and they are left wondering whether they missed
+          it. `attention` and not `severe`: it is a condition, not a loss. */}
+      {asked.missing && (
+        <Alert className={`mb-3 ${BANNER.attention}`}>
+          <AlertDescription className="text-current">
+            <strong>Dit verschil staat niet in deze momentopname.</strong> De link wees een
+            bevinding aan die er niet meer is: het verschil is opgelost, of de pagina is
+            opnieuw gemeten en de tekst is veranderd. De hele pagina staat er nog wel.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/*
+        `py-0 gap-0` because this Card's first child is a tab strip that has to sit
+        flush against the top edge and draw its own bottom rule. Card's default vertical
+        padding would float the strip inside the card, which is the one place the strip
+        must not be.
+
+        `overflow-visible` is not cosmetic. Card ships `overflow-hidden` to clip an image
+        to its corners, and an `overflow` other than `visible` on any ancestor silently
+        stops `position: sticky` working in the descendant. The Inhoud panel's outline
+        nav is `lg:sticky lg:top-4` and it navigates a table up to 288 rows long, so
+        clipping this card would have cost the one piece of furniture that makes a long
+        page usable — and cost it quietly, with nothing on screen to show for it.
+      */}
+      <Card className="gap-0 overflow-visible py-0">
       {/*
         The tab strip is shadcn on Base UI since ticket 74, and it is the only
         thing in this component the library touches. What it buys is the roving
@@ -151,9 +202,29 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
         declared on a child to win — which is the concrete shape of "where a shadcn
         variable and a palette token disagree, the palette wins".
       */}
-      <Tabs value={tab} onValueChange={setTab} className="gap-0">
+      <Tabs value={tab} onValueChange={chooseTab} className="gap-0">
         <div className="flex flex-wrap items-center gap-1 border-b px-2">
-          <TabsList variant="line" className="h-auto flex-wrap gap-1 p-0">
+          {/*
+            `group-data-horizontal/tabs:h-auto` and not a plain `h-auto`, and this is
+            the fourth instance of the trap in the ADR: `tabsListVariants` writes the
+            height as `group-data-horizontal/tabs:h-8`, `tailwind-merge` does not dedupe
+            across differing variant modifiers, and the attribute selector then outranks
+            the plain class. So the list was pinned to 32 pixels while its own triggers
+            are 38 — `h-auto` on the *trigger* does win, because there it is plain
+            against plain.
+
+            Six pixels of trigger therefore hung out the bottom of the list box. That is
+            the whole of the "underline sits below the divider" report: the underline is
+            the active trigger's `-mb-px border-b-2`, the divider is this wrapper's
+            `border-b`, and they are meant to be the same line. On a narrow screen it
+            was worse than cosmetic — the strip wraps to two rows inside a box still
+            claiming to be 32 pixels tall, so row two rendered outside its parent and
+            landed on top of the noise checkbox.
+
+            Matching the prefix lets the two collapse to one class, and the list is
+            finally as tall as what it contains.
+          */}
+          <TabsList variant="line" className="group-data-horizontal/tabs:h-auto flex-wrap gap-1 p-0">
             {TABS.map((name) => (
               <TabsTrigger
                 key={name}
@@ -178,7 +249,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
               value rather than as an event: `onCheckedChange` and not
               `event.target.checked`. */}
           <Label className="ml-auto py-2 font-normal text-muted-foreground">
-            <Checkbox checked={showNoise} onCheckedChange={setShowNoise} />
+            <Checkbox checked={noise} onCheckedChange={chooseNoise} />
             Ruis en gedempt tonen ({hiddenCount})
           </Label>
         </div>
@@ -188,13 +259,19 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
             let one tab sit differently from the other three. */}
         <CardContent className="p-4">
           <TabsContent value="Inhoud">
-            <ContentView report={report} findings={derived} showNoise={showNoise} control={control} />
+            <ContentView
+              report={report}
+              findings={derived}
+              showNoise={noise}
+              control={control}
+              landing={landing}
+            />
           </TabsContent>
           <TabsContent value="Links">
-            <FindingTable findings={findings} check="links" control={control} sides={report.sides} />
+            <FindingTable findings={findings} check="links" control={control} sides={report.sides} landing={landing} />
           </TabsContent>
           <TabsContent value="Afbeeldingen">
-            <FindingTable findings={findings} check="images" control={control} sides={report.sides} />
+            <FindingTable findings={findings} check="images" control={control} sides={report.sides} landing={landing} />
           </TabsContent>
           <TabsContent value="Meta">
             <MetaTable production={production} next={next} />
@@ -202,11 +279,22 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
         </CardContent>
       </Tabs>
     </Card>
+    </>
   );
 }
 
-function FindingTable({ findings, check, control, sides }) {
+function FindingTable({ findings, check, control, sides, landing }) {
   const rows = findings.filter((finding) => finding.check === check);
+
+  // A link can name a finding on either of these two tabs, and neither has a document
+  // position to anchor on the way the content view does — their rows *are* findings. So
+  // they anchor on the id, and the landing scrolls to it once the tab is on screen.
+  // The **mark** is drawn at once and the **landing** waits for the log, which is the
+  // hook's own rule.
+  const focus = landing?.focus ?? null;
+  const landed = focus && rows.some((finding) => finding.id === focus) ? findingAnchor(focus) : null;
+  useLandOn(landed, landing?.settled);
+
   if (!rows.length) return <Empty>Geen bevindingen voor {CHECK_LABEL[check]}.</Empty>;
 
   return (
@@ -214,9 +302,15 @@ function FindingTable({ findings, check, control, sides }) {
        in an `overflow-x-auto` container, which is right for a wide dashboard row and
        wrong here: these three columns hold prose of wildly different lengths, and an
        auto layout would let the two comparison columns change width from row to row,
-       which is the one thing a diff must not do. The scroll container stays and simply
-       never fires. */
-    <Table className="table-fixed">
+       which is the one thing a diff must not do.
+
+       This used to add "the scroll container stays and simply never fires", which was
+       true and was the bug. `table-fixed w-full` never asks for more room than it is
+       given, so a narrow screen did not overflow — it divided, and the 224 pixel
+       `w-56` status column ate a 319 pixel card, leaving the two comparison columns
+       48 pixels each. A diff whose columns hold three words is not a narrow diff. The
+       floor lets the container do the job it was already wrapped in. */
+    <Table className="table-fixed min-w-3xl">
       <TableHeader className={HEAD_TONE}>
         <TableRow>
           <TableHead className="w-56">Soort</TableHead>
@@ -226,7 +320,17 @@ function FindingTable({ findings, check, control, sides }) {
       </TableHeader>
       <TableBody>
         {rows.map((finding) => (
-          <TableRow key={finding.id} className="align-top">
+          <TableRow
+            key={finding.id}
+            id={findingAnchor(finding.id)}
+            /* The same pair the content view's rows carry, for the same two reasons:
+               `-1` so a landing can hand it the keyboard without putting every row in the
+               Tab order, and `aria-current` so the mark is an announcement and not only a
+               colour. */
+            tabIndex={finding.id === focus ? -1 : undefined}
+            aria-current={finding.id === focus ? 'location' : undefined}
+            className={cn('align-top scroll-mt-4', finding.id === focus && CHROME.landed)}
+          >
             <TableCell className="px-2 py-2 align-top whitespace-normal">
               <ClassPill class={finding.class} />
               <Detail detail={finding.detail} />
@@ -270,7 +374,9 @@ function MetaTable({ production, next }) {
           uit en deze regels staan niet in de teller.
         </AlertDescription>
       </Alert>
-      <Table className="table-fixed">
+      {/* A lower floor than the finding table's: a meta row holds a title or a
+          description, not a block of body copy, and `w-40` leaves more behind. */}
+      <Table className="table-fixed min-w-2xl">
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.field} className="align-top">

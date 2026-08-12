@@ -18,3 +18,5 @@ dist/
 .agents/
 .claude/
 skills-lock.json
+# Snapshots and console logs the browser tooling writes while a page is driven.
+.playwright-mcp/

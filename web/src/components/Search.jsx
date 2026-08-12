@@ -4,7 +4,6 @@ import { Checkbox } from './ui/checkbox.jsx';
 import { Label } from './ui/label.jsx';
 import { Separator } from './ui/separator.jsx';
 import { CHROME, INK } from '../lib/palette.mjs';
-import { pageHref } from '../lib/page-url.mjs';
 import { cn } from '../lib/utils.js';
 import { searchNotes, searchStore } from '../lib/search.mjs';
 
@@ -23,7 +22,7 @@ import { searchNotes, searchStore } from '../lib/search.mjs';
  * is one derivation on screen twice and not a second surface.
  */
 export default function Search({
-  store, pages, term, byFinding, events, includeClosed, onIncludeClosed, bulk,
+  store, pages, term, byFinding, events, includeClosed, onIncludeClosed, bulk, link,
 }) {
   const { index, error } = useSearchIndex(store);
 
@@ -103,11 +102,12 @@ export default function Search({
             repeats={result.repeats}
             byFinding={byFinding}
             bulk={bulk}
+            link={link}
           />
         )}
 
-      <Named store={store} pages={named} />
-      <Notes notes={notes.notes} />
+      <Named store={store} pages={named} link={link} />
+      <Notes notes={notes.notes} link={link} />
     </>
   );
 }
@@ -129,7 +129,7 @@ export default function Search({
  * the only block that can carry it, and losing it would have made a page unreachable by
  * name. No count beside a name — the page list is where a page's numbers are.
  */
-function Named({ store, pages }) {
+function Named({ store, pages, link }) {
   if (pages.length === 0) return null;
 
   return (
@@ -142,7 +142,7 @@ function Named({ store, pages }) {
         <ul className="mt-1 flex flex-wrap gap-x-3 text-sm">
           {pages.map((page) => (
             <li key={page.page}>
-              <a className={cn('hover:underline', CHROME.link)} href={pageHref(store, page.page)}>
+              <a className={cn('hover:underline', CHROME.link)} href={link(store, page.page)}>
                 {page.page}
               </a>
             </li>
@@ -161,7 +161,7 @@ function Named({ store, pages }) {
  * what *active work by default* is protecting — that rule is about which findings are
  * offered as work.
  */
-function Notes({ notes }) {
+function Notes({ notes, link }) {
   if (notes.length === 0) return null;
 
   return (
@@ -181,7 +181,7 @@ function Notes({ notes }) {
               {/* The event's own store and page, and not the component's: an event
                   carries where it was written, and reading it is what keeps the link
                   honest if the two ever disagree. */}
-              <a className={cn('hover:underline', CHROME.link)} href={pageHref(note.store, note.page)}>
+              <a className={cn('hover:underline', CHROME.link)} href={link(note.store, note.page)}>
                 {note.page}
               </a>
               <span className="ml-2 text-muted-foreground">{note.note}</span>

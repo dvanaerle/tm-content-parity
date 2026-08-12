@@ -177,7 +177,7 @@ export const CHROME = {
   // sand on green, which is `headerMuted` given a hover.
   storeCurrent: 'bg-background text-brand',
   storeOther: 'text-surface-raised hover:bg-brand-dark hover:text-on-brand',
-  // The row a link landed on (ticket 101). It is chrome and not a finding: it says
+  // The row a link landed on (ticket 109). It is chrome and not a finding: it says
   // *this is the one you clicked*, which is a fact about the navigation and not a
   // claim about the content — so it must not borrow a diff hue, and it must not
   // borrow `attention` either, which would read as a condition to decide about. An

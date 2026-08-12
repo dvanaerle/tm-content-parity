@@ -1,0 +1,120 @@
+import { describe, expect, it } from 'vitest';
+import { findingAnchor, landingFor, landingRow } from './landing.mjs';
+
+/**
+ * Landing on the difference the link named (ticket 109).
+ *
+ * A page link from the dashboard carries a finding id, and the page has to put that
+ * finding in front of the reader. It is a **landing** and never a filter: the row
+ * arrives with the rows around it in document order, because that is the question a
+ * one-sided difference asks and the reason ADR 0006 keeps the content view whole.
+ */
+
+describe('findingAnchor', () => {
+  // The content view anchors its rows on production's document position (`p12`), for
+  // the reason `view.mjs` gives. The Links and Afbeeldingen tables have no such
+  // position — their rows are findings — so they anchor on the id, and the two schemes
+  // share one document. The prefix is what keeps them apart, and it is also what makes
+  // the id legal: a digest can begin with a digit.
+  it('cannot collide with a row anchor, and survives a digest starting with a digit', () => {
+    expect(findingAnchor('9f2c1a')).toBe('bevinding-9f2c1a');
+    expect(findingAnchor('p12')).not.toBe('p12');
+  });
+});
+
+describe('landingFor', () => {
+  /** A derived finding, as `derivePageState()` hands them over. */
+  const finding = (part) => ({
+    id: 'a1', check: 'text', class: 'text-missing', shown: true, state: 'open', ...part,
+  });
+
+  // The link can name a finding on any of the three checks, and two of them are not in
+  // the content view at all. A landing that only ever opened Inhoud would send an
+  // editor to a tab that does not hold what they clicked.
+  it('names the tab the finding lives on', () => {
+    const findings = [
+      finding({ id: 'a1', check: 'text' }),
+      finding({ id: 'b2', check: 'links' }),
+      finding({ id: 'c3', check: 'images' }),
+    ];
+
+    expect(landingFor({ findings, focus: 'a1' }).tab).toBe('Inhoud');
+    expect(landingFor({ findings, focus: 'b2' }).tab).toBe('Links');
+    expect(landingFor({ findings, focus: 'c3' }).tab).toBe('Afbeeldingen');
+  });
+
+  // The dashboard lists a `genegeerd` row and a muted one, so both can be clicked. A
+  // muted finding and one of a hidden class are behind *Ruis en gedempt tonen*, and a
+  // landing that did not switch it on would send the reader to an empty screen and say
+  // nothing about why.
+  it('asks for the noise toggle when the finding is behind it', () => {
+    const open = finding({ id: 'a1' });
+    const dismissed = finding({ id: 'b2', state: 'dismissed' });
+    const muted = finding({ id: 'c3', state: 'muted' });
+    const hiddenClass = finding({ id: 'd4', shown: false });
+    const findings = [open, dismissed, muted, hiddenClass];
+
+    // A dismissal is a decision and not noise: the row stays on screen, so the toggle
+    // is left where the reader had it.
+    expect(landingFor({ findings, focus: 'a1' }).needsNoise).toBe(false);
+    expect(landingFor({ findings, focus: 'b2' }).needsNoise).toBe(false);
+    expect(landingFor({ findings, focus: 'c3' }).needsNoise).toBe(true);
+    expect(landingFor({ findings, focus: 'd4' }).needsNoise).toBe(true);
+  });
+
+  // A finding id is a term of the text, so it expires the moment the text changes: a
+  // link sent on Monday can name a finding this snapshot does not have, because the
+  // difference was fixed or the page was re-measured. That is not an error and it is
+  // not nothing either — the page has to be able to say so, so the caller gets told
+  // rather than left to infer it from a tab that did not move.
+  it('reports a finding this snapshot does not have', () => {
+    const findings = [finding({ id: 'a1' })];
+
+    expect(landingFor({ findings, focus: 'gone' })).toEqual({
+      tab: null, needsNoise: false, missing: true,
+    });
+  });
+
+  // The ordinary case, and it must ask for nothing: a reader who opened a page from
+  // the page list chose their own tab and their own toggle.
+  it('asks for nothing when no link named a finding', () => {
+    expect(landingFor({ findings: [finding({ id: 'a1' })], focus: null })).toEqual({
+      tab: null, needsNoise: false, missing: false,
+    });
+  });
+});
+
+describe('landingRow', () => {
+  // The content view is a list of **rows** and the link names a **finding**, so the
+  // one thing it has to do is translate. It lands on the row's own anchor and not on
+  // `findingAnchor`, because a row already has a position in the document and that is
+  // the anchor an outline link and a copied hash both use.
+  it('translates the finding into the row that carries it', () => {
+    const rows = [
+      { key: 'p11', finding: null },
+      { key: 'p12', finding: { id: 'a1' } },
+      { key: 'n7', finding: { id: 'b2' } },
+    ];
+
+    expect(landingRow(rows, 'a1')).toBe('p12');
+    expect(landingRow(rows, 'b2')).toBe('n7');
+  });
+
+  // A grouped finding covers several rows and the reader is sent to the first of them,
+  // which is where the difference starts. Landing halfway down a run would put the
+  // beginning of it above the fold.
+  it('lands on the first row a grouped finding covers', () => {
+    const rows = [
+      { key: 'p12', finding: { id: 'a1' } },
+      { key: 'p13', finding: { id: 'a1' } },
+    ];
+
+    expect(landingRow(rows, 'a1')).toBe('p12');
+  });
+
+  // Nothing to land on is the ordinary case, and it must not be a row.
+  it('lands nowhere when the rows do not hold it', () => {
+    expect(landingRow([{ key: 'p12', finding: { id: 'a1' } }], 'gone')).toBe(null);
+    expect(landingRow([{ key: 'p12', finding: { id: 'a1' } }], null)).toBe(null);
+  });
+});

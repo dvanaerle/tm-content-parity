@@ -8,7 +8,6 @@ import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible.jsx';
 import { CHROME, INK, PILL } from '../lib/palette.mjs';
-import { pageHref } from '../lib/page-url.mjs';
 import { cn } from '../lib/utils.js';
 import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
 
@@ -35,12 +34,12 @@ import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
  * decision on a repeat is still one decision per finding — every number here says how
  * much is *decided*, and none of them counts down to an empty list.
  */
-export default function Repeats({ repeats, byFinding, bulk }) {
+export default function Repeats({ repeats, byFinding, bulk, link }) {
   if (repeats.length === 0) return <NoRepeats />;
 
   return (
     <>
-      <RowList repeats={repeats} byFinding={byFinding} bulk={bulk} />
+      <RowList repeats={repeats} byFinding={byFinding} bulk={bulk} link={link} />
       <Total repeats={repeats} />
     </>
   );
@@ -69,7 +68,7 @@ export default function Repeats({ repeats, byFinding, bulk }) {
  * term is the grouping the editor asked for — and grouping it by class as well would be a
  * second grouping over one answer.
  */
-export function ClassGroups({ repeats, classes, byFinding, bulk }) {
+export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
   const groups = useMemo(() => groupRepeatsByClass(repeats, classes), [repeats, classes]);
 
   // Which groups are open. The initial state is the derivation's `opensOnLoad`: closed,
@@ -106,6 +105,7 @@ export function ClassGroups({ repeats, classes, byFinding, bulk }) {
             onDraw={(next) => setBudget({ ...budget, [group.class]: next })}
             byFinding={byFinding}
             bulk={bulk}
+            link={link}
           />
         ))}
       </ul>
@@ -126,7 +126,7 @@ export function ClassGroups({ repeats, classes, byFinding, bulk }) {
  * makes that tail navigable; it does not get to decide the tail is not work. So no group is
  * left out for being small, and none of them hides its rows behind its count.
  */
-function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk }) {
+function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, link }) {
   const count = group.repeats.length;
 
   if (count === 0) {
@@ -160,6 +160,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk }
             repeats={group.repeats}
             byFinding={byFinding}
             bulk={bulk}
+            link={link}
             drawn={drawn}
             onDraw={onDraw}
           />
@@ -180,7 +181,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk }
  * which is the flat list a search draws. A list that is never taken off screen cannot lose
  * its paging, so there is nothing above it to hold.
  */
-function RowList({ repeats, byFinding, bulk, drawn: given, onDraw }) {
+function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw }) {
   const [held, setHeld] = useState(PAGE_SIZE);
   const drawn = given ?? held;
   const draw = (next) => (onDraw ? onDraw(next) : setHeld(next));
@@ -189,7 +190,7 @@ function RowList({ repeats, byFinding, bulk, drawn: given, onDraw }) {
     <>
       <ul className="text-sm">
         {repeats.slice(0, drawn).map((repeat) => (
-          <Row key={repeat.key} repeat={repeat} byFinding={byFinding} bulk={bulk} />
+          <Row key={repeat.key} repeat={repeat} byFinding={byFinding} bulk={bulk} link={link} />
         ))}
       </ul>
 
@@ -240,7 +241,7 @@ const PAGE_SIZE = 100;
 const acrossPagesTitle = (repeat) => `${repeat.occurrences} keer in totaal, op ${repeat.on.length} `
   + "pagina's. Op sommige van die pagina's staat het verschil meer dan één keer.";
 
-function Row({ repeat, byFinding, bulk }) {
+function Row({ repeat, byFinding, bulk, link }) {
   const [open, setOpen] = useState(false);
 
   // The same four rules the page bar obeys, over this difference's findings: a mute
@@ -295,10 +296,19 @@ function Row({ repeat, byFinding, bulk }) {
             {/* A page name opens the **whole** content view for that page, and not a
                 fragment of it filtered to this difference. The question a one-sided
                 difference asks is where the text belongs, and only document order
-                answers it (ADR 0006). */}
+                answers it (ADR 0006).
+
+                Since ticket 109 the link also **names this finding**, and the page lands
+                on it: the row opens, the view scrolls to it, and it is marked. That is not
+                a filter and it narrows nothing — it is the difference between arriving at
+                the row and arriving at the top of a page 399 rows long. The link carries
+                the dashboard back as well, so both Back and the header link return to this
+                screen: its view, its pills and its search term. **Not** which group was
+                open — that is session state by the rule `groupRepeatsByClass()` states,
+                and a pill that is on re-opens its own group anyway. */}
             {repeat.on.map((entry) => (
               <li key={entry.id} className="flex flex-wrap items-baseline gap-2 py-0.5">
-                <a className={cn('hover:underline', CHROME.link)} href={pageHref(repeat.store, entry.page)}>
+                <a className={cn('hover:underline', CHROME.link)} href={link(repeat.store, entry.page, entry.id)}>
                   {entry.page}
                 </a>
                 <Occurrences count={entry.occurrences} title={onePageTitle(entry.occurrences)} />

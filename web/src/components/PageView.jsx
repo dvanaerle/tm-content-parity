@@ -91,6 +91,12 @@ export default function PageView({ report: built }) {
       <Ledger
         report={report}
         findings={derived.findings}
+        /* Whether the page has stopped changing shape, which is what a landing has to
+           wait for: the override log arrives a beat after the first paint and adds a
+           control to every decided row, so a scroll taken before it lands is measured
+           against a layout that is about to grow. An unconnected log settles
+           immediately — it is never going to answer. */
+        settled={log.ready || !log.connected}
         append={append}
         canWrite={canWrite}
         observationId={report.observationId}

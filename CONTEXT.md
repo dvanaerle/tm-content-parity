@@ -190,10 +190,28 @@ element any more: it folds the links inside it. Both the word and the rule are g
   rewrote the text, because size is not similarity. The class stays `copy` and the
   score stays with it. "Uncompared" is not a class: the class vocabulary stays closed.
   See `docs/adr/0009-the-word-diff-runs-in-the-browser.md`.
-- **Filter** — a narrowing of what is on screen, by class. It is session-only and it
-  moves no bar, no denominator and no count. The content view narrows a page to a
-  class and the dashboard narrows the page list to the same class; both say so with
-  an amber strip for as long as the filter is on.
+- **Filter** — a narrowing of what is on screen, by class. It moves no bar, no
+  denominator and no count. The content view narrows a page to a class and the
+  dashboard narrows the page list to the same class; both say so with an amber strip
+  for as long as the filter is on.
+  On the dashboard the filter is part of the **screen** and therefore lives in the URL
+  (ticket 109), so Back restores it and a copied link carries it. On a page it stays
+  session-only: a page filter is a pass an editor is making, not a place to return to.
+  Neither of them has ever moved a number and this does not change that.
+- **Screen** — everything a dashboard is *drawing*: which of the two views is on, the
+  sort, the search term, the class pills and *inclusief afgesloten*. It lives in the
+  query string, so Back returns to it and it can be sent to a colleague; only what
+  differs from the default is written, so a query means somebody chose something. It is
+  what is drawn and never what a number means — see **Filter**. **Which group is open
+  is not part of it**, for the reason **Class group** gives: that is session state, and
+  a URL that pinned it would make *filter wissen* and the address bar disagree about
+  what a filter is.
+- **Landing** — arriving at one difference because a link named it. A page link from
+  the dashboard carries the **finding id**, and the page opens the tab that finding
+  lives on, opens its row, marks it and scrolls to it. A landing is **not** a filter and
+  removes nothing: the rows around it stay in document order, which is the whole reason
+  ADR 0006 keeps the content view whole. A finding id is a term of the text, so a link
+  outlives the finding it names, and a page reached by a stale one says so.
 - **Dashboard** — one store's work on one screen, at `/<store>/`. It carries only
   that store's summaries and only that store's progress numbers. There is no
   all-stores dashboard: a store is the unit an editor is responsible for.

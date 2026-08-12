@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pageHref, recheckPath } from './page-url.mjs';
+import { backInSearch, findingInSearch, pageHref, recheckPath, storeHref } from './page-url.mjs';
 
 describe('pageHref', () => {
   // The Astro route is a rest parameter, so a slash in the key is a route
@@ -24,6 +24,58 @@ describe('pageHref', () => {
   it('leaves the unanchored sentinel exactly as the build wrote it', () => {
     expect(pageHref('fr', '(fr)heavy-duty-veranda')).toBe('/fr/(fr)heavy-duty-veranda/');
     expect(pageHref('be_fr', '(be_fr)fr/pergola')).toBe('/be_fr/(be_fr)fr/pergola/');
+  });
+});
+
+describe('pageHref, asked for a finding', () => {
+  // Ticket 101. Clicking a difference on the dashboard used to open the page at the
+  // top, and on a 399-row page the difference had to be found again by eye. The link
+  // names it, and the page lands on it.
+  it('carries the finding id', () => {
+    expect(pageHref('nl', 'lighting-system/productinformatie', { finding: 'abc123' }))
+      .toBe('/nl/lighting-system/productinformatie/?bevinding=abc123');
+  });
+
+  // The screen the editor left, so the way back is that screen and not a bare store.
+  // It is a query string inside a query string, so it has to arrive encoded or the
+  // page would read the dashboard's own keys as its own.
+  it('carries the dashboard it was clicked from, encoded', () => {
+    expect(pageHref('nl', 'faq', { finding: 'abc123', back: 'weergave=pages&soort=copy' }))
+      .toBe('/nl/faq/?bevinding=abc123&terug=weergave%3Dpages%26soort%3Dcopy');
+  });
+});
+
+describe('reading a link back', () => {
+  // The other end of `pageHref`. What the dashboard wrote, the page reads — and a
+  // page reached the ordinary way asked for nothing, which is the common case and
+  // must read as null rather than as an empty string somebody has to remember to
+  // check.
+  it('reads the finding and the way back off a link it wrote', () => {
+    const href = pageHref('nl', 'faq', { finding: 'abc123', back: 'weergave=pages&soort=copy' });
+    const search = href.slice(href.indexOf('?'));
+
+    expect(findingInSearch(search)).toBe('abc123');
+    expect(backInSearch(search)).toBe('weergave=pages&soort=copy');
+  });
+
+  it('says null when a link asked for nothing', () => {
+    expect(findingInSearch('')).toBe(null);
+    expect(backInSearch('')).toBe(null);
+    expect(findingInSearch('?bevinding=')).toBe(null);
+  });
+});
+
+describe('storeHref', () => {
+  // The way back. With nothing carried it is the store's own dashboard, which is the
+  // link the page header has always drawn.
+  it('is the bare dashboard when nothing was carried', () => {
+    expect(storeHref('nl')).toBe('/nl/');
+    expect(storeHref('nl', null)).toBe('/nl/');
+    expect(storeHref('nl', '')).toBe('/nl/');
+  });
+
+  it('returns to the screen that was left', () => {
+    expect(storeHref('nl', 'weergave=pages&soort=copy')).toBe('/nl/?weergave=pages&soort=copy');
   });
 });
 

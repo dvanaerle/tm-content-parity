@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Bar, Chip, ClassFilterPills, FilterBanner } from './Chips.jsx';
 import { EditorPrompt, LogBanner } from './Progress.jsx';
 import { ClassGroups } from './Repeats.jsx';
@@ -15,6 +15,7 @@ import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
+import { useScreen } from '../lib/screen-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
 import { pagesWithClasses, repeatsInStore, repeatsWithClasses, toggleIn } from '../lib/view.mjs';
 
@@ -49,19 +50,37 @@ export default function Dashboard({
   store, pages, notChecked = [], regions = [],
   regionsChanged = { store: null, reason: null, changes: [] },
 }) {
-  const [query, setQuery] = useState('');
-  const [sort, setSort] = useState('worst');
-  // *Inclusief afgesloten*, which belongs to the search and not to the two views: the
-  // views answer about the work that is left, and only a search is ever asked to look
-  // back at what was decided.
-  const [includeClosed, setIncludeClosed] = useState(false);
-  // Which of the two views is on screen. *Verschillen* lands first: it is the
-  // question an editor arrives with, and the page list is one click away.
-  const [view, setView] = useState('repeats');
-  // Ticket 36 gives the class pills the same semantics the content view's filter
-  // has: a pure view filter, session-only, that moves no bar and no roll-up. The
-  // chips above the table keep counting every comparable page.
-  const [classes, setClasses] = useState(/** @type {string[]} */ ([]));
+  /*
+   * Every control on this screen, in the **address bar** since ticket 109.
+   *
+   * It was five pieces of session state, so opening a page threw all of them away: an
+   * editor working down a `copy` filter opened the third page on the list, pressed
+   * Back, and got the unfiltered queue from the top. Now the screen is the URL, so
+   * Back restores it and the link can be sent to a colleague.
+   *
+   * The semantics are untouched. Ticket 36 gives the class pills a pure view filter
+   * that moves no bar and no roll-up, and the chips above still count every comparable
+   * page; *inclusief afgesloten* still belongs to the search alone; *Verschillen* still
+   * lands first. `screen-url.mjs` only says where the state is kept.
+   */
+  const { screen, patch, search } = useScreen();
+  const { query, sort, includeClosed, view, classes } = screen;
+
+  /**
+   * Every link off this dashboard into a page, built in one place.
+   *
+   * It is one prop rather than a store and a back-query drilled separately, because it
+   * passes through four components to reach the row that draws it — and the leaves then
+   * do not have to know that a way back exists at all.
+   *
+   * The **store is an argument** and not closed over. A note in the search result
+   * carries the store it was written on, and reading the event's own store is what
+   * keeps that link honest if the two ever disagree.
+   */
+  const link = useCallback(
+    (linkStore, page, finding = null) => pageHref(linkStore, page, { finding, back: search }),
+    [search],
+  );
 
   // One-sided pages are out of the bar from the first day: ticket 20 owns them,
   // and seventy-six undecidable rows would poison the roll-up.
@@ -205,7 +224,7 @@ export default function Dashboard({
               .sort((a, b) => b[1] - a[1])
               .map(([cls, count]) => ({ class: cls, count }))}
             selected={classes}
-            onToggle={(cls) => setClasses(toggleIn(classes, cls))}
+            onToggle={(cls) => patch({ classes: toggleIn(classes, cls) })}
             title={(cls) => (view === 'repeats'
               ? `Toon alleen de verschillen van soort ${cls}. De getallen hierboven veranderen niet.`
               : `Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`)}
@@ -226,18 +245,18 @@ export default function Dashboard({
             <Input
               type="search"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => patch({ query: event.target.value })}
               placeholder="Zoek in de inhoud"
               title="Zoekt de teksten, de links, de kopjes en de paginanamen van deze winkel."
             />
             {/* The switch belongs to the two views, and a search answers past both of
                 them, so it steps aside while one is on screen. */}
-            {!searching && <ViewSwitch view={view} onChange={setView} />}
+            {!searching && <ViewSwitch view={view} onChange={(next) => patch({ view: next })} />}
             {!searching && view === 'pages' && (
               // A native select works without JavaScript and this one does not. Nothing is
               // lost: the control and its state already live inside a `client:load` island,
               // so the sort was inert without JavaScript before this swap as well.
-              <Select value={sort} onValueChange={setSort} items={SORT_LABEL}>
+              <Select value={sort} onValueChange={(next) => patch({ sort: next })} items={SORT_LABEL}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -278,13 +297,14 @@ export default function Dashboard({
               byFinding={byFinding}
               events={log.events}
               includeClosed={includeClosed}
-              onIncludeClosed={setIncludeClosed}
+              onIncludeClosed={(next) => patch({ includeClosed: next })}
               bulk={bulk}
+              link={link}
             />
           )}
 
           {!searching && classes.length > 0 && (
-            <FilterBanner onClear={() => setClasses([])} className="border-b px-4 py-2">
+            <FilterBanner onClear={() => patch({ classes: [] })} className="border-b px-4 py-2">
               <strong>Gefilterd op {classes.join(', ')}.</strong>
               {view === 'repeats'
                 ? `${shownRepeats.length} van ${repeats.length} verschillen.`
@@ -309,6 +329,7 @@ export default function Dashboard({
               classes={classes}
               byFinding={byFinding}
               bulk={bulk}
+              link={link}
             />
           )}
 
@@ -328,7 +349,7 @@ export default function Dashboard({
               {rows.map((page) => (
                 <TableRow key={`${page.store}/${page.page}`}>
                   <TableCell className="px-4">
-                    <a className={cn('font-medium hover:underline', CHROME.link)} href={pageHref(page.store, page.page)}>
+                    <a className={cn('font-medium hover:underline', CHROME.link)} href={link(page.store, page.page)}>
                       {page.page}
                     </a>
                     <span className="ml-2 text-xs text-muted-foreground">{page.sides.production.units} blokken</span>
@@ -365,7 +386,7 @@ export default function Dashboard({
       >
         {oneSided.map((page) => (
           <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
-            <a className={`hover:underline ${CHROME.link}`} href={pageHref(page.store, page.page)}>{page.page}</a>
+            <a className={`hover:underline ${CHROME.link}`} href={link(page.store, page.page)}>{page.page}</a>
             <span className="text-muted-foreground">{page.skipReason}</span>
           </li>
         ))}

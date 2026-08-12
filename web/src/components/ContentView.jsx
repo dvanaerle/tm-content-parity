@@ -9,6 +9,7 @@ import { Label } from './ui/label.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { cn } from '../lib/utils.js';
 import { CHROME } from '../lib/palette.mjs';
+import { landingRow, useLandOn } from '../lib/landing.mjs';
 import {
   NO_FILTER,
   isNarrowed,
@@ -37,7 +38,7 @@ import {
  * What is on screen is `view.mjs`'s decision, not this component's. The filter is
  * the judgement in this feature and it is pure and tested; this file is the pixels.
  */
-export default function ContentView({ report, findings, showNoise, control }) {
+export default function ContentView({ report, findings, showNoise, control, landing }) {
   const [filter, setFilter] = useState(NO_FILTER);
   const { production, new: next } = report.sides;
 
@@ -50,6 +51,17 @@ export default function ContentView({ report, findings, showNoise, control }) {
   }), [report.rows, findings, production, next, filter, showNoise]);
 
   const outline = useMemo(() => outlineFrom(rows), [rows]);
+
+  /*
+   * The row a link landed on (ticket 109).
+   *
+   * The link names a finding and this view is a list of rows, so `landingRow()` does the
+   * translation and the row's **own** anchor is what is scrolled to — the same anchor an
+   * outline link uses and a reader copies. Nothing is filtered: the row arrives with the
+   * rows around it in document order, which is the question a one-sided difference asks
+   * and the reason ADR 0006 keeps this view whole.
+   */
+  const landed = useMemo(() => landingRow(rows, landing?.focus ?? null), [rows, landing]);
   const narrowed = isNarrowed(filter);
 
   return (
@@ -82,7 +94,7 @@ export default function ContentView({ report, findings, showNoise, control }) {
               </EmptyHeader>
             </Empty>
           )
-          : <Rows rows={rows} control={control} sides={report.sides} />}
+          : <Rows rows={rows} control={control} sides={report.sides} landed={landed} settled={landing?.settled} />}
       </div>
     </div>
   );
@@ -164,6 +176,14 @@ function Export({ markdown, name, children }) {
  * those units — so what is left of it is the jump list.
  *
  * It sticks, because the page it navigates is up to 288 rows long.
+ *
+ * Everything that makes it a *column* is behind `lg:`, because below `lg` the parent
+ * is `flex-col` and there is no column to be. `shrink-0` used to be unconditional
+ * while the width was not, which is the one combination that cannot work: a flex item
+ * with no width that refuses to shrink takes its content width, and the longest
+ * heading here is 650 pixels. It pushed the document to 697 pixels inside a 399 pixel
+ * viewport and took the whole page sideways with it. `truncate` on each link was dead
+ * in the same breath — there was no box to truncate against.
  */
 function Outline({ entries }) {
   if (!entries.length) return null;
@@ -171,7 +191,7 @@ function Outline({ entries }) {
   return (
     <nav
       aria-label="Koppen op deze pagina"
-      className="max-h-[80vh] shrink-0 self-start overflow-auto lg:sticky lg:top-4 lg:w-56"
+      className="max-h-64 w-full overflow-auto lg:sticky lg:top-4 lg:max-h-[80vh] lg:w-56 lg:shrink-0 lg:self-start"
     >
       <h3 className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Koppen</h3>
       <ol className="space-y-0.5 text-sm">
@@ -199,8 +219,20 @@ function Outline({ entries }) {
  * The clamp state belongs to the **row** and not to a cell, because a row is one
  * comparison and two cells at two heights cannot be read against each other.
  */
-function Rows({ rows, control, sides }) {
+function Rows({ rows, control, sides, landed, settled }) {
   const [open, setOpen] = useState(() => new Set());
+
+  // A landing is a jump, so it obeys the same rule the hash jump below obeys: the row it
+  // lands on opens. It is a separate effect because it arrives from the query string and
+  // not from the hash, and because it can change while the page stays put — a re-check
+  // replaces the report without touching the address bar.
+  useEffect(() => {
+    if (landed) setOpen((held) => new Set(held).add(landed));
+  }, [landed]);
+
+  // The **mark** and the open row are drawn at once; the landing itself waits for the
+  // log, which is the hook's own rule.
+  useLandOn(landed, settled);
 
   // A jump is a request to read one row, so the row it lands on opens — and it opens
   // downwards from its own top, which the native jump has already put at the top of
@@ -227,8 +259,16 @@ function Rows({ rows, control, sides }) {
   return (
     /* `table-fixed`, for the reason `Ledger.jsx` gives: an auto layout would let the
        two comparison columns change width from row to row, and a diff whose columns
-       move is a diff a reader cannot scan. */
-    <Table className="table-fixed">
+       move is a diff a reader cannot scan.
+
+       `min-w-3xl` is what makes the scroll container shadcn's `Table` already wraps
+       itself in actually fire. `table-fixed w-full` alone never asks for more room
+       than it is given, so on a 319 pixel card it did not overflow — it *divided*,
+       handing the 224 pixel status column its width and leaving 48 pixels each to the
+       two prose columns. Three words per line is not a narrower diff, it is no diff
+       at all. Below the threshold the reader now scrolls the table sideways and the
+       columns keep the proportions they have on a desktop. */
+    <Table className="table-fixed min-w-3xl">
       <TableHeader className="[&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
         <TableRow>
           <TableHead className="w-56">Status</TableHead>
@@ -243,7 +283,14 @@ function Rows({ rows, control, sides }) {
           <TableRow
             key={row.key}
             id={row.key}
-            className="align-top scroll-mt-4"
+            /* The landed row is the only focusable row, and only while it is the landed
+               one: `-1` takes the focus a landing gives it without putting every row of a
+               288-row table into the Tab order. `aria-current` is what says *this is the
+               one you clicked* to a reader who cannot see the outline — the outline alone
+               is a colour, and a colour is not an announcement. */
+            tabIndex={row.key === landed ? -1 : undefined}
+            aria-current={row.key === landed ? 'location' : undefined}
+            className={cn('align-top scroll-mt-4', row.key === landed && CHROME.landed)}
           >
             <TableCell className="px-2 py-3 align-top whitespace-normal">
               {row.class
