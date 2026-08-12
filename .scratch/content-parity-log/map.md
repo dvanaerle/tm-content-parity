@@ -848,6 +848,34 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   ticket imagined, so the interface says so under the list. It also argues against
   ticket 31: a 22-page maximum is a click-through, not a bulk tool.
 
+- [100 — Verschillen groups by class](issues/100-verschillen-groups-by-class.md)
+  — **Built 2026-08-12.** The queue arrives as a **class group** for each class of the
+  closed vocabulary, ordered by the vocabulary and never by the counts, so no group moves
+  as the work is done. `groupRepeatsByClass()` is a pure derivation over 81's repeats: it
+  re-sorts nothing, `Repeat` gained no field, and the rendering budget belongs to the group
+  — held above the rows, because a closed group unmounts them and a budget kept down there
+  reset every time it was reopened.
+
+  **Opening a group is not a filter.** It is a class name in component state — not
+  persisted, not in the url, absent from the amber strip — and the class pills stay the one
+  filter: with a pill on, only the selected groups exist and they are open, so the two
+  controls cannot tell different stories. Groups start closed unless one of them is the
+  only one holding anything.
+
+  **The ticket's word "section" is refused**, and `CONTEXT.md` gains *class group* instead.
+  "Section" is the mute scope, a run of one page under an anchor heading (ADR 0008), and
+  one word with two meanings is what that glossary exists to stop. **Two of the ticket's
+  own rules collide** — one at a time, against a pill opening what it selects — and the
+  pills win: one-at-a-time governs the clicks, because a two-class filter answered with one
+  class drawn open is the queue disagreeing with the control that narrowed it.
+
+  An empty **shown** class is drawn and says so, because *nothing wrong here* and *this
+  class does not exist* are two different answers; `fr` ships eleven groups and one such
+  sentence. A class the vocabulary does not name is drawn **last** rather than nowhere: it
+  cannot arrive today, and the guard exists because the failure would otherwise be silent —
+  the row leaves the screen while the footer keeps counting it. The search keeps the flat
+  list, since a search's grouping is the term.
+
 ### Facts found while charting
 
 - Production emits 9 `data-content-type` attributes on a page where the new site

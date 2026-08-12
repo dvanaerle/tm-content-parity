@@ -198,11 +198,25 @@ element any more: it folds the links inside it. Both the word and the rule are g
   that store's summaries and only that store's progress numbers. There is no
   all-stores dashboard: a store is the unit an editor is responsible for.
   It holds **two views over one derivation**, and one filter serves both.
-  **Verschillen** is the store's repeats, worst-first by pages, and it answers
-  *what do I decide next*; opening a row lists its pages, and a page name opens the
-  whole content view for that page and never a fragment of it. **Pagina's** is the
-  store's pages, worst-first, and it answers *which page do I open next*. There is
-  no all-stores repeat view, for the reason there is no all-stores dashboard.
+  **Verschillen** is the store's repeats in **class groups**, worst-first by pages
+  inside each one, and it answers *what do I decide next*; opening a row lists its
+  pages, and a page name opens the whole content view for that page and never a
+  fragment of it. **Pagina's** is the store's pages, worst-first, and it answers
+  *which page do I open next*. There is no all-stores repeat view, for the reason
+  there is no all-stores dashboard.
+- **Class group** — the repeats of one class in *Verschillen*, under a label carrying
+  the class and how many repeats it holds. The groups are in the vocabulary's order
+  and never in the counts' order, because a group that moves position as the work is
+  done is a group nobody can learn where to look for. A shown class with no repeats is
+  a group that says so: "nothing wrong here" and "this class does not exist" are two
+  different answers. **Opening a group is not a filter**: it changes what is drawn and
+  never what is included, so it is session state, it never enters the amber strip and
+  *filter wissen* does not touch it. The class pills stay the one filter, and with a
+  pill on only the selected groups exist, so the two controls cannot tell different
+  stories. Do **not** call it a *section*: that word is the mute scope, a run of one
+  page under an anchor heading, and ticket 100's own wording is refused here for it.
+  A group holds its own **rendering budget**, so *volgende 100* pages the group it
+  sits in.
 - **Doorway** — the root, `/`. It lists the stores and waits. It is not a dashboard
   and it holds no numbers, because there is no all-stores dashboard for it to be.
 - **Store switcher** — the six store ids in the shell header, each a link to that

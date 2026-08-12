@@ -17,6 +17,10 @@
  * rows did not ask a question about classes.
  */
 
+// The closed vocabulary, for the **order** of the class groups and nothing else. The
+// import site is `vocabulary.mjs` for the reason `classes.mjs` states.
+import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
+
 /**
  * @typedef {object} ContentFilter
  * @property {boolean} onlyDifferences  The inverse control. Matched rows are the default.
@@ -341,3 +345,85 @@ export function repeatsWithClasses(repeats, classes) {
  * @returns {number}
  */
 export const findingsIn = (repeats) => repeats.reduce((sum, repeat) => sum + repeat.on.length, 0);
+
+/**
+ * The repeat list in a **class group** for each class (ticket 100).
+ *
+ * One wall of rows asks an editor to read it before it says anything. Six or so numbers,
+ * one for each kind of difference, is a choice instead: *which kind do I work through*.
+ * It changes nothing about which work is on top — the rows in a group are the rows
+ * `repeatsInStore()` returned, in its worst-first order.
+ *
+ * The word is **group** and never *section*: `CONTEXT.md` spends "section" on the mute
+ * scope, which is a run of one page under an anchor heading, and one word with two
+ * meanings is what that glossary exists to stop. Ticket 100 asked for "sections"; the
+ * concept it describes is this, and the name is refused.
+ *
+ * Opening a group is **not** a filter: it changes what is drawn and never what is
+ * included, so it stays out of the amber strip and *filter wissen* does not touch it. The
+ * class pills stay the one filter, and this function reads them — with a pill on, only the
+ * selected groups exist and they are open, so the two controls cannot tell different
+ * stories.
+ *
+ * @typedef {object} ClassGroup
+ * @property {string} class
+ * @property {Repeat[]} repeats
+ * @property {boolean} opensOnLoad  The **initial** state, not the state. Which group is
+ *                                  open is session state in the component.
+ *
+ * @param {Repeat[]} repeats
+ * @param {string[]} classes  The pills that are on. Empty means every class.
+ * @returns {ClassGroup[]}
+ */
+export function groupRepeatsByClass(repeats, classes = []) {
+  /** @type {Map<string, Repeat[]>} */
+  const byClass = new Map();
+  for (const repeat of repeats) {
+    if (!byClass.has(repeat.class)) byClass.set(repeat.class, []);
+    byClass.get(repeat.class).push(repeat);
+  }
+
+  // Which classes are drawn. With a pill on it is the selected ones and nothing else:
+  // opening a group is not a filter, so the two controls must not be able to tell
+  // different stories about what is included. With no pill on it is every shown class,
+  // empty ones as well — *nothing wrong here* and *this class does not exist* are two
+  // different answers, and a reader who cannot tell them apart does not know whether the
+  // rule ran. A hidden class is drawn only when it holds something, which is the noise
+  // toggle's repeats arriving in a group of their own rather than mixed into a shown one.
+  const isDrawn = classes.length > 0
+    ? (cls) => classes.includes(cls)
+    : (cls) => FINDING_CLASSES[cls]?.shown || byClass.has(cls);
+
+  // A class the closed vocabulary does not name cannot be ordered by it, so it goes last
+  // rather than nowhere. Nothing reaches here today that is not in the vocabulary; the
+  // guard is for the failure being silent, because the row would leave the screen while
+  // the footer below kept counting it.
+  const unnamed = [...byClass.keys()].filter((cls) => !FINDING_CLASSES[cls]).sort();
+
+  // The vocabulary's order and never the counts. A group that changes position as the
+  // work is done is a group nobody can learn where to look for.
+  const groups = [...Object.keys(FINDING_CLASSES), ...unnamed]
+    .filter(isDrawn)
+    .map((cls) => ({ class: cls, repeats: byClass.get(cls) ?? [] }));
+
+  // Groups start closed, and two of them is the case this ticket exists for: the editor
+  // chooses. A lone non-empty group opens, because a closed single group is a click that
+  // asks nothing — and so does a selected one, because the pill was that choice already.
+  // An empty group never opens: there is nothing behind it to read.
+  //
+  // Two pills therefore open two groups, which the ticket also asks to be one at a time.
+  // The two rules meet only here, and the pills win: they are the control that chose those
+  // classes, so the queue must not answer a two-class filter with one class drawn open.
+  // One-at-a-time governs the **clicks** — the component collapses the rest on a click —
+  // and re-toggling a pill is what restores the pair.
+  //
+  // `opensOnLoad` is the **initial** state and not the state itself. Which group is open
+  // is session state in the component, it is not a filter, and it never enters the amber
+  // strip.
+  const filled = groups.filter((group) => group.repeats.length > 0);
+  const chosen = classes.length > 0 ? filled.map((group) => group.class) : [];
+  const lone = filled.length === 1 ? [filled[0].class] : [];
+  const opening = new Set([...chosen, ...lone]);
+
+  return groups.map((group) => ({ ...group, opensOnLoad: opening.has(group.class) }));
+}

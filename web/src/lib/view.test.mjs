@@ -6,6 +6,7 @@ import {
   onlyDifferencesState,
   outlineFrom,
   pagesWithClasses,
+  groupRepeatsByClass,
   prepareRows,
   repeatsInStore,
   repeatsWithClasses,
@@ -441,6 +442,139 @@ describe('repeatsWithClasses', () => {
 
   it('moves no count: it narrows a list and returns the rows it was given', () => {
     expect(repeatsWithClasses(repeats, ['copy', 'casing'])).toEqual(repeats);
+  });
+});
+
+/**
+ * Ticket 100. The repeat list arrives in a **class group** for each class, so an editor
+ * meets six or so numbers instead of one undifferentiated column, and chooses which kind
+ * of difference to work through.
+ *
+ * The word is group and never *section*: `CONTEXT.md` gives "section" to the mute scope,
+ * a run of one page under an anchor heading. Ticket 100 asked for "sections" and the name
+ * is refused; the concept it describes is this.
+ *
+ * It is a **pure derivation over the repeats ticket 81 already makes**: no second grouping
+ * of findings, and the rows in a group are the very objects `repeatsInStore()` returned.
+ */
+describe('groupRepeatsByClass', () => {
+  const repeat = (cls, pages) => ({ key: `${cls}|${pages}`, class: cls, on: Array(pages).fill({}) });
+
+  it('is one group for a class, carrying that class\'s repeats', () => {
+    const groups = groupRepeatsByClass([repeat('copy', 3), repeat('casing', 1), repeat('copy', 2)]);
+
+    const of = (cls) => groups.find((group) => group.class === cls).repeats;
+    expect(of('copy').map((one) => one.on.length)).toEqual([3, 2]);
+    expect(of('casing')).toHaveLength(1);
+  });
+
+  it('orders the groups by the closed vocabulary and never by the counts', () => {
+    // A group that moves position as work is done is a group nobody can learn. The
+    // vocabulary declares `copy` before `casing`, and one repeat against forty does not
+    // change that.
+    const order = groupRepeatsByClass([repeat('casing', 40), repeat('copy', 1)])
+      .map((group) => group.class);
+
+    expect(order.indexOf('copy')).toBeLessThan(order.indexOf('casing'));
+  });
+
+  it('keeps the worst-first order inside a group exactly as it was given', () => {
+    // The list is already sorted worst-first, so this ticket changes nothing about which
+    // work is on top — only how much of it arrives at once. A group is a slice of today's
+    // ungrouped list and never a second opinion about its order.
+    const finding = (id, prod) => ({ id, class: 'copy', prod, new: 'x', detail: null, occurrences: 1 });
+    const repeats = repeatsInStore([
+      { store: 'nl', page: 'a', findings: [finding('a1', 'Zelden'), finding('a2', 'Vaak')] },
+      { store: 'nl', page: 'b', findings: [finding('b1', 'Vaak')] },
+    ]);
+
+    const [group] = groupRepeatsByClass(repeats);
+
+    expect(group.repeats).toEqual(repeats);
+    expect(group.repeats.map((one) => one.prod)).toEqual(['Vaak', 'Zelden']);
+  });
+
+  it('draws a shown class that has no repeats, and leaves it empty', () => {
+    // "Nothing wrong here" and "this class does not exist" are two different answers. A
+    // reader who cannot tell them apart does not know whether the rule ran at all.
+    const groups = groupRepeatsByClass([repeat('copy', 2)]);
+    const casing = groups.find((group) => group.class === 'casing');
+
+    expect(casing).toBeDefined();
+    expect(casing.repeats).toEqual([]);
+  });
+
+  it('gives a hidden class a group of its own rather than mixing it into a shown one', () => {
+    // With the noise toggle on, hidden repeats arrive. `text-added` is hidden and `copy`
+    // is shown, and a hidden row inside the `copy` group would be drawn as if the editor
+    // had been asked to look at it. An empty hidden class is drawn nowhere: it is behind
+    // the toggle, so it is not an answer anybody asked for.
+    const groups = groupRepeatsByClass([repeat('copy', 1), repeat('text-added', 2)]);
+    const of = (cls) => groups.find((group) => group.class === cls);
+
+    expect(of('text-added').repeats).toHaveLength(1);
+    expect(of('copy').repeats).toHaveLength(1);
+    expect(of('tag-changed')).toBeUndefined();
+  });
+
+  it('draws only the selected classes when a class pill is on', () => {
+    // The pills stay the one filter, and the two controls must not tell different
+    // stories: an unselected class is not drawn at all, rather than drawn and closed.
+    const groups = groupRepeatsByClass([repeat('copy', 2), repeat('casing', 1)], ['casing']);
+
+    expect(groups.map((group) => group.class)).toEqual(['casing']);
+    expect(groups[0].repeats).toHaveLength(1);
+  });
+
+  it('starts closed, unless one group is the only one holding anything', () => {
+    // A closed single group is a click that asks nothing. Two of them is the case this
+    // ticket exists for: the editor chooses, and nothing is chosen for them.
+    const opens = (groups) => groups.filter((one) => one.opensOnLoad).map((one) => one.class);
+
+    expect(opens(groupRepeatsByClass([repeat('copy', 2)]))).toEqual(['copy']);
+    expect(opens(groupRepeatsByClass([repeat('copy', 2), repeat('casing', 1)]))).toEqual([]);
+  });
+
+  it('opens the selected groups, because the editor already chose them', () => {
+    // Two pills open two groups, which the ticket also asks to be one at a time. The
+    // pills win where the two rules meet: the queue must not answer a two-class filter
+    // with one class drawn open. One-at-a-time governs the clicks.
+    const groups = groupRepeatsByClass(
+      [repeat('copy', 2), repeat('casing', 1), repeat('link-target', 1)],
+      ['copy', 'casing'],
+    );
+
+    expect(groups.map((group) => group.opensOnLoad)).toEqual([true, true]);
+  });
+
+  it('never opens an empty group', () => {
+    // Selected or lone, there is nothing behind it to read.
+    expect(groupRepeatsByClass([], ['copy']).map((group) => group.opensOnLoad)).toEqual([false]);
+  });
+
+  it('draws a class the vocabulary does not name, last rather than nowhere', () => {
+    // The vocabulary is closed, so today nothing reaches here that is not in it. The
+    // guard is for the failure being **silent**: a group list built from the vocabulary
+    // alone would drop the row off the screen while the footer below kept counting it,
+    // and the reader would meet *40 verschillen* over 38 rows. This list never gets to
+    // decide that a repeat is not work.
+    const groups = groupRepeatsByClass([repeat('copy', 1), repeat('invented', 1)]);
+
+    expect(groups.at(-1).class).toBe('invented');
+    expect(groups.at(-1).repeats).toHaveLength(1);
+  });
+
+  it('moves no count: the groups hold the list it was given, whole', () => {
+    // The rule that outranks the rest of this ticket. Grouping is drawing, so the repeat
+    // total across the groups is the ungrouped total — and a group carries rows, a name
+    // and its initial state, and nothing a bar could be built from.
+    const repeats = [repeat('copy', 2), repeat('casing', 1), repeat('copy', 5)];
+    const groups = groupRepeatsByClass(repeats);
+    const inside = groups.flatMap((group) => group.repeats);
+
+    expect(inside).toHaveLength(repeats.length);
+    expect(findingsIn(inside)).toBe(findingsIn(repeats));
+    expect(Object.keys(groups[0]).sort()).toEqual(['class', 'opensOnLoad', 'repeats']);
   });
 });
 

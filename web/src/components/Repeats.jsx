@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collap
 import { CHROME, INK, PILL } from '../lib/palette.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { cn } from '../lib/utils.js';
-import { findingsIn, repeatSections } from '../lib/view.mjs';
+import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
 
 /**
  * A store's work listed as differences rather than as pages (ticket 81).
@@ -24,14 +24,18 @@ import { findingsIn, repeatSections } from '../lib/view.mjs';
  * them. The pills above it are the ones the page list uses, so a pill that lists its
  * findings directly *is* this view with a class pre-selected.
  *
+ * This is the **flat** reading of that list, and it is what a search draws (ticket 82).
+ * *Verschillen* draws `ClassGroups` below instead, which is the same rows in a class group
+ * for each class (ticket 100). A search answers past the classes — the term is the
+ * grouping the editor asked for — so grouping its result by class would be a second
+ * grouping over one answer.
+ *
  * **The backlog is not drained.** A repeat is a grouping and never a finding, so a
  * decision on a repeat is still one decision per finding — every number here says how
  * much is *decided*, and none of them counts down to an empty list.
  */
 export default function Repeats({ repeats, byFinding }) {
-  if (repeats.length === 0) {
-    return <p className="px-4 py-6 text-sm text-muted-foreground">Geen verschil gevonden.</p>;
-  }
+  if (repeats.length === 0) return <NoRepeats />;
 
   return (
     <>
@@ -42,49 +46,63 @@ export default function Repeats({ repeats, byFinding }) {
 }
 
 /**
- * The same repeats, collapsed into a section for each class (ticket 100).
+ * The same repeats, in a **class group** for each class (ticket 100).
  *
  * *Verschillen* is the queue an editor lands on, and as one undifferentiated column it
  * asks to be read before it says anything. Six or so numbers is a choice instead: which
- * **kind** of difference to work through. The order inside a section is untouched, so
+ * **kind** of difference to work through. The order inside a group is untouched, so
  * nothing changes about which work is on top — only how much of it arrives at once.
  *
- * **Opening a section is not a filter.** It changes what is drawn and never what is
+ * The word is **group** and never *section*. `CONTEXT.md` spends "section" on the mute
+ * scope — a run of one page under an anchor heading — and one word with two meanings is
+ * what that glossary exists to stop. Ticket 100 asked for sections; the name is refused
+ * and the concept is kept.
+ *
+ * **Opening a group is not a filter.** It changes what is drawn and never what is
  * included, so it is session state here, it is absent from the amber strip, and *filter
- * wissen* does not touch it. The class pills stay the one filter: while a pill is on,
- * its section is open and the unselected sections are not drawn at all, so the two
- * controls cannot tell different stories.
+ * wissen* does not touch it. The class pills stay the one filter: while a pill is on, its
+ * group is open and the unselected groups are not drawn at all, so the two controls cannot
+ * tell different stories.
  *
  * The search draws the flat list above instead. A search answers past the classes — the
- * term is the grouping the editor asked for — and sectioning it would be a second
- * grouping over one answer.
+ * term is the grouping the editor asked for — and grouping it by class as well would be a
+ * second grouping over one answer.
  */
-export function RepeatSections({ repeats, classes = [], byFinding }) {
-  const sections = useMemo(() => repeatSections(repeats, classes), [repeats, classes]);
+export function ClassGroups({ repeats, classes, byFinding }) {
+  const groups = useMemo(() => groupRepeatsByClass(repeats, classes), [repeats, classes]);
 
-  // Which sections are open, and the whole of what this component keeps. The initial
-  // state is the derivation's `opensOnLoad`: closed, unless a section is the only one
-  // holding anything or the pills already chose it.
+  // Which groups are open. The initial state is the derivation's `opensOnLoad`: closed,
+  // unless a group is the only one holding anything or the pills already chose it.
   const [open, setOpen] = useState(
-    () => sections.filter((section) => section.opensOnLoad).map((section) => section.class),
+    () => groups.filter((group) => group.opensOnLoad).map((group) => group.class),
   );
 
-  // One at a time. Two open sections is the wall again, in two halves.
+  // One at a time, on a click: two open groups is the wall again in halves. The pills may
+  // still open several at load, and that is their call to make — they are the control that
+  // chose those classes. Clicking from there collapses the rest, and re-toggling a pill is
+  // what brings the pair back.
   const toggle = (cls) => setOpen(open.includes(cls) ? open.filter((held) => held !== cls) : [cls]);
 
-  if (repeats.length === 0) {
-    return <p className="px-4 py-6 text-sm text-muted-foreground">Geen verschil gevonden.</p>;
-  }
+  // How many rows each group draws, held **here** rather than inside the group. A closed
+  // group unmounts its rows, so a budget living down there would reset every time: an
+  // editor who paged `copy` to three hundred rows, looked at `casing` and came back would
+  // find the paging gone. The budget is the group's, and the group keeps it for as long as
+  // this list is on screen.
+  const [budget, setBudget] = useState(/** @type {Record<string, number>} */ ({}));
+
+  if (repeats.length === 0) return <NoRepeats />;
 
   return (
     <>
       <ul>
-        {sections.map((section) => (
-          <Section
-            key={section.class}
-            section={section}
-            open={open.includes(section.class)}
-            onToggle={() => toggle(section.class)}
+        {groups.map((group) => (
+          <ClassGroupRow
+            key={group.class}
+            group={group}
+            open={open.includes(group.class)}
+            onToggle={() => toggle(group.class)}
+            drawn={budget[group.class] ?? PAGE_SIZE}
+            onDraw={(next) => setBudget({ ...budget, [group.class]: next })}
             byFinding={byFinding}
           />
         ))}
@@ -97,19 +115,22 @@ export function RepeatSections({ repeats, classes = [], byFinding }) {
 /**
  * One class, its repeat count, and its rows behind a click.
  *
- * An empty section is drawn and says so, and it is **not** a trigger: *nothing wrong
- * here* and *this class does not exist* are two different answers, and a reader who
- * cannot tell them apart does not know whether the rule ran. Roughly 17% of repeats are
- * singletons, and grouping makes them navigable — it does not get to decide they are not
- * work, so no section is ever left out for being small.
+ * An empty group is drawn and says so, and it is **not** a trigger: *nothing wrong here*
+ * and *this class does not exist* are two different answers, and a reader who cannot tell
+ * them apart does not know whether the rule ran. It states no number, because the sentence
+ * is the number and *0 verschillen* beside it would say one thing twice.
+ *
+ * Most repeats are singletons — 78.8% of them in `nl`, measured in ticket 81 — and grouping
+ * makes that tail navigable; it does not get to decide the tail is not work. So no group is
+ * left out for being small, and none of them hides its rows behind its count.
  */
-function Section({ section, open, onToggle, byFinding }) {
-  const count = section.repeats.length;
+function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding }) {
+  const count = group.repeats.length;
 
   if (count === 0) {
     return (
       <li className="flex items-center gap-2 border-b border-slate-100 px-4 py-2 text-sm last:border-0">
-        <ClassPill class={section.class} />
+        <ClassPill class={group.class} />
         <span className="text-muted-foreground">Geen verschil van deze soort in deze winkel.</span>
       </li>
     );
@@ -120,20 +141,20 @@ function Section({ section, open, onToggle, byFinding }) {
       <Collapsible open={open} onOpenChange={onToggle}>
         <CollapsibleTrigger className="flex w-full items-center gap-2 bg-muted/40 px-4 py-2 text-left text-sm hover:bg-muted">
           <span aria-hidden className="w-3 text-muted-foreground">{open ? '▾' : '▸'}</span>
-          <ClassPill class={section.class} />
-          {/* The count is the section's own rows and nothing summed from elsewhere.
+          <ClassPill class={group.class} />
+          {/* The count is this group's own rows and nothing summed from elsewhere.
               Opening it moves no count, no bar and no denominator: the repeat total
-              across the sections is the total the footer states. */}
+              across the groups is the total the footer states. */}
           <span className="tabular-nums text-muted-foreground">
             {count} {count === 1 ? 'verschil' : 'verschillen'}
           </span>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          {/* The budget belongs to **this** section, and so does the button that pages
-              it. One number over the whole list would draw a hundred rows of the first
-              class and none of the fifth. */}
-          <RowList repeats={section.repeats} byFinding={byFinding} />
+          {/* The budget belongs to **this** group, and so does the button that pages it.
+              One number over the whole list would draw a hundred rows of the first class
+              and none of the fifth. */}
+          <RowList repeats={group.repeats} byFinding={byFinding} drawn={drawn} onDraw={onDraw} />
         </CollapsibleContent>
       </Collapsible>
     </li>
@@ -146,9 +167,15 @@ function Section({ section, open, onToggle, byFinding }) {
  * A rendering budget, in the manner of the clamp: it is about length and not about
  * findings. The line below says how many rows there are, so nothing here is hidden —
  * only not drawn yet.
+ *
+ * The budget is a prop when a class group owns it and state here when nobody else does,
+ * which is the flat list a search draws. A list that is never taken off screen cannot lose
+ * its paging, so there is nothing above it to hold.
  */
-function RowList({ repeats, byFinding }) {
-  const [drawn, setDrawn] = useState(PAGE_SIZE);
+function RowList({ repeats, byFinding, drawn: given, onDraw }) {
+  const [held, setHeld] = useState(PAGE_SIZE);
+  const drawn = given ?? held;
+  const draw = (next) => (onDraw ? onDraw(next) : setHeld(next));
 
   return (
     <>
@@ -161,7 +188,7 @@ function RowList({ repeats, byFinding }) {
       {drawn < repeats.length && (
         <p className="border-t border-slate-100 px-4 py-3 text-sm text-muted-foreground">
           {drawn} van {repeats.length} verschillen getekend.{' '}
-          <Button variant="outline" size="xs" onClick={() => setDrawn(drawn + PAGE_SIZE)}>
+          <Button variant="outline" size="xs" onClick={() => draw(drawn + PAGE_SIZE)}>
             Volgende {PAGE_SIZE} tonen
           </Button>
         </p>
@@ -176,7 +203,7 @@ function RowList({ repeats, byFinding }) {
  * Both numbers come from **this** list, so they cannot disagree about what they are
  * counting. A filtered row count over an unfiltered finding count would be exactly the
  * mismatched pair ticket 81 exists to stop — and the total is over the repeats given,
- * grouped or not, so sectioning them cannot move it either.
+ * grouped or not, so grouping them cannot move it either.
  */
 function Total({ repeats }) {
   return (
@@ -188,6 +215,11 @@ function Total({ repeats }) {
     </p>
   );
 }
+
+/** Said by both readings, so it is said once. */
+const NoRepeats = () => (
+  <p className="px-4 py-6 text-sm text-muted-foreground">Geen verschil gevonden.</p>
+);
 
 /** How many rows are drawn at once, and how many the button adds. */
 const PAGE_SIZE = 100;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Bar, Chip, ClassFilterPills, FilterBanner } from './Chips.jsx';
 import { LogBanner } from './Progress.jsx';
-import { RepeatSections } from './Repeats.jsx';
+import { ClassGroups } from './Repeats.jsx';
 import Search from './Search.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
 import { Input } from './ui/input.jsx';
@@ -228,15 +228,15 @@ export default function Dashboard({
 
           {!searching && view === 'repeats' && (
             // Keyed on the filter, so a narrowed list starts at the top of its own
-            // rendering budget, with its sections open on the pills that narrowed it.
+            // rendering budget, with its groups open on the pills that narrowed it.
             // A budget carried over from the wider list would say *100 van 100
             // getekend* over a list of 12.
             //
-            // Ticket 100: the rows arrive in sections by class. The list is already
-            // narrowed to the pills here, and the classes go along so the sections can
-            // draw the selected ones only — the same filter said once, to two things
+            // Ticket 100: the rows arrive in a class group for each class. The list is
+            // already narrowed to the pills here, and the classes go along so the groups
+            // can draw the selected ones only — the same filter said once, to two things
             // that must agree about it.
-            <RepeatSections
+            <ClassGroups
               key={classes.join(',')}
               repeats={shownRepeats}
               classes={classes}
