@@ -667,7 +667,7 @@ describe('excluded regions', () => {
 
 describe('the committed region list', () => {
   it('cuts the product grid on both hosts by one selector', () => {
-    expect(EXCLUDED_REGIONS).toHaveLength(2);
+    expect(EXCLUDED_REGIONS).toHaveLength(3);
     expect(EXCLUDED_REGIONS[0].selector).toBe('#amasty-shopby-product-list');
     expect(EXCLUDED_REGIONS[0].kind).toBe('non-editorial');
   });
@@ -689,6 +689,63 @@ describe('the committed region list', () => {
   it('falls back to 20 for an entry that declares no cap', () => {
     expect(capFor(/** @type {any} */ ({ selector: '#x' }))).toBe(DEFAULT_MAX_UNITS);
     expect(DEFAULT_MAX_UNITS).toBe(20);
+  });
+});
+
+/**
+ * The filter block. The ticket asked for `#layered-filter-block`, which is the id
+ * production puts on the wrapper — and the new site does not: it ships the id as a
+ * template expression, so an id anchor would cut one side of a two-sided region
+ * and leave the other side's labels behind as findings nobody can resolve.
+ *
+ * So the entry anchors on the inner block that both hosts name the same, and this
+ * is the rule under test: one selector, both host shapes, one match each.
+ *
+ * The entry is read from the committed list, never retyped.
+ */
+describe('the filter block entry', () => {
+  const FILTER = EXCLUDED_REGIONS.filter((entry) => entry.selector === '.filter-content');
+  const only = (main) => extractPage(page(main, { bodyClass: 'catalog-category-view' }), {
+    ...CONTEXT,
+    excludedRegions: FILTER,
+  });
+
+  /** The labels the catalogue writes, and Akeneo writes on the new site. */
+  const LABELS = '<p>Productlijn</p><a href="/overkapping?product_line=7873">Poly line (12)</a>';
+
+  /** Production: the id on the wrapper, the shared class on the block inside it. */
+  const PRODUCTION = `
+    <div class="sidebar sidebar-main"><div id="layered-filter-block" class="block filter">
+      <div class="block-content filter-content">${LABELS}</div>
+    </div></div>`;
+
+  /**
+   * The new site: the same inner class, a different wrapper, and the id left
+   * unevaluated in the attribute. The selector must not read that attribute.
+   */
+  const NEW = `
+    <aside class="sidebar sidebar-main"><div class="block-filter hidden fixed" id="isSidebar ? 'layered-filter-block' : ''">
+      <div class="block-content filter-content px-4 py-6 md:p-0">${LABELS}</div>
+    </div></aside>`;
+
+  it('cuts the block on production, where the wrapper carries the id', () => {
+    const extract = only(`<h1>Overkappingen</h1>${PRODUCTION}`);
+    const [cut] = extract.diagnostics.regionsExcluded;
+
+    expect(cut.matches).toBe(1);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Overkappingen']);
+    expect(extract.links).toEqual([]);
+  });
+
+  it('cuts the block on the new site, where the id is an unevaluated expression', () => {
+    // The whole reason the entry is not `#layered-filter-block`. Both sides leave
+    // together, so neither side's labels are left over as findings.
+    const extract = only(`<h1>Overkappingen</h1>${NEW}`);
+    const [cut] = extract.diagnostics.regionsExcluded;
+
+    expect(cut.matches).toBe(1);
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Overkappingen']);
+    expect(extract.links).toEqual([]);
   });
 });
 

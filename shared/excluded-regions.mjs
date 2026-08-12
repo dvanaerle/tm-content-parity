@@ -149,6 +149,51 @@ export const EXCLUDED_REGIONS = [
     // `/downloads`.
     maxUnits: 30,
   },
+  {
+    // The ticket asked for `#layered-filter-block`, and that id is production's
+    // alone. The new site builds the same block from a template, so the id
+    // attribute it ships is the unevaluated binding
+    // `isSidebar ? 'layered-filter-block' : ''`, and the selector matches nothing
+    // there; its wrapper carries `.block-filter` instead.
+    //
+    // Cutting one side only would be worse than cutting neither. The new site's
+    // filter labels would stay in the extract with nothing left to pair against,
+    // and they turn into `text-added` rows that no editor can resolve: 22 of them
+    // on `overkapping` nl alone. So the anchor is the inner block that both hosts
+    // name the same, and the region leaves both extracts together.
+    selector: '.filter-content',
+    kind: 'non-editorial',
+    reason:
+      'Het filterblok op een categoriepagina. De filternamen, de labels erin en '
+      + 'de aantallen erachter komen uit de catalogus, en op de nieuwe site beheert '
+      + 'Akeneo ze. Niemand schrijft ze, dus een verschil erin is geen '
+      + 'redactiewerk. De haak is de binnenste blok-klasse, want die heet op beide '
+      + 'sites hetzelfde: productie zet er ook een id op, maar de nieuwe site zet '
+      + 'dat id in een template-expressie en dan past een id-regel maar op één '
+      + 'kant. Eén kant wegnemen is erger dan geen kant: de labels van de andere '
+      + 'kant blijven dan over als bevindingen die niemand kan oplossen.',
+    // Measured 2026-08-11 against live production and the new site by
+    // `crawl/probes/probe-layered-filter.mjs`: the three pages below in every store
+    // the seeds hold them for, plus four controls, so **32 page-store pairs and not
+    // the corpus**. One match on each host on all fourteen category pairs, and zero
+    // on all eighteen control pairs — home, `/downloads`, `/betaalmethoden` and
+    // `/showroom-contact`. `production: 69` and `new: 28` are the widest of each;
+    // production removes 65, 66 or 69 and the new site removes 28 everywhere.
+    //
+    // The findings it takes away are ~110 per pair (314→194 on `overkapping` nl).
+    // Between zero and eight rows *appear*, all `text-added` or `link-target`: a
+    // product-line label outside the block that used to pair with one inside it.
+    // That is the failure direction the ADR asks for — it over-reports.
+    measured: {
+      pages: ['overkapping', 'carport', 'veranda'],
+      production: 69,
+      new: 28,
+    },
+    // 30% above the measurement, for a category with more filters than these three.
+    // Not the 60% the product grid took: that would be 110, over the ceiling, and
+    // the ceiling is the part this file will not let an author raise.
+    maxUnits: 90,
+  },
 ];
 
 /**
