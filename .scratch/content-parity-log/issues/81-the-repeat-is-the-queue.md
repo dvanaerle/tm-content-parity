@@ -113,7 +113,8 @@ The list is worst-first **by pages**, which is worst-first by findings.
 
 ### Measured — and ticket 76's table is superseded, not restated
 
-Ticket 76 is still `ready-for-agent` and its numbers describe **448 reports**. The disk
+Ticket 76 was open at the time and its numbers describe **448 reports** — it has since
+closed on this measurement, 2026-08-12, because the corpus it named no longer exists. The disk
 now holds **816 reports, 722 comparable, 35,503 shown findings** — tickets 50 and 54
 landed in between. Measuring against 76's table would have measured a corpus that no
 longer exists, in exactly the way 76 accuses the pre-64 numbers of doing. So the

@@ -292,13 +292,19 @@ insert policy are applied, the two repository secrets are set, and a manual
 secrets are readable, the `anon` role can insert under the policy, and PostgREST
 accepts the empty-object insert.
 
-**One check is left, on the next day.** A green manual run proves the insert. It
-does not prove the cron. Open Actions and confirm that a **scheduled** run has
-written a row. The schedule is `17 4 * * *` UTC and GitHub runs it when it can,
-so one or two hours late is usual and is not a fault. **Ticket 30 unblocks
-then**, not before.
+**One check is left.** A green manual run proves the insert. It does not prove
+the cron. Open Actions and confirm that a **scheduled** run has written a row.
+The schedule is `17 4 * * *` UTC and GitHub runs it when it can, so one or two
+hours late is usual and is not a fault.
 
-Nothing else in this runbook waits on it. Session 2 can start now.
+**Ticket 30 no longer waits on it.** 30 resolved 2026-08-12 on the wiring, which
+is verified: the project holds 511 override rows written by more than one editor.
+This check stays here, with the keep-alive it belongs to. Note that those rows do
+not prove the cron either — editor writes are database activity themselves, so the
+project has never been idle long enough for the keep-alive to be what kept it
+awake.
+
+Nothing in this runbook waits on it. Session 2 can start now.
 
 **If the project is ever paused anyway**, and it can be — see below — open the
 Supabase dashboard and press **Resume project**. It takes a few minutes and the
@@ -996,25 +1002,24 @@ Record how many live mutes existed before the change. If it is still zero, say
 so, because that is what made the change free.
 ```
 
-### Session 10B — The two measurements
+### Session 10B — The one measurement
 
-After the corpus settles, and not before. Both are research tickets: they write
-numbers, not features.
+After the corpus settles, and not before. A research ticket: it writes numbers,
+not features.
+
+**76 has left this session — resolved 2026-08-12 without running.** It asked for a
+before-and-after of the promo-banner removal and the before corpus is gone: the
+crawls of 50 and 54 overwrote the 448 reports, and all 816 on disk are post-64.
+Ticket 81 carries the after.
 
 ```
 /clear
 ```
 
 ```
-/implement Build these two research tickets in one session. Neither writes
-product code.
+/implement Build this research ticket. It writes no product code.
 
-1. .scratch/content-parity-log/issues/76-the-coverage-curve-without-the-promo-banner.md
-2. .scratch/content-parity-log/issues/89-what-a-one-sided-campaign-rule-would-catch.md
-
-76 restates the coverage curve now that ticket 64 has removed the promo banner,
-which was the head of the distribution. Every number designed against must be
-re-stated before it is designed against.
+1. .scratch/content-parity-log/issues/89-what-a-one-sided-campaign-rule-would-catch.md
 
 89 may REFUSE ticket 90. The campaign pattern is Dutch, which is the objection
 ADR 0003 used against a Dutch text anchor, and the banner carries link findings a
@@ -1290,7 +1295,7 @@ crawl, it is a `data` ticket and it runs alone.
 | 49 | be/be_fr blind spot | session 1 | — | **done** — wontfix, `.out-of-scope/` |
 | 22 | Re-measure prod status | session 1 | — | **done** — folded into 53 and 51 |
 | 13 | Supabase pause | session 1 | — | **done** — applied, one green run, cron unproven |
-| 30 | Wire Supabase | after a scheduled run | you | you, one click |
+| 30 | Wire Supabase | session 1 | — | **done** — resolved 2026-08-12, 511 override rows live |
 | 47 | Shared keys layering | session 2 | — | **done** — ADR 0001, `shared/keys.mjs` |
 | 59 | link-status erases the other stores | session 2 | — | **done** — the script refuses an argument and exits 2 |
 | 60 | Report filename in the contract | session 2 | — | **done** — the shape is in `compare/contract.mjs` |

@@ -2,7 +2,8 @@
 
 Type: grilling
 Status: resolved
-Resolved: 2026-08-07
+Resolved: 2026-08-07 — decided and built. One verification is still open: see
+"Still unproven — the cron".
 Blocked by: —
 Parent: ../map.md
 
@@ -177,9 +178,30 @@ under pressure.
 Ticket 30 says to resolve this ticket before an editor sees the log. It records
 "free or paid: not yet recorded". It is now recorded: **free**.
 
-Ticket 30 unblocks when a **scheduled** run has written a row. A
-`workflow_dispatch` run proves the insert; it does not prove the cron. Waiting a
+Ticket 30 used to carry the rule that it unblocks when a **scheduled** run has written a
+row. **That check came back here on 2026-08-12**, when ticket 30 resolved: 30 is about
+wiring, and the wiring is verified — the project holds 511 override rows written by more
+than one editor across several days. Whether the cron fires is this ticket's mitigation
+to prove, and nothing else waits on it.
+
+### Still unproven — the cron
+
+A `workflow_dispatch` run proves the insert; it does not prove the cron. Waiting a
 whole week to see that no pause happens tests Supabase's timer, not this Action.
+
+**Open Actions and confirm that a scheduled run has written a row.** The schedule is
+`17 4 * * *` UTC and GitHub runs it when it can, so one or two hours late is usual and is
+not a fault. The workflow landed 2026-08-07, so several scheduled runs should be in the
+history.
+
+It cannot be checked from a working copy: `keepalive` has no select policy by design, so
+the anon key cannot read the table, and the repository is private, so the Actions API
+refuses an unauthenticated request. It is a human at a browser tab.
+
+**The live override rows do not answer it.** Editor writes are database activity in their
+own right, so the project has never been idle long enough for the keep-alive to be the
+thing keeping it awake. The 511 rows prove no pause has happened; they say nothing about
+why.
 
 ### Built
 

@@ -2,7 +2,7 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: 75, 76
+Blocked by: 75
 Parent: ../map.md
 
 **What to build:** a demoted heading stops being counted as migration work and becomes a
@@ -20,8 +20,12 @@ measurement stops meaning anything.
 
 `heading-level` carried **1,215 shown findings, 5.3% of shown**, in the measurement of
 2026-08-10: 469 on `nl`, 442 on `be`, 143 on `de`, 59 on `fr`, 57 on `be_fr`, 45 on `uk`.
-[76](76-the-coverage-curve-without-the-promo-banner.md) restates it after the promo
-banner leaves, and that number is the one to move.
+**That measurement is over 448 reports and the disk now holds 816**, so those numbers are
+history. Ticket 76 was to have restated them and closed without doing so — the pre-64
+corpus it needed is gone. **This ticket measures its own before-value**: count
+`heading-level` shown findings over `data/reports/` as it stands, per store and as a
+share of shown, and record it here before the enum change lands. That number is the one
+to move.
 
 ## What must stay true
 

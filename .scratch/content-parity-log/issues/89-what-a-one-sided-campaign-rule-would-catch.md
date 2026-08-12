@@ -79,7 +79,9 @@ and every one carries `anchorHeading: null`.
   the answer should list the near-misses it found.
 - The exclusion currently removes the banner, so the reports on disk may or may not still
   hold it depending on when they were written. Check before counting, and say which corpus
-  the numbers describe. Ticket 76 has the same problem and the same obligation.
+  the numbers describe. All 816 reports on disk were crawled after the exclusion landed
+  — that is what closed ticket 76, which could no longer find a before corpus to compare
+  against.
 
 ---
 

@@ -120,7 +120,6 @@ What can run in the second session today:
 | **33** | The re-triage of 20 and 48 — 04 and 16 closed on 2026-08-11 | `talk`. **Joined on 2026-08-10**, when step 03 landed. |
 | **13** | Ticket 89, the campaign rule | `read`. No blocker. It **reads** `data/`, so see rule 2. |
 | **00b** | The first real mute | A browser. Nothing in git. |
-| **23** | Ticket 30, wire Supabase | A browser and `web/.env`. Nothing in git. |
 
 **Step 33 has joined the list.** Step 03 unblocked it on 2026-08-10, and three of
 its four tickets already carry their new numbers. Step 34 never joins: it is on
@@ -801,23 +800,18 @@ history too. Both of these steps read `data/`, so they were worthless before ste
 
 ---
 
-### ☐ Step 12 — Ticket 76, the coverage curve without the promo banner
+### ☑ Step 12 — Ticket 76, the coverage curve without the promo banner
 
-touches `read`. Blocked by nothing, but worthless before step 11.
+**Resolved 2026-08-12 without running. Do not open a session for this.**
 
-```
-/clear
-```
+The step asked for a before-and-after of the promo-banner removal. The before
+corpus is gone: the crawls of tickets 50 and 54 overwrote the 448 reports, and
+all 816 reports on disk are post-64. The banner is confirmed out of the corpus.
 
-```
-/implement .scratch/content-parity-log/issues/76-the-coverage-curve-without-the-promo-banner.md
-```
-
-**Gate.** Every prior number is restated in one table beside its before value.
-The baseline is **8,229** distinct repeats: 25% of the corpus costs 116
-decisions, 50% costs 903, 75% costs 3,393 and 90% costs **5,930**.
-
-**Ticket 81 and ticket 86 both wait on this.**
+Ticket 81 already carries the after — the per-store curve, the repeat counts and
+the singleton shares — measured on the 816 reports rather than on 76's table. The
+bulk-dismissal verdict ticket 31 was waiting for is **no**. Ticket 86 now
+measures its own `heading-level` before-value rather than waiting on this step.
 
 ---
 
@@ -1113,34 +1107,26 @@ and the share of `nl` findings that the first **50** rows cover.
 
 ---
 
-### ☐ Step 23 — Ticket 30, wire the Supabase project. **YOU, not an agent**
+### ☑ Step 23 — Ticket 30, wire the Supabase project
 
-touches nothing in git. `Status: ready-for-human`.
+**Resolved 2026-08-12. Do not run this step, and above all do not run
+`schema.sql`** — it begins by dropping the override log, and the live project now
+holds **511 override rows** written by real editors.
 
-**It has one precondition that is still unproven.** Ticket 13 is applied and one
-**manual** keepalive run went green. That proves the insert. It does not prove
-the cron. Open Actions and confirm that a **scheduled** run has written a row.
-The schedule is `17 4 * * *` UTC and GitHub runs it when it can, so one or two
-hours late is usual and is not a fault.
+The schema is applied, the two public values are in `web/.env.local`, and the log
+has been in daily use since 2026-08-10 across more than one editor.
 
-Then apply the schema and the two public env values to `web/.env`.
-
-**`schema.sql` drops the override log.** It is the whole-file version, for a new
-project. The live project already holds dismissals, so if step 00a has run this
-step must not re-apply `schema.sql` over it.
-
-**Gate.** `overrides` has exactly **two** RLS policies: insert for `anon` and
-select for `anon`. No update and no delete. The connected bundle is
-`_astro/overrides.*.js` at about **228 KB**, against about 11 KB when it is not
-connected.
-
-**Ticket 31 cannot ship without this.**
+**One check is still open, and it belongs to ticket 13, not here.** A **manual**
+keepalive run went green, which proves the insert and not the cron. Open Actions
+and confirm that a **scheduled** run has written a row. The schedule is
+`17 4 * * *` UTC and GitHub runs it when it can, so one or two hours late is usual
+and is not a fault. Nothing waits on that check.
 
 ---
 
 ### ☐ Step 24 — Ticket 31, one reason, many findings
 
-touches `web`. Blocked by 30, 76, 81 and 88 — steps 23, 12, 22, and 88 is
+touches `web`. Blocked by 81 — step 22. 30, 76 and 88 are
 **done**.
 
 **It was rewritten on 2026-08-10, not duplicated.** The grouping key it asked for

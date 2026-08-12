@@ -2,7 +2,7 @@
 
 Type: build
 Status: ready-for-agent
-Blocked by: 30, 76, 81, 88
+Blocked by: 81, 88 — 30 and 76 are resolved
 Parent: ../map.md
 
 **What to build:** an editor decides once about a difference that is on thirty pages.
@@ -29,7 +29,7 @@ Spec 29 carried the story and shipped it as nothing:
 ## What was open, and what answered it
 
 This ticket had three open questions. The grilling session of 2026-08-10 answered two
-and ticket 76 answers the third.
+and ticket 81's measurement answered the third. **All three are closed.**
 
 **1. How the editor finds the other pages.** Answered:
 [81](81-the-repeat-is-the-queue.md) builds the **repeat** — every finding in one store
@@ -41,11 +41,14 @@ one store, because the stores translate the text.
 knows one page and cannot host this. No new view is needed, because 81 built the view
 that already holds many.
 
-**3. Whether a mute is the better answer.** [76](76-the-coverage-curve-without-the-promo-banner.md)
-measures it. The measurement of 2026-08-10 found 8,229 repeats in 22,990 shown
-findings, 116 of them covering a quarter of the corpus — but the whole head of that
-distribution was the promo banner, which ticket 64 has since excluded. **Read 76's
-answer before building. It may still shrink this ticket to nothing.**
+**3. Whether a mute is the better answer.** Answered, and the answer is a warning.
+[81](81-the-repeat-is-the-queue.md) measured the 816 reports on disk, after ticket 64
+removed the promo banner that used to be the whole head of the distribution: the
+largest repeat in the largest store is on **22 pages**, and **79–91% of every store's
+repeats are singletons**. A bulk tool would idle. Ticket 76 closed on those numbers
+without a second measurement. **This ticket is not shrunk to nothing, but it is smaller
+than its opening sentence claims — thirty pages is not a case that occurs.** Say the
+real size where the editor presses the button.
 
 ## What blocks it in the code
 
@@ -108,9 +111,10 @@ component.
 
 ## Traps
 
-- **Ticket 30 is `ready-for-human` and it is listed as a blocker.** Supabase already
-  holds 45 events by ticket 65's count, so 30 may be effectively done and unmarked.
-  Check its state before treating the edge as live, and record what you found.
+- **Ticket 30 was listed as a blocker and it is resolved.** That trap read "30 may be
+  effectively done and unmarked" — it was. Checked 2026-08-12: the project holds **511**
+  override rows written by more than one editor, up from the 45 ticket 65 counted. The
+  edge is live. Nothing here waits on Supabase.
 - **A repeat can be large.** The old measurement's largest single tuple was 329
   findings. Thirty-nine inserts is not the worst case; several hundred is.
 - **This is not a mute in disguise.** A mute is a judgement about a class on a page and

@@ -481,9 +481,10 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   chronologically by construction**, which is what lets "contradicted by a *later*
   observation" be a string comparison inside a pure function. A `DiffRow` gained
   a `finding` id, because a row is a position and a finding is grouped, and the
-  browser cannot recompute the id. **The Supabase project is not yet wired**: the
-  log runs in its designed not-connected state. Ticket 13 was the one real risk;
-  it is resolved, and the keep-alive it chose is built but not yet applied.
+  browser cannot recompute the id. **The Supabase project was not yet wired** at the time
+  of writing: the log ran in its designed not-connected state. It is wired now — ticket 30
+  resolved 2026-08-12 and the log holds 511 override rows. Ticket 13 was the one real
+  risk; it is resolved, and the keep-alive it chose is built and applied.
 
 - [28 — 41 findings on a median page, 61% of them `structure`](issues/28-structure-finding-volume.md)
   — **`structure` splits directionally** into `text-missing` (shown) and
@@ -1104,8 +1105,7 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   quarter of the corpus and 903 covered half — but **3,925 repeats are singletons**, so
   **the backlog is not drained**: 90% coverage costs about 5,930 decisions. Progress must
   read as how much is decided and never as how much is left. The head of that
-  distribution was the promo banner, which ticket 64 has since excluded, so ticket 76
-  restates the curve before anything is designed against it.
+  distribution was the promo banner, which ticket 64 has since excluded.
 
   **These numbers are superseded — do not design against them.** Ticket 81 measured the
   816 reports now on disk: **35,503 shown findings, 25,657 repeats across the six
@@ -1113,6 +1113,12 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   pages, and 79% to 91% of every store's repeats are singletons. 76's own accusation
   applies to its table. The current per-store curve is in
   [81's answer](issues/81-the-repeat-is-the-queue.md).
+
+  **76 is resolved 2026-08-12 without a new measurement.** It asked for a before-and-after
+  of the banner removal, and the before corpus no longer exists on disk — the crawls of 50
+  and 54 overwrote it, and all 816 reports are post-64. The banner is confirmed out (12 of
+  816 reports mention it, all of them the actievoorwaarden page and in-body links, never
+  the block). 81 carries the after. The bulk-dismissal verdict for 31 is **no**.
 
   The stack goes first, alone, because an upgrade that carries a product change cannot be
   reviewed:
@@ -1129,7 +1135,7 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
 
   Then the contract and the measurements, all unblocked:
   [75 class visibility](issues/75-class-visibility-replaces-shown.md),
-  [76 the coverage curve](issues/76-the-coverage-curve-without-the-promo-banner.md),
+  [76 the coverage curve](issues/76-the-coverage-curve-without-the-promo-banner.md) — **resolved 2026-08-12**,
   [77 the run log](issues/77-a-finding-says-when-it-was-first-seen.md),
   [88 the mute](issues/88-the-mute-says-what-it-hides.md),
   [89 what a campaign rule would catch](issues/89-what-a-one-sided-campaign-rule-would-catch.md).
@@ -1634,12 +1640,14 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   keep the built snapshot. No count moves.
 
 - [30 — Wire the Supabase project to the built log](issues/30-wire-the-supabase-project.md)
-  is `ready-for-human` and nearly done: the schema is applied, the two public
-  values are in `web/.env.local`, and the built bundle carries the client. What
-  is left is one click — claim a fix, reload, press Hercontroleer — which is the
-  only end-to-end proof of the precedence rule against a real project. It also
-  waits on ticket 13's keep-alive: **a scheduled run must have written a row**,
-  because a manual `workflow_dispatch` proves the insert and not the cron.
+  — **resolved 2026-08-12.** The schema is applied, the two public values are in
+  `web/.env.local`, the built bundle carries the client, and the log is in daily use:
+  **511 override rows**, written by more than one editor, the latest on the day it
+  resolved. The end-to-end proof is not a pending click; editors have been doing it for
+  days. The one thing still unproven is ticket 13's keep-alive — **a scheduled run must
+  have written a row**, because a manual `workflow_dispatch` proves the insert and not the
+  cron — and that check now sits in [13](issues/13-supabase-pause-risk.md), which owns
+  the mitigation. Nothing waits on it.
 
 ## Not yet specified
 
