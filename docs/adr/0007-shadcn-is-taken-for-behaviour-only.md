@@ -50,6 +50,12 @@ is for.
 - The dependency count goes from two to about nine. That is a real change of posture
   and it is deliberate, bounded by the list of seven primitives. A new primitive is a
   small decision; a new theming system is a decision here.
+- **An eighth file arrives with the seven** (recorded when ticket 74 ran the
+  install, and not a change of this decision). `ui/button.jsx` is a registry
+  dependency of Dialog, which imports it for the footer's close control. It is a
+  part of a primitive rather than a primitive we chose, and the bound still reads
+  as seven: nothing outside `ui/` imports it, and it is where a shadcn button
+  belongs if a later ticket wants one.
 - Custom UI stays custom for the content-parity concepts: the finding diff, the page
   group, the repeat, the history note and the bulk selection. No library has them, and
   the failure mode of adopting shadcn is rebuilding the diff out of parts that are

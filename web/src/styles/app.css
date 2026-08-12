@@ -1,6 +1,28 @@
 @import 'tailwindcss';
 
 /*
+ * shadcn's two stylesheets (ticket 74). `shadcn/tailwind.css` carries the custom
+ * variants the primitives are written against — `data-open`, `data-checked`,
+ * `data-active` — and `tw-animate-css` carries `animate-in` and `animate-out`.
+ * Both are behaviour made visible, which is the whole reason ADR 0007 takes the
+ * library at all.
+ *
+ * The font import shadcn writes here is **not** kept. This build is opened from
+ * outside the network, which is why the mono stack below is a device stack and not
+ * a webfont, and a webfont for the body would contradict that in the same file.
+ */
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+/*
+ * shadcn's primitives carry `dark:` classes and this interface has no dark mode.
+ * The variant stays redefined as a class so those classes hang off a `.dark`
+ * ancestor that is never written, rather than off `prefers-color-scheme`, which
+ * would switch a reader's whole screen on an OS setting nobody here chose.
+ */
+@custom-variant dark (&:is(.dark *));
+
+/*
  * The one place a colour is defined (ticket 35).
  *
  * The storefront's own Tailwind config cannot be imported: it is Tailwind 3
@@ -76,4 +98,107 @@
    */
   --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'SF Mono', Menlo,
     Consolas, monospace;
+}
+
+/*
+ * --- shadcn's surface, defined from the palette above (ticket 74) ---------- *
+ *
+ * **This block is the mechanism by which the palette wins.** shadcn's primitives
+ * read their colour from `--primary`, `--destructive`, `--ring` and friends, and a
+ * shadcn install writes those as its own literal values. Here not one of them is a
+ * literal. Every entry that carries meaning is `var(--color-…)` from the `@theme`
+ * above, so the palette holds the only definition and the primitives inherit it.
+ * Where the two disagreed, the palette's value is what is written: shadcn's
+ * `--primary` was a neutral near-black and is the brand green.
+ *
+ * `--destructive` is the interesting one, and it is **not** red. shadcn spends it
+ * on an error and an `aria-invalid` ring, which is a status; palette rule 2 says
+ * red and green are for diff meaning and never for status. So it takes the amber
+ * ink, which is the palette's word for "an editor must look at this". Handing it
+ * `--color-lost` would have been the same mistake in the other direction: red
+ * would then mean both "production has this and the new site does not" and "this
+ * control is wrong", eight pixels apart.
+ *
+ * The neutrals are stock Tailwind `slate` hexes, per palette rule 3, and they are
+ * written as hexes rather than as `var(--color-slate-200)` because Tailwind's own
+ * default theme variables are pruned when unused and these are read from CSS, not
+ * from a class name.
+ *
+ * shadcn's `sidebar-*` and `chart-*` variables are dropped. The seven primitives
+ * use neither, and a variable no component reads is a colour with no meaning.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+:root {
+  /* Surface. White cards on the slate ground `Shell.astro` already sets. */
+  --background: #ffffff;
+  --foreground: #0f172a; /* slate-900, the body ink */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  /* Meaning. Both of these come from the palette and neither is a hex. */
+  --primary: var(--color-brand-green);
+  --primary-foreground: #ffffff;
+  --destructive: var(--color-attention-ink);
+  --ring: var(--color-brand-lighter-green);
+
+  /* Quiet grounds: a hover, a muted row, a table footer. */
+  --secondary: #f1f5f9; /* slate-100 */
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b; /* slate-500 */
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+
+  /* The border every table, card and panel in this interface already wears. */
+  --border: #e2e8f0; /* slate-200 */
+  --input: #cbd5e1; /* slate-300, the border a form control already wears */
+
+  /* `rounded`, matching the corner the rest of the interface has. */
+  --radius: 0.25rem;
+}
+
+@layer base {
+  /*
+   * shadcn's primitives write `border-b` and `border-t` with no colour and expect
+   * this default. Tailwind v4's own default is `currentColor`, which would draw a
+   * table rule in the ink colour.
+   *
+   * It lands on `*` and not on the primitives alone, so it is worth saying what it
+   * does to what was already here. This is the base layer, so every explicit
+   * `border-*` utility outranks it. The colourless `border` in the existing
+   * components was checked one by one — `Ledger.jsx`, `ContentView.jsx`,
+   * `Dashboard.jsx`, `PageView.jsx` — and each arrives with a `BANNER` tone or a
+   * `border-current` beside it. Nothing on screen moves.
+   */
+  * {
+    @apply border-border outline-ring/50;
+  }
 }

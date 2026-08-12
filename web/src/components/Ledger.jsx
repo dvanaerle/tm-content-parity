@@ -5,6 +5,7 @@ import { ClassPill } from './Chips.jsx';
 import ContentView from './ContentView.jsx';
 import { DiffCells } from './Diff.jsx';
 import OverrideControl from './OverrideControl.jsx';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
 import { BANNER, CHROME, INK } from '../lib/palette.mjs';
 
@@ -91,46 +92,75 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
 
   return (
     <section className="rounded border border-slate-200 bg-white">
-      <nav className="flex flex-wrap items-center gap-1 border-b border-slate-200 px-2" role="tablist">
-        {TABS.map((name) => (
-          <button
-            key={name}
-            type="button"
-            role="tab"
-            aria-selected={name === tab}
-            onClick={() => setTab(name)}
-            className={`flex items-center gap-2 px-3 py-2 text-sm ${
-              name === tab ? `-mb-px border-b-2 font-semibold ${CHROME.tabActive}` : 'text-slate-600'
-            }`}
-          >
-            {name}
-            {badges[name] !== undefined && (
-              <span className="rounded bg-slate-100 px-1.5 text-xs tabular-nums text-slate-600">
-                {badges[name]}
-              </span>
-            )}
-          </button>
-        ))}
+      {/*
+        The tab strip is shadcn on Base UI since ticket 74, and it is the only
+        thing in this component the library touches. What it buys is the roving
+        tabindex: one Tab stop reaches the strip, the arrow keys move between the
+        four, and Home and End reach the ends. The hand-rolled strip put four Tab
+        stops in a row and answered no arrow key at all.
 
-        <label className="ml-auto flex items-center gap-2 py-2 text-sm text-slate-600">
-          <input type="checkbox" checked={showNoise} onChange={(event) => setShowNoise(event.target.checked)} />
-          Ruis en gedempt tonen ({hiddenCount})
-        </label>
-      </nav>
+        The noise toggle now sits **beside** the `TabsList` rather than inside it.
+        It was a child of the old `role="tablist"`, which told a screen reader that
+        a checkbox was a fifth tab.
 
-      <div role="tabpanel" className="p-4">
-        {tab === 'Inhoud' && (
-          <ContentView
-            report={report}
-            findings={derived}
-            showNoise={showNoise}
-            control={control}
-          />
-        )}
-        {tab === 'Links' && <FindingTable findings={findings} check="links" control={control} sides={report.sides} />}
-        {tab === 'Afbeeldingen' && <FindingTable findings={findings} check="images" control={control} sides={report.sides} />}
-        {tab === 'Meta' && <MetaTable production={production} next={next} />}
-      </div>
+        Colour is still the palette's. `CHROME.tabActive` is applied as a literal,
+        because the component already knows which tab is selected and a
+        `data-active:` prefix assembled around a palette value at runtime is a class
+        name Tailwind cannot see in the source text.
+
+        It goes on the trigger **and** on the label span. On the trigger it draws
+        the underline. shadcn writes `data-active:text-foreground` on the trigger
+        too, and an attribute selector outranks a plain class, so the ink has to be
+        declared on a child to win — which is the concrete shape of "where a shadcn
+        variable and a palette token disagree, the palette wins".
+      */}
+      <Tabs value={tab} onValueChange={setTab} className="gap-0">
+        <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 px-2">
+          <TabsList variant="line" className="h-auto flex-wrap gap-1 p-0">
+            {TABS.map((name) => (
+              <TabsTrigger
+                key={name}
+                value={name}
+                className={`h-auto flex-none gap-2 rounded-none px-3 py-2 text-sm after:hidden ${
+                  name === tab
+                    ? `-mb-px border-x-0 border-t-0 border-b-2 font-semibold ${CHROME.tabActive}`
+                    : 'text-slate-600'
+                }`}
+              >
+                <span className={name === tab ? CHROME.tabActive : undefined}>{name}</span>
+                {badges[name] !== undefined && (
+                  <span className="rounded bg-slate-100 px-1.5 text-xs tabular-nums text-slate-600">
+                    {badges[name]}
+                  </span>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <label className="ml-auto flex items-center gap-2 py-2 text-sm text-slate-600">
+            <input type="checkbox" checked={showNoise} onChange={(event) => setShowNoise(event.target.checked)} />
+            Ruis en gedempt tonen ({hiddenCount})
+          </label>
+        </div>
+
+        {/* The padding is on the wrapper and not on each panel: exactly one panel
+            is mounted at a time, so four copies of `p-4` would be four chances to
+            let one tab sit differently from the other three. */}
+        <div className="p-4">
+          <TabsContent value="Inhoud">
+            <ContentView report={report} findings={derived} showNoise={showNoise} control={control} />
+          </TabsContent>
+          <TabsContent value="Links">
+            <FindingTable findings={findings} check="links" control={control} sides={report.sides} />
+          </TabsContent>
+          <TabsContent value="Afbeeldingen">
+            <FindingTable findings={findings} check="images" control={control} sides={report.sides} />
+          </TabsContent>
+          <TabsContent value="Meta">
+            <MetaTable production={production} next={next} />
+          </TabsContent>
+        </div>
+      </Tabs>
     </section>
   );
 }
