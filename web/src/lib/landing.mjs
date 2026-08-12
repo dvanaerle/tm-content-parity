@@ -10,7 +10,8 @@
  * reason ADR 0006 keeps the content view whole. Nothing here removes a row.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { CHROME } from './palette.mjs';
 
 /**
  * The element id a finding is reachable by.
@@ -33,6 +34,12 @@ export const findingAnchor = (id) => `bevinding-${id}`;
  * The tab each check lives on. `Ledger.jsx` owns the strip; this owns which of its
  * tabs answers for a finding, because a landing has to choose one before the reader
  * sees anything — and two of the three checks are not in the content view at all.
+ *
+ * **The fourth tab is not in here, and that is not an omission.** Meta is `metaRows()`,
+ * which is display only and holds no findings — ticket 21 has not decided what a parity
+ * defect in the `<head>` is. So the one `meta` rule, `no-declared-alternate`, is a
+ * finding no tab draws, and `landingFor()` answers for it rather than pretending Meta
+ * would show it.
  */
 const TAB_OF_CHECK = { text: 'Inhoud', links: 'Links', images: 'Afbeeldingen' };
 
@@ -49,6 +56,10 @@ const TAB_OF_CHECK = { text: 'Inhoud', links: 'Links', images: 'Afbeeldingen' };
  *                                expires when the text does: the difference was fixed,
  *                                or the page was measured again. The page says so
  *                                rather than landing nowhere in silence.
+ * @property {boolean} unplaced   This snapshot **has** the finding and no tab draws it:
+ *                                a `meta` finding, which the display-only Meta tab does
+ *                                not list. The other half of the same courtesy — the
+ *                                link was good and there is still nothing to look at.
  *
  * @param {object} input
  * @param {object[]} input.findings   The **derived** findings of the page.
@@ -57,15 +68,76 @@ const TAB_OF_CHECK = { text: 'Inhoud', links: 'Links', images: 'Afbeeldingen' };
  */
 export function landingFor({ findings, focus }) {
   const target = focus ? findings.find((finding) => finding.id === focus) ?? null : null;
+  const tab = target ? TAB_OF_CHECK[target.check] ?? null : null;
 
   return {
-    tab: target ? TAB_OF_CHECK[target.check] ?? null : null,
+    tab,
     // The same test `Ledger.jsx` and `prepareRows()` already apply, asked the other way
     // round: those two decide what to hide, and this decides whether what the reader
     // was sent to is one of them. A dismissal is a decision and not noise, so a
     // `genegeerd` row is on screen already and the toggle is left where it was.
-    needsNoise: Boolean(target) && !(target.shown && target.state !== 'muted'),
+    //
+    // **Only when a tab would draw it.** The toggle is asked for so that the row the
+    // reader was sent to appears, so with no such row there is nothing to ask for, and
+    // switching it on would only fill the page with rows nobody asked to see.
+    needsNoise: Boolean(tab) && !(target.shown && target.state !== 'muted'),
     missing: Boolean(focus) && target === null,
+    unplaced: Boolean(target) && tab === null,
+  };
+}
+
+/**
+ * What marks the row a landing arrived on. Two tables draw one — the content view's rows
+ * and the finding table's — and this is the one rule they share rather than the same three
+ * attributes written out in both.
+ *
+ * All three say the same thing to a different reader. The outline is for the reader who
+ * can see it; `aria-current` is what makes the mark an announcement rather than a colour;
+ * and `tabIndex` is what lets `useLandOn()` hand the row the keyboard, `-1` because
+ * exactly one row is a landing and 399 Tab stops would be the alternative.
+ *
+ * The className is the caller's to merge, because each table has its own row classes to
+ * merge it with.
+ *
+ * @param {boolean} landed
+ */
+export const landedRowProps = (landed) => ({
+  tabIndex: landed ? -1 : undefined,
+  'aria-current': landed ? 'location' : undefined,
+  className: landed ? CHROME.landed : undefined,
+});
+
+/**
+ * The two controls a landing borrows, and the reader taking either one back.
+ *
+ * A landing needs a tab on screen and, sometimes, *Ruis en gedempt tonen* switched on.
+ * Both are the reader's controls, so the landing only borrows them: it holds until the
+ * reader touches that control, and from then on their choice stands.
+ *
+ * **One flag per control, and this is the whole reason the hook exists.** A single
+ * "the reader has chosen" flag made the two controls hand each other back: switching
+ * tabs released the toggle, so the row the reader landed on disappeared, and ticking
+ * the toggle released the tab, so a reader who landed on Links was thrown to Inhoud.
+ * Two controls, two answers.
+ *
+ * It is not a one-shot either. A finding's `state` arrives with the override log a beat
+ * after the tab has to be chosen, so `asked` can change under the reader — which is why
+ * this holds an *untaken* flag rather than seeding state from the first answer.
+ *
+ * @param {{ tab: string | null, needsNoise: boolean }} asked  From `landingFor()`.
+ * @param {string} defaultTab  The tab a reader who was sent nowhere gets.
+ */
+export function useLanding(asked, defaultTab) {
+  const [chosenTab, setChosenTab] = useState(defaultTab);
+  const [tabTaken, setTabTaken] = useState(false);
+  const [showNoise, setShowNoise] = useState(false);
+  const [noiseTaken, setNoiseTaken] = useState(false);
+
+  return {
+    tab: !tabTaken && asked.tab ? asked.tab : chosenTab,
+    noise: noiseTaken ? showNoise : asked.needsNoise,
+    chooseTab: (name) => { setTabTaken(true); setChosenTab(name); },
+    chooseNoise: (on) => { setNoiseTaken(true); setShowNoise(on); },
   };
 }
 

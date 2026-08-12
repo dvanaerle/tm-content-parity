@@ -51,7 +51,7 @@ check.
 A landing is **not** a filter. It opens the row, marks it, takes the keyboard and scrolls —
 and removes nothing, so ADR 0006 holds by construction.
 
-Three things a landing has to get right, each of which was wrong first:
+Five things a landing has to get right, each of which was wrong first:
 
 - **It waits for the log.** A decided row grows an override control when the log answers, so
   a landing taken before that is measured against a layout about to move. Measured on
@@ -62,6 +62,15 @@ Three things a landing has to get right, each of which was wrong first:
 - **It expires.** A finding id is a term of `sha256(store | page | check | rule | prodNorm |
   newNorm | detail)`, so a link outlives the finding it names. A stale link says so and
   leaves the page whole.
+- **It only borrows the two controls, and gives each back on its own.** A landing needs a
+  tab, and sometimes *Ruis en gedempt tonen*. One "the reader has chosen" flag made the two
+  hand each other back: ticking the toggle threw a reader off Links, and switching tabs
+  released the toggle that was the only reason the landed row was drawable, so the row
+  vanished. Two controls, two flags — `useLanding()`.
+- **Not every finding has a tab.** The Meta tab is `metaRows()`, display only, so the one
+  `meta` rule is a finding no tab draws. Asking for the noise toggle on the way to a row
+  that does not exist buys a screenful of noise and no landing, so `landingFor()` reports
+  it the way it reports a stale link: `unplaced`, and the page says so.
 
 ## Considered options
 

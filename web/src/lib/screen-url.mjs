@@ -58,8 +58,12 @@ const PARAM = Object.freeze({
 /**
  * How long the address bar lags the screen, in milliseconds. It exists for the search
  * box: see the mirror in `useScreen()`.
+ *
+ * Exported because the browser test has to wait for the mirror, and a test that waited a
+ * hard-coded number would go on passing while waiting the wrong amount the moment this
+ * changed — either flaking, or asserting on a write that had not happened yet.
  */
-const MIRROR_DELAY = 250;
+export const MIRROR_DELAY = 250;
 
 /** The closed sets. A value outside one of them is not a screen, so the default wins. */
 const VIEWS = ['repeats', 'pages'];

@@ -46,6 +46,7 @@ export default defineConfig({
           name: 'browser',
           include: ['**/*.browser.test.mjs'],
           exclude: ['**/node_modules/**', 'dist/**'],
+          setupFiles: ['./vitest.browser-setup.mjs'],
           browser: {
             enabled: true,
             provider: 'playwright',

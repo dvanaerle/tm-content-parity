@@ -14,7 +14,7 @@ import { Label } from './ui/label.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
-import { findingAnchor, landingFor, useLandOn } from '../lib/landing.mjs';
+import { findingAnchor, landedRowProps, landingFor, useLanding, useLandOn } from '../lib/landing.mjs';
 import { findingInSearch } from '../lib/page-url.mjs';
 import { BANNER, CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
@@ -61,9 +61,6 @@ const TABS = ['Inhoud', 'Links', 'Afbeeldingen', 'Meta'];
  * anything; it renders what the pure function decided.
  */
 export default function Ledger({ report, findings: derived, append, canWrite, observationId, settled }) {
-  const [chosenTab, setChosenTab] = useState('Inhoud');
-  const [showNoise, setShowNoise] = useState(false);
-
   /*
    * The difference a link named, and what this ledger has to do about it (ticket 109).
    *
@@ -71,23 +68,17 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
    * rendered to static HTML at build time, so a first render that read `location` would
    * render one thing on the server and another in the browser.
    *
-   * `taken` is the reader taking the controls back. The landing is not a one-shot,
-   * because a finding's `state` arrives with the log a beat after the tab has to be
-   * chosen — so it holds until the reader touches the tab strip or the noise box, and
-   * from then on their choice stands. The mark on the row stays either way: switching
-   * tabs to look at something else is not a reason to lose where you came from.
+   * `landingFor()` decides what the landing asks for and `useLanding()` holds it against
+   * the reader's own two controls — each of which is released on its own, because
+   * switching tabs is not a request to switch the noise toggle off and vice versa. The
+   * mark on the row stays either way: looking at something else is not a reason to lose
+   * where you came from.
    */
   const [focus, setFocus] = useState(/** @type {string | null} */ (null));
-  const [readerChose, setReaderChose] = useState(false);
   useEffect(() => setFocus(findingInSearch(window.location.search)), []);
 
   const asked = useMemo(() => landingFor({ findings: derived, focus }), [derived, focus]);
-
-  const tab = !readerChose && asked.tab ? asked.tab : chosenTab;
-  const noise = showNoise || (!readerChose && asked.needsNoise);
-
-  const chooseTab = (name) => { setReaderChose(true); setChosenTab(name); };
-  const chooseNoise = (on) => { setReaderChose(true); setShowNoise(on); };
+  const { tab, noise, chooseTab, chooseNoise } = useLanding(asked, TABS[0]);
 
   /**
    * The landing, as the one thing the two tables below need: `focus` says which row and
@@ -150,18 +141,37 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
 
   return (
     <>
-      {/* A finding id is a term of the text, so it expires the moment the text does: a
-          link sent last week can name a difference this snapshot no longer has, because
-          it was fixed or the page was measured again. That is not a failure and it is not
-          nothing either, and a reader who followed the link has to be told — otherwise
-          the page simply does not move and they are left wondering whether they missed
-          it. `attention` and not `severe`: it is a condition, not a loss. */}
-      {asked.missing && (
+      {/* Two ways a link can arrive with nothing to land on, and both of them have to be
+          said out loud — otherwise the page simply does not move and the reader is left
+          wondering whether they missed it.
+
+          The first is a link that outlived its finding: an id is a term of the text, so it
+          expires the moment the text does, whether the difference was fixed or the page was
+          measured again. The second is a finding this page has and no tab draws — the one
+          `meta` rule, which the display-only Meta tab does not list.
+
+          `attention` and not `severe` for both: a condition, not a loss. */}
+      {(asked.missing || asked.unplaced) && (
         <Alert className={`mb-3 ${BANNER.attention}`}>
+          <AlertTitle className="font-semibold">
+            {asked.missing
+              ? 'Dit verschil staat niet in deze momentopname.'
+              : 'Dit verschil staat niet in een van deze tabbladen.'}
+          </AlertTitle>
           <AlertDescription className="text-current">
-            <strong>Dit verschil staat niet in deze momentopname.</strong> De link wees een
-            bevinding aan die er niet meer is: het verschil is opgelost, of de pagina is
-            opnieuw gemeten en de tekst is veranderd. De hele pagina staat er nog wel.
+            {asked.missing ? (
+              <p className="text-sm">
+                De link wees een bevinding aan die er niet meer is: het verschil is opgelost,
+                of de pagina is opnieuw gemeten en de tekst is veranderd. De hele pagina staat
+                er nog wel.
+              </p>
+            ) : (
+              <p className="text-sm">
+                De link wees een bevinding over de <code>&lt;head&gt;</code> aan. Ticket 21
+                beslist nog wat daar een pariteitsdefect is, dus die bevinding heeft geen
+                regel om naartoe te springen. Meta laat de velden zelf zien.
+              </p>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -180,105 +190,105 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
         page usable — and cost it quietly, with nothing on screen to show for it.
       */}
       <Card className="gap-0 overflow-visible py-0">
-      {/*
-        The tab strip is shadcn on Base UI since ticket 74, and it is the only
-        thing in this component the library touches. What it buys is the roving
-        tabindex: one Tab stop reaches the strip, the arrow keys move between the
-        four, and Home and End reach the ends. The hand-rolled strip put four Tab
-        stops in a row and answered no arrow key at all.
+        {/*
+          The tab strip is shadcn on Base UI since ticket 74, and it is the only
+          thing in this component the library touches. What it buys is the roving
+          tabindex: one Tab stop reaches the strip, the arrow keys move between the
+          four, and Home and End reach the ends. The hand-rolled strip put four Tab
+          stops in a row and answered no arrow key at all.
 
-        The noise toggle now sits **beside** the `TabsList` rather than inside it.
-        It was a child of the old `role="tablist"`, which told a screen reader that
-        a checkbox was a fifth tab.
+          The noise toggle now sits **beside** the `TabsList` rather than inside it.
+          It was a child of the old `role="tablist"`, which told a screen reader that
+          a checkbox was a fifth tab.
 
-        Colour is still the palette's. `CHROME.tabActive` is applied as a literal,
-        because the component already knows which tab is selected and a
-        `data-active:` prefix assembled around a palette value at runtime is a class
-        name Tailwind cannot see in the source text.
+          Colour is still the palette's. `CHROME.tabActive` is applied as a literal,
+          because the component already knows which tab is selected and a
+          `data-active:` prefix assembled around a palette value at runtime is a class
+          name Tailwind cannot see in the source text.
 
-        It goes on the trigger **and** on the label span. On the trigger it draws
-        the underline. shadcn writes `data-active:text-foreground` on the trigger
-        too, and an attribute selector outranks a plain class, so the ink has to be
-        declared on a child to win — which is the concrete shape of "where a shadcn
-        variable and a palette token disagree, the palette wins".
-      */}
-      <Tabs value={tab} onValueChange={chooseTab} className="gap-0">
-        <div className="flex flex-wrap items-center gap-1 border-b px-2">
-          {/*
-            `group-data-horizontal/tabs:h-auto` and not a plain `h-auto`, and this is
-            the fourth instance of the trap in the ADR: `tabsListVariants` writes the
-            height as `group-data-horizontal/tabs:h-8`, `tailwind-merge` does not dedupe
-            across differing variant modifiers, and the attribute selector then outranks
-            the plain class. So the list was pinned to 32 pixels while its own triggers
-            are 38 — `h-auto` on the *trigger* does win, because there it is plain
-            against plain.
+          It goes on the trigger **and** on the label span. On the trigger it draws
+          the underline. shadcn writes `data-active:text-foreground` on the trigger
+          too, and an attribute selector outranks a plain class, so the ink has to be
+          declared on a child to win — which is the concrete shape of "where a shadcn
+          variable and a palette token disagree, the palette wins".
+        */}
+        <Tabs value={tab} onValueChange={chooseTab} className="gap-0">
+          <div className="flex flex-wrap items-center gap-1 border-b px-2">
+            {/*
+              `group-data-horizontal/tabs:h-auto` and not a plain `h-auto`, and this is
+              the fourth instance of the trap in the ADR: `tabsListVariants` writes the
+              height as `group-data-horizontal/tabs:h-8`, `tailwind-merge` does not dedupe
+              across differing variant modifiers, and the attribute selector then outranks
+              the plain class. So the list was pinned to 32 pixels while its own triggers
+              are 38 — `h-auto` on the *trigger* does win, because there it is plain
+              against plain.
 
-            Six pixels of trigger therefore hung out the bottom of the list box. That is
-            the whole of the "underline sits below the divider" report: the underline is
-            the active trigger's `-mb-px border-b-2`, the divider is this wrapper's
-            `border-b`, and they are meant to be the same line. On a narrow screen it
-            was worse than cosmetic — the strip wraps to two rows inside a box still
-            claiming to be 32 pixels tall, so row two rendered outside its parent and
-            landed on top of the noise checkbox.
+              Six pixels of trigger therefore hung out the bottom of the list box. That is
+              the whole of the "underline sits below the divider" report: the underline is
+              the active trigger's `-mb-px border-b-2`, the divider is this wrapper's
+              `border-b`, and they are meant to be the same line. On a narrow screen it
+              was worse than cosmetic — the strip wraps to two rows inside a box still
+              claiming to be 32 pixels tall, so row two rendered outside its parent and
+              landed on top of the noise checkbox.
 
-            Matching the prefix lets the two collapse to one class, and the list is
-            finally as tall as what it contains.
-          */}
-          <TabsList variant="line" className="group-data-horizontal/tabs:h-auto flex-wrap gap-1 p-0">
-            {TABS.map((name) => (
-              <TabsTrigger
-                key={name}
-                value={name}
-                className={`h-auto flex-none gap-2 rounded-none px-3 py-2 text-sm after:hidden ${
-                  name === tab
-                    ? `-mb-px border-x-0 border-t-0 border-b-2 font-semibold ${CHROME.tabActive}`
-                    : 'text-muted-foreground'
-                }`}
-              >
-                <span className={name === tab ? CHROME.tabActive : undefined}>{name}</span>
-                {badges[name] !== undefined && (
-                  <Badge variant="secondary" className="tabular-nums">
-                    {badges[name]}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+              Matching the prefix lets the two collapse to one class, and the list is
+              finally as tall as what it contains.
+            */}
+            <TabsList variant="line" className="group-data-horizontal/tabs:h-auto flex-wrap gap-1 p-0">
+              {TABS.map((name) => (
+                <TabsTrigger
+                  key={name}
+                  value={name}
+                  className={`h-auto flex-none gap-2 rounded-none px-3 py-2 text-sm after:hidden ${
+                    name === tab
+                      ? `-mb-px border-x-0 border-t-0 border-b-2 font-semibold ${CHROME.tabActive}`
+                      : 'text-muted-foreground'
+                  }`}
+                >
+                  <span className={name === tab ? CHROME.tabActive : undefined}>{name}</span>
+                  {badges[name] !== undefined && (
+                    <Badge variant="secondary" className="tabular-nums">
+                      {badges[name]}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          {/* Base UI's Checkbox is not an `<input>`, so the state arrives as the
-              value rather than as an event: `onCheckedChange` and not
-              `event.target.checked`. */}
-          <Label className="ml-auto py-2 font-normal text-muted-foreground">
-            <Checkbox checked={noise} onCheckedChange={chooseNoise} />
-            Ruis en gedempt tonen ({hiddenCount})
-          </Label>
-        </div>
+            {/* Base UI's Checkbox is not an `<input>`, so the state arrives as the
+                value rather than as an event: `onCheckedChange` and not
+                `event.target.checked`. */}
+            <Label className="ml-auto py-2 font-normal text-muted-foreground">
+              <Checkbox checked={noise} onCheckedChange={chooseNoise} />
+              Ruis en gedempt tonen ({hiddenCount})
+            </Label>
+          </div>
 
-        {/* The padding is on the wrapper and not on each panel: exactly one panel
-            is mounted at a time, so four copies of `p-4` would be four chances to
-            let one tab sit differently from the other three. */}
-        <CardContent className="p-4">
-          <TabsContent value="Inhoud">
-            <ContentView
-              report={report}
-              findings={derived}
-              showNoise={noise}
-              control={control}
-              landing={landing}
-            />
-          </TabsContent>
-          <TabsContent value="Links">
-            <FindingTable findings={findings} check="links" control={control} sides={report.sides} landing={landing} />
-          </TabsContent>
-          <TabsContent value="Afbeeldingen">
-            <FindingTable findings={findings} check="images" control={control} sides={report.sides} landing={landing} />
-          </TabsContent>
-          <TabsContent value="Meta">
-            <MetaTable production={production} next={next} />
-          </TabsContent>
-        </CardContent>
-      </Tabs>
-    </Card>
+          {/* The padding is on the wrapper and not on each panel: exactly one panel
+              is mounted at a time, so four copies of `p-4` would be four chances to
+              let one tab sit differently from the other three. */}
+          <CardContent className="p-4">
+            <TabsContent value="Inhoud">
+              <ContentView
+                report={report}
+                findings={derived}
+                showNoise={noise}
+                control={control}
+                landing={landing}
+              />
+            </TabsContent>
+            <TabsContent value="Links">
+              <FindingTable findings={findings} check="links" control={control} sides={report.sides} landing={landing} />
+            </TabsContent>
+            <TabsContent value="Afbeeldingen">
+              <FindingTable findings={findings} check="images" control={control} sides={report.sides} landing={landing} />
+            </TabsContent>
+            <TabsContent value="Meta">
+              <MetaTable production={production} next={next} />
+            </TabsContent>
+          </CardContent>
+        </Tabs>
+      </Card>
     </>
   );
 }
@@ -319,32 +329,33 @@ function FindingTable({ findings, check, control, sides, landing }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map((finding) => (
-          <TableRow
-            key={finding.id}
-            id={findingAnchor(finding.id)}
-            /* The same pair the content view's rows carry, for the same two reasons:
-               `-1` so a landing can hand it the keyboard without putting every row in the
-               Tab order, and `aria-current` so the mark is an announcement and not only a
-               colour. */
-            tabIndex={finding.id === focus ? -1 : undefined}
-            aria-current={finding.id === focus ? 'location' : undefined}
-            className={cn('align-top scroll-mt-4', finding.id === focus && CHROME.landed)}
-          >
-            <TableCell className="px-2 py-2 align-top whitespace-normal">
-              <ClassPill class={finding.class} />
-              <Detail detail={finding.detail} />
-              <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
-              {/* A target key and an alt text are not words on the page, so the
-                  heading above them is the only thing a browser can scroll to. */}
-              <Section anchorHeading={finding.anchorHeading} sides={sides} />
-              <div className="mt-1">{control(finding)}</div>
-            </TableCell>
-            {/* The same component the content rows use. A link finding word-diffs
-                two target keys, which makes a changed path segment jump out. */}
-            <DiffCells prod={finding.prod} new={finding.new} mono />
-          </TableRow>
-        ))}
+        {rows.map((finding) => {
+          // The mark of a landed row is `landing.mjs`'s rule, and the class it carries is
+          // merged with this table's own rather than replacing them.
+          const { className, ...mark } = landedRowProps(finding.id === focus);
+
+          return (
+            <TableRow
+              key={finding.id}
+              id={findingAnchor(finding.id)}
+              {...mark}
+              className={cn('align-top scroll-mt-4', className)}
+            >
+              <TableCell className="px-2 py-2 align-top whitespace-normal">
+                <ClassPill class={finding.class} />
+                <Detail detail={finding.detail} />
+                <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
+                {/* A target key and an alt text are not words on the page, so the
+                    heading above them is the only thing a browser can scroll to. */}
+                <Section anchorHeading={finding.anchorHeading} sides={sides} />
+                <div className="mt-1">{control(finding)}</div>
+              </TableCell>
+              {/* The same component the content rows use. A link finding word-diffs
+                  two target keys, which makes a changed path segment jump out. */}
+              <DiffCells prod={finding.prod} new={finding.new} mono />
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

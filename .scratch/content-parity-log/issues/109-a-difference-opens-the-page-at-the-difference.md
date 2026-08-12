@@ -1,7 +1,7 @@
 # 109 — A difference opens the page at the difference
 
 Type: task
-Status: ready-for-agent
+Status: ready-for-human
 Parent: ../map.md
 
 **What to build:** an editor who clicks a difference on the dashboard arrives at that
@@ -25,21 +25,31 @@ Being lost is two separate losses, and both are navigation:
    Back returned an unfiltered queue from the top, and there was no link to send a
    colleague.
 
-- [ ] A page link from a repeat row names the finding it was clicked from.
-- [ ] Following it opens the page on the tab that finding lives on, opens its row, marks
+- [x] A page link from a repeat row names the finding it was clicked from.
+- [x] Following it opens the page on the tab that finding lives on, opens its row, marks
       it, and scrolls to it.
-- [ ] The rows around it are untouched. Nothing is filtered and nothing is removed —
+- [x] The rows around it are untouched. Nothing is filtered and nothing is removed —
       ADR 0006 stands, and this is a landing and not a fragment.
-- [ ] A finding behind *Ruis en gedempt tonen* switches the toggle on rather than landing
+- [x] A finding behind *Ruis en gedempt tonen* switches the toggle on rather than landing
       on an empty screen. A `genegeerd` finding does not: a dismissal is a decision, not
       noise, and the row is already drawn.
-- [ ] The reader taking the tab strip or the noise box back keeps their choice.
-- [ ] The dashboard screen lives in the query string, so Back restores it and a copied
+- [x] The reader taking the tab strip or the noise box back keeps their choice.
+- [x] The dashboard screen lives in the query string, so Back restores it and a copied
       link shows it.
-- [ ] An untouched dashboard has a clean URL. Only a choice is written.
-- [ ] The page header's way back returns to that screen rather than to the bare store.
-- [ ] A link naming a finding this snapshot no longer has says so, and the page stays
-      usable.
+- [x] An untouched dashboard has a clean URL. Only a choice is written.
+- [x] The page header's way back returns to that screen rather than to the bare store.
+- [x] A link naming a finding this snapshot no longer has says so, and the page stays
+      usable. So does one naming a finding no tab draws.
+
+## Not in this ticket
+
+**The open class group does not go in the URL.** The ask named it — *Back returns to the
+dashboard, same pills / group / search* — and this leaves it as session state, for the
+reason `Class group` gives in `CONTEXT.md`: opening a group is not a filter, and a URL that
+pinned it would make *filter wissen* and the address bar disagree about what a filter is.
+It mostly does not show, because a pill that is on re-opens its own group anyway, so the
+gap is the no-pill case: an editor who opened one group by hand, with no filter on, comes
+back to a closed queue. `docs/adr/0010` carries the argument.
 
 ## Traps
 

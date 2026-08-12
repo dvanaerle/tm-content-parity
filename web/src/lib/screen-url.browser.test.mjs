@@ -1,8 +1,7 @@
-import { createElement } from 'react';
+import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { act } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { useScreen } from './screen-url.mjs';
+import { MIRROR_DELAY, useScreen } from './screen-url.mjs';
 
 /**
  * `useScreen` in a real browser (ticket 109).
@@ -47,7 +46,9 @@ afterEach(() => {
  * box would otherwise write once per keystroke — so every assertion about the address bar
  * has to be taken after it has fired rather than in the same tick as the change.
  */
-const mirrored = () => act(async () => { await new Promise((done) => setTimeout(done, 400)); });
+const mirrored = () => act(async () => {
+  await new Promise((done) => setTimeout(done, MIRROR_DELAY * 2));
+});
 
 describe('useScreen', () => {
   // The case the ticket exists for, from the receiving end: an editor presses Back onto

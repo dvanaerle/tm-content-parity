@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { findingAnchor, landingFor, landingRow } from './landing.mjs';
+import { findingAnchor, landedRowProps, landingFor, landingRow } from './landing.mjs';
+import { CHROME } from './palette.mjs';
 
 /**
  * Landing on the difference the link named (ticket 109).
@@ -62,6 +63,20 @@ describe('landingFor', () => {
     expect(landingFor({ findings, focus: 'd4' }).needsNoise).toBe(true);
   });
 
+  // Not every finding of a page is drawn on one of the four tabs. `no-declared-alternate`
+  // is the one `meta` rule, and the Meta tab is `metaRows()` — display only, no findings
+  // in it at all. So a link naming it has nothing to land on, and the wrong answer is the
+  // one this had: `shown: false` made it ask for *Ruis en gedempt tonen*, which floods the
+  // page with noise rows on the way to a row that is not there. Asking for the toggle only
+  // makes sense when switching it on would draw the thing.
+  it('asks for nothing and says so when no tab draws the finding', () => {
+    const findings = [finding({ id: 'm1', check: 'meta', class: 'no-declared-alternate', shown: false })];
+
+    expect(landingFor({ findings, focus: 'm1' })).toEqual({
+      tab: null, needsNoise: false, missing: false, unplaced: true,
+    });
+  });
+
   // A finding id is a term of the text, so it expires the moment the text changes: a
   // link sent on Monday can name a finding this snapshot does not have, because the
   // difference was fixed or the page was re-measured. That is not an error and it is
@@ -71,7 +86,7 @@ describe('landingFor', () => {
     const findings = [finding({ id: 'a1' })];
 
     expect(landingFor({ findings, focus: 'gone' })).toEqual({
-      tab: null, needsNoise: false, missing: true,
+      tab: null, needsNoise: false, missing: true, unplaced: false,
     });
   });
 
@@ -79,7 +94,32 @@ describe('landingFor', () => {
   // the page list chose their own tab and their own toggle.
   it('asks for nothing when no link named a finding', () => {
     expect(landingFor({ findings: [finding({ id: 'a1' })], focus: null })).toEqual({
-      tab: null, needsNoise: false, missing: false,
+      tab: null, needsNoise: false, missing: false, unplaced: false,
+    });
+  });
+});
+
+describe('landedRowProps', () => {
+  // Two tables draw a landed row — the content view's and the finding table's — and the
+  // three things that mark one are one rule, not two: the outline so it can be seen, the
+  // `-1` so a landing can hand it the keyboard without putting every row in the Tab
+  // order, and `aria-current` so the mark is an announcement and not only a colour. It
+  // was written out twice, which is two places for a landing to become colour-only again.
+  it('marks a landed row so it can be seen, focused and announced', () => {
+    expect(landedRowProps(true)).toEqual({
+      tabIndex: -1,
+      'aria-current': 'location',
+      className: CHROME.landed,
+    });
+  });
+
+  // Every other row in the table, which is nearly all of them: no outline, and above all
+  // no Tab stop. 399 findings on the worst page would be 399 presses to get past.
+  it('leaves every other row alone', () => {
+    expect(landedRowProps(false)).toEqual({
+      tabIndex: undefined,
+      'aria-current': undefined,
+      className: undefined,
     });
   });
 });

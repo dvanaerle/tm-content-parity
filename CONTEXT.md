@@ -211,7 +211,11 @@ element any more: it folds the links inside it. Both the word and the rule are g
   lives on, opens its row, marks it and scrolls to it. A landing is **not** a filter and
   removes nothing: the rows around it stay in document order, which is the whole reason
   ADR 0006 keeps the content view whole. A finding id is a term of the text, so a link
-  outlives the finding it names, and a page reached by a stale one says so.
+  outlives the finding it names, and a page reached by a stale one says so — as does one
+  naming a finding no tab draws, which is the `meta` check: Meta is display only.
+  The tab and *Ruis en gedempt tonen* are **borrowed**, each released on its own the
+  moment the reader touches that control. Taking one back is not taking the other back:
+  switching tabs must not switch off the toggle that was drawing the landed row.
 - **Dashboard** — one store's work on one screen, at `/<store>/`. It carries only
   that store's summaries and only that store's progress numbers. There is no
   all-stores dashboard: a store is the unit an editor is responsible for.

@@ -1,7 +1,7 @@
 import { createElement, act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
-import { useLandOn } from './landing.mjs';
+import { useLanding, useLandOn } from './landing.mjs';
 
 /**
  * `useLandOn` in a real browser (ticket 109).
@@ -48,6 +48,83 @@ function mount(anchor, settled = true) {
 afterEach(() => {
   document.body.innerHTML = '';
   window.scrollTo(0, 0);
+});
+
+/**
+ * The two controls a landing borrows, and the reader taking either one back.
+ *
+ * `asked` is what `landingFor()` decided. The hook holds the reader's own tab and their
+ * own toggle beside it, and the question these tests exist for is that the two are
+ * **independent**: taking one back must not hand the other one back as well.
+ */
+function mountControls(asked) {
+  const seen = /** @type {{ tab: string, noise: boolean }} */ ({});
+
+  function Probe() {
+    const { tab, noise, chooseTab, chooseNoise } = useLanding(asked, 'Inhoud');
+    seen.tab = tab;
+    seen.noise = noise;
+
+    return createElement('div', null,
+      createElement('button', { id: 'take-tab', onClick: () => chooseTab('Inhoud') }, 'Inhoud'),
+      createElement('button', { id: 'take-noise', onClick: () => chooseNoise(false) }, 'ruis uit'),
+    );
+  }
+
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  act(() => root.render(createElement(Probe)));
+
+  return {
+    seen,
+    press: (id) => act(() => document.getElementById(id).click()),
+    unmount: () => act(() => root.unmount()),
+  };
+}
+
+/** A muted `links` finding: the tab has to change **and** the toggle has to come on. */
+const askedForBoth = { tab: 'Links', needsNoise: true, missing: false, unplaced: false };
+
+describe('useLanding', () => {
+  // The reader landed on Links and then looked at something else. The noise toggle is
+  // still the only reason the row they came for is drawable, so switching tabs must not
+  // switch it off — that used to make the landed row vanish the moment they clicked a tab.
+  it('keeps the borrowed noise toggle when the reader takes the tab strip', () => {
+    const { seen, press, unmount } = mountControls(askedForBoth);
+    expect(seen).toEqual({ tab: 'Links', noise: true });
+
+    press('take-tab');
+
+    expect(seen).toEqual({ tab: 'Inhoud', noise: true });
+    unmount();
+  });
+
+  // And the other way round. The reader landed on Links and switched the noise off,
+  // which is their business — but it is not a request to be sent back to Inhoud, which
+  // is what one shared flag did.
+  it('keeps the borrowed tab when the reader takes the noise box', () => {
+    const { seen, press, unmount } = mountControls(askedForBoth);
+
+    press('take-noise');
+
+    expect(seen).toEqual({ tab: 'Links', noise: false });
+    unmount();
+  });
+
+  // The ordinary page, opened from the page list: nothing was asked for, so the reader
+  // gets the first tab and a toggle that is off, and both answer to them alone.
+  it('is the reader´s own two controls when no link named a finding', () => {
+    const { seen, press, unmount } = mountControls({
+      tab: null, needsNoise: false, missing: false, unplaced: false,
+    });
+    expect(seen).toEqual({ tab: 'Inhoud', noise: false });
+
+    press('take-noise');
+
+    expect(seen).toEqual({ tab: 'Inhoud', noise: false });
+    unmount();
+  });
 });
 
 describe('useLandOn', () => {

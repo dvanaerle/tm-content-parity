@@ -9,7 +9,7 @@ import { Label } from './ui/label.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { cn } from '../lib/utils.js';
 import { CHROME } from '../lib/palette.mjs';
-import { landingRow, useLandOn } from '../lib/landing.mjs';
+import { landedRowProps, landingRow, useLandOn } from '../lib/landing.mjs';
 import {
   NO_FILTER,
   isNarrowed,
@@ -279,41 +279,43 @@ function Rows({ rows, control, sides, landed, settled }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map((row) => (
-          <TableRow
-            key={row.key}
-            id={row.key}
-            /* The landed row is the only focusable row, and only while it is the landed
-               one: `-1` takes the focus a landing gives it without putting every row of a
-               288-row table into the Tab order. `aria-current` is what says *this is the
-               one you clicked* to a reader who cannot see the outline — the outline alone
-               is a colour, and a colour is not an announcement. */
-            tabIndex={row.key === landed ? -1 : undefined}
-            aria-current={row.key === landed ? 'location' : undefined}
-            className={cn('align-top scroll-mt-4', row.key === landed && CHROME.landed)}
-          >
-            <TableCell className="px-2 py-3 align-top whitespace-normal">
-              {row.class
-                ? <ClassPill class={row.class} />
-                : <span className="text-xs text-muted-foreground">gelijk</span>}
-              {row.score !== null && <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>}
-              <ClampControl open={open.has(row.key)} onToggle={() => toggle(row.key)} />
-              <Occurrences count={row.finding?.occurrences} title={onePageTitle(row.finding?.occurrences)} />
-              {row.finding && <div className="mt-1">{control(row.finding)}</div>}
-            </TableCell>
-            <DiffCells
-              prod={row.prod?.norm ?? null}
-              new={row.new?.norm ?? null}
-              prodRaw={row.prod?.raw ?? null}
-              newRaw={row.new?.raw ?? null}
-              prodPrefix={<><Tag unit={row.prod} /><Locate url={sides.production.url} text={row.prod?.raw} side="productie" /></>}
-              newPrefix={<><Tag unit={row.new} /><Locate url={sides.new.url} text={row.new?.raw} side="de nieuwe site" /></>}
-              strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
-              equal={row.equal}
-              clamped={!open.has(row.key)}
-            />
-          </TableRow>
-        ))}
+        {rows.map((row) => {
+          // What marks a landed row is `landing.mjs`'s rule and not this table's: the
+          // finding table draws one too, and the outline, the Tab stop and the
+          // announcement are one mark said three ways rather than three classes
+          // that happen to sit here. The class it hands back is merged with this row's.
+          const { className, ...mark } = landedRowProps(row.key === landed);
+
+          return (
+            <TableRow
+              key={row.key}
+              id={row.key}
+              {...mark}
+              className={cn('align-top scroll-mt-4', className)}
+            >
+              <TableCell className="px-2 py-3 align-top whitespace-normal">
+                {row.class
+                  ? <ClassPill class={row.class} />
+                  : <span className="text-xs text-muted-foreground">gelijk</span>}
+                {row.score !== null && <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>}
+                <ClampControl open={open.has(row.key)} onToggle={() => toggle(row.key)} />
+                <Occurrences count={row.finding?.occurrences} title={onePageTitle(row.finding?.occurrences)} />
+                {row.finding && <div className="mt-1">{control(row.finding)}</div>}
+              </TableCell>
+              <DiffCells
+                prod={row.prod?.norm ?? null}
+                new={row.new?.norm ?? null}
+                prodRaw={row.prod?.raw ?? null}
+                newRaw={row.new?.raw ?? null}
+                prodPrefix={<><Tag unit={row.prod} /><Locate url={sides.production.url} text={row.prod?.raw} side="productie" /></>}
+                newPrefix={<><Tag unit={row.new} /><Locate url={sides.new.url} text={row.new?.raw} side="de nieuwe site" /></>}
+                strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
+                equal={row.equal}
+                clamped={!open.has(row.key)}
+              />
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

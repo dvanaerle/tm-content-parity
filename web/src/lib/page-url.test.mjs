@@ -28,7 +28,7 @@ describe('pageHref', () => {
 });
 
 describe('pageHref, asked for a finding', () => {
-  // Ticket 101. Clicking a difference on the dashboard used to open the page at the
+  // Ticket 109. Clicking a difference on the dashboard used to open the page at the
   // top, and on a 399-row page the difference had to be found again by eye. The link
   // names it, and the page lands on it.
   it('carries the finding id', () => {
