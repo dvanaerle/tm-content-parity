@@ -16,6 +16,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { appendEach } from '../../../overrides/bulk.mjs';
 import { derivePageState, deriveStoreState } from '../../../overrides/state.mjs';
 import { createOverridesPort } from '../../../overrides/supabase.mjs';
 
@@ -104,6 +105,11 @@ export function useOverrides({ report, editor }) {
   useEffect(() => { reload(); }, [reload]);
 
   /**
+   * The store, the page and the editor of the page on screen, unless the caller names
+   * another one. The spread is after the defaults on purpose: ticket 31 needs an event
+   * aimed at a page that is **not** the one being looked at, and a caller that passes a
+   * `page` is aiming it. Nothing in a page view does, and the seam no longer forbids it.
+   *
    * @param {Partial<import('../../../overrides/state.mjs').OverrideEvent>} partial
    * @returns {Promise<boolean>} Whether it was stored.
    */
@@ -144,6 +150,24 @@ export function useOverrides({ report, editor }) {
 }
 
 /**
+ * The one sentence a bulk control shows in place of its buttons, and the message a press
+ * with no name reports. Both are here so the words and the flag they explain sit
+ * together.
+ *
+ * The order is the order an editor can act on: a name is the one thing they can fix here
+ * and now, so it is asked for before anything they cannot.
+ */
+function whyNotWriting({ port, editor, events, error }) {
+  if (!port) return 'Geen verbinding met het logboek, dus beslissen is uitgeschakeld.';
+  if (error) return 'Het logboek reageert niet, dus dit staat op alleen-lezen.';
+  if (!editor) return NO_EDITOR;
+  if (events === null) return 'Het logboek wordt nog geladen.';
+  return null;
+}
+
+const NO_EDITOR = 'Vul bovenaan je naam in om hier te beslissen. Elke beslissing krijgt een naam.';
+
+/**
  * The dashboard's side: every event for the store, reduced to a bar per page and
  * one roll-up **summed over findings, never over pages**.
  *
@@ -152,12 +176,19 @@ export function useOverrides({ report, editor }) {
  * everything `derivePageState()` reads. So the dashboard and the page agree by
  * construction rather than by two implementations of the same rules.
  *
- * @param {{ pages: import('./reports.mjs').PageSummary[] }} input
+ * It **writes** since ticket 31, and only in bulk. A repeat row is the one control the
+ * store list hosts, and the page ledger stays the only place a single finding is decided
+ * — the two surfaces do not both need to offer every action, and a dashboard that could
+ * write one event at a time would be the second override control this project has spent
+ * two tickets reducing to one.
+ *
+ * @param {{ pages: import('./reports.mjs').PageSummary[], editor?: string }} input
  */
-export function useStoreOverrides({ pages }) {
+export function useStoreOverrides({ pages, editor = '' }) {
   const { port, reason } = usePort();
   const [events, setEvents] = useState(/** @type {any[] | null} */ (null));
   const [error, setError] = useState(/** @type {string | null} */ (null));
+  const [busy, setBusy] = useState(false);
 
   const stores = useMemo(
     () => [...new Set(pages.map((page) => page.store))].sort().join(','),
@@ -183,6 +214,37 @@ export function useStoreOverrides({ pages }) {
     [derived],
   );
 
+  /**
+   * One press, N events, each aimed at its own page (ticket 31).
+   *
+   * The **editor** is injected here and per event, because attribution is per row. The
+   * store and the page are not: a bulk press spans pages and this hook is not bound to
+   * one, so every event has to carry its own. `appendEach()` holds the rule about a
+   * partial failure; this holds nothing but the wiring, because there is no DOM test in
+   * this repo and anything with a decision in it belongs below that line.
+   *
+   * A failure sets the same `error` a single write does, so the log goes read-only and
+   * the banner appears. The rows that *were* written still enter the list: they are in
+   * the table, and a list that dropped them would disagree with the log it reports on.
+   */
+  const appendMany = useCallback(async (toWrite) => {
+    if (!port || !editor) {
+      return {
+        stored: [], written: 0, total: toWrite.length, failedOn: null, error: NO_EDITOR,
+      };
+    }
+
+    setBusy(true);
+    try {
+      const result = await appendEach(port, toWrite.map((event) => ({ ...event, editor })));
+      if (result.stored.length > 0) setEvents((held) => [...(held ?? []), ...result.stored]);
+      setError(result.error);
+      return result;
+    } finally {
+      setBusy(false);
+    }
+  }, [port, editor]);
+
   return {
     derived,
     byPage,
@@ -190,9 +252,20 @@ export function useStoreOverrides({ pages }) {
     // derived from it: searching the **notes** (ticket 82). A note is a sentence an
     // editor wrote, and the derivation keeps the decision and drops the words.
     events: events ?? [],
+    appendMany,
+    busy,
     ready: events !== null,
     error,
     connected: Boolean(port),
     notConnectedReason: reason,
+    /** The same four conditions the page view writes under. No name, no writing. */
+    canWrite: Boolean(port) && Boolean(editor) && events !== null && !error,
+    /**
+     * Which of those four is missing, in one sentence. It lives here and not in a
+     * component for the reason this hook exists: the conditions are derived in one
+     * place, and a second cascade over the same four would be a second implementation
+     * of the same rule, free to drift from the flag it is explaining.
+     */
+    notWritingReason: whyNotWriting({ port, editor, events, error }),
   };
 }

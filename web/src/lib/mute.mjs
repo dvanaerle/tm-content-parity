@@ -28,7 +28,7 @@ export function muteForms(findings, pressedOn) {
   const wide = { class: pressedOn.class };
 
   return [
-    { key: section, where: where(anchorHeading), count: muteCoverage(findings, section) },
+    { key: section, where: sectionName(anchorHeading), count: muteCoverage(findings, section) },
     { key: wide, where: 'op de hele pagina', count: muteCoverage(findings, wide) },
   ].map((form) => ({ ...form, says: `${howMany(form.count)} ${form.where}` }));
 }
@@ -38,9 +38,12 @@ export function muteForms(findings, pressedOn) {
  * eerste kop" is what it is, and an editor who reads that does not press it
  * thinking they muted the page.
  *
+ * Exported because a bulk mute names sections too (ticket 31), and one phrase for one
+ * concept is what keeps the two presses describing the same thing the same way.
+ *
  * @param {string | null} anchorHeading
  */
-const where = (anchorHeading) => (
+export const sectionName = (anchorHeading) => (
   anchorHeading === null ? 'in de inhoud vóór de eerste kop' : `onder “${anchorHeading}”`
 );
 

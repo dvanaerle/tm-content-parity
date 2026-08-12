@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Bar, Chip, ClassFilterPills, FilterBanner } from './Chips.jsx';
-import { LogBanner } from './Progress.jsx';
+import { EditorPrompt, LogBanner } from './Progress.jsx';
 import { ClassGroups } from './Repeats.jsx';
 import Search from './Search.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
@@ -13,7 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
-import { useStoreOverrides } from '../lib/overrides.mjs';
+import { useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
 import { pagesWithClasses, repeatsInStore, repeatsWithClasses, toggleIn } from '../lib/view.mjs';
@@ -68,7 +68,10 @@ export default function Dashboard({
   const comparable = useMemo(() => pages.filter((page) => page.comparable), [pages]);
   const oneSided = pages.filter((page) => !page.comparable);
 
-  const log = useStoreOverrides({ pages: comparable });
+  // The same name the page view writes under, out of the same `localStorage` key. A
+  // repeat row can write since ticket 31, and every row it writes carries the editor.
+  const { editor, save } = useEditor();
+  const log = useStoreOverrides({ pages: comparable, editor });
 
   /** The open count **after** overrides, so the worst page is the worst remaining page. */
   const openOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar.open ?? page.summary.shown;
@@ -101,6 +104,33 @@ export default function Dashboard({
     return index;
   }, [log.derived]);
 
+  /**
+   * The same findings kept per page, which is what a **mute** has to be counted over: it
+   * hides a class in a section, so its size is a fact about the page and not about the
+   * difference that was pressed on (ADR 0008).
+   */
+  const findingsByPage = useMemo(
+    () => new Map(log.derived.pages.map((page) => [`${page.store}/${page.page}`, page.findings])),
+    [log.derived],
+  );
+
+  /**
+   * What a repeat row needs to be able to decide, in one prop.
+   *
+   * It is a bag rather than four props because it passes through four components to
+   * reach the row that uses it, and it says **why** it cannot write rather than merely
+   * that it cannot: a control that vanishes without a reason reads as a missing feature.
+   */
+  const bulk = useMemo(() => ({
+    canWrite: log.canWrite,
+    busy: log.busy,
+    appendMany: log.appendMany,
+    findingsByPage,
+    // The hook's own sentence about its own flag, not a second reading of the four
+    // conditions behind it.
+    notWritingReason: log.notWritingReason,
+  }), [log.canWrite, log.busy, log.appendMany, log.notWritingReason, findingsByPage]);
+
   const totals = useMemo(() => {
     const byClass = {};
     let hidden = 0;
@@ -123,6 +153,19 @@ export default function Dashboard({
         ready={log.ready}
         error={log.error}
       />
+
+      {/* The name lives here since ticket 31: this screen can write now, and it wrote
+          nothing before. It is one field and it is asked for once, not per row. */}
+      {log.connected && (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <EditorPrompt editor={editor} save={save} />
+          <span className="text-muted-foreground">
+            {editor
+              ? 'Beslissingen op een verschil worden op deze naam vastgelegd, per bevinding.'
+              : 'Vul je naam in om een verschil in één keer af te handelen. Elke beslissing krijgt een naam.'}
+          </span>
+        </div>
+      )}
 
       <section className="flex flex-wrap items-center gap-2">
         <Chip value={comparable.length} label="pagina's vergeleken" tone="dark" />
@@ -167,7 +210,14 @@ export default function Dashboard({
               ? `Toon alleen de verschillen van soort ${cls}. De getallen hierboven veranderen niet.`
               : `Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`)}
           />
-          <div className="flex items-center gap-2">
+          {/* `flex-wrap` here and not only on the `CardHeader`: the header wrapped, but
+              this inner group did not, so its three controls were measured as one
+              indivisible 386 pixel run and hung 27 pixels past a 399 pixel viewport —
+              taking the sort `Select`'s label off the side of the screen with them.
+              The search box gives up its fixed width on the way down for the same
+              reason: `w-56` is 224 pixels of a 319 pixel card, which leaves the switch
+              and the select nowhere to go. */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
             {/* One box, and it searches the content (ticket 82). It used to match a page
                 name and nothing else, and it lived with the page list because that was
                 the only list it could narrow. The page key is one of the six fields it
@@ -179,7 +229,6 @@ export default function Dashboard({
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Zoek in de inhoud"
               title="Zoekt de teksten, de links, de kopjes en de paginanamen van deze winkel."
-              className="w-56"
             />
             {/* The switch belongs to the two views, and a search answers past both of
                 them, so it steps aside while one is on screen. */}
@@ -192,7 +241,24 @@ export default function Dashboard({
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                {/* The popup sizes to its own longest option, not to the trigger.
+                    shadcn's default is `w-(--anchor-width)`, which assumes the trigger
+                    is the wider box — and against a `w-fit` trigger it never is. The
+                    trigger keeps 30 pixels clear on the right for its chevron while a
+                    `SelectItem` keeps 32 for the check, so every option gets two pixels
+                    less room than the label that sized the anchor, and the popup's
+                    `overflow-x-hidden` renders the shortfall as a clipped word. A
+                    `w-fit` trigger is also sized to the *selected* option, so any longer
+                    option was cut off regardless.
+
+                    Both floors are one `max()` class on purpose: written as two
+                    `min-w-*` classes they are one utility group with no variant between
+                    them, and `tailwind-merge` would keep only the last — the same trap
+                    the tab strip hit, from the other side.
+
+                    It is corrected here and not in `ui/select.jsx`, which stays exactly
+                    as shadcn ships it so a re-add can never drop a local fix. */}
+                <SelectContent className="w-auto min-w-[max(var(--anchor-width),9rem)] max-w-(--available-width)">
                   <SelectGroup>
                     {Object.entries(SORT_LABEL).map(([name, label]) => (
                       <SelectItem key={name} value={name}>{label}</SelectItem>
@@ -213,6 +279,7 @@ export default function Dashboard({
               events={log.events}
               includeClosed={includeClosed}
               onIncludeClosed={setIncludeClosed}
+              bulk={bulk}
             />
           )}
 
@@ -241,6 +308,7 @@ export default function Dashboard({
               repeats={shownRepeats}
               classes={classes}
               byFinding={byFinding}
+              bulk={bulk}
             />
           )}
 
@@ -374,7 +442,7 @@ export default function Dashboard({
  * constant has to move with it — the same bargain `OverrideControl.jsx` strikes for a
  * checked box.
  */
-const PRESSED_TONE = 'aria-pressed:bg-brand-green aria-pressed:hover:bg-brand-medium-green';
+const PRESSED_TONE = 'aria-pressed:bg-brand aria-pressed:hover:bg-brand-dark';
 
 function ViewSwitch({ view, onChange }) {
   return (

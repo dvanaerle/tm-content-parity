@@ -23,7 +23,7 @@ import { searchNotes, searchStore } from '../lib/search.mjs';
  * is one derivation on screen twice and not a second surface.
  */
 export default function Search({
-  store, pages, term, byFinding, events, includeClosed, onIncludeClosed,
+  store, pages, term, byFinding, events, includeClosed, onIncludeClosed, bulk,
 }) {
   const { index, error } = useSearchIndex(store);
 
@@ -64,7 +64,7 @@ export default function Search({
 
   return (
     <>
-      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-100 px-4 py-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-4 py-3">
         <p className="text-sm">
           {/* The count of the result and nothing else. Search narrows and moves no
               count, so the chips above still count every comparable page.
@@ -97,7 +97,14 @@ export default function Search({
 
       {result.repeats.length === 0
         ? <p className="px-4 py-6 text-sm text-muted-foreground">Geen verschil met deze woorden.</p>
-        : <Repeats key={`${term}|${includeClosed}`} repeats={result.repeats} byFinding={byFinding} />}
+        : (
+          <Repeats
+            key={`${term}|${includeClosed}`}
+            repeats={result.repeats}
+            byFinding={byFinding}
+            bulk={bulk}
+          />
+        )}
 
       <Named store={store} pages={named} />
       <Notes notes={notes.notes} />

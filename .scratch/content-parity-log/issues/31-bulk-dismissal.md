@@ -1,7 +1,7 @@
 # 31 — One reason, many findings
 
 Type: build
-Status: ready-for-agent
+Status: resolved 2026-08-12 - built, and one acceptance criterion refused. See the answer.
 Blocked by: 81, 88 — 30 and 76 are resolved
 Parent: ../map.md
 
@@ -78,36 +78,44 @@ component.
 
 ## Acceptance criteria
 
-- [ ] The seam takes a target page per event, so an event can be aimed at a page that is
-      not the one on screen. `useOverrides()` and `append()` both change, and the change
-      is covered by a test that does not touch the network.
-- [ ] Selecting a repeat and dismissing it writes one event per finding id, each with
+- [x] The seam takes a target page per event, so an event can be aimed at a page that is
+      not the one on screen. **`useOverrides()` and `append()` did not change - see the
+      refusal below.** `overrides/bulk.mjs` is the seam, and `overrides/bulk.test.mjs`
+      covers it against a fake port.
+- [x] Selecting a repeat and dismissing it writes one event per finding id, each with
       the same note and the same editor.
-- [ ] The table gains no scope and no action. A test asserts the written events use the
-      existing `finding` scope and `dismissed` action only.
-- [ ] A failure part-way through reports how many were written and which page failed.
-      The interface does not claim success.
-- [ ] The interface states, before the press, how many findings the decision covers and
-      that it covers those findings only.
-- [ ] The bar and the denominator move by exactly the number of findings dismissed, and
-      by nothing else.
-- [ ] A mute is still available and still described honestly. If 76's answer says a mute
-      is the better tool for most repeats, the interface says so at the point of choice.
+- [x] The table gains no scope and no action. `bulk.test.mjs` pins the vocabulary from
+      both builders, and pins the dismissal to `finding` + `dismissed` alone.
+- [x] A failure part-way through reports how many were written and which page failed.
+      The interface does not claim success - and the report is drawn on **any** shortfall,
+      not only on a named page, because a press can write nothing and name nothing.
+- [x] The interface states, before the press, how much the decision covers and that it
+      covers that only. It states it in **pages**, once: `CONTEXT.md`'s *Repeat* entry
+      forbids the second unit, and the first draft of this control printed both.
+- [x] The bar and the denominator move by exactly the number of findings dismissed, and
+      by nothing else. A finding a colleague already decided is skipped and the skip is
+      stated, so a press never overwrites a `fixed` claim with somebody else's judgement.
+- [x] A mute is still available and still described honestly. 76 does **not** say a mute
+      is the better tool - it says a bulk tool idles - so what the interface states at the
+      point of choice is the measured size and the difference in expiry, which is the
+      choice actually being made.
 
 ### Bulk mute
 
-- [ ] Selecting N pages, a class and a section writes N mute events, one per page, each
+- [x] Selecting N pages, a class and a section writes N mute events, one per page, each
       with the same note and the same editor. The same seam serves both actions.
-- [ ] The count of findings covered is stated before the press, as
-      [88](88-the-mute-says-what-it-hides.md) requires for a single mute. A bulk mute is
-      the press that most needs it.
-- [ ] A note is mandatory, per 88.
-- [ ] The two actions are not offered as one control. A dismissal expires and a mute does
-      not, and an editor choosing between them is choosing between those two behaviours.
-- [ ] Bulk mute is **not** offered as the answer for campaign copy. All 1,645 banner
-      findings carry a null anchor heading, so it would mute the null section on about 330
-      pages and take unrelated findings with it.
-      [90](90-a-campaign-is-a-class-not-a-commit.md) owns that.
+- [x] The count of findings covered is stated before the press, through the same
+      `muteCoverage()` a single mute's button uses, summed per page. The gap between it and
+      the difference's own size is stated too, because that gap is the warning.
+- [x] A note is mandatory, per 88. Both builders return no events without one, and the
+      `override_note` constraint covers `muted` as well as `dismissed`.
+- [x] The two actions are not offered as one control, and they are not offered on one
+      eligibility either: a repeat with nothing left to dismiss still offers the mute,
+      which is the judgement that does not expire.
+- [x] Bulk mute is **not** offered as the answer for campaign copy. A null anchor heading
+      refuses the press and says why. *Unknown section* is a **second** refusal with its own
+      sentence - merging the two would have told an editor their content sits before the
+      first heading when the truth was a stale list.
 
 ## Traps
 
@@ -126,3 +134,64 @@ component.
 Ticket 09 named the rule. Spec 29 carried the story. The code review of the spec-29
 work found it unbuilt and found the seam that prevents it. The grilling session of
 2026-08-10 supplied the grouping key.
+
+## Answer - 2026-08-12
+
+Built. Both actions live on a repeat row in ticket 81's list, below the page list it opens,
+because those are the pages the decision covers and an editor reads them before deciding
+about them. The header row could not host them anyway: it is entirely a collapsible
+trigger.
+
+- `overrides/bulk.mjs` - `appendEach()`, the N-event write. Sequential, and it stops at the
+  first refusal, which is the only shape that yields a report readable in one sentence.
+  Nothing is rolled back: the table is append-only, so the rows that were written are
+  decisions that were made.
+- `web/src/lib/bulk.mjs` - `bulkDismissal()` and `bulkMute()`: what a press would write and
+  what it covers, so the sentence above the button and the events behind it cannot drift.
+- `web/src/components/BulkControl.jsx` - the two presses, each with its own note field.
+- `useStoreOverrides()` writes now, and only in bulk. The page ledger stays the only place
+  a single finding is decided.
+
+### One acceptance criterion is refused
+
+> *`useOverrides()` and `append()` both change.*
+
+Neither did, and neither should have. The control belongs on a repeat row - this ticket's
+own second open question settles that, and the page ledger "knows one page and cannot host
+this". So the hook that had to learn to write is `useStoreOverrides()`, which could not
+write at all. `append()` needed no change either: its defaults were already spread
+**before** the caller's fields, so a caller could always aim an event at another page. That
+is now a documented guarantee instead of an accident.
+
+What the criterion was protecting - *an event can be aimed at a page that is not the one on
+screen, proven without a network* - holds, and `overrides/bulk.test.mjs` is where it is
+proven. An `appendMany` was briefly added to `useOverrides()` as well and then removed: no
+page view calls it, and a page-scoped event list is the wrong home for foreign-page rows.
+
+### What the size warning says, and why it is on screen at all
+
+Ticket 81 measured 816 reports: the largest repeat in the largest store is on **22 pages**,
+and **79-91%** of every store's repeats are singletons. Ticket 76 closed on those numbers
+with *the bulk-dismissal verdict for ticket 31 is no*.
+
+This is built anyway, smaller than its opening sentence and saying so. Thirty pages is not
+a case that occurs, so the control states the real distribution where the press is made
+rather than implying a tool that mostly idles. It is still worth building: the seam was the
+blocker, `useStoreOverrides()` was read-only, and a 22-page repeat is 22 decisions an
+editor otherwise makes 22 times.
+
+### Not built
+
+No page-wide bulk mute. ADR 0008 keeps the page-wide form second, for a page whose headings
+are its content; across N pages it would hide a whole class on all of them from one press,
+which is the largest press in the log multiplied. A page like that is a judgement to make
+one page at a time.
+
+### Two things the code review caught, worth keeping in the record
+
+- **The doubled figure.** The first draft printed *N bevindingen op N pagina's* off one
+  variable. `CONTEXT.md`'s *Repeat* entry forbids exactly that: the page is a term of the
+  finding id, so the two are one number. It says pages, once.
+- **A press that claimed success.** Closing the form on `failedOn === null` cleared it after
+  a press that wrote nothing and named no page - the no-name case, reachable because the
+  name field is on the same screen. Success is now `written === total` and no error.

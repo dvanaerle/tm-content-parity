@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { barOf } from '../../../overrides/state.mjs';
 import { Detail, Occurrences, onePageTitle } from './Annotations.jsx';
+import BulkControl from './BulkControl.jsx';
 import { ClassPill } from './Chips.jsx';
 import { STATE } from './OverrideControl.jsx';
 import { Badge } from './ui/badge.jsx';
@@ -34,12 +35,12 @@ import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
  * decision on a repeat is still one decision per finding — every number here says how
  * much is *decided*, and none of them counts down to an empty list.
  */
-export default function Repeats({ repeats, byFinding }) {
+export default function Repeats({ repeats, byFinding, bulk }) {
   if (repeats.length === 0) return <NoRepeats />;
 
   return (
     <>
-      <RowList repeats={repeats} byFinding={byFinding} />
+      <RowList repeats={repeats} byFinding={byFinding} bulk={bulk} />
       <Total repeats={repeats} />
     </>
   );
@@ -68,7 +69,7 @@ export default function Repeats({ repeats, byFinding }) {
  * term is the grouping the editor asked for — and grouping it by class as well would be a
  * second grouping over one answer.
  */
-export function ClassGroups({ repeats, classes, byFinding }) {
+export function ClassGroups({ repeats, classes, byFinding, bulk }) {
   const groups = useMemo(() => groupRepeatsByClass(repeats, classes), [repeats, classes]);
 
   // Which groups are open. The initial state is the derivation's `opensOnLoad`: closed,
@@ -104,6 +105,7 @@ export function ClassGroups({ repeats, classes, byFinding }) {
             drawn={budget[group.class] ?? PAGE_SIZE}
             onDraw={(next) => setBudget({ ...budget, [group.class]: next })}
             byFinding={byFinding}
+            bulk={bulk}
           />
         ))}
       </ul>
@@ -124,12 +126,12 @@ export function ClassGroups({ repeats, classes, byFinding }) {
  * makes that tail navigable; it does not get to decide the tail is not work. So no group is
  * left out for being small, and none of them hides its rows behind its count.
  */
-function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding }) {
+function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk }) {
   const count = group.repeats.length;
 
   if (count === 0) {
     return (
-      <li className="flex items-center gap-2 border-b border-slate-100 px-4 py-2 text-sm last:border-0">
+      <li className="flex items-center gap-2 border-b border-border px-4 py-2 text-sm last:border-0">
         <ClassPill class={group.class} />
         <span className="text-muted-foreground">Geen verschil van deze soort in deze winkel.</span>
       </li>
@@ -137,7 +139,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding }) {
   }
 
   return (
-    <li className="border-b border-slate-100 last:border-0">
+    <li className="border-b border-border last:border-0">
       <Collapsible open={open} onOpenChange={onToggle}>
         <CollapsibleTrigger className="flex w-full items-center gap-2 bg-muted/40 px-4 py-2 text-left text-sm hover:bg-muted">
           <span aria-hidden className="w-3 text-muted-foreground">{open ? '▾' : '▸'}</span>
@@ -154,7 +156,13 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding }) {
           {/* The budget belongs to **this** group, and so does the button that pages it.
               One number over the whole list would draw a hundred rows of the first class
               and none of the fifth. */}
-          <RowList repeats={group.repeats} byFinding={byFinding} drawn={drawn} onDraw={onDraw} />
+          <RowList
+            repeats={group.repeats}
+            byFinding={byFinding}
+            bulk={bulk}
+            drawn={drawn}
+            onDraw={onDraw}
+          />
         </CollapsibleContent>
       </Collapsible>
     </li>
@@ -172,7 +180,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding }) {
  * which is the flat list a search draws. A list that is never taken off screen cannot lose
  * its paging, so there is nothing above it to hold.
  */
-function RowList({ repeats, byFinding, drawn: given, onDraw }) {
+function RowList({ repeats, byFinding, bulk, drawn: given, onDraw }) {
   const [held, setHeld] = useState(PAGE_SIZE);
   const drawn = given ?? held;
   const draw = (next) => (onDraw ? onDraw(next) : setHeld(next));
@@ -181,12 +189,12 @@ function RowList({ repeats, byFinding, drawn: given, onDraw }) {
     <>
       <ul className="text-sm">
         {repeats.slice(0, drawn).map((repeat) => (
-          <Row key={repeat.key} repeat={repeat} byFinding={byFinding} />
+          <Row key={repeat.key} repeat={repeat} byFinding={byFinding} bulk={bulk} />
         ))}
       </ul>
 
       {drawn < repeats.length && (
-        <p className="border-t border-slate-100 px-4 py-3 text-sm text-muted-foreground">
+        <p className="border-t border-border px-4 py-3 text-sm text-muted-foreground">
           {drawn} van {repeats.length} verschillen getekend.{' '}
           <Button variant="outline" size="xs" onClick={() => draw(drawn + PAGE_SIZE)}>
             Volgende {PAGE_SIZE} tonen
@@ -207,7 +215,7 @@ function RowList({ repeats, byFinding, drawn: given, onDraw }) {
  */
 function Total({ repeats }) {
   return (
-    <p className="border-t border-slate-100 px-4 py-3 text-xs text-muted-foreground">
+    <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
       {repeats.length} verschillen over {findingsIn(repeats)} bevindingen. Het groeperen
       scheelt leeswerk en geen werk: één beslissing op een regel blijft één beslissing per
       bevinding, dus deze lijst raakt niet leeg. Wat vooruitgaat, is hoeveel er besloten
@@ -232,7 +240,7 @@ const PAGE_SIZE = 100;
 const acrossPagesTitle = (repeat) => `${repeat.occurrences} keer in totaal, op ${repeat.on.length} `
   + "pagina's. Op sommige van die pagina's staat het verschil meer dan één keer.";
 
-function Row({ repeat, byFinding }) {
+function Row({ repeat, byFinding, bulk }) {
   const [open, setOpen] = useState(false);
 
   // The same four rules the page bar obeys, over this difference's findings: a mute
@@ -246,7 +254,7 @@ function Row({ repeat, byFinding }) {
   const bar = barOf(repeat.on.map((entry) => byFinding.get(entry.id)));
 
   return (
-    <li className="border-b border-slate-100 last:border-0">
+    <li className="border-b border-border last:border-0">
       {/* The trigger is the whole row, and `Collapsible` is what writes the
           `aria-expanded` this markup used to carry by hand — the state below still
           decides, and the library only draws it. */}
@@ -283,7 +291,7 @@ function Row({ repeat, byFinding }) {
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <ul className="border-t border-slate-100 bg-muted px-4 py-2 text-sm">
+          <ul className="border-t border-border bg-muted px-4 py-2 text-sm">
             {/* A page name opens the **whole** content view for that page, and not a
                 fragment of it filtered to this difference. The question a one-sided
                 difference asks is where the text belongs, and only document order
@@ -298,6 +306,12 @@ function Row({ repeat, byFinding }) {
               </li>
             ))}
           </ul>
+
+          {/* One reason, many findings (ticket 31). It is **below** the page list on
+              purpose: those are the pages the decision covers, and an editor reads them
+              before deciding about them. It cannot go in the header, which is entirely
+              the collapsible's trigger. */}
+          <BulkControl repeat={repeat} byFinding={byFinding} bulk={bulk} />
         </CollapsibleContent>
       </Collapsible>
     </li>

@@ -1,0 +1,154 @@
+import { muteCoverage } from '../../../overrides/state.mjs';
+
+/**
+ * What one press on a repeat row would write, and what it covers (ticket 31).
+ *
+ * A repeat is a grouping and never a finding, so a decision on one is N decisions on N
+ * findings. This file builds those N events and counts what they touch, so the sentence
+ * above the button and the events behind it cannot drift apart — the bargain `mute.mjs`
+ * already strikes for a single mute.
+ */
+
+/**
+ * The N dismissals of one repeat.
+ *
+ * @param {object} input
+ * @param {import('./view.mjs').Repeat} input.repeat
+ * @param {Map<string, { state: string }>} input.byFinding  The derivation's answer per id.
+ * @param {string} input.note  Mandatory: the SQL constraint refuses a dismissal without
+ *   one, and one note copied to all N rows is the correct shape.
+ */
+export function bulkDismissal({ repeat, byFinding, note }) {
+  const reason = note.trim();
+
+  // The findings this press is allowed to touch: the two states the single control
+  // offers *Negeren…* on, and no others. A finding a colleague dismissed, muted or
+  // claimed fixed keeps their decision — the bar has to move by exactly the number
+  // dismissed and by nothing else, and overwriting a `fixed` claim would turn a claim
+  // of fact into somebody else's judgement while moving no number at all.
+  const on = repeat.on.filter((entry) => OFFERED.has(byFinding.get(entry.id)?.state ?? 'open'));
+
+  // Counted off the repeat and never off the events: the interface states the size
+  // **before** the press, and until a reason is typed there are no events to count.
+  const events = reason
+    ? on.map((entry) => ({
+      scope: 'finding',
+      action: 'dismissed',
+      store: repeat.store,
+      page: entry.page,
+      findingId: entry.id,
+      note: reason,
+    }))
+    : [];
+
+  return { covers: on.length, decided: repeat.on.length - on.length, events };
+}
+
+/**
+ * The states a dismissal is offered on, which are `OverrideControl.jsx`'s two. An
+ * absent finding reads as `open`, the way a search result reads one the log has not
+ * decided.
+ */
+const OFFERED = new Set(['open', 'contradicted']);
+
+/**
+ * The N mutes of the pages one repeat is on.
+ *
+ * **A different selection unit from the dismissal above, and the difference is the
+ * point.** A dismissal is a judgement about two exact strings and it expires when either
+ * changes; a mute is a judgement about a class in one section of one page and it never
+ * expires. So this writes `page-class` events keyed on the class and the anchor heading,
+ * and it hides more than the difference the editor was looking at — everything of that
+ * class in that section, which is why the count it reports is its own and not the
+ * repeat's.
+ *
+ * @param {object} input
+ * @param {import('./view.mjs').Repeat} input.repeat
+ * @param {Map<string, { anchorHeading?: string | null }>} input.byFinding
+ * @param {Map<string, any[]>} input.findingsByPage  Every derived finding per page, keyed
+ *   `store/page` the way `log.byPage` is — a page name is unique within a store and not
+ *   across six of them. It is what the coverage of a mute is counted over: ADR 0008 has
+ *   the count computed before the press, on the snapshot in front of the editor.
+ * @param {string} input.note
+ */
+export function bulkMute({ repeat, byFinding, findingsByPage, note }) {
+  const reason = note.trim();
+
+  // `anchorHeading` is read off the derivation, which is the same snapshot the coverage
+  // is counted over, so the section on the button and the section in the event cannot
+  // disagree. A finding the derivation does not hold is `undefined` here and stays
+  // `undefined`: *I do not know which section this is* and *this is the content before
+  // the first heading* are two different answers, and `?? null` would merge them.
+  const on = repeat.on.map((entry) => ({
+    page: entry.page,
+    anchorHeading: byFinding.get(entry.id)?.anchorHeading,
+  }));
+
+  const unknown = on.filter((entry) => entry.anchorHeading === undefined);
+  // Campaign copy carries a null anchor heading — every one of the 1,645 banner findings
+  // does — so a bulk mute of the null section would hide that section on hundreds of
+  // pages and take every unrelated finding in it along. A single mute may still be
+  // pressed on such a page, on the page itself, where one section is in front of the
+  // editor. Ticket 90 owns campaign copy.
+  const headless = on.filter((entry) => entry.anchorHeading === null);
+
+  const offered = unknown.length === 0 && headless.length === 0;
+  const refusal = refusalFor({ unknown, headless, pages: on.length });
+
+  const events = offered && reason
+    ? on.map((entry) => ({
+      scope: 'page-class',
+      action: 'muted',
+      store: repeat.store,
+      page: entry.page,
+      class: repeat.class,
+      anchorHeading: entry.anchorHeading,
+      note: reason,
+    }))
+    : [];
+
+  // What the press hides, counted on the snapshot in front of the editor and per page,
+  // through the same function a single mute's button uses. It is a **ceiling** and it
+  // never understates: `muteCoverage()` counts what the key covers and not what it
+  // changes, so a finding already dismissed is in this number.
+  const covers = on.reduce((sum, entry) => sum + muteCoverage(
+    findingsByPage.get(`${repeat.store}/${entry.page}`) ?? [],
+    { class: repeat.class, anchorHeading: entry.anchorHeading },
+  ), 0);
+
+  return {
+    offered,
+    refusal,
+    covers,
+    pages: on.length,
+    /** The findings of the difference itself, so the gap between the two is readable. */
+    difference: repeat.on.length,
+    /** The sections named, so the press says where it lands and not only how much. */
+    sections: [...new Set(on.map((entry) => entry.anchorHeading))],
+    events,
+  };
+}
+
+/**
+ * Why a bulk mute is not offered, in the words that name the actual obstacle.
+ *
+ * Two obstacles and two sentences, because they call for different work. An unknown
+ * section means the screen is older than the log and a reload answers it; a null
+ * section means the difference genuinely sits before the first heading, and muting
+ * there is a judgement to make one page at a time.
+ */
+function refusalFor({ unknown, headless, pages }) {
+  if (unknown.length > 0) {
+    return `Van ${unknown.length} van deze ${pages} pagina's is niet bekend onder welk `
+      + 'kopje dit verschil staat — deze lijst is ouder dan het logboek. Herlaad de '
+      + 'pagina, of demp per pagina op de pagina zelf.';
+  }
+
+  if (headless.length > 0) {
+    return `${headless.length} van deze ${pages} pagina's draagt dit verschil in de inhoud `
+      + 'vóór de eerste kop. Daar dempt dit niet één sectie maar alles wat vóór de eerste '
+      + 'kop staat, op elke pagina. Demp dat per pagina, op de pagina zelf.';
+  }
+
+  return null;
+}

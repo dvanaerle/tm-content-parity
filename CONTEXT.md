@@ -299,6 +299,15 @@ who wins against re-check.
   expires, so it is the one that must be auditable. The anchor heading is in the mute
   key and not in the finding id, because a mute is a judgement and an id is an
   identity. See `docs/adr/0008-the-mute-key-carries-the-anchor-heading.md`.
+- **Bulk decision** — one press that writes **N ordinary events**, one per page, each
+  carrying the editor and the same note. It is not a scope and it never will be: a
+  repeat is a grouping the interface makes and has no identity to key on, so the table
+  gains N rows and no column. The two bulk presses have **different selection units**,
+  which is the whole of the difference between them — a bulk **dismissal** takes a
+  repeat and expires with the text; a bulk **mute** takes pages × class × section and
+  does not expire. Neither covers a page that a later crawl finds. A partial failure is
+  reported as *N of M saved*: the table is append-only, so what was written stands and
+  the interface says how far it got. See ticket 31.
 - **Page review** — "a human looked at this whole page." Keyed on store and page.
   It covers what the tool cannot see: layout, tone, an image that agrees by name
   and shows something else. It never expires; it becomes **stale**.
