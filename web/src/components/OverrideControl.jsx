@@ -160,7 +160,7 @@ function FixCheckbox({ finding, canWrite, onTick }) {
 
   return (
     <Checkbox
-      className={contradicted ? TICK.attention : TICK.secondary}
+      className={contradicted ? TICK.attention : TICK.added}
       checked={state === 'fixed' || contradicted}
       disabled={!canWrite || closedByJudgement}
       onCheckedChange={(ticked) => onTick(ticked)}
@@ -185,15 +185,21 @@ function FixCheckbox({ finding, canWrite, onTick }) {
  * tone is written with the **same** `data-checked:` prefix, and it wins on
  * source order.
  *
- * The two entries are literals for the reason `palette.mjs` gives: Tailwind reads
+ * The entries are literals for the reason `palette.mjs` gives: Tailwind reads
  * class names out of the source text, and a prefix assembled around a palette value
- * at runtime is not in the source text. Their meaning is `ACCENT`'s — `info` for a
- * claim that stands, `attention` for one a later observation contradicted — and
- * they name the same two colours it names. `ACCENT` itself is now unused, and stays
- * where it is: `palette.test.mjs` pins its keys, and `CHROME.headerMuted` is
- * already an export nothing reads.
+ * at runtime is not in the source text.
+ *
+ * **A standing claim is green, decided 2026-08-13, and it is the one exception to
+ * the rule that `added` is direction and never status.** `palette.mjs` reserves the
+ * only green in the interface for *the new site has this and production does not*,
+ * and this checkbox spends it on *I corrected this*. It was `info` blue in the
+ * design and the colour is a preference, taken deliberately and recorded here so
+ * the next reader does not read it as the drift the one colour map exists to stop.
+ * `attention` is unchanged and still means a claim a later observation contradicted.
+ * `info` stays defined and unused, so restoring the blue is a one-word change.
  */
 const TICK = {
+  added: 'data-checked:border-success data-checked:bg-success data-checked:text-white dark:data-checked:bg-success',
   info: 'data-checked:border-info data-checked:bg-info data-checked:text-white dark:data-checked:bg-info',
   attention: 'data-checked:border-warning data-checked:bg-warning data-checked:text-white dark:data-checked:bg-warning',
 };
