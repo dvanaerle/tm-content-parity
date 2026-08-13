@@ -120,6 +120,48 @@ export function FilterBanner({ onClear, className = '', children }) {
 }
 
 /**
+ * The dashboard's strip, in the one place all three of its screens read it from.
+ *
+ * The page list, the differences list and a search are three lists narrowed by the same
+ * pills, so they say so in the same sentence. Written once because ticket 102 puts the
+ * strip over a search as well, and three copies of a sentence are three chances for one
+ * of them to describe a filter the other two do not have.
+ *
+ * `shown` and `total` are counted off the list under the strip and never from elsewhere:
+ * a narrowed list beneath an unnarrowed denominator is the mismatched pair ticket 81
+ * exists to stop.
+ *
+ * **No pills, no strip**, and that is decided here rather than at each call site: a strip
+ * reading *Gefilterd op .* over an unfiltered list is the one sentence this component
+ * must never be able to say, and a guard repeated by every caller is a guard one of them
+ * will eventually forget.
+ *
+ * @param {object} props
+ * @param {string[]} props.classes  The pills that are on. None means no filter, and the
+ *                                 component draws nothing.
+ * @param {number} props.shown
+ * @param {number} props.total
+ * @param {string} props.noun      What is counted: `verschillen`, `pagina's`.
+ * @param {() => void} props.onClear
+ * @param {string} [props.className]
+ */
+export function ClassFilterBanner({ classes, shown, total, noun, onClear, className = '' }) {
+  if (classes.length === 0) return null;
+
+  return (
+    <FilterBanner onClear={onClear} className={className}>
+      {/* `{' '}` before the last sentence and not after the `<strong>`: the banner is a
+          flex row with a gap, so the element boundary is already a gap — but the text
+          children after it collapse into one anonymous item, and there the space has to
+          be written. */}
+      <strong>Gefilterd op {classes.join(', ')}.</strong>
+      {`${shown} van ${total} ${noun}.`}
+      {' '}De getallen hierboven tellen alles.
+    </FilterBanner>
+  );
+}
+
+/**
  * The parity bar. Ticket 09: shown classes on this snapshot only, and a hidden
  * class is not in it at all — a bar that counts what the editor was never asked
  * to look at cannot be read.

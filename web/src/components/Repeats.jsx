@@ -30,9 +30,10 @@ import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
  *
  * This is the **flat** reading of that list, and it is what a search draws (ticket 82).
  * *Verschillen* draws `ClassGroups` below instead, which is the same rows in a class group
- * for each class (ticket 100). A search answers past the classes — the term is the
- * grouping the editor asked for — so grouping its result by class would be a second
- * grouping over one answer.
+ * for each class (ticket 100). A search **is** narrowed by the classes since ticket 102 —
+ * the pills are a filter and a term does not withdraw one — but it is not *grouped* by
+ * them: the term is the grouping the editor asked for, so grouping its result by class as
+ * well would be a second grouping over one answer.
  *
  * **The backlog is not drained.** A repeat is a grouping and never a finding, so a
  * decision on a repeat is still one decision per finding — every number here says how
@@ -114,9 +115,9 @@ const NOTHING = new Set();
  * group is open and the unselected groups are not drawn at all, so the two controls cannot
  * tell different stories.
  *
- * The search draws the flat list above instead. A search answers past the classes — the
- * term is the grouping the editor asked for — and grouping it by class as well would be a
- * second grouping over one answer.
+ * The search draws the flat list above instead. Its result is narrowed by the classes
+ * (ticket 102) and grouped by the term: the term is the grouping the editor asked for, and
+ * grouping it by class as well would be a second grouping over one answer.
  */
 export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
   const groups = useMemo(() => groupRepeatsByClass(repeats, classes), [repeats, classes]);

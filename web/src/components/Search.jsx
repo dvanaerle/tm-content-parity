@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import Repeats from './Repeats.jsx';
+import { ClassFilterBanner } from './Chips.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Label } from './ui/label.jsx';
 import { Separator } from './ui/separator.jsx';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { searchNotes, searchStore } from '../lib/search.mjs';
+import { pagesWithClasses } from '../lib/view.mjs';
 
 /**
  * What an editor gets for typing words: every finding in this store that holds them,
@@ -20,9 +22,20 @@ import { searchNotes, searchStore } from '../lib/search.mjs';
  * The rows are **repeats**, drawn by the component the *Verschillen* view draws, so a
  * search row and a repeats row are the same row with the same marks and the same bar. It
  * is one derivation on screen twice and not a second surface.
+ *
+ * **The class pills survive a term** (ticket 102). A search answers past the two views,
+ * but a class filter is not a view: it is the editor's answer to *which kind of
+ * difference am I working on*, and a second question does not withdraw it. So `classes`
+ * arrives here, the result is narrowed by it, and the amber strip is drawn over that
+ * result for as long as it is on.
+ *
+ * *Inclusief afgesloten* is not part of that. It is search-only, it says what counts as a
+ * result rather than what is on screen, and it stays out of the strip — as does the term
+ * itself, which becomes a filter deliberately in ticket 106 and not by accident here.
  */
 export default function Search({
-  store, pages, term, byFinding, events, includeClosed, onIncludeClosed, bulk, link,
+  store, pages, term, classes = [], onClearClasses, byFinding, events,
+  includeClosed, onIncludeClosed, bulk, link,
 }) {
   const { index, error } = useSearchIndex(store);
 
@@ -30,12 +43,15 @@ export default function Search({
     () => (index ? searchStore({
       index,
       term,
+      classes,
       includeClosed,
       // The log's own answer about a finding. `open` for one the log has not decided,
       // which is also what an unconnected log says about everything.
       stateOf: (id) => byFinding.get(id)?.state ?? 'open',
     }) : null),
-    [index, term, includeClosed, byFinding],
+    // The pills are in here, so moving one re-answers the same term against the new
+    // selection. An editor who narrows mid-search does not retype.
+    [index, term, classes, includeClosed, byFinding],
   );
 
   const notes = useMemo(() => searchNotes({ events, term }), [events, term]);
@@ -47,8 +63,18 @@ export default function Search({
   // second answer: it is the by-page reading of the same term.
   const named = useMemo(() => {
     const needle = term.trim().toLowerCase();
-    return pages.filter((page) => page.page.toLowerCase().includes(needle));
-  }, [pages, term]);
+    const found = pages.filter((page) => page.page.toLowerCase().includes(needle));
+    // The pills narrow this half through the derivation the page list itself narrows
+    // by, rather than through a second reading of what a class filter means.
+    //
+    // It reads `summary.byClass`, which is the snapshot's count and knows nothing of the
+    // log — so a page whose only `copy` finding is already dismissed still lists under a
+    // `copy` pill, while the result above it does not. That is deliberate: this block is
+    // the page list's answer and it is narrowed exactly as the page list is. A clean page
+    // is the whole reason the block exists, and a version of it that read the log would
+    // hide the pages it is here to keep reachable.
+    return pagesWithClasses(found, classes);
+  }, [pages, term, classes]);
 
   if (error) {
     return (
@@ -63,6 +89,18 @@ export default function Search({
 
   return (
     <>
+      {/* Above the count, where the two views draw it. The denominator is what the term
+          found before the pills cut it, so the strip is about the filter and not about
+          the term — and *filter wissen* clears the classes and leaves the term alone. */}
+      <ClassFilterBanner
+        classes={classes}
+        shown={result.repeats.length}
+        total={result.matchedRepeats}
+        noun="verschillen"
+        onClear={onClearClasses}
+        className="border-b px-4 py-2"
+      />
+
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-4 py-3">
         <p className="text-sm">
           {/* The count of the result and nothing else. Search narrows and moves no
@@ -98,7 +136,11 @@ export default function Search({
         ? <p className="px-4 py-6 text-sm text-muted-foreground">Geen verschil met deze woorden.</p>
         : (
           <Repeats
-            key={`${term}|${includeClosed}`}
+            // The classes are in the key for the reason the term is: `OneSelection`
+            // holds ticks against rows, and a pill can take the ticked row out of the
+            // list. A selection that outlived the result it was made in would arm a
+            // press over rows the editor can no longer see.
+            key={`${term}|${includeClosed}|${classes.join(',')}`}
             repeats={result.repeats}
             byFinding={byFinding}
             bulk={bulk}

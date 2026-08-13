@@ -328,6 +328,65 @@ describe('searchStore', () => {
   });
 });
 
+describe('searchStore, narrowed by the class pills (ticket 102)', () => {
+  const index = (findings) => ({ store: 'nl', pages: 4, builtAt: '2026-08-11T00:00:00Z', findings });
+
+  /** A term over three classes, which the pills then cut down. */
+  const three = index([
+    entry({ id: 'a', page: 'afhalen', class: 'copy', prod: 'Bekijk deals >' }),
+    entry({ id: 'b', page: 'garantie', class: 'copy', prod: 'Bekijk deals >' }),
+    entry({ id: 'c', page: 'montage', class: 'casing', prod: 'bekijk DEALS >' }),
+    entry({ id: 'd', page: 'levering', class: 'text-missing', prod: 'Bekijk deals nu >' }),
+  ]);
+
+  it('returns what the term and the classes agree on, and never more', () => {
+    // The bypass this ticket closes: before it, a term answered over every class as
+    // though the pills had never been pressed. A filter the editor set does not stop
+    // holding because they asked a second question.
+    const result = searchStore({ index: three, term: 'deals', classes: ['copy'] });
+
+    expect(result.repeats.map((one) => one.class)).toEqual(['copy']);
+    expect(result.repeats[0].on.map((one) => one.page)).toEqual(['afhalen', 'garantie']);
+  });
+
+  it('counts the result after the narrowing, so no number disagrees with the rows', () => {
+    // Both numbers are counted off the list that is drawn — the rule ticket 81 set for
+    // the repeats footer. A narrowed list under the unnarrowed page count would be
+    // exactly the mismatched pair that rule exists to stop.
+    const result = searchStore({ index: three, term: 'deals', classes: ['copy'] });
+
+    expect(result.total).toBe(2);
+    expect(result.pages).toBe(2);
+  });
+
+  it('says how many the term matched before the classes, for the amber strip', () => {
+    // The strip says *n van m*, in the same words the two views say it. `m` is what the
+    // term alone found, so the sentence is about the filter and not about the term. It
+    // is still a count of a result: no bar, no denominator of work, no closed count.
+    const result = searchStore({ index: three, term: 'deals', classes: ['copy'] });
+
+    expect(result.repeats).toHaveLength(1);
+    expect(result.matchedRepeats).toBe(3);
+  });
+
+  it('returns exactly what it returns today when no class is on', () => {
+    // This ticket adds a narrowing; it removes none. An empty selection is not a filter
+    // that matches nothing — it is no filter, which is what an untouched box says.
+    const withArg = searchStore({ index: three, term: 'deals', classes: [] });
+    const without = searchStore({ index: three, term: 'deals' });
+
+    // The literals first: comparing the two calls alone would be new code against new
+    // code, and would still pass if both had drifted from what the term answers.
+    expect(without.repeats).toHaveLength(3);
+    expect(without.total).toBe(4);
+    expect(without.pages).toBe(4);
+
+    expect(withArg.repeats).toEqual(without.repeats);
+    expect(withArg.total).toBe(without.total);
+    expect(withArg.pages).toBe(without.pages);
+  });
+});
+
 /** An override event, as the log appends them. */
 const event = (part) => ({
   createdAt: '2026-08-10T09:00:00Z', editor: 'Dennis', scope: 'finding', action: 'dismissed',

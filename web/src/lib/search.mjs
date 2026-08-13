@@ -19,6 +19,11 @@
  * about the log, and they are two functions rather than one merged list, so no caller
  * can present both halves as one moment by accident.
  *
+ * **A search composes with the class filter** (ticket 102). The classes are the filter and
+ * the term is a search, and the two narrow one result together: `searchStore()` takes the
+ * pills and applies them through `repeatsWithClasses()`, the same derivation the two views
+ * narrow by. There is no second answer here to what a class filter means.
+ *
  * **Search narrows; it moves no count.** The rule ticket 36 pinned holds here as it
  * holds in `view.mjs`: this module returns what is on screen and never what it adds up
  * to. It says how many findings on how many pages — a count *of the result*, in the
@@ -54,7 +59,7 @@
 
 import { latestByKey } from '../../../overrides/state.mjs';
 import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
-import { findingsIn, repeatsInStore } from './view.mjs';
+import { findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
 
 /**
  * One finding, cut to what a search reads.
@@ -252,13 +257,20 @@ export function matchedFields(entry, term) {
  *   The log's answer about one finding. It defaults to `open`, which is what an
  *   unconnected log knows: no decision has been read, so nothing is closed yet.
  * @param {boolean} [args.includeClosed] *Inclusief afgesloten*.
+ * @param {string[]} [args.classes] The class pills that are on (ticket 102). Empty means
+ *   every class, which is what an untouched filter says — not a filter matching nothing.
+ *   It is a second narrowing over the same result and not a second search: the term
+ *   decides what matched, the classes decide which of it is on screen.
  * @returns {{
  *   repeats: (import('./view.mjs').Repeat & { fields: string[] })[],
  *   total: number,
  *   pages: number,
+ *   matchedRepeats: number,
  * }}
  */
-export function searchStore({ index, term, stateOf = () => 'open', includeClosed = false }) {
+export function searchStore({
+  index, term, stateOf = () => 'open', includeClosed = false, classes = [],
+}) {
   /** @type {Map<string, IndexEntry[]>} */
   const byPage = new Map();
   /** @type {Map<string, string[]>} */
@@ -279,17 +291,37 @@ export function searchStore({ index, term, stateOf = () => 'open', includeClosed
   // The matched fields ride **on the repeat** — decision 3. The union over its
   // findings, because the page key is a searchable field and the members differ in
   // exactly that one: a term can be in one page's key and not another's.
-  const repeats = repeatsInStore(pages).map((repeat) => ({
+  const matchedRepeats = repeatsInStore(pages).map((repeat) => ({
     ...repeat,
     fields: SEARCH_FIELDS.filter(
       (field) => repeat.on.some((one) => fieldsById.get(one.id)?.includes(field)),
     ),
   }));
 
+  // The class pills, applied **after** the grouping and through the derivation the two
+  // views already narrow by (ticket 102). After, because a search row is a repeat and
+  // must stay one: narrowing the entries first and grouping the survivors would be a
+  // second place for what a repeat is. It is safe here — a repeat's key holds its class,
+  // so every member of one shares it and no repeat is ever half-filtered.
+  const repeats = repeatsWithClasses(matchedRepeats, classes);
+
   // Both numbers are counted off **this** list, so they cannot disagree about what they
-  // are counting. `findingsIn` is the counter the repeats footer uses, asked here rather
-  // than rewritten, for the same reason the grouping is.
-  return { repeats, total: findingsIn(repeats), pages: byPage.size };
+  // are counting — the narrowed list is what is drawn, so it is what is counted, and the
+  // page count comes off the rows rather than off the wider bucketing above.
+  // `findingsIn` is the counter the repeats footer uses, asked here rather than
+  // rewritten, for the same reason the grouping is.
+  //
+  // `matchedRepeats` is the other half of the amber strip's sentence — *n van m
+  // verschillen*, in the words the two views say it. It counts what the term found
+  // before the pills cut it, so the strip describes the filter and not the term. Its
+  // unit is in its name on purpose: `total` beside it counts **findings**, and two
+  // numbers of two units under one vague word is the doubled figure CONTEXT.md forbids.
+  return {
+    repeats,
+    total: findingsIn(repeats),
+    pages: new Set(repeats.flatMap((repeat) => repeat.on.map((one) => one.page))).size,
+    matchedRepeats: matchedRepeats.length,
+  };
 }
 
 /**

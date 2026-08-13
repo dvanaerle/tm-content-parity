@@ -191,6 +191,17 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   live, and a committed entry that matches **nothing** still fails silently at the crawl
   and is only reported one run later by ticket 64's coverage line. See
   [90](issues/90-a-campaign-is-a-class-not-a-commit.md).
+- **A term composes with the class pills; it does not replace them.** A search used to
+  answer over every class as though the pills had never been pressed, and the amber strip
+  sat behind a `!searching` guard — so the editor's answer to *which kind of difference am
+  I working on* was discarded the moment they asked a second question. The classes now
+  reach `searchStore()` and are applied through `repeatsWithClasses()`, **after** the
+  grouping, so a search row is still a repeat. The strip is one `ClassFilterBanner` for all
+  three narrowed lists. The term itself stays out of the strip — it becomes a filter in
+  [106](issues/106-the-scope-is-a-filter-and-says-so.md), for the page scope, and this is
+  the strip that scope chip needed somewhere to live. `CONTEXT.md`'s **Filter** entry now
+  admits a search. See
+  [102](issues/102-the-class-pills-survive-a-search.md).
 
 ### Resolved tickets
 

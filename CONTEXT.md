@@ -199,6 +199,10 @@ element any more: it folds the links inside it. Both the word and the rule are g
   denominator and no count. The content view narrows a page to a class and the
   dashboard narrows the page list to the same class; both say so with an amber strip
   for as long as the filter is on.
+  A **search is narrowed by it too** (ticket 102): the classes are the filter and the
+  term is a search, so a term composes with a filter rather than replacing one, and the
+  strip stays up over the result. *Inclusief afgesloten* is not a filter — it says what
+  counts as a result and not what is on screen — and it is absent from the strip.
   On the dashboard the filter is part of the **screen** and therefore lives in the URL
   (ticket 109), so Back restores it and a copied link carries it. On a page it stays
   session-only: a page filter is a pass an editor is making, not a place to return to.

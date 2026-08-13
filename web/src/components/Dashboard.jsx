@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Bar, Chip, ClassFilterPills, FilterBanner } from './Chips.jsx';
+import { Bar, Chip, ClassFilterBanner, ClassFilterPills } from './Chips.jsx';
 import { EditorPrompt, LogBanner } from './Progress.jsx';
 import { ClassGroups } from './Repeats.jsx';
 import Search from './Search.jsx';
@@ -114,6 +114,19 @@ export default function Dashboard({
   const repeats = useMemo(() => repeatsInStore(comparable), [comparable]);
   const shownRepeats = useMemo(() => repeatsWithClasses(repeats, classes), [repeats, classes]);
 
+  /**
+   * What the amber strip counts, which is whichever list is under it.
+   *
+   * Asked once rather than three times in the strip's own props: *how many, of how many,
+   * of what* is one answer about one list, and three separate readings of `view` are
+   * three chances for the noun to end up over the other list's number. The searching
+   * case is absent on purpose — a search counts its own result, and only `Search` holds
+   * that count.
+   */
+  const narrowed = view === 'repeats'
+    ? { shown: shownRepeats.length, total: repeats.length, noun: 'verschillen' }
+    : { shown: rows.length, total: comparable.length, noun: "pagina's" };
+
   /** Every derived finding of the store by id, so a repeat row can say what is decided. */
   const byFinding = useMemo(() => {
     const index = new Map();
@@ -214,9 +227,15 @@ export default function Dashboard({
               .map(([cls, count]) => ({ class: cls, count }))}
             selected={classes}
             onToggle={(cls) => patch({ classes: toggleIn(classes, cls) })}
-            title={(cls) => (view === 'repeats'
-              ? `Toon alleen de verschillen van soort ${cls}. De getallen hierboven veranderen niet.`
-              : `Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`)}
+            // The counts stay the store's own — a pill says how much of this kind there
+            // is, which is not a question about what is on screen. What a press *does*
+            // depends on which of the three lists is under it, so the tooltip does too.
+            title={(cls) => {
+              if (searching) return `Zoek alleen binnen ${cls}. De getallen hierboven veranderen niet.`;
+              return view === 'repeats'
+                ? `Toon alleen de verschillen van soort ${cls}. De getallen hierboven veranderen niet.`
+                : `Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`;
+            }}
           />
           {/* `flex-wrap` here and not only on the `CardHeader`: the header wrapped, but
               this inner group did not, so its three controls were measured as one
@@ -278,11 +297,19 @@ export default function Dashboard({
           </div>
         </CardHeader>
         <CardContent className="px-0">
+          {/* The classes go along (ticket 102). A search used to answer past the pills
+              as well as past the two views, which threw away the editor's answer to
+              *which kind of difference am I working on* the moment they asked a second
+              question. The strip that says a filter is on goes with them, and is drawn
+              inside `Search`: its denominator is a count of the result, and only that
+              component has it. */}
           {searching && (
             <Search
               store={store}
               pages={comparable}
               term={query}
+              classes={classes}
+              onClearClasses={() => patch({ classes: [] })}
               byFinding={byFinding}
               events={log.events}
               includeClosed={includeClosed}
@@ -292,14 +319,13 @@ export default function Dashboard({
             />
           )}
 
-          {!searching && classes.length > 0 && (
-            <FilterBanner onClear={() => patch({ classes: [] })} className="border-b px-4 py-2">
-              <strong>Gefilterd op {classes.join(', ')}.</strong>
-              {view === 'repeats'
-                ? `${shownRepeats.length} van ${repeats.length} verschillen.`
-                : `${rows.length} van ${comparable.length} pagina's.`}
-              {' '}De getallen hierboven tellen alles.
-            </FilterBanner>
+          {!searching && (
+            <ClassFilterBanner
+              classes={classes}
+              {...narrowed}
+              onClear={() => patch({ classes: [] })}
+              className="border-b px-4 py-2"
+            />
           )}
 
           {!searching && view === 'repeats' && (
