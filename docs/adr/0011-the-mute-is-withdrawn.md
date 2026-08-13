@@ -19,8 +19,22 @@ heading, made 2026-08-10 11:07. Its note reads `"Negeren"` — the name of the o
 control. The single mute anybody ever left standing is annotated with the thing its author
 was reaching for.
 
-ADR 0008 hardened a key that has never been turned in anger. `WORKLIST.md:170` still
-carries the open step *"00b — Make the first real mute. Nobody has made one yet."*
+**Revoked 2026-08-13 by ticket 111**, row `712`. Read the paragraph above as the state on the
+day this ADR was written. No `muted` row is now the latest event on its key, and the eleven
+rows stay on disk.
+
+ADR 0008 hardened a key that has never been turned in anger. `WORKLIST.md:170` carried the
+open step *"00b — Make the first real mute. Nobody has made one yet."* — a hand step,
+deliberate rather than casual, because the table is append-only and the first press would
+be permanent. It was open on the day this ADR was written.
+
+**Step 00b is closed as *will not happen*, 2026-08-13.** Nobody made the first real mute in
+the whole life of the feature, and the reason it stayed open is the reason it is now
+unreachable: ticket 112 took both buttons out of the interface, so there is no control left
+to press. The step is quoted here rather than pointed at, because `WORKLIST.md` was itself
+deleted the same day (commit `926d46f`) — the issue files carry their own status now. This
+paragraph is the surviving record of the sentence, and it was the cleanest statement of the
+evidence in the repo.
 
 ## The judgement: the mute acts beyond what was pressed
 
@@ -63,8 +77,17 @@ every store and every future crawl. See ticket 86.
   in a shown class is either open work or work an editor closed. There is no longer any way
   to say *this is not work at all* — that is now a property of the **class**, not of a
   place on a page.
-- **`nl`'s numbers move once.** Revoking the live mute returns its hidden findings to open.
-  The count must be measured and stated before the change lands.
+- ~~**`nl`'s numbers move once.** Revoking the live mute returns its hidden findings to open.
+  The count must be measured and stated before the change lands.~~
+  **Measured 2026-08-13 by ticket 111, and `nl`'s numbers did not move at all.** The
+  consequence was predicted and did not happen. The mute had **drifted off the section it
+  names** — its key holds an anchor heading, the page's headings changed under it, and on the
+  snapshot in front of readers it was covering nothing. So the count was measured before the
+  change landed, exactly as this line demanded, and the answer was zero.
+  That is worth more to this ADR than a movement would have been. A judgement whose reach
+  changes when the page changes, silently, in the direction of covering less, is the same
+  defect as the over-reach argued above seen from the other side: `muteCoverage()` counts what
+  the **key** covers, and the key is not a thing the editor chose.
 - **A fully decided difference offers only *Ongedaan maken*.** The mute used to be the last
   tool available where a dismissal was refused. That case is now correctly empty: if every
   page is decided, the work is done, and a second judgement on top of a colleague's is how

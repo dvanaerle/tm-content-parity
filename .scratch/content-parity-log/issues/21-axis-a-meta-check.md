@@ -176,7 +176,8 @@ column and the class is not.
 The class pill is **not** on the row. On a five-row table the field is fixed and
 both values sit side by side, so a `META-CASING` pill next to `…beschutting.`
 against `…beschutting` says nothing the cells do not. The class still drives the
-dashboard filter, the mute key and the Taken tab, which keeps its pills.
+dashboard filter ~~, the mute key~~ and the Taken tab, which keeps its pills.
+(2026-08-13, ADR 0011: the class keys nothing.)
 
 The override controls sit inline, after the field label. No row is added for them.
 

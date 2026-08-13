@@ -33,7 +33,7 @@ French, nothing in ticket 55 is in doubt.
       that reads it.**
 - [x] **The key of a page that has a Dutch url key does not change, byte for
       byte.** This is the whole of the safety story: every stored finding id, every
-      mute and every review keys on the page value, and the override table is
+      ~~mute~~ and every review keys on the page value, and the override table is
       append-only by policy, so a reformatted key can never be repaired. Keep the
       existing 181 keys and nothing detaches. The new pages have no stored state,
       so they cannot be orphaned.
@@ -200,8 +200,8 @@ disagree about which store owns a page.
 
 `shared/page-key.mjs` is new, and it is the named exception to the contract's
 sentence that every reader treats the page value as an opaque string. That sentence
-must stay true of the other readers — the key is in the finding id, the mute key
-and the append-only override table — but it was already false in spirit, because
+must stay true of the other readers — the key is in the finding id, ~~the mute key~~
+and the append-only override table (2026-08-13, ADR 0011: the mute key is deleted) — but it was already false in spirit, because
 `crawl/seed-list.mjs` held its own colon guard and its own `(home)` literal while
 the contract promised the shape was nobody's business.
 

@@ -56,7 +56,9 @@ minus Leesweergave.
 - [x] Filter state is visible while it is on — an amber strip reading *Je ziet 5
       van 235 regels. Dit is niet de hele pagina.* — and **Filter wissen** clears
       it in one action. The noise toggle is deliberately outside the filter: an
-      editor who asked to see the muted rows did not ask a question about classes.
+      editor who asked to see the ~~muted~~ noisy rows did not ask a question about classes.
+      *(2026-08-13, ADR 0011: the toggle reveals `diagnostic` classes and never muted rows;
+      ticket 113 gave it its name back.)*
 - [x] The dashboard's class pills are clickable with the same semantics. Ticking
       `casing` narrows 124 pages to 58 and moves nothing above the table.
       *The dashboard gets the amber strip too.* This ticket asked for it on the
@@ -69,8 +71,8 @@ minus Leesweergave.
       cannot.
 - [x] The checkbox has **three** visual states: unticked, ticked (`accent-info-ink`),
       and ticked-but-contradicted (`accent-attention-fill`). A contradicted claim
-      stays ticked — the editor did claim it — and turns amber. A dismissal and a
-      mute disable the box rather than tick it: ticking would say the editor
+      stays ticked — the editor did claim it — and turns amber. A dismissal ~~and a
+      mute~~ disables the box rather than ticking it (2026-08-13, ADR 0011: one judgement): ticking would say the editor
       corrected something they in fact accepted.
 - [x] A tick on one row of a grouped finding ticks every row of it, visibly: the
       rows share one finding id, so one event moves them all, and the `×N` badge is

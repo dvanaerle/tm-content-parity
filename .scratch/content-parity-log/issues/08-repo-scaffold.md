@@ -72,12 +72,17 @@ passes (14 tests) and `npm run build --prefix web` builds to `dist/`.
 `compare/contract.mjs` is one module, and it is the only contract. It holds:
 
 - `FINDING_CLASSES` — all 18 classes from tickets 02, 05 and 06, each with its
-  check and its shown or hidden default. The class is the mute key, so the
-  table is also the interface vocabulary.
+  check and its shown or hidden default. ~~The class is the mute key, so the
+  table is also the interface vocabulary.~~ — **2026-08-13, [ADR
+  0011](../../../docs/adr/0011-the-mute-is-withdrawn.md): the class keys nothing, and the
+  table is still the interface vocabulary** — it is what the pills, the filters and the
+  visibility enum all read.
 - `findingId()` — `sha256(store|page|check|rule|prodNorm|newNorm)`, cut to 16
   base64url characters. A test holds the collision bug down: 200 findings that
   are different only in a number give 200 different ids.
-- `muteKey()` — store, page and class. It holds no content.
+- ~~`muteKey()` — store, page and class. It holds no content.~~ — **deleted 2026-08-13, ADR
+  0011.** It moved to `shared/mute-key.mjs` per ADR 0001, gained the anchor heading in ticket
+  88, and ticket 114 removed the file entirely.
 - The shapes, as JSDoc typedefs: `PageExtract` (what `crawl/` gives),
   `Finding`, and `PageReport` (what `web/` reads, one file per store page).
 
@@ -90,8 +95,8 @@ passes (14 tests) and `npm run build --prefix web` builds to `dist/`.
 
   **First paid on 2026-08-06.** Ticket 33 retired `structure`, so every override
   keyed on it — a `fixed`, `dismissed` or `reviewed` event on one of the 5,049
-  `structure` findings, and any mute on `<store>|<page>|structure` — matches
-  nothing any more. Nothing was migrated and no alias was added, per spec 32
+  `structure` findings, ~~and any mute on `<store>|<page>|structure`~~ — matches
+  nothing any more. (The mute clause is spent, 2026-08-13, ADR 0011.) Nothing was migrated and no alias was added, per spec 32
   decision 4. It cost nothing because the Supabase project is still not wired
   (ticket 13), and that is the only reason it was cheap. **A future
   re-classification of a class with real override data behind it is not this

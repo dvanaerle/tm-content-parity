@@ -5,6 +5,19 @@ Status: resolved
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
+> **The subject of this ticket was withdrawn on 2026-08-13, and this ticket is why.**
+> Nothing below is struck through: it was built, it shipped, and it did what it says.
+> What it also did was make the mute reviewable for the first time — a count before the
+> press, a mandatory note, a named section — and a reviewable feature is a measurable
+> one. The measurement is the evidence in
+> [ADR 0011](../../../docs/adr/0011-the-mute-is-withdrawn.md): eleven `muted` rows, all
+> on `nl`, all by one editor, **ten revoked by their own author** and six of them noted
+> `Test`. The note requirement this ticket added is what lets that sentence be written;
+> four of the eleven predate it and carry no note at all. The one mute left standing was
+> annotated `"Negeren"` — the name of the other control.
+> This ticket is the half of the deprecation that earned it. Tickets 111 to 115 carry
+> the withdrawal.
+
 **What to build:** *Klasse dempen* stops being one press that silently hides half a
 page. An editor mutes `text-missing` **under one heading**, sees how many findings that
 covers before pressing, and writes why. The page-wide form is still there for a page
@@ -193,5 +206,19 @@ directions are tested.
 | `web/src/components/OverrideControl.jsx` | *Dempen…* replaces *Klasse dempen* |
 | `web/src/lib/reports.mjs` | the dashboard index carries the heading, or it disagrees |
 
-**`supabase/mute-anchor-heading.sql` has not been applied.** It is the one step that
-is not code, and until it runs the browser will send a column the table does not have.
+~~**`supabase/mute-anchor-heading.sql` has not been applied.** It is the one step that
+is not code, and until it runs the browser will send a column the table does not have.~~
+
+**Applied 2026-08-10, and superseded 2026-08-13 by ADR 0011.** This was the last open action
+item on the ticket and it is closed twice over. The file carries both dates in its own header
+and it is **kept, not deleted**: the eleven `page-class` rows in the live table were written
+under the shape it applied, and a migration that ran is a fact about the table whether or not
+the feature it served survived. `supabase/schema.sql` marks the same columns and constraints
+retired rather than dropping them, for the reason ADR 0011 gives — eleven rows contradict any
+constraint saying a mute is impossible.
+
+The applying of it also exposed the defect the ticket's own answer records: the mute key had
+been put in `compare/contract.mjs`, which imports `node:crypto`, so the React island stopped
+building and every control in it died. The key moved to `shared/mute-key.mjs` per ADR 0001,
+and ticket 114 deleted that file. The lesson outlived both: a green `npm test` says nothing
+about the bundle.

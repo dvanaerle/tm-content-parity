@@ -136,10 +136,12 @@ gate says it cost nothing today.
 
 ## The override detach, recorded
 
-`class` is both the rule id and the mute key, so retiring `structure` orphans any
-override keyed on it: a `fixed`, `dismissed` or `reviewed` event on a
-`structure` finding no longer matches any finding, and a mute on
-`nl|<page>|structure` no longer matches any class. Nothing is migrated and no
+`class` is both the rule id ~~and the mute key~~ and a term of the finding id, so retiring
+`structure` orphans any override keyed on it: a `fixed`, `dismissed` or `reviewed` event on a
+`structure` finding no longer matches any finding ~~, and a mute on
+`nl|<page>|structure` no longer matches any class~~. — **the mute clauses are struck
+2026-08-13, [ADR 0011](../../../docs/adr/0011-the-mute-is-withdrawn.md); the detach is
+unchanged.** It was always the finding id that carried the class. Nothing is migrated and no
 back-compatibility alias is added, per spec 32 decision 4 and ticket 08. It is
 free today because the Supabase project carries no override data yet (ticket 13
 is still the open risk), and it will never be cheaper.

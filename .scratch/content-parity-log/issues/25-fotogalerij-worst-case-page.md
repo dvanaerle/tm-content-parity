@@ -206,8 +206,11 @@ kept as the list of questions to ask when the upload is done.
 **So the images are neither a defect to raise nor noise to hide.** They are a
 migration in progress, and the count is the thing that watches it.
 
-- **Do not mute `image-missing` on these pages.** The instruction in **Why it is on
-  hold** stands, and it now has a reason with a date on it.
+- ~~**Do not mute `image-missing` on these pages.**~~ The instruction in **Why it is on
+  hold** stands, and it now has a reason with a date on it. — **2026-08-13, ADR 0011: it
+  cannot be disobeyed any more.** There is no mute, so nothing can take the count out of
+  the denominator and hide the migration this ticket is watching. The reason it was written
+  is the reason the mute went.
 - **Do not read the image numbers as a parity result.** 81 → 38 on `fotogalerij` and
   81 → 16 on `fotogalerij/zonwering` describe an unfinished upload, and the two facts
   in **Two facts that make the counts unreliable** still apply on top of that.

@@ -117,7 +117,8 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   note**. See `docs/adr/0004-history-is-a-run-log-that-never-re-attaches.md`.
 - **A class says what it is for, in one field.** `work`, `information`, `diagnostic`,
   replacing the shown-or-hidden boolean. It is **not** a second axis: ticket 02 removed
-  that, and the class stays the only axis and the mute key. `shown: false` said two
+  that, and the class stays the only axis ~~and the mute key~~ — **2026-08-13, ADR 0011:
+  it keys nothing now, and the conclusion is unaffected.** `shown: false` said two
   things at once — information for an editor, and a diagnostic for a rule author. The
   migration is defined so the denominator does not move on the day it lands.
   "Excluded from comparison" is not a value, because a region leaves at extraction.
@@ -145,6 +146,12 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   note becomes mandatory. The heading is in the mute key and not in the finding id,
   because a mute is a judgement and an id is an identity.
   See `docs/adr/0008-the-mute-key-carries-the-anchor-heading.md`.
+  **Superseded 2026-08-13 by ADR 0011 — the whole subject is withdrawn**, and this entry is
+  kept because it is the argument that led there. It is not struck: it was built, and the
+  count-before-the-press and the mandatory note are what made the eleven `muted` rows
+  readable enough to judge. The 173 is still the sharpest statement of the over-reach, and
+  the over-reach turned out to be in the key rather than in the choosing, which is why
+  narrowing it did not save it. See the last entry in this list.
 - **The word diff runs in the browser, with a trim and a cap.** ADR 0006 made it a cell
   renderer; this says where it runs. Measured over 448 reports: 14.8 million LCS cells,
   and **78% of them are rows that already agree** — 8,461 exact matches that the content
@@ -158,9 +165,13 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
 - **Axis B is out of scope for this work.** Every decision above is axis A. Axis B keeps
   its own tab and its own bar and is never summed, per ticket 11. This is written down
   so the silence in the proposal is not read as a decision.
-- **Two proposed removals were refused, and both became different tickets.** Class mute
+- **Two proposed removals were refused, and both became different tickets.** ~~Class mute
   is not removed — it is the only override that survives a text change, and its problem
-  was the key, so the key narrows. The hard-coded campaign exclusion is not handed to
+  was the key, so the key narrows.~~ **The first refusal is reversed, 2026-08-13, ADR 0011
+  — see the entry at the end of this list.** The key did narrow, in ticket 88, and
+  narrowing it is what made the feature reviewable enough to measure: eleven `muted` rows,
+  ten revoked by their own author. *The only override that survives a text change* was
+  true and was not enough. The hard-coded campaign exclusion is not handed to
   editors as search-and-dismiss: it was **4,055 findings, 11.8% of the corpus**, and a
   dismissal expires whenever the campaign copy changes. The durable answer is that the
   campaign rule fires one-sided, so a campaign classifies itself with no commit — the
@@ -202,8 +213,48 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   the strip that scope chip needed somewhere to live. `CONTEXT.md`'s **Filter** entry now
   admits a search. See
   [102](issues/102-the-class-pills-survive-a-search.md).
+- **The mute is withdrawn, and a dismissal is the only judgement.** This reverses the
+  refusal three entries above — *class mute is not removed* — and `PRD.md:457` carries the
+  reversal beside the refusal. Two reasons, in this order. **The evidence**: the table holds
+  eleven `muted` rows, every one on `nl`, every one by the same editor, **ten revoked by
+  their own author**, six noted `Test` or a misspelling of it; the one left standing was
+  annotated `"Negeren"`, the name of the other control. Nobody ever made the first real
+  mute. **The judgement**: `muteCoverage()` counted what the **key** covers and not what the
+  editor selected, so a press hid findings nobody had looked at and findings the next crawl
+  had not yet produced — an over-reach in the key that no selection interface can fix. And
+  the one job it was wanted for, a whole class, it could never do: hundreds of presses,
+  each needing a note, none reaching a page the next crawl finds. That job is **class
+  visibility** (ADR 0005), and it is ticket 86. The refusal was not unsound when it was
+  made; ticket 88 hardened the mute, and a reviewable feature is a measurable one, so 88 is
+  what produced the evidence against it. **Nothing is deleted**: the eleven rows stay, ADR
+  0008 stays superseded rather than wrong, and ticket 41 is parked in
+  `issues/.out-of-scope/` rather than removed. The denominator loses its subtraction —
+  nothing is now outside the count, and *this is not work at all* is a property of the class
+  and not of a place on a page. Five tickets carry it:
+  [111](issues/111-revoke-the-last-mute.md) revoked the last mute by hand,
+  [112](issues/112-dempen-leaves-the-interface.md) took both presses out of the interface,
+  [113](issues/113-the-displays-stop-reading-the-mute.md) stopped the displays reading the
+  state, [114](issues/114-the-mute-leaves-the-derivation.md) took the symbols out of the
+  derivation and the port, and
+  [115](issues/115-the-record-is-squared-with-the-decision.md) squared the record with the
+  decision. See `docs/adr/0011-the-mute-is-withdrawn.md`.
 
 ### Resolved tickets
+
+Each entry is the record of what that ticket decided **on the day it resolved**, in the
+present tense of that day. Two standing corrections apply across all of them and are not
+repeated in each:
+
+- **The mute is withdrawn, 2026-08-13, [ADR
+  0011](../../docs/adr/0011-the-mute-is-withdrawn.md).** Wherever an entry below says that
+  `class` is the mute key, that a mute leaves the denominator, or that `muted` is one of
+  five derived states, read it as the record and not as the model. There are four states,
+  the class keys nothing, and nothing is outside the count. Tickets **01**, **02**, **05**,
+  **06**, **08**, **09**, **11**, **29**, **31** and **33** all argue from the mute key
+  somewhere, and none of their conclusions turned on it alone.
+- **`WORKLIST.md` was deleted, 2026-08-13, commit `926d46f`.** Every `WORKLIST.md step NN`
+  pointer below is dead. The file is recoverable with
+  `git show 926d46f^:.scratch/content-parity-log/WORKLIST.md`.
 
 - [01 — Finding identity: stable ids across re-crawls](issues/01-finding-identity.md)
   — Ids are content-addressed and deliberately expire. "Resolved" needs no stable
@@ -1058,13 +1109,16 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
 - **`structure` is 61% of everything shown**, and it is what the log says when the
   pairing found nothing — a statement about the alignment, not about the sites.
   Ticket 28.
-- **The mute key carries the anchor heading, and a mute says what it hides.**
+- ~~**The mute key carries the anchor heading, and a mute says what it hides.**
   `store | page | class | anchorHeading`, where an absent heading is the page-wide
   form and a null one is the content before the first heading — a real section, and
   the third state the key had to spell out. Both forms state their finding count
   before the press and both require a note. Zero mutes were live when the key
-  changed, so nothing was orphaned. ADR 0008 and ticket
-  [88](issues/88-the-mute-says-what-it-hides.md).
+  changed, so nothing was orphaned.~~ ADR 0008 and ticket
+  [88](issues/88-the-mute-says-what-it-hides.md). — **withdrawn 2026-08-13 by ADR 0011**,
+  which supersedes ADR 0008. Built, and it did what it says; the note it made mandatory is
+  what let the feature be measured, and the measurement withdrew it. *Zero mutes were live
+  when the key changed* held on the day, and an editor wrote one at 11:07 the same day.
 
 ## Working order
 
@@ -1073,17 +1127,19 @@ they are five streams and not one queue. Three constraints give the order.
 
 1. **`data/` has one writer.** Tickets 54, 55, 58 and 67 each rebuild the corpus.
    Two of them must never be in flight together.
-2. **Ticket 88 is free today and impossible tomorrow.** Ticket 65 measured the
+2. ~~**Ticket 88 is free today and impossible tomorrow.** Ticket 65 measured the
    override table: no mute is live in any store. The table is append-only, so a
-   mute written under the old key can never be repaired.
+   mute written under the old key can never be repaired.~~ — **spent 2026-08-13,
+   ADR 0011.** 88 landed 2026-08-10 and the mute is withdrawn.
 3. **A measurement before the corpus settles is a measurement done twice.**
    Tickets 76 and 89 count the corpus that ticket 55 takes from 451 pairs to
    about 800.
 
 The order:
 
-0. **[88](issues/88-the-mute-says-what-it-hides.md), alone and first.** Out of
-   dependency order, for constraint 2.
+0. ~~**[88](issues/88-the-mute-says-what-it-hides.md), alone and first.** Out of
+   dependency order, for constraint 2.~~ — **done 2026-08-10; the mute is withdrawn
+   2026-08-13, ADR 0011.** The order starts at 1.
 1. **The corpus.** One ticket per session, serial:
    54 → 55 + 56 → 67 → 58.
 2. **Re-measure.** 76 and 89. Also ticket 38's per-store counts, and the
@@ -1165,11 +1221,12 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   [75 class visibility](issues/75-class-visibility-replaces-shown.md),
   [76 the coverage curve](issues/76-the-coverage-curve-without-the-promo-banner.md) — **resolved 2026-08-12**,
   [77 the run log](issues/77-a-finding-says-when-it-was-first-seen.md),
-  [88 the mute](issues/88-the-mute-says-what-it-hides.md),
+  [88 the mute](issues/88-the-mute-says-what-it-hides.md) — **resolved 2026-08-10, and its
+  subject withdrawn 2026-08-13 by ADR 0011**,
   [89 what a campaign rule would catch](issues/89-what-a-one-sided-campaign-rule-would-catch.md).
-  **88 is urgent while it is free.** Ticket 65 counted the table: no mute is live in any
+  ~~**88 is urgent while it is free.** Ticket 65 counted the table: no mute is live in any
   store, the table is append-only, and a mute written under the old key can never be
-  repaired.
+  repaired.~~ — spent. Tickets 111 to 115 withdrew the mute.
 
   Then the interface and the rest:
   [78 the history note](issues/78-a-closed-finding-leaves-a-history-note.md),
@@ -1534,8 +1591,9 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   | filter re-render there | **21 ms** — no virtualisation needed, none added |
 
   The "Opgelost" button is a **checkbox** with three states: unticked, ticked, and
-  ticked-but-contradicted. Dismissal and mute keep their menu, because a note is
-  mandatory on a dismissal and a checkbox cannot carry one.
+  ticked-but-contradicted. Dismissal ~~and mute~~ keeps its menu, because a note is
+  mandatory on a dismissal and a checkbox cannot carry one. — **2026-08-13, ADR 0011: one
+  menu, not two.** The reason is unchanged and it only ever applied to the dismissal.
 
   **Ticket 34 is reopened.** Position, ordering, the shared counter and the
   occurrence badge all landed and hold the baseline exactly. What did not land is
@@ -1627,7 +1685,10 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     — the prefactor. Nothing changes on the screen.
   - [40 — Coverage: missing pages, from the seed file alone](issues/40-coverage-missing-pages.md)
     — the tracer bullet. **Needs no crawl**: the 635 null cells are on disk now.
-  - [41 — The coverage matrix, and bulk muting](issues/41-coverage-matrix-bulk-mute.md)
+  - [41 — The coverage matrix, and bulk muting](issues/.out-of-scope/41-coverage-matrix-bulk-mute.md)
+    — **parked `wontfix` 2026-08-13**, ADR 0011: its second half was bulk muting and there
+    is no mute for a matrix to offer. The matrix itself is not refused; a revival starts
+    from 40.
   - [42 — Untranslated text](issues/42-untranslated-text.md) — the highest-value
     check on the axis.
   - [43 — Alt language and meta](issues/43-alt-language-and-meta.md)

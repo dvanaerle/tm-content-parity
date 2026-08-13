@@ -5,6 +5,21 @@ Status: resolved 2026-08-12 - built, and one acceptance criterion refused. See t
 Blocked by: 81, 88 — 30 and 76 are resolved
 Parent: ../map.md
 
+> **The bulk mute is withdrawn, 2026-08-13, [ADR
+> 0011](../../../docs/adr/0011-the-mute-is-withdrawn.md).** This ticket shipped **two**
+> presses and one of them is gone: ticket 112 removed *Dempen…* from the interface and 114
+> removed `bulkMute()` and `refusesMute()`. Everything about the **bulk dismissal** stands,
+> including the seam it chose, and ticket 110 later put a ticked page selection in front of
+> both.
+>
+> The file is not struck line by line, because it is the record of what was built. Two of its
+> findings are worth reading against the withdrawal. Its own answer to *whether a mute is
+> the better answer* was **a warning** rather than a yes — and the warning was right. And its
+> measured refusals — a twelve-page repeat refused because one page carries the difference
+> before the first heading, a repeat where the mute is offered alone because every finding is
+> already decided — are the over-reach ADR 0011 is argued from, visible in the interface a
+> day after it shipped.
+
 **What to build:** an editor decides once about a difference that is on thirty pages.
 They select the repeat, write one reason, and the log records thirty decisions — one for
 each finding, each with the editor's name.

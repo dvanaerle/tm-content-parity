@@ -54,5 +54,7 @@ machine-readable file, so this is a one-time extraction.
 
 Measure the volume before you call this done. If one shared page footer is
 untranslated on every de page, the tab fills with the same finding. That is a
-real result and it belongs in the ticket, but it may also want the class-mute
-that already exists.
+real result and it belongs in the ticket, ~~but it may also want the class-mute
+that already exists.~~ — **struck 2026-08-13, ADR 0011: there is no class-mute.** A shared
+footer untranslated on every `de` page is a **repeat**, and the answer to a repeat is one
+bulk dismissal over its pages (ticket 110), not a press that never expires.

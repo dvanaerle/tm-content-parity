@@ -13,6 +13,15 @@ this one is live.
 
 Nineteen tickets carry the work. Five ADRs carry the decisions. This document says why.
 
+> **The mute is withdrawn, 2026-08-13.** [ADR
+> 0011](../../docs/adr/0011-the-mute-is-withdrawn.md) supersedes ADR 0008 and removes the
+> `muted` override and the `page-class` scope from the model; a dismissal is the only
+> judgement an editor can make. Every passage below that promises a mute is annotated where
+> it stands, and stories **18 to 22** are struck. Nothing is deleted: this document is the
+> record of what was asked for on 2026-08-10, and the refusal it recorded at *Remove Class
+> Mute* is what the ADR reverses. Tickets 111 to 115 carry the withdrawal. The one thing
+> the mute was wanted for — a whole class — is **class visibility** and ticket 86.
+
 ---
 
 ## Problem statement
@@ -102,16 +111,24 @@ Three rules hold the shape:
     so that I know what to do again.
 17. As a content editor, I want to be told that a bulk dismissal covers only these
     findings, so that I am not surprised when a new page brings the difference back.
-18. As a content editor, I want to mute a class **under one heading**, so that I can
-    silence a section without hiding half the page.
-19. As a content editor, I want the page-wide mute still available, so that a gallery
-    page whose headings are captions does not cost me 239 presses.
-20. As a content editor, I want a mute to require a reason, so that the one decision that
-    never expires can be reviewed later.
-21. As a reviewer, I want to see who muted what, where and why, so that a silent page can
-    be explained a year from now.
-22. As a content editor, I want to choose between a dismissal and a mute knowing that one
-    expires and one does not, so that I pick the behaviour I mean.
+**Stories 18 to 22 are struck, 2026-08-13, ADR 0011.** All five were built by ticket 88 and
+all five are withdrawn with their subject. They are kept numbered so that the mapping in
+`RUNBOOK.md` — *81 → PRD 1–6, 82 → 7–8*, and the rest — does not shift under a reader.
+Story 20's *reason* and story 21's *who, where and why* are what made the measurement in
+ADR 0011 possible, so they were answered before they were retired.
+
+18. ~~As a content editor, I want to mute a class **under one heading**, so that I can
+    silence a section without hiding half the page.~~
+19. ~~As a content editor, I want the page-wide mute still available, so that a gallery
+    page whose headings are captions does not cost me 239 presses.~~
+20. ~~As a content editor, I want a mute to require a reason, so that the one decision that
+    never expires can be reviewed later.~~
+21. ~~As a reviewer, I want to see who muted what, where and why, so that a silent page can
+    be explained a year from now.~~
+22. ~~As a content editor, I want to choose between a dismissal and a mute knowing that one
+    expires and one does not, so that I pick the behaviour I mean.~~ — the choice is gone
+    because one of the two is gone. What survives of this story is that a dismissal says
+    plainly that it expires with the text.
 
 ### History
 
@@ -238,44 +255,62 @@ Three rules hold the shape:
 
 ### State, buckets and overrides
 
-- **A finding still has no stored state.** Five derived states stay: `open`, `dismissed`,
-  `muted`, `fixed`, `contradicted`. Ticket 09 stands.
+- **A finding still has no stored state.** ~~Five~~ **Four** derived states stay: `open`,
+  `dismissed`, ~~`muted`,~~ `fixed`, `contradicted`. Ticket 09 stands. — **2026-08-13, ADR
+  0011.** Ticket 114 took `muted` out of the derivation.
 - **A bucket is a grouping over those five**, derived and never stored. Three buckets,
   named with words the glossary already holds:
 
   ```
   Open            → open
   Needs attention → contradicted
-  Closed          → absent from snapshot | dismissed | fixed and not contradicted | muted
+  Closed          → absent from snapshot | dismissed | fixed and not contradicted
   ```
+
+  **`| muted` struck from Closed, 2026-08-13, ADR 0011.** The three buckets are unchanged
+  and the fourth term is simply gone. See ticket 80, which is sequenced behind this.
 
   A stale page review is a **page badge**, not a finding bucket. Two scopes in one bucket
   would count one thing twice.
-- **The mute key gains the anchor heading.** A page-wide mute is the same key with the
+- ~~**The mute key gains the anchor heading.** A page-wide mute is the same key with the
   heading absent — one key shape, not two mechanisms. A null heading is a real section:
-  the content before the first heading.
+  the content before the first heading.~~
 
   ```
   store | page | class | anchorHeading?
   ```
 
-- **A mute states its finding count before the press and requires a note.** The count is
+  **Struck 2026-08-13, ADR 0011.** Built by ticket 88, applied to the table by
+  `supabase/mute-anchor-heading.sql` on 2026-08-10, and withdrawn with the key it narrowed.
+  The over-reach was never in the heading: it was in the key covering what the editor had
+  not selected, which is why narrowing it did not save it. **The anchor heading survives**
+  as a locator — it is how a finding says where it is on the page — and that role never
+  depended on the mute.
+- ~~**A mute states its finding count before the press and requires a note.** The count is
   computed on the current snapshot. The note is enforced in the database, as a dismissal's
-  is, so the rule does not live in the browser alone. ADR 0008.
+  is, so the rule does not live in the browser alone. ADR 0008.~~ — **struck 2026-08-13,
+  ADR 0011.** The database check on the note survives for the dismissal, which is the only
+  judgement left; `supabase/schema.sql` marks the `muted` half retired rather than dropping
+  it, because eleven rows in the table contradict any constraint saying a mute is
+  impossible.
 - **The overrides table stays one append-only table.** New actions, no new scopes beyond
   what each already needs, no mutation, no delete. Action vocabulary after this work:
 
   ```
   finding     : fixed | dismissed | cleared
-  page-class  : muted | cleared                     (key gains anchorHeading)
   page        : reviewed | noted | prioritised
               | migrate | not-migrated | replaced | redirected
               | cleared
   ```
 
+  **The `page-class : muted | cleared` line is struck, 2026-08-13, ADR 0011.** The scope
+  leaves the vocabulary. It stays in `supabase/schema.sql`'s `check` constraints, marked
+  retired, because the table holds eleven `page-class` rows and they are not deleted.
 - **Bulk is N events, never a key.** One seam change makes it possible: the append path
   must take a target page instead of reading it from the report on screen. That one change
-  serves bulk dismissal and bulk mute both.
+  serves bulk dismissal ~~and bulk mute~~ both. — **2026-08-13, ADR 0011: it serves one
+  press, not two.** Ticket 112 removed `bulkMute()`. The seam is unchanged, which is the
+  point of it.
 - **`PRIORITIES` is a closed list in `shared/`**, not in the database — a browser island
   must read it without `node:crypto`, and a closed list in git cannot drift.
 - **There is no owner field and no login.** An editor is a name in `localStorage`.
@@ -287,8 +322,11 @@ Three rules hold the shape:
 ### Classification
 
 - **`shown` becomes one visibility field.** `work | information | diagnostic`. It replaces
-  the boolean; it is not a second axis, because the class is the only axis and it is the
-  mute key. ADR 0005.
+  the boolean; it is not a second axis, because the class is the only axis ~~and it is the
+  mute key~~. ADR 0005. — **2026-08-13, ADR 0011: the class is the only axis and it keys
+  nothing.** The conclusion is unchanged and one of its two reasons is gone; ADR 0005 is
+  amended in place. Visibility is now also the mechanism that does the job the mute could
+  not: one word, applied once, covering every store and every future crawl.
 
   ```
   work        → counts
@@ -374,9 +412,9 @@ preferred, and the highest available one is used.
 
 | seam | what it takes |
 | --- | --- |
-| `compare/contract.mjs` | the mute key gaining the anchor heading; the class pins moving to the visibility groups |
+| `compare/contract.mjs` | ~~the mute key gaining the anchor heading~~ (struck 2026-08-13, ADR 0011 — `shared/mute-key.mjs` is deleted); the class pins moving to the visibility groups |
 | `compare/vocabulary.mjs`, `compare/text.mjs`, `compare/images.mjs` | the visibility field; the one-sided campaign rule, in both directions |
-| `overrides/state.mjs` | the three buckets, the history note, the two annotations, the migration decisions and their contradiction rule, mute precedence under the new key |
+| `overrides/state.mjs` | the three buckets, the history note, the two annotations, the migration decisions and their contradiction rule, ~~mute precedence under the new key~~ (struck 2026-08-13, ADR 0011 — `muteCoverage()` and the `page-class` branch are gone; the eleven historical rows still load as events) |
 | `web/src/lib/view.mjs` | the context marker, the repeat grouping, the search query |
 | the overrides **port** | the write boundary for bulk, exercised with a fake port |
 | `web/src/lib/reports.mjs` | the build-time search index, and the run-log read |
@@ -454,7 +492,7 @@ Two areas get no automated seam, deliberately. **No browser automation is added*
 | Store Backlog | **Dashboard**, which the glossary already defines |
 | Finding *states*: Open, Needs attention, Resolved | **Buckets** over five derived states, and the third is **Closed**. "Resolved" stays retired |
 | `Changed` findings, with previous decisions carried across | **refused.** A history note instead, display-only, asserting no identity |
-| Remove Class Mute | **refused.** The key narrows; the tool is the only one that survives a text change |
+| Remove Class Mute | **refused.** The key narrows; the tool is the only one that survives a text change. — **Reversed 2026-08-13: the draft's answer was right, and this refusal was wrong.** Not because the argument above is unsound — a dismissal does still expire with the text — but because the feature was measured after it was hardened. Eleven `muted` rows in the table, all `nl`, all one editor, ten revoked by their own author, six noted `Test`; and the one job anybody wanted it for, a whole class, is hundreds of presses it can never finish. That is the class's job, not a page's. See [ADR 0011](../../docs/adr/0011-the-mute-is-withdrawn.md), which supersedes ADR 0008, and tickets 111 to 115 |
 | Remove the campaign exclusion, editors dismiss instead | **refused.** It was 4,055 findings, and a dismissal expires with the campaign copy. The rule becomes one-sided instead |
 | Remove Equal | the dashboard **chip** goes; the equal **rows** stay, collapsed |
 | Custom columns, add / rename / reorder / hide / remove | two fixed annotations, and no owner |
@@ -469,9 +507,11 @@ Two areas get no automated seam, deliberately. **No browser automation is added*
 Measured 2026-08-10 over 448 reports: **33,507 findings, 22,990 shown**, 373 comparable
 pages. `text-missing` 49.3%, `missing-link` 21.0%, `image-missing` 12.1%, `heading-level`
 5.3%, `link-target` 4.7%, `copy` 3.4%. **8,229 repeats**; 116 covered a quarter and 903
-covered half; 3,925 are singletons. Per page: median 37, p90 151, max 399. Mute keys:
+covered half; 3,925 are singletons. Per page: median 37, p90 151, max 399. ~~Mute keys:
 2,101 `page + class` groups at median 4 and p90 25, against 7,639 with the heading at
-median 1; largest single press 173.
+median 1; largest single press 173.~~ — **the mute-key row is spent, 2026-08-13, ADR
+0011.** It is kept because it is the measurement ADR 0008 was argued from, and the 173 is
+the number that made ticket 88 urgent. Every other figure in this paragraph still stands.
 
 Two caveats travel with all of it. The head of the repeat distribution was the promo
 banner, which ticket 64 has excluded and the reports on disk pre-date — so one ticket
@@ -481,9 +521,15 @@ surface may assume a store is small.
 
 ### Sequencing risks
 
-- **The mute change is free now and will not stay free.** No mute is live in any store. The
+- ~~**The mute change is free now and will not stay free.** No mute is live in any store. The
   table is append-only, so a mute written under the old key can never be repaired, only
-  superseded.
+  superseded.~~ — **struck 2026-08-13, ADR 0011, and the risk it named came true the same
+  day it was written.** *No mute is live in any store* rested on ticket 65's read of
+  2026-08-07. On **2026-08-10 at 11:07** an editor wrote the mute that ticket 111 had to
+  revoke by hand — `nl` · `downloads` · `text-missing`, note `"Negeren"`. So the window this
+  paragraph said would close did close, and ticket 88 landed inside it. What the row bought
+  in the end was not a repair but the evidence: eleven `muted` rows to measure, which is
+  what ADR 0011 is argued from.
 - **The campaign research may refuse the campaign build**, and that is a valid outcome.
 - **The two Astro majors must carry no product change**, or a regression and a redesign
   become indistinguishable in the diff.

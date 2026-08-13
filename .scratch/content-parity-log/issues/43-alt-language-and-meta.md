@@ -31,10 +31,18 @@ not this ticket.
 
 ## Why three classes and not one
 
-The reason is mechanical, not taxonomic. `class` is ticket 01's mute key and
+~~The reason is mechanical, not taxonomic. `class` is ticket 01's mute key and
 ticket 02's shown or hidden switch. Alt text and meta are much more likely to be
 muted for a whole store than body copy is. One shared class would make an editor
-hide visible copy to silence a `<title>`.
+hide visible copy to silence a `<title>`.~~
+
+**Struck 2026-08-13, ADR 0011: the mechanical reason is void and no taxonomic one has been
+put in its place.** *Mechanical, not taxonomic* was the honest thing to say and it is now
+the problem — the class is no longer a key, so nothing an editor does to one class can
+reach another. Half the argument does survive: `class` is still ticket 02's shown-or-hidden
+switch, which ticket 75 turns into a visibility enum, so one shared class would still give
+an alt difference and a `<title>` difference one visibility. Whether that is enough to
+justify three classes is the re-triage's question. See ticket 39.
 
 All three classes are shown.
 
@@ -45,7 +53,9 @@ All three classes are shown.
 - [ ] A de page with the nl `<title>` makes one `meta-untranslated` finding.
 - [ ] A page with no `<title>` or no description makes one `meta-presence`
       finding.
-- [ ] A mute on `meta-untranslated` does not hide an `untranslated` finding.
+- [ ] ~~A mute on `meta-untranslated` does not hide an `untranslated` finding.~~ — **struck
+      2026-08-13, ADR 0011: it has no subject.** If the split survives re-triage it needs a
+      criterion that names what an editor actually does to one class and not the other.
 - [ ] The same skip rule applies: a brand token in an alt or a title makes no
       finding.
 - [ ] `npm test` is green.

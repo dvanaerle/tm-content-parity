@@ -17,15 +17,16 @@ as a Dutch url key instead of an opaque key. The count was then measured.
 ## The measurement that closed it
 
 The page value is used in about 82 places. **Twelve hold an assumption about its
-shape.** The rest treat it as an opaque string: the finding id, the mute key, the
-override event key and the database column; everything shown to an editor; every
+shape.** The rest treat it as an opaque string: the finding id, ~~the mute key,~~ the
+override event key and the database column (2026-08-13, ADR 0011: the mute key is deleted,
+so the count of readers is one lower and no conclusion moves); everything shown to an editor; every
 sort, search and lookup; and about 31 pure pass-throughs.
 
 **The persistence risk is zero, on one condition.** Stored keys live in one place,
 the override table, and that table is append-only by policy — there is no update
 and no delete, so a reformatted key could never be repaired. But a page that has a
 Dutch url key can keep its current string, and the 181 pages that hold stored
-findings, mutes and reviews all have one. The new pages have no stored state.
+findings, ~~mutes~~ and reviews all have one. The new pages have no stored state.
 
 So there is nothing to migrate, and a double-write period would buy nothing and
 leave rows behind that cannot be removed. Ticket 54 makes the change in one edit

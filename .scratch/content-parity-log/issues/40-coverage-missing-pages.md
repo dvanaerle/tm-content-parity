@@ -21,17 +21,23 @@ seed file is on disk now: 1086 cells, of which 635 are null. So the whole path �
 data, compare, contract, interface, override — can be cut today.
 
 An editor must be able to open the Coverage view for one store, see the pages
-that store does not have, mute one that is absent on purpose, reload the page,
-and see the mute again. The axis B bar must move when they do.
+that store does not have, ~~mute one that is absent on purpose, reload the page,
+and see the mute again~~, and the axis B bar must move when they do. — **struck
+2026-08-13, ADR 0011**, and this is the sentence the status line above is about: the
+tracer bullet had no destination once the mute went, because *how an editor says a page
+is absent on purpose* has no answer yet. A dismissal is keyed on two texts and a missing
+page has none.
 
 This is the tracer bullet for the whole axis. Everything after it adds checks to
 a path that already works.
 
 ## Rules from ticket 11
 
-- Every absent page is a finding. An editor mutes the ones that are absent on
-  purpose. This is deliberate: the alternative hides the one case that matters,
-  which is a page that must exist and nobody saw that it does not.
+- Every absent page is a finding. ~~An editor mutes the ones that are absent on
+  purpose.~~ — **struck 2026-08-13, ADR 0011; the first half stands and the second has no
+  mechanism.** The reason it was deliberate is unchanged and is worth keeping: the
+  alternative hides the one case that matters, which is a page that must exist and nobody
+  saw that it does not.
 - **A 404 cell is not this axis.** A null cell means nobody ever asked for the
   page in that store. A 404 cell means the store claims the page and the new site
   does not serve it. Ticket 20 owns the 404 cell.
@@ -49,16 +55,20 @@ a path that already works.
 - [ ] A page whose NL cell is 404 makes no axis B finding in any store.
 - [ ] The Coverage view has its own bar with absolute counts. The axis A bar on
       the dashboard does not change.
-- [ ] A mute on one missing page is written to Supabase, and it is still there
-      after a reload.
+- [ ] ~~A mute on one missing page is written to Supabase, and it is still there
+      after a reload.~~ — **struck 2026-08-13, ADR 0011.** This is the criterion that
+      cannot be built, and re-triage owes it a replacement before this ticket is an
+      agent's.
 - [ ] The axis A dashboard shows no axis B finding.
 - [ ] `npm test` is green. The presence rule has tests.
 
 ## Notes
 
-`muteKey()` is already `store|page|class`, so per-store muting needs no change to
-the contract. The store in the key is the store that does not have the page. The
-page is the NL url key.
+~~`muteKey()` is already `store|page|class`, so per-store muting needs no change to
+the contract.~~ — **struck 2026-08-13, ADR 0011: `shared/mute-key.mjs` is deleted.** What
+survives is the shape of the answer, and it is still worth having: the store in the key is
+the store that does not have the page, and the page is the NL url key. Whatever replaces
+the mute here needs both.
 
 Ticket 39 decides where the axis B artifact goes on disk. Do not put it in
 `data/reports/`.

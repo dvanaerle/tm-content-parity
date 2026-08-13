@@ -1,8 +1,13 @@
 # Class visibility is one enum, and not a second axis
 
 Ticket 02 removed a confidence axis with one sentence: the class is the only axis,
-and it is also the mute key. The product then asked for each class to be classified
+~~and it is also the mute key~~. The product then asked for each class to be classified
 as migration work, optional information, or a diagnostic.
+
+> **The mute clause is struck, 2026-08-13, [ADR 0011](0011-the-mute-is-withdrawn.md).** The
+> class keys nothing now. It is still the only axis, so every argument below holds; where
+> the text leans on the key, read it as the record of 2026-08-10. The amendment further down
+> is the one that changes a conclusion.
 
 We decided that this **replaces** the `shown` boolean on a class. It is one field
 with three values — `work`, `information`, `diagnostic` — and the class stays the
@@ -18,7 +23,10 @@ diagnostic for a developer. One enum says which; a boolean beside an enum would 
 class be hidden and also be work, which has no meaning.
 
 A second field would also be a second axis, which is exactly what ticket 02 removed.
-The mute key is the class, and it must stay one thing.
+~~The mute key is the class, and it must stay one thing.~~ — **struck 2026-08-13, ADR
+0011.** The class must stay one thing for its own sake; it is no longer a key, and the
+argument never needed it to be one. What the withdrawal adds is that this enum is now the
+only way to say *this is not work at all*.
 
 ## Why "excluded from comparison" is not a value
 

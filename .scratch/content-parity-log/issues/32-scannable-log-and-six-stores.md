@@ -2,7 +2,8 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: 114 for its mute lines only — **added 2026-08-13.** *"Mute keeps its menu"* has
+Blocked by: nothing — **114 resolved 2026-08-13; the two mute lines are struck in place.**
+The note that added the block read: *"Mute keeps its menu"* has
 no menu to keep: ADR 0011 withdrew the mute. Its other statement — that a re-classification
 orphans any override keyed on the old class — stays true of the dismissal, which is keyed
 on the finding id and therefore on the class. Everything else in this spec is unaffected.
@@ -236,8 +237,10 @@ moved baseline.
    source; the browser reads it through the existing browser-safe vocabulary
    module.
 4. **Accept that overrides on `structure` detach.** `class` is both the rule id
-   and the mute key, so a re-classification orphans any override keyed on the old
-   name. This is a known and accepted consequence, recorded in ticket 08. It is
+   ~~and the mute key~~ and a term of the finding id, so a re-classification orphans any
+   override keyed on the old name. — **2026-08-13, ADR 0011: the mute clause is struck and
+   the decision is unchanged.** A dismissal is keyed on the finding id, which carries the
+   class, so it detaches for exactly the reason given here. This is a known and accepted consequence, recorded in ticket 08. It is
    near-free today because the Supabase project carries no real override data
    yet, and it will never be cheaper.
 5. **Do not re-tune the 0.6 pair threshold in this phase, or in this spec.**
@@ -338,7 +341,8 @@ moved baseline.
     filtering the page list to pages carrying that class.
 27. **A checkbox replaces the "Opgelost" button only.** Dismissal keeps its
     menu, because ticket 09 makes a note mandatory on a dismissal and a checkbox
-    cannot carry one. Mute keeps its menu.
+    cannot carry one. ~~Mute keeps its menu.~~ — **struck 2026-08-13, ADR 0011: there is no
+    menu to keep.** One menu, and the reason for it was always the dismissal's note.
 28. **The checkbox has three visual states**: unticked, ticked, and
     **ticked-but-contradicted**. `fixed` is a claim of fact that loses to
     re-check; a two-state checkbox is exactly the affordance that made the

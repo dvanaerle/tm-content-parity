@@ -5,8 +5,13 @@ Status: ready-for-agent
 Blocked by: 97
 Parent: 58-axis-a-meta-check.md
 
+> **2026-08-13, [ADR 0011](../../../docs/adr/0011-the-mute-is-withdrawn.md):** the two
+> mentions of the mute below are struck. *Like any other finding* now means ticked off or
+> dismissed, and the class drives the dashboard filter and the Taken tab but keys nothing.
+> Nothing else in this ticket is affected.
+
 **What to build:** an editor opens the Meta tab and reads five named rows. Three of
-them can be ticked off or muted like any other finding; two sit below a rule as
+them can be ticked off or ~~muted~~ dismissed like any other finding; two sit below a rule as
 display only, and the note says they are not counted. The tab carries a badge, so a
 head defect is visible without opening the tab.
 
@@ -15,7 +20,7 @@ has five known slots and an editor reads it as a checklist of slots, not as a li
 defects, so the field is the useful first column. The class pill is **not** on the
 row: with the field fixed and both values side by side, a `META-CASING` pill next to
 `…beschutting.` against `…beschutting` says nothing the cells do not. The class still
-drives the dashboard filter, the mute key and the Taken tab, which keeps its pills.
+drives the dashboard filter ~~, the mute key~~ and the Taken tab, which keeps its pills.
 
 ```
                               Productie              Nieuwe site

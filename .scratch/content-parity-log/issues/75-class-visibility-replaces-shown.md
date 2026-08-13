@@ -2,12 +2,14 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: None — can start immediately. **But sequence it against 114 (2026-08-13):** its
+Blocked by: None — can start immediately. **The sequencing question is settled: 114 landed
+first, 2026-08-13.** So the second branch of the note below is the live one — the mute
+criterion is already void, it is struck in place, and the count-neutrality this ticket
+checks is against the dismissal alone. The note read: sequence it against 114, because its
 criterion *"A mute still takes findings out of the denominator"* is a count-neutrality check
-that ADR 0011 makes false. If 75 lands **before** 114 the criterion holds as written and
-114 removes it; if **after**, the criterion is already void and the count-neutrality it
-tests is against the dismissal alone. Either order is fine; building it without knowing
-which is not. Ticket 86 is blocked by this one and moves the denominator on purpose.
+that ADR 0011 makes false; if 75 lands **before** 114 the criterion holds as written and
+114 removes it; if **after**, the criterion is already void. Either order is fine; building
+it without knowing which is not. Ticket 86 is blocked by this one and moves the denominator on purpose.
 Parent: ../map.md
 
 **What to build:** a class stops being shown or hidden and starts saying what it is
@@ -22,9 +24,12 @@ Every rule is in
 ## The decision this ticket carries
 
 It is **one field replacing one field**, and not a field beside it. Ticket 02 removed
-a confidence axis with one sentence — the class is the only axis, and it is also the
-mute key — and a second boolean beside an enum would put that axis back. A class that
-is hidden and also work has no meaning.
+a confidence axis with one sentence — the class is the only axis, ~~and it is also the
+mute key~~ — and a second boolean beside an enum would put that axis back. A class that
+is hidden and also work has no meaning. — **the mute clause is struck 2026-08-13, ADR
+0011.** The class keys nothing now, and *one field replacing one field* does not depend on
+it: the argument is that two switches on one class can disagree, which is true of the
+visibility enum alone.
 
 `shown: false` says two different things today and nothing says which. `text-added` is
 hidden because content the new site invented is usually not a defect, and an editor
@@ -55,8 +60,10 @@ is the first of those.
       totals beside the previous ones: expect **no movement at all**, on any store.
 - [ ] `work` counts. `information` renders and does not count. `diagnostic` stays
       behind the noise toggle. Each of the three is checked on a page that has one.
-- [ ] A mute still takes findings out of the denominator, and a dismissal still moves
-      them into the numerator.
+- [ ] ~~A mute still takes findings out of the denominator, and~~ a dismissal still moves
+      them into the numerator. — **the mute half is struck 2026-08-13, ADR 0011.** The
+      count-neutrality this criterion tests is now against the dismissal alone; nothing
+      leaves the denominator, so there is no subtraction left to preserve.
 - [ ] The contract pins are updated: the class count stays 21, and the pinned set that
       used to be "the hidden classes" becomes the three visibility groups.
 - [ ] The noise toggle's label still tells the truth about what it reveals. It now

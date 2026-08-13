@@ -3,6 +3,8 @@
 Type: task
 Status: resolved 2026-08-12 — built, every criterion met, and **the word "section" is
 refused**: it is the mute scope already. The concept is a **class group**. See the answer.
+(That reason expired on 2026-08-13 with ADR 0011; the refusal stands on other grounds. See
+the answer.)
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
@@ -67,9 +69,15 @@ It re-sorts nothing, so a group is a slice of today's ungrouped list — `Repeat
 of class names in `useState` and nothing else: not persisted, not in the url, absent from
 the amber strip.
 
-**The word "section" is refused.** `CONTEXT.md` already spends it on the mute scope — a run
-of one page under an anchor heading, `docs/adr/0008` — and one word with two meanings is
-what that glossary exists to stop. This ticket's own wording asked for sections; the concept
+**The word "section" is refused.** ~~`CONTEXT.md` already spends it on the mute scope — a run
+of one page under an anchor heading, `docs/adr/0008` —~~ and one word with two meanings is
+what that glossary exists to stop. — **2026-08-13, [ADR
+0011](../../../docs/adr/0011-the-mute-is-withdrawn.md): the reason is gone and the refusal
+is kept.** `CONTEXT.md` no longer spends *section* on the mute scope, because there is no
+mute scope, so the word is technically free. It stays refused anyway: **class group** is in
+the code, in the glossary and in this ticket's answer, and renaming a built concept to
+reclaim a word nobody needs is churn. If *section* is ever wanted, it is a new ticket
+against a built screen. This ticket's own wording asked for sections; the concept
 it describes is kept and the name is not. `CONTEXT.md` now carries **class group** as a
 term, because the concept was in the code and in no glossary.
 

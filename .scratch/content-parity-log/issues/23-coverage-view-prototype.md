@@ -6,7 +6,10 @@ Blocked by: 11
 Parent: ../map.md
 
 > **Folded 2026-08-06** into [41 — The coverage matrix, and bulk
-> muting](41-coverage-matrix-bulk-mute.md). The seed data is already on disk, so
+> muting](.out-of-scope/41-coverage-matrix-bulk-mute.md). **And 41 was parked `wontfix`
+> on 2026-08-13**, ADR 0011: its bulk-muting half has no subject. So this ticket's
+> questions are folded into a parked ticket, and a revival of the matrix starts from
+> ticket 40, which is `needs-triage` for the same reason. The seed data is already on disk, so
 > a prototype of the matrix and the real matrix would be almost the same thing.
 > Build the simplest matrix and judge the real one. Every question below is an
 > acceptance criterion on ticket 41.

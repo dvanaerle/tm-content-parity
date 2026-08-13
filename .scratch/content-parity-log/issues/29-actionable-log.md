@@ -7,6 +7,26 @@ Parent: ../map.md
 Implements: 03, 09, 10
 Supersedes as the build instruction for: 10
 
+> **The mute is withdrawn, 2026-08-13, [ADR
+> 0011](../../../docs/adr/0011-the-mute-is-withdrawn.md).** This is the spec that **built**
+> the mute, so the word runs through it — the precedence rule, user stories 6, 7 and 27, the
+> `bar` shape, the five derived states, the schema. Read all of it as the record of
+> 2026-08-06 and not as the model. It is not struck line by line: what it describes is what
+> shipped, and it shipped correctly.
+>
+> Four things to carry across. There are **four** derived states, not five. **Nothing leaves
+> the denominator** — story 27 asked for exactly the arithmetic that ADR 0011 removes, and
+> `barOf()` no longer subtracts. The precedence rule *a finding-scope override beats a
+> page-class mute* has nothing left to rank, so a `cleared` dismissal now falls back to
+> nothing. And story 7 — *a muted finding stays visible behind a toggle* — is the claim that
+> did not survive contact: the toggle showed the rows, and the count they had left was gone,
+> which is what *hidden* turned out to mean in practice.
+>
+> Everything else in this spec is untouched and is still the tool: the pure derivation in
+> `overrides/state.mjs`, the append-only table, latest-event-per-key, the claim-of-fact
+> against judgement split, the contradiction rule, the local re-check service and the
+> feature detection that hides its button.
+
 ## Resolution
 
 Built. 141 tests green (was 101), 180 pages built, the service answers a live

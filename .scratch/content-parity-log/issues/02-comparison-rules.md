@@ -87,9 +87,12 @@ Tier 2 is **visible difference**. Do not fold these. Report them.
 
 Production made its letter case on purpose. If the tool folds case, the new
 site can drift and no person sees it. The risk is volume. If letter case is
-different across the full site, the log fills with these findings. The per-page
-mute is the wrong tool for a site-wide difference. Watch this after the first
-full run.
+different across the full site, the log fills with these findings. ~~The per-page
+mute is the wrong tool for a site-wide difference.~~ Watch this after the first
+full run. — **2026-08-13, ADR 0011: this sentence was right and it is the whole argument.**
+*The per-page mute is the wrong tool for a site-wide difference* was written on 2026-08-06,
+four days before ADR 0008 hardened the key and seven before the ADR that withdrew it. The
+right tool for a site-wide difference is the class's visibility (ADR 0005).
 
 ### The class vocabulary
 
@@ -97,8 +100,11 @@ full run.
 calculated from the class and gave no more data. Keep the similarity score as a
 number on `copy` findings. Do not put it in a bucket.
 
-`class` is also the mute key from ticket 01. Thus each class must have a name an
-editor knows.
+~~`class` is also the mute key from ticket 01.~~ Thus each class must have a name an
+editor knows. — **the key clause is struck 2026-08-13, [ADR
+0011](../../../docs/adr/0011-the-mute-is-withdrawn.md); the conclusion stands.** A class
+still names a pill an editor filters on and a word they read, so it still needs a name they
+know. It keys nothing.
 
 | class | meaning | default |
 | --- | --- | --- |

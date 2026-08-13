@@ -13,6 +13,19 @@ ticket, from the first to the last, with the command and the gate for each. Read
 this file for *why* the order is what it is. Read `WORKLIST.md` for *what to do
 next*.
 
+> **`WORKLIST.md` was deleted on 2026-08-13, commit `926d46f`.** The issue files carry their
+> own status and blockers and this file carries the order, so a third copy of the queue was
+> a thing to keep in sync rather than a thing to read. Every `WORKLIST.md step NN` pointer
+> below and in `map.md` is therefore dead; they are left in place as the record of where a
+> step was booked, and `git show 926d46f^:.scratch/content-parity-log/WORKLIST.md` is the
+> file. Read the issue files for *what to do next*.
+
+> **The mute is withdrawn, 2026-08-13.** [ADR
+> 0011](../../docs/adr/0011-the-mute-is-withdrawn.md) supersedes ADR 0008. **Session 10A
+> below is spent** — do not run it; ticket 88 is resolved and its subject is gone. Tickets
+> 111 to 115 carried the withdrawal, and the mute passages below are annotated where they
+> stand.
+
 ## The rule this order comes from
 
 Tickets batch up to a **measurement gate**. Batch freely inside a gate. Never
@@ -130,17 +143,21 @@ Revised 2026-08-10. Three constraints give it.
 
 1. **`data/` has one writer.** Tickets 54, 55, 58 and 67 each rebuild the corpus.
    Two of them must never be in flight together.
-2. **Ticket 88 is free today and impossible tomorrow.** Ticket 65 counted the
+2. ~~**Ticket 88 is free today and impossible tomorrow.** Ticket 65 counted the
    table: no mute is live in any store. The table is append-only, so a mute
-   written under the old key can never be repaired, only superseded.
+   written under the old key can never be repaired, only superseded.~~
+   — **spent 2026-08-13, ADR 0011.** 88 landed on 2026-08-10 and the window closed the
+   same day: an editor wrote a mute at 11:07 that ticket 111 revoked by hand. The
+   constraint held, and the feature it protected is withdrawn.
 3. **A measurement before the corpus settles is a measurement done twice.**
    Tickets 76 and 89 count the corpus that ticket 55 takes from 451 pairs to
    about 800.
 
 The order:
 
-0. **Ticket 88, alone and first.** Out of dependency order, for constraint 2.
-   Session 10A.
+0. ~~**Ticket 88, alone and first.** Out of dependency order, for constraint 2.
+   Session 10A.~~ — **done 2026-08-10, and withdrawn 2026-08-13 by ADR 0011.** The order
+   starts at 1.
 1. **The corpus.** 54, then 55 and 56, then 67, then 68, then 58. One ticket, one
    gate. Sessions 4, 5, 2C and 6.
 2. **Re-measure.** 76 and 89. Also ticket 38's per-store counts, and the
@@ -905,8 +922,19 @@ its own bar that is never summed with the parity bar, per ticket 11. And the
 numbers in tickets 40 to 45 are counted against a 451-pair seed list that ticket
 55 takes to about 800, so they must be re-stated whenever the stream restarts.
 
-The sittings below are kept as written. They are correct and they are not for
+The sittings below are kept as written. ~~They are correct and~~ they are not for
 today.
+
+> **They are no longer correct, 2026-08-13, [ADR
+> 0011](../../docs/adr/0011-the-mute-is-withdrawn.md).** Four of the tickets these sittings
+> hand to `/implement` are now **`needs-triage`** — **39**, **40**, **43** and **44** — and
+> one, **41**, is parked `wontfix`. Each argued for a separate class per axis *because an
+> editor who mutes one class would mute both*, and there is no mute. The conclusions may
+> still be right; the arguments are void, so an agent building them today would implement a
+> distinction justified by a feature that does not exist. **39 must be re-decided on taxonomy
+> before session 7 runs**, and 40 owes a bigger answer than a rename: axis B needs a way for
+> an editor to say *this page is absent on purpose*, and a dismissal is keyed on two texts,
+> which a missing page does not have. Read each ticket's own status line first.
 
 All 21 classes in the vocabulary are axis A today. There are no coverage
 classes at all. Ticket 11 holds every rule.
@@ -935,11 +963,14 @@ classes, because ticket 58 has landed.
 ```
 
 ```
-/implement Build both tickets in one session:
-
-1. .scratch/content-parity-log/issues/41-coverage-matrix-bulk-mute.md
-2. .scratch/content-parity-log/issues/45-images-across-stores.md
+/implement .scratch/content-parity-log/issues/45-images-across-stores.md
 ```
+
+**Ticket 41 has left this session, 2026-08-13.** It is parked `wontfix` at
+`issues/.out-of-scope/41-coverage-matrix-bulk-mute.md`: the whole of its second half is bulk
+muting, and ADR 0011 withdrew the mute. The coverage matrix itself is not refused, and a
+revival starts from ticket 40, which is `needs-triage` for the same reason. So this sitting
+is one ticket, and axis B is parked anyway.
 
 ### Session 9
 
@@ -971,36 +1002,33 @@ cover a quarter of the corpus and 903 cover half, but **3,925 repeats are
 singletons**. The backlog does not drain: 90% coverage costs about 5,930
 decisions. Progress must read as how much is decided, never as how much is left.
 
-### Session 10A — Ticket 88, the mute. FIRST, and out of order
+### Session 10A — Ticket 88, the mute. ~~FIRST, and out of order~~ — SPENT
 
-**Do this before anything else in the whole runbook.** The largest press available
-today hides **173 findings**, asks for no reason and records no section. It
-persists for ever. Ticket 65 counted the table: 45 events, 14 keys, 5 live
-overrides, all dismissals, **no live mute in any store**. The table is
-append-only, so the migration is free today and impossible on the day an editor
-presses the button.
+**Do not run this session.** Ticket 88 was built on 2026-08-10, and on 2026-08-13 its
+subject was withdrawn by [ADR 0011](../../docs/adr/0011-the-mute-is-withdrawn.md), which
+supersedes ADR 0008. The command below would build a feature that no longer exists, against
+an ADR that is superseded, so it is struck rather than deleted — 88 is what made the mute
+reviewable, and a reviewable feature is a measurable one, which is how the evidence for
+withdrawing it was produced. Tickets 111 to 115 carry the withdrawal, in that order.
 
-```
-/clear
-```
+**One thing in it did not expire.** *A mute may drift when a heading changes; an id may
+not* was the trap this session was written around, and ticket 111 met it: the last live
+mute had drifted off the section it names and was hiding nothing, so revoking it moved no
+number. The anchor heading survives as a locator.
 
-```
-/implement .scratch/content-parity-log/issues/88-the-mute-says-what-it-hides.md
+The session as it stood, kept as the record:
 
-Read docs/adr/0008-the-mute-key-carries-the-anchor-heading.md first. Every rule
-is there and none of them is reopened.
-
-The heading goes in the mute key and NOT in the finding id. Ticket 34 kept it out
-of the id and out of the grouping key, and this ticket does not change that. A
-mute may drift when a heading changes; an id may not.
-
-Gate: on nl__terrasoverkapping the pair (text-missing, «Gumax® Heavy Duty»)
-covers 64 of 88 and must leave 24 visible. The page-wide form still works on
-nl__fotogalerij/zonwering, where the section form offers 239 groups.
-
-Record how many live mutes existed before the change. If it is still zero, say
-so, because that is what made the change free.
-```
+> ~~**Do this before anything else in the whole runbook.** The largest press available
+> today hides **173 findings**, asks for no reason and records no section. It
+> persists for ever. Ticket 65 counted the table: 45 events, 14 keys, 5 live
+> overrides, all dismissals, **no live mute in any store**. The table is
+> append-only, so the migration is free today and impossible on the day an editor
+> presses the button.~~
+>
+> ~~`/implement .scratch/content-parity-log/issues/88-the-mute-says-what-it-hides.md` —
+> read ADR 0008 first; the heading goes in the mute key and NOT in the finding id; gate on
+> `nl__terrasoverkapping`, where `(text-missing, «Gumax® Heavy Duty»)` covers 64 of 88 and
+> must leave 24 visible; record how many live mutes existed before the change.~~
 
 ### Session 10B — The one measurement
 
@@ -1069,9 +1097,12 @@ count moves at any of the three steps.
 
 75: read docs/adr/0005-class-visibility-is-one-enum.md. The shown-or-hidden
 boolean becomes work / information / diagnostic. It is NOT a second axis —
-ticket 02 removed that, and the class stays the only axis and the mute key. The
-migration is defined so the denominator does not move on the day it lands. Expect
-no movement at all.
+ticket 02 removed that, and the class stays the only axis. (It was also the mute
+key; ADR 0011 withdrew the mute on 2026-08-13, so the class now keys nothing and
+that half of the argument is gone. Read 75's own dated note before you start it.)
+The migration is defined so the denominator does not move on the day it lands. Expect
+no movement at all — but 75's criterion about a mute leaving the denominator is void,
+and there is nothing outside the count any more.
 
 77: read docs/adr/0004-history-is-a-run-log-that-never-re-attaches.md. Ids stay
 content-addressed and they expire, so ticket 01 stands. The word "Changed" is
@@ -1145,8 +1176,11 @@ that the ticket did not have: the migration can be **unfinished**, which looks
 the same as broken in a snapshot. Empty alts on 4 of 7 pages, `serre` and
 `tuinkamer` identical, and counts that move both ways all point that way.
 
-The owner will rebuild the page by hand and compare. Until then, mute nothing on
-these pages — a mute on `image-missing` hides the number to watch.
+The owner will rebuild the page by hand and compare. ~~Until then, mute nothing on
+these pages — a mute on `image-missing` hides the number to watch.~~ — **2026-08-13, ADR
+0011: an instruction that can no longer be disobeyed.** There is no mute, so nothing can
+hide the number to watch. A dismissal on these pages would expire the moment either side
+changes, which is the property this warning wanted and could not get.
 
 ---
 
@@ -1227,7 +1261,11 @@ observed**, and **ends with a negative invariant and a test that pins it**.
 > on `nl__terrasoverkapping`, where `(text-missing, «Gumax® Heavy Duty»)` covers
 > 64 of 88 and must leave 24 visible.
 
-That is ticket 88, and a test can be written from it before any code is read.
+That is ticket 88. **Its subject was withdrawn on 2026-08-13 (ADR 0011) and the criterion is
+kept here anyway**, because what this section teaches is the grammar and not the feature: it
+names a file, states an observable outcome, and ends with a negative invariant — *and must
+leave 24 visible* — that a test can pin. A test could be written from it before any code was
+read, and one was.
 Compare it with the shape that cannot be built: "a cell clamps to about three
 lines". A criterion with an unchosen number is a decision, and a decision goes to
 `/grill-with-docs` and not to `/implement`.
@@ -1320,7 +1358,12 @@ crawl, it is a `data` ticket and it runs alone.
 | 04 | Six store page lists | closes with 55 | — | none |
 | 37 | Leesweergave | after 68 | `web` | **parked 2026-08-11** — built once, kept on `park/ticket-37-leesweergave` |
 | 58 | Head becomes a check | session 6 | `data` **alone** | `/implement` |
-| 88 | The mute says what it hides | **session 10A, first** | `web` | `/implement` — free today, impossible later |
+| 88 | The mute says what it hides | session 10A | `web` | **done** — built 2026-08-10; its subject was **withdrawn 2026-08-13**, ADR 0011, and it produced the evidence |
+| 111 | Revoke the last mute | — | `read` | **done** — 2026-08-13. Revoked; it had drifted and no number moved |
+| 112 | *Dempen…* leaves the interface | — | `web` | **done** — 2026-08-13 |
+| 113 | The displays stop reading the mute | — | `web` | **done** — 2026-08-13 |
+| 114 | The mute leaves the derivation | — | `compare` | **done** — 2026-08-13, `36dcd89` |
+| 115 | The record is squared with the decision | — | — | **done** — 2026-08-13. Docs only |
 | 76 | The coverage curve | session 10B | `read` | `/implement` — research |
 | 89 | What a campaign rule would catch | session 10B | `read` | `/implement` — research. **It may refuse 90** |
 | 72 | Astro 6 | session 10C | `web` **alone** | `/implement` |
@@ -1342,7 +1385,7 @@ crawl, it is a `data` ticket and it runs alone.
 | 87 | Three widths | session 10E, **last** | `web` | `/implement` — last, so it is not done twice |
 | 39 | Class vocabulary axes | session 7 | `compare` **alone** | **parked** — the vocabulary. Land it first when it restarts |
 | 40 | Coverage, missing pages | session 7 | `compare` | **parked** |
-| 41 | Coverage matrix | session 8 | `web` | **parked** |
+| 41 | Coverage matrix | session 8 | `web` | **parked `wontfix` 2026-08-13**, ADR 0011 — its second half was bulk muting. In `issues/.out-of-scope/` |
 | 45 | Images across stores | session 8 | `compare` | **parked** |
 | 42 | Untranslated text | session 9 | `compare` | **parked** |
 | 43 | Alt language and meta | session 9 | `compare` | **parked** |

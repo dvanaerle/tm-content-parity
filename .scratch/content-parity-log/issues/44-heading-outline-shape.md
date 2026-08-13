@@ -39,9 +39,11 @@ The extract gives this directly. Elements carry `kind: 'heading'` and
 Ticket 11 said to reuse ticket 02's `restructured`. **Ticket 33 may have retired
 that class already** — spec 32 replaces `structure` with a directional pair and
 reworks the text classes. Ticket 39 settles what axis B uses for the cap, because
-a class record carries one axis and `muteKey()` is `store|page|class`, so one
-shared class would let an editor mute both axes with one click. **Use whatever
-ticket 39 decided.** Do not open it again.
+a class record carries one axis ~~and `muteKey()` is `store|page|class`, so one
+shared class would let an editor mute both axes with one click~~. **Use whatever
+ticket 39 decided.** Do not open it again. — **the mute clause is struck 2026-08-13, ADR
+0011**, and it was the whole reason given here. The instruction stands: 39 owns the
+question, and 39 now has to answer it on taxonomy.
 
 ## Acceptance criteria
 

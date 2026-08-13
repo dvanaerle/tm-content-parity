@@ -112,9 +112,13 @@ contacted. 451 store-page pairs, 415 answered 200.
 
 ### Classes
 
-`class` is the only axis and it is the mute key (ticket 01), so link findings
+`class` is the only axis ~~and it is the mute key (ticket 01)~~, so link findings
 carry a granular set rather than one `link` class — otherwise an editor must
-mute genuine 404s to silence intended redirects.
+~~mute~~ hide genuine 404s to silence intended redirects. — **2026-08-13, [ADR
+0011](../../../docs/adr/0011-the-mute-is-withdrawn.md): the key is withdrawn and the seven
+classes stand.** The class carries the shown-or-hidden default, which ticket 75 turns into a
+visibility enum, so one `link` class would still put `broken-link` and `redirect` behind one
+switch. That is the same argument without the mute.
 
 | class | shown | fires when |
 | --- | --- | --- |

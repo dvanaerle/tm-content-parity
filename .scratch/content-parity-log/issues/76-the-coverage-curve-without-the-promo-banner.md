@@ -99,7 +99,9 @@ queue on the old head is designing for work that is already gone.
 - The distribution of shown findings per page after removal. Before removal: median
   37, p90 151, worst 399 on `nl__fotogalerij/zonwering`.
 - A one-line answer to the question ticket 31 asked three years of sessions ago:
-  **is bulk dismissal worth building, or does a mute already do this job?**
+  ~~**is bulk dismissal worth building, or does a mute already do this job?**~~
+  — **answered 2026-08-13 by ADR 0011: bulk dismissal is the only one of the two left**, and
+  ticket 110 built it over a ticked selection of pages.
 
 ## Acceptance criteria
 

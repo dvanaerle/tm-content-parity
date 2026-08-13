@@ -103,7 +103,10 @@ about whether an element is on the page.
 
 ### Classes
 
-`class` is the only axis and the mute key, per tickets 01 and 02. Five classes:
+`class` is the only axis ~~and the mute key~~, per tickets 01 and 02. Five classes:
+— **the key clause is struck 2026-08-13, [ADR
+0011](../../../docs/adr/0011-the-mute-is-withdrawn.md).** The five classes stand; they were
+argued from the shown-or-hidden default as much as from the key.
 
 | Class | Meaning | Default |
 | --- | --- | --- |

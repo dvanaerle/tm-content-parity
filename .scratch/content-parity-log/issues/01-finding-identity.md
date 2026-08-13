@@ -6,6 +6,23 @@ Resolved: 2026-08-06
 Blocked by: —
 Parent: ../map.md
 
+> **The mute is withdrawn, 2026-08-13, [ADR
+> 0011](../../../docs/adr/0011-the-mute-is-withdrawn.md).** This ticket invented the two
+> override kinds, so it is where every later *the class is the mute key* comes from. **One
+> kind is left**: a dismissal, keyed on the finding id, expiring the moment either text
+> changes. The *Mute* column of the table below, and the paragraph under it, are the record
+> of 2026-08-06 and are struck in place.
+>
+> The reasoning in them is not what failed. *A dismissal expiring is correct, not a defect*
+> is still the spine of the model, and *a mute is a judgement, an id is an identity* is the
+> distinction ADR 0008 was built on. What failed is the claim in the last line — *muted
+> findings stay visible behind a toggle, so nothing is truly hidden.* Ticket 88 measured the
+> reach: one press covered 173 findings the editor had never seen, and none of the eleven
+> mutes anybody wrote survived its own author's second thoughts.
+>
+> Everything else here stands: the id is still content-addressed, still page-scoped, still
+> excludes the occurrence count, and still deliberately expires.
+
 ## Question
 
 How does a finding keep a stable id across re-crawls, so that a dismissal or a
@@ -61,21 +78,27 @@ problem.
 
 ### Two override kinds
 
-| | Dismissal | Mute |
+**The `Mute` column is struck, 2026-08-13, ADR 0011.** One override kind is left.
+
+| | Dismissal | ~~Mute~~ |
 | --- | --- | --- |
-| Keyed on | content | page (or store) + class |
-| Lifetime | expires when either side's text changes | persists |
-| Means | "these two exact strings are acceptable" | "this class is never a defect here" |
-| Example | `Levering in 5 werkdagen.` — trailing dot, fine | `price` on this page; `campaign` site-wide |
+| Keyed on | content | ~~page (or store) + class~~ |
+| Lifetime | expires when either side's text changes | ~~persists~~ |
+| Means | "these two exact strings are acceptable" | ~~"this class is never a defect here"~~ |
+| Example | `Levering in 5 werkdagen.` — trailing dot, fine | ~~`price` on this page; `campaign` site-wide~~ |
 
 A dismissal expiring is **correct**, not a defect. The editor judged *this prod
 text* against *this new text*. If either changes, the judgement is stale and must
 be re-asked. This is what stops a dismissal from silently absorbing a later
 regression — the risk flagged when charting.
 
-Mutes cover rotating content (campaigns, prices, stock), which would otherwise
+~~Mutes cover rotating content (campaigns, prices, stock), which would otherwise
 demand a fresh dismissal every cycle and train editors to click without reading.
-Muted findings stay visible behind a toggle, so nothing is truly hidden.
+Muted findings stay visible behind a toggle, so nothing is truly hidden.~~
+— **struck 2026-08-13, ADR 0011.** The rotating-content case was real and it got a better
+answer than a mute: the campaign banner leaves the log **at extraction**, as an excluded
+region anchored on an id (ADR 0003, tickets 64 and 90), which costs no editor judgement at
+all and cannot expire with the copy.
 
 ### The id
 

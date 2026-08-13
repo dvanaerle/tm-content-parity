@@ -6,6 +6,20 @@ Resolved: 2026-08-06
 Blocked by: 01, 03
 Parent: ../map.md
 
+> **The mute is withdrawn, 2026-08-13, [ADR
+> 0011](../../../docs/adr/0011-the-mute-is-withdrawn.md).** This ticket is where *a mute
+> leaves the denominator, a dismissal enters the numerator* was written, and that sentence is
+> quoted across the repo. **Nothing leaves the denominator now.** The `page-class` scope and
+> the `muted` action are struck below; the derived states are four, not five.
+>
+> The rest of this ticket is untouched and is still the model. The split between a **claim of
+> fact** and a **judgement** stands, `fixed` still loses to re-check and shows as
+> contradicted, the table is still append-only with latest-event-per-key, a page review still
+> goes stale rather than expiring, and the bar is still absolute counts over the current
+> snapshot. What the withdrawal removes is the third precedence case: there is no longer any
+> way to say *this is not work at all* about a place on a page, and that judgement is now a
+> property of the **class** (ADR 0005, ticket 86).
+
 ## Question
 
 What are the states a finding moves through, who may move it, and what does
@@ -78,7 +92,7 @@ append.
 | scope | key | actions |
 | --- | --- | --- |
 | `finding` | ticket 01's finding id | `fixed`, `dismissed`, `cleared` |
-| `page-class` | ticket 01's mute key | `muted`, `cleared` |
+| ~~`page-class`~~ | ~~ticket 01's mute key~~ | ~~`muted`, `cleared`~~ — struck 2026-08-13, ADR 0011. The eleven rows stay in the table |
 | `page` | store + page | `reviewed`, `cleared` |
 
 The latest event per `(scope, key)` wins —
@@ -93,7 +107,8 @@ This **amends a charting decision**. "A manual checkbox overrides re-check and
 wins until cleared" was written when there was one checkbox. With the claim and
 judgement split:
 
-- **`dismissed` and `muted` win.** Re-check cannot evaluate acceptability.
+- **`dismissed` ~~and `muted`~~ wins.** Re-check cannot evaluate acceptability. — **2026-08-13,
+  ADR 0011: one judgement.**
 - **`fixed` loses.** Re-check is the arbiter of fact. A snapshot that still gives
   the id makes the finding **contradicted** — open again, shown as
   *claimed fixed, still differs*, attributed to the person who claimed it.
@@ -122,9 +137,13 @@ closed — a dismissal quietly absorbing a later regression — this time site-w
 
 A dismissal is the one action that asserts "this difference is acceptable". It is
 the claim a reader challenges later, and the one that survives a re-crawl.
-`fixed` proves itself at the next re-check, and `muted` is legible from its key.
+`fixed` proves itself at the next re-check, ~~and `muted` is legible from its key~~.
 A note demanded on all three trains editors to type `.` and destroys the signal
-where it was needed.
+where it was needed. — **2026-08-13, ADR 0011: *legible from its key* did not hold.**
+Ticket 88 made the note mandatory on a mute for exactly that reason, and four of the eleven
+rows predate it and carry none. The fear in the last sentence was also right: six of the
+eleven notes read `Test`, `Testring`, `Tesriyg` or `testing`. Both halves of this paragraph
+were true at once, which is why the mute went rather than its note requirement.
 
 ### The progress bar
 
@@ -134,9 +153,13 @@ Numerator: absent + `dismissed` + `fixed` and not contradicted.**
 - Hidden classes (`restructured`, `price`, `campaign`, `redirect`, `extra-link`,
   `image-added`, `image-campaign`) are in neither. They are noise by decision,
   and a bar that counts them never reaches zero, which equals no bar.
-- **A mute removes findings from the denominator; a dismissal moves them to the
+- ~~**A mute removes findings from the denominator; a dismissal moves them to the
   numerator.** A mute says "not a defect here"; a dismissal says "I read this one
-  and accepted it".
+  and accepted it".~~ — **struck 2026-08-13, ADR 0011, and this is the sentence quoted
+  across the repo.** Nothing is removed from the denominator: every difference in a shown
+  class is either open work or work an editor closed. *"I read this one and accepted it"* is
+  the only judgement left, and *"not a defect here"* is now said about the class rather than
+  about a place on a page. Ticket 114 removed the subtraction from `barOf()`.
 - **`fixed` counts as closed until it is contradicted.** This is what makes the
   button worth pressing on a frozen snapshot, where nothing can contradict it.
 - **Always show the absolute counts next to the percentage.** The denominator

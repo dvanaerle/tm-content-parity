@@ -2,7 +2,9 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: 114 — **added 2026-08-13.** This ticket enumerates *"five derived states —
+Blocked by: nothing — **114 resolved 2026-08-13 and the block is lifted; the sentences it
+was waiting on are struck in place below.** The note that added it read: This ticket
+enumerates *"five derived states —
 `open`, `dismissed`, `muted`, `fixed`, `contradicted`"* and defines Closed partly as *"a
 muted finding is Closed but it left the denominator"*. ADR 0011 withdrew the mute: there
 are **four** states, and nothing leaves the denominator. The three buckets are unchanged
@@ -17,9 +19,11 @@ reading five state words and working out which of them means finished.
 
 ## The decision this ticket carries
 
-There are five derived states — `open`, `dismissed`, `muted`, `fixed`, `contradicted` —
-and they are correct. What is missing is a grouping over them. A **bucket** is that
-grouping. It is not a state, and nothing is stored on a finding to put it in one.
+There are ~~five~~ **four** derived states — `open`, `dismissed`, ~~`muted`,~~ `fixed`,
+`contradicted` — and they are correct. What is missing is a grouping over them. A **bucket**
+is that grouping. It is not a state, and nothing is stored on a finding to put it in one.
+— **`muted` struck 2026-08-13, ADR 0011**; ticket 114 removed it from the derivation, and
+the grouping this ticket carries is unaffected.
 
 **Needs attention is `contradicted`, and nothing else.** A page review that went stale
 is a fact about a *page*, so it stays a badge on the page. Two scopes in one bucket
@@ -47,8 +51,8 @@ exist, and the word stays retired.
 - [ ] Closed is kept out of the active workload: it is reachable and it is not the
       default view.
 - [ ] The three buckets are derived in `overrides/state.mjs` as a pure function over the
-      five states, with a test covering each state's bucket, including a contradicted
-      claim and a muted finding.
+      ~~five~~ four states, with a test covering each state's bucket, including a
+      contradicted claim ~~and a muted finding~~. — **2026-08-13, ADR 0011.**
 - [ ] No new column, action or scope is added to the overrides table. This ticket stores
       nothing.
 - [ ] The bar is still computed over the current snapshot only, and this ticket does not
@@ -56,9 +60,13 @@ exist, and the word stays retired.
 
 ## Traps
 
-- **A muted finding is Closed but it left the denominator**, while a dismissed finding
+- ~~**A muted finding is Closed but it left the denominator**, while a dismissed finding
   is Closed and is in the numerator. Two Closed findings therefore affect the bar
-  differently, and the interface must not suggest the bucket determines the bar.
+  differently, and the interface must not suggest the bucket determines the bar.~~
+  — **struck 2026-08-13, ADR 0011.** The trap is gone with the state that made it: nothing
+  leaves the denominator now, so every Closed finding affects the bar the same way. The
+  closing warning survives on its own merits — a bucket is a grouping and still does not
+  determine the bar, because an absent finding is Closed and is in neither term.
 - **`contradicted` is derived and never stored.** Do not add a column for it on the way
   to grouping it.
 - The proposal listed "Fix not verified" beside contradicted as if they were two things.

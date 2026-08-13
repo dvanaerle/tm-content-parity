@@ -5,6 +5,15 @@ Status: ready-for-human
 Blocked by: 31 — resolved
 Parent: ../map.md
 
+> **The mute lines are struck, 2026-08-13.** [ADR
+> 0011](../../../docs/adr/0011-the-mute-is-withdrawn.md) withdrew the `muted` override, so
+> every criterion and trap here that reasons from it is struck in place and dated below.
+> The dismissal and the clearing halves are untouched and still describe what shipped: the
+> ticked selection, the tri-state, the floating bar and the one selection per list are all
+> live. Where a criterion covered both presses, only the mute clause is struck. The prose
+> below still argues from *two* presses in places; read those paragraphs as the 2026-08-12
+> record.
+
 **What to build:** an editor opens a difference, unticks the two pages they are not sure
 about, and the press covers the other eight. The buttons, the counts and the events all
 follow the ticks.
@@ -64,13 +73,22 @@ thirteen tests in `web/src/lib/bulk.test.mjs` keep their meaning.
       at a time. Two open differences with ticks in both must never produce one count that
       does not say what it counts.
 - [x] Both actions state the selected count, not the repeat's size: *Negeren op 4
-      pagina's…*, *Dempen op 4 pagina's…*.
+      pagina's…*, ~~*Dempen op 4 pagina's…*~~ — **struck 2026-08-13, ADR 0011: there is no
+      *Dempen* press.** The rule holds for the two presses that are left.
 - [x] The dismissal writes one event per **ticked** page, and the sentence above it counts
       the same pages the events do.
-- [x] The mute's coverage, its page count and the sections it names are all counted over
-      the ticked pages. Unticking a page removes its section from the sentence.
-- [x] A mute that is refused says **which pages** refuse it, and marks them in the table.
-      Unticking exactly those pages offers the press.
+- [x] ~~The mute's coverage, its page count and the sections it names are all counted over
+      the ticked pages. Unticking a page removes its section from the sentence.~~
+      — **struck 2026-08-13, ADR 0011.** Built and shipped; ticket 112 took the press out
+      of the interface and 114 took `muteCoverage()` out of the derivation. The ask was
+      right about the granularity and wrong about the subject: it was the mute's reach that
+      made ticked selection necessary, and the withdrawal answers the same complaint by
+      removing the reach.
+- [x] ~~A mute that is refused says **which pages** refuse it, and marks them in the table.
+      Unticking exactly those pages offers the press.~~ — **struck 2026-08-13, ADR 0011.**
+      The refusal this served was the twelve-page repeat one of whose pages carries the
+      difference before the first heading. That case is now simply a dismissal on twelve
+      pages, because a dismissal is keyed on two texts and never on a section.
 - [x] An empty selection shows no bar, rather than a bar carrying buttons that would write
       nothing.
 - [x] A selection made with no editor name still gets a bar, and the bar says a name is
@@ -96,15 +114,20 @@ thirteen tests in `web/src/lib/bulk.test.mjs` keep their meaning.
   searched row saying *op 10 pagina's* is ten **matching** pages, and ticking all of them
   dismisses ten while leaving any unmatched page of the same difference open. That is the
   right behaviour and the wrong sentence if the sentence is silent.
-- **One selection, two presses, two eligibilities.** A dismissal may not touch a finding a
-  colleague decided; a mute's coverage deliberately **includes** decided findings, because
+- **One selection, two presses, two eligibilities.** — **history from 2026-08-13, ADR
+  0011:** the two eligibilities were the mute's and the dismissal's, and there is one press
+  with one eligibility now. The trap read: a dismissal may not touch a finding a colleague
+  decided; a mute's coverage deliberately **includes** decided findings, because
   `muteCoverage()` counts what a key covers and not what it changes (ADR 0008). So the same
   ticked row can be skipped by one press and counted by the other. Say it; do not resolve it
   by making the two agree, because they are not measuring the same thing.
 - **The doubled figure still applies to the dismissal.** `CONTEXT.md`'s *Repeat* entry: the
   page is a term of the finding id, so pages and findings are one number and only one of
-  them is printed. The mute is the exception and states two on purpose — it hides more than
-  the difference pressed on, and that gap is the warning.
+  them is printed. ~~The mute is the exception and states two on purpose — it hides more than
+  the difference pressed on, and that gap is the warning.~~ — **struck 2026-08-13, ADR
+  0011: there is no exception left.** One number is now always the right number of numbers,
+  which is the same thing said from the other side: nothing hides more than what was
+  pressed on.
 - **The difference row is entirely a `CollapsibleTrigger`.** — **retired by round two, R1:**
   the select-all leaves the row, so the trap has nothing left to catch. It read: the
   select-all that belongs on the row is inside the control that opens it, and a plain
@@ -159,13 +182,17 @@ gesture it saved. **A selection is made in the list of things being selected.**
 bulk press offers nothing at all there: round one drew the state badge and stopped. If a
 press can put ten pages in a state, it has to be able to take them out of it.
 
-- [x] A ticked page whose finding is `dismissed` or `muted` is undoable from the bar, with
-      the same wording the single control uses: *Ongedaan maken*.
+- [x] A ticked page whose finding is `dismissed` ~~or `muted`~~ is undoable from the bar, with
+      the same wording the single control uses: *Ongedaan maken*. — **the `muted` half is
+      struck 2026-08-13, ADR 0011.** The criterion shipped and still describes the dismissal,
+      which is the only judgement there is now.
 - [x] The undo writes the same events the single control writes, through the same rule and
       not a second copy of it: `{ scope: 'finding', action: 'cleared', findingId }` for a
-      dismissal, and `{ scope: 'page-class', action: 'cleared', class, anchorHeading? }` for
+      dismissal, ~~and `{ scope: 'page-class', action: 'cleared', class, anchorHeading? }` for
       a mute — the mute undone on the key that made it, or a section mute is left standing
-      and the row does not move.
+      and the row does not move.~~ — **the `page-class` half is struck 2026-08-13, ADR
+      0011.** Ticket 111 revoked the last live mute by hand before the branch removed the
+      code, so no key was left needing a clearing this press could no longer write.
 - [x] **The undo takes no note**, unlike the other two presses. That is deliberate and it
       matches the single control: a `cleared` event carries no reason, and inventing a
       mandatory one here would make bulk undo harder than the undo it mirrors. This is the

@@ -142,8 +142,8 @@ search through 82" as its own scope. Ticking this criterion here would have clai
 subject that ships in 83.
 
 What is built is the mechanism the criterion asks for, over the notes that exist today:
-`note`, the sentence an editor gives when dismissing or muting, and the one a page review
-can carry. They are filtered live from the events the store page has already loaded —
+`note`, the sentence an editor gives when dismissing ~~or muting~~ (2026-08-13, ADR 0011),
+and the one a page review can carry. They are filtered live from the events the store page has already loaded —
 in memory, not indexed, exactly as the spec body says — through `latestByKey()`, so a
 withdrawn note is never offered as a live reason. The day 83's column exists, its notes
 are found by the same function with no change here.

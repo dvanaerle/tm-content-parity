@@ -7,6 +7,16 @@ Assignee: d.aerle
 Blocked by: 02, 04
 Parent: ../map.md
 
+> **The mute is withdrawn, 2026-08-13, [ADR
+> 0011](../../../docs/adr/0011-the-mute-is-withdrawn.md).** Axis B is parked, and when it
+> restarts **two of the rules below have no mechanism**: the three-way class split argued
+> from the mute key, and *an editor mutes the pages that are absent on purpose*. Both are
+> struck in place. Tickets 39, 40, 43 and 44 are `needs-triage` for this reason and none of
+> them is an agent's to pick up: axis B needs an answer to **how an editor says a page is
+> absent on purpose**, and a dismissal is keyed on two texts, which a missing page does not
+> have. Everything else here — presence, untranslated as set membership, the separate bar,
+> every store comparing to NL — is unaffected.
+
 ## Question
 
 What does the coverage axis check when it compares NL to the other five stores,
@@ -116,11 +126,14 @@ records a judgement and an editor who changes the rules hold two different
 powers, and ticket 03 made that table append-only and unauthenticated on purpose.
 
 **Three classes, not one**: `untranslated`, `alt-untranslated`,
-`meta-untranslated`. The reason is mechanical, not taxonomic. `class` is ticket
+`meta-untranslated`. ~~The reason is mechanical, not taxonomic. `class` is ticket
 01's mute key and ticket 02's shown/hidden switch. Alt text and meta are much
 more likely to be muted for a whole store than body copy is, and one shared class
-would make an editor hide visible copy to silence a `<title>`. All three are
-shown.
+would make an editor hide visible copy to silence a `<title>`.~~ All three are
+shown. — **the reason is struck 2026-08-13, ADR 0011.** The class keys nothing, so nothing
+an editor does to one class reaches another. Half survives: `class` is still ticket 02's
+shown-or-hidden switch, which ticket 75 turns into a visibility enum. Whether that carries
+three classes is ticket 39's to decide, on taxonomy.
 
 ### Page presence
 
@@ -128,10 +141,15 @@ A **null cell** in the seed data — the page is not in that store's sitemap —
 a `missing-page` finding. There are 635 null cells of 1086. Only 20 of 181 rows
 hold all six stores, and 53 rows are NL only.
 
-Every absent page is a finding, and an editor **mutes** the pages that are absent
+Every absent page is a finding, ~~and an editor **mutes** the pages that are absent
 on purpose. `muteKey()` is already `store|page|class`, so per-store muting needs
 no change to the contract. The UI gives a "mute for all stores" bulk action that
-writes five events, as ticket 09 already set the pattern for bulk dismissal.
+writes five events, as ticket 09 already set the pattern for bulk dismissal.~~
+— **struck 2026-08-13, ADR 0011.** The first clause stands and the rest has no mechanism.
+This is the open question axis B now owes an answer to, and it is why ticket 40 is
+`needs-triage` and ticket 41 is parked: *absent on purpose* is a judgement about a page
+that has no text on either side, so neither of the two things left — a dismissal on a
+finding id, a review on a page — says it.
 
 The two alternatives were worse. If a human must first mark each NL page as
 in-scope per store, the tab shows nothing until 905 decisions are made. If a

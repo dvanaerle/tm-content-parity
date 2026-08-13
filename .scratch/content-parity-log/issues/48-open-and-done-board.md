@@ -51,9 +51,9 @@ ticket or none.
   the row. A board breaks it. If the answer is a mode, note that ticket 37 already
   adds *Leesweergave* as a second mode, so this would be the third.
 - **What counts as "afgerond"?** A tick is a fix claim, and a fix claim **loses** to
-  re-check: a contradicted claim is open again. A dismissal and a mute are
-  judgements and close a row a different way. Does *Afgeronde taken* hold all three,
-  or claims only? Where does a contradicted claim sit — it is ticked and it is open.
+  re-check: a contradicted claim is open again. A dismissal ~~and a mute are~~ is a
+  judgement and closes a row a different way. Does *Afgeronde taken* hold ~~all three~~
+  both, or claims only? — **2026-08-13, ADR 0011: two kinds, not three.** Where does a contradicted claim sit — it is ticked and it is open.
 - **Is a grouped finding one task or several?** One finding can be several rows.
   A `×6` finding ticked once moves six rows at the same time, so the board would
   count six done tasks for one act of work.

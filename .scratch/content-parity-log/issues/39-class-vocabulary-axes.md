@@ -45,11 +45,15 @@ and do not open them again in a later ticket.
 
 1. **`restructured` is used by both axes.** Ticket 02 made it an axis A text
    class. Ticket 11 uses the same class for the heading outline cap. A record
-   with one `axis` field cannot be in two axes. Also, `muteKey()` is
+   with one `axis` field cannot be in two axes. ~~Also, `muteKey()` is
    `store|page|class`, so an editor who mutes `restructured` mutes it on both
-   axes with one click. Give axis B its own class, or make `axis` a list. A
+   axes with one click.~~ Give axis B its own class, or make `axis` a list. ~~A
    separate class is the recommendation: the mute key makes one shared class a
-   trap, and the two findings do not mean the same thing.
+   trap~~, and the two findings do not mean the same thing. — **struck 2026-08-13, ADR
+   0011.** The two struck clauses were the whole mechanical argument, and they are void: no
+   key over-reaches any more. **The first sentence survives untouched** — one `axis` field
+   still cannot hold two axes — and *the two findings do not mean the same thing* is the
+   taxonomic argument the re-triage has to decide on. Decide it on that, or do not split.
 2. **`orphan-page` has no producer, and on 2026-08-11 it stopped being owed one.**
    Declare the class, build no producer, and say so in the ticket. The reason is no
    longer "no known instances": ticket [16](16-new-site-page-discovery.md) closed
@@ -95,4 +99,5 @@ A wide change with a small blast radius: four files import `vocabulary.mjs`
 
 `ObservedPage` in `compare/contract.mjs` is the seam that gives axis B the whole
 override machinery for free. Anything axis B makes that satisfies that shape gets
-the bar, the mute and the dismissal with no new code.
+the bar ~~, the mute~~ and the dismissal with no new code. — **2026-08-13, ADR 0011: the
+machinery is one judgement smaller.**

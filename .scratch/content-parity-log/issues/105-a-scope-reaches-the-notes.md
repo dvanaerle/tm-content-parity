@@ -25,7 +25,9 @@ each other. Today every note renders identically. That stops here.
 - [ ] An unscoped search returns exactly today's notes. This adds a narrowing and removes
       none.
 - [ ] A note's kind is legible on sight — a note attached to a page reads differently from
-      the sentence given when dismissing or muting a finding.
+      the sentence given when dismissing ~~or muting~~ a finding. — **2026-08-13, ADR 0011:
+      a dismissal is the only judgement that takes a note.** The two kinds of note are still
+      two.
 - [ ] A one-sided page with a note shows that note, alongside 104's explanation of why
       there are no findings.
 - [ ] The two halves keep their two freshnesses and stay two blocks. No merged list.
