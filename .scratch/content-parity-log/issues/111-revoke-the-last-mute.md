@@ -56,11 +56,14 @@ The mute is revoked — row `712`, `2026-08-13T06:56:09.069Z` — and **`nl`'s n
 not move**. They did not move because on the snapshot in front of readers the mute was
 already hiding nothing: it had drifted off the section it names.
 
-Measured with `.scratch/revoke111/revoke.mjs` (read, name the event, write, read) and
-`.scratch/revoke111/verify.mjs` (the two after-the-fact queries), both against
+Measured with a throwaway pair under `.scratch/revoke111/` — one script to read, name the
+event, write it and read again, one to run the two after-the-fact queries — against
 `data/reports/` at observation `2026-08-12T05:54:59.189Z-55445435` and the live table.
-They are untracked, as every measurement script here is — `.scratch/measure79/` is the
-precedent, and this one calls code ticket 114 removes. This answer is the record.
+**They have since been deleted**, and were never committed: a one-time revocation cannot
+be re-run, and they call the `page-class` half of `clearedEventFor()` that ticket 114
+removes. What they did is written down here instead — the key, the counts, the event, the
+row it became, and both queries — because this answer is the record and the script was
+only ever the instrument.
 
 ### What it covered: zero, in every class
 
