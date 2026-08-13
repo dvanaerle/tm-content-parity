@@ -1,8 +1,13 @@
 # CONTEXT — the words this repo uses
 
-Written in ASD-STE100 Simplified Technical English. Each word below has one
-meaning in the code, in the interface and in the tickets. The decisions behind
-them are in `.scratch/content-parity-log/map.md`.
+Written in ASD-STE100 Simplified Technical English, spelled in UK English. Each word
+below has one meaning in the code, in the interface and in the tickets. The decisions
+behind them are in `.scratch/content-parity-log/map.md`.
+
+**The interface speaks this list's own language.** It is English (UK) on all six stores
+since 2026-08-13 (ADR 0014), so a label and its entry here are the same words. Each Dutch
+label the interface had is kept below, struck and dated, because a ticket written before
+that day names it.
 
 ## The two sites
 
@@ -127,7 +132,8 @@ element any more: it folds the links inside it. Both the word and the rule are g
   is needed in. It is what the override control and the context marker both read, and it
   asks the **visibility** and never a class name — so a class re-triaged in
   `vocabulary.mjs` needs no second edit. A `diagnostic` finding is decidable: what a rule
-  saw is behind *Ruis tonen*, and it keeps the control it has.
+  saw is behind *Show noise* (~~*Ruis tonen*~~, 2026-08-13), and it keeps the control it
+  has.
   **Diagnostic** tells the author of a rule what the rule saw: it stays behind the
   noise toggle. Visibility is not a second axis; it replaced a shown-or-hidden
   boolean, and the class stays the only axis. "Excluded from comparison" is not a
@@ -238,19 +244,20 @@ element any more: it folds the links inside it. Both the word and the rule are g
   for as long as the filter is on.
   A **search is narrowed by it too** (ticket 102): the classes are the filter and the
   term is a search, so a term composes with a filter rather than replacing one, and the
-  strip stays up over the result. *Inclusief afgesloten* is not a filter — it says what
+  strip stays up over the result. *Include closed* (~~*Inclusief afgesloten*~~,
+  2026-08-13) is not a filter — it says what
   counts as a result and not what is on screen — and it is absent from the strip.
   On the dashboard the filter is part of the **screen** and therefore lives in the URL
   (ticket 109), so Back restores it and a copied link carries it. On a page it stays
   session-only: a page filter is a pass an editor is making, not a place to return to.
   Neither of them has ever moved a number and this does not change that.
 - **Screen** — everything a dashboard is *drawing*: which of the two views is on, the
-  sort, the search term, the class pills and *inclusief afgesloten*. It lives in the
+  sort, the search term, the class pills and *include closed*. It lives in the
   query string, so Back returns to it and it can be sent to a colleague; only what
   differs from the default is written, so a query means somebody chose something. It is
   what is drawn and never what a number means — see **Filter**. **Which group is open
   is not part of it**, for the reason **Class group** gives: that is session state, and
-  a URL that pinned it would make *filter wissen* and the address bar disagree about
+  a URL that pinned it would make *clear filter* and the address bar disagree about
   what a filter is.
 - **Landing** — arriving at one difference because a link named it. A page link from
   the dashboard carries the **finding id**, and the page opens the tab that finding
@@ -259,30 +266,34 @@ element any more: it folds the links inside it. Both the word and the rule are g
   ADR 0006 keeps the content view whole. A finding id is a term of the text, so a link
   outlives the finding it names, and a page reached by a stale one says so — as does one
   naming a finding no tab draws, which is the `meta` check: Meta is display only.
-  The tab and *Ruis tonen* are **borrowed**, each released on its own the
+  The tab and *Show noise* are **borrowed**, each released on its own the
   moment the reader touches that control. Taking one back is not taking the other back:
   switching tabs must not switch off the toggle that was drawing the landed row.
 - **Dashboard** — one store's work on one screen, at `/<store>/`. It carries only
   that store's summaries and only that store's progress numbers. There is no
   all-stores dashboard: a store is the unit an editor is responsible for.
   It holds **two views over one derivation**, and one filter serves both.
-  **Verschillen** is the store's repeats in **class groups**, worst-first by pages
-  inside each one, and it answers *what do I decide next*; opening a row lists its
-  pages, and a page name opens the whole content view for that page and never a
-  fragment of it. **Pagina's** is the store's pages, worst-first, and it answers
+  **Repeats** (~~*Verschillen*~~, 2026-08-13) is the store's repeats in **class groups**,
+  worst-first by pages inside each one, and it answers *what do I decide next*; opening a
+  row lists its pages, and a page name opens the whole content view for that page and
+  never a fragment of it. The Dutch label named the wider word: a **difference** is wider
+  than a finding and the view lists **repeats**, so this is a correction and not a
+  translation. **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first,
+  and it answers
   *which page do I open next*. There is no all-stores repeat view, for the reason
   there is no all-stores dashboard.
-- **Class group** — the repeats of one class in *Verschillen*, under a label carrying
+- **Class group** — the repeats of one class in *Repeats*, under a label carrying
   the class and how many repeats it holds. The groups are in the vocabulary's order
   and never in the counts' order, because a group that moves position as the work is
   done is a group nobody can learn where to look for. A `work` class with no repeats is
   a group that says so: "nothing wrong here" and "this class does not exist" are two
   different answers. **Opening a group is not a filter**: it changes what is drawn and
   never what is included, so it is session state, it never enters the amber strip and
-  *filter wissen* does not touch it. The class pills stay the one filter, and with a
+  *clear filter* does not touch it. The class pills stay the one filter, and with a
   pill on only the selected groups exist, so the two controls cannot tell different
   stories.
-  A group holds its own **rendering budget**, so *volgende 100* pages the group it
+  A group holds its own **rendering budget**, so *show the next 100*
+  (~~*volgende 100*~~, 2026-08-13) pages the group it
   sits in. Do **not** call it a *section*: that word named the mute scope, a run of one
   page under an anchor heading, and though the mute is withdrawn (ADR 0011) the word stays
   taken — it is what an anchor heading names, and ticket 100's own wording is refused here
@@ -292,8 +303,9 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Store switcher** — the six store ids in the shell header, each a link to that
   store's dashboard. It never goes to the same page in another store: the stores
   translate the category url keys, so that page often does not exist.
-- **Noise toggle** — *Ruis tonen*, the control that shows the classes whose visibility is
-  `diagnostic`. It is **not** a filter: it belongs to the whole log, and *filter wissen*
+- **Noise toggle** — *Show noise* (~~*Ruis tonen*~~, 2026-08-13), the control that shows
+  the classes whose visibility is `diagnostic`. It is **not** a filter: it belongs to the
+  whole log, and *clear filter* (~~*filter wissen*~~, 2026-08-13)
   does not clear it. An editor who asked to see what a rule saw did not ask a question
   about classes. It had a second job until ADR 0011 — it also showed muted findings, and
   it was called *Ruis en gedempt tonen* — and a diagnostic class is not a judgement, so
@@ -305,12 +317,17 @@ nothing. **"Content"** showed two blocks of flat Markdown and no diff. **"Outlin
 was production's elements indented by heading level, which the content view contains;
 what is left of it is a heading jump-list beside the rows.
 
+The four tabs a page has are **Text**, **Links**, **Images** and **Meta**
+(~~*Inhoud*, *Afbeeldingen*~~, 2026-08-13). The first is **Text** and not *Content*:
+"Content" is retired above and **content view** is the spine that tab draws, so one word
+would mean three things. `Text` is the check's own name.
+
 **"Taken"** was every finding of one page in one list, grouped by check. Each of its
 three groups is a tab that shows the same findings with more context, so it was the
 one reading of the work that had to strip the context to exist. The grouped reading
-now lives on the dashboard as *Verschillen*, which groups **across** pages — where the
+now lives on the dashboard as *Repeats*, which groups **across** pages — where the
 repetition is. Nothing it offered is unreachable: a text finding is a row of the
-content view, a link and an image finding are rows of Links and Afbeeldingen, and all
+content view, a link and an image finding are rows of Links and Images, and all
 four carry the same override control, the same class pill, the same detail and the
 same section line.
 
@@ -368,7 +385,8 @@ who wins against re-check.
   2026-08-13**, together with the `page-class` scope. It was built, tried and never
   adopted: eleven presses, all on `nl`, ten of them revoked by their own author within
   a minute, six of them labelled *Test*. The one that was left standing carries the note
-  `"Negeren"` — the name of the other control. And the job anybody wanted it for, silencing
+  `"Negeren"` — the name, in the language the interface then spoke, of the other control
+  (now *Dismiss*). And the job anybody wanted it for, silencing
   a whole class, is not a job it could do: its key named one section of one page, so a
   class across a store was hundreds of presses that no later crawl would extend. That job
   belongs to **visibility** on the class. Do not reason from this term.
@@ -390,12 +408,18 @@ who wins against re-check.
   It covers what the tool cannot see: layout, tone, an image that agrees by name
   and shows something else. It never expires; it becomes **stale**.
 - **Cleared** — the one action that revokes the last override on a key. There are
-  no `un-` words.
+  no `un-` words. The control says **Clear** (~~*Ongedaan maken*~~, 2026-08-13). This is
+  the rule's first real test: *Undo* is the exact word it refuses, and it is what a
+  translation of the Dutch would have written, so the label is a **correction** and not a
+  translation.
 - **Contradicted** — a fix claim that the current snapshot disagrees with. The
-  finding is open again, and the interface says *claimed fixed, still differs*,
-  with the name of the person who claimed it. It is derived, never kept.
+  finding is open again, and the interface says *claimed fixed, still differs*
+  (~~*nog niet opgelost*~~, 2026-08-13), with the name of the person who claimed it. The
+  Dutch said "not yet solved", which was never it: nobody is solving anything, a claim
+  is contradicted. It is derived, never kept.
 - **Stale** — a page review made against a page whose findings changed after it.
-  The interface says **"changed since review"**, not "needs review", because a
+  The interface says **"changed since review"** (~~*gewijzigd sinds controle*~~,
+  2026-08-13), not "needs review", because a
   page also becomes stale when an editor corrects things. **Its findings** means
   every finding on the page, in any class: a reviewer read the page and not the
   counted subset of it, and a hash that filtered on visibility made a change to the
@@ -424,7 +448,9 @@ who wins against re-check.
 Two words are retired. **"Resolved"** hid the difference between a claim and a
 judgement. **"Reopened"** describes nothing: a finding is in the snapshot or it
 is not. "Resolved" stays retired, and the third bucket is named **Closed**, which
-this list already defines.
+this list already defines. Since 2026-08-13 the ban is **enforced**: the stopword guard
+in `npm test` refuses the word anywhere under `web/src`, which is the first mechanical
+check ticket 80's rule has had.
 
 ## Progress
 
@@ -463,7 +489,8 @@ Neither can make a finding, because the comparison needs 200 on both sides. They
 are scope decisions and not editor work, so they stay out of the progress bar.
 
 **There is no migration checklist, and none is planned.** One-sided pages are *shown* and
-not *decided*: the `eenzijdig` chip, the store header sentence and a read-only aside naming
+not *decided*: the `one-sided` chip (~~`eenzijdig`~~, 2026-08-13), the store header sentence
+and a read-only aside naming
 each page with its `skipReason`. The default answer for a legacy-only page is to build it,
 which needs no vocabulary, so the checklist and its verbs were parked `wontfix` on
 2026-08-11 — see `issues/.out-of-scope/20-one-sided-pages-checklist.md` for the reasoning and
@@ -474,6 +501,12 @@ a surviving page is renamed rather than missing.
 
 ## Axes
 
+- **Untranslated** — a finding class on the **scraped store content**: a store page that
+  shows the NL text where the store's own language belongs (ticket 42). It is never a
+  description of this interface. The interface has one language and it is English, and it
+  is not "untranslated" — there is nothing it is waiting for. Two meanings for one word is
+  what this list exists to stop, and this is the collision that became available the day
+  the chrome stopped being Dutch (ADR 0014).
 - **Axis A — parity.** Production against the new site, in one store.
 - **Axis B — coverage.** NL against the five other stores. Translated text is
   different text on purpose, so axis B does not compare words.

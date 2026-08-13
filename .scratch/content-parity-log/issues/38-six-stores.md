@@ -43,8 +43,12 @@ Status: resolved 2026-08-07
 - [x] Each store carries its own progress numbers.
 - [x] **Axis A only** — production against the new site *within* one store. Axis
       B, NL against the other stores, stays unbuilt and is not touched here.
-- [x] The interface stays **Dutch** on every store. The log's question is whether
-      two strings match, which needs no comprehension of either.
+- [x] ~~The interface stays **Dutch** on every store.~~ The log's question is whether
+      two strings match, which needs no comprehension of either — that half stands, and
+      it is the whole reason the language is **one** language. **Reversed 2026-08-13**:
+      the interface speaks **English (UK)** on all six stores. See
+      `docs/adr/0014-the-interface-speaks-english.md`. The tick stays: this was met, and
+      then the decision changed.
 - [x] **Measure the be/be_fr shared-host blind spot and write the number into
       `map.md`.** `cross-store-link` compares hosts and those two stores share
       one, so a French page linking into a Dutch Belgian page is not flagged.

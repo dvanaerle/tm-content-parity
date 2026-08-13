@@ -173,8 +173,11 @@ the six stores, in the house style.
     colleague a link to the French dashboard.
 38. As a content editor, I want each store's dashboard to load only that store's
     pages, so that the page is fast.
-39. As a content editor, I want the interface to stay in Dutch on every store, so
-    that the tool reads the same wherever I am.
+39. ~~As a content editor, I want the interface to stay in Dutch on every store, so
+    that the tool reads the same wherever I am.~~ **Reversed 2026-08-13**: one language
+    on every store, and that language is **English (UK)**. The story's own reason — the
+    tool reads the same wherever I am — is what survives. See
+    `docs/adr/0014-the-interface-speaks-english.md`.
 40. As a content editor, I want the be_fr store treated as its own store, so that
     the French Belgian pages are not mixed into the Dutch Belgian ones.
 41. As a manager, I want each store to carry its own progress numbers, so that I
@@ -395,9 +398,13 @@ moved baseline.
     page linking into a Dutch Belgian page is not flagged. Crawl be_fr, count how
     many be_fr anchors actually point at a non-`/fr` path on the shared host, and
     write the number into the map. Only open a ticket if the number is not zero.
-42. **The interface stays Dutch on every store.** The log's question is whether
-    two strings match, which needs no comprehension of either. No translation
-    affordance.
+42. ~~**The interface stays Dutch on every store.**~~ The log's question is whether
+    two strings match, which needs no comprehension of either. **No translation
+    affordance** — that half **survives**, and it is not weakened by what follows.
+    **Reversed 2026-08-13**: the language is **English (UK)**, on all six stores. Only
+    the value changed; one language is still the rule. See
+    `docs/adr/0014-the-interface-speaks-english.md`, which states that the reversal is
+    no permission to add i18n.
 
 ### Phase 8 — the design system
 

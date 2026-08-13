@@ -4,8 +4,10 @@ Drafted 2026-08-13 by ticket 118, before the run lands. Measured with
 `node crawl/probes/probe-118-review-staleness.mjs` against the live override log and
 `data/reports/` as it stands. The numbers below are that run.
 
-The interface is Dutch, so translate this before it goes out. It is written here in the
-language of the repository.
+~~The interface is Dutch, so translate this before it goes out.~~ **Struck 2026-08-13**:
+the interface speaks English (UK) on all six stores (ADR 0014), so this note and the
+screen no longer need a translator between them. It is written here in the language of
+the repository.
 
 ## What changes
 

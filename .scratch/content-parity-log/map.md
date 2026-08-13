@@ -22,6 +22,9 @@ differences, act on it, press Recheck, and watch the count fall to zero.
   theme; the new environment runs Hyvä. See `CONTEXT.md` and `AGENTS.md` in
   `devdva02` for the ubiquitous language.
 - **Write in ASD-STE100 Simplified Technical English.**
+- **Spell in UK English**: `behaviour`, `honouring`, `normalisation`. It has been a
+  convention by usage since the first ticket and it was written nowhere; ticket 124
+  wrote it down, because the interface now spells in the same place the docs do.
 - **Skills to consult**: `mattpocock-skills:grilling` and
   `mattpocock-skills:domain-modeling` for decision tickets;
   `mattpocock-skills:prototype` for UI questions; `mattpocock-skills:research`
@@ -1302,6 +1305,19 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     the split is a commit per area and not a second ticket. It **blocks 42**, which
     builds the axis B tab and would otherwise write Dutch labels a week before
     deleting them.
+
+    **Resolved 2026-08-13.** Four commits, one per area: the contract (the five screen
+    parameters, `finding` and `back`, the `/search-index/` route, the export filenames,
+    the six store names, `lang="en-GB"` and the three dates), the labels (34 files), the
+    stopword guard, and the documents. **No count, bar, denominator or derivation moved**
+    — 679 tests pass and the ones that pin that rule pass unchanged, which is the whole
+    claim of a relabelling. The guard caught one real hit on its way in: *resolved* as an
+    ordinary verb in `view.mjs`, reworded rather than excused. Two words were renamed
+    beyond the ticket's list, both under the trap's own test — *does it reach the address
+    bar* — namely `bevinding` and `terug`; and the `bevinding-` DOM anchor followed them.
+    The old Dutch parameters are **not** aliases, so a link copied before today opens the
+    default screen. **125 is unblocked**, and it owns the `lang` on a content cell, which
+    this ticket deliberately did not touch.
   - [125 — A content cell says which language it is in](issues/125-a-content-cell-says-which-language-it-is-in.md)
     — `ready-for-agent`, blocked by 124. `lang="nl"` has been wrong on five of six
     stores since the shell was written, so a German paragraph on `/de/` is

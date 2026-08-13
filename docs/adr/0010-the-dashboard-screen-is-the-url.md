@@ -90,10 +90,15 @@ Five things a landing has to get right, each of which was wrong first:
 - `CONTEXT.md` gains **Screen** and **Landing**, and **Filter** no longer says
   *session-only* — on the dashboard it is part of the screen. On a page it still is:
   a page filter is a pass an editor is making, not a place to return to.
-- The parameter names are part of every link an editor copies, so `weergave`, `sortering`,
-  `zoek`, `soort` and `afgesloten` are as stable as the page keys.
-- `terug` arrives off the address bar and is laundered through `screenFromSearch()`, which
-  keeps the five keys the dashboard has. Nothing else can reach an href.
+- The parameter names are part of every link an editor copies, so ~~`weergave`,
+  `sortering`, `zoek`, `soort` and `afgesloten`~~ **`view`, `sort`, `query`, `classes` and
+  `closed`** are as stable as the page keys. *Amended 2026-08-13 by
+  `0014-the-interface-speaks-english.md`: the names are English, and the Dutch ones are not
+  accepted as aliases. This ADR is amended and not superseded — everything else in it
+  stands.*
+- ~~`terug`~~ **`back`** arrives off the address bar and is laundered through
+  `screenFromSearch()`, which keeps the five keys the dashboard has. Nothing else can reach
+  an href.
 - Two seams are the browser rather than a pure function — the mirror and the landing — so
   the suite gained a second vitest project that runs real Chromium. A pretend DOM would
   answer a question about `history` and `scrollIntoView` by definition, which is not the
