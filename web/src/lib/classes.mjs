@@ -31,7 +31,10 @@ const TONE = {
   'broken-link': 'severe',
   leakage: 'severe',
   'cross-store-link': 'severe',
-  'heading-level': 'attention',
+  // `heading-level` sat here until ticket 86 moved it to `information`, and `toneOf()`
+  // answers `neutral` for that before it ever reads this table. The entry was removed
+  // rather than left: a tone that cannot be reached is a tone the next reader would
+  // trust.
   copy: 'attention',
   'link-target': 'attention',
   'alt-lost': 'attention',
@@ -60,6 +63,36 @@ function toneOf(cls) {
   if (FINDING_CLASSES[cls].direction === 'lost') return 'lost';
   return TONE[cls] ?? 'attention';
 }
+
+/**
+ * Whether a finding is one an editor can **decide** (ticket 86).
+ *
+ * `CONTEXT.md` says an `information` finding exactly: **a finding you can link to and
+ * cannot decide.** It keeps its id, because somebody may have to be sent to it, and it
+ * offers no override control, because a dismissal says "these two exact strings are
+ * acceptable" and on an information row nothing is being asked.
+ *
+ * It reads the **visibility** and never a class name. Ticket 86 moved `heading-level`
+ * behind it and ticket 116 brings `regrouped`; written as a special case for the first it
+ * would have to be built twice. It is the sibling of `toneOf()` above, and it is here for
+ * the same reason: a rule the interface derives from the visibility belongs beside the
+ * other one, not in whichever surface asked first. The three surfaces that ask are the
+ * content view, Links and Afbeeldingen — and two of them have no rows, so this cannot
+ * live in `view.mjs`, which is the content view's own module.
+ *
+ * It is deliberately **not** `isWork()`. A `diagnostic` finding is decidable: what a rule
+ * saw sits behind *Ruis tonen*, and it keeps the control it has. Only `information` says
+ * that nothing is being asked.
+ *
+ * A row whose two sides agree carries no finding at all (ticket 02) and has nothing to
+ * ask either, so `null` answers `false`. One field covering both cases is what lets
+ * ticket 79's context marker read one rule instead of two.
+ *
+ * @param {{ visibility?: import('../../../compare/vocabulary.mjs').Visibility } | null | undefined} finding
+ *   A finding the override derivation has decided, or `null`.
+ * @returns {boolean}
+ */
+export const canDecide = (finding) => Boolean(finding) && finding.visibility !== 'information';
 
 /**
  * @param {string} cls

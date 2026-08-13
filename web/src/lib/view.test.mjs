@@ -239,6 +239,53 @@ describe('prepareRows', () => {
     ]);
   });
 
+  it('says of an information row that it cannot be decided', () => {
+    // Ticket 86. `CONTEXT.md` says an `information` finding exactly: **a finding you can
+    // link to and cannot decide.** It keeps its id, because somebody may have to be sent
+    // to it, and it carries no override control, because a dismissal says "these two
+    // exact strings are acceptable" and nothing is being asked.
+    //
+    // The row reads it off `canDecide()` in `classes.mjs`, which asks the visibility and
+    // never the class name. Written as a special case for `heading-level` it would have to
+    // be built a second time for ticket 116.
+    const base = fixture();
+    base.rows.push({ class: 'heading-level', prod: 0, new: 0, score: null, finding: 'level1' });
+    base.findings.push({ id: 'level1', class: 'heading-level', visibility: 'information', state: 'open', occurrences: 1, detail: 'h2 → h3' });
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: false });
+    const level = rows.find((row) => row.class === 'heading-level');
+
+    expect(level.decidable).toBe(false);
+    // It is still on screen, it still has its finding, and the finding still has its
+    // detail. Rendered, not counted — and not deleted.
+    expect(level.finding.id).toBe('level1');
+    expect(level.finding.detail).toBe('h2 → h3');
+  });
+
+  it('says of a work row that it can be decided, and of a diagnostic row as well', () => {
+    // The gate is `information` and nothing wider. A diagnostic row is behind *Ruis
+    // tonen*, and what the author of a rule sees there is not this ticket's subject —
+    // it keeps the control it has today.
+    const base = fixture();
+    base.rows.push({ class: 'tag-changed', prod: null, new: 2, score: null, finding: 'tag1' });
+    base.findings.push({ id: 'tag1', class: 'tag-changed', visibility: 'diagnostic', state: 'open', occurrences: 1 });
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: true });
+
+    expect(rows.find((row) => row.class === 'copy').decidable).toBe(true);
+    expect(rows.find((row) => row.class === 'text-missing').decidable).toBe(true);
+    expect(rows.find((row) => row.class === 'tag-changed').decidable).toBe(true);
+  });
+
+  it('has nothing to decide on a row that carries no finding', () => {
+    // A row whose two sides agree is not a finding at all (ticket 02), so there is no
+    // decision to offer on it either. Saying so in the same field is what lets ticket
+    // 79's context marker read one rule instead of two.
+    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+
+    expect(rows.filter((row) => row.class === null).map((row) => row.decidable)).toEqual([false, false]);
+  });
+
   it('never returns a count a bar could be built from', () => {
     // Decision 25 of spec 32. Two people quoting "the number" must mean the same
     // number, so nothing here may look like a denominator.
@@ -541,6 +588,19 @@ describe('groupRepeatsByClass', () => {
     expect(of('text-added').repeats).toHaveLength(1);
     expect(of('copy').repeats).toHaveLength(1);
     expect(of('tag-changed')).toBeUndefined();
+  });
+
+  it('draws no empty group for a class that has left work', () => {
+    // Ticket 86. `heading-level` was `work` and therefore had an empty group owed to it;
+    // it is `information` now, so it forms no group at all unless it holds something —
+    // and it never will, because `loadSummaries()` keeps the work classes only. The rule
+    // is `isWork(cls) || byClass.has(cls)`, which needed no edit for this: it already read
+    // the visibility. Written as a special case for the class name it would need one, and
+    // ticket 116 would need a second.
+    const groups = groupRepeatsByClass([repeat('copy', 2)]).map((group) => group.class);
+
+    expect(groups).toContain('casing');
+    expect(groups).not.toContain('heading-level');
   });
 
   it('draws only the selected classes when a class pill is on', () => {

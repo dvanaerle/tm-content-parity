@@ -13,7 +13,7 @@ import { Empty as EmptyState, EmptyDescription, EmptyHeader } from './ui/empty.j
 import { Label } from './ui/label.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs.jsx';
-import { CHECK_LABEL } from '../lib/classes.mjs';
+import { CHECK_LABEL, canDecide } from '../lib/classes.mjs';
 import { findingAnchor, landedRowProps, landingFor, useLanding, useLandOn } from '../lib/landing.mjs';
 import { findingInSearch } from '../lib/page-url.mjs';
 import { BANNER, CHROME, INK } from '../lib/palette.mjs';
@@ -98,14 +98,19 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
     [derived, noise],
   );
 
-  const control = (finding) => (
+  // One closure for all three tabs, so the question *is there a decision here* is asked
+  // once. An `information` finding is one an editor can link to and cannot decide, so it
+  // is drawn with no control at all — the same shape `MetaTable` has had since ticket 54,
+  // for the same reason: the shared colours must not show something an editor can
+  // complete. Ticket 86, and `canDecide()` in `view.mjs` is the rule.
+  const control = (finding) => (canDecide(finding) ? (
     <OverrideControl
       finding={finding}
       observationId={observationId}
       append={append}
       canWrite={canWrite}
     />
-  );
+  ) : null);
 
   // What the toggle would reveal, which is the `diagnostic` findings and nothing else.
   // The label must count what it uncovers: an `information` finding is on screen already.

@@ -147,13 +147,16 @@ describe('findingSetHash', () => {
     expect(reloaded.findingSetHash(everyClass)).toBe(findingSetHash(everyClass));
   });
 
-  it('is byte-identical across the flip ticket 86 makes', async () => {
-    // The flip this ticket exists to unblock, spelled out: `heading-level` from `work`
-    // to `information`, and nothing else touched.
+  it('is byte-identical across a flip of one single class', async () => {
+    // The flip this ticket unblocked has landed: ticket 86 moved `heading-level` out of
+    // `work` on 2026-08-13, so the edit is modelled from where the class now sits, back
+    // the way it came. One class moving is the case that matters beside the sweep above,
+    // because it is the shape every future re-triage has.
     const reloaded = await retriaged((name) => (
-      name === 'heading-level' ? 'information' : FINDING_CLASSES[name].visibility
+      name === 'heading-level' ? 'work' : FINDING_CLASSES[name].visibility
     ));
-    expect(reloaded.FINDING_CLASSES['heading-level'].visibility).toBe('information');
+    expect(FINDING_CLASSES['heading-level'].visibility).toBe('information');
+    expect(reloaded.FINDING_CLASSES['heading-level'].visibility).toBe('work');
     expect(reloaded.findingSetHash(everyClass)).toBe(findingSetHash(everyClass));
   });
 
@@ -280,8 +283,12 @@ describe('FINDING_CLASSES', () => {
     expect(FINDING_CLASSES['text-added']).toMatchObject({ check: 'text', visibility: 'information' });
   });
 
-  it('counts a heading-level change and diagnoses a plain tag change', () => {
-    expect(FINDING_CLASSES['heading-level']).toMatchObject({ check: 'text', visibility: 'work' });
+  it('reads a heading-level change and diagnoses a plain tag change', () => {
+    // Ticket 86: `heading-level` left `work`. A demoted heading is a heading-hierarchy
+    // question, and heading hierarchy is SEO work the log has always said is somebody
+    // else's phase. It is not deleted — a real difference nobody has decided about
+    // would be thrown away — so it renders and it counts nowhere.
+    expect(FINDING_CLASSES['heading-level']).toMatchObject({ check: 'text', visibility: 'information' });
     expect(FINDING_CLASSES['tag-changed']).toMatchObject({ check: 'text', visibility: 'diagnostic' });
   });
 
@@ -321,20 +328,22 @@ describe('FINDING_CLASSES', () => {
 
     expect(group('work')).toEqual([
       'alt-changed', 'alt-lost', 'broken-link', 'casing', 'copy', 'cross-store-link',
-      'heading-level', 'image-missing', 'leakage', 'link-target', 'missing-link',
-      'text-missing',
+      'image-missing', 'leakage', 'link-target', 'missing-link', 'text-missing',
     ]);
     expect(group('information')).toEqual([
-      'extra-link', 'image-added', 'price', 'restructured', 'text-added',
+      'extra-link', 'heading-level', 'image-added', 'price', 'restructured', 'text-added',
     ]);
     expect(group('diagnostic')).toEqual([
       'campaign', 'image-campaign', 'no-declared-alternate', 'redirect', 'tag-changed',
     ]);
   });
 
-  it('counts twelve classes as work, which is the denominator this ticket did not move', () => {
+  it('counts eleven classes as work, which is the denominator ticket 86 moved', () => {
+    // Twelve until 2026-08-13. Ticket 75 landed the enum count-neutral at twelve, and
+    // ticket 86 is the first move that was **meant** to move the denominator: one class
+    // out of `work`, on its own commit, so that one number never hides two movements.
     const work = Object.values(FINDING_CLASSES).filter((cls) => cls.visibility === 'work');
-    expect(work.length).toBe(12);
+    expect(work.length).toBe(11);
   });
 });
 

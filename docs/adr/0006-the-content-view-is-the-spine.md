@@ -16,6 +16,18 @@ corpus says it is not. Measured over 448 reports, 22,990 shown findings:
 Three one-sided classes are **82%** of the work. `copy` is 3.4%, and it is the only
 class with a similarity score.
 
+> **`heading-level` is no longer in this table's subject, 2026-08-13, ticket 86.** It moved
+> from `work` to `information`, so its row is a count of differences that are rendered and
+> not counted. **The decision this ADR makes is unaffected, and the row is left standing on
+> purpose**: the argument is that most findings are one-sided and the question they ask is
+> *where does this text belong*, which only document order answers. Dropping `heading-level`
+> from `work` makes the three one-sided classes a **larger** share of the work, not a
+> smaller one, so it strengthens the conclusion. The row is also the evidence for a second
+> claim this ADR relies on — a `heading-level` row has two equal sides and is still worth a
+> position in the view — and that claim is what ticket 86 kept when it refused to delete the
+> class. Read the numbers as the measurement of 2026-08-10 over 448 reports; ticket 86
+> re-measured this class alone over 816 and found **2,846 findings, 10.00%**.
+
 For a one-sided finding the two sides are a string and nothing. A word diff of
 `Bekijk alle deals` against nothing draws one deletion block. It compares nothing,
 because the comparison is already answered. The question that is **not** answered is

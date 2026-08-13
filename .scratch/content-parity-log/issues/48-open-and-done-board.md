@@ -230,9 +230,24 @@ the predicate deliberately, once 80 has defined Closed.
       beside the `equal` field 68 put on `ContentRow`, and not a condition in a
       component.
 - [ ] A **contradicted** row does not collapse. It is Needs attention, not Closed.
-- [ ] A row carrying `heading-level` or `tag-changed` with an open finding does not
+- [ ] A row carrying ~~`heading-level` or~~ `tag-changed` with an open finding does not
       collapse, even though its words agree. This is the 68/79 disagreement above, and
       the answer states which rule won and why.
+      **`heading-level` is struck 2026-08-13, ticket 86**, which moved it to
+      `information`. It is not a counter-example any more — it is an instance of the
+      *third* collapse rule, not an exception to the first, because a finding you can
+      link to and cannot decide holds no open work whatever its words do. The example
+      this criterion needs is `tag-changed`, which is `diagnostic` and therefore still
+      decidable, and 86 left it alone deliberately. **86 also built the predicate this
+      ticket specifies**: `canDecide()` in `web/src/lib/classes.mjs`, applied to the row
+      as `ContentRow.decidable` in `view.mjs` beside 68's `equal` field, tested. So the
+      rule here is `collapse = equal || closed || !decidable`, and what is left to build
+      is the marker and the third term's place in it.
+- [ ] **Say in words whether an `information` finding is *open*.** This ticket's predicate
+      is *"no open work"* and it never defined the case, because when it was written every
+      shown class was work. Ticket 86 answered it in code — not work, therefore not open
+      work — and asked that this ticket answer it in its own words rather than inherit it
+      silently. Added 2026-08-13 by 86.
 - [ ] All positions of one finding collapse together. Occurrence count is not part of
       the finding id, so one decision closes every place it is drawn.
 - [ ] **The collapse set is computed when the page opens**, and a tick does not move

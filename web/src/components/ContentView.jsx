@@ -300,7 +300,20 @@ function Rows({ rows, control, sides, landed, settled }) {
                 {row.score !== null && <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>}
                 <ClampControl open={open.has(row.key)} onToggle={() => toggle(row.key)} />
                 <Occurrences count={row.finding?.occurrences} title={onePageTitle(row.finding?.occurrences)} />
-                {row.finding && <div className="mt-1">{control(row.finding)}</div>}
+                {/*
+                  * `decidable` and not `row.finding`: an `information` row keeps its
+                  * finding — it has an id and a link can name it — and offers no
+                  * decision, because nothing is being asked (ticket 86).
+                  *
+                  * This gates the **wrapper**, and `Ledger.jsx`'s closure gates the
+                  * control itself, because Links and Afbeeldingen share that closure and
+                  * have no rows to read. The two are one rule, `canDecide()`, and not a
+                  * rule stated twice: without this the row would draw an empty `mt-1`
+                  * div. It reads the row rather than calling the rule again so that
+                  * ticket 79's marker and this cell can never disagree about which rows
+                  * hold a decision.
+                  */}
+                {row.decidable && <div className="mt-1">{control(row.finding)}</div>}
               </TableCell>
               <DiffCells
                 prod={row.prod?.norm ?? null}

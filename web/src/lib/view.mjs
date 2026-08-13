@@ -20,6 +20,10 @@
 // The closed vocabulary, for the **order** of the class groups and nothing else. The
 // import site is `vocabulary.mjs` for the reason `classes.mjs` states.
 import { FINDING_CLASSES, isWork } from '../../../compare/vocabulary.mjs';
+// `canDecide()` is the interface's other rule derived from the visibility, and it lives
+// beside `toneOf()` rather than here: two of its three callers are the Links and
+// Afbeeldingen tabs, which have no rows at all (ticket 86).
+import { canDecide } from './classes.mjs';
 
 /**
  * @typedef {object} ContentFilter
@@ -86,6 +90,11 @@ export function toggleClass(filter, cls) {
  *                                     same string. The renderer must not diff it.
  * @property {number | null} score
  * @property {object | null} finding    The **derived** finding, with `state` and `visibility`.
+ * @property {boolean} decidable        Whether there is anything to ask about this row.
+ *                                     `canDecide()` in `classes.mjs` is the rule; the
+ *                                     field is it applied to the row, so ticket 79's
+ *                                     context marker reads one thing off the row and
+ *                                     does not have to reach for the finding again.
  * @property {ContentUnit | null} prod
  * @property {ContentUnit | null} new
  */
@@ -133,6 +142,7 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
       class: row.class,
       score: row.score,
       finding,
+      decidable: canDecide(finding),
       prod,
       new: next,
     });

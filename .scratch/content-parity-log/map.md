@@ -1309,7 +1309,17 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   [83 priority and note](issues/83-a-page-carries-a-priority-and-a-note.md),
   [84 migration decisions](issues/.out-of-scope/84-a-one-sided-page-carries-a-migration-decision.md),
   [85 the comparison scope](issues/85-the-comparison-scope-is-legible.md),
-  [86 heading level](issues/86-heading-level-becomes-information.md),
+  [86 heading level](issues/86-heading-level-becomes-information.md) — **resolved
+  2026-08-13. The first re-triage that moved the denominator on purpose: 2,846 findings,
+  10.00% of the work findings, out of `work` and into `information`. 28,462 → 25,616, and
+  no other class tally moved by one finding**, which
+  `crawl/probes/probe-86-heading-level-denominator.mjs` re-measures and fails on. Not a
+  deletion — it renders, keeps its `detail` and keeps its id. The evidence was never the
+  volume: of 682 live override events, **zero** sat on the class, so it had been shown for
+  months and skipped, and nothing detached. It needed 118 first, or one word would have
+  marked 392 page reviews stale on a day when no page changed. It also lands the generic
+  `canDecide()` rule that 79, 48 and 116 read; the **context marker itself is still 79's**,
+  so the collapse third of its criterion eight is a predicate here and a feature there,
   [90 a campaign is a class](issues/90-a-campaign-is-a-class-not-a-commit.md),
   [87 three widths](issues/87-three-widths.md).
 

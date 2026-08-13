@@ -118,7 +118,16 @@ element any more: it folds the links inside it. Both the word and the rule are g
   (ADR 0011); the class is now the only axis and keys nothing.
 - **Visibility** — what a class is for. One of three words, and each class has
   exactly one. **Work** is migration work: it counts. **Information** is a
-  difference an editor may want to read: it is rendered and it does not count.
+  difference an editor may want to read: it is rendered and it does not count. Said
+  exactly, it is **a finding you can link to and cannot decide** — it keeps its id,
+  because somebody may have to be sent to it, and it offers no override control, because
+  a dismissal says "these two exact strings are acceptable" and nothing is being asked.
+  **Decidable** is that half said as one word. The code says `canDecide` for the rule and
+  `decidable` for the field a row carries, and they are the same word in the two shapes it
+  is needed in. It is what the override control and the context marker both read, and it
+  asks the **visibility** and never a class name — so a class re-triaged in
+  `vocabulary.mjs` needs no second edit. A `diagnostic` finding is decidable: what a rule
+  saw is behind *Ruis tonen*, and it keeps the control it has.
   **Diagnostic** tells the author of a rule what the rule saw: it stays behind the
   noise toggle. Visibility is not a second axis; it replaced a shown-or-hidden
   boolean, and the class stays the only axis. "Excluded from comparison" is not a
@@ -176,11 +185,15 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Context marker** — one row that stands for a run of rows holding **no open work**
   and says how many blocks it holds. It expands. The content view shows the rows that
   need a decision by default and collapses the rest into markers, so position survives
-  and nobody scrolls past agreement or past their own finished work. Two things
-  collapse: a row whose texts agree, and a row whose finding is **Closed**. A
-  **contradicted** row does not, because it is Needs attention. Equal text is therefore
-  not the rule — a row can agree about every word and carry an open `heading-level`
-  finding, and that row stays (ticket 48). In this state every visible row is work, so the
+  and nobody scrolls past agreement or past their own finished work. Three things
+  collapse: a row whose texts agree, a row whose finding is **Closed**, and a row that
+  is not **decidable**. A **contradicted** row does not, because it is Needs attention.
+  Equal text is therefore not the rule — a row can agree about every word and carry an
+  open `copy` or `casing` finding, and that row stays (ticket 48). The third rule is
+  ticket 86's: a finding you can link to and cannot decide holds no work, whatever its
+  words do. `heading-level` was the example here until 2026-08-13, when 86 made it
+  `information` and moved it from the second side of that sentence to the third.
+  In this state every visible row is work, so the
   **row tint carries no signal and it goes**; the class pill carries the class. The
   retired *Diff* tab is what happens without the marker and without that rule.
 - **Clamp** — a row that shows some lines of each side, with a control that opens it.

@@ -85,7 +85,18 @@ export const FINDING_CLASSES = {
   // One class covers a level change and a promotion to or from a heading. The
   // class is the unit visibility is decided on, so one decision covers both. That is
   // accepted: both are the same defect to the outline.
-  'heading-level': { check: 'text', visibility: 'work', meaning: 'The text is the same, and it is a heading on one side or at another level.' },
+  //
+  // Re-triaged from `work` by **ticket 86**, 2026-08-13, and it is the first move that was
+  // meant to move the denominator: 2,846 findings — 10.00% of the work findings on the 722
+  // comparable pages — left the number everybody is measured on. A demoted heading is a
+  // heading-hierarchy question, and heading hierarchy is SEO work that the log has always
+  // said is somebody else's phase. The evidence is not the volume: of 682 live override
+  // events, **zero** sit on a `heading-level` finding. The class has been shown for months
+  // and skipped. It is **not deleted**, because that would throw away a real difference
+  // nobody has decided about; it renders, it keeps its `detail` and its id, and it counts
+  // nowhere. Where heading hierarchy is handled instead: nowhere yet — ticket 117 carries
+  // the 14 pages whose `h1` moved, deliberately untriaged.
+  'heading-level': { check: 'text', visibility: 'information', meaning: 'The text is the same, and it is a heading on one side or at another level.' },
   // Triaged by ticket 75. The same words in a different element, neither of them a heading:
   // nothing moved for a reader, and what it reports is what the alignment saw.
   'tag-changed': { check: 'text', visibility: 'diagnostic', meaning: 'The text is the same, and it sits in a different element. Neither side is a heading.' },

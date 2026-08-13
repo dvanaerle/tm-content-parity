@@ -76,6 +76,19 @@ the noise toggle. A dismissal moves findings into the numerator.
   remove it as SEO work is a move out of `work`, not a deletion, and it moves the
   denominator.
 
+  > **Landed 2026-08-13, ticket 86, and it is the first move this ADR enabled.** Re-measured
+  > over the 816 reports: **2,846 findings, 10.00% of the work findings** on the 722
+  > comparable pages — not 5.3%, because that figure was taken over 448 reports. The
+  > denominator went **28,462 → 25,616**, and no other class tally moved by a single
+  > finding. Not a deletion: the class renders, keeps its `detail` and keeps its id.
+  > Two things this ADR did not foresee, and both are why the move needed its own ticket
+  > rather than a line in 75. First, the evidence is not the volume — of 682 live override
+  > events, **zero** sit on a `heading-level` finding, so the class had been shown for
+  > months and skipped, and nothing detached. Second, the hash had to move first: ADR 0013
+  > took the visibility filter out of `findingSetHash()`, or this one word would have
+  > printed *"changed since review"* on all 392 pages carrying the class on a day when no
+  > page changed. **A re-triage is therefore not free, and the cost is not in the bar.**
+
 ## Scope
 
 Axis A only. Axis B keeps its own tab and its own bar.
