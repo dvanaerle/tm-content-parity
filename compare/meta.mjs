@@ -89,7 +89,7 @@ function stateOf(prod, next) {
  *
  * @param {import('./contract.mjs').PageExtract} production
  * @param {import('./contract.mjs').PageExtract} next
- * @returns {MetaRow[]} A row an editor has no power over is absent, not muted.
+ * @returns {MetaRow[]} A row an editor has no power over is absent, not rendered quietly.
  */
 export function metaRows(production, next) {
   const hosts = {

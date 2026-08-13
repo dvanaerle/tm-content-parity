@@ -80,8 +80,9 @@ export function compareImages(production, next, collector) {
     if (!prodAlt) continue;
 
     // Ticket 06 reuses ticket 02's vocabulary rather than adding `alt-casing`:
-    // `class` is the mute key, so an editor who mutes casing on a page must not
-    // keep receiving casing findings from a second tab.
+    // `class` is the unit visibility is decided on, and casing is one kind of difference,
+    // so it gets one decision. A separate `alt-casing` would split that decision in two
+    // and let the same judgement drift between two tabs.
     collector.add({
       class: tier2(prodAlt) === tier2(newAlt) ? 'casing' : 'alt-changed',
       prod: prodAlt,

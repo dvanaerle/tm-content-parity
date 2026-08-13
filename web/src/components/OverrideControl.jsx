@@ -21,11 +21,11 @@ import { Input } from './ui/input.jsx';
  * Ticking off a pass is then one click per row instead of a menu. Dismissal keeps
  * its menu because a dismissal carries a mandatory note and a checkbox cannot.
  *
- * There was a second judgement here until ticket 112. *Dempen…* opened the two
- * forms of ADR 0008 — a section and the whole page, each with its count — and
- * ADR 0011 withdrew the mute entirely: a dismissal, keyed on the finding and
- * expiring the moment either text changes, is the only judgement left. What went
- * with the button is everything written to tell the two apart.
+ * There was a second judgement here until ticket 112, and ADR 0011 withdrew it
+ * entirely: a dismissal, keyed on the finding and expiring the moment either text
+ * changes, is the only judgement left. A fully decided difference therefore offers
+ * only *Ongedaan maken*, and that case is correctly empty — a second judgement on
+ * top of a colleague's is how two people disagree invisibly in an append-only table.
  */
 
 /**
@@ -46,7 +46,6 @@ export const STATE = {
   open: { label: 'open', tone: 'neutral' },
   fixed: { label: 'opgelost', tone: 'added' },
   dismissed: { label: 'genegeerd', tone: 'neutral' },
-  muted: { label: 'gedempt', tone: 'neutral' },
   contradicted: { label: 'nog niet opgelost', tone: 'attention' },
 };
 
@@ -106,7 +105,7 @@ export default function OverrideControl({
           geclaimd opgelost door {override.editor}, verschilt nog
         </span>
       )}
-      {(state === 'fixed' || state === 'dismissed' || state === 'muted') && (
+      {(state === 'fixed' || state === 'dismissed') && (
         <span className="text-xs text-muted-foreground" title={override.note ?? undefined}>
           {override.editor}
           {override.note ? ` — ${override.note}` : ''}
@@ -120,13 +119,11 @@ export default function OverrideControl({
       {/* `fixed` is not here: its own checkbox unticks it. A second control for the
           same event would let the two disagree about what is on screen.
 
-          Which event this is, is `clearedEventFor()`'s to say — a mute is cleared on
-          the key that made it, and clearing the page-wide key would leave a section
-          mute standing with the row unmoved. It was written out here until ticket 110
-          gave the same press to a whole difference; two copies of that rule would be
-          two places for the next change to the mute key to land, and it would land in
-          one of them. */}
-      {canWrite && (state === 'dismissed' || state === 'muted') && (
+          Which event this is, is `clearedEventFor()`'s to say, and it stays that way now
+          there is one shape to return. It was written out here until ticket 110 gave the
+          same press to a whole difference; two copies of that rule would be two places
+          for the next change to a key to land, and it would land in one of them. */}
+      {canWrite && state === 'dismissed' && (
         <Action onClick={() => append(clearedEventFor(finding))}>
           Ongedaan maken
         </Action>
@@ -144,9 +141,9 @@ export default function OverrideControl({
  * superseded "the tick always wins" model feel natural. So a contradicted claim
  * stays ticked — the editor did claim it — and turns amber.
  *
- * A dismissal and a mute also close a finding, and neither is a claim of fact.
- * Their checkbox is disabled rather than ticked: ticking it would say the editor
- * corrected something they in fact accepted.
+ * A dismissal also closes a finding, and it is not a claim of fact. Its checkbox is
+ * disabled rather than ticked: ticking it would say the editor corrected something
+ * they in fact accepted.
  *
  * It is shadcn's checkbox on Base UI since the library came in, and no longer a
  * native `<input type="checkbox">`. That is why the tone below is a fill and no
@@ -154,7 +151,7 @@ export default function OverrideControl({
  */
 function FixCheckbox({ finding, canWrite, onTick }) {
   const { state, occurrences } = finding;
-  const closedByJudgement = state === 'dismissed' || state === 'muted';
+  const closedByJudgement = state === 'dismissed';
   const contradicted = state === 'contradicted';
 
   // One rename repeated six times is one finding, and one event closes all six.

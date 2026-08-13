@@ -3,8 +3,8 @@
  *
  * `compare/contract.mjs` says every reader treats the page value as an opaque
  * string. That is true of about 70 of its 82 readers, and it must stay true: the
- * key is in the finding id, in the mute key and in the override table, which is
- * append-only by policy. This module is the named exception, so the sentinel has
+ * key is in the finding id and in the override table, which is append-only by
+ * policy. This module is the named exception, so the sentinel has
  * one definition instead of one for each reader who guessed.
  *
  * ADR 0001 asks three questions. The first two are plain: the module is pure, and

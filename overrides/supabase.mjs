@@ -17,18 +17,29 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { namesSection } from '../shared/mute-key.mjs';
 
 const TABLE = 'overrides';
 
-/** The columns, in the order `state.mjs` wants them named. */
-const COLUMNS = 'id, created_at, editor, scope, action, store, page, finding_id, class, anchor_heading, names_section, observation_id, finding_set_hash, note';
+/**
+ * The columns, in the order `state.mjs` wants them named.
+ *
+ * `anchor_heading` and `names_section` are **not** selected. The withdrawn override of
+ * ADR 0011 was keyed on a section, and those two columns existed to carry it — the three
+ * anchor states of ADR 0008, and the second null needed to say them with. They stay on the
+ * table, holding what the eleven historical rows put there; nothing reads them.
+ *
+ * `anchorHeading` survives on a **finding**, where it says where on the page a difference
+ * sits. That comes off the snapshot and never off this table.
+ */
+const COLUMNS = 'id, created_at, editor, scope, action, store, page, finding_id, class, observation_id, finding_set_hash, note';
 
 /**
- * The two mappers are exported for their own test. They are the one place where
- * the mute's **three** anchor states meet a table with two nulls to say them
- * with: `names_section` is what tells the page-wide form from the section before
- * the first heading (ADR 0008).
+ * The two mappers are exported for their own test.
+ *
+ * `toEvent()` maps every row the same way and asks nothing about its scope, so a
+ * historical `page-class` row becomes an event like any other and the derivation is left
+ * to not look it up. A mapper that switched on the scope is where reading one of those
+ * eleven rows would start to throw.
  *
  * @param {any} row
  * @returns {import('./state.mjs').OverrideEvent}
@@ -43,9 +54,6 @@ export const toEvent = (row) => ({
   page: row.page,
   findingId: row.finding_id,
   class: row.class,
-  // Absent, not null. A row from before ticket 88 has no column and reads as the
-  // page-wide form, which is what it was.
-  ...(row.names_section ? { anchorHeading: row.anchor_heading ?? null } : {}),
   observationId: row.observation_id,
   findingSetHash: row.finding_set_hash,
   note: row.note,
@@ -62,8 +70,6 @@ export const toRow = (event) => ({
   page: event.page,
   finding_id: event.findingId ?? null,
   class: event.class ?? null,
-  anchor_heading: event.anchorHeading ?? null,
-  names_section: namesSection(event),
   observation_id: event.observationId ?? null,
   finding_set_hash: event.findingSetHash ?? null,
   note: event.note ?? null,

@@ -87,7 +87,7 @@ function mountControls(asked) {
  * A `redirect` finding: the tab has to change **and** the toggle has to come on. Its
  * class is one the tool does not show — a diagnostic for a rule author rather than work
  * for an editor — so *Ruis tonen* is the only thing that draws the row. That is the whole
- * of what puts a landing behind the toggle since ADR 0011 withdrew the mute, and it is why
+ * of what puts a landing behind the toggle since ADR 0011, and it is why
  * the subject here is a class and not a judgement.
  */
 const askedForBoth = { tab: 'Links', needsNoise: true, missing: false, unplaced: false };

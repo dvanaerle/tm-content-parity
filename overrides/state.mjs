@@ -12,49 +12,50 @@
  */
 
 import { FINDING_CLASSES } from '../compare/vocabulary.mjs';
-import { muteKey, namesSection } from '../shared/mute-key.mjs';
 
 /**
  * One row of the append-only `overrides` table, in the shape the port hands over.
+ *
+ * The unions below are what the app **writes**. The table is append-only and older
+ * than they are, so it also holds shapes they do not name: eleven `page-class` rows
+ * carrying the withdrawn action of ADR 0011. Those rows still load — the port
+ * maps them and `eventKey()` gives them a key of their own — and the derivation
+ * simply never looks that key up. Skipping what it no longer understands is the
+ * contract here; failing on it would make eleven rows unreadable for ever.
  *
  * @typedef {object} OverrideEvent
  * @property {string} [id]
  * @property {string} createdAt      ISO 8601. Latest per key wins; events may arrive unsorted.
  * @property {string} editor         A name from `localStorage`. There is no login.
- * @property {'finding' | 'page-class' | 'page'} scope
- * @property {'fixed' | 'dismissed' | 'muted' | 'reviewed' | 'cleared'} action
+ * @property {'finding' | 'page'} scope
+ * @property {'fixed' | 'dismissed' | 'reviewed' | 'cleared'} action
  * @property {string} store
  * @property {string} page
  * @property {string | null} [findingId]      When `scope === 'finding'`.
- * @property {string | null} [class]          When `scope === 'page-class'`.
- * @property {string | null} [anchorHeading]  The section a mute names. **Absent
- *   is the page-wide form**, and `null` is the content before the first heading,
- *   which is a section of its own (ADR 0008).
+ * @property {string | null} [class]          Only on the historical rows above.
  * @property {string | null} [observationId]  What a `fixed` claim was made against.
  * @property {string | null} [findingSetHash] On `reviewed`, for staleness.
  * @property {string | null} [note]           Required on `dismissed`.
  */
 
-/** @typedef {'open' | 'dismissed' | 'muted' | 'fixed' | 'contradicted'} FindingState */
+/** @typedef {'open' | 'dismissed' | 'fixed' | 'contradicted'} FindingState */
 
 /**
- * The append-only table is keyed on `(scope, store, page, finding_id ?? class)`,
- * and on the anchor slot as well when the scope is `page-class`. The
- * `overrides_current` view takes the latest row per key. This is the same key, so
- * the derivation agrees with the view.
+ * The append-only table is keyed on `(scope, store, page, finding_id ?? class)`, and
+ * `overrides_current` takes the latest row per key.
  *
- * The mute half is `muteKey()` from the contract, which is where that key is
- * written down. Two spellings of one key is how a mute starts hiding something
- * other than what the interface said it would.
+ * **The view's key carries one column more than this one** — `anchor_heading_slot` — and
+ * the two still agree on everything the app writes, because nothing sets `names_section`
+ * any more, so the slot is the constant `*page` on every new row and cannot separate two
+ * of them. On the eleven retired `page-class` rows the view can split what this merges.
+ * That is not a drift to fix: those rows are only ever reduced and sorted here, and no
+ * lookup asks for their key. Adding the slot back would be carrying a column for them.
  *
  * @param {OverrideEvent} event
  * @returns {string}
  */
 export function eventKey(event) {
-  if (event.scope === 'page-class') {
-    return ['page-class', muteKey(/** @type {any} */ (event))].join('|');
-  }
-  const key = event.scope === 'finding' ? event.findingId : '';
+  const key = event.scope === 'finding' ? event.findingId : event.class;
   return [event.scope, event.store, event.page, key ?? ''].join('|');
 }
 
@@ -118,31 +119,18 @@ export function derivePageState({ report, events, observationId = report.observa
   // it silently misses every override.
   const place = { store: report.store, page: report.page };
 
+  // **One key reaches one finding**, and it is the finding's own. ADR 0011 withdrew the
+  // override keyed on a class, so there is no second, wider key underneath this one — and
+  // with it went the precedence order between the two, and the fall-through a `cleared`
+  // finding override used to have onto the wider key. A cleared finding is now simply open.
   const findings = report.findings.map((finding) => {
     const own = current.get(eventKey({ ...place, scope: 'finding', findingId: finding.id }));
 
-    // Two mute keys can reach one finding: the section it sits in, and the page.
-    // A mute that named a heading the snapshot no longer has reaches nothing, and
-    // that is the whole of ADR 0008's drift rule — there is no fallback to write.
-    const section = current.get(eventKey({
-      ...place, scope: 'page-class', class: finding.class, anchorHeading: finding.anchorHeading ?? null,
-    }));
-    const wide = current.get(eventKey({ ...place, scope: 'page-class', class: finding.class }));
-
-    // A finding-scope override is the more specific key, so it beats a class mute.
-    // A `cleared` one matches neither branch and falls through to the mute.
     if (own?.action === 'dismissed') return decided(finding, 'dismissed', own);
     if (own?.action === 'fixed') {
       const state = isContradicted(own, observationId) ? 'contradicted' : 'fixed';
       return decided(finding, state, own);
     }
-
-    // The same rule again, one level down, including the fall-through: a cleared
-    // section matches neither branch and lands on the page-wide mute underneath
-    // it. Stopping there instead would leave a section that no press could reach
-    // again, under a page-wide button that had just counted it in.
-    if (section?.action === 'muted') return decided(finding, 'muted', section);
-    if (wide?.action === 'muted') return decided(finding, 'muted', wide);
     return decided(finding, 'open', null);
   });
 
@@ -164,9 +152,6 @@ const decided = (finding, state, override) => ({
       editor: override.editor,
       at: override.createdAt,
       note: override.note ?? null,
-      // The key that decided this, so *ongedaan maken* can clear that one key and
-      // not a wider one. Absent means the page-wide form, as it does on the event.
-      ...(namesSection(override) ? { anchorHeading: override.anchorHeading } : {}),
     }
     : null,
 });
@@ -174,17 +159,16 @@ const decided = (finding, state, override) => ({
 /**
  * The one event that revokes one decision (ticket 110, round two).
  *
- * It lives beside `decided()` because the key does: that function attaches the key that
- * decided a finding **so that clearing can aim at that one key**, and how to read it back
- * belongs next to how it was written. Two callers ask — `OverrideControl.jsx` for the
- * single finding in front of an editor, and `bulk.mjs` for the ticked pages of a
- * difference — and neither may answer it for itself, or a change to how a mute is cleared
- * lands in one of the two and not the other.
+ * **Two callers must write the same event**, and that is the whole of why this is a
+ * function: `OverrideControl.jsx` for the single finding in front of an editor, and
+ * `bulk.mjs` for the ticked pages of a difference. Neither may answer it for itself.
  *
- * A dismissal is keyed on the finding, so it is cleared on the finding. A mute is cleared
- * on the key that made it, section or page-wide: clearing the section where a page-wide
- * mute is what decided the finding would leave that mute standing, and the row would not
- * move.
+ * It returns one shape now. A dismissal is keyed on the finding, so it is cleared on the
+ * finding, and the override ADR 0011 withdrew was the only other thing a clearing could
+ * ever aim at — so this no longer reads a key back off the finding, because `decided()`
+ * no longer attaches one. That narrowing is **not** a reason to inline it into the two
+ * callers: the next change to what a clearing names must have one place to land, not two,
+ * and it was made one function in ticket 110 precisely because it had been two.
  *
  * `store` and `page` are the caller's to add — the single control's hook puts the page it
  * is on into every event, and the bulk press names the page per row.
@@ -192,43 +176,7 @@ const decided = (finding, state, override) => ({
  * @param {ReturnType<typeof decided>} finding  A finding the derivation has decided.
  */
 export function clearedEventFor(finding) {
-  if (finding.state !== 'muted') {
-    return { scope: 'finding', action: 'cleared', findingId: finding.id };
-  }
-
-  return {
-    scope: 'page-class',
-    action: 'cleared',
-    class: finding.class,
-    ...(namesSection(finding.override) ? { anchorHeading: finding.override.anchorHeading } : {}),
-  };
-}
-
-/**
- * How many findings a mute would cover, on the snapshot in front of the editor.
- *
- * ADR 0008: the count is the guard. It is what stops a press on the null section
- * from reading as a press on the page, and it is what teaches an editor that the
- * section form is the wrong tool on a page of per-photo captions — with no
- * threshold to argue about.
- *
- * The **key is the argument**, in the same shape the press writes, so the number
- * on the button and the event behind it cannot drift apart. Hidden classes are
- * left out: they are in no bar, so muting them hides nothing.
- *
- * This counts what the mute covers, not what it changes. A finding already
- * dismissed keeps its dismissal, because the finding key is the more specific
- * one — so the number is a ceiling, and it never understates the press.
- *
- * @param {ReturnType<typeof decided>[]} findings  Derived findings, for `shown`.
- * @param {{ class: string, anchorHeading?: string | null }} key
- * @returns {number}
- */
-export function muteCoverage(findings, key) {
-  const section = namesSection(key);
-  return findings.filter((finding) => finding.shown
-    && finding.class === key.class
-    && (!section || (finding.anchorHeading ?? null) === key.anchorHeading)).length;
+  return { scope: 'finding', action: 'cleared', findingId: finding.id };
 }
 
 /**
@@ -237,9 +185,9 @@ export function muteCoverage(findings, key) {
  * - A **hidden class is in neither** the numerator nor the denominator, or the bar
  *   could never reach zero.
  * - **Nothing leaves the denominator.** It is the shown findings on this snapshot,
- *   full stop. The mute took findings out of it until ADR 0011 withdrew the mute,
- *   and whether something is work at all is now a property of the class alone and
- *   never of a place on a page. So there is no count of findings that are *outside*
+ *   full stop. The one override that used to take findings out of it was withdrawn by
+ *   ADR 0011, and whether something is work at all is now a property of the class alone
+ *   and never of a place on a page. So there is no count of findings that are *outside*
  *   the bar for the bar to report beside itself.
  * - A **dismissal enters the numerator**: "I read this and accepted it" is work.
  * - **`contradicted` reads as open.** A claim that did not survive a later

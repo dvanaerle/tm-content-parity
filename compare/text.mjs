@@ -97,9 +97,9 @@ const isHeading = (unit) => unit.kind === 'heading';
  * new site holds them in a `<td>`. That is a PageBuilder rebuild, and an editor
  * has nothing to do about it.
  *
- * The class is also the mute key (ticket 01), so `heading-level` covers a level
- * change and a promotion to or from a heading with one word. An editor who mutes
- * it mutes both. That is accepted: both break the outline in the same way. The
+ * The class is the unit visibility is decided on (ADR 0005), so `heading-level` covers a
+ * level change and a promotion to or from a heading with one word, and one visibility
+ * decision covers both. That is accepted: both break the outline in the same way. The
  * finding carries a `detail` (`h2 → h3`), so the two are still separate findings
  * with separate ids.
  *

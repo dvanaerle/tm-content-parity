@@ -273,9 +273,9 @@ export function newObservationId() {
  * A hash over the sorted ids of the findings in **shown** classes.
  *
  * A page review records this, and goes stale when it stops matching. It must be
- * the shown set only: over every class, muting something would change the hash
- * and make every review on the page stale, which is the opposite of what a mute
- * is for.
+ * the shown set only: over every class, hiding a class would change the hash and make
+ * every review on the page stale, and a review must go stale because the **work**
+ * changed and never because the tool was told what to put up as work (ADR 0005).
  *
  * @param {Pick<Finding, 'id' | 'class'>[]} findings
  * @returns {string} 16 base64url characters.
@@ -362,7 +362,14 @@ export function storeOfFile(name) {
 }
 
 /**
- * The mute key is **not** here. Ticket 88 made it live in the browser, and this
- * file imports `node:crypto` for `findingId()`, so an island that reaches it
- * fails to build. It is `shared/mute-key.mjs`, which imports nothing.
+ * A note about what is deliberately **not** in this file, because the reason outlived the
+ * thing it was written about.
+ *
+ * Ticket 88 moved a key builder out of this file and into `shared/`, so that a browser
+ * island could import it without dragging `node:crypto` in behind it — this file imports
+ * that for `findingId()`, and a Vite build of an island that reaches this file fails on it.
+ * ADR 0011 withdrew the override that key belonged to, and ticket 114 deleted the module;
+ * the constraint that put it there is untouched by any of that. **Anything an island has to
+ * compute must not be reached through this file.** `shared/` is where it goes, pure and
+ * importing nothing (ADR 0001).
  */

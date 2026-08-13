@@ -296,16 +296,14 @@ describe('searchStore', () => {
     // with, and the log counts it as open. Search does not get a second opinion — it
     // asks the same question `barOf` asks, so a finding cannot be open in the bar and
     // gone from the search that is meant to find it.
-    // `dismissed` and `muted` are the two that must part company here: a dismissal is
-    // an editor closing work, and after ADR 0011 a mute closes nothing, so it is still
-    // work and the search meant to find it must find it.
-    const states = { b: 'fixed', c: 'contradicted', d: 'muted', e: 'dismissed' };
+    // `dismissed` is an editor closing work, so it goes with `fixed`. Those two are the
+    // only states that close anything since ADR 0011 withdrew the second judgement.
+    const states = { b: 'fixed', c: 'contradicted', e: 'dismissed' };
     const result = searchStore({
       index: index([
         entry({ id: 'a', page: 'afhalen' }),
         entry({ id: 'b', page: 'garantie' }),
         entry({ id: 'c', page: 'montage' }),
-        entry({ id: 'd', page: 'levering' }),
         entry({ id: 'e', page: 'retour' }),
       ]),
       term: 'deals',
@@ -313,7 +311,7 @@ describe('searchStore', () => {
     });
 
     expect(result.repeats[0].on.map((one) => one.page))
-      .toEqual(['afhalen', 'montage', 'levering']);
+      .toEqual(['afhalen', 'montage']);
   });
 
   it('includes what is closed when asked to, without moving a count', () => {

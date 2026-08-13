@@ -6,10 +6,10 @@ import Repeats from './Repeats.jsx';
 
 /**
  * The selection and the presses it arms, mounted and clicked (ticket 110). Two of them
- * since ticket 112 took the mute out of the interface: a dismissal and its undo.
+ * since ticket 112 took the second judgement out of the interface: a dismissal and its undo.
  *
  * It is a browser test and it is an acceptance criterion rather than a nicety. Ticket 31
- * shipped a `BulkControl` that referenced a `MuteForm` it never defined: 628 unit tests
+ * shipped a `BulkControl` that referenced a form component it never defined: 628 unit tests
  * passed, the build was clean, and the press threw during render and took the dashboard
  * island down with it — because every decision lived in `.mjs` and nothing mounted the
  * `.jsx`. This ticket adds a control to that same component, so the path from a checkbox
@@ -287,8 +287,8 @@ describe('the selection on a difference', () => {
 
   /**
    * A difference whose every finding is decided has nothing left to dismiss, and one press
-   * is left standing: an undo is what a decided page is *for*. The mute used to be the
-   * other tool here (ticket 110), and ADR 0011 took it — so this is the case most likely
+   * is left standing: an undo is what a decided page is *for*. A second judgement used to be
+   * the other tool here (ticket 110), and ADR 0011 took it — so this is the case most likely
    * to read as a broken screen, and the bar has to say why the press is gone rather than
    * merely be missing it.
    */
@@ -343,7 +343,7 @@ describe('the selection on a difference', () => {
     const { bulk, unmount } = mount({
       byFinding: byFinding({
         f1: { state: 'dismissed', override: { action: 'dismissed' } },
-        f2: { state: 'muted', override: { action: 'muted', anchorHeading: 'Afmetingen' } },
+        f2: { state: 'dismissed', override: { action: 'dismissed' } },
       }),
     });
 
@@ -361,12 +361,7 @@ describe('the selection on a difference', () => {
         scope: 'finding', action: 'cleared', store: 'nl', page: 'overkapping', findingId: 'f1',
       },
       {
-        scope: 'page-class',
-        action: 'cleared',
-        store: 'nl',
-        page: 'veranda',
-        class: 'copy',
-        anchorHeading: 'Afmetingen',
+        scope: 'finding', action: 'cleared', store: 'nl', page: 'veranda', findingId: 'f2',
       },
     ]);
     unmount();

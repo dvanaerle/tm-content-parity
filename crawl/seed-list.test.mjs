@@ -194,7 +194,7 @@ describe('the page key', () => {
   });
 
   it('keeps the key of an anchored page byte for byte', () => {
-    // Every stored finding, mute and review keys on this string, and the
+    // Every stored finding and review keys on this string, and the
     // override table is append-only, so a reformatted key can never be repaired.
     expect(pageKey({ store: 'nl', path: 'faq/montage' })).toBe('faq/montage');
   });

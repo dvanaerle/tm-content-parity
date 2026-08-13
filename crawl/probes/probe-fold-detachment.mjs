@@ -332,9 +332,12 @@ for (const event of live) {
     const { detached, reason, finding } = detaches(event);
     rows.push({ ...base, detached, reason, class: finding?.class ?? null });
   } else if (event.scope === 'page-class') {
-    // The mute key is page-plus-class (ticket 01). No text enters it, so the
-    // fold cannot detach it.
-    rows.push({ ...base, detached: false, reason: 'the mute key carries no text' });
+    // The withdrawn override of ADR 0011. Its key was page-plus-class, no text entered
+    // it, so the fold cannot detach it. This branch stays because eleven rows on the
+    // table still carry the scope: dropping it would send them to the review branch
+    // below, which dereferences a report and would throw. A probe that reads the real
+    // table has to read all of it.
+    rows.push({ ...base, detached: false, reason: 'a withdrawn override, keyed on no text' });
   } else {
     // A review records the hash over the **shown** finding ids, so it goes
     // stale when one of those ids moves — including a `copy` that becomes a
@@ -359,6 +362,8 @@ for (const event of live) {
   }
 }
 
+// `muted` is retired (ADR 0011) and is still a column here, because this probe counts what
+// the table holds and not what the app can write. Dropping it would silently omit rows.
 const kinds = ['dismissed', 'fixed', 'muted', 'reviewed'];
 
 console.log(`\nOverride log: ${events.length} events, ${live.length} live.\n`);

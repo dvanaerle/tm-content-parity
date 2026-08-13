@@ -50,9 +50,9 @@
  * all — it is on `report.sides.*.links[].text`, in the extract, which is the half
  * `loadSummaries()` throws away. A browser cannot derive it, so the build resolves it by
  * target key. `anchorHeading` is the newer half: ADR 0011 took it off the dashboard's index
- * with the mute that put it there, and it stays a searchable field here because it is a
- * **locator** — *onder "…"* is how an editor finds a difference on a long page, which never
- * had anything to do with the judgement.
+ * along with the withdrawn override that was keyed on it, and it stays a searchable field
+ * here because it is a **locator** — *onder "…"* is how an editor finds a difference on a
+ * long page, which never had anything to do with any judgement.
  *
  * **3. A search result must not extend `Repeat.on`.** The grouping is ticket 81's
  * `repeatsInStore()` and it is reused rather than rewritten, as this ticket's trap
@@ -371,8 +371,8 @@ export function searchNotes({ events, term }) {
  *
  * `dismissed` and `fixed` are what `barOf` counts as closed, and they are the whole of
  * what an editor is not looking for. A `contradicted` claim is a fix the newest
- * observation did not agree with, and the bar reads it as open, so search does too — as
- * does the mute, which after ADR 0011 closes nothing and takes nothing out of the
+ * observation did not agree with, and the bar reads it as open, so search does too. Since
+ * ADR 0011 those two are the whole list — nothing else closes anything or leaves the
  * denominator. Search asks the bar's question rather than forming a second opinion: a
  * finding that is open in the bar must be findable by the search meant to find it.
  *

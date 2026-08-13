@@ -355,10 +355,11 @@ export const findingsIn = (repeats) => repeats.reduce((sum, repeat) => sum + rep
  * It changes nothing about which work is on top — the rows in a group are the rows
  * `repeatsInStore()` returned, in its worst-first order.
  *
- * The word is **group** and never *section*: `CONTEXT.md` spends "section" on the mute
- * scope, which is a run of one page under an anchor heading, and one word with two
- * meanings is what that glossary exists to stop. Ticket 100 asked for "sections"; the
- * concept it describes is this, and the name is refused.
+ * The word is **group** and never *section*: `CONTEXT.md` spends "section" on a run of one
+ * page under an anchor heading, and one word with two meanings is what that glossary exists
+ * to stop. That the override keyed on a section is withdrawn (ADR 0011) does not free the
+ * word — the anchor heading is still how a difference says where it is. Ticket 100 asked
+ * for "sections"; the concept it describes is this, and the name is refused.
  *
  * Opening a group is **not** a filter: it changes what is drawn and never what is
  * included, so it stays out of the amber strip and *filter wissen* does not touch it. The

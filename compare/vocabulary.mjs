@@ -8,9 +8,11 @@
  * never in the browser, so the split costs nothing.
  *
  * Ticket 02 fixes the text classes, ticket 05 the link classes, ticket 06 the
- * image classes, ticket 33 the directional text split. A class is also the mute
- * key (ticket 01), so each name must be a name an editor knows, and each new
- * class must give its default.
+ * image classes, ticket 33 the directional text split. A class **keys nothing** since
+ * ADR 0011, but it is still the unit **visibility** is decided on — one enum, triaged once
+ * in git, and the only thing that can say *this is not work at all* (ADR 0005). So one
+ * class is one such decision: each name must be a name an editor knows, and each new class
+ * must give its default.
  *
  * **A one-sided difference is named by its direction, on every check.** Content
  * production has and the new site lost is shown. Content the new site invented is
@@ -51,8 +53,8 @@ export const FINDING_CLASSES = {
 
   // Ticket 33 — the same text in a different element. Silent before this ticket.
   // One class covers a level change and a promotion to or from a heading. The
-  // class is also the mute key (ticket 01), so an editor who mutes this mutes
-  // both. That is accepted: both are the same defect to the outline.
+  // class is the unit visibility is decided on, so one decision covers both. That is
+  // accepted: both are the same defect to the outline.
   'heading-level': { check: 'text', shown: true, meaning: 'The text is the same, and it is a heading on one side or at another level.' },
   'tag-changed': { check: 'text', shown: false, meaning: 'The text is the same, and it sits in a different element. Neither side is a heading.' },
 

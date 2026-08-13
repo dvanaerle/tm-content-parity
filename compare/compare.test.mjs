@@ -1158,9 +1158,8 @@ describe('compareImages', () => {
   });
 
   it('sends a case-only alt difference to the shared casing class', () => {
-    // A separate `alt-casing` would mean an editor who mutes casing on a page
-    // still receives casing findings from a second tab, so the mute would not
-    // mean what it says.
+    // Casing is one kind of difference and it gets one visibility decision. A separate
+    // `alt-casing` would split that decision across two classes and let it drift.
     const findings = collect((collector) => compareImages(
       extract({ images: [image('dak.jpg', 'Glazen Dak')] }),
       extract({ side: 'new', images: [image('dak.jpg', 'Glazen dak')] }),

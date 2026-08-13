@@ -26,12 +26,20 @@ create table overrides (
   created_at  timestamptz not null default now(),
   editor      text        not null check (length(trim(editor)) > 0),
 
+  -- RETIRED 2026-08-13, ADR 0011: `page-class` is no longer written. The app has no
+  -- code that can produce one — ticket 114 deleted the key, the derivation and the
+  -- control — and the eleven historical rows are why the value stays in this check.
+  -- A constraint saying a mute is impossible could only be added `not valid`, which
+  -- would be a schema asserting a shape the table demonstrably held eleven times.
+  --
   -- What the event is keyed on:
   --   finding     one difference, by its content-addressed id (ticket 01)
-  --   page-class  one class on one page — the mute key, which persists
+  --   page-class  one class on one page — the withdrawn mute key
   --   page        the whole page — a human review
   scope       text        not null check (scope in ('finding', 'page-class', 'page')),
 
+  -- RETIRED 2026-08-13, ADR 0011: `muted` is no longer written, for the reason above.
+  --
   -- `cleared` is valid on every scope. It is what replaces four `un-` verbs and
   -- the `active` flag the earlier model carried.
   action      text        not null check (
@@ -48,6 +56,15 @@ create table overrides (
   -- The class name from compare/vocabulary.mjs. Present when scope = 'page-class'.
   class       text,
 
+  -- RETIRED 2026-08-13, ADR 0011: these three columns carried the section of the withdrawn
+  -- override, and nothing reads them. `overrides/supabase.mjs` no longer selects them and
+  -- no insert names them, so a new row takes the `names_section` default and leaves
+  -- `anchor_heading` null. They hold what the eleven historical rows put there.
+  --
+  -- The **finding's** `anchorHeading` is a different thing and survives (ADR 0011): it is
+  -- how a difference says where it is on the page. It comes off the snapshot, never off
+  -- this table, so it was never one of these columns.
+  --
   -- ADR 0008: a mute names a section, and the section is the anchor heading. The
   -- field has three states and two of them are null here, so `names_section`
   -- carries the difference: false is the page-wide form, and true with a null
@@ -55,10 +72,13 @@ create table overrides (
   anchor_heading text,
   names_section  boolean not null default false,
 
-  -- The heading part of the mute key, as one value. `anchorHeadingSlot()` in
-  -- compare/contract.mjs is the same expression in JavaScript, and the derivation
-  -- keys on it. The two must agree, or the log shows one thing and the view holds
-  -- another.
+  -- The heading part of the withdrawn key, as one value. `anchorHeadingSlot()` in
+  -- `shared/mute-key.mjs` held the same expression in JavaScript, and the derivation keyed
+  -- on it; ticket 114 deleted that module with the key it built. So the two no longer
+  -- agree, and the divergence is **accepted rather than fixed**: `eventKey()` keys on
+  -- three columns and this view on four, which can split two of the eleven historical rows
+  -- the derivation merges. Nothing looks their key up, so nothing can observe it. See the
+  -- note on `eventKey()` in `overrides/state.mjs`.
   anchor_heading_slot text generated always as (
     case
       when not names_section then '*page'
@@ -79,6 +99,10 @@ create table overrides (
 
   note        text,
 
+  -- RETIRED 2026-08-13, ADR 0011: the `page-class` branch of this constraint and of
+  -- `override_action` below permit a row the app can no longer build. They stay because
+  -- the eleven historical rows have to keep satisfying the table they are in.
+  --
   -- Each scope carries its own key column, and nothing else.
   constraint override_key check (
     (scope = 'finding'    and finding_id is not null and class is null) or
@@ -94,17 +118,23 @@ create table overrides (
     or (scope = 'page'       and action = 'reviewed')
   ),
 
+  -- RETIRED 2026-08-13, ADR 0011: nothing sets `names_section` any more, so every new
+  -- row satisfies this on the first branch by default.
+  --
   -- Only a mute names a section. Every other row leaves both fields alone.
   constraint override_anchor_heading check (
     (names_section = false and anchor_heading is null)
     or (names_section and scope = 'page-class')
   ),
 
-  -- A note is required on the two **judgements**, and on nothing else. A
-  -- dismissal accepts a real difference for good and a mute hides a class for
-  -- ever, so the next reader must be told why; a fix claim is a one-line
-  -- correction and must not cost a sentence of prose. Ticket 88 added the mute:
-  -- it was the one override nobody could review later, and it hides the most.
+  -- RETIRED 2026-08-13, ADR 0011 — the `muted` half. A note is required on the
+  -- **judgement**, and a dismissal is the only judgement left; the mute this clause also
+  -- covered can no longer be written, so the clause is now a rule about dismissals with a
+  -- dead disjunct beside it.
+  --
+  -- A dismissal accepts a real difference for good, so the next reader must be told why;
+  -- a fix claim is a one-line correction and must not cost a sentence of prose. Ticket 88
+  -- added the mute here: it was the one override nobody could review later.
   constraint override_note check (
     action not in ('dismissed', 'muted') or length(trim(coalesce(note, ''))) > 0
   )

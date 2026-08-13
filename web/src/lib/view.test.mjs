@@ -154,7 +154,7 @@ describe('prepareRows', () => {
     // A row that is hidden by class stays hidden by class; a decided row in a shown
     // class is not noise and was never behind this toggle to begin with.
     const base = fixture();
-    base.findings[0] = { ...base.findings[0], state: 'muted' };
+    base.findings[0] = { ...base.findings[0], state: 'dismissed' };
 
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(4);
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(4);
@@ -453,9 +453,9 @@ describe('repeatsWithClasses', () => {
  * meets six or so numbers instead of one undifferentiated column, and chooses which kind
  * of difference to work through.
  *
- * The word is group and never *section*: `CONTEXT.md` gives "section" to the mute scope,
- * a run of one page under an anchor heading. Ticket 100 asked for "sections" and the name
- * is refused; the concept it describes is this.
+ * The word is group and never *section*: `CONTEXT.md` gives "section" to a run of one page
+ * under an anchor heading, which is still how a difference says where it is. Ticket 100
+ * asked for "sections" and the name is refused; the concept it describes is this.
  *
  * It is a **pure derivation over the repeats ticket 81 already makes**: no second grouping
  * of findings, and the rows in a group are the very objects `repeatsInStore()` returned.

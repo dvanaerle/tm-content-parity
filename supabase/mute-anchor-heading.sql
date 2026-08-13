@@ -1,3 +1,10 @@
+-- APPLIED 2026-08-10, and SUPERSEDED 2026-08-13 by ADR 0011: the mute this file
+-- hardened is withdrawn, and ticket 114 deleted the code that could write one. Nothing
+-- here is rolled back — the columns, the generated slot and the constraints stay on the
+-- table, holding what the eleven historical rows put there. This file is kept as the
+-- record of a change that was applied to a live table; do not apply it again, and do not
+-- read it as a description of a live feature. `schema.sql` carries the retirement notes.
+--
 -- Ticket 88 / ADR 0008: the mute key gains the anchor heading, and a mute needs
 -- a note.
 --
@@ -16,7 +23,8 @@ alter table overrides add column anchor_heading text;
 alter table overrides add column names_section boolean not null default false;
 
 -- The heading part of the mute key, as one value. `anchorHeadingSlot()` in
--- compare/contract.mjs is the same expression in JavaScript. The two must agree.
+-- `shared/mute-key.mjs` was the same expression in JavaScript, and the two had to agree.
+-- Ticket 114 deleted that module; `schema.sql` records why the divergence is accepted.
 alter table overrides add column anchor_heading_slot text generated always as (
   case
     when not names_section then '*page'

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { findingSetHash } from '../compare/contract.mjs';
 import {
-  clearedEventFor, derivePageState, deriveStoreState, eventKey, latestByKey, muteCoverage,
+  clearedEventFor, derivePageState, deriveStoreState, eventKey, latestByKey,
 } from './state.mjs';
 
 /**
@@ -71,15 +71,34 @@ const fix = (id, observationId = CURRENT) => event({
 const dismiss = (id) => event({
   scope: 'finding', action: 'dismissed', findingId: id, note: 'Prijs verschilt per omgeving.',
 });
-/** The page-wide form: the same key with the heading absent (ADR 0008). */
-const mute = (cls) => event({
-  scope: 'page-class', action: 'muted', class: cls, note: 'De hele pagina roteert.',
-});
-/** The section form. `null` is a real section: the content before the first heading. */
-const muteSection = (cls, anchorHeading) => event({
-  scope: 'page-class', action: 'muted', class: cls, anchorHeading, note: 'Deze sectie roteert.',
-});
 const clearFinding = (id) => event({ scope: 'finding', action: 'cleared', findingId: id });
+
+/**
+ * A row carrying the scope and action ADR 0011 withdrew, in the shape the port hands one
+ * over. Eleven of these are on disk for ever, so the derivation has to walk past them
+ * rather than fail on them.
+ *
+ * The live one is `nl` · `downloads` · `text-missing` · the content before the first
+ * heading, 2026-08-10 11:07, note `"Negeren"`. Its **page and class are the fixture's**
+ * here, on purpose: the derivation filters events on the report's store and page, so a row
+ * for another page would be dropped before reaching anything and the test would pass
+ * without having asked its question. Everything else is the row as stored — including
+ * `findingId: null`, which is what makes it a row the finding lookup can never match.
+ */
+const withdrawnRow = () => ({
+  id: '0311',
+  createdAt: '2026-08-10T11:07:00.000Z',
+  editor: 'Danielle',
+  scope: 'page-class',
+  action: 'muted',
+  store: 'nl',
+  page: 'overkappingen',
+  findingId: null,
+  class: 'copy',
+  observationId: null,
+  findingSetHash: null,
+  note: 'Negeren',
+});
 
 /** @param {import('../compare/contract.mjs').PageReport} r */
 const stateOf = (r, events, observationId) => {
@@ -93,7 +112,6 @@ describe('the precedence matrix', () => {
   it.each([
     // Ticket 09: a judgement beats the snapshot, a claim of fact does not.
     ['dismissed beats the snapshot', [dismiss('A')], 'dismissed'],
-    ['muted beats the snapshot', [mute('copy')], 'muted'],
     ['a fix claimed against this same observation is closed', [fix('A', CURRENT)], 'fixed'],
     ['a fix claimed against an earlier observation is contradicted', [fix('A', EARLIER)], 'contradicted'],
     ['no events leaves the finding open', [], 'open'],
@@ -127,19 +145,35 @@ describe('absence beats everything', () => {
   });
 });
 
-describe('the more specific key wins', () => {
+/**
+ * ADR 0011 withdrew the one override that was keyed on anything but a finding, so there is
+ * no longer a wider key for a finding-scope one to beat, and no fall-through under a
+ * cleared one. What is left to prove is that the eleven rows the table still holds are
+ * walked past rather than fallen over — the trap ticket 114 names, because nothing looks
+ * wrong until a parse or a switch statement meets one.
+ */
+describe('a withdrawn override still on the table', () => {
   const one = report([finding('A')]);
 
-  it('a dismissal on the finding beats a mute on its class', () => {
-    expect(stateOf(one, [mute('copy'), dismiss('A')]).A).toBe('dismissed');
+  it('loads and leaves the finding open', () => {
+    expect(stateOf(one, [withdrawnRow()]).A).toBe('open');
   });
 
-  it('a cleared finding override falls back to the class mute underneath it', () => {
-    expect(stateOf(one, [mute('copy'), dismiss('A'), clearFinding('A')]).A).toBe('muted');
+  it('is keyed on its own scope and never lands in a finding or page slot', () => {
+    const key = eventKey(withdrawnRow());
+    expect(key).toBe('page-class|nl|overkappingen|copy');
+    expect(key).not.toBe(eventKey(dismiss('A')));
+    expect(key).not.toBe(eventKey(event({ scope: 'page', action: 'reviewed' })));
   });
 
-  it('a mute on another class does not touch this finding', () => {
-    expect(stateOf(one, [mute('casing')]).A).toBe('open');
+  it('leaves the bar and the review untouched', () => {
+    const derived = derivePageState({ report: one, events: [withdrawnRow()] });
+    expect(derived.bar).toMatchObject({ closed: 0, denominator: 1, open: 1 });
+    expect(derived.review).toBeNull();
+  });
+
+  it('does not stop a dismissal on the same page being read', () => {
+    expect(stateOf(one, [withdrawnRow(), dismiss('A')]).A).toBe('dismissed');
   });
 });
 
@@ -161,126 +195,41 @@ describe('latest wins per key', () => {
     expect(stateOf(report([finding('A'), finding('B')]), events)).toEqual({ A: 'open', B: 'dismissed' });
   });
 
-  it('keys a mute on the class and a dismissal on the finding, never the same slot', () => {
-    expect(eventKey(mute('copy'))).not.toBe(eventKey(dismiss('copy')));
-  });
-
   it('keeps one entry per key', () => {
-    expect(latestByKey([dismiss('A'), clearFinding('A'), mute('copy')]).size).toBe(2);
-  });
-});
-
-describe('the mute key carries the anchor heading', () => {
-  // ADR 0008: one key shape, `store | page | class | anchorHeading`, where the
-  // page-wide form is the same key with the heading absent.
-  it('separates two sections of the same class', () => {
-    expect(eventKey(muteSection('copy', 'Gumax® Heavy Duty')))
-      .not.toBe(eventKey(muteSection('copy', 'Zonwering')));
+    expect(latestByKey([dismiss('A'), clearFinding('A'), dismiss('B')]).size).toBe(2);
   });
 
-  it('separates a section mute from the page-wide form', () => {
-    expect(eventKey(muteSection('copy', 'Gumax® Heavy Duty'))).not.toBe(eventKey(mute('copy')));
-  });
-
-  it('separates the null section from the page-wide form, which is the trap', () => {
-    // Both are "no heading" in the payload. They are different judgements: one
-    // covers the content before the first heading, the other covers the page.
-    expect(eventKey(muteSection('copy', null))).not.toBe(eventKey(mute('copy')));
-  });
-
-  it('gives one key to one section, whatever the heading is spelled with', () => {
-    expect(eventKey(muteSection('copy', '*page'))).toBe(eventKey(muteSection('copy', '*page')));
-    expect(eventKey(muteSection('copy', '*page'))).not.toBe(eventKey(mute('copy')));
-  });
-
-  it('leaves the finding key and the page key untouched', () => {
+  it('gives the finding key and the page key the shapes the derivation looks up', () => {
     expect(eventKey(dismiss('A'))).toBe('finding|nl|overkappingen|A');
     expect(eventKey(event({ scope: 'page', action: 'reviewed' }))).toBe('page|nl|overkappingen|');
   });
 });
 
-describe('a mute names a section', () => {
-  // The page of ADR 0008: one heading carries most of the class, and the rest of
-  // the page carries the same class under other headings.
+describe('the anchor heading survives as a locator', () => {
+  // It is how a difference says where it is, it is rendered on a page, and ADR 0011 did
+  // not take it: only the withdrawn key that used to read it, and the index entry.
   const HEAVY = 'Gumax® Heavy Duty';
-  const page = report([
-    finding('A', 'copy', HEAVY),
-    finding('B', 'copy', HEAVY),
-    finding('C', 'copy', 'Zonwering'),
-    finding('D', 'copy', null),
-  ]);
+  const page = report([finding('A', 'copy', HEAVY), finding('D', 'copy', null)]);
 
-  it('mutes its own section and leaves the same class visible elsewhere', () => {
-    expect(stateOf(page, [muteSection('copy', HEAVY)]))
-      .toEqual({ A: 'muted', B: 'muted', C: 'open', D: 'open' });
+  it('is carried through the derivation on every finding', () => {
+    const derived = derivePageState({ report: page, events: [] });
+    expect(derived.findings.map((f) => f.anchorHeading)).toEqual([HEAVY, null]);
   });
 
-  it('mutes the null section only, and never the page through it', () => {
-    // The null bucket is heterogeneous, so this is the trap ADR 0008 names.
-    expect(stateOf(page, [muteSection('copy', null)]))
-      .toEqual({ A: 'open', B: 'open', C: 'open', D: 'muted' });
-  });
-
-  it('mutes the whole class when the heading is absent', () => {
-    expect(stateOf(page, [mute('copy')]))
-      .toEqual({ A: 'muted', B: 'muted', C: 'muted', D: 'muted' });
-  });
-
-  it('holds a section mute and a page-wide mute at once, on their own keys', () => {
-    const events = [muteSection('copy', HEAVY), mute('casing')];
-    expect(stateOf(page, events)).toEqual({ A: 'muted', B: 'muted', C: 'open', D: 'open' });
-    expect(latestByKey(events).size).toBe(2);
-  });
-
-  it('falls through from a cleared section to the page-wide mute underneath it', () => {
-    // The same fall-through a cleared dismissal already has onto a class mute. An
-    // editor who undoes a section mute and then mutes the page means the page: the
-    // button counted that section in, so it must take it.
-    const events = [
-      muteSection('copy', HEAVY),
-      event({ scope: 'page-class', action: 'cleared', class: 'copy', anchorHeading: HEAVY }),
-      mute('copy'),
-    ];
-    expect(stateOf(page, events)).toEqual({ A: 'muted', B: 'muted', C: 'muted', D: 'muted' });
-  });
-
-  it('leaves a cleared section open when nothing wider is muted', () => {
-    const events = [
-      muteSection('copy', HEAVY),
-      event({ scope: 'page-class', action: 'cleared', class: 'copy', anchorHeading: HEAVY }),
-    ];
-    expect(stateOf(page, events)).toEqual({ A: 'open', B: 'open', C: 'open', D: 'open' });
-  });
-
-  it('stops applying when the heading it named is gone', () => {
-    // ADR 0008: the judgement was about a section that is no longer there, so the
-    // editor is asked again. It must never widen to the page.
-    const renamed = report([finding('A', 'copy', 'Gumax® Heavy Duty Plus')]);
-    expect(stateOf(renamed, [muteSection('copy', HEAVY)]).A).toBe('open');
-  });
-
-  it('leaves a muted finding shown, because muting is not deleting', () => {
-    const derived = derivePageState({ report: page, events: [muteSection('copy', HEAVY)] });
-    expect(derived.findings.find((f) => f.id === 'A')).toMatchObject({ shown: true, state: 'muted' });
-  });
-
-  it('tells the interface which key muted a finding, so undo can clear that key', () => {
-    const bySection = derivePageState({ report: page, events: [muteSection('copy', HEAVY)] });
-    expect(bySection.findings[0].override).toMatchObject({ anchorHeading: HEAVY });
-
-    const byPage = derivePageState({ report: page, events: [mute('copy')] });
-    expect(byPage.findings[0].override).not.toHaveProperty('anchorHeading');
+  it('is not attached to an override, because no override is keyed on it', () => {
+    const derived = derivePageState({ report: page, events: [dismiss('A')] });
+    expect(derived.findings[0].override).not.toHaveProperty('anchorHeading');
+    expect(derived.findings[0].anchorHeading).toBe(HEAVY);
   });
 });
 
 /**
  * The one event that revokes one decision, asked of the derivation that made it.
  *
- * It lives here because the key is here: `decided()` above attaches the key that decided
- * a finding *so that clearing can aim at that one key*, and the rule for reading it back
- * belongs beside the rule that wrote it. Two callers ask — the single control on a page
- * and the bulk press on a difference — and neither may answer it for itself, or a change
- * to how a mute is cleared lands in one of the two.
+ * Two callers must write the same event — the single control on a page and the bulk press
+ * on a difference — and neither may answer it for itself. ADR 0011 left it one shape to
+ * return, and it stays **one function** for the same reason it became one in ticket 110:
+ * the next change to what a clearing names gets one place to land, not two.
  */
 describe('the event that clears one decision', () => {
   it('clears a dismissal on the finding it was made on', () => {
@@ -288,63 +237,14 @@ describe('the event that clears one decision', () => {
       .toEqual({ scope: 'finding', action: 'cleared', findingId: 'f1' });
   });
 
-  // A mute is cleared on **the key that made it**, which is the key `decided()` handed
-  // back. Clearing the section where a page-wide mute is what decided the finding would
-  // leave that mute standing, and the row would not move.
-  it('clears a section mute on its section and a page-wide mute on neither', () => {
-    const muted = { id: 'f1', state: 'muted', class: 'copy' };
-
-    expect(clearedEventFor({ ...muted, override: { anchorHeading: 'Afmetingen' } }))
-      .toEqual({ scope: 'page-class', action: 'cleared', class: 'copy', anchorHeading: 'Afmetingen' });
-
-    // The content before the first heading is a real section, and `null` names it.
-    expect(clearedEventFor({ ...muted, override: { anchorHeading: null } }))
-      .toEqual({ scope: 'page-class', action: 'cleared', class: 'copy', anchorHeading: null });
-
-    // The page-wide form names no section, and neither may the event that clears it.
-    expect(clearedEventFor({ ...muted, override: {} }))
-      .toEqual({ scope: 'page-class', action: 'cleared', class: 'copy' });
-  });
-});
-
-describe('what a mute would cover, before the press', () => {
-  const HEAVY = 'Gumax® Heavy Duty';
-  // The shape of nl__terrasoverkapping in ADR 0008, in miniature: one heading
-  // carries most of the class, and the null bucket holds unrelated findings.
-  const findings = derivePageState({
-    report: report([
-      finding('A', 'copy', HEAVY),
-      finding('B', 'copy', HEAVY),
-      finding('C', 'copy', 'Zonwering'),
-      finding('D', 'copy', null),
-      finding('E', 'casing', HEAVY),
-      finding('H', 'restructured', HEAVY),
-    ]),
-    events: [],
-  }).findings;
-
-  it('counts the section the press would take', () => {
-    expect(muteCoverage(findings, { class: 'copy', anchorHeading: HEAVY })).toBe(2);
-  });
-
-  it('counts the whole class when the heading is absent, which is the larger press', () => {
-    expect(muteCoverage(findings, { class: 'copy' })).toBe(4);
-  });
-
-  it('counts the null section as a section and not as the page', () => {
-    expect(muteCoverage(findings, { class: 'copy', anchorHeading: null })).toBe(1);
-  });
-
-  it('counts one class only, because the class is still the only axis', () => {
-    expect(muteCoverage(findings, { class: 'casing', anchorHeading: HEAVY })).toBe(1);
-  });
-
-  it('leaves a hidden class out, because it is in no bar and hiding it hides nothing', () => {
-    expect(muteCoverage(findings, { class: 'restructured', anchorHeading: HEAVY })).toBe(0);
-  });
-
-  it('counts nothing for a heading the snapshot does not have', () => {
-    expect(muteCoverage(findings, { class: 'copy', anchorHeading: 'Weg' })).toBe(0);
+  it('names the finding and nothing wider, whatever else the finding carries', () => {
+    // The class and the anchor heading are on a finding and are not on this event. No
+    // override is keyed on either any more, so a clearing that mentioned them would be
+    // aiming at a key nothing writes.
+    const event_ = clearedEventFor({
+      id: 'f1', state: 'dismissed', class: 'copy', anchorHeading: 'Afmetingen', override: {},
+    });
+    expect(event_).toEqual({ scope: 'finding', action: 'cleared', findingId: 'f1' });
   });
 });
 
@@ -364,14 +264,14 @@ describe('bar arithmetic', () => {
   });
 
   it('nothing leaves the denominator, and there is no fourth number', () => {
-    // ADR 0011 withdrew the one thing that used to take findings out of the
-    // denominator. A difference in a shown class is now either open work or work
-    // an editor closed, so the mute the derivation still produces is invisible to
-    // the bar rather than a category beside it.
-    const bar = derivePageState({ report: four, events: [mute('copy')] }).bar;
+    // ADR 0011 withdrew the one override that used to take findings out of the
+    // denominator, so a difference in a shown class is now either open work or work an
+    // editor closed. The historical rows cannot put the subtraction back.
+    const bar = derivePageState({ report: four, events: [withdrawnRow()] }).bar;
 
     expect(bar).toMatchObject({ closed: 0, denominator: 4, open: 4 });
-    expect(bar).not.toHaveProperty('muted');
+    expect(Object.keys(bar).sort())
+      .toEqual(['closed', 'contradicted', 'denominator', 'dismissed', 'fixed', 'open']);
   });
 
   it('a hidden class is in neither the numerator nor the denominator', () => {
@@ -427,7 +327,7 @@ describe('page review', () => {
     expect(reviewOf(one, grown.findingSetHash).fresh).toBe(false);
   });
 
-  it('survives a mute, because the hash covers the shown classes only', () => {
+  it('is not staled by a hidden class, because the hash covers the shown ones only', () => {
     const withHidden = report([finding('A'), finding('H', 'restructured')]);
     expect(withHidden.findingSetHash).toBe(one.findingSetHash);
   });

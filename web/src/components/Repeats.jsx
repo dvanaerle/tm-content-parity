@@ -104,8 +104,8 @@ const NOTHING = new Set();
  * nothing changes about which work is on top — only how much of it arrives at once.
  *
  * The word is **group** and never *section*. `CONTEXT.md` spends "section" on a run of one
- * page under an anchor heading — the mute scope, until ADR 0011 withdrew the mute, and the
- * word stays taken because that run is what an anchor heading names either way. One word
+ * page under an anchor heading. ADR 0011 withdrew the override that was keyed on such a run,
+ * and the word stays taken anyway, because that run is what an anchor heading names. One word
  * with two meanings is what that glossary exists to stop. Ticket 100 asked for sections;
  * the name is refused and the concept is kept.
  *
@@ -331,9 +331,9 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
    */
   const tickAll = (on) => put(on ? new Set(repeat.on.map((entry) => entry.id)) : new Set());
 
-  // The same four rules the page bar obeys, over this difference's findings: a mute
-  // leaves the denominator, a dismissal enters the numerator, and a contradicted
-  // claim reads as open.
+  // The same rules the page bar obeys, over this difference's findings: nothing leaves
+  // the denominator, a dismissal enters the numerator, and a contradicted claim reads
+  // as open.
   //
   // The lookup cannot miss: `byFinding` is derived from the same store summaries the
   // repeats are, so every id here is in it. It is left to throw rather than to skip a

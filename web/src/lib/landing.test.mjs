@@ -50,7 +50,7 @@ describe('landingFor', () => {
   it('asks for the noise toggle when the finding is behind it', () => {
     const open = finding({ id: 'a1' });
     const dismissed = finding({ id: 'b2', state: 'dismissed' });
-    const decided = finding({ id: 'c3', state: 'muted' });
+    const decided = finding({ id: 'c3', state: 'fixed' });
     const hiddenClass = finding({ id: 'd4', shown: false });
     const findings = [open, dismissed, decided, hiddenClass];
 

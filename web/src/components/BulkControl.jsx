@@ -33,8 +33,8 @@ import { cn } from '../lib/utils.js';
  * there. A press that can put ten pages in a state and cannot take them out of it is a
  * one-way door with a ten-page way back, which is the work ticket 110 exists to remove.
  *
- * There were three until ticket 112. The bulk mute was the larger of the two doors to a
- * `muted` event and ADR 0011 shut both: a dismissal is the only judgement now, so the
+ * There were three until ticket 112. The bulk press was the larger of the two doors to the
+ * second judgement, and ADR 0011 shut both: a dismissal is the only judgement now, so the
  * choosing this bar used to explain — which judgement, at what cost, on which pages each
  * was eligible for — has no second thing to choose between and went with the press.
  *
@@ -246,12 +246,12 @@ const Selection = ({ repeat, count }) => (
  * Why the dismissal is not on screen, said where it would have been.
  *
  * This line used to be one half of a sentence about **choosing**: a dismissal dies with the
- * text and a mute did not, so an editor picking between them was told which was which. Only
- * one judgement is left (ADR 0011), so there is nothing to choose and nothing to compare —
- * what survives is the half that explains an absence.
+ * text and the other judgement did not, so an editor picking between them was told which was
+ * which. Only one judgement is left (ADR 0011), so there is nothing to choose and nothing to
+ * compare — what survives is the half that explains an absence.
  *
  * It matters more now than it did. A difference whose every finding is closed used to keep
- * the mute, so the bar was never empty of presses there; the undo can be spent too, and
+ * the second judgement, so the bar was never empty of presses there; the undo can be spent too, and
  * then this sentence is the only thing on the strip below the selection. Ticket 112 names
  * that case: it is correctly empty, and it must not read as a broken screen.
  *
@@ -279,7 +279,7 @@ const NothingToDismiss = () => (
  *
  * What it does **not** say is that a dismissal dies the day either text changes. Round two
  * cut that from here because `Choice` said it a line above; ticket 112 then cut `Choice`
- * itself, since it was one half of a **comparison** with the mute and the mute is gone. So
+ * itself, since it was one half of a **comparison** with the override ADR 0011 withdrew. So
  * the fact is now nowhere on this bar. That is a deliberate consequence of ADR 0011 and not
  * an oversight — expiry is no longer a thing an editor *chooses between*, it is simply what
  * the one judgement does — and if it is ever wanted back it is a sentence of its own here,
