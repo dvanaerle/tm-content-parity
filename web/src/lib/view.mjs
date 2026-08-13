@@ -76,8 +76,8 @@ export function toggleClass(filter, cls) {
 }
 
 /**
- * One row of the content view: a `DiffRow` with both sides resolved to their
- * unit and its finding attached.
+ * One row of the content view: a `DiffRow` with both sides read into their unit
+ * and its finding attached.
  *
  * @typedef {import('../../../compare/contract.mjs').ContentUnit} ContentUnit
  *
