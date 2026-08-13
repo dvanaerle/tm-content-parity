@@ -19,9 +19,9 @@ translated in each store. What is stable across stores is the campaign option id
 a link target — Magento attribute codes and option ids are global. Measured in `nl`,
 `be`, `de` and `uk`, that signal matched the banner and matched nothing else.
 
-**Blocked by:** 63.
+Blocked by: 63.
 
-**Status:** resolved — 2026-08-07
+Status: resolved — 2026-08-07
 
 **Origin:** the grilling of 2026-08-07 on the content unit. The user asked for the
 banner to be ignored, and then asked what happens when the content changes.

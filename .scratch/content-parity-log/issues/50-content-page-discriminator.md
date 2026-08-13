@@ -5,9 +5,9 @@ Today it finds all of the Dutch pages and about one third of the French, German
 and Belgian-French pages. The French store has about 110 content pages. The seed
 list holds 28.
 
-**Blocked by:** None.
+Blocked by: None.
 
-**Status:** resolved 2026-08-10 — built by 55
+Status: resolved 2026-08-10 — built by 55
 
 **Type:** task
 

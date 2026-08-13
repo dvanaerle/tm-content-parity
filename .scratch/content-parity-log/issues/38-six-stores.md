@@ -10,10 +10,10 @@ nobody has run it. The crawl, extract, compare, link-key and report-naming paths
 are all already store-generic, and the seed data holds a production URL and a
 new-site URL for all 451 store pages. The gap is data and one missing route.
 
-**Blocked by:** None — can start immediately. It needs nothing from tickets
+Blocked by: None — can start immediately. It needs nothing from tickets
 33–37 and can run alongside them.
 
-**Status:** resolved 2026-08-07
+Status: resolved 2026-08-07
 
 **Implements:** spec [32](32-scannable-log-and-six-stores.md), phase 7.
 

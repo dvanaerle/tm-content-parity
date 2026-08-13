@@ -14,10 +14,10 @@ overlapping ad-hoc colour maps that have already drifted apart.
 The token work comes first inside this ticket and is the reason the two are one:
 the diff needs exactly one red and one green, defined in exactly one place.
 
-**Blocked by:** [33](33-directional-text-classes.md) — the tints are keyed on
+Blocked by: [33](33-directional-text-classes.md) — the tints are keyed on
 direction, and direction is what 33 introduces.
 
-**Status:** resolved — built on branch `axis-a-compare-and-log`.
+Status: resolved — built on branch `axis-a-compare-and-log`.
 
 **Implements:** spec [32](32-scannable-log-and-six-stores.md), phases 3, 6 and 8.
 

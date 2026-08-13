@@ -12,9 +12,9 @@ This ticket goes first and alone, so that ticket 67 is a change of behaviour and
 nothing else. A rename mixed into a behavioural change hides the behavioural change
 in the diff, and this one rebuilds every report.
 
-**Blocked by:** None — can start immediately.
+Blocked by: None — can start immediately.
 
-**Status:** resolved 2026-08-07
+Status: resolved 2026-08-07
 
 **Origin:** the grilling of 2026-08-07 on the content unit, question 1.
 

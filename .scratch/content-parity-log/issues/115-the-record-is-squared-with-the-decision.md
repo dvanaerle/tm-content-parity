@@ -105,7 +105,8 @@ the two origins every later *the class is the mute key* comes from, including th
 quoted most often in the repo: *a mute removes findings from the denominator*. **Tickets 29
 and 31** — the two build records, by banner rather than line by line, because what they
 describe is what shipped. And passing clauses in **02, 05, 06, 08, 21, 23, 25, 33, 36, 42,
-48, 54, 57, 76, 82, 86, 98, 100, 105**.
+48, 54, 57, 76, 82, 86, 98, 122, 105**. *(122 was numbered 100 when this was written;
+renumbered 2026-08-13.)*
 
 **Two things found on the way, both recorded rather than fixed here.**
 

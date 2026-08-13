@@ -11,7 +11,7 @@ empty when it has nothing to say — a distinction that vanishes if both render 
 `![](file.jpg)`, and it is exactly the distinction the `alt-lost` class exists
 for.
 
-**Blocked by:** [36](../36-merged-content-view.md) only, which owns the tab this
+Blocked by: [36](../36-merged-content-view.md) only, which owns the tab this
 toggle lives on. [34](../34-position-and-ordering.md) was the other edge — an image
 cannot be placed in the prose without the document-order index — and **the shared
 counter landed**, so that edge is satisfied.
@@ -19,7 +19,7 @@ counter landed**, so that edge is satisfied.
 34 was reopened on 2026-08-07 on a different criterion, the deep link. This view
 does not use it. Do not read 34's open status as a block on this ticket.
 
-**Status:** wontfix — **parked 2026-08-11**. Not rejected on its merits and not
+Status: wontfix — **parked 2026-08-11**. Not rejected on its merits and not
 blocked: parked because it is not known whether the feature is wanted, and that is
 a question for a brainstorm rather than a triage. It was built on 2026-08-11 and
 reverted the same day; the build is kept (see below). Read *Built once, then held*

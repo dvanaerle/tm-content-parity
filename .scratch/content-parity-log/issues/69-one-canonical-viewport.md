@@ -14,9 +14,9 @@ duplicates on every category page — and it is the part this ticket is for.
 `CONTEXT.md` now states the canonical viewport. This ticket makes the statement true
 in the code.
 
-**Blocked by:** 64.
+Blocked by: 64.
 
-**Status:** ready-for-agent
+Status: ready-for-agent
 
 **Origin:** the grilling of 2026-08-07 on the content unit, question 20.
 

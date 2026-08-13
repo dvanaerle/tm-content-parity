@@ -17,9 +17,9 @@ children, so this ticket makes the general case behave like the case that was ri
 See `docs/adr/0002-content-unit-is-the-editable-block.md` for the decision and the
 rejected alternatives.
 
-**Blocked by:** 66.
+Blocked by: 66.
 
-**Status:** resolved 2026-08-10
+Status: resolved 2026-08-10
 
 **Origin:** the grilling of 2026-08-07 on the content unit. The user's argument
 decided it: the unit must be the thing that is edited, and content is edited one

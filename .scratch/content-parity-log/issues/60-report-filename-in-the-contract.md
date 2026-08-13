@@ -14,7 +14,7 @@ writes it, `compare/` and `web/` read it. Change the contract in that file first
 then the code." A filename shape that `web/` parses is exactly that kind of data,
 and it has no home in the contract file.
 
-**Status:** resolved 2026-08-07
+Status: resolved 2026-08-07
 
 **Session:** 2, and **before spec 50**. See `../RUNBOOK.md`.
 

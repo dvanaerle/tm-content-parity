@@ -10,8 +10,8 @@ A row of the content view collapses into a context marker when it holds **no ope
 work** — not when its two texts happen to match. Nothing is reordered, nothing is
 grouped, nothing is counted, and no mode is added.
 
-**Status:** ready-for-agent
-**Blocked by:** [79](79-the-content-view-opens-on-the-differences.md),
+Status: ready-for-agent
+Blocked by: [79](79-the-content-view-opens-on-the-differences.md),
 [80](80-three-buckets-and-the-third-is-closed.md)
 
 ---
@@ -28,7 +28,7 @@ document order whatever its state. On `terrasoverkapping` that is 168 differing 
 in one list, and a row ticked an hour ago sits between two rows that are still open.
 The editor re-reads finished work to find unfinished work.
 
-**Blocked by:** — (was 37, and that edge is void: 37 was **parked** on 2026-08-11)
+Blocked by: — (was 37, and that edge is void: 37 was **parked** on 2026-08-11)
 
 [36](36-merged-content-view.md) owns the tick and the view this groups, and 36 is
 resolved. The edge on [37](.out-of-scope/37-leesweergave.md) is discussed below and

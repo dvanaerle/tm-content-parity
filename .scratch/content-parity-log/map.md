@@ -575,6 +575,34 @@ repeated in each:
   was not invented. The USP strip is deliberately left open. Built by
   [63](issues/63-regions-excluded-at-extraction.md).
 
+- [32 — A scannable diff, class filters, six stores, and a design system](issues/32-scannable-log-and-six-stores.md)
+  — **Closed 2026-08-13 by verification, not by work.** The spec read
+  `ready-for-agent` while its six build tickets had already built it. Seven of
+  eight phases are in the code: 33 the class vocabulary, 34 position, 35 the diff
+  rendering and the design system and the meta panel, 36 the merged content view
+  and the filters, 38 the six stores. **Leesweergave is the one phase that is not
+  built** — decisions 21–24, parked `wontfix` as ticket 37. Two user stories are
+  open and both have owners: story 29's deep link is ticket 34's reopened
+  criterion, and story 24's dropped `h1` is ticket 44.
+
+  **Five of its decisions are superseded, and the spec text does not say so.**
+  The tabs are four and not five (ticket 81 removed Taken); shown-and-hidden is
+  the three-value visibility enum (ADR 0005) over 22 classes and not 21; the
+  dashboard filter is in the URL and not session-only (ADR 0010); stock neutral
+  greys are retired; and the Testing Decisions section rests on "five test files
+  and no component tests" when there are 29 and a headless-Chromium project. The
+  answer on the ticket lists each one and where the decision now lives, so a
+  reader of the spec does not build from a superseded line.
+
+  Found while verifying and **fixed the same day**: `TICK.secondary` in
+  `OverrideControl.jsx` was `undefined`, so a fix tick that stands rendered in the
+  shadcn primary. Decision 28 asks for three visual states and two of them were
+  distinct. The tick is now **green**, which is a decision and not the design:
+  `palette.mjs` reserves the only green for the `added` direction and spends none
+  on status, and this is the one exception, taken on preference and written into
+  the docblock beside it. `TICK.info` stays defined and unused, so the blue is a
+  one-word change.
+
 - [33 — The class vocabulary: direction, and the changes the log cannot see](issues/33-directional-text-classes.md)
   — **Phase 1 of spec 32 is built and measured.** `structure` is retired for
   `text-missing` (shown) and `text-added` (hidden), and an exact-text pair whose
@@ -911,7 +939,8 @@ repeated in each:
   ticket imagined, so the interface says so under the list. It also argues against
   ticket 31: a 22-page maximum is a click-through, not a bulk tool.
 
-- [100 — Verschillen groups by class](issues/100-verschillen-groups-by-class.md)
+- [122 — Verschillen groups by class](issues/122-verschillen-groups-by-class.md)
+  *(renumbered from 100 on 2026-08-13; 100 was already taken)*
   — **Built 2026-08-12.** The queue arrives as a **class group** for each class of the
   closed vocabulary, ordered by the vocabulary and never by the counts, so no group moves
   as the work is done. `groupRepeatsByClass()` is a pure derivation over 81's repeats: it
@@ -956,6 +985,22 @@ repeated in each:
   withdrawing the mute: the project's only live mute spent its last days deciding nothing,
   and no surface said so. Nothing was deleted; a revocation is a new row.
 
+- **Three resolved tickets the map never indexed**, added 2026-08-13 by the
+  reconciliation below. Each is resolved and none has work left in it; they are
+  listed so that the map holds one entry per ticket, which is the property that
+  makes a frontier scan trustworthy.
+
+  - [47 — Where a shared identity key lives](issues/47-shared-keys-layering.md)
+    — the ticket behind
+    [ADR 0001](../../docs/adr/0001-a-pure-rule-that-both-stages-need-lives-in-shared.md).
+    A rule both the crawl and the compare need lives in `shared/`.
+  - [54 — The French store shows all of its pages](issues/54-french-store-shows-all-its-pages.md)
+    — resolved 2026-08-10; the identity half landed on the day and the crawl
+    followed. One of the four tickets that grew the seed list past 04's numbers.
+  - [56 — An excluded page says why](issues/56-an-excluded-page-says-why.md)
+    — an excluded page stays visible in a *Not checked* list carrying its reason,
+    which is what ticket 19 promised and did not build.
+
 ### Facts found while charting
 
 - Production emits 9 `data-content-type` attributes on a page where the new site
@@ -985,7 +1030,9 @@ repeated in each:
 - **`fotogalerij` is the extreme of the parity axis**: production 178 text
   elements, 81 images and 13,939 markdown bytes against the new site's 9, 38 and
   156, both sides 200. Five more gallery pages share the shape, 66–178 against 9.
-  Ticket 25.
+  Ticket [25](issues/25-fotogalerij-worst-case-page.md), resolved: the migration
+  of those pages is unfinished, and that is a storefront matter and not a tool
+  defect.
 - **Page status, nl store, measured by ticket 07**: production 139 × 200 and
   42 × 404; the new site 166 × 200 and 14 × 404. A 404 page still extracts,
   because the 404 page has a `<main>`.
@@ -1179,6 +1226,30 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
 [48](issues/48-open-and-done-board.md) re-triages after 37.
 
 ## Ready to build
+
+- **The same words, divided differently** — spec
+  [119](issues/119-spec-the-same-words-divided-differently.md), five build tickets in
+  dependency order: **118 → 86 →
+  [116](issues/116-a-merged-paragraph-is-one-row.md) →
+  [120](issues/120-a-split-paragraph-is-one-row.md) →
+  [121](issues/121-a-run-may-hold-a-heading.md)**, with
+  [117](issues/117-the-page-keeps-one-h1.md) held at `needs-triage` and gating nothing.
+  Decisions: [ADR 0012](../../docs/adr/0012-regrouped-requires-total-coverage.md) and
+  [ADR 0013](../../docs/adr/0013-the-finding-set-hash-ignores-visibility.md). Each ticket
+  moves a number, so each lands on its own run — ticket 33 established that one number
+  hiding two opposite movements is how a measurement stops meaning anything.
+
+  [118 — the finding-set hash ignores visibility](issues/118-the-finding-set-hash-ignores-visibility.md)
+  — **resolved 2026-08-13.** `findingSetHash()` no longer filters on class visibility, so
+  a vocabulary edit can never again print *changed since review* on a page where nothing
+  moved. It landed first and alone so its churn is attributable to it: **84 of 133 live
+  page reviews go stale on the run**, announced in advance by
+  [notes/2026-08-13-your-page-reviews-go-stale-once.md](notes/2026-08-13-your-page-reviews-go-stale-once.md).
+  Both the ticket and ADR 0013 predicted 121 and *all* of them. The ADR's paragraph is
+  rewritten, and the ticket's trap is struck through in place with the measurement beside
+  it. 6 reviews survive, because a page whose findings are all `work` hashes the same
+  under either rule, and 43 were already stale for reasons that predate the decision.
+  **86 is unblocked.**
 
 - **The log becomes a workspace** — nineteen tickets from the grilling session of
   2026-08-10, which read a product proposal against the code and the corpus. Five ADRs
@@ -1538,7 +1609,9 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   colon, so the fallback has never fired.
 
 - [32 — A scannable diff, class filters, six stores, and a design system](issues/32-scannable-log-and-six-stores.md)
-  — the spec from the grilling session of 2026-08-06, `ready-for-agent`. Eight
+  — the spec from the grilling session of 2026-08-06. **Resolved 2026-08-13 —
+  the record of what it built is in Decisions so far, above; this entry is the
+  workstream and keeps the record of tickets 35, 36 and 48.** Eight
   phases, and **phase 1 must be measured before phase 2 starts**. It retires
   `structure` for a directional `text-missing` / `text-added` pair, adds
   `heading-level` and `tag-changed` for the **762 tag changes on 80 pages the log
@@ -1550,12 +1623,12 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
 
   Broken into six build tickets. **33, 35, 36 and 38 are resolved. 34 is measured
   and eight-ninths built** — the review of 2026-08-07 reopened it on the one
-  criterion it ticked in error. **37 is unblocked and is the next ticket to
-  build.**
+  criterion it ticked in error. **37 is parked `wontfix`**, so no ticket of this
+  spec is waiting to be built.
 
   ```
   33 ✓ ──> 34 ~ ─┐
-     └──> 35 ✓ ──┴──> 36 ✓ ──> 37 ← next ──> 48 (needs-triage)
+     └──> 35 ✓ ──┴──> 36 ✓ ──> 37 ✗ parked ──> 48 (needs-triage)
   38 ✓ (independent) ──> 49 ✗ wontfix
                      └──> 59 ✓, 60 ✓
   ```
@@ -1672,7 +1745,10 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
 
 - **Axis B: coverage, NL against the other five stores.** Ticket 11 resolved every
   rule and nothing was built. `/to-tickets` cut it into seven slices on
-  2026-08-06. It **supersedes ticket 24** and **folds ticket 23** into 41.
+  2026-08-06. It **supersedes ticket
+  [24](issues/24-axis-b-compare-stage.md)** and **folds ticket
+  [23](issues/23-coverage-view-prototype.md)** into 41. Both are resolved on
+  those grounds and neither has work left in it.
 
   ```
   33 ✓ (spec 32) ──> 39 ──> 40 ──> 41
@@ -1716,6 +1792,83 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   the meta classes add about 130. One number would hide both, as ticket 33 found.
   It re-crawls all six stores, so nothing else should be in flight against
   `data/`.
+
+  **Cut into nine build tickets, and the map had not indexed one of them until
+  2026-08-13.** All nine are `ready-for-agent`. Two measurements go first,
+  because 58's own instruction is that the two halves must not be counted as one
+  number; the re-crawl is the hinge, and nothing else may touch `data/` while it
+  runs.
+
+  ```
+  91 ──> 93 ─┐
+  92 ──> 94 ─┴──> 95 ──┐
+                 96 ───┴──> 97 ──> 98
+                            └────> 99
+  ```
+
+  - [91 — Measure: what the nine meta classes would fire, on today's corpus](issues/91-measure-meta-classes-on-todays-corpus.md)
+  - [92 — Measure: does either side send `<meta name="title">` or keywords?](issues/92-measure-meta-title-and-keywords-presence.md)
+  - [93 — `no-route` leaves the log, and an aborted run writes its failures](issues/93-no-route-leaves-the-log.md)
+    — the prefactor half, the one that **removes** about 150 findings.
+  - [94 — The extract carries the head, and a stale one refuses to compare](issues/94-the-extract-carries-the-head.md)
+    — `extractVersion`, so a new head field can never fold to `null` on both
+    sides and report `same`.
+  - [95 — Re-crawl all six stores with the new head](issues/95-recrawl-six-stores-with-the-new-head.md)
+    — the run itself. Blocked by 93 and 94, and it blocks the producer.
+  - [96 — Nine meta classes enter the vocabulary](issues/96-nine-meta-classes-in-the-vocabulary.md)
+    — 22 classes to 30 (the count was 21 when 21 wrote it; ticket 58's own
+    arithmetic predates `no-declared-alternate`).
+  - [97 — The producer: one finding per head row](issues/97-the-meta-producer-one-finding-per-row.md)
+  - [98 — The Meta tab becomes a checklist an editor can tick](issues/98-the-meta-tab-becomes-a-checklist.md)
+    — this is what retires spec 32's decision 31, *the meta panel is display
+    only*. The panel is display-only **until 98 lands**, and not by principle.
+  - [99 — Measure: what the meta check added, beside what the prefactor removed](issues/99-measure-what-the-meta-check-added.md)
+    — the second of the two numbers.
+
+  - [100 — The glossary names the display-only rows, and the English labels](issues/100-the-glossary-names-the-display-only-rows.md)
+    — `ready-for-agent`, blocked by 98. The tail of the same chain: once a head
+    row can be ticked, `CONTEXT.md` has to say which rows stayed display-only and
+    why the head labels are English in a Dutch interface.
+
+- **The search learns the page scope** — seven tickets, none of which the map
+  indexed until 2026-08-13. [102](issues/102-the-class-pills-survive-a-search.md)
+  is **resolved** and is the record above, in Decisions so far: a term composes
+  with the class pills instead of replacing them. What is left is the scope — a
+  term that names a page rather than a string.
+
+  ```
+  103 ──> 104, 107, 108
+      └──> 105 <── 123
+  106 (independent)
+  ```
+
+  - [103 — A leading slash narrows the search to pages](issues/103-a-leading-slash-narrows-the-search-to-pages.md)
+    — the root of the chain; the other four wait on it.
+  - [104 — A scoped search says which kind of nothing it found](issues/104-a-scoped-search-says-which-kind-of-nothing.md)
+  - [105 — A scope reaches the notes](issues/105-a-scope-reaches-the-notes.md)
+    — blocked by 103 and 123.
+  - [106 — The scope is a filter and says so](issues/106-the-scope-is-a-filter-and-says-so.md)
+    — the scope chip joins the amber strip 102 built. Independent of 103.
+  - [107 — Typing a slash offers the page keys](issues/107-typing-a-slash-offers-the-page-keys.md)
+  - [108 — A page row hands its key to the search](issues/108-a-page-row-hands-its-key-to-the-search.md)
+  - [123 — An unloaded log is not an empty one](issues/123-an-unloaded-log-is-not-an-empty-one.md)
+    — *renumbered from 101 on 2026-08-13.* A search in the first moment after a
+    store loads must not answer "none" about a log it has not read.
+
+- **Two tickets are `ready-for-human`, and the map did not say so.** Neither is
+  blocked and neither is delegable as written.
+
+  - [109 — A difference opens the page at the difference](issues/109-a-difference-opens-the-page-at-the-difference.md)
+    — carries [ADR 0010](../../docs/adr/0010-the-dashboard-screen-is-the-url.md),
+    which is already in Decisions so far.
+  - [110 — The press covers the pages you ticked](issues/110-the-press-covers-the-pages-you-ticked.md)
+    — the bulk press; 31 below is the measurement it argues from.
+
+- [101 — The image campaign rule hides editorial images](issues/101-the-image-campaign-rule-hides-editorial-images.md)
+  — `ready-for-agent`, unblocked, and **the live collateral ticket 89 measured
+  and 90 could not close**: 24 of the `IMAGE_CAMPAIGN` rule's 530 findings are
+  one editorial image hidden unnoticed. 90 fixed the text side by anchoring on an
+  id; the image side is still a pattern.
 
 - [31 — Bulk dismissal across pages](issues/31-bulk-dismissal.md) — the one user
   story in spec 29 that shipped as nothing, found by the code review of the

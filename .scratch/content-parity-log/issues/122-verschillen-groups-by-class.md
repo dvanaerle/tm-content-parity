@@ -1,4 +1,10 @@
-# 100 — Verschillen groups by class
+# 122 — Verschillen groups by class
+
+**Renumbered from 100 on 2026-08-13.** Number 100 was already held by
+[the glossary names the display-only rows](100-the-glossary-names-the-display-only-rows.md),
+opened two days earlier, and one number cannot name two tickets. This file moved
+because it is the later claimant, which is the rule the out-of-scope README
+states from the other direction: a number is never reused. The work is unchanged.
 
 Type: task
 Status: resolved 2026-08-12 — built, every criterion met, and **the word "section" is

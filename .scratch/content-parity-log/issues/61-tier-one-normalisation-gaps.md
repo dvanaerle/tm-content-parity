@@ -7,9 +7,9 @@ it today. A hexadecimal HTML entity stays literal, so text reads as
 comparison carries a character an editor cannot see or delete. Each one is a finding
 that nobody can act on.
 
-**Blocked by:** None — can start immediately.
+Blocked by: None — can start immediately.
 
-**Status:** resolved 2026-08-07
+Status: resolved 2026-08-07
 
 **Origin:** the grilling of 2026-08-07 on the content unit. The user opened the
 session with two reports of findings on text that looks identical.

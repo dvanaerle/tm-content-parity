@@ -17,7 +17,7 @@ Ticket 38 fixed it **by usage** — run the script over every crawled store at o
 and wrote the rule into `README.md` and the map. The review of ticket 38 asked for
 more than that, because usage is not a guard.
 
-**Status:** resolved 2026-08-07
+Status: resolved 2026-08-07
 
 **Session:** 2, and before session 3. See `../RUNBOOK.md`.
 

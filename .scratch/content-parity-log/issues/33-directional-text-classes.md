@@ -21,9 +21,9 @@ sides, so it reports the pages where an `h1`'s own words moved into another tag,
 and not the pages that lost the words as well. Spec 32's user story 24 stays open.
 See "Left for another ticket".
 
-**Blocked by:** None — can start immediately.
+Blocked by: None — can start immediately.
 
-**Status:** resolved — built on branch `axis-a-compare-and-log`.
+Status: resolved — built on branch `axis-a-compare-and-log`.
 
 **Implements:** spec [32](32-scannable-log-and-six-stores.md), phase 1.
 

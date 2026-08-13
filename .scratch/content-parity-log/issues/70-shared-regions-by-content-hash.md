@@ -20,9 +20,9 @@ The durable property is the one the user named: the banner is a **shared element
 loaded on every page it is put on. That is true of the next campaign as well, and of
 every store, and it needs no knowledge of what the block says.
 
-**Blocked by:** 64, 67.
+Blocked by: 64, 67.
 
-**Status:** ready-for-agent
+Status: ready-for-agent
 
 **Origin:** the grilling of 2026-08-07 on the content unit, questions 22 and 24. It
 is the deferred half of both.

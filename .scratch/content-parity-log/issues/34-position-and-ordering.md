@@ -9,11 +9,11 @@ two strings, an occurrence count and a score. Grouping actively destroys
 position. So a one-word finding sends the editor hunting through the page by eye,
 and `occurrences: 6` means it was six different places.
 
-**Blocked by:** [33](33-directional-text-classes.md) — the spec forbids moving
+Blocked by: [33](33-directional-text-classes.md) — the spec forbids moving
 the same rows twice, and phase 1's measurement must be settled against an
 unmoved baseline before anything else changes the comparison.
 
-**Status:** ready-for-agent
+Status: ready-for-agent
 
 Reopened on 2026-08-07 by the review of commit `3251d91..HEAD`. Eight of the nine
 criteria hold. The deep-link one does not, and it was ticked in error. See

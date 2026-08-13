@@ -2,7 +2,7 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: 103, 101
+Blocked by: 103, 123
 Parent: ../map.md
 
 **What to build:** an editor scopes to a page and the notes half narrows with the
@@ -31,7 +31,7 @@ each other. Today every note renders identically. That stops here.
 - [ ] A one-sided page with a note shows that note, alongside 104's explanation of why
       there are no findings.
 - [ ] The two halves keep their two freshnesses and stay two blocks. No merged list.
-- [ ] The notes half keeps 101's honest states: a scoped notes block never says "none"
+- [ ] The notes half keeps 123's honest states: a scoped notes block never says "none"
       about a log it has not read.
 - [ ] Notes stay governed by the latest-per-key rule, so a withdrawn note is never offered
       as a live one.

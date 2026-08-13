@@ -9,7 +9,7 @@ page that links into the Dutch Belgian half of the same host is not flagged.
 Ticket 38 said to open a follow-up **only if the number is not zero**. It is not
 zero, so this ticket exists. But it is 1.
 
-**Status:** needs-triage — **re-opened 2026-08-10 by ticket
+Status: needs-triage — **re-opened 2026-08-10 by ticket
 [55](../55-five-stores-show-all-their-pages.md).** The first re-open trigger below
 fired. The number that made this wontfix was **1**; it is **12** now. The wontfix
 answer is kept below, unedited, because the reasoning is still sound and only the

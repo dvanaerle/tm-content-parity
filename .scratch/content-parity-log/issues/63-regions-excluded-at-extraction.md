@@ -18,9 +18,9 @@ The DOM exists only while the page is parsed.
 See `docs/adr/0003-regions-are-excluded-at-extraction.md`, which also records why
 the obvious wrapper selector is a trap.
 
-**Blocked by:** None — can start immediately.
+Blocked by: None — can start immediately.
 
-**Status:** resolved — 2026-08-07
+Status: resolved — 2026-08-07
 
 **Origin:** the grilling of 2026-08-07 on the content unit. It answers ticket
 [27](27-category-page-product-listings.md), which this ticket resolves.

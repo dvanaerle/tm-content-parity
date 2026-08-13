@@ -13,9 +13,9 @@ that does not exist. Its first test is "equal after tier 2, therefore `casing`".
 `CONTEXT.md` already decides this: the tool never makes a finding that it then
 hides, and a row that is equal after tier-1 normalisation is not a finding.
 
-**Blocked by:** None — can start immediately.
+Blocked by: None — can start immediately.
 
-**Status:** resolved 2026-08-07
+Status: resolved 2026-08-07
 
 **Origin:** the grilling of 2026-08-07 on the content unit.
 

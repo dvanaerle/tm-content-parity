@@ -13,9 +13,9 @@ possible, because the old id keys text that is no longer a unit.
 
 But the size of the loss decides how the change is announced, and nobody knows it.
 
-**Blocked by:** None — can start immediately. Needs Supabase access.
+Blocked by: None — can start immediately. Needs Supabase access.
 
-**Status:** resolved 2026-08-07
+Status: resolved 2026-08-07
 
 **Origin:** the grilling of 2026-08-07 on the content unit, question 9. Required by
 `docs/adr/0002-content-unit-is-the-editable-block.md`.

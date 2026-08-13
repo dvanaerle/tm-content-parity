@@ -13,9 +13,9 @@ The word diff costs more as well. `compare/worddiff.mjs` builds a full LCS table
 the tokens of both sides, in the browser, once for each cell pair, with no trim and no
 cap.
 
-**Blocked by:** 67. **Sequenced after 79**, which collapses the runs of equal rows.
+Blocked by: 67. **Sequenced after 79**, which collapses the runs of equal rows.
 
-**Status:** resolved 2026-08-10
+Status: resolved 2026-08-10
 
 **Origin:** the grilling of 2026-08-07 on the content unit, questions 7 and 8. The
 numbers, the criteria and the decisions below come from the grilling of 2026-08-10.

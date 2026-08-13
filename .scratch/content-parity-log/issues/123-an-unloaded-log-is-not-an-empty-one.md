@@ -1,4 +1,10 @@
-# 101 — An unloaded log is not an empty one
+# 123 — An unloaded log is not an empty one
+
+**Renumbered from 101 on 2026-08-13.** Number 101 was already held by
+[the image-campaign rule hides editorial images](101-the-image-campaign-rule-hides-editorial-images.md),
+opened two days earlier, and one number cannot name two tickets. This file moved
+because it is the later claimant, which is the rule the out-of-scope README
+states from the other direction: a number is never reused. The work is unchanged.
 
 Type: task
 Status: ready-for-agent
