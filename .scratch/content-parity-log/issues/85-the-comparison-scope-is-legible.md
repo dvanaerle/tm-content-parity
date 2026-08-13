@@ -5,6 +5,33 @@ Status: ready-for-agent
 Blocked by: 75
 Parent: ../map.md
 
+> **About half of this is already built, verified 2026-08-13 in a triage sweep of every
+> open ticket. Read the criteria against this note before building anything.**
+>
+> **Already in the tree.** The excluded-**regions** panel, read-only, with selector, kind,
+> reason and per-side removal counts — `web/src/components/Dashboard.jsx:433-452`, with the
+> kind wording in `REGION_KIND`. All seven coverage verdicts, worded in Dutch and measured
+> against the previous snapshot — `Dashboard.jsx:529-575` (`RegionCoverage`,
+> `REGION_VERDICT`), fed by `compare/region-coverage.mjs`, and the mismatched-scope guard is
+> honoured (`REGION_VERDICT_REASON`, *Niet vergeleken*). The zero-match sentence, including
+> the *the snapshot may be older than the entry* reading, at `Dashboard.jsx:444-448`. A
+> missing snapshot degrades quietly rather than drawing an empty panel. Excluded **pages**
+> appear with their reasons through `web/src/lib/not-checked.mjs:24-54` and
+> `Dashboard.jsx:412-430`, grouped by kind.
+>
+> **What is left.** The excluded-pages entries are a comma-joined list inside the *Niet
+> gecontroleerd* aside (`Dashboard.jsx:424-427`), not a panel with a per-entry store count.
+> There is **no class-visibility panel at all** — `web/src/lib/classes.mjs:102-120` gives
+> `classInfo()` per class, but nothing enumerates the classes with their visibility group
+> and finding count. A `stopped-matching` or zero-page entry renders as a row inside the
+> aside rather than being hoisted as a warning above the list, and it does not say how many
+> findings are back in the backlog. No panel names the pull request as the route to edit.
+> The **drafting endpoint does not exist**: `api/server.mjs` serves `/api/health` (:142) and
+> the re-check routes (:144-178), and 404s everything else (:179) — no selector measurement,
+> no `maxUnits` proposal, no 100 ceiling, no share-of-page or campaign-anchor warning, no
+> three-page fetch. And no ADR or answer records an owner for the exclusion list;
+> `shared/excluded-regions.mjs` still only states the need.
+
 **What to build:** one place in the dashboard that answers "what is this comparison
 looking at, and what is it deliberately blind to" — the excluded pages with their
 reasons, the excluded regions with their coverage, and every finding class with its

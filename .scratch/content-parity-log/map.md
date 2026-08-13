@@ -939,6 +939,28 @@ repeated in each:
   ticket imagined, so the interface says so under the list. It also argues against
   ticket 31: a 22-page maximum is a click-through, not a bulk tool.
 
+- **Three tickets resolved 2026-08-13 by a triage sweep, not by a build.** All three
+  were built and none had its status line moved, so all three sat in the frontier
+  advertising work that was already done. The sweep read all 44 open tickets against the
+  code; these were the only three fully built, and 34, 70, 85 and 87 were found
+  part-built and annotated in place. The verifications are code reads, not hands-on
+  checks of the running interface, and each answer says so.
+
+  - [74 — Seven accessible primitives](issues/74-seven-accessible-primitives.md)
+    — built in `34a9e96`. All seven at `web/src/components/ui/`, `@base-ui/react` with
+    no TypeScript, the tab strip as first user, and the palette's precedence over
+    shadcn's variables written into `app.css` rather than left to import order.
+  - [109 — A difference opens the page at the difference](issues/109-a-difference-opens-the-page-at-the-difference.md)
+    — the finding id travels in `bevinding`, the landing opens the tab and scrolls,
+    the editor's own tab and noise choices win, the way back is laundered through
+    `screenFromSearch()`, and the dashboard screen rides the query string on
+    `replaceState`. Carries ADR 0010.
+  - [110 — The press covers the pages you ticked](issues/110-the-press-covers-the-pages-you-ticked.md)
+    — through review rounds two and three: tri-state select-all in the table head,
+    the floating bar, both presses stating the ticked count, clearing through the
+    shared `clearedEventFor` seam, one selection per list, no new dependency. **Its
+    mute half was struck by ADR 0011, not built.**
+
 - [122 — Verschillen groups by class](issues/122-verschillen-groups-by-class.md)
   *(renumbered from 100 on 2026-08-13; 100 was already taken)*
   — **Built 2026-08-12.** The queue arrives as a **class group** for each class of the
@@ -1279,14 +1301,17 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   reviewed:
   [72 Astro 6](issues/72-upgrade-to-astro-6.md) — **resolved 2026-08-11**,
   [73 Astro 7](issues/73-upgrade-to-astro-7.md) — **resolved 2026-08-11**,
-  [74 seven primitives](issues/74-seven-accessible-primitives.md).
+  [74 seven primitives](issues/74-seven-accessible-primitives.md) — **resolved 2026-08-13**,
+  built in `34a9e96` and found by a triage sweep with its status line never moved.
   Astro 7.2.0 is current, the documented path from 5.14 is 5 → 6 → 7, and v6 raises the
   Node floor to 22.12.0 for the crawl and the re-check service as well as the build.
 
   **73 was upgraded by hand, outside a ticket**, so it did not run its gate. 72 closed on
   a byte-identical build of all 823 pages; 73 has no such line, and the whitespace
   difference its own criteria predicted from the new `compressHTML` default is
-  unmeasured. 74 is unblocked either way — it builds on top of whatever the tree is.
+  unmeasured. ~~74 is unblocked either way — it builds on top of whatever the tree is.~~
+  — **74 is resolved, 2026-08-13**; it built on top of the tree as written and the
+  question of 73's ungated upgrade is unaffected by it, and still open.
 
   Then the contract and the measurements, all unblocked:
   [75 class visibility](issues/75-class-visibility-replaces-shown.md),
@@ -1865,14 +1890,18 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     — *renumbered from 101 on 2026-08-13.* A search in the first moment after a
     store loads must not answer "none" about a log it has not read.
 
-- **Two tickets are `ready-for-human`, and the map did not say so.** Neither is
-  blocked and neither is delegable as written.
+- ~~**Two tickets are `ready-for-human`, and the map did not say so.** Neither is
+  blocked and neither is delegable as written.~~ — **both are built and were resolved
+  2026-08-13.** A triage sweep of all 44 open tickets found the code in the tree and the
+  status lines never moved. See *Resolved tickets*.
 
   - [109 — A difference opens the page at the difference](issues/109-a-difference-opens-the-page-at-the-difference.md)
     — carries [ADR 0010](../../docs/adr/0010-the-dashboard-screen-is-the-url.md),
-    which is already in Decisions so far.
+    which is already in Decisions so far. **Resolved 2026-08-13.**
   - [110 — The press covers the pages you ticked](issues/110-the-press-covers-the-pages-you-ticked.md)
-    — the bulk press; 31 below is the measurement it argues from.
+    — the bulk press; 31 below is the measurement it argues from. **Resolved 2026-08-13**,
+    through review rounds two and three, with its mute half struck by ADR 0011 rather
+    than built.
 
 - [101 — The image campaign rule hides editorial images](issues/101-the-image-campaign-rule-hides-editorial-images.md)
   — `ready-for-agent`, unblocked, and **the live collateral ticket 89 measured

@@ -1,9 +1,12 @@
 # PRD — The log becomes a workspace
 
 Type: prd
-Status: live, half delivered — 2026-08-13: of the twenty tickets it names, **ten have
-landed** (31, 72, 73, 75, 76, 81, 82, 88, 89, 90), **one is parked** (84, `wontfix` with
-20), and **nine are open** (74, 77, 78, 79, 80, 83, 85, 86, 87). A PRD is not an agent
+Status: live, half delivered — 2026-08-13: of the twenty tickets it names, **eleven have
+landed** (31, 72, 73, 74, 75, 76, 81, 82, 88, 89, 90), **one is parked** (84, `wontfix`
+with 20), and **eight are open** (77, 78, 79, 80, 83, 85, 86, 87) — of which **85 and 87
+are part-built**; see the notes at the top of those two. (First written as *ten landed,
+nine open*, counting 74 as open. A triage sweep the same day found 74 built in commit
+`34a9e96` with its status line never moved.) A PRD is not an agent
 task and takes no triage role; the roles in `docs/agents/triage-labels.md` belong to the
 tickets. **This document does not track the tickets opened after it** — 91 onwards are in
 `map.md`, which is where the working order lives.

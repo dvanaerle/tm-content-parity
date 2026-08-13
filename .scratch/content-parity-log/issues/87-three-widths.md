@@ -5,6 +5,28 @@ Status: ready-for-agent
 Blocked by: 79, 81
 Parent: ../map.md
 
+> **Part of this arrived on the way to other tickets, verified 2026-08-13 in a triage sweep
+> of every open ticket.**
+>
+> **Already in the tree.** Every data table has a horizontal scroll wrapper —
+> `web/src/components/ui/table.jsx:12` wraps in `overflow-x-auto`, and its users pass
+> `table-fixed min-w-3xl` / `min-w-2xl` (`ContentView.jsx:271`, `Ledger.jsx:329,396`), so
+> the fixed pixel columns became **minimum** widths while `table-fixed` was kept. That is
+> this ticket's *a wide table scrolls sideways rather than crushing itself*, delivered by
+> ticket 74's primitive. Some responsive utilities also now exist beyond the two `lg:` ones
+> this ticket describes — `Shell.astro:41,55,60`, `Dashboard.jsx:250`,
+> `ContentView.jsx:68,194`.
+>
+> **What is left.** The **three widths are named nowhere** — no doc, constant or comment in
+> `web/src`, `docs/` or `CONTEXT.md` states the targets, so there is nothing to build
+> against. The **header does not wrap**, and `Shell.astro:35-41` says so outright: *nothing
+> here can wrap without breaking the `h-16`*. The touch-target rule is unmet and currently
+> pointed the wrong way — override controls, the bulk buttons and the clamp control use
+> `size="xs"` (`BulkControl.jsx:122,133`), which is smaller than a touch target, not larger.
+> And the *expand and collapse by touch* criterion is still **unverifiable**, because 79's
+> context markers do not exist yet. Both blocks — 79 and 81 — should be re-read before this
+> starts; 81 is resolved, 79 is not.
+
 **What to build:** the log is usable on a laptop, on a tablet and on a phone. An editor
 standing in a showroom with a phone can read a page's findings, and the side-by-side diff
 scrolls sideways instead of crushing itself into two unreadable columns.

@@ -19,6 +19,20 @@ Reopened on 2026-08-07 by the review of commit `3251d91..HEAD`. Eight of the nin
 criteria hold. The deep-link one does not, and it was ticked in error. See
 "What is not done" below.
 
+> **Re-verified 2026-08-13 during a triage sweep of every open ticket, and still true.**
+> The eight that hold are in the tree: `compare/locate.mjs:29` (`anchorHeadingFor`),
+> `compare/locate.mjs:63` (`textFragmentUrl`), and the occurrence badge at
+> `web/src/components/Annotations.jsx:69-84`. The ninth fails in two ways, both at
+> `Annotations.jsx:47-57` — `Section` returns `null` when `anchorHeading` is falsy, so a
+> row without one gets **no link at all**; and where it does render, both `Locate` calls
+> (`:52-53`) are handed the **same** heading string, so the new-site link is built from
+> production's heading. An agent taking this ticket builds the ninth criterion only.
+> One thing has moved under it since: ticket 113 took `anchorHeading` out of part of the
+> derivation (`web/src/lib/reports.mjs:101`) and ADR 0011 took it off the dashboard index
+> (`web/src/lib/search.mjs:52`). The field still exists on the ledger row
+> (`Ledger.jsx:356`) and in search, so the ninth criterion is still reachable — but check
+> which surfaces still carry it before designing the fix.
+
 **Implements:** spec [32](32-scannable-log-and-six-stores.md), phase 2.
 
 - [x] Text elements, images and links come from **one** document-order walk, on a

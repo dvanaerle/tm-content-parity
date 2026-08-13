@@ -24,6 +24,21 @@ Blocked by: 64, 67.
 
 Status: ready-for-agent
 
+> **Half of the motivation is already gone, verified 2026-08-13 in a triage sweep of every
+> open ticket.** Ticket 64's campaign-specific anchor — the first of the two problems below
+> — was retired independently: `shared/excluded-regions.mjs:105-120` now keys on
+> `selector: '#campaign-banner'` rather than on this campaign's option ids, with the
+> reasoning written in. So *the next campaign needs a new commit* is **no longer true**, and
+> that is not what this ticket has left to do.
+>
+> **The mechanism is untouched.** No content hash exists anywhere: a region carries
+> `selector`, `kind`, `reason`, `measured` and `maxUnits` only
+> (`shared/excluded-regions.mjs:55-62`), and `RegionRemoval` in `compare/contract.mjs:105-112`
+> carries no hash. Nothing counts a hash's occurrences per store and nothing surfaces an
+> unlisted frequent block. The second problem below — **a new shared block arrives as
+> thousands of rows** — is the whole of the remaining work, and it should be re-argued on
+> its own merits now that the anchor is fixed by other means.
+
 **Origin:** the grilling of 2026-08-07 on the content unit, questions 22 and 24. It
 is the deferred half of both.
 
