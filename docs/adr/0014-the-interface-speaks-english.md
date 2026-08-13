@@ -116,4 +116,5 @@ the interface no longer needs a translator between them.
   **untranslated** is a finding class on scraped store content and never a description of
   this interface.
 - No count, no bar, no denominator and no derivation moves. That is what makes this a
-  relabelling: 679 tests pass, and the ones that pin those rules pass unchanged.
+  relabelling: the suite passes, and the tests that pin those rules pass **unchanged** —
+  `view.mjs` and `bulk.mjs` are edited in their comments only.

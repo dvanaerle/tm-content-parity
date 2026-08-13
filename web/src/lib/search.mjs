@@ -263,7 +263,7 @@ export function matchedFields(entry, term) {
  * @param {(id: string) => import('../../../overrides/state.mjs').FindingState} [args.stateOf]
  *   The log's answer about one finding. It defaults to `open`, which is what an
  *   unconnected log knows: no decision has been read, so nothing is closed yet.
- * @param {boolean} [args.includeClosed] *Inclusief afgesloten*.
+ * @param {boolean} [args.includeClosed] *Include closed*.
  * @param {string[]} [args.classes] The class pills that are on (ticket 102). Empty means
  *   every class, which is what an untouched filter says — not a filter matching nothing.
  *   It is a second narrowing over the same result and not a second search: the term

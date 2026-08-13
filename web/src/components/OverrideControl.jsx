@@ -24,7 +24,7 @@ import { Input } from './ui/input.jsx';
  * There was a second judgement here until ticket 112, and ADR 0011 withdrew it
  * entirely: a dismissal, keyed on the finding and expiring the moment either text
  * changes, is the only judgement left. A fully decided difference therefore offers
- * only *Ongedaan maken*, and that case is correctly empty — a second judgement on
+ * only *Clear*, and that case is correctly empty — a second judgement on
  * top of a colleague's is how two people disagree invisibly in an append-only table.
  */
 

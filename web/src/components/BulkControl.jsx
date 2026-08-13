@@ -29,7 +29,7 @@ import { cn } from '../lib/utils.js';
  * for the whole list, and ticking in a second difference takes it.
  *
  * **Two presses**, and the second is the way back: `OverrideControl.jsx` has offered
- * *Ongedaan maken* on one decided finding since ticket 29, and this offered nothing at all
+ * *Clear* on one decided finding since ticket 29, and this offered nothing at all
  * there. A press that can put ten pages in a state and cannot take them out of it is a
  * one-way door with a ten-page way back, which is the work ticket 110 exists to remove.
  *

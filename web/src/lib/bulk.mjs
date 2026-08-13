@@ -93,7 +93,7 @@ const offersDismissal = (finding) => OFFERED.has(finding?.state ?? 'open');
  *
  * The word is **cleared** and not *undo*: `CONTEXT.md` gives that one action the job of
  * revoking the last override on a key, and it says there are no `un-` words. The button an
- * editor presses says *Ongedaan maken*, which is the same word the single control has worn
+ * editor presses says *Clear*, which is the same word the single control has worn
  * since ticket 29 — the Dutch label and the vocabulary are two different things.
  *
  * The event itself comes from `clearedEventFor()`, beside the derivation that decided the

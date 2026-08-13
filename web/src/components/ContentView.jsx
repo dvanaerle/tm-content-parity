@@ -355,10 +355,10 @@ function ClampControl({ open, onToggle }) {
       size="xs"
       onClick={onToggle}
       aria-expanded={open}
-      title={open ? 'Show four rows of this block' : 'Show all of this block'}
+      title={open ? 'Show four lines of this block' : 'Show all of this block'}
       className="ml-2 text-xs font-normal text-muted-foreground"
     >
-      {open ? 'four rows' : 'whole block'}
+      {open ? 'four lines' : 'whole block'}
     </Button>
   );
 }

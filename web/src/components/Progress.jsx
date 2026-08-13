@@ -71,7 +71,7 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
             onClick={() => append({ scope: 'page', action: 'cleared' })}
             className="px-0 text-muted-foreground"
           >
-            Withdraw
+            Clear
           </Button>
         )}
         {canWrite && !review.fresh && (
@@ -139,7 +139,7 @@ export function LogBanner({ connected, notConnectedReason, ready, error }) {
     // ticket 35 keeps red for "production had this and the new site lost it".
     return (
       <Banner tone="severe">
-        <strong>The decision log does not answer.</strong> The page is read-only, so you
+        <strong>The override log does not answer.</strong> The page is read-only, so you
         cannot lose a change that you think is saved.{' '}
         {/*
           A failed read keeps the last good one, so the two cases say different
@@ -156,12 +156,12 @@ export function LogBanner({ connected, notConnectedReason, ready, error }) {
   if (!connected) {
     return (
       <Banner tone="attention">
-        <strong>No connection to the decision log.</strong> {notConnectedReason} The Fixed
+        <strong>No connection to the override log.</strong> {notConnectedReason} The Fixed
         tick and Dismiss are off; the rest of the log works.
       </Banner>
     );
   }
-  if (!ready) return <Banner tone="neutral">The decision log is loading…</Banner>;
+  if (!ready) return <Banner tone="neutral">The override log is loading…</Banner>;
   return null;
 }
 

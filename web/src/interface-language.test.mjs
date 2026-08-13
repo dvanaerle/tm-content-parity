@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { extname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -26,42 +27,53 @@ import { describe, expect, it } from 'vitest';
  */
 const STOPWORDS = ['pagina', 'winkel', 'verschil', 'wissen', 'geen', 'niet', 'resolved'];
 
-const ROOT = new URL('.', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+// `fileURLToPath` and not `.pathname`, which keeps the percent-encoding: a checkout under
+// a path holding a space would then be a directory name `readdir` cannot find. It is also
+// the idiom `repo-root.mjs` and `api/server.mjs` use.
+const ROOT = fileURLToPath(new URL('.', import.meta.url));
 
-/** The files the interface is written in. `ui/` is shadcn's and it holds no label. */
+/**
+ * The extensions the interface is written in. `ui/` is swept as well: those files are
+ * shadcn's and they *should* hold no label, and a guard that takes that on trust is a
+ * guard that cannot see the day one does.
+ */
 const DRAWN = ['.jsx', '.mjs', '.astro', '.js'];
 
 /** @returns {Promise<string[]>} */
 async function filesUnder(directory) {
-  const found = [];
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) found.push(...await filesUnder(path));
-    else if (DRAWN.includes(extname(entry.name)) && !entry.name.endsWith('.test.mjs')) {
-      found.push(path);
-    }
-  }
-  return found;
+  const entries = await readdir(directory, { recursive: true, withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile()
+      && DRAWN.includes(extname(entry.name))
+      && !entry.name.endsWith('.test.mjs'))
+    .map((entry) => join(entry.parentPath, entry.name));
 }
 
 /**
- * A word inside a word is not the word. `verschil` must not fire on nothing, but
- * `geen` inside `Nijmegen` would be a hit no reader could act on, and a guard that
- * cries wolf is a guard somebody switches off.
+ * A word inside a word is not the word. Without the boundary `geen` fires inside
+ * `Nijmegen`, and a guard that cries wolf is a guard somebody switches off.
  */
 const holds = (text, word) => new RegExp(`\\b${word}`, 'i').test(text);
 
 describe('the interface speaks one language', () => {
+  // The sweep reads every file the interface is written in, so it is given room: under a
+  // full `npm test` it shares a machine with two vitest projects, and vitest's five-second
+  // default made it a flake rather than a guard.
   it('draws no Dutch stopword anywhere under web/src', async () => {
     const files = await filesUnder(ROOT);
     // The sweep has to actually sweep. A path that resolved to nothing would make this
     // whole file pass by finding no file to read.
     expect(files.length).toBeGreaterThan(30);
 
+    // Read together rather than one after the other. The files are small and there are
+    // hundreds of them, so the cost is the round trips and not the bytes.
+    const read = await Promise.all(
+      files.map(async (file) => /** @type {[string, string]} */ ([file, await readFile(file, 'utf8')])),
+    );
+
     /** @type {string[]} */
     const caught = [];
-    for (const file of files) {
-      const text = await readFile(file, 'utf8');
+    for (const [file, text] of read) {
       for (const [index, line] of text.split('\n').entries()) {
         for (const word of STOPWORDS) {
           if (holds(line, word)) {
@@ -72,7 +84,10 @@ describe('the interface speaks one language', () => {
     }
 
     expect(caught).toEqual([]);
-  });
+    // The five-second default is what made this a flake instead of a guard: standalone the
+    // sweep takes under a second, and under a full `npm test` it shares the machine with
+    // two vitest projects.
+  }, 30_000);
 
   // The guard has to be able to fail. Without this the list could be emptied, or the
   // matcher could be broken, and the file would go on reporting success.

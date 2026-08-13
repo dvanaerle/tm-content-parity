@@ -1310,9 +1310,10 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     parameters, `finding` and `back`, the `/search-index/` route, the export filenames,
     the six store names, `lang="en-GB"` and the three dates), the labels (34 files), the
     stopword guard, and the documents. **No count, bar, denominator or derivation moved**
-    — 679 tests pass and the ones that pin that rule pass unchanged, which is the whole
-    claim of a relabelling. The guard caught one real hit on its way in: *resolved* as an
-    ordinary verb in `view.mjs`, reworded rather than excused. Two words were renamed
+    — the tests that pin that rule pass **unchanged**, and `view.mjs` and `bulk.mjs` are
+    edited in their comments only, which is the whole claim of a relabelling. The guard
+    caught one real hit on its way in: *resolved* as an ordinary verb in `view.mjs`,
+    reworded rather than excused. Two words were renamed
     beyond the ticket's list, both under the trap's own test — *does it reach the address
     bar* — namely `bevinding` and `terug`; and the `bevinding-` DOM anchor followed them.
     The old Dutch parameters are **not** aliases, so a link copied before today opens the
