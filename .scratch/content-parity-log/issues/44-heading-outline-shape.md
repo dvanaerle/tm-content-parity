@@ -1,7 +1,11 @@
 # 44 — Heading outline shape
 
 Type: task
-Status: ready-for-agent
+Status: needs-triage — **2026-08-13**. Was `ready-for-agent`. Its class-split argument is
+the mute — *"one shared class would let an editor mute both axes with one click"* — and ADR
+0011 withdrew it. Re-argue on taxonomy or drop the split. See ticket 39. Note also that
+ticket 86 makes `heading-level` `information` rather than work, which this ticket should
+be read against.
 Blocked by: 42
 Parent: ../map.md
 

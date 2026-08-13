@@ -1,7 +1,11 @@
 # 43 — Alt language and meta
 
 Type: task
-Status: ready-for-agent
+Status: needs-triage — **2026-08-13**. Was `ready-for-agent`. Its reason for a separate
+`meta-untranslated` class is the mute — *"`class` is ticket 01's mute key"*, and meta is
+*"more likely to be muted for a whole store than body copy"* — and ADR 0011 withdrew the
+mute. The criterion *"A mute on `meta-untranslated` does not hide an `untranslated`
+finding"* has no subject. Re-argue the split on taxonomy or drop it. See ticket 39.
 Blocked by: 42
 Parent: ../map.md
 

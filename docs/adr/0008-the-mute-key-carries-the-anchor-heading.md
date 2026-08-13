@@ -1,5 +1,11 @@
 # The mute key carries the anchor heading, and a mute says what it hides
 
+> **Superseded by [ADR 0011](0011-the-mute-is-withdrawn.md), 2026-08-13.** The mute was
+> withdrawn: under the key this ADR designed it was pressed eleven times, ten of them
+> revoked by their own author within a minute, and never adopted. What is below is why the
+> key was shaped this way, and it is kept because ADR 0011 argues against it. The
+> distinction it draws — a mute is a judgement, an id is an identity — is what survives.
+
 A mute is keyed on `store | page | class`. It is the only override that survives a
 text change, which makes it the right tool for rotating content — and its key is
 coarser than the judgement an editor is making. Measured over 448 reports and 22,990

@@ -1,7 +1,13 @@
 # 40 — Coverage: missing pages, from the seed file alone
 
 Type: task
-Status: ready-for-agent
+Status: needs-triage — **2026-08-13**. Was `ready-for-agent`; its interaction model was
+the mute, which ADR 0011 withdrew. *"An editor mutes the ones that are absent on purpose"*
+and *"A mute on one missing page is written to Supabase, and it is still there"* cannot be
+built. This is not a rename: axis B needs an answer to **how an editor says a page is
+absent on purpose**, and a dismissal is keyed on two texts, which a missing page does not
+have. That question is open, so this is not an agent's to pick up. Ticket 41 is parked
+behind it.
 Blocked by: 39
 Parent: ../map.md
 

@@ -1,9 +1,14 @@
 # 41 — The coverage matrix, and bulk muting
 
 Type: task
-Status: ready-for-agent
+Status: wontfix — **parked 2026-08-13**. Not disproven and not deferred: its subject was
+withdrawn. The whole of the second half of this ticket is bulk muting — *one action mutes
+a whole row or a whole column* — and ADR 0011 withdrew the `muted` override entirely, on
+the evidence that it was built, tried eleven times and never adopted. There is no mute for
+a matrix to offer. **The coverage matrix itself is not refused**, and if it is revived it
+starts from ticket 40, which is now `needs-triage` for the same reason.
 Blocked by: 40
-Parent: ../map.md
+Parent: ../../map.md
 
 ## What to build
 

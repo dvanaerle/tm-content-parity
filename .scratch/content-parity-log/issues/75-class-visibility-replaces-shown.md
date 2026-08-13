@@ -2,7 +2,12 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: None — can start immediately.
+Blocked by: None — can start immediately. **But sequence it against 114 (2026-08-13):** its
+criterion *"A mute still takes findings out of the denominator"* is a count-neutrality check
+that ADR 0011 makes false. If 75 lands **before** 114 the criterion holds as written and
+114 removes it; if **after**, the criterion is already void and the count-neutrality it
+tests is against the dismissal alone. Either order is fine; building it without knowing
+which is not. Ticket 86 is blocked by this one and moves the denominator on purpose.
 Parent: ../map.md
 
 **What to build:** a class stops being shown or hidden and starts saying what it is

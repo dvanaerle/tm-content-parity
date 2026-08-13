@@ -2,7 +2,10 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: —
+Blocked by: 114 for its mute lines only — **added 2026-08-13.** *"Mute keeps its menu"* has
+no menu to keep: ADR 0011 withdrew the mute. Its other statement — that a re-classification
+orphans any override keyed on the old class — stays true of the dismissal, which is keyed
+on the finding id and therefore on the class. Everything else in this spec is unaffected.
 Parent: ../map.md
 Implements: the grilling session of 2026-08-06 (Q1–Q31)
 Amends: 02 (class vocabulary), 06 (ImageRecord), 12 (tab count), 21 (meta panel),

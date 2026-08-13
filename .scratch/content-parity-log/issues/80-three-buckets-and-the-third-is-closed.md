@@ -2,7 +2,12 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: None — can start immediately.
+Blocked by: 114 — **added 2026-08-13.** This ticket enumerates *"five derived states —
+`open`, `dismissed`, `muted`, `fixed`, `contradicted`"* and defines Closed partly as *"a
+muted finding is Closed but it left the denominator"*. ADR 0011 withdrew the mute: there
+are **four** states, and nothing leaves the denominator. The three buckets are unchanged
+and correct; only the sentences reasoning from `muted` need cutting, which is why this is
+sequenced behind 114 rather than re-triaged.
 Parent: ../map.md
 
 **What to build:** the dashboard and the ledger group findings into three: **Open**,

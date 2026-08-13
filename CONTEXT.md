@@ -113,8 +113,9 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Tier 2** — visible difference: letter case, trailing punctuation. Report as
   a `casing` finding.
 - **Check** — a family of comparisons: `text`, `links`, `images`, `meta`.
-- **Class** — why the two sides are different. The class vocabulary is closed, and
-  the class is also the mute key. See `compare/contract.mjs`.
+- **Class** — why the two sides are different. The class vocabulary is closed. See
+  `compare/contract.mjs`. It was also the mute key until the mute was withdrawn
+  (ADR 0011); the class is now the only axis and keys nothing.
 - **Visibility** — what a class is for. One of three words, and each class has
   exactly one. **Work** is migration work: it counts. **Information** is a
   difference an editor may want to read: it is rendered and it does not count.
@@ -213,7 +214,7 @@ element any more: it folds the links inside it. Both the word and the rule are g
   ADR 0006 keeps the content view whole. A finding id is a term of the text, so a link
   outlives the finding it names, and a page reached by a stale one says so — as does one
   naming a finding no tab draws, which is the `meta` check: Meta is display only.
-  The tab and *Ruis en gedempt tonen* are **borrowed**, each released on its own the
+  The tab and *Ruis tonen* are **borrowed**, each released on its own the
   moment the reader touches that control. Taking one back is not taking the other back:
   switching tabs must not switch off the toggle that was drawing the landed row.
 - **Dashboard** — one store's work on one screen, at `/<store>/`. It carries only
@@ -235,18 +236,23 @@ element any more: it folds the links inside it. Both the word and the rule are g
   never what is included, so it is session state, it never enters the amber strip and
   *filter wissen* does not touch it. The class pills stay the one filter, and with a
   pill on only the selected groups exist, so the two controls cannot tell different
-  stories. Do **not** call it a *section*: that word is the mute scope, a run of one
-  page under an anchor heading, and ticket 100's own wording is refused here for it.
+  stories.
   A group holds its own **rendering budget**, so *volgende 100* pages the group it
-  sits in.
+  sits in. Do **not** call it a *section*: that word named the mute scope, a run of one
+  page under an anchor heading, and though the mute is withdrawn (ADR 0011) the word stays
+  taken — it is what an anchor heading names, and ticket 100's own wording is refused here
+  for it.
 - **Doorway** — the root, `/`. It lists the stores and waits. It is not a dashboard
   and it holds no numbers, because there is no all-stores dashboard for it to be.
 - **Store switcher** — the six store ids in the shell header, each a link to that
   store's dashboard. It never goes to the same page in another store: the stores
   translate the category url keys, so that page often does not exist.
-- **Noise toggle** — the control that shows hidden classes and muted findings. It is
-  **not** a filter: it belongs to the whole log, and *filter wissen* does not clear
-  it. An editor who asked to see the muted rows did not ask a question about classes.
+- **Noise toggle** — *Ruis tonen*, the control that shows the classes whose visibility is
+  `diagnostic`. It is **not** a filter: it belongs to the whole log, and *filter wissen*
+  does not clear it. An editor who asked to see what a rule saw did not ask a question
+  about classes. It had a second job until ADR 0011 — it also showed muted findings, and
+  it was called *Ruis en gedempt tonen* — and a diagnostic class is not a judgement, so
+  the job that is left is the one it was named for.
 
 Four tab names are retired, and the content view is what replaced the first three.
 **"Diff"** showed the differing rows only, so once every row was tinted the tint said
@@ -312,28 +318,29 @@ who wins against re-check.
   content, thus on the finding id, so it expires when either side changes. This
   is correct behaviour: the judgement is stale, and the tool must ask again. A
   note is necessary.
-- **Mute** — a judgement about a class in one place: "this class is never a defect
-  here." Keyed on store, page, class and **anchor heading**, so it names a section.
-  A **page-wide mute** is the same judgement with the heading left out; it stays
-  available for a page whose headings are content, such as a gallery. A mute persists,
-  and muted findings stay visible behind a toggle. A mute **says how many findings it
-  hides before it is made**, and it needs a note: it is the one judgement that never
-  expires, so it is the one that must be auditable. The anchor heading is in the mute
-  key and not in the finding id, because a mute is a judgement and an id is an
-  identity. See `docs/adr/0008-the-mute-key-carries-the-anchor-heading.md`.
+- **Mute** — ~~a judgement about a class in one place: "this class is never a defect
+  here", keyed on store, page, class and anchor heading~~. **Withdrawn from the vocabulary
+  2026-08-13**, together with the `page-class` scope. It was built, tried and never
+  adopted: eleven presses, all on `nl`, ten of them revoked by their own author within
+  a minute, six of them labelled *Test*. The one that was left standing carries the note
+  `"Negeren"` — the name of the other control. And the job anybody wanted it for, silencing
+  a whole class, is not a job it could do: its key named one section of one page, so a
+  class across a store was hundreds of presses that no later crawl would extend. That job
+  belongs to **visibility** on the class. Do not reason from this term.
+  See `docs/adr/0011-the-mute-is-withdrawn.md`, which supersedes ADR 0008.
 - **Bulk decision** — one press that writes **N ordinary events**, one per page, each
   carrying the editor and the same note. It is not a scope and it never will be: a
   repeat is a grouping the interface makes and has no identity to key on, so the table
   gains N rows and no column. **The pages are ticked**: a difference is a list with a
   checkbox per row and one in the column header, and every count follows the ticks. The
-  three bulk presses have **different eligibilities on one selection**, and that is the
-  whole of the difference between them — a bulk **dismissal** expires with the text and
-  skips a finding a colleague decided; a bulk **mute** takes pages × class × section, does
-  not expire, and counts a decided finding it does not change; a bulk **clearing** revokes
-  a dismissal or a mute and touches nothing else. Do not make them agree: they are not
-  measuring the same thing. Neither of the first two covers a page that a later crawl
-  finds. A partial failure is reported as *N of M saved*: the table is append-only, so what
-  was written stands and the interface says how far it got. See tickets 31 and 110.
+  two bulk presses have **different eligibilities on one selection** — a bulk
+  **dismissal** expires with the text and skips a finding a colleague decided; a bulk
+  **clearing** revokes a dismissal and touches nothing else. The dismissal does not cover a
+  page that a later crawl finds. A partial failure is reported as *N of M saved*: the table
+  is append-only, so what was written stands and the interface says how far it got.
+  There were three presses until ADR 0011 took the bulk mute; a difference whose every
+  finding is already decided therefore offers only the clearing, which is correct — the
+  work there is done. See tickets 31 and 110.
 - **Page review** — "a human looked at this whole page." Keyed on store and page.
   It covers what the tool cannot see: layout, tone, an image that agrees by name
   and shows something else. It never expires; it becomes **stale**.
@@ -348,7 +355,8 @@ who wins against re-check.
 - **Migration decision** — ~~an override on a one-sided page: **migrate**,
   **not migrated**, **replaced** or **redirected**~~. **Withdrawn from the vocabulary
   2026-08-11.** It never existed in the code: the override actions are
-  `fixed | dismissed | muted | reviewed | cleared` and nothing else. The four values came
+  `fixed | dismissed | reviewed | cleared` and nothing else — `muted` was among them until
+  ADR 0011. The four values came
   from a superseded draft, were refused by the user — *usually, every page needs to be
   built*, so a verb per page names a decision already made — and their tickets are parked
   `wontfix` in `.scratch/content-parity-log/issues/.out-of-scope/` (20 and 84). Do not
@@ -383,8 +391,11 @@ this list already defines.
   twice.
 - **Closed** — a finding that is absent from the snapshot, or dismissed, or
   claimed fixed and not contradicted.
-- **Denominator** — the findings in **shown** classes on this snapshot. A mute
-  takes findings out of it; a dismissal moves them into the numerator.
+- **Denominator** — the findings in **shown** classes on this snapshot. A dismissal moves
+  them into the numerator. Nothing takes them out of it: the mute did, and ADR 0011
+  withdrew it, so a difference in a shown class is either open work or work an editor
+  closed. Whether something is work at all is a property of the **class** — its
+  visibility — and never of a place on a page.
 - **Absolute counts go next to each percentage.** The denominator moves at each
   crawl, so a percentage alone reads as a regression when the dataset only became
   larger.

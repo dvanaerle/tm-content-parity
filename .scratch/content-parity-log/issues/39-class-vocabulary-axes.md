@@ -1,7 +1,13 @@
 # 39 — The class vocabulary learns about axes
 
 Type: task (prefactor)
-Status: ready-for-agent
+Status: needs-triage — **2026-08-13**. Was `ready-for-agent`. The conclusion may still be
+right; the **argument for it is void**. This ticket recommends a separate class per axis
+because *"`muteKey()` is `store|page|class`, so an editor who mutes `restructured` mutes it
+on both axes"* — and ADR 0011 withdrew the mute, so no key over-reaches any more. Decide
+the split on taxonomy, or do not split. An agent building it today would implement a
+distinction justified by a feature that does not exist. Tickets 43 and 44 carry the same
+argument and are parked the same way.
 Blocked by: 33 — spec 32 rewrites the same class table
 Parent: ../map.md
 
