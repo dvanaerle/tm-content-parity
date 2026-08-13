@@ -29,7 +29,7 @@ const regions = regionsRemovedInStore(pages);
 const regionsChanged = await regionsChangedInLog();
 
 // The found total is stated beside the store. The chips below start at
-// `pagina's vergeleken`, and that number counts the **comparable** pages only.
+// `Pages compared`, and that number counts the **comparable** pages only.
 // On nl the gap is 179 to 124. Nobody reads 124 as the size of the store. On fr
 // the gap is 28 to 25. A reader who arrives through the switcher does read 25 as
 // the size of the store.
@@ -39,19 +39,19 @@ const regionsChanged = await regionsChangedInLog();
 const totals = storeTotals({ pages, notChecked });
 ---
 
-<Shell title={`Overzicht — ${store}`} store={store}>
+<Shell title={`Dashboard — ${store}`} store={store}>
   <header slot="banner">
-    <h1 class="text-xl font-semibold">Pariteit met productie</h1>
+    <h1 class="text-xl font-semibold">Parity with production</h1>
     <p class="text-sm text-muted-foreground">
-      Productie is de bron van waarheid, dus elk verschil is een defect op de
-      nieuwe site. Winkel: <strong>{store}</strong> — {STORE_NAME[store]}.
+      Production is the source of truth, so each difference is a defect on the
+      new site. Store: <strong>{store}</strong> — {STORE_NAME[store]}.
     </p>
     <p class="text-sm text-muted-foreground">
-      <strong>{totals.found}</strong> pagina's gevonden: {totals.crawled} gecrawld, waarvan {totals.comparable} te
-      vergelijken.{
-        totals.oneSided > 0 && ` De andere ${totals.oneSided} zijn eenzijdig: de nieuwe site antwoordt daar geen 200. Ze staan onderaan.`
+      <strong>{totals.found}</strong> pages found: {totals.crawled} crawled, of which {totals.comparable} can be
+      compared.{
+        totals.oneSided > 0 && ` The other ${totals.oneSided} are one-sided: the new site does not answer 200 there. They are at the bottom.`
       }{
-        totals.notChecked > 0 && ` ${totals.notChecked} pagina's worden niet gecontroleerd; onderaan staat per pagina waarom.`
+        totals.notChecked > 0 && ` ${totals.notChecked} pages are not checked; the bottom of this page says why, for each one.`
       }
     </p>
   </header>

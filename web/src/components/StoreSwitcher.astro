@@ -8,8 +8,9 @@ import { STORE_NAME } from '../lib/stores.mjs';
  *
  * The label is the store id and not the country. The store id is the word the
  * whole tool uses. `CONTEXT.md` gives it, the report filenames carry it, and an
- * override is keyed on it. The Dutch name is the title. There it explains the id
- * without replacing it.
+ * override is keyed on it. The country name is the title. There it explains the id
+ * without replacing it — an English name is no invitation to draw `Germany` where a
+ * reader learned six ids (ticket 124).
  *
  * It navigates to the dashboard of the store. It never goes to the same page in
  * another store. The stores translate the category keys (ticket 04), so a page key
@@ -20,7 +21,7 @@ const { stores, store } = Astro.props;
 
 {
   stores.length > 1 && (
-    <nav aria-label="Winkel" class="ml-auto flex items-center gap-1 text-sm">
+    <nav aria-label="Store" class="ml-auto flex items-center gap-1 text-sm">
       {stores.map((id) => (
         <a
           href={`/${id}/`}

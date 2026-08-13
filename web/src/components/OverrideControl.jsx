@@ -8,12 +8,12 @@ import { Input } from './ui/input.jsx';
 
 /**
  * The one action control. Spec 29: one control, one place in the code, three call
- * sites — Inhoud, Links and Afbeeldingen. It was four until ticket 81 removed the
+ * sites — Text, Links and Images. It was four until ticket 81 removed the
  * Taken tab; the control it wore was the same one these three wear, which is the
  * point of there being one.
  *
  * The two powers are deliberately unequal, and the inequality is the design:
- * a **judgement** (negeren) beats a re-check, a **claim of fact** (opgelost) does
+ * a **judgement** (dismiss) beats a re-check, a **claim of fact** (fixed) does
  * not. So the control offers both and then reports back what the derivation made
  * of it, including *claimed fixed, still differs*.
  *
@@ -34,8 +34,8 @@ import { Input } from './ui/input.jsx';
  * the code and in the interface, and a second copy of this map is how a state comes
  * to be called two things.
  *
- * Ticket 35 took the colours out of here. `opgelost` was green and
- * `nog niet opgelost` was red, which spent both diff hues on a work state — an
+ * Ticket 35 took the colours out of here. `fixed` was green and
+ * `claimed fixed, still differs` was red, which spent both diff hues on a work state — an
  * editor scanning a page would have read "done" and "lost content" in the same
  * two colours. Both are status now: blue for done, amber for a claim the re-check
  * contradicted.
@@ -44,9 +44,9 @@ import { Input } from './ui/input.jsx';
  */
 export const STATE = {
   open: { label: 'open', tone: 'neutral' },
-  fixed: { label: 'opgelost', tone: 'added' },
-  dismissed: { label: 'genegeerd', tone: 'neutral' },
-  contradicted: { label: 'nog niet opgelost', tone: 'attention' },
+  fixed: { label: 'fixed', tone: 'added' },
+  dismissed: { label: 'dismissed', tone: 'neutral' },
+  contradicted: { label: 'claimed fixed, still differs', tone: 'attention' },
 };
 
 export default function OverrideControl({
@@ -77,11 +77,11 @@ export default function OverrideControl({
           autoFocus
           value={note}
           onChange={(change) => setNote(change.target.value)}
-          placeholder="Waarom is dit geen defect?"
+          placeholder="Why is this not a defect?"
           className="w-52"
         />
-        <Action type="submit" disabled={!note.trim()}>Negeren</Action>
-        <Action onClick={close}>Annuleren</Action>
+        <Action type="submit" disabled={!note.trim()}>Dismiss</Action>
+        <Action onClick={close}>Cancel</Action>
       </form>
     );
   }
@@ -102,7 +102,7 @@ export default function OverrideControl({
 
       {state === 'contradicted' && (
         <span className={`text-xs ${INK.attention}`}>
-          geclaimd opgelost door {override.editor}, verschilt nog
+          claimed fixed by {override.editor}, still differs
         </span>
       )}
       {(state === 'fixed' || state === 'dismissed') && (
@@ -113,7 +113,7 @@ export default function OverrideControl({
       )}
 
       {canWrite && (state === 'open' || state === 'contradicted') && (
-        <Action onClick={() => setAsking('dismiss')}>Negeren…</Action>
+        <Action onClick={() => setAsking('dismiss')}>Dismiss…</Action>
       )}
 
       {/* `fixed` is not here: its own checkbox unticks it. A second control for the
@@ -125,7 +125,7 @@ export default function OverrideControl({
           for the next change to a key to land, and it would land in one of them. */}
       {canWrite && state === 'dismissed' && (
         <Action onClick={() => append(clearedEventFor(finding))}>
-          Ongedaan maken
+          Clear
         </Action>
       )}
     </div>
@@ -156,7 +156,7 @@ function FixCheckbox({ finding, canWrite, onTick }) {
 
   // One rename repeated six times is one finding, and one event closes all six.
   // The editor is told so before the click, not after it.
-  const grouped = occurrences > 1 ? ` Eén vinkje vinkt alle ${occurrences} regels af.` : '';
+  const grouped = occurrences > 1 ? ` One tick closes all ${occurrences} rows.` : '';
 
   return (
     <Checkbox
@@ -164,11 +164,11 @@ function FixCheckbox({ finding, canWrite, onTick }) {
       checked={state === 'fixed' || contradicted}
       disabled={!canWrite || closedByJudgement}
       onCheckedChange={(ticked) => onTick(ticked)}
-      aria-label={`Opgelost — ${finding.class}`}
+      aria-label={`Fixed — ${finding.class}`}
       title={
         contradicted
-          ? `Je claimde dit als opgelost, maar een latere waarneming ziet het verschil nog.${grouped}`
-          : `Ik heb dit gecorrigeerd.${grouped}`
+          ? `You claimed this as fixed, but a later observation still sees the difference.${grouped}`
+          : `I corrected this.${grouped}`
       }
     />
   );

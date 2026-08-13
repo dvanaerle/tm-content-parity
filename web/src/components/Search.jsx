@@ -19,7 +19,7 @@ import { pagesWithClasses } from '../lib/view.mjs';
  * blocks under two sentences, never as one list — a single list would present two moments
  * as one, and an editor would read the note half as being as stale as the other.
  *
- * The rows are **repeats**, drawn by the component the *Verschillen* view draws, so a
+ * The rows are **repeats**, drawn by the component the *Repeats* view draws, so a
  * search row and a repeats row are the same row with the same marks and the same bar. It
  * is one derivation on screen twice and not a second surface.
  *
@@ -29,7 +29,7 @@ import { pagesWithClasses } from '../lib/view.mjs';
  * arrives here, the result is narrowed by it, and the amber strip is drawn over that
  * result for as long as it is on.
  *
- * *Inclusief afgesloten* is not part of that. It is search-only, it says what counts as a
+ * *Include closed* is not part of that. It is search-only, it says what counts as a
  * result rather than what is on screen, and it stays out of the strip — as does the term
  * itself, which becomes a filter deliberately in ticket 106 and not by accident here.
  */
@@ -79,24 +79,24 @@ export default function Search({
   if (error) {
     return (
       <p className="px-4 py-6 text-sm text-muted-foreground">
-        De zoekindex van deze winkel is niet gelezen ({error}). Zoeken werkt weer na een
-        nieuwe build.
+        The search index of this store was not read ({error}). Search works again after a
+        new build.
       </p>
     );
   }
 
-  if (!result) return <p className="px-4 py-6 text-sm text-muted-foreground">Zoekindex wordt geladen…</p>;
+  if (!result) return <p className="px-4 py-6 text-sm text-muted-foreground">The search index is loading…</p>;
 
   return (
     <>
       {/* Above the count, where the two views draw it. The denominator is what the term
           found before the pills cut it, so the strip is about the filter and not about
-          the term — and *filter wissen* clears the classes and leaves the term alone. */}
+          the term — and *clear filter* clears the classes and leaves the term alone. */}
       <ClassFilterBanner
         classes={classes}
         shown={result.repeats.length}
         total={result.matchedRepeats}
-        noun="verschillen"
+        noun="differences"
         onClear={onClearClasses}
         className="border-b px-4 py-2"
       />
@@ -113,13 +113,13 @@ export default function Search({
               says what its own row says: how many pages. */}
           <strong className="font-medium">
             {result.repeats.length === 1
-              ? `1 verschil op ${result.pages} pagina's`
-              : `${result.total} bevindingen op ${result.pages} pagina's`}
+              ? `1 difference on ${result.pages} pages`
+              : `${result.total} findings on ${result.pages} pages`}
           </strong>
           <span className="text-muted-foreground">
-            {result.repeats.length > 1 && ` in ${result.repeats.length} verschillen`}
-            . Uit de snapshot van {new Date(index.builtAt).toLocaleDateString('en-GB')} —
-            de getallen bovenaan veranderen niet mee.
+            {result.repeats.length > 1 && ` in ${result.repeats.length} differences`}
+            . From the snapshot of {new Date(index.builtAt).toLocaleDateString('en-GB')} —
+            the counts at the top do not move with it.
           </span>
         </p>
 
@@ -128,12 +128,12 @@ export default function Search({
             checked={includeClosed}
             onCheckedChange={(checked) => onIncludeClosed(checked)}
           />
-          Inclusief afgesloten
+          Include closed
         </Label>
       </div>
 
       {result.repeats.length === 0
-        ? <p className="px-4 py-6 text-sm text-muted-foreground">Geen verschil met deze woorden.</p>
+        ? <p className="px-4 py-6 text-sm text-muted-foreground">No difference with these words.</p>
         : (
           <Repeats
             // The classes are in the key for the reason the term is: `OneSelection`
@@ -180,7 +180,7 @@ function Named({ store, pages, link }) {
       <Separator />
       <section className="px-4 py-3">
         <h3 className="text-sm font-medium">
-          {pages.length} {pages.length === 1 ? 'pagina heet' : "pagina's heten"} zo
+          {pages.length} {pages.length === 1 ? 'page has' : 'pages have'} this name
         </h3>
         <ul className="mt-1 flex flex-wrap gap-x-3 text-sm">
           {pages.map((page) => (
@@ -197,7 +197,7 @@ function Named({ store, pages, link }) {
 }
 
 /**
- * The notes are drawn whatever *inclusief afgesloten* says, and that is deliberate: a note
+ * The notes are drawn whatever *include closed* says, and that is deliberate: a note
  * is the sentence required when **dismissing** or muting something, so nearly every note
  * there is hangs off work that is already closed. Hiding them by default would leave the
  * option switching on a half of the answer that is empty until it is pressed, which is not
@@ -212,11 +212,11 @@ function Notes({ notes, link }) {
       <Separator />
       <section className="bg-muted px-4 py-3">
         <h3 className="text-sm font-medium">
-          {notes.length} {notes.length === 1 ? 'notitie' : 'notities'} met deze woorden
+          {notes.length} {notes.length === 1 ? 'note' : 'notes'} with these words
         </h3>
         <p className={cn('mb-2 text-xs', INK.info)}>
-          Nu uit het log gelezen, niet uit de snapshot. Deze helft is dus actueel en de
-          bevindingen hierboven zijn zo oud als de laatste build.
+          Read from the log now, not from the snapshot. This half is current, and the
+          findings above are as old as the last build.
         </p>
         <ul className="text-sm">
           {notes.map((note) => (
@@ -255,7 +255,7 @@ function useSearchIndex(store) {
   useEffect(() => {
     let live = true;
     setState({ index: null, error: null });
-    fetch(`/zoekindex/${store}.json`)
+    fetch(`/search-index/${store}.json`)
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`))))
       .then((index) => { if (live) setState({ index, error: null }); })
       .catch((failure) => { if (live) setState({ index: null, error: failure.message }); });

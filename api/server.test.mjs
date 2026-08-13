@@ -57,7 +57,7 @@ describe('the re-check endpoint', () => {
     });
     const { status, body } = await call(handle, '/api/recheck/nl/overkappingen');
     expect(status).toBe(503);
-    expect(body.reason).toMatch(/onderhoudsmodus/);
+    expect(body.reason).toMatch(/maintenance mode/);
     expect(body).not.toHaveProperty('findings');
   });
 

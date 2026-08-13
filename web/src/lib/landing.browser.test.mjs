@@ -12,7 +12,7 @@ import { useLanding, useLandOn } from './landing.mjs';
  */
 
 /** A page with a target far below the fold, so a scroll is the only way to see it. */
-function pageWithTargetBelowTheFold(id = 'bevinding-a1') {
+function pageWithTargetBelowTheFold(id = 'finding-a1') {
   const spacer = document.createElement('div');
   spacer.style.height = '4000px';
 
@@ -61,12 +61,12 @@ function mountControls(asked) {
   const seen = /** @type {{ tab: string, noise: boolean }} */ ({});
 
   function Probe() {
-    const { tab, noise, chooseTab, chooseNoise } = useLanding(asked, 'Inhoud');
+    const { tab, noise, chooseTab, chooseNoise } = useLanding(asked, 'Text');
     seen.tab = tab;
     seen.noise = noise;
 
     return createElement('div', null,
-      createElement('button', { id: 'take-tab', onClick: () => chooseTab('Inhoud') }, 'Inhoud'),
+      createElement('button', { id: 'take-tab', onClick: () => chooseTab('Text') }, 'Text'),
       createElement('button', { id: 'take-noise', onClick: () => chooseNoise(false) }, 'ruis uit'),
     );
   }
@@ -102,12 +102,12 @@ describe('useLanding', () => {
 
     press('take-tab');
 
-    expect(seen).toEqual({ tab: 'Inhoud', noise: true });
+    expect(seen).toEqual({ tab: 'Text', noise: true });
     unmount();
   });
 
   // And the other way round. The reader landed on Links and switched the noise off,
-  // which is their business — but it is not a request to be sent back to Inhoud, which
+  // which is their business — but it is not a request to be sent back to Text, which
   // is what one shared flag did.
   it('keeps the borrowed tab when the reader takes the noise box', () => {
     const { seen, press, unmount } = mountControls(askedForBoth);
@@ -124,11 +124,11 @@ describe('useLanding', () => {
     const { seen, press, unmount } = mountControls({
       tab: null, needsNoise: false, missing: false, unplaced: false,
     });
-    expect(seen).toEqual({ tab: 'Inhoud', noise: false });
+    expect(seen).toEqual({ tab: 'Text', noise: false });
 
     press('take-noise');
 
-    expect(seen).toEqual({ tab: 'Inhoud', noise: false });
+    expect(seen).toEqual({ tab: 'Text', noise: false });
     unmount();
   });
 });
@@ -140,7 +140,7 @@ describe('useLandOn', () => {
     const target = pageWithTargetBelowTheFold();
     expect(target.getBoundingClientRect().top).toBeGreaterThan(window.innerHeight);
 
-    const unmount = mount('bevinding-a1');
+    const unmount = mount('finding-a1');
 
     const { top } = target.getBoundingClientRect();
     expect(top).toBeGreaterThanOrEqual(0);
@@ -153,7 +153,7 @@ describe('useLandOn', () => {
   it('honours the row scroll margin', () => {
     const target = pageWithTargetBelowTheFold();
 
-    const unmount = mount('bevinding-a1');
+    const unmount = mount('finding-a1');
 
     expect(Math.round(target.getBoundingClientRect().top)).toBe(16);
     unmount();
@@ -164,7 +164,7 @@ describe('useLandOn', () => {
   it('gives the row the keyboard', () => {
     const target = pageWithTargetBelowTheFold();
 
-    const unmount = mount('bevinding-a1');
+    const unmount = mount('finding-a1');
 
     expect(document.activeElement).toBe(target);
     unmount();
@@ -176,7 +176,7 @@ describe('useLandOn', () => {
   it('waits until the page has stopped changing shape', () => {
     pageWithTargetBelowTheFold();
 
-    const unmount = mount('bevinding-a1', false);
+    const unmount = mount('finding-a1', false);
 
     expect(window.scrollY).toBe(0);
     unmount();
@@ -199,7 +199,7 @@ describe('useLandOn', () => {
   it('does nothing when the row is not on the page', () => {
     pageWithTargetBelowTheFold();
 
-    const unmount = mount('bevinding-verdwenen');
+    const unmount = mount('finding-gone');
 
     expect(window.scrollY).toBe(0);
     unmount();

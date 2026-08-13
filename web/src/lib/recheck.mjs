@@ -60,7 +60,7 @@ export async function recheckPage(store, page) {
     // Ticket 04: production can be in maintenance mode without warning, and a run
     // that records the maintenance page records phantom defects. The service
     // refuses rather than answering, and the reason is shown as written.
-    throw new Error(body?.reason ?? `De hercontrole mislukte (${response.status}).`);
+    throw new Error(body?.reason ?? `The re-check failed (${response.status}).`);
   }
   return body;
 }

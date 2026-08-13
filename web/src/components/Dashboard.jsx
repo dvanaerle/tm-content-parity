@@ -28,19 +28,19 @@ const CHECKS = ['text', 'links', 'images'];
  * **Two views over one derivation** since ticket 81, and the toggle between them is
  * the whole of the difference:
  *
- * - *Verschillen* lists the store's **repeats**: one row for one difference, saying
+ * - *Repeats* lists the store's **repeats**: one row for one difference, saying
  *   how many pages carry it. It answers "what do I decide next".
- * - *Pagina's* lists the store's pages, worst-first. It answers "which page do I
+ * - *Pages* lists the store's pages, worst-first. It answers "which page do I
  *   open next", which is what this dashboard has always answered.
  *
  * Neither is a second surface. The class pills, the search box and the counts above
  * are one set, and both views read the same filter — so a pill that lists its
- * findings directly is *Verschillen* with a class pre-selected.
+ * findings directly is *Repeats* with a class pre-selected.
  *
  * The box **searches the content** since ticket 82, and typing in it puts the result in
  * place of either view. It used to match a page name, which is now one of the six fields
  * it searches, so the old question is still asked by the one box that is left. The result
- * draws repeat rows through the same component *Verschillen* draws, which keeps this a
+ * draws repeat rows through the same component *Repeats* draws, which keeps this a
  * third reading of one derivation rather than a third surface.
  *
  * Axis A only. Ticket 11 gave the coverage axis its own bar, which must never be
@@ -60,7 +60,7 @@ export default function Dashboard({
    *
    * The semantics are untouched. Ticket 36 gives the class pills a pure view filter
    * that moves no bar and no roll-up, and the chips above still count every comparable
-   * page; *inclusief afgesloten* still belongs to the search alone; *Verschillen* still
+   * page; *include closed* still belongs to the search alone; *Repeats* still
    * lands first. `screen-url.mjs` only says where the state is kept.
    */
   const { screen, patch, search } = useScreen();
@@ -124,8 +124,8 @@ export default function Dashboard({
    * that count.
    */
   const narrowed = view === 'repeats'
-    ? { shown: shownRepeats.length, total: repeats.length, noun: 'verschillen' }
-    : { shown: rows.length, total: comparable.length, noun: "pagina's" };
+    ? { shown: shownRepeats.length, total: repeats.length, noun: 'differences' }
+    : { shown: rows.length, total: comparable.length, noun: 'pages' };
 
   /** Every derived finding of the store by id, so a repeat row can say what is decided. */
   const byFinding = useMemo(() => {
@@ -154,7 +154,7 @@ export default function Dashboard({
 
   const totals = useMemo(() => {
     const byClass = {};
-    // The chip below says *verborgen (ruis)*, so it counts what is actually hidden:
+    // The chip below says *hidden (noise)*, so it counts what is actually hidden:
     // the `diagnostic` findings. Ticket 75 moved `information` out from behind the
     // toggle, and it is on screen on the page it is on.
     let diagnostic = 0;
@@ -185,40 +185,40 @@ export default function Dashboard({
           <EditorPrompt editor={editor} save={save} />
           <span className="text-muted-foreground">
             {editor
-              ? 'Beslissingen op een verschil worden op deze naam vastgelegd, per bevinding.'
-              : 'Vul je naam in om een verschil in één keer af te handelen. Elke beslissing krijgt een naam.'}
+              ? 'A decision on a difference is recorded under this name, for each finding.'
+              : 'Give your name to decide a difference in one press. Each decision carries a name.'}
           </span>
         </div>
       )}
 
       <section className="flex flex-wrap items-center gap-2">
-        <Chip value={comparable.length} label="pagina's vergeleken" />
-        <Chip value={totals.open} label="verschillen open" tone="attention" />
-        <Chip value={totals.closed} label="afgehandeld" tone="added" />
-        <Chip value={totals.clean} label="pagina's gelijk" tone="added" />
+        <Chip value={comparable.length} label="pages compared" />
+        <Chip value={totals.open} label="differences open" tone="attention" />
+        <Chip value={totals.closed} label="closed" tone="added" />
+        <Chip value={totals.clean} label="pages equal" tone="added" />
         {totals.contradicted > 0 && (
           <Chip
             value={totals.contradicted}
-            label="nog niet opgelost"
+            label="claimed fixed, still differs"
             tone="attention"
-            title="Geclaimd opgelost, maar een latere waarneming ziet het verschil nog."
+            title="Claimed fixed, but a later observation still sees the difference."
           />
         )}
         <Chip
           value={log.derived.reviewedFresh}
-          label="pagina's gecontroleerd"
-          title="Een mens heeft alles op deze pagina bekeken, ook wat het gereedschap niet ziet."
+          label="pages reviewed"
+          title="A human looked at everything on this page, also at what the tool cannot see."
         />
-        <Chip value={totals.diagnostic} label="verborgen (ruis)" />
+        <Chip value={totals.diagnostic} label="hidden (noise)" />
         <Chip
           value={oneSided.length}
-          label="eenzijdig"
-          title="Een van de twee kanten antwoordt geen 200. Ticket 20 beslist wat hiermee gebeurt."
+          label="one-sided"
+          title="One of the two sides does not answer 200. Ticket 20 decides what happens with these."
         />
         <Chip
           value={notChecked.length}
-          label="niet gecontroleerd"
-          title="Gevonden en zichtbaar, maar er is niets te vergelijken. Elke pagina zegt onderaan waarom."
+          label="not checked"
+          title="Found and visible, but there is nothing to compare. The bottom of this page says why, for each one."
         />
       </section>
 
@@ -234,10 +234,10 @@ export default function Dashboard({
             // is, which is not a question about what is on screen. What a press *does*
             // depends on which of the three lists is under it, so the tooltip does too.
             title={(cls) => {
-              if (searching) return `Zoek alleen binnen ${cls}. De getallen hierboven veranderen niet.`;
+              if (searching) return `Search inside ${cls} only. The counts above do not change.`;
               return view === 'repeats'
-                ? `Toon alleen de verschillen van soort ${cls}. De getallen hierboven veranderen niet.`
-                : `Toon alleen pagina's met ${cls}. De getallen hierboven veranderen niet.`;
+                ? `Show the differences of class ${cls} only. The counts above do not change.`
+                : `Show the pages with ${cls} only. The counts above do not change.`;
             }}
           />
           {/* `flex-wrap` here and not only on the `CardHeader`: the header wrapped, but
@@ -257,8 +257,8 @@ export default function Dashboard({
               type="search"
               value={query}
               onChange={(event) => patch({ query: event.target.value })}
-              placeholder="Zoek in de inhoud"
-              title="Zoekt de teksten, de links, de kopjes en de paginanamen van deze winkel."
+              placeholder="Search the content"
+              title="Searches the text, the links, the headings and the page names of this store."
             />
             {/* The switch belongs to the two views, and a search answers past both of
                 them, so it steps aside while one is on screen. */}
@@ -334,8 +334,8 @@ export default function Dashboard({
           {!searching && view === 'repeats' && (
             // Keyed on the filter, so a narrowed list starts at the top of its own
             // rendering budget, with its groups open on the pills that narrowed it.
-            // A budget carried over from the wider list would say *100 van 100
-            // getekend* over a list of 12.
+            // A budget carried over from the wider list would say *100 of 100
+            // drawn* over a list of 12.
             //
             // Ticket 100: the rows arrive in a class group for each class. The list is
             // already narrowed to the pills here, and the classes go along so the groups
@@ -355,12 +355,12 @@ export default function Dashboard({
           <Table>
             <TableHeader>
               <TableRow className="text-xs uppercase tracking-wide">
-                <TableHead className="px-4 text-muted-foreground">Pagina</TableHead>
+                <TableHead className="px-4 text-muted-foreground">Page</TableHead>
                 <TableHead className="w-40 px-4 text-muted-foreground">Open</TableHead>
                 {CHECKS.map((check) => (
                   <TableHead key={check} className="w-24 text-muted-foreground">{CHECK_LABEL[check]}</TableHead>
                 ))}
-                <TableHead className="w-24 px-4 text-muted-foreground">Verborgen</TableHead>
+                <TableHead className="w-24 px-4 text-muted-foreground">Hidden</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -370,7 +370,7 @@ export default function Dashboard({
                     <a className={cn('font-medium hover:underline', CHROME.link)} href={link(page.store, page.page)}>
                       {page.page}
                     </a>
-                    <span className="ml-2 text-xs text-muted-foreground">{page.sides.production.units} blokken</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{page.sides.production.units} blocks</span>
                   </TableCell>
                   <TableCell className="px-4">
                     <Bar shown={openOf(page)} units={page.sides.production.units} />
@@ -378,7 +378,7 @@ export default function Dashboard({
                       {openOf(page)}
                     </span>
                     {barOf(page)?.closed > 0 && (
-                      <span className={cn('ml-1 text-xs', INK.added)}>+{barOf(page).closed} af</span>
+                      <span className={cn('ml-1 text-xs', INK.added)}>+{barOf(page).closed} closed</span>
                     )}
                   </TableCell>
                   {CHECKS.map((check) => (
@@ -393,14 +393,14 @@ export default function Dashboard({
           </Table>
           )}
           {!searching && view === 'pages' && rows.length === 0 && (
-            <p className="px-4 py-6 text-sm text-muted-foreground">Geen pagina gevonden.</p>
+            <p className="px-4 py-6 text-sm text-muted-foreground">No page found.</p>
           )}
         </CardContent>
       </Card>
 
       <Aside
-        title={`Eenzijdige pagina's (${oneSided.length})`}
-        note="Een kant antwoordt geen 200, dus er is niets te vergelijken. Ticket 20 beslist of dit een migratietaak wordt."
+        title={`One-sided pages (${oneSided.length})`}
+        note="One side does not answer 200, so there is nothing to compare. Ticket 20 decides whether this becomes a migration task."
       >
         {oneSided.map((page) => (
           <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
@@ -411,8 +411,8 @@ export default function Dashboard({
       </Aside>
 
       <Aside
-        title={`Niet gecontroleerd (${notChecked.length})`}
-        note="Gevonden, geteld en zichtbaar, maar er is niets te vergelijken (ticket 56). De reden staat er per groep bij. Zichtbaar uitgesloten, niet stil weggelaten."
+        title={`Not checked (${notChecked.length})`}
+        note="Found, counted and visible, but there is nothing to compare (ticket 56). Each group states its reason. Excluded in view, not left out silently."
       >
         {groupNotChecked(notChecked).map((group) => (
           <li key={group.key} className="border-t py-2 first:border-0">
@@ -426,13 +426,13 @@ export default function Dashboard({
           </li>
         ))}
         {notChecked.length === 0 && (
-          <li className="py-1 text-muted-foreground">Elke gevonden pagina van deze winkel wordt gecontroleerd.</li>
+          <li className="py-1 text-muted-foreground">Each page found in this store is checked.</li>
         )}
       </Aside>
 
       <Aside
-        title={`Uitgesloten regio's (${regions.length})`}
-        note="Stukken binnen de contentgrens die geen redactiewerk zijn (ticket 63). Ze gaan er bij de extractie uit. Zichtbaar uitgesloten, niet stil weggelaten."
+        title={`Excluded regions (${regions.length})`}
+        note="Parts inside the content boundary that are not editor work (ticket 63). They leave at extraction. Excluded in view, not left out silently."
       >
         {regions.map((region) => (
           <li key={region.selector} className="py-1">
@@ -440,10 +440,10 @@ export default function Dashboard({
             <span className="text-muted-foreground"> — {REGION_KIND[region.kind] ?? region.kind}. {region.reason}</span>
             <span className="block text-muted-foreground">
               {region.removedOn.production.pages === 0 && region.removedOn.new.pages === 0
-                ? 'In deze snapshot nergens weggehaald. Drie mogelijke oorzaken: deze winkel heeft de regio niet, de selector past niet meer, of de snapshot is ouder dan deze regel.'
-                : `Weggehaald op ${region.removedOn.production.pages} pagina's op productie `
-                  + `(${region.removedOn.production.units} blokken) en op ${region.removedOn.new.pages} `
-                  + `op de nieuwe site (${region.removedOn.new.units} blokken).`}
+                ? 'Removed nowhere in this snapshot. Three possible causes: this store does not have the region, the selector no longer matches, or the snapshot is older than this rule.'
+                : `Removed on ${region.removedOn.production.pages} pages on production `
+                  + `(${region.removedOn.production.units} blocks) and on ${region.removedOn.new.pages} `
+                  + `on the new site (${region.removedOn.new.units} blocks).`}
             </span>
           </li>
         ))}
@@ -510,19 +510,19 @@ function ViewSwitch({ view, onChange }) {
 
 const VIEW_LABEL = {
   repeats: {
-    label: 'Verschillen',
-    title: 'Eén regel per verschil, met de pagina\'s waarop het staat. Wat beslis ik hierna?',
+    label: 'Repeats',
+    title: 'One row for each difference, with the pages it is on. What do I decide next?',
   },
   pages: {
-    label: "Pagina's",
-    title: 'Elke pagina van deze winkel, meeste verschillen eerst. Welke pagina open ik hierna?',
+    label: 'Pages',
+    title: 'Each page of this store, most differences first. Which page do I open next?',
   },
 };
 
 /** The two orders the page list is read in, and the words the closed control shows. */
 const SORT_LABEL = {
-  worst: 'Meeste verschillen eerst',
-  name: 'Op naam',
+  worst: 'Worst first',
+  name: 'By name',
 };
 
 /**
@@ -532,7 +532,7 @@ const SORT_LABEL = {
  * leaving the reader to infer it from the rows that returned.
  *
  * The verdict comes from `compare/region-coverage.mjs` and the words are written
- * here, because the crawl and the dashboard speak two languages.
+ * here, because a verdict is a key and a sentence is a label.
  *
  * It is a statement about the whole run. A store's own numbers are the line above.
  */
@@ -540,12 +540,12 @@ function RegionCoverage({ store, reason, changes }) {
   const moved = changes.filter((change) => change.verdict !== 'unchanged');
   if (!reason && moved.length === 0) return null;
 
-  const scope = store ? `winkel ${store}` : 'alle winkels';
+  const scope = store ? `store ${store}` : 'all stores';
   return (
     <li className="mt-2 border-t pt-2">
-      <strong className="font-medium">Vergeleken met de vorige snapshot ({scope})</strong>
+      <strong className="font-medium">Compared with the previous snapshot ({scope})</strong>
       {reason
-        ? <span className="block text-muted-foreground">Niet vergeleken. {REGION_VERDICT_REASON}</span>
+        ? <span className="block text-muted-foreground">Not compared. {REGION_VERDICT_REASON}</span>
         : moved.map((change) => (
           <span key={change.selector} className="block text-muted-foreground">
             <code>{change.selector}</code>
@@ -557,44 +557,44 @@ function RegionCoverage({ store, reason, changes }) {
   );
 }
 
-const REGION_VERDICT_REASON = 'De vorige snapshot heeft een andere omvang, of hij is er niet. '
-  + 'De volgende run vergelijkt weer.';
+const REGION_VERDICT_REASON = 'The previous snapshot has a different size, or it is absent. '
+  + 'The next run compares again.';
 
 /**
  * One sentence for each verdict. `unchanged` has none, because a run where
  * nothing moved must stay quiet.
  */
 const REGION_VERDICT = {
-  'stopped-matching': (change) => `weggehaald op ${change.was.pages} pagina's in de vorige snapshot, `
-    + `en nu op ${change.now.pages}. Deze regel past niet meer, en de regio staat weer in het log. `
-    + 'Een anker op een campagne stopt met passen als de campagne verandert.',
-  'started-matching': (change) => `weggehaald op ${change.was.pages} pagina's in de vorige snapshot, `
-    + `en nu op ${change.now.pages}. Deze regel past sinds deze run.`,
-  narrowed: (change) => `weggehaald op ${change.was.pages} pagina's in de vorige snapshot, `
-    + `en nu op ${change.now.pages}. Deze regel past op minder pagina's dan eerst.`,
-  widened: (change) => `weggehaald op ${change.was.pages} pagina's in de vorige snapshot, `
-    + `en nu op ${change.now.pages}. Deze regel past op meer pagina's dan eerst.`,
-  'new-entry': (change) => `nieuw in de lijst, weggehaald op ${change.now.pages} pagina's. `
-    + 'De vorige snapshot heeft er geen getal voor.',
-  'left-the-list': (change) => 'staat niet meer in de lijst. Weggehaald op '
-    + `${change.was.pages} pagina's in de vorige snapshot.`,
+  'stopped-matching': (change) => `removed on ${change.was.pages} pages in the previous snapshot, `
+    + `and now on ${change.now.pages}. This rule no longer matches, and the region is back in the log. `
+    + 'A rule anchored on a campaign stops to match when the campaign changes.',
+  'started-matching': (change) => `removed on ${change.was.pages} pages in the previous snapshot, `
+    + `and now on ${change.now.pages}. This rule matches since this run.`,
+  narrowed: (change) => `removed on ${change.was.pages} pages in the previous snapshot, `
+    + `and now on ${change.now.pages}. This rule matches fewer pages than before.`,
+  widened: (change) => `removed on ${change.was.pages} pages in the previous snapshot, `
+    + `and now on ${change.now.pages}. This rule matches more pages than before.`,
+  'new-entry': (change) => `new in the list, removed on ${change.now.pages} pages. `
+    + 'The previous snapshot has no number for it.',
+  'left-the-list': (change) => 'is no longer in the list. It was removed on '
+    + `${change.was.pages} pages in the previous snapshot.`,
 };
 
 /**
- * The three ways a page is not checked, in the language the dashboard speaks.
- * Two of them are decisions and one is an accident, and an editor acts on them
- * differently, so they never share a word.
+ * The three ways a page is not checked, as the dashboard says them. Two of them
+ * are decisions and one is an accident, and an editor acts on them differently, so
+ * they never share a word.
  */
 const NOT_CHECKED_KIND = {
-  'dropped-by-rule': 'Geen contentpagina',
-  'excluded-page': 'Bewust buiten het log',
-  'not-crawled': 'Niet opgehaald',
+  'dropped-by-rule': 'Not a content page',
+  'excluded-page': 'Outside the log on purpose',
+  'not-crawled': 'Not fetched',
 };
 
-/** The two words of the vocabulary, in the language the dashboard speaks. */
+/** The two words of the vocabulary, as the dashboard says them. */
 const REGION_KIND = {
-  'non-editorial': 'Niet-redactioneel: de catalogus of een extensie maakt de tekst',
-  'legacy-only': 'Alleen oud: geschreven, maar de nieuwe site krijgt het niet',
+  'non-editorial': 'Non-editorial: the catalogue or an extension makes the text',
+  'legacy-only': 'Legacy only: written, but the new site does not get it',
 };
 
 function Aside({ title, note, children }) {

@@ -59,7 +59,7 @@ const readSeeds = async () => (seeds ??= JSON.parse(await readFile(SEEDS, 'utf8'
 async function urlsFor(store, page) {
   const all = await readSeeds();
   const cell = all.rows.find((row) => row.page === page)?.stores?.[store];
-  if (!cell) throw new Error(`Geen pagina ${store}/${page} in de seed-lijst.`);
+  if (!cell) throw new Error(`No page ${store}/${page} in the seed list.`);
   return { prodUrl: cell.prodUrl, newUrl: cell.newUrl };
 }
 
@@ -147,7 +147,7 @@ export function createApi({ recheck: run, savedRecheck: read = async () => null 
     // methods, so the read and the press can never split a key differently.
     const [store, ...rest] = pathname.slice('/api/recheck/'.length).split('/');
     const page = decodeURIComponent(rest.join('/'));
-    if (!store || !page) return send(response, 400, { reason: 'Geef een winkel en een pagina.' });
+    if (!store || !page) return send(response, 400, { reason: 'Give a store and a page.' });
 
     // Ticket 71: the saved re-check, never the crawl report. The built page
     // already carries the crawl report, and it holds both extracts.
@@ -155,10 +155,10 @@ export function createApi({ recheck: run, savedRecheck: read = async () => null 
       const saved = await read(store, page);
       return saved
         ? send(response, 200, saved)
-        : send(response, 404, { reason: 'Geen bewaarde hercontrole.' });
+        : send(response, 404, { reason: 'No saved re-check.' });
     }
 
-    if (request.method !== 'POST') return send(response, 405, { reason: 'Gebruik POST of GET.' });
+    if (request.method !== 'POST') return send(response, 405, { reason: 'Use POST or GET.' });
 
     try {
       return send(response, 200, await run(store, page));
@@ -168,15 +168,15 @@ export function createApi({ recheck: run, savedRecheck: read = async () => null 
       // plain refusal with the reason, never a result.
       if (error instanceof MaintenanceError) {
         return send(response, 503, {
-          reason: `De site staat in onderhoudsmodus (${error.message}). Er is niets vergeleken,`
-            + ' want een onderhoudspagina levert honderden verzonnen verschillen op.',
+          reason: `The site is in maintenance mode (${error.message}). Nothing was compared,`
+            + ' because a maintenance page gives hundreds of invented differences.',
         });
       }
       return send(response, 500, { reason: /** @type {Error} */ (error).message });
     }
   }
 
-  if (pathname.startsWith('/api/')) return send(response, 404, { reason: 'Onbekend eindpunt.' });
+  if (pathname.startsWith('/api/')) return send(response, 404, { reason: 'Unknown endpoint.' });
 
   return serveStatic(pathname, response);
   };
@@ -204,7 +204,7 @@ async function serveStatic(pathname, response) {
   return send(
     response,
     404,
-    'Niet gevonden. Draai eerst `npm run build` in de hoofdmap, of `npm start`.',
+    'Not found. Run `npm run build` in the root first, or `npm start`.',
     'text/plain; charset=utf-8',
   );
 }

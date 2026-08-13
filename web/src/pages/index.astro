@@ -13,19 +13,19 @@ import { STORE_NAME } from '../lib/stores.mjs';
 const stores = await storesInLog();
 ---
 
-<Shell title="Winkels">
+<Shell title="Stores">
   {
     stores.length === 0 ? (
       <p class="text-muted-foreground">
-        Nog geen rapporten in <code>data/reports/</code>. Draai
-        <code>node crawl/21-crawl-store.mjs nl</code> en daarna
+        No reports in <code>data/reports/</code> yet. Run
+        <code>node crawl/21-crawl-store.mjs nl</code> and then
         <code>node compare/30-compare.mjs nl</code>.
       </p>
     ) : (
       <section>
-        <h1 class="mb-2 text-xl font-semibold">Kies een winkel</h1>
+        <h1 class="mb-2 text-xl font-semibold">Choose a store</h1>
         <p class="mb-4 text-sm text-muted-foreground">
-          Elke winkel heeft zijn eigen overzicht en zijn eigen voortgang.
+          Each store has its own dashboard and its own progress.
         </p>
         <ul class="space-y-1 text-sm">
           {stores.map((store) => (

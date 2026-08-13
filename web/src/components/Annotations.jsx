@@ -56,9 +56,9 @@ export const Section = ({ anchorHeading, anchorHeadings = null, sides = null }) 
   anchorHeading
     ? (
       <div className="mt-1 flex items-baseline gap-1 text-xs text-muted-foreground">
-        <span className="truncate" title={anchorHeading}>onder “{anchorHeading}”</span>
-        {sides && <Locate url={sides.production.url} text={anchorHeadings?.production} side="productie" />}
-        {sides && <Locate url={sides.new.url} text={anchorHeadings?.new} side="de nieuwe site" />}
+        <span className="truncate" title={anchorHeading}>under “{anchorHeading}”</span>
+        {sides && <Locate url={sides.production.url} text={anchorHeadings?.production} side="production" />}
+        {sides && <Locate url={sides.new.url} text={anchorHeadings?.new} side="the new site" />}
       </div>
     )
     : null
@@ -84,8 +84,8 @@ export const Occurrences = ({ count, title }) => (
 );
 
 /** What the badge means on a finding: the same difference, several times on this page. */
-export const onePageTitle = (count) => `Deze bevinding staat ${count} keer op de pagina. `
-  + `Eén vinkje vinkt ze alle ${count} af.`;
+export const onePageTitle = (count) => `This finding is ${count} times on the page. `
+  + `One tick closes all ${count}.`;
 
 /**
  * Opens the live page scrolled to this text, with a `#:~:text=` fragment the
@@ -102,7 +102,7 @@ export function Locate({ url, text, side }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      title={`Open op ${side}, bij deze tekst`}
+      title={`Open on ${side}, at this text`}
       className="mr-2 text-xs text-muted-foreground no-underline hover:text-foreground"
     >
       ↗

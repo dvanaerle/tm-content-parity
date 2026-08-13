@@ -29,7 +29,7 @@ import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
  * findings directly *is* this view with a class pre-selected.
  *
  * This is the **flat** reading of that list, and it is what a search draws (ticket 82).
- * *Verschillen* draws `ClassGroups` below instead, which is the same rows in a class group
+ * *Repeats* draws `ClassGroups` below instead, which is the same rows in a class group
  * for each class (ticket 100). A search **is** narrowed by the classes since ticket 102 —
  * the pills are a filter and a term does not withdraw one — but it is not *grouped* by
  * them: the term is the grouping the editor asked for, so grouping its result by class as
@@ -98,7 +98,7 @@ const NOTHING = new Set();
 /**
  * The same repeats, in a **class group** for each class (ticket 100).
  *
- * *Verschillen* is the queue an editor lands on, and as one undifferentiated column it
+ * *Repeats* is the queue an editor lands on, and as one undifferentiated column it
  * asks to be read before it says anything. Six or so numbers is a choice instead: which
  * **kind** of difference to work through. The order inside a group is untouched, so
  * nothing changes about which work is on top — only how much of it arrives at once.
@@ -110,8 +110,8 @@ const NOTHING = new Set();
  * the name is refused and the concept is kept.
  *
  * **Opening a group is not a filter.** It changes what is drawn and never what is
- * included, so it is session state here, it is absent from the amber strip, and *filter
- * wissen* does not touch it. The class pills stay the one filter: while a pill is on, its
+ * included, so it is session state here, it is absent from the amber strip, and *clear
+ * filter* does not touch it. The class pills stay the one filter: while a pill is on, its
  * group is open and the unselected groups are not drawn at all, so the two controls cannot
  * tell different stories.
  *
@@ -171,7 +171,7 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
  * An empty group is drawn and says so, and it is **not** a trigger: *nothing wrong here*
  * and *this class does not exist* are two different answers, and a reader who cannot tell
  * them apart does not know whether the rule ran. It states no number, because the sentence
- * is the number and *0 verschillen* beside it would say one thing twice.
+ * is the number and *0 differences* beside it would say one thing twice.
  *
  * Most repeats are singletons — 78.8% of them in `nl`, measured in ticket 81 — and grouping
  * makes that tail navigable; it does not get to decide the tail is not work. So no group is
@@ -184,7 +184,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, 
     return (
       <li className="flex items-center gap-2 border-b border-border px-4 py-2 text-sm last:border-0">
         <ClassPill class={group.class} />
-        <span className="text-muted-foreground">Geen verschil van deze soort in deze winkel.</span>
+        <span className="text-muted-foreground">No difference of this class in this store.</span>
       </li>
     );
   }
@@ -199,7 +199,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, 
               Opening it moves no count, no bar and no denominator: the repeat total
               across the groups is the total the footer states. */}
           <span className="tabular-nums text-muted-foreground">
-            {count} {count === 1 ? 'verschil' : 'verschillen'}
+            {count} {count === 1 ? 'difference' : 'differences'}
           </span>
         </CollapsibleTrigger>
 
@@ -254,9 +254,9 @@ function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw, searche
 
       {drawn < repeats.length && (
         <p className="border-t border-border px-4 py-3 text-sm text-muted-foreground">
-          {drawn} van {repeats.length} verschillen getekend.{' '}
+          {drawn} of {repeats.length} differences drawn.{' '}
           <Button variant="outline" size="xs" onClick={() => draw(drawn + PAGE_SIZE)}>
-            Volgende {PAGE_SIZE} tonen
+            Show the next {PAGE_SIZE}
           </Button>
         </p>
       )}
@@ -275,17 +275,16 @@ function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw, searche
 function Total({ repeats }) {
   return (
     <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-      {repeats.length} verschillen over {findingsIn(repeats)} bevindingen. Het groeperen
-      scheelt leeswerk en geen werk: één beslissing op een regel blijft één beslissing per
-      bevinding, dus deze lijst raakt niet leeg. Wat vooruitgaat, is hoeveel er besloten
-      is.
+      {repeats.length} differences over {findingsIn(repeats)} findings. The grouping saves
+      reading and no work: one decision on one row stays one decision for each finding, so
+      this list does not become empty. What goes forward is how much is decided.
     </p>
   );
 }
 
 /** Said by both readings, so it is said once. */
 const NoRepeats = () => (
-  <p className="px-4 py-6 text-sm text-muted-foreground">Geen verschil gevonden.</p>
+  <p className="px-4 py-6 text-sm text-muted-foreground">No difference found.</p>
 );
 
 /** How many rows are drawn at once, and how many the button adds. */
@@ -296,8 +295,8 @@ const PAGE_SIZE = 100;
  * counts over the pages, and the row already says how many pages there are. Confusing
  * the two is this ticket's named trap, so the two sentences are written apart.
  */
-const acrossPagesTitle = (repeat) => `${repeat.occurrences} keer in totaal, op ${repeat.on.length} `
-  + "pagina's. Op sommige van die pagina's staat het verschil meer dan één keer.";
+const acrossPagesTitle = (repeat) => `${repeat.occurrences} times in total, on ${repeat.on.length} `
+  + 'pages. On some of those pages the difference is there more than once.';
 
 function Row({ repeat, byFinding, bulk, link, searched }) {
   const [open, setOpen] = useState(false);
@@ -338,7 +337,7 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
   // The lookup cannot miss: `byFinding` is derived from the same store summaries the
   // repeats are, so every id here is in it. It is left to throw rather than to skip a
   // missing one, because a skipped member would quietly lower the denominator and the
-  // row would then say *3 van 3 afgehandeld* about four findings.
+  // row would then say *3 of 3 closed* about four findings.
   const bar = barOf(repeat.on.map((entry) => byFinding.get(entry.id)));
 
   return (
@@ -380,14 +379,14 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
                 carries one finding of this difference and the two numbers are one
                 number. `occurrences` is the number that genuinely differs — the same
                 difference several times on a single page — and it is named apart. */}
-            <span className="tabular-nums font-medium">op {repeat.on.length} pagina's</span>
+            <span className="tabular-nums font-medium">on {repeat.on.length} pages</span>
             {/* Drawn only when it exceeds the page count, so the mark appears exactly
                 when it says something the page count does not. */}
             {repeat.occurrences > repeat.on.length && (
               <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
             )}
             <span className={cn('ml-2 tabular-nums', bar.closed ? INK.added : 'text-muted-foreground')}>
-              {bar.closed} van {bar.denominator} afgehandeld
+              {bar.closed} of {bar.denominator} closed
             </span>
           </span>
         </CollapsibleTrigger>
@@ -442,8 +441,8 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
  * allowed by hand — and a decided page is not a page with nothing left to do: since round
  * two an undo is live there.
  *
- * Its label says **kies** and never *afgehandeld*. The ledger already spends a checkbox on
- * the tri-state *Opgelost* control, which genuinely is a decision (tickets 36 and 48), so
+ * Its label says **select** and never *closed*. The ledger already spends a checkbox on
+ * the tri-state *Fixed* control, which genuinely is a decision (tickets 36 and 48), so
  * two checkboxes with two meanings share this screen and each has to say which it is.
  */
 function SelectAll({ repeat, selected, onTickAll }) {
@@ -462,8 +461,8 @@ function SelectAll({ repeat, selected, onTickAll }) {
       // there, which would re-tick the same rows and leave the control stuck at mixed —
       // a control that cannot be pressed back is not a control.
       onCheckedChange={(ticked) => onTickAll(some ? false : ticked)}
-      aria-label={`Kies alle ${repeat.on.length} pagina's van dit verschil`}
-      title="Kiest elke pagina van dit verschil. Kiezen legt niets vast."
+      aria-label={`Select all ${repeat.on.length} pages of this difference`}
+      title="Selects each page of this difference. A selection decides nothing."
     />
   );
 }
@@ -473,9 +472,9 @@ function SelectAll({ repeat, selected, onTickAll }) {
  *
  * It was a list until this ticket and it is a table now, because a tick is a column and a
  * column wants a header word. That word is the whole reason the table is here: the ledger
- * already spends a checkbox on the tri-state *Opgelost* control, which **is** a decision,
+ * already spends a checkbox on the tri-state *Fixed* control, which **is** a decision,
  * and two checkboxes with two meanings on one screen have to say which is which. This one
- * says *Kies*, and every tick repeats it in its label.
+ * says *Select*, and every tick repeats it in its label.
  *
  * A page name opens the **whole** content view for that page, and not a fragment of it
  * filtered to this difference. The question a one-sided difference asks is where the text
@@ -499,20 +498,20 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
             press on the matches, which is right — and unsayable if this line is missing. */}
         {searched && (
           <TableCaption className="mt-2 text-left text-xs">
-            Dit zijn de pagina&rsquo;s waarop de zoekterm is gevonden. Dit verschil kan op
-            meer pagina&rsquo;s staan; die staan hier niet en worden niet mee beslist.
+            These are the pages where the search term was found. This difference can be on
+            more pages; those are not here and they are not decided with these.
           </TableCaption>
         )}
         <TableHeader>
           <TableRow>
             {/* The header word is drawn for a screen reader and not for an eye. A header
-                cell holding nothing but a checkbox announces nothing, and *Kies* beside
+                cell holding nothing but a checkbox announces nothing, and *Select* beside
                 the tick would be a word repeated in every label under it. */}
             <TableHead className="w-8">
               <SelectAll repeat={repeat} selected={selected} onTickAll={onTickAll} />
-              <span className="sr-only">Kies</span>
+              <span className="sr-only">Select</span>
             </TableHead>
-            <TableHead>Pagina</TableHead>
+            <TableHead>Page</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
@@ -523,7 +522,7 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
                 <Checkbox
                   checked={selected.has(entry.id)}
                   onCheckedChange={(ticked) => onTick(entry.id, ticked)}
-                  aria-label={`Kies ${entry.page}`}
+                  aria-label={`Select ${entry.page}`}
                 />
               </TableCell>
               <TableCell className="whitespace-normal">
@@ -551,7 +550,7 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
  * hold the target instead. Without this the row shows words that do not contain what was
  * typed — because what was typed is in the link, the heading or the page name.
  *
- * Nothing here when there are no fields, which is the *Verschillen* view: it lists every
+ * Nothing here when there are no fields, which is the *Repeats* view: it lists every
  * difference and no term was typed, so there is nowhere a match could have been.
  */
 const MatchedFields = ({ fields }) => (
@@ -564,14 +563,14 @@ const MatchedFields = ({ fields }) => (
     : null
 );
 
-/** The six searchable fields, in the language the dashboard speaks. */
+/** The six searchable fields, as the dashboard says them. */
 const FIELD_LABEL = {
-  page: 'de paginanaam',
-  prodText: 'de tekst op productie',
-  newText: 'de tekst op de nieuwe site',
-  linkTarget: 'het linkdoel',
-  linkText: 'de linktekst',
-  anchorHeading: 'het kopje',
+  page: 'the page name',
+  prodText: 'the text on production',
+  newText: 'the text on the new site',
+  linkTarget: 'the link target',
+  linkText: 'the link text',
+  anchorHeading: 'the heading',
 };
 
 /**

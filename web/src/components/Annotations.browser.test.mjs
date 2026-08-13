@@ -88,6 +88,6 @@ describe('the deep links on a finding row', () => {
     });
 
     expect(links().map((link) => link.url)).toEqual([PROD_URL]);
-    expect(document.body.textContent).toContain('onder “Kleuren en RAL”');
+    expect(document.body.textContent).toContain('under “Kleuren en RAL”');
   });
 });

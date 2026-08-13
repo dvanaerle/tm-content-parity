@@ -67,11 +67,11 @@ export const EXCLUDED_REGIONS = [
     selector: '#amasty-shopby-product-list',
     kind: 'non-editorial',
     reason:
-      'Het productoverzicht op een categoriepagina. De catalogus maakt de '
-      + 'tegeltitels, de filterlabels, het aantal resultaten en de sorteerknop. '
-      + 'Niemand schrijft ze. Een verschil erin is dus geen redactiewerk. '
-      + 'Productie zet de tegeltitel in een tag die de extractie nooit las. '
-      + 'Daardoor leek productie negen tegels kwijt die het nooit had.',
+      'The product grid on a category page. The catalogue makes the tile titles, the '
+      + 'filter labels, the count of results and the sort control. Nobody writes them, so '
+      + 'a difference in them is not editor work. Production puts the tile title in a tag '
+      + 'that the extraction never read. That made production look as if it lost nine '
+      + 'tiles that it never had.',
     // Measured 2026-08-07 by `crawl/probes/probe-excluded-regions.mjs`. One match
     // on each host, on all three pages, with the same count on all three.
     // Re-measured 2026-08-10 after ticket 67 folded inline links: both counts are
@@ -108,16 +108,15 @@ export const EXCLUDED_REGIONS = [
     selector: '#campaign-banner',
     kind: 'legacy-only',
     reason:
-      'De campagnebanner. Eén gedeeld Magento-blok, in alle zes de winkels, op '
-      + 'bijna elke pagina. Een redacteur schrijft de banner wel, dus '
-      + 'niet-redactioneel is het niet. Maar de nieuwe site krijgt hem niet, en '
-      + 'daardoor maakt hetzelfde blok op elke pagina dezelfde bevindingen die '
-      + 'niemand kan oplossen. Productie markeert het blok zelf, dus het anker is '
-      + 'niet campagnespecifiek: de volgende campagne heeft andere teksten, andere '
-      + 'links en een andere looptijd, maar houdt dezelfde haak, en deze regel '
-      + 'blijft passen zonder commit. De haak zit in het CMS-blok. Wie een nieuw '
-      + 'blok bouwt zonder haak laat de banner terugkomen als bevindingen, en de '
-      + 'dekkingscontrole meldt dat in één regel.',
+      'The campaign banner. One shared Magento block, in all six stores, on nearly every '
+      + 'page. An editor does write the banner, so it is not non-editorial. But the new '
+      + 'site does not get it, so the same block on each page makes the same findings that '
+      + 'nobody can solve. Production marks the block itself, so the anchor is not specific '
+      + 'to a campaign: the next campaign has different text, different links and a '
+      + 'different period, but it keeps the same hook, and this rule continues to match '
+      + 'with no commit. The hook is in the CMS block. A new block built without the hook '
+      + 'lets the banner come back as findings, and the coverage check reports that in one '
+      + 'line.',
     // Measured 2026-08-11 against live production by
     // `crawl/probes/probe-promo-banner.mjs`: six stores, the three pages below
     // plus `overkapping` and four controls, so **48 page-store pairs and not the
@@ -164,14 +163,13 @@ export const EXCLUDED_REGIONS = [
     selector: '.filter-content',
     kind: 'non-editorial',
     reason:
-      'Het filterblok op een categoriepagina. De filternamen, de labels erin en '
-      + 'de aantallen erachter komen uit de catalogus, en op de nieuwe site beheert '
-      + 'Akeneo ze. Niemand schrijft ze, dus een verschil erin is geen '
-      + 'redactiewerk. De haak is de binnenste blok-klasse, want die heet op beide '
-      + 'sites hetzelfde: productie zet er ook een id op, maar de nieuwe site zet '
-      + 'dat id in een template-expressie en dan past een id-regel maar op één '
-      + 'kant. Eén kant wegnemen is erger dan geen kant: de labels van de andere '
-      + 'kant blijven dan over als bevindingen die niemand kan oplossen.',
+      'The filter block on a category page. The filter names, the labels in them and the '
+      + 'counts behind them come from the catalogue, and on the new site Akeneo holds them. '
+      + 'Nobody writes them, so a difference in them is not editor work. The hook is the '
+      + 'inner block class, because both sites give it the same name: production also puts '
+      + 'an id on it, but the new site puts that id in a template expression, and then an '
+      + 'id rule matches one side only. To cut one side is worse than to cut neither: the '
+      + 'labels of the other side are then left over as findings that nobody can solve.',
     // Measured 2026-08-11 against live production and the new site by
     // `crawl/probes/probe-layered-filter.mjs`: the three pages below in every store
     // the seeds hold them for, plus four controls, so **32 page-store pairs and not

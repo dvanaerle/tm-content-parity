@@ -119,13 +119,13 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
             <>
               {dismissal.covers > 0 && (
                 <Button variant="outline" size="xs" onClick={() => setAsking('dismiss')}>
-                  Negeren op {dismissal.covers === 1 ? 'deze pagina' : `${dismissal.covers} pagina's`}…
+                  Dismiss on {dismissal.covers === 1 ? 'this page' : `${dismissal.covers} pages`}…
                 </Button>
               )}
               {/* No ellipsis, because there is nothing further to ask: this one writes on
-                  the first press, the way the single control's *Ongedaan maken* does. A
+                  the first press, the way the single control's *Cleared* does. A
                   `cleared` event carries no reason, so there is no note to type — and it
-                  is the one press here whose label has to carry *Bezig…* itself, since it
+                  is the one press here whose label has to carry *Saving…* itself, since it
                   has no form to show it in. */}
               {cleared.covers > 0 && (
                 <Button
@@ -136,8 +136,8 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
                   title={clearTitle(cleared)}
                 >
                   {bulk.busy
-                    ? 'Bezig…'
-                    : `Ongedaan maken op ${cleared.covers === 1 ? 'deze pagina' : `${cleared.covers} pagina's`}`}
+                    ? 'Saving…'
+                    : `Clear on ${cleared.covers === 1 ? 'this page' : `${cleared.covers} pages`}`}
                 </Button>
               )}
             </>
@@ -152,8 +152,8 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
             the log can be written to: it is not a decision.
 
             It is the cross at the end of the bar, behind a rule, where a floating bar of
-            this kind puts it — and never a word among the presses, where *wissen* sits one
-            tab stop from *negeren* and reads like a third thing to decide. A glyph names
+            this kind puts it — and never a word among the presses, where *clear* sits one
+            tab stop from *dismiss* and reads like a third thing to decide. A glyph names
             nothing, so the words it replaced are its label. */}
         <span aria-hidden className="ml-auto h-4 w-px bg-border" />
         <Button
@@ -161,8 +161,8 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
           variant="ghost"
           size="xs"
           onClick={onClear}
-          aria-label="Selectie wissen"
-          title="Selectie wissen"
+          aria-label="Clear the selection"
+          title="Clear the selection"
         >
           <span aria-hidden>✕</span>
         </Button>
@@ -183,7 +183,7 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
               autoFocus
               value={note}
               onChange={(change) => setNote(change.target.value)}
-              placeholder="Waarom is dit geen defect?"
+              placeholder="Why is this not a defect?"
               className="w-64"
             />
             {/* One note, copied to all N rows. The SQL constraint refuses a dismissal
@@ -193,17 +193,17 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
               variant="outline"
               size="xs"
               disabled={dismissal.events.length === 0 || bulk.busy}
-              title={dismissal.events.length === 0 ? 'Een beslissing heeft een reden nodig.' : undefined}
+              title={dismissal.events.length === 0 ? 'A decision needs a reason.' : undefined}
             >
               {bulk.busy
-                ? 'Bezig…'
-                : `Negeren op ${dismissal.covers} ${dismissal.covers === 1 ? 'pagina' : "pagina's"}`}
+                ? 'Saving…'
+                : `Dismiss on ${dismissal.covers} ${dismissal.covers === 1 ? 'page' : 'pages'}`}
             </Button>
             {/* `type="button"` and not the default. A button inside a form submits it, so
                 without this the cancel *presses* the decision it is there to abandon:
                 `close()` runs, the submit fires behind it, and N rows land in an
                 append-only table that has nothing to undo them with. */}
-            <Button type="button" variant="outline" size="xs" onClick={close}>Annuleren</Button>
+            <Button type="button" variant="outline" size="xs" onClick={close}>Cancel</Button>
           </div>
         </form>
       )}
@@ -215,7 +215,7 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
  * What is ticked, and **which difference** it is ticked on (ticket 110).
  *
  * The second half is not decoration, and it matters more now that the bar floats: the
- * difference it belongs to can be scrolled off the screen entirely, and *2 geselecteerd*
+ * difference it belongs to can be scrolled off the screen entirely, and *2 selected*
  * pinned to the bottom of a queue of four thousand is a number with no subject. So it
  * repeats the words of its own difference, in one line, the way the row states them.
  */
@@ -229,14 +229,14 @@ const Selection = ({ repeat, count }) => (
       {count}
     </span>
     {/* An explicit space, so the count and the sentence are one string when read aloud —
-        *2van 3 pagina's* is what adjacent boxes concatenate to. A whitespace-only run is
+        *2of 3 pages* is what adjacent boxes concatenate to. A whitespace-only run is
         not rendered as a flex item, so it costs nothing beside the gap. */}
     {' '}
     <span>
       <strong className="font-medium tabular-nums text-foreground">
-        van {repeat.on.length} {repeat.on.length === 1 ? 'pagina' : "pagina's"}
+        of {repeat.on.length} {repeat.on.length === 1 ? 'page' : 'pages'}
       </strong>{' '}
-      geselecteerd op <ClassWord class={repeat.class} />{' '}
+      selected on <ClassWord class={repeat.class} />{' '}
       <span className="text-foreground">{repeat.prod ?? '—'} → {repeat.new ?? '—'}</span>
     </span>
   </p>
@@ -255,16 +255,16 @@ const Selection = ({ repeat, count }) => (
  * then this sentence is the only thing on the strip below the selection. Ticket 112 names
  * that case: it is correctly empty, and it must not read as a broken screen.
  *
- * The word is **afgehandeld** and no longer *beslist*. `offersDismissal()` withholds the
+ * The word is **closed** and no longer *decided*. `offersDismissal()` withholds the
  * press on `fixed` as well as on the two judgements, so this sentence is drawn over a
- * difference somebody merely ticked off as corrected — and *beslist* would call that a
+ * difference somebody merely ticked off as corrected — and *decided* would call that a
  * judgement, which is the one distinction this control exists to keep (a claim of fact
- * loses to a re-check; a judgement does not). *Afgehandeld* is what the row above already
+ * loses to a re-check; a judgement does not). *Closed* is what the row above already
  * says of the same findings, and it is true of both.
  */
 const NothingToDismiss = () => (
   <p className="text-xs text-muted-foreground">
-    Elke bevinding hier is al afgehandeld, dus er is niets te negeren.
+    Every finding here is closed already, so there is nothing to dismiss.
   </p>
 );
 
@@ -294,10 +294,10 @@ function Covers({ dismissal }) {
   return (
     <p className="text-xs text-muted-foreground">
       <strong className="font-medium tabular-nums text-foreground">
-        {dismissal.covers} {dismissal.covers === 1 ? 'pagina' : "pagina's"}
+        {dismissal.covers} {dismissal.covers === 1 ? 'page' : 'pages'}
       </strong>
       {dismissal.decided > 0
-        ? ` van de ${pages}: de andere ${dismissal.decided} ${dismissal.decided === 1 ? 'is' : 'zijn'} al beslist.`
+        ? ` of the ${pages}: the other ${dismissal.decided} ${dismissal.decided === 1 ? 'is' : 'are'} decided already.`
         : '.'}
     </p>
   );
@@ -308,7 +308,7 @@ function Covers({ dismissal }) {
  *
  * N inserts can fail after the third, and the rows that were written are in the log: the
  * table is append-only, so there is nothing to roll back and nothing to pretend.
- * *12 van 30 opgeslagen* is the sentence.
+ * *12 of 30 saved* is the sentence.
  *
  * It is drawn on any shortfall and not only on a named page, because a press can also
  * write nothing at all and name nothing — with no editor, for one. Keying on the page
@@ -326,11 +326,11 @@ function Report({ written, total, failedOn, error }) {
 
   return (
     <p className={cn('mb-2 text-xs', INK.attention)}>
-      <strong className="font-medium">{written} van {total} opgeslagen.</strong>{' '}
+      <strong className="font-medium">{written} of {total} saved.</strong>{' '}
       {failedOn
-        ? <>Het stopte op <code>{failedOn}</code>, en de rest is niet geschreven. </>
-        : 'Er is niets geschreven. '}
-      {written > 0 && 'Wat wel is opgeslagen staat in het log en is hierboven te zien. '}
+        ? <>It stopped on <code>{failedOn}</code>, and the rest is not written. </>
+        : 'Nothing is written. '}
+      {written > 0 && 'What was saved is in the log and it is visible above. '}
       {error}
     </p>
   );
@@ -345,10 +345,10 @@ function Report({ written, total, failedOn, error }) {
  * screen rather than changing what an editor presses.
  */
 const clearTitle = ({ covers, skipped }) => (
-  'Haalt de beslissing weg en zet het verschil terug op open.'
+  'Removes the decision and puts the difference back to open.'
   + (skipped > 0
-    ? ` ${skipped} van de ${covers + skipped} gekozen pagina's blijft zoals het is: daar is`
-      + ' niets beslist, of het is een claim die met het vinkje Opgelost teruggaat.'
+    ? ` ${skipped} of the ${covers + skipped} selected pages stays as it is: nothing is`
+      + ' decided there, or it is a claim that the Fixed tick takes back.'
     : '')
 );
 
@@ -361,5 +361,5 @@ const ClassWord = ({ class: cls }) => <span className="font-medium text-foregrou
 
 /** Why the buttons are absent, which is never nothing at all. */
 const NotWriting = ({ reason }) => (
-  <p className="text-xs text-muted-foreground">{reason ?? 'Beslissen kan hier nu niet.'}</p>
+  <p className="text-xs text-muted-foreground">{reason ?? 'A decision cannot be made here now.'}</p>
 );

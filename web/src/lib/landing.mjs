@@ -18,7 +18,7 @@ import { CHROME } from './palette.mjs';
  *
  * The content view already anchors its rows on the **document position** (`p12`), for
  * the reason `view.mjs` gives: a position in a row list moves when a filter moves. So
- * this is for the two tables that have no such position — Links and Afbeeldingen,
+ * this is for the two tables that have no such position — Links and Images,
  * whose rows are findings and nothing else — and the content view lands on its own
  * anchor instead.
  *
@@ -28,7 +28,7 @@ import { CHROME } from './palette.mjs';
  * @param {string} id
  * @returns {string}
  */
-export const findingAnchor = (id) => `bevinding-${id}`;
+export const findingAnchor = (id) => `finding-${id}`;
 
 /**
  * The tab each check lives on. `Ledger.jsx` owns the strip; this owns which of its
@@ -41,7 +41,7 @@ export const findingAnchor = (id) => `bevinding-${id}`;
  * finding no tab draws, and `landingFor()` answers for it rather than pretending Meta
  * would show it.
  */
-const TAB_OF_CHECK = { text: 'Inhoud', links: 'Links', images: 'Afbeeldingen' };
+const TAB_OF_CHECK = { text: 'Text', links: 'Links', images: 'Images' };
 
 /**
  * What the page has to do about the finding a link named.
@@ -49,7 +49,7 @@ const TAB_OF_CHECK = { text: 'Inhoud', links: 'Links', images: 'Afbeeldingen' };
  * @typedef {object} Landing
  * @property {string | null} tab  The tab that must be on screen, or null when there is
  *                                nothing to land on and the reader's own choice stands.
- * @property {boolean} needsNoise Whether *Ruis tonen* has to be on for the finding to be
+ * @property {boolean} needsNoise Whether *Show noise* has to be on for the finding to be
  *                                drawn at all.
  * @property {boolean} missing    A link named a finding and this snapshot has no such
  *                                finding. A finding id is a term of the text, so it
@@ -115,14 +115,14 @@ export const landedRowProps = (landed) => ({
 /**
  * The two controls a landing borrows, and the reader taking either one back.
  *
- * A landing needs a tab on screen and, sometimes, *Ruis tonen* switched on.
+ * A landing needs a tab on screen and, sometimes, *Show noise* switched on.
  * Both are the reader's controls, so the landing only borrows them: it holds until the
  * reader touches that control, and from then on their choice stands.
  *
  * **One flag per control, and this is the whole reason the hook exists.** A single
  * "the reader has chosen" flag made the two controls hand each other back: switching
  * tabs released the toggle, so the row the reader landed on disappeared, and ticking
- * the toggle released the tab, so a reader who landed on Links was thrown to Inhoud.
+ * the toggle released the tab, so a reader who landed on Links was thrown to Text.
  * Two controls, two answers.
  *
  * It is not a one-shot either. The finding id arrives in an effect, a beat after the

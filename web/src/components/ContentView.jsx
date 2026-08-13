@@ -81,8 +81,8 @@ export default function ContentView({ report, findings, showNoise, control, land
 
         {narrowed && (
           <FilterBanner onClear={() => setFilter(NO_FILTER)} className="mb-3 rounded border px-3 py-2">
-            <strong>Gefilterd.</strong>
-            Je ziet {rows.length} van {total} regels. Dit is niet de hele pagina.
+            <strong>Filtered.</strong>
+            You see {rows.length} of {total} rows. This is not the whole page.
           </FilterBanner>
         )}
 
@@ -90,7 +90,7 @@ export default function ContentView({ report, findings, showNoise, control, land
           ? (
             <Empty className="py-6">
               <EmptyHeader>
-                <EmptyDescription>Geen regels in deze filter.</EmptyDescription>
+                <EmptyDescription>No rows in this filter.</EmptyDescription>
               </EmptyHeader>
             </Empty>
           )
@@ -103,7 +103,7 @@ export default function ContentView({ report, findings, showNoise, control, land
 /**
  * The class filter, the inverse control and the Markdown export.
  *
- * The chips count **regels** and never findings. A grouped finding is one finding
+ * The chips count **rows** and never findings. A grouped finding is one finding
  * over several rows, so the two numbers differ on purpose, and the word on the
  * tooltip is what keeps them apart. Nothing here moves a bar: `view.mjs` returns no
  * number a bar could be built from.
@@ -117,7 +117,7 @@ function Controls({ classes, filter, setFilter, production, next, page, store })
         counts={classes.map(({ class: cls, rows }) => ({ class: cls, count: rows }))}
         selected={filter.classes}
         onToggle={(cls) => setFilter(toggleClass(filter, cls))}
-        title={(_cls, count) => `${count} regels in deze klasse. Filteren verandert geen enkel getal.`}
+        title={(_cls, count) => `${count} rows in this class. A filter changes no count.`}
       />
 
       {/* The inverse control. Matched rows are the default, because a tint only
@@ -128,7 +128,7 @@ function Controls({ classes, filter, setFilter, production, next, page, store })
       <Label
         className={cn('font-normal', differences.disabled ? 'text-muted-foreground/60' : 'text-muted-foreground')}
         title={differences.disabled
-          ? 'Een klassefilter toont altijd alleen verschillen.'
+          ? 'A class filter always shows differences only.'
           : undefined}
       >
         <Checkbox
@@ -136,7 +136,7 @@ function Controls({ classes, filter, setFilter, production, next, page, store })
           disabled={differences.disabled}
           onCheckedChange={(checked) => setFilter({ ...filter, onlyDifferences: checked })}
         />
-        Alleen verschillen
+        Differences only
       </Label>
 
       <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
@@ -190,10 +190,10 @@ function Outline({ entries }) {
 
   return (
     <nav
-      aria-label="Koppen op deze pagina"
+      aria-label="Headings on this page"
       className="max-h-64 w-full overflow-auto lg:sticky lg:top-4 lg:max-h-[80vh] lg:w-56 lg:shrink-0 lg:self-start"
     >
-      <h3 className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Koppen</h3>
+      <h3 className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Headings</h3>
       <ol className="space-y-0.5 text-sm">
         {entries.map((entry) => (
           <li key={entry.key} style={{ paddingLeft: `${(entry.level - 1) * 10}px` }}>
@@ -273,9 +273,9 @@ function Rows({ rows, control, sides, landed, settled }) {
         <TableRow>
           <TableHead className="w-56">Status</TableHead>
           <TableHead>
-            Productie <span className="normal-case opacity-70">— bron van waarheid</span>
+            Production <span className="normal-case opacity-70">— source of truth</span>
           </TableHead>
-          <TableHead>Nieuwe site</TableHead>
+          <TableHead>New site</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -296,7 +296,7 @@ function Rows({ rows, control, sides, landed, settled }) {
               <TableCell className="px-2 py-3 align-top whitespace-normal">
                 {row.class
                   ? <ClassPill class={row.class} />
-                  : <span className="text-xs text-muted-foreground">gelijk</span>}
+                  : <span className="text-xs text-muted-foreground">equal</span>}
                 {row.score !== null && <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>}
                 <ClampControl open={open.has(row.key)} onToggle={() => toggle(row.key)} />
                 <Occurrences count={row.finding?.occurrences} title={onePageTitle(row.finding?.occurrences)} />
@@ -306,7 +306,7 @@ function Rows({ rows, control, sides, landed, settled }) {
                   * decision, because nothing is being asked (ticket 86).
                   *
                   * This gates the **wrapper**, and `Ledger.jsx`'s closure gates the
-                  * control itself, because Links and Afbeeldingen share that closure and
+                  * control itself, because Links and Images share that closure and
                   * have no rows to read. The two are one rule, `canDecide()`, and not a
                   * rule stated twice: without this the row would draw an empty `mt-1`
                   * div. It reads the row rather than calling the rule again so that
@@ -320,8 +320,8 @@ function Rows({ rows, control, sides, landed, settled }) {
                 new={row.new?.norm ?? null}
                 prodRaw={row.prod?.raw ?? null}
                 newRaw={row.new?.raw ?? null}
-                prodPrefix={<><Tag unit={row.prod} /><Locate url={sides.production.url} text={row.prod?.raw} side="productie" /></>}
-                newPrefix={<><Tag unit={row.new} /><Locate url={sides.new.url} text={row.new?.raw} side="de nieuwe site" /></>}
+                prodPrefix={<><Tag unit={row.prod} /><Locate url={sides.production.url} text={row.prod?.raw} side="production" /></>}
+                newPrefix={<><Tag unit={row.new} /><Locate url={sides.new.url} text={row.new?.raw} side="the new site" /></>}
                 strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
                 equal={row.equal}
                 clamped={!open.has(row.key)}
@@ -343,10 +343,10 @@ function Rows({ rows, control, sides, landed, settled }) {
  * backwards. So it is quiet instead: text, no border, and the size of the score
  * beside it.
  *
- * **It says what the reader gets, and it borrows no other word.** *Uitklappen* is the
- * fold, which `CONTEXT.md` reserves to two meanings and refuses to a clamp; *inklappen*
- * is what a run of equal rows does, which is ticket 79's context marker and not this;
- * and *openen* is the word the finding state beside it already uses.
+ * **It says what the reader gets, and it borrows no other word.** *Unfold* is the fold,
+ * which `CONTEXT.md` reserves to two meanings and refuses to a clamp; *collapse* is what a
+ * run of equal rows does, which is ticket 79's context marker and not this; and *open* is
+ * the word the finding state beside it already uses.
  */
 function ClampControl({ open, onToggle }) {
   return (
@@ -355,10 +355,10 @@ function ClampControl({ open, onToggle }) {
       size="xs"
       onClick={onToggle}
       aria-expanded={open}
-      title={open ? 'Toon vier regels van dit blok' : 'Toon dit blok helemaal'}
+      title={open ? 'Show four rows of this block' : 'Show all of this block'}
       className="ml-2 text-xs font-normal text-muted-foreground"
     >
-      {open ? 'vier regels' : 'hele blok'}
+      {open ? 'four rows' : 'whole block'}
     </Button>
   );
 }

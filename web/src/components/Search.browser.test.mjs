@@ -75,7 +75,7 @@ async function mount(props = {}) {
     events: [],
     includeClosed: false,
     onIncludeClosed: () => {},
-    bulk: { canWrite: false, busy: false, appendMany: async () => ({}), notWritingReason: 'geen naam' },
+    bulk: { canWrite: false, busy: false, appendMany: async () => ({}), notWritingReason: 'no name' },
     link: (store, page) => `/${store}/${page}/`,
     ...props,
     ...over,
@@ -87,7 +87,7 @@ async function mount(props = {}) {
 
 /** The amber strip, found by the one action only it carries. */
 const strip = () => [...document.querySelectorAll('[data-slot="alert"]')]
-  .find((element) => element.textContent.includes('Filter wissen'));
+  .find((element) => element.textContent.includes('Clear filter'));
 
 describe('a search under the class pills', () => {
   it('keeps the amber strip up, in the words it uses everywhere else', async () => {
@@ -96,19 +96,19 @@ describe('a search under the class pills', () => {
     // narrowed — and a narrowed list that looks whole is read as whole.
     const { unmount } = await mount({ classes: ['copy'] });
 
-    expect(strip().textContent).toContain('Gefilterd op copy.');
-    expect(strip().textContent).toContain('1 van 3 verschillen.');
-    expect(strip().textContent).toContain('De getallen hierboven tellen alles.');
+    expect(strip().textContent).toContain('Filtered on copy.');
+    expect(strip().textContent).toContain('1 of 3 differences.');
+    expect(strip().textContent).toContain('The counts above count everything.');
     unmount();
   });
 
-  it('clears the classes on Filter wissen and asks nothing about the term', async () => {
+  it('clears the classes on Clear filter and asks nothing about the term', async () => {
     // The press hands back one thing: the classes. The term is not the strip's to touch
     // — that is ticket 106's business, and only for a scope.
     const { cleared, unmount } = await mount({ classes: ['copy'] });
 
     const button = [...strip().querySelectorAll('button')]
-      .find((one) => one.textContent.trim() === 'Filter wissen');
+      .find((one) => one.textContent.trim() === 'Clear filter');
     await act(async () => button.click());
 
     expect(cleared).toEqual([true]);
@@ -122,7 +122,7 @@ describe('a search under the class pills', () => {
     await rerender({ classes: ['text-missing'] });
 
     expect(document.body.textContent).toContain('Bekijk deals nu >');
-    expect(strip().textContent).toContain('Gefilterd op text-missing.');
+    expect(strip().textContent).toContain('Filtered on text-missing.');
     unmount();
   });
 

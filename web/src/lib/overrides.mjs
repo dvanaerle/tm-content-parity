@@ -158,14 +158,14 @@ export function useOverrides({ report, editor }) {
  * and now, so it is asked for before anything they cannot.
  */
 function whyNotWriting({ port, editor, events, error }) {
-  if (!port) return 'Geen verbinding met het logboek, dus beslissen is uitgeschakeld.';
-  if (error) return 'Het logboek reageert niet, dus dit staat op alleen-lezen.';
+  if (!port) return 'No connection to the log, so a decision cannot be made.';
+  if (error) return 'The log does not answer, so this is read-only.';
   if (!editor) return NO_EDITOR;
-  if (events === null) return 'Het logboek wordt nog geladen.';
+  if (events === null) return 'The log is still loading.';
   return null;
 }
 
-const NO_EDITOR = 'Vul bovenaan je naam in om hier te beslissen. Elke beslissing krijgt een naam.';
+const NO_EDITOR = 'Give your name at the top to decide here. Each decision carries a name.';
 
 /**
  * The dashboard's side: every event for the store, reduced to a bar per page and

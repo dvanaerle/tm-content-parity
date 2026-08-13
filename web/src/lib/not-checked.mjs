@@ -35,7 +35,7 @@ const NOT_CRAWLED_REASON =
 
 /**
  * The excluded pages **this** store has. `veranda-configurator` is nl only, so a
- * German dashboard that reported one page *niet gecontroleerd* would be counting
+ * German dashboard that reported one page *not checked* would be counting
  * another store's page (ticket 38).
  *
  * The store has the page when the cell has both sides, which is the crawler's

@@ -51,7 +51,7 @@ export function ClassPill({ class: cls }) {
  * class* would drift, and the drift would land on the one word an editor reads the
  * affordance by.
  *
- * The count beside each pill is whatever the caller counts — regels on a page, pagina's
+ * The count beside each pill is whatever the caller counts — rows on a page, pages
  * on the dashboard — so the caller owns the tooltip that names the unit.
  */
 export function ClassFilterPills({ counts, selected, onToggle, title }) {
@@ -113,7 +113,7 @@ export function FilterBanner({ onClear, className = '', children }) {
     <Alert className={cn('flex flex-wrap items-center gap-2 text-sm', BANNER.attention, className)}>
       {children}
       <Button variant="outline" size="xs" onClick={onClear} className="border-current bg-transparent">
-        Filter wissen
+        Clear filter
       </Button>
     </Alert>
   );
@@ -132,7 +132,7 @@ export function FilterBanner({ onClear, className = '', children }) {
  * exists to stop.
  *
  * **No pills, no strip**, and that is decided here rather than at each call site: a strip
- * reading *Gefilterd op .* over an unfiltered list is the one sentence this component
+ * reading *Filtered on .* over an unfiltered list is the one sentence this component
  * must never be able to say, and a guard repeated by every caller is a guard one of them
  * will eventually forget.
  *
@@ -141,7 +141,7 @@ export function FilterBanner({ onClear, className = '', children }) {
  *                                 component draws nothing.
  * @param {number} props.shown
  * @param {number} props.total
- * @param {string} props.noun      What is counted: `verschillen`, `pagina's`.
+ * @param {string} props.noun      What is counted: `differences`, `pages`.
  * @param {() => void} props.onClear
  * @param {string} [props.className]
  */
@@ -154,9 +154,9 @@ export function ClassFilterBanner({ classes, shown, total, noun, onClear, classN
           flex row with a gap, so the element boundary is already a gap — but the text
           children after it collapse into one anonymous item, and there the space has to
           be written. */}
-      <strong>Gefilterd op {classes.join(', ')}.</strong>
-      {`${shown} van ${total} ${noun}.`}
-      {' '}De getallen hierboven tellen alles.
+      <strong>Filtered on {classes.join(', ')}.</strong>
+      {`${shown} of ${total} ${noun}.`}
+      {' '}The counts above count everything.
     </FilterBanner>
   );
 }

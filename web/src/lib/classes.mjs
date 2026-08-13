@@ -44,9 +44,9 @@ const TONE = {
 
 /** @type {Record<string, string>} */
 export const CHECK_LABEL = {
-  text: 'Tekst',
+  text: 'Text',
   links: 'Links',
-  images: "Afbeeldingen",
+  images: 'Images',
   meta: 'Meta',
 };
 
@@ -77,11 +77,11 @@ function toneOf(cls) {
  * would have to be built twice. It is the sibling of `toneOf()` above, and it is here for
  * the same reason: a rule the interface derives from the visibility belongs beside the
  * other one, not in whichever surface asked first. The three surfaces that ask are the
- * content view, Links and Afbeeldingen — and two of them have no rows, so this cannot
+ * content view, Links and Images — and two of them have no rows, so this cannot
  * live in `view.mjs`, which is the content view's own module.
  *
  * It is deliberately **not** `isWork()`. A `diagnostic` finding is decidable: what a rule
- * saw sits behind *Ruis tonen*, and it keeps the control it has. Only `information` says
+ * saw sits behind *Show noise*, and it keeps the control it has. Only `information` says
  * that nothing is being asked.
  *
  * A row whose two sides agree carries no finding at all (ticket 02) and has nothing to

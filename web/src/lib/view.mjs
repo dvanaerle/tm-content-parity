@@ -13,7 +13,7 @@
  * things (spec 32, decision 25).
  *
  * The noise toggle is **not** part of the filter. It belongs to the whole ledger
- * and it survives a click on *filter wissen*: an editor who asked to see what a rule
+ * and it survives a click on *clear filter*: an editor who asked to see what a rule
  * saw did not ask a question about classes.
  */
 
@@ -22,7 +22,7 @@
 import { FINDING_CLASSES, isWork } from '../../../compare/vocabulary.mjs';
 // `canDecide()` is the interface's other rule derived from the visibility, and it lives
 // beside `toneOf()` rather than here: two of its three callers are the Links and
-// Afbeeldingen tabs, which have no rows at all (ticket 86).
+// Images tabs, which have no rows at all (ticket 86).
 import { canDecide } from './classes.mjs';
 
 /**
@@ -38,7 +38,7 @@ export const NO_FILTER = Object.freeze({ onlyDifferences: false, classes: Object
 export const isNarrowed = (filter) => filter.onlyDifferences || filter.classes.length > 0;
 
 /**
- * What *Alleen verschillen* must draw. A class filter already implies the differences
+ * What *Differences only* must draw. A class filter already implies the differences
  * — `prepareRows` drops every matched row as soon as a class is on — so an unticked
  * box over a differences-only view is a control that says one thing while the view
  * does another. While a class is on the box is on, and it is disabled, because
@@ -108,7 +108,7 @@ export function toggleClass(filter, cls) {
  * @param {boolean} input.showNoise   The ledger's toggle: the classes it does not show.
  * @returns {{ rows: ContentRow[], total: number, classes: { class: string, rows: number }[] }}
  *   `total` counts the rows the page has under the noise toggle, so the interface can
- *   say *42 van 310 regels*. It is a row count and never a finding count.
+ *   say *42 of 310 rows*. It is a row count and never a finding count.
  */
 export function prepareRows({ rows, findings, elements, filter, showNoise }) {
   const byId = new Map(findings.map((finding) => [finding.id, finding]));
@@ -377,7 +377,7 @@ export const findingsIn = (repeats) => repeats.reduce((sum, repeat) => sum + rep
  * for "sections"; the concept it describes is this, and the name is refused.
  *
  * Opening a group is **not** a filter: it changes what is drawn and never what is
- * included, so it stays out of the amber strip and *filter wissen* does not touch it. The
+ * included, so it stays out of the amber strip and *clear filter* does not touch it. The
  * class pills stay the one filter, and this function reads them — with a pill on, only the
  * selected groups exist and they are open, so the two controls cannot tell different
  * stories.

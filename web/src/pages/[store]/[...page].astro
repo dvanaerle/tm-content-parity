@@ -23,7 +23,7 @@ const { production, new: next } = report.sides;
 <Shell title={`${report.store} — ${report.page}`} store={report.store}>
   <header slot="banner">
     <!-- Where this page sits, and the way back out of it (ticket 109). It replaces the
-         lone *← alle pagina's van nl* link, which pointed at the bare store and so threw
+         lone *← all pages of nl* link, which pointed at the bare store and so threw
          away the pills, the view and the search term. It is a `client:load` island only
          because the screen it returns to arrives in the address bar; it renders the bare
          store link at build time, so a reader with no JavaScript keeps the link that was
@@ -32,8 +32,8 @@ const { production, new: next } = report.sides;
 
     <div class="flex flex-wrap items-baseline gap-3">
       <h1 class="text-xl font-semibold">{report.page}</h1>
-      <a class={`text-sm hover:underline ${CHROME.link}`} href={production.url} rel="noreferrer">productie ↗</a>
-      <a class={`text-sm hover:underline ${CHROME.link}`} href={next.url} rel="noreferrer">nieuw ↗</a>
+      <a class={`text-sm hover:underline ${CHROME.link}`} href={production.url} rel="noreferrer">production ↗</a>
+      <a class={`text-sm hover:underline ${CHROME.link}`} href={next.url} rel="noreferrer">new ↗</a>
     </div>
 
     {/* The two count chips are gone: the bar in the island replaces them, because
@@ -44,15 +44,15 @@ const { production, new: next } = report.sides;
         already does. */}
     <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
       <Badge variant="outline" className="h-auto gap-1 px-2 py-1">
-        productie <strong>{production.status}</strong> · {production.elements.length} blokken
+        production <strong>{production.status}</strong> · {production.elements.length} blocks
       </Badge>
       <Badge variant="outline" className="h-auto gap-1 px-2 py-1">
-        nieuw <strong>{next.status}</strong> · {next.elements.length} blokken
+        new <strong>{next.status}</strong> · {next.elements.length} blocks
       </Badge>
       {
         (production.boundary !== 'main' || next.boundary !== 'main') && (
           <Badge className={`h-auto px-2 py-1 ${PILL.attention}`}>
-            grens: productie {production.boundary}, nieuw {next.boundary}
+            boundary: production {production.boundary}, new {next.boundary}
           </Badge>
         )
       }

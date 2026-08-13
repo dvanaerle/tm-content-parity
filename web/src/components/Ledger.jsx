@@ -33,18 +33,18 @@ const HEAD_TONE = '[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:t
 /**
  * A tabbed ledger, production and the new site side by side.
  *
- * **Four tabs** since ticket 81, and Inhoud lands first. Diff and Content were two
+ * **Four tabs** since ticket 81, and Text lands first. Diff and Content were two
  * tabs answering half a question each, and Outline was production's unit list
  * indented by heading level — which the merged content view now contains, and which
  * returns there as navigation. That closes ticket 12's question about the tab count.
  *
- * Inhoud lands first because it is now the whole page rather than a wall of
+ * Text lands first because it is now the whole page rather than a wall of
  * unexplained differences. An editor who lands on a task list has to take the
  * tool's word for it.
  *
  * **Taken is gone.** It was every finding of the page in one list, grouped by check,
  * and each of its three groups is a tab that shows the same findings with better
- * context: Inhoud puts a text finding in document order, and Links and Afbeeldingen
+ * context: Text puts a text finding in document order, and Links and Images
  * word-diff the two targets. Its one remaining claim was *work down a page without
  * changing tabs*, and it answered that by removing the context the other tabs add.
  * The grouped reading of the work is now the store's repeat list, which groups
@@ -53,7 +53,7 @@ const HEAD_TONE = '[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:t
  * Coverage is absent: Axis B is ticket 24, and ticket 11 forbids summing its bar
  * with this one. It arrives as a fifth tab, not as extra rows in these.
  */
-const TABS = ['Inhoud', 'Links', 'Afbeeldingen', 'Meta'];
+const TABS = ['Text', 'Links', 'Images', 'Meta'];
 
 /**
  * `findings` are the **derived** findings from `derivePageState()` — the same
@@ -116,13 +116,13 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
   // The label must count what it uncovers: an `information` finding is on screen already.
   const noiseCount = derived.filter((f) => f.visibility === 'diagnostic').length;
 
-  // Every badge counts **findings**, including Inhoud's. The content view is a list
+  // Every badge counts **findings**, including Text's. The content view is a list
   // of rows and a grouped finding covers several of them, so a row count here would
   // put two different numbers for the same thing next to each other.
   const badges = {
-    Inhoud: findings.filter((finding) => finding.check === 'text').length,
+    Text: findings.filter((finding) => finding.check === 'text').length,
     Links: findings.filter((finding) => finding.check === 'links').length,
-    Afbeeldingen: findings.filter((finding) => finding.check === 'images').length,
+    Images: findings.filter((finding) => finding.check === 'images').length,
   };
 
   if (!report.comparable) {
@@ -132,13 +132,13 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
          hues; Alert's `destructive` reads from `--destructive`, which this repo has
          already pointed at the amber ink for exactly that reason. */
       <Alert className={`p-4 ${BANNER.attention}`}>
-        <AlertTitle className="font-semibold">Niet te vergelijken</AlertTitle>
+        <AlertTitle className="font-semibold">Cannot be compared</AlertTitle>
         <AlertDescription className="text-current">
           <p className="text-sm">{report.skipReason}</p>
           <p className="mt-2 text-sm">
-            Ticket 07 laat de vergelijking alleen doorgaan bij status 200 aan beide kanten:
-            een 404-pagina heeft ook een <code>&lt;main&gt;</code> en levert anders honderden
-            verschillen op waar niemand iets mee kan.
+            Ticket 07 lets the comparison continue only at status 200 on both sides: a 404
+            page also has a <code>&lt;main&gt;</code>, and it gives hundreds of differences
+            that nobody can use.
           </p>
         </AlertDescription>
       </Alert>
@@ -161,21 +161,21 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
         <Alert className={`mb-3 ${BANNER.attention}`}>
           <AlertTitle className="font-semibold">
             {asked.missing
-              ? 'Dit verschil staat niet in deze momentopname.'
-              : 'Dit verschil staat niet in een van deze tabbladen.'}
+              ? 'This difference is not in this snapshot.'
+              : 'This difference is not on one of these tabs.'}
           </AlertTitle>
           <AlertDescription className="text-current">
             {asked.missing ? (
               <p className="text-sm">
-                De link wees een bevinding aan die er niet meer is: het verschil is opgelost,
-                of de pagina is opnieuw gemeten en de tekst is veranderd. De hele pagina staat
-                er nog wel.
+                The link named a finding that is no longer there: the difference is fixed, or
+                the page was measured again and the text changed. The whole page is still
+                here.
               </p>
             ) : (
               <p className="text-sm">
-                De link wees een bevinding over de <code>&lt;head&gt;</code> aan. Ticket 21
-                beslist nog wat daar een pariteitsdefect is, dus die bevinding heeft geen
-                regel om naartoe te springen. Meta laat de velden zelf zien.
+                The link named a finding about the <code>&lt;head&gt;</code>. Ticket 21 has not
+                decided what a parity defect is there, so that finding has no row to jump to.
+                Meta shows the fields themselves.
               </p>
             )}
           </AlertDescription>
@@ -190,7 +190,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
 
         `overflow-visible` is not cosmetic. Card ships `overflow-hidden` to clip an image
         to its corners, and an `overflow` other than `visible` on any ancestor silently
-        stops `position: sticky` working in the descendant. The Inhoud panel's outline
+        stops `position: sticky` working in the descendant. The Text panel's outline
         nav is `lg:sticky lg:top-4` and it navigates a table up to 288 rows long, so
         clipping this card would have cost the one piece of furniture that makes a long
         page usable — and cost it quietly, with nothing on screen to show for it.
@@ -266,7 +266,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
                 `event.target.checked`. */}
             <Label className="ml-auto py-2 font-normal text-muted-foreground">
               <Checkbox checked={noise} onCheckedChange={chooseNoise} />
-              Ruis tonen ({noiseCount})
+              Show noise ({noiseCount})
             </Label>
           </div>
 
@@ -274,7 +274,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
               is mounted at a time, so four copies of `p-4` would be four chances to
               let one tab sit differently from the other three. */}
           <CardContent className="p-4">
-            <TabsContent value="Inhoud">
+            <TabsContent value="Text">
               <ContentView
                 report={report}
                 findings={derived}
@@ -286,7 +286,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
             <TabsContent value="Links">
               <FindingTable findings={findings} check="links" control={control} sides={report.sides} landing={landing} />
             </TabsContent>
-            <TabsContent value="Afbeeldingen">
+            <TabsContent value="Images">
               <FindingTable findings={findings} check="images" control={control} sides={report.sides} landing={landing} />
             </TabsContent>
             <TabsContent value="Meta">
@@ -311,7 +311,7 @@ function FindingTable({ findings, check, control, sides, landing }) {
   const landed = focus && rows.some((finding) => finding.id === focus) ? findingAnchor(focus) : null;
   useLandOn(landed, landing?.settled);
 
-  if (!rows.length) return <Empty>Geen bevindingen voor {CHECK_LABEL[check]}.</Empty>;
+  if (!rows.length) return <Empty>No findings for {CHECK_LABEL[check]}.</Empty>;
 
   return (
     /* `table-fixed` survives the swap. shadcn's Table is auto-layout and wraps itself
@@ -329,9 +329,9 @@ function FindingTable({ findings, check, control, sides, landing }) {
     <Table className="table-fixed min-w-3xl">
       <TableHeader className={HEAD_TONE}>
         <TableRow>
-          <TableHead className="w-56">Soort</TableHead>
-          <TableHead>Productie</TableHead>
-          <TableHead>Nieuw</TableHead>
+          <TableHead className="w-56">Class</TableHead>
+          <TableHead>Production</TableHead>
+          <TableHead>New site</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -390,9 +390,9 @@ function MetaTable({ production, next }) {
     <>
       <Alert className="mb-3">
         <AlertDescription>
-          Alleen weergave, zonder afvinken. Ticket 21 beslist nog wat in de{' '}
-          <code>&lt;head&gt;</code> een pariteitsdefect is, dus hier komen geen bevindingen
-          uit en deze regels staan niet in de teller.
+          Display only, with no decision. Ticket 21 has not decided what a parity defect in
+          the <code>&lt;head&gt;</code> is, so no finding comes out of here and these rows are
+          not in the count.
         </AlertDescription>
       </Alert>
       {/* A lower floor than the finding table's: a meta row holds a title or a
@@ -410,7 +410,7 @@ function MetaTable({ production, next }) {
                     site **lost** one must not read like the rest. */}
                 {row.field === 'canonical' && row.state === 'lost' && (
                   <span className={`mt-1 block text-xs font-normal ${INK.lost}`}>
-                    de nieuwe site heeft er geen
+                    the new site has none
                   </span>
                 )}
               </TableHead>

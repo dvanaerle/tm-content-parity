@@ -124,7 +124,7 @@ describe('the selection on a difference', () => {
 
     // Nothing is selected, so there is nothing for an action to act on and no action is
     // offered. A bar carrying buttons that would write nothing is the thing this replaces.
-    expect(button('Negeren')).toBeUndefined();
+    expect(button('Dismiss')).toBeUndefined();
     unmount();
   });
 
@@ -190,12 +190,12 @@ describe('the selection on a difference', () => {
     // Two open differences with ticks in both must never produce one count that does not
     // say what it counts, so the bar carries the words of its own difference.
     const bar = document.querySelector('[data-slot="bulk-bar"]');
-    expect(bar.textContent).toContain("2 van 3 pagina's");
+    expect(bar.textContent).toContain("2 of 3 pages");
     expect(bar.textContent).toContain('oud');
     expect(bar.textContent).toContain('nieuw');
 
     // The press states the **selected** count and not the repeat's size.
-    expect(button("Negeren op 2 pagina's")).toBeDefined();
+    expect(button("Dismiss on 2 pages")).toBeDefined();
     unmount();
   });
 
@@ -205,14 +205,14 @@ describe('the selection on a difference', () => {
     press(differenceRow());
     press(pageTicks()[0]);
     press(pageTicks()[2]);
-    press(button("Negeren op 2 pagina's"));
+    press(button("Dismiss on 2 pages"));
 
     // Ticking writes nothing: the press still costs a button, a note and a submit, and
     // there is no path from a checkbox to the log without all three.
     expect(bulk.calls).toHaveLength(0);
 
     await type('afgesproken met de redactie');
-    await pressAndWait(button("Negeren op 2 pagina's"));
+    await pressAndWait(button("Dismiss on 2 pages"));
 
     expect(bulk.calls).toHaveLength(1);
     expect(bulk.calls[0].map((event) => event.page)).toEqual(['overkapping', 'carport']);
@@ -238,7 +238,7 @@ describe('the selection on a difference', () => {
 
     expect(selectAll()).not.toBeNull();
     press(selectAll());
-    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 van 3 pagina's");
+    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 of 3 pages");
     unmount();
   });
 
@@ -273,15 +273,15 @@ describe('the selection on a difference', () => {
     press(differenceRow());
     press(selectAll());
 
-    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 van 3 pagina's");
+    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 of 3 pages");
     expect(pageTicks().map((tick) => tick.getAttribute('aria-checked')))
       .toEqual(['true', 'true', 'true']);
     expect(selectAll().getAttribute('aria-checked')).toBe('true');
 
     // The decided page is still drawn with its state, and the dismissal still leaves it
     // alone: two of the three, not three.
-    expect(document.querySelector('table').textContent).toContain('genegeerd');
-    expect(button("Negeren op 2 pagina's")).toBeDefined();
+    expect(document.querySelector('table').textContent).toContain('dismissed');
+    expect(button("Dismiss on 2 pages")).toBeDefined();
     unmount();
   });
 
@@ -305,21 +305,21 @@ describe('the selection on a difference', () => {
     press(selectAll());
 
     const bar = document.querySelector('[data-slot="bulk-bar"]');
-    expect(bar.textContent).toContain("3 van 3 pagina's");
+    expect(bar.textContent).toContain("3 of 3 pages");
     expect(selectAll().getAttribute('aria-checked')).toBe('true');
 
-    expect(button('Negeren')).toBeUndefined();
+    expect(button('Dismiss')).toBeUndefined();
     // *Afgehandeld* and never *beslist*: `f3` is a claim of fact and not a judgement, and
     // the third page is why the looser word would be a lie about a colleague's tick.
-    expect(bar.textContent).toContain('Elke bevinding hier is al afgehandeld, dus er is niets te negeren');
+    expect(bar.textContent).toContain('Every finding here is closed already, so there is nothing to dismiss');
     // Two of the three: a claim of fact is not this control's to take back — `fixed` has
     // its own checkbox on the page, and two controls for one event would let them disagree.
-    expect(button("Ongedaan maken op 2 pagina's")).toBeDefined();
+    expect(button("Clear on 2 pages")).toBeDefined();
     unmount();
   });
 
   // The sentence above the button counts the same pages the events do, so its total is the
-  // selection and never the repeat. *1 van de 3* on a two-page selection would report a
+  // selection and never the repeat. *1 of the 3* on a two-page selection would report a
   // remainder the press was never aimed at.
   it('says how many of the ticked pages it leaves alone, out of the ticked ones', () => {
     const { unmount } = mount({ byFinding: byFinding({ f2: { state: 'dismissed' } }) });
@@ -327,10 +327,10 @@ describe('the selection on a difference', () => {
     press(differenceRow());
     press(pageTicks()[0]);
     press(pageTicks()[1]);
-    press(button('Negeren op deze pagina'));
+    press(button('Dismiss on this page'));
 
     const bar = document.querySelector('[data-slot="bulk-bar"]');
-    expect(bar.textContent).toContain('1 pagina van de 2');
+    expect(bar.textContent).toContain('1 page of the 2');
     unmount();
   });
 
@@ -351,7 +351,7 @@ describe('the selection on a difference', () => {
     press(selectAll());
 
     // Over the ticked pages it can act on: the third is open and has nothing to undo.
-    await pressAndWait(button("Ongedaan maken op 2 pagina's"));
+    await pressAndWait(button("Clear on 2 pages"));
 
     expect(bulk.calls).toHaveLength(1);
     // No note and no second press: a `cleared` event carries no reason, and the single
@@ -373,7 +373,7 @@ describe('the selection on a difference', () => {
     press(differenceRow());
     press(selectAll());
 
-    expect(button('Ongedaan maken')).toBeUndefined();
+    expect(button('Clear')).toBeUndefined();
     unmount();
   });
 
@@ -388,7 +388,7 @@ describe('the selection on a difference', () => {
 
     press(differenceRow());
     press(pageTicks()[0]);
-    press(document.querySelector('[aria-label="Selectie wissen"]'));
+    press(document.querySelector('[aria-label="Clear the selection"]'));
 
     expect(document.querySelector('[data-slot="bulk-bar"]')).toBeNull();
     expect(pageTicks().every((tick) => tick.getAttribute('aria-checked') === 'false')).toBe(true);
@@ -425,13 +425,13 @@ describe('the selection on a difference', () => {
     const bar = document.querySelector('[data-slot="bulk-bar"]');
     expect(bar).not.toBeNull();
     expect(bar.textContent).toContain('Vul je naam in om te beslissen.');
-    expect(button('Negeren')).toBeUndefined();
+    expect(button('Dismiss')).toBeUndefined();
     unmount();
   });
 
   /**
    * `searchStore()` builds its repeats out of matched findings only, and a term can be in
-   * one page's key and not another's. So a searched row saying *op 3 pagina's* means three
+   * one page's key and not another's. So a searched row saying *on 3 pages* means three
    * **matching** pages, and ticking all of them leaves any unmatched page of the same
    * difference open. That is the right behaviour and the wrong sentence if the sentence is
    * silent, so the list says it and the unsearched list does not.
@@ -440,14 +440,14 @@ describe('the selection on a difference', () => {
     const found = mount({ searched: true });
 
     press(differenceRow());
-    expect(document.querySelector('table').textContent).toContain('zoekterm');
+    expect(document.querySelector('table').textContent).toContain('search term');
     found.unmount();
 
     document.body.innerHTML = '';
     const all = mount();
 
     press(differenceRow());
-    expect(document.querySelector('table').textContent).not.toContain('zoekterm');
+    expect(document.querySelector('table').textContent).not.toContain('search term');
     all.unmount();
   });
 

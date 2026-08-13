@@ -13,12 +13,12 @@ import { CHROME } from './palette.mjs';
 
 describe('findingAnchor', () => {
   // The content view anchors its rows on production's document position (`p12`), for
-  // the reason `view.mjs` gives. The Links and Afbeeldingen tables have no such
+  // the reason `view.mjs` gives. The Links and Images tables have no such
   // position — their rows are findings — so they anchor on the id, and the two schemes
   // share one document. The prefix is what keeps them apart, and it is also what makes
   // the id legal: a digest can begin with a digit.
   it('cannot collide with a row anchor, and survives a digest starting with a digit', () => {
-    expect(findingAnchor('9f2c1a')).toBe('bevinding-9f2c1a');
+    expect(findingAnchor('9f2c1a')).toBe('finding-9f2c1a');
     expect(findingAnchor('p12')).not.toBe('p12');
   });
 });
@@ -30,7 +30,7 @@ describe('landingFor', () => {
   });
 
   // The link can name a finding on any of the three checks, and two of them are not in
-  // the content view at all. A landing that only ever opened Inhoud would send an
+  // the content view at all. A landing that only ever opened Text would send an
   // editor to a tab that does not hold what they clicked.
   it('names the tab the finding lives on', () => {
     const findings = [
@@ -39,13 +39,13 @@ describe('landingFor', () => {
       finding({ id: 'c3', check: 'images' }),
     ];
 
-    expect(landingFor({ findings, focus: 'a1' }).tab).toBe('Inhoud');
+    expect(landingFor({ findings, focus: 'a1' }).tab).toBe('Text');
     expect(landingFor({ findings, focus: 'b2' }).tab).toBe('Links');
-    expect(landingFor({ findings, focus: 'c3' }).tab).toBe('Afbeeldingen');
+    expect(landingFor({ findings, focus: 'c3' }).tab).toBe('Images');
   });
 
-  // The dashboard lists a `genegeerd` row as well as an open one, so both can be
-  // clicked. A `diagnostic` finding is behind *Ruis tonen*, and a landing that did
+  // The dashboard lists a `dismissed` row as well as an open one, so both can be
+  // clicked. A `diagnostic` finding is behind *Show noise*, and a landing that did
   // not switch it on would send the reader to an empty screen and say nothing about why.
   it('asks for the noise toggle when the finding is behind it', () => {
     const open = finding({ id: 'a1' });

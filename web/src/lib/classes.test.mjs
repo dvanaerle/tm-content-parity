@@ -7,7 +7,7 @@ import { canDecide } from './classes.mjs';
  *
  * `canDecide()` is the rule of ticket 86, and it is tested here rather than beside a
  * component because all three of its callers apply it and none of them decides it: the
- * content view reads it off `ContentRow.decidable`, and Links and Afbeeldingen call it on
+ * content view reads it off `ContentRow.decidable`, and Links and Images call it on
  * the finding, because those two tabs have no rows.
  */
 describe('canDecide', () => {

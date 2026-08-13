@@ -49,7 +49,7 @@ export default function PageView({ report: built }) {
             onClick={() => recheck.run(report.store, report.page)}
             className={cn('text-white', CHROME.button)}
           >
-            {recheck.running ? 'Bezig met hercontrole…' : 'Hercontroleer'}
+            {recheck.running ? 'Re-checking…' : 'Re-check'}
           </Button>
         )}
 
@@ -73,8 +73,8 @@ export default function PageView({ report: built }) {
               tone. The structure is worth keeping over dropping the description entirely:
               it is what puts the message in the alert's accessible name. */}
           <AlertDescription className="text-current">
-            <strong>De hercontrole is niet uitgevoerd.</strong> {recheck.error} De pagina is
-            onveranderd gebleven.
+            <strong>The re-check did not run.</strong> {recheck.error} The page is
+            unchanged.
           </AlertDescription>
         </Alert>
       )}
@@ -82,8 +82,8 @@ export default function PageView({ report: built }) {
       {log.connected && !editor && (
         <Alert className="bg-muted">
           <AlertDescription>
-            Vul je naam in om af te vinken. Elke actie krijgt een naam, zodat niemand het
-            oordeel van een collega omgooit zonder te weten van wie het was.
+            Give your name to decide. Each action carries a name, so nobody overturns the
+            judgement of a colleague without knowing whose it was.
           </AlertDescription>
         </Alert>
       )}
@@ -104,10 +104,10 @@ export default function PageView({ report: built }) {
 
       {/* A restored re-check must not look like a crawl result. */}
       <p className="text-xs text-muted-foreground">
-        {source === 'recheck' ? 'Hercontrole van ' : 'Momentopname van '}
+        {source === 'recheck' ? 'Re-check of ' : 'Snapshot of '}
         {new Date(report.builtAt).toLocaleString('en-GB')}
-        {' · '}waarneming <code>{report.observationId}</code>
-        {!recheckAvailable && ' · hercontrole vereist de lokale service'}
+        {' · '}observation <code>{report.observationId}</code>
+        {!recheckAvailable && ' · a re-check needs the local service'}
       </p>
     </div>
   );

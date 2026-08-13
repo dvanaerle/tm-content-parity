@@ -126,14 +126,14 @@ export function DiffCells({
 /**
  * What an **uncompared** cell says. It is about the comparison and never about the
  * content: the cap is a size, so a paragraph with five scattered edits and a score of
- * 0.97 reaches it as well as a rewrite does. *Herschreven* is refused for the reason
+ * 0.97 reaches it as well as a rewrite does. *Rewritten* is refused for the reason
  * `CONTEXT.md` retires "changed" — the tool cannot know it.
  *
  * It does not promise the whole text on the screen either. The cell holds both versions
  * whole, and the clamp is still over it until the row is opened, so a sentence saying
- * *beide versies staan er volledig* would be false for four lines of every row.
+ * *both versions are here in full* would be false for four lines of every row.
  */
-const UNCOMPARED = 'Dit blok is te groot voor de woordvergelijking. Er is niets vergeleken.';
+const UNCOMPARED = 'This block is too large for the word comparison. Nothing was compared.';
 
 /** @param {{ spans: import('../../../compare/worddiff.mjs').DiffSpan[] | null }} props */
 function Cell({ side, value, spans, tint, prefix, raw, mono, strong, clamped, note }) {
@@ -145,7 +145,7 @@ function Cell({ side, value, spans, tint, prefix, raw, mono, strong, clamped, no
   const shape = 'px-2 py-3 align-top whitespace-normal';
 
   if (value === null || value === '') {
-    return <TableCell className={`${shape} text-sm italic text-muted-foreground`}>niet aanwezig</TableCell>;
+    return <TableCell className={`${shape} text-sm italic text-muted-foreground`}>not present</TableCell>;
   }
 
   return (
@@ -211,7 +211,7 @@ function CopyButton({ text }) {
       }}
       className="ml-2 align-middle text-xs text-muted-foreground"
     >
-      {copied ? 'gekopieerd' : 'kopieer letterlijk'}
+      {copied ? 'copied' : 'copy the literal text'}
     </Button>
   );
 }

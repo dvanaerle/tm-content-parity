@@ -47,7 +47,7 @@ export function bulkDismissal({ repeat, byFinding, note, selected }) {
     }))
     : [];
 
-  // Both numbers over the **selection**: *4 pagina's van de 6* is a sentence about the
+  // Both numbers over the **selection**: *4 pages of the 6* is a sentence about the
   // press that is about to be made, and taking its total off the repeat would report a
   // remainder the press was never aimed at.
   return { covers: on.length, decided: chosen.length - on.length, events };

@@ -318,8 +318,8 @@ export function searchStore({
   // `findingsIn` is the counter the repeats footer uses, asked here rather than
   // rewritten, for the same reason the grouping is.
   //
-  // `matchedRepeats` is the other half of the amber strip's sentence — *n van m
-  // verschillen*, in the words the two views say it. It counts what the term found
+  // `matchedRepeats` is the other half of the amber strip's sentence — *n of m
+  // differences*, in the words the two views say it. It counts what the term found
   // before the pills cut it, so the strip describes the filter and not the term. Its
   // unit is in its name on purpose: `total` beside it counts **findings**, and two
   // numbers of two units under one vague word is the doubled figure CONTEXT.md forbids.
