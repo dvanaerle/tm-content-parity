@@ -124,16 +124,6 @@ export default function Dashboard({
   }, [log.derived]);
 
   /**
-   * The same findings kept per page, which is what a **mute** has to be counted over: it
-   * hides a class in a section, so its size is a fact about the page and not about the
-   * difference that was pressed on (ADR 0008).
-   */
-  const findingsByPage = useMemo(
-    () => new Map(log.derived.pages.map((page) => [`${page.store}/${page.page}`, page.findings])),
-    [log.derived],
-  );
-
-  /**
    * What a repeat row needs to be able to decide, in one prop.
    *
    * It is a bag rather than four props because it passes through four components to
@@ -144,11 +134,10 @@ export default function Dashboard({
     canWrite: log.canWrite,
     busy: log.busy,
     appendMany: log.appendMany,
-    findingsByPage,
     // The hook's own sentence about its own flag, not a second reading of the four
     // conditions behind it.
     notWritingReason: log.notWritingReason,
-  }), [log.canWrite, log.busy, log.appendMany, log.notWritingReason, findingsByPage]);
+  }), [log.canWrite, log.busy, log.appendMany, log.notWritingReason]);
 
   const totals = useMemo(() => {
     const byClass = {};

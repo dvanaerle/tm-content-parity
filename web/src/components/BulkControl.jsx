@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { INK } from '../lib/palette.mjs';
-import { bulkClear, bulkDismissal, bulkMute } from '../lib/bulk.mjs';
-import { sectionName } from '../lib/mute.mjs';
+import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
 import { cn } from '../lib/utils.js';
 
 /**
@@ -29,21 +28,25 @@ import { cn } from '../lib/utils.js';
  * is one of it, because there is one place for it to be — `Repeats.jsx` holds the selection
  * for the whole list, and ticking in a second difference takes it.
  *
- * **Three presses since round two**, and the third is the way back: `OverrideControl.jsx`
- * has offered *Ongedaan maken* on one decided finding since ticket 29, and this offered
- * nothing at all there. A press that can put ten pages in a state and cannot take them out
- * of it is a one-way door with a ten-page way back, which is the work this ticket exists
- * to remove.
+ * **Two presses**, and the second is the way back: `OverrideControl.jsx` has offered
+ * *Ongedaan maken* on one decided finding since ticket 29, and this offered nothing at all
+ * there. A press that can put ten pages in a state and cannot take them out of it is a
+ * one-way door with a ten-page way back, which is the work ticket 110 exists to remove.
+ *
+ * There were three until ticket 112. The bulk mute was the larger of the two doors to a
+ * `muted` event and ADR 0011 shut both: a dismissal is the only judgement now, so the
+ * choosing this bar used to explain — which judgement, at what cost, on which pages each
+ * was eligible for — has no second thing to choose between and went with the press.
  *
  * It is a **toolbar**: one strip, the selection on the left and what can be done with it
  * on the right. Round one ran the count, the buttons and three paragraphs down the page,
  * and round two found the paragraphs unread. What is left is what changes a press — the
- * counts, the refusals, the one line on how the two judgements differ, and the sentence
- * saying why the buttons are absent. The corpus statistics that argued for the design went
- * with the rest of the prose.
+ * counts, the sentence saying why the buttons are absent, and the one line saying why the
+ * dismissal is spent where every page is already decided. The corpus statistics that
+ * argued for the design went with the rest of the prose.
  */
 export default function BulkControl({ repeat, byFinding, bulk, selected, onClear }) {
-  /** @type {['dismiss' | 'mute' | null, Function]} */
+  /** @type {['dismiss' | null, Function]} */
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
   /** The last press's report. Held so a partial failure stays on screen to be read. */
@@ -54,15 +57,8 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
     [repeat, byFinding, note, selected],
   );
 
-  const mute = useMemo(
-    () => bulkMute({
-      repeat, byFinding, findingsByPage: bulk?.findingsByPage ?? new Map(), note, selected,
-    }),
-    [repeat, byFinding, bulk?.findingsByPage, note, selected],
-  );
-
   /**
-   * The third press, and the only one that writes on the first click: a `cleared` event
+   * The second press, and the only one that writes on the first click: a `cleared` event
    * carries no reason, so there is no note to ask for and no form to open. It mirrors the
    * single control, which has taken one decision back with one press since ticket 29.
    */
@@ -114,15 +110,11 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
         <Selection repeat={repeat} count={selected.size} />
 
         <div className="flex flex-wrap items-center gap-1">
-          {/* Three buttons and never one. A dismissal expires with the text, a mute does
-              not, and an undo takes one of the two back — an editor choosing between them
-              is choosing between those behaviours, and a single *afhandelen* control would
-              make the choice for them.
-
-              They are offered **independently**. A difference whose every finding is
-              decided has nothing left to dismiss, and both of the others are live there.
-              Gating them on the dismissal's eligibility took the mute off screen exactly
-              where it was the only tool left. */}
+          {/* Two buttons: the judgement and the way back out of it. They are offered
+              **independently** — a difference whose every finding is decided has nothing
+              left to dismiss, and the undo is exactly what is live there. Gating one on the
+              other's eligibility is what took a press off screen precisely where it was the
+              only tool left. */}
           {bulk?.canWrite && asking === null && (
             <>
               {dismissal.covers > 0 && (
@@ -130,19 +122,6 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
                   Negeren op {dismissal.covers === 1 ? 'deze pagina' : `${dismissal.covers} pagina's`}…
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() => setAsking('mute')}
-                // The denominator rule is `CONTEXT.md`'s own — gedempt werk is uit de
-                // balk, niet afgehandeld — and it is background rather than instruction,
-                // so it is here rather than in a paragraph above the button.
-                title={mute.offered
-                  ? 'Dempt de soort in die sectie. Vervalt niet, en haalt het werk uit de noemer.'
-                  : 'Kan hier niet in bulk.'}
-              >
-                Dempen op {mute.pages === 1 ? 'deze pagina' : `${mute.pages} pagina's`}…
-              </Button>
               {/* No ellipsis, because there is nothing further to ask: this one writes on
                   the first press, the way the single control's *Ongedaan maken* does. A
                   `cleared` event carries no reason, so there is no note to type — and it
@@ -174,7 +153,7 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
 
             It is the cross at the end of the bar, behind a rule, where a floating bar of
             this kind puts it — and never a word among the presses, where *wissen* sits one
-            tab stop from *dempen* and reads like a fourth thing to decide. A glyph names
+            tab stop from *negeren* and reads like a third thing to decide. A glyph names
             nothing, so the words it replaced are its label. */}
         <span aria-hidden className="ml-auto h-4 w-px bg-border" />
         <Button
@@ -191,7 +170,7 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
 
       {report && <Report {...report} />}
 
-      {bulk?.canWrite && asking === null && <Choice canDismiss={dismissal.covers > 0} />}
+      {bulk?.canWrite && asking === null && dismissal.covers === 0 && <NothingToDismiss />}
 
       {bulk?.canWrite && dismissal.covers > 0 && asking === 'dismiss' && (
         <form
@@ -227,19 +206,6 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
             <Button type="button" variant="outline" size="xs" onClick={close}>Annuleren</Button>
           </div>
         </form>
-      )}
-
-      {bulk?.canWrite && asking === 'mute' && (
-        <MuteForm
-          mute={mute}
-          repeat={repeat}
-          decided={dismissal.decided}
-          note={note}
-          setNote={setNote}
-          busy={bulk.busy}
-          onCancel={close}
-          onPress={() => press(mute.events)}
-        />
       )}
     </div>
   );
@@ -277,21 +243,28 @@ const Selection = ({ repeat, count }) => (
 );
 
 /**
- * What the presses differ in, in one line, where the editor chooses between them.
+ * Why the dismissal is not on screen, said where it would have been.
  *
- * The choice is not *how much* — it is which judgement is being made. A dismissal says
- * "these two exact strings are acceptable" and dies with the text; a mute says "this class
- * is never a defect in this section" and lives for ever. Offering one where the editor
- * wanted the other is the failure ticket 31 names as its own, so the difference is said —
- * and it is said in a sentence, because round two found an essay here and nobody reads an
- * essay above a button. What is left out is background rather than instruction: the
- * corpus statistics argued for the design and told an editor nothing.
+ * This line used to be one half of a sentence about **choosing**: a dismissal dies with the
+ * text and a mute did not, so an editor picking between them was told which was which. Only
+ * one judgement is left (ADR 0011), so there is nothing to choose and nothing to compare —
+ * what survives is the half that explains an absence.
+ *
+ * It matters more now than it did. A difference whose every finding is closed used to keep
+ * the mute, so the bar was never empty of presses there; the undo can be spent too, and
+ * then this sentence is the only thing on the strip below the selection. Ticket 112 names
+ * that case: it is correctly empty, and it must not read as a broken screen.
+ *
+ * The word is **afgehandeld** and no longer *beslist*. `offersDismissal()` withholds the
+ * press on `fixed` as well as on the two judgements, so this sentence is drawn over a
+ * difference somebody merely ticked off as corrected — and *beslist* would call that a
+ * judgement, which is the one distinction this control exists to keep (a claim of fact
+ * loses to a re-check; a judgement does not). *Afgehandeld* is what the row above already
+ * says of the same findings, and it is true of both.
  */
-const Choice = ({ canDismiss }) => (
+const NothingToDismiss = () => (
   <p className="text-xs text-muted-foreground">
-    {canDismiss
-      ? 'Negeren vervalt zodra een van de twee teksten verandert; dempen vervalt niet.'
-      : 'Elke bevinding hier is al beslist, dus er is niets te negeren. Dempen vervalt niet.'}
+    Elke bevinding hier is al afgehandeld, dus er is niets te negeren.
   </p>
 );
 
@@ -304,8 +277,13 @@ const Choice = ({ canDismiss }) => (
  * is the doubled figure the repeat list exists to stop. The row header above says pages;
  * so does this.
  *
- * What it does **not** say any more is what `Choice` above already said: that a dismissal
- * dies the day either text changes. Round two cut the repetition, not the fact.
+ * What it does **not** say is that a dismissal dies the day either text changes. Round two
+ * cut that from here because `Choice` said it a line above; ticket 112 then cut `Choice`
+ * itself, since it was one half of a **comparison** with the mute and the mute is gone. So
+ * the fact is now nowhere on this bar. That is a deliberate consequence of ADR 0011 and not
+ * an oversight — expiry is no longer a thing an editor *chooses between*, it is simply what
+ * the one judgement does — and if it is ever wanted back it is a sentence of its own here,
+ * not a resurrection of the choosing.
  */
 function Covers({ dismissal }) {
   // The total is the seam's own two numbers added, and never the repeat's size or a second
@@ -359,104 +337,6 @@ function Report({ written, total, failedOn, error }) {
 }
 
 /**
- * The bulk mute, which is a different judgement from the dismissal and not a bigger one.
- *
- * Three things make it its own form:
- *
- * - **It states two numbers, and it must.** `Covers` above states one, because for a
- *   dismissal the page is a term of the finding id and the two counts are one number.
- *   A mute is keyed on the class and the section, so it hides every finding of that class
- *   there — `covers` is genuinely larger than `difference`, and the gap is the thing an
- *   editor has to see before pressing (ADR 0008). Suppressing the second number here
- *   would hide the only fact that distinguishes this press from the other one.
- * - **It names the sections.** `sectionName()` is `mute.mjs`'s phrase, imported rather
- *   than restated, so the single mute on a page and this press describe one concept in
- *   one wording.
- * - **It is not a `<form>`.** A mute never expires, and Enter in a note field is how a
- *   permanent decision gets made by accident. The press is a press.
- *
- * When the mute is refused it draws the refusal and nothing else: `bulkMute()` decides
- * that, and its two sentences name the two different obstacles.
- */
-function MuteForm({ mute, repeat, decided, note, setNote, busy, onCancel, onPress }) {
-  if (!mute.offered) {
-    return (
-      <div className="flex flex-col gap-2">
-        <p className={cn('text-xs', INK.attention)}>{mute.refusal}</p>
-        <div>
-          <Button type="button" variant="outline" size="xs" onClick={onCancel}>Terug</Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xs text-muted-foreground">
-        Dempt <ClassWord class={repeat.class} /> {mute.sections.map(sectionName).join(', ')} op{' '}
-        <strong className="font-medium tabular-nums text-foreground">
-          {mute.pages} {mute.pages === 1 ? 'pagina' : "pagina's"}
-        </strong>
-        . Dat verbergt daar{' '}
-        <strong className="font-medium tabular-nums text-foreground">
-          {mute.covers} {mute.covers === 1 ? 'bevinding' : 'bevindingen'}
-        </strong>
-        {mute.covers > mute.difference
-          ? `, waarvan ${mute.difference} van dit verschil. De rest is ander werk van dezelfde soort in dezelfde sectie.`
-          : '.'}
-      </p>
-
-      <TwoEligibilities decided={decided} />
-
-      <div className="flex flex-wrap items-center gap-1">
-        <Input
-          autoFocus
-          value={note}
-          onChange={(change) => setNote(change.target.value)}
-          placeholder="Waarom hoort deze soort hier niet?"
-          className="w-64"
-        />
-        {/* Ticket 88: the one decision that never expires is the one that has to be
-            auditable, so the note is as mandatory here as on a dismissal. */}
-        <Button
-          type="button"
-          variant="outline"
-          size="xs"
-          disabled={mute.events.length === 0 || busy}
-          onClick={onPress}
-          title={mute.events.length === 0 ? 'Een beslissing heeft een reden nodig.' : undefined}
-        >
-          {busy ? 'Bezig…' : `Dempen op ${mute.pages} ${mute.pages === 1 ? 'pagina' : "pagina's"}`}
-        </Button>
-        <Button type="button" variant="outline" size="xs" onClick={onCancel}>Annuleren</Button>
-      </div>
-    </div>
-  );
-}
-
-/**
- * One selection, two presses, two eligibilities — said out loud where the two disagree
- * (ticket 110).
- *
- * A dismissal may not touch a finding a colleague decided, and it skips it. A mute's
- * coverage deliberately **includes** it, because `muteCoverage()` counts what a key covers
- * and not what it changes (ADR 0008). So the same ticked row is left alone by one press
- * and counted by the other, and the honest thing is to name the gap rather than close it:
- * the two are not measuring the same thing, and making them agree would make one of them
- * wrong.
- */
-const TwoEligibilities = ({ decided }) => (
-  decided > 0
-    ? (
-      <p className="text-xs text-muted-foreground">
-        {decided} van deze pagina&rsquo;s is al beslist: negeren slaat die over, dempen
-        telt die mee.
-      </p>
-    )
-    : null
-);
-
-/**
  * Why this press is on fewer pages than are ticked, said where the gap is (ticket 110).
  *
  * The other two presses have a form to state their two numbers in; this one writes on the
@@ -474,8 +354,8 @@ const clearTitle = ({ covers, skipped }) => (
 
 /**
  * The class named inside a sentence, in words rather than as a pill. The pill is a
- * label on a row; here the class is the grammatical object of "dempt", and a coloured
- * chip mid-sentence reads as a second control.
+ * label on a row; here the class is what the selection is *on*, and a coloured chip
+ * mid-sentence reads as a second control.
  */
 const ClassWord = ({ class: cls }) => <span className="font-medium text-foreground">{cls}</span>;
 

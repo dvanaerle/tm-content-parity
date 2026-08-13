@@ -163,8 +163,8 @@ export function LogBanner({ connected, notConnectedReason, ready, error }) {
   if (!connected) {
     return (
       <Banner tone="attention">
-        <strong>Geen verbinding met het afvinklogboek.</strong> {notConnectedReason} Afvinken,
-        negeren en dempen zijn uitgeschakeld; de rest van het logboek werkt gewoon.
+        <strong>Geen verbinding met het afvinklogboek.</strong> {notConnectedReason} Afvinken
+        en negeren zijn uitgeschakeld; de rest van het logboek werkt gewoon.
       </Banner>
     );
   }

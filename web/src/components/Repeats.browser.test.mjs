@@ -5,7 +5,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import Repeats from './Repeats.jsx';
 
 /**
- * The selection and the two presses, mounted and clicked (ticket 110).
+ * The selection and the presses it arms, mounted and clicked (ticket 110). Two of them
+ * since ticket 112 took the mute out of the interface: a dismissal and its undo.
  *
  * It is a browser test and it is an acceptance criterion rather than a nicety. Ticket 31
  * shipped a `BulkControl` that referenced a `MuteForm` it never defined: 628 unit tests
@@ -65,9 +66,6 @@ function bulkBag(over = {}) {
       calls.push(events);
       return { written: events.length, total: events.length, failedOn: null, error: null };
     },
-    findingsByPage: new Map(repeat.on.map((entry) => [
-      `nl/${entry.page}`, [derived(entry.id)],
-    ])),
     notWritingReason: null,
     ...over,
   };
@@ -127,7 +125,6 @@ describe('the selection on a difference', () => {
     // Nothing is selected, so there is nothing for an action to act on and no action is
     // offered. A bar carrying buttons that would write nothing is the thing this replaces.
     expect(button('Negeren')).toBeUndefined();
-    expect(button('Dempen')).toBeUndefined();
     unmount();
   });
 
@@ -197,9 +194,8 @@ describe('the selection on a difference', () => {
     expect(bar.textContent).toContain('oud');
     expect(bar.textContent).toContain('nieuw');
 
-    // Both actions state the **selected** count and not the repeat's size.
+    // The press states the **selected** count and not the repeat's size.
     expect(button("Negeren op 2 pagina's")).toBeDefined();
-    expect(button("Dempen op 2 pagina's")).toBeDefined();
     unmount();
   });
 
@@ -221,26 +217,6 @@ describe('the selection on a difference', () => {
     expect(bulk.calls).toHaveLength(1);
     expect(bulk.calls[0].map((event) => event.page)).toEqual(['overkapping', 'carport']);
     expect(bulk.calls[0].every((event) => event.action === 'dismissed')).toBe(true);
-    unmount();
-  });
-
-  // The other press, walked the same way. The two are different judgements and not two
-  // sizes of one, so neither is covered by the other's test.
-  it('mutes the ticked pages, in the section each of them carries the difference under', async () => {
-    const { bulk, unmount } = mount();
-
-    press(differenceRow());
-    press(pageTicks()[0]);
-    press(pageTicks()[1]);
-    press(button("Dempen op 2 pagina's"));
-
-    await type('deze soort hoort hier niet');
-    await pressAndWait(button("Dempen op 2 pagina's"));
-
-    expect(bulk.calls).toHaveLength(1);
-    expect(bulk.calls[0].map((event) => event.page)).toEqual(['overkapping', 'veranda']);
-    expect(bulk.calls[0].every((event) => event.scope === 'page-class')).toBe(true);
-    expect(bulk.calls[0].every((event) => event.anchorHeading === 'Afmetingen')).toBe(true);
     unmount();
   });
 
@@ -310,12 +286,13 @@ describe('the selection on a difference', () => {
   });
 
   /**
-   * A difference whose every finding is decided has nothing left to dismiss, and the other
-   * two presses are both live there: a mute is about the class in the section rather than
-   * about these two strings, and an undo is what a decided page is *for*. The three are
-   * offered independently, so the one that is spent does not take the others with it.
+   * A difference whose every finding is decided has nothing left to dismiss, and one press
+   * is left standing: an undo is what a decided page is *for*. The mute used to be the
+   * other tool here (ticket 110), and ADR 0011 took it — so this is the case most likely
+   * to read as a broken screen, and the bar has to say why the press is gone rather than
+   * merely be missing it.
    */
-  it('offers the presses that are live on a difference that is decided throughout', () => {
+  it('offers only the undo where every finding is decided, and says why', () => {
     const { unmount } = mount({
       byFinding: byFinding({
         f1: { state: 'dismissed', override: { action: 'dismissed' } },
@@ -327,11 +304,14 @@ describe('the selection on a difference', () => {
     press(differenceRow());
     press(selectAll());
 
-    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 van 3 pagina's");
+    const bar = document.querySelector('[data-slot="bulk-bar"]');
+    expect(bar.textContent).toContain("3 van 3 pagina's");
     expect(selectAll().getAttribute('aria-checked')).toBe('true');
 
     expect(button('Negeren')).toBeUndefined();
-    expect(button("Dempen op 3 pagina's")).toBeDefined();
+    // *Afgehandeld* and never *beslist*: `f3` is a claim of fact and not a judgement, and
+    // the third page is why the looser word would be a lie about a colleague's tick.
+    expect(bar.textContent).toContain('Elke bevinding hier is al afgehandeld, dus er is niets te negeren');
     // Two of the three: a claim of fact is not this control's to take back — `fixed` has
     // its own checkbox on the page, and two controls for one event would let them disagree.
     expect(button("Ongedaan maken op 2 pagina's")).toBeDefined();
@@ -351,38 +331,6 @@ describe('the selection on a difference', () => {
 
     const bar = document.querySelector('[data-slot="bulk-bar"]');
     expect(bar.textContent).toContain('1 pagina van de 2');
-    unmount();
-  });
-
-  /**
-   * The wall this ticket turns into *not this page*. One page of the repeat carries the
-   * difference before its first heading, and that refuses the bulk mute for all of them —
-   * correctly, since muting there hides everything before the first heading on every page.
-   * The granularity was the problem, so the row is marked and unticking it is the answer.
-   */
-  it('marks the ticked pages that refuse a mute, and offers it once they are unticked', () => {
-    const { unmount } = mount({ byFinding: byFinding({ f2: { anchorHeading: null } }) });
-
-    press(differenceRow());
-
-    // On the row, before anything is ticked: *untick exactly those* is only an instruction
-    // if the rows say which they are before the ticking.
-    const rows = () => [...document.querySelectorAll('tbody tr')];
-    expect(rows()[1].textContent).toContain('niet te dempen');
-    expect(rows()[0].textContent).not.toContain('niet te dempen');
-
-    press(selectAll());
-
-    press(button("Dempen op 3 pagina's"));
-    expect(document.querySelector('[data-slot="bulk-bar"]').textContent)
-      .toContain('vóór de eerste kop');
-
-    press(button('Terug'));
-    press(pageTicks()[1]);
-    press(button("Dempen op 2 pagina's"));
-
-    // No refusal left, so the note field is on screen and the press is a press.
-    expect(document.querySelector('[data-slot="input"]')).not.toBeNull();
     unmount();
   });
 
@@ -506,28 +454,6 @@ describe('the selection on a difference', () => {
     press(differenceRow());
     expect(document.querySelector('table').textContent).not.toContain('zoekterm');
     all.unmount();
-  });
-
-  /**
-   * One selection, two presses, two eligibilities. A dismissal may not touch a finding a
-   * colleague decided; a mute's coverage deliberately **includes** it, because
-   * `muteCoverage()` counts what a key covers and not what it changes (ADR 0008). So the
-   * same ticked row is skipped by one press and counted by the other. The interface says
-   * so; it does not resolve it by making the two agree, because they are not measuring the
-   * same thing.
-   */
-  it('says that the mute counts a ticked page the dismissal would skip', () => {
-    const { unmount } = mount({ byFinding: byFinding({ f2: { state: 'dismissed' } }) });
-
-    press(differenceRow());
-    press(pageTicks()[0]);
-    press(pageTicks()[1]);
-    press(button("Dempen op 2 pagina's"));
-
-    const bar = document.querySelector('[data-slot="bulk-bar"]');
-    expect(bar.textContent).toContain('1 van deze');
-    expect(bar.textContent).toContain('negeren slaat die over, dempen telt die mee');
-    unmount();
   });
 
   // `aria-checked="mixed"` is the whole of the third state for a screen reader and none of

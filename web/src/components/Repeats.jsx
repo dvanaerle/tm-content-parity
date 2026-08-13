@@ -11,7 +11,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collap
 import {
   Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,
 } from './ui/table.jsx';
-import { refusesMute } from '../lib/bulk.mjs';
 import { CHROME, INK, PILL } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
@@ -103,10 +102,11 @@ const NOTHING = new Set();
  * **kind** of difference to work through. The order inside a group is untouched, so
  * nothing changes about which work is on top — only how much of it arrives at once.
  *
- * The word is **group** and never *section*. `CONTEXT.md` spends "section" on the mute
- * scope — a run of one page under an anchor heading — and one word with two meanings is
- * what that glossary exists to stop. Ticket 100 asked for sections; the name is refused
- * and the concept is kept.
+ * The word is **group** and never *section*. `CONTEXT.md` spends "section" on a run of one
+ * page under an anchor heading — the mute scope, until ADR 0011 withdrew the mute, and the
+ * word stays taken because that run is what an anchor heading names either way. One word
+ * with two meanings is what that glossary exists to stop. Ticket 100 asked for sections;
+ * the name is refused and the concept is kept.
  *
  * **Opening a group is not a filter.** It changes what is drawn and never what is
  * included, so it is session state here, it is absent from the amber strip, and *filter
@@ -330,14 +330,6 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
    */
   const tickAll = (on) => put(on ? new Set(repeat.on.map((entry) => entry.id)) : new Set());
 
-  /**
-   * The pages of this difference a bulk mute cannot be pressed on — the same rule the
-   * press applies, asked so the list can mark them. One page of twelve refuses the mute
-   * for all twelve, and *untick the ones that refuse* is only an instruction if the rows
-   * say which they are.
-   */
-  const refuses = useMemo(() => refusesMute({ repeat, byFinding }), [repeat, byFinding]);
-
   // The same four rules the page bar obeys, over this difference's findings: a mute
   // leaves the denominator, a dismissal enters the numerator, and a contradicted
   // claim reads as open.
@@ -407,7 +399,6 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
             selected={selected}
             onTick={tick}
             onTickAll={tickAll}
-            refuses={refuses}
             searched={searched}
           />
         </CollapsibleContent>
@@ -447,8 +438,8 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
  *
  * It ticks **every** page of the difference, decided or not. Round one ticked only the
  * pages a dismissal was offered on, which refused by select-all what the row-level tick
- * allowed by hand — and a decided page is not a page with nothing left to do: a mute is
- * still live there, and since round two so is an undo.
+ * allowed by hand — and a decided page is not a page with nothing left to do: since round
+ * two an undo is live there.
  *
  * Its label says **kies** and never *afgehandeld*. The ledger already spends a checkbox on
  * the tri-state *Opgelost* control, which genuinely is a decision (tickets 36 and 48), so
@@ -497,7 +488,7 @@ function SelectAll({ repeat, selected, onTickAll }) {
  * which group was open — that is session state by the rule `groupRepeatsByClass()` states,
  * and a pill that is on re-opens its own group anyway.
  */
-function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, refuses, searched }) {
+function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searched }) {
   return (
     <div className="border-t border-border bg-muted px-4 py-2 text-sm">
       <Table>
@@ -542,12 +533,6 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, refus
               </TableCell>
               <TableCell>
                 <FindingState finding={byFinding.get(entry.id)} />
-                {/* On the row and not on the *ticked* row. An editor ticking one page at
-                    a time has to see which page will block the mute before they tick it,
-                    or *untick exactly those* is an instruction they can only follow
-                    backwards. The mark costs two words and only ever appears inside an
-                    opened difference. */}
-                <NoMute reason={refuses.get(entry.id)} />
               </TableCell>
             </TableRow>
           ))}
@@ -556,36 +541,6 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, refus
     </div>
   );
 }
-
-/**
- * The row that is holding the bulk mute back, said on the row itself.
- *
- * The refusal above the button gives the count and the reason; this gives the address.
- * Only the mute is refused — a dismissal on this page is untouched — so the words name
- * the one press they are about and not the selection.
- */
-const NoMute = ({ reason }) => (
-  reason
-    ? (
-      <span className={cn('ml-2 text-[11px]', INK.attention)} title={WHY_NO_MUTE[reason]}>
-        niet te dempen
-      </span>
-    )
-    : null
-);
-
-/**
- * The two obstacles, kept apart. A section this screen does not know is a screen older
- * than the log and a reload answers it; a difference before the first heading is a real
- * fact about the page, and muting there is a judgement to make one page at a time. Saying
- * one of these where the other is true sends an editor to the wrong work.
- */
-const WHY_NO_MUTE = {
-  unknown: 'Van deze pagina is hier niet bekend onder welk kopje dit verschil staat — dit '
-    + 'scherm is ouder dan het logboek. Herlaad de pagina. Negeren kan wel.',
-  headless: 'Dit verschil staat hier vóór de eerste kop, dus dempen zou hier alles vóór de '
-    + 'eerste kop verbergen. Dat gaat per pagina, op de pagina zelf. Negeren kan wel.',
-};
 
 /**
  * Where the searched words were found, on a row a search put on screen (ticket 82).
