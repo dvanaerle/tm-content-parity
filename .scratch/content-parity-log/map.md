@@ -877,6 +877,23 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   the row leaves the screen while the footer keeps counting it. The search keeps the flat
   list, since a search's grouping is the term.
 
+- [111 — The last mute is revoked](issues/111-revoke-the-last-mute.md)
+  — **Done 2026-08-13, and the ticket's own premise refused.** The one live mute is
+  cleared, so no key in the table has `muted` as its latest event and no page bar in any
+  store draws *N gedempt (buiten de teller)*. ADR 0011 may proceed.
+
+  **`nl`'s numbers did not move** — 4632 open of 4784, before and after. The mute had
+  **drifted off the section it named**: its key was `nl|downloads|text-missing|*none`, the
+  content before the first heading, and on the current snapshot every one of that page's
+  191 findings sits under a heading. It was hiding nothing, in every class, and had been
+  for some time. ADR 0011 predicts the opposite ("`nl`'s numbers move once") and that
+  prediction is wrong; the ADR's argument does not depend on it.
+
+  This is ADR 0008's drift rule working as written — a mute naming a heading the snapshot
+  no longer has reaches nothing, with no fallback to a wider key — and a third argument for
+  withdrawing the mute: the project's only live mute spent its last days deciding nothing,
+  and no surface said so. Nothing was deleted; a revocation is a new row.
+
 ### Facts found while charting
 
 - Production emits 9 `data-content-type` attributes on a page where the new site
