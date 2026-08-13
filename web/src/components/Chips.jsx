@@ -36,7 +36,7 @@ export function ClassPill({ class: cls }) {
   const info = classInfo(cls);
   return (
     <Badge
-      className={cn('h-auto px-1.5 py-0.5 text-[11px] uppercase tracking-wide', info.pill)}
+      className={cn('h-auto px-1.5 py-0.5 text-xs uppercase tracking-wide', info.pill)}
       title={info.meaning}
     >
       {cls}

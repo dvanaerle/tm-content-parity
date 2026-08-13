@@ -44,7 +44,7 @@ import { Input } from './ui/input.jsx';
  */
 export const STATE = {
   open: { label: 'open', tone: 'neutral' },
-  fixed: { label: 'opgelost', tone: 'info' },
+  fixed: { label: 'opgelost', tone: 'added' },
   dismissed: { label: 'genegeerd', tone: 'neutral' },
   muted: { label: 'gedempt', tone: 'neutral' },
   contradicted: { label: 'nog niet opgelost', tone: 'attention' },
@@ -102,12 +102,12 @@ export default function OverrideControl({
       <Badge className={PILL[STATE[state].tone]}>{STATE[state].label}</Badge>
 
       {state === 'contradicted' && (
-        <span className={`text-[11px] ${INK.attention}`}>
+        <span className={`text-xs ${INK.attention}`}>
           geclaimd opgelost door {override.editor}, verschilt nog
         </span>
       )}
       {(state === 'fixed' || state === 'dismissed' || state === 'muted') && (
-        <span className="text-[11px] text-muted-foreground" title={override.note ?? undefined}>
+        <span className="text-xs text-muted-foreground" title={override.note ?? undefined}>
           {override.editor}
           {override.note ? ` — ${override.note}` : ''}
         </span>
@@ -163,7 +163,7 @@ function FixCheckbox({ finding, canWrite, onTick }) {
 
   return (
     <Checkbox
-      className={contradicted ? TICK.attention : TICK.info}
+      className={contradicted ? TICK.attention : TICK.secondary}
       checked={state === 'fixed' || contradicted}
       disabled={!canWrite || closedByJudgement}
       onCheckedChange={(ticked) => onTick(ticked)}

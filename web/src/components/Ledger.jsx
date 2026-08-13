@@ -28,7 +28,7 @@ import { cn } from '../lib/utils.js';
  * in this case the muted neutral the whole interface already uses, has to be declared
  * somewhere that outranks shadcn rather than somewhere that ties with it.
  */
-const HEAD_TONE = '[&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground';
+const HEAD_TONE = '[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground';
 
 /**
  * A tabbed ledger, production and the new site side by side.
@@ -244,7 +244,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
                 >
                   <span className={name === tab ? CHROME.tabActive : undefined}>{name}</span>
                   {badges[name] !== undefined && (
-                    <Badge variant="secondary" className="tabular-nums">
+                    <Badge variant="neutral" className="tabular-nums">
                       {badges[name]}
                     </Badge>
                   )}
@@ -396,7 +396,7 @@ function MetaTable({ production, next }) {
                     pages and those rows are gone, so the 2 pages where the new
                     site **lost** one must not read like the rest. */}
                 {row.field === 'canonical' && row.state === 'lost' && (
-                  <span className={`mt-1 block text-[11px] font-normal ${INK.lost}`}>
+                  <span className={`mt-1 block text-xs font-normal ${INK.lost}`}>
                     de nieuwe site heeft er geen
                   </span>
                 )}

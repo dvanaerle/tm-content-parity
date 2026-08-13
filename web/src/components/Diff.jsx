@@ -209,7 +209,7 @@ function CopyButton({ text }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1200);
       }}
-      className="ml-2 align-middle text-[11px] text-muted-foreground"
+      className="ml-2 align-middle text-xs text-muted-foreground"
     >
       {copied ? 'gekopieerd' : 'kopieer letterlijk'}
     </Button>

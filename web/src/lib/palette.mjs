@@ -56,7 +56,7 @@ export const PILL = {
   severe: 'bg-warning-subtle text-on-warning',
   attention: 'bg-warning-subtle text-on-warning',
   info: 'bg-info-subtle text-info-text',
-  neutral: 'bg-secondary text-secondary-foreground',
+  neutral: 'bg-muted text-muted-foreground',
   dark: 'bg-border-strong text-white',
 };
 
@@ -87,6 +87,7 @@ export const FILL = {
   info: 'bg-info',
   neutral: 'bg-border',
   dark: 'bg-border-strong',
+  secondary: 'bg-secondary',
 };
 
 /**
@@ -116,6 +117,7 @@ export const BANNER = {
  */
 export const INK = {
   lost: 'text-danger-text',
+  added: 'text-success-text',
   attention: 'text-on-warning',
   info: 'text-info-text',
 };
@@ -170,7 +172,7 @@ export const CHROME = {
   // `Link/link` and not `Brand/brand`: the styleguide publishes a link colour, and
   // it is a step darker than `Primary/primary` because `#809700` on white is 3.0:1.
   link: 'text-link hover:text-link-hover',
-  tabActive: 'border-primary text-brand',
+  tabActive: 'border-secondary text-primary',
   button: 'bg-primary hover:bg-primary-strong',
   // The store switcher sits on the green header, so both of its states are chrome
   // (ticket 38). The current store reads as ink on white. The other stores are

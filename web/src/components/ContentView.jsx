@@ -193,7 +193,7 @@ function Outline({ entries }) {
       aria-label="Koppen op deze pagina"
       className="max-h-64 w-full overflow-auto lg:sticky lg:top-4 lg:max-h-[80vh] lg:w-56 lg:shrink-0 lg:self-start"
     >
-      <h3 className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Koppen</h3>
+      <h3 className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Koppen</h3>
       <ol className="space-y-0.5 text-sm">
         {entries.map((entry) => (
           <li key={entry.key} style={{ paddingLeft: `${(entry.level - 1) * 10}px` }}>
@@ -269,7 +269,7 @@ function Rows({ rows, control, sides, landed, settled }) {
        at all. Below the threshold the reader now scrolls the table sideways and the
        columns keep the proportions they have on a desktop. */
     <Table className="table-fixed min-w-3xl">
-      <TableHeader className="[&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
+      <TableHeader className="[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
         <TableRow>
           <TableHead className="w-56">Status</TableHead>
           <TableHead>

@@ -43,7 +43,7 @@ export function PageBar({ bar, ready }) {
         {/* Blue, not green. Work done is status, and ticket 35 keeps green for
             "the new site added this" and nothing else. */}
         <div
-          className={cn('h-full transition-[width]', FILL.info)}
+          className={cn('h-full transition-[width]', FILL.secondary)}
           style={{ width: ready ? `${percent}%` : '0%' }}
         />
       </div>

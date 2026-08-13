@@ -351,7 +351,7 @@ export default function Dashboard({
           {!searching && view === 'pages' && (
           <Table>
             <TableHeader>
-              <TableRow className="text-[11px] uppercase tracking-wide">
+              <TableRow className="text-xs uppercase tracking-wide">
                 <TableHead className="px-4 text-muted-foreground">Pagina</TableHead>
                 <TableHead className="w-40 px-4 text-muted-foreground">Open</TableHead>
                 {CHECKS.map((check) => (
@@ -371,11 +371,11 @@ export default function Dashboard({
                   </TableCell>
                   <TableCell className="px-4">
                     <Bar shown={openOf(page)} units={page.sides.production.units} />
-                    <span className={cn('ml-2 tabular-nums', openOf(page) ? 'font-semibold' : INK.info)}>
+                    <span className={cn('ml-2 tabular-nums', openOf(page) ? 'font-semibold' : INK.added)}>
                       {openOf(page)}
                     </span>
                     {barOf(page)?.closed > 0 && (
-                      <span className={cn('ml-1 text-xs', INK.info)}>+{barOf(page).closed} af</span>
+                      <span className={cn('ml-1 text-xs', INK.added)}>+{barOf(page).closed} af</span>
                     )}
                   </TableCell>
                   {CHECKS.map((check) => (

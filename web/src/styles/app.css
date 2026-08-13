@@ -302,12 +302,12 @@
    * the same hex as the sand the header's muted ink uses, and that is not a collision
    * to fix — the styleguide spends one value on both jobs.
    */
-   --secondary: oklch(0.97 0 0);
-   --secondary-foreground: oklch(0.205 0 0);
-   --muted: oklch(0.97 0 0);
-   --muted-foreground: oklch(0.556 0 0);
-   --accent: oklch(0.97 0 0);
-   --accent-foreground: oklch(0.205 0 0);
+   --secondary: #809700;
+   --secondary-foreground: #fff;
+   --muted: var(--color-neutral-100);
+   --muted-foreground: var(--color-neutral-500);
+   --accent: #ff8000;
+   --accent-foreground: #fff;
 
   /* The border every table, card and panel in this interface wears. */
   --border: #e3e3e3; /* Border/border */

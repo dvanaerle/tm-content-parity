@@ -15,7 +15,7 @@ import { textFragmentUrl } from '../../../compare/locate.mjs';
  * finding: the two texts are identical and the tag is what changed.
  */
 export const Tag = ({ unit }) => (
-  unit ? <span className="mr-2 font-mono text-[11px] text-muted-foreground">{unit.tag}</span> : null
+  unit ? <span className="mr-2 font-mono text-xs text-muted-foreground">{unit.tag}</span> : null
 );
 
 /**
@@ -30,7 +30,7 @@ export const Tag = ({ unit }) => (
  */
 export const Detail = ({ detail }) => (
   detail
-    ? <span className="ml-2 font-mono text-[11px] text-muted-foreground">{detail}</span>
+    ? <span className="ml-2 font-mono text-xs text-muted-foreground">{detail}</span>
     : null
 );
 
@@ -47,7 +47,7 @@ export const Detail = ({ detail }) => (
 export const Section = ({ anchorHeading, sides = null }) => (
   anchorHeading
     ? (
-      <div className="mt-1 flex items-baseline gap-1 text-[11px] text-muted-foreground">
+      <div className="mt-1 flex items-baseline gap-1 text-xs text-muted-foreground">
         <span className="truncate" title={anchorHeading}>onder “{anchorHeading}”</span>
         {sides && <Locate url={sides.production.url} text={anchorHeading} side="productie" />}
         {sides && <Locate url={sides.new.url} text={anchorHeading} side="de nieuwe site" />}
@@ -95,7 +95,7 @@ export function Locate({ url, text, side }) {
       target="_blank"
       rel="noreferrer"
       title={`Open op ${side}, bij deze tekst`}
-      className="mr-2 text-[11px] text-muted-foreground no-underline hover:text-foreground"
+      className="mr-2 text-xs text-muted-foreground no-underline hover:text-foreground"
     >
       ↗
     </a>

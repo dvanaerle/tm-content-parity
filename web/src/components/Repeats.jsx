@@ -386,7 +386,7 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
             {repeat.occurrences > repeat.on.length && (
               <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
             )}
-            <span className={cn('ml-2 tabular-nums', bar.closed ? INK.info : 'text-muted-foreground')}>
+            <span className={cn('ml-2 tabular-nums', bar.closed ? INK.added : 'text-muted-foreground')}>
               {bar.closed} van {bar.denominator} afgehandeld
             </span>
           </span>
@@ -557,7 +557,7 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
 const MatchedFields = ({ fields }) => (
   fields?.length
     ? (
-      <span className="ml-2 text-[11px] text-muted-foreground">
+      <span className="ml-2 text-xs text-muted-foreground">
         in {fields.map((field) => FIELD_LABEL[field]).join(', ')}
       </span>
     )

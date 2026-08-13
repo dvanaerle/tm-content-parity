@@ -225,7 +225,7 @@ const Selection = ({ repeat, count }) => (
         over the page now, and what it is *about* has to be readable before the sentence
         is. The sentence still carries the denominator — one page ticked of forty is a
         different press from forty of forty. */}
-    <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-medium tabular-nums text-primary-foreground">
+    <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium tabular-nums text-primary-foreground">
       {count}
     </span>
     {/* An explicit space, so the count and the sentence are one string when read aloud —
