@@ -32,20 +32,20 @@ it has no callers.
 
 ## Acceptance criteria
 
-- [ ] The bar draws open, needs-attention and closed, and no fourth number. The denominator
+- [x] The bar draws open, needs-attention and closed, and no fourth number. The denominator
       is the shown findings on the snapshot, full stop.
-- [ ] The toggle reads *Ruis tonen* and shows only `diagnostic` classes. Its independence
+- [x] The toggle reads *Ruis tonen* and shows only `diagnostic` classes. Its independence
       from the tab — each borrowed by a landing and released on its own — still holds, and
       its browser test still passes.
-- [ ] `anchorHeading` is gone from the index payload, and the index gets smaller. Record
+- [x] `anchorHeading` is gone from the index payload, and the index gets smaller. Record
       the gzipped size of `nl`'s index before and after; the comment that justified the
       field also documented the payload as the costly one.
-- [ ] The anchor heading is **untouched as a locator**. A finding on a page still says
+- [x] The anchor heading is **untouched as a locator**. A finding on a page still says
       *onder "…"* with its jump links, from the page's own report. If that line changes,
       this ticket is wrong.
-- [ ] No screen changes what it draws for any finding that is not muted — and after 111
+- [x] No screen changes what it draws for any finding that is not muted — and after 111
       there are none.
-- [ ] The derivation still produces `muted`. It has no readers after this and that is the
+- [x] The derivation still produces `muted`. It has no readers after this and that is the
       point; 114 deletes it.
 
 ## Traps
