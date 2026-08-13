@@ -88,11 +88,13 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
 
   const { production, new: next } = report.sides;
 
-  // The toggle asks about the **class**: a class the tool does not show is what a rule
-  // saw and does not put up as work. What an editor decided about a finding is not
-  // noise, so no decision ever moves a row behind this toggle.
+  // The toggle asks about the **class**: a `diagnostic` is what a rule saw, told to the
+  // author of the rule. An `information` finding is drawn beside the work and counted
+  // nowhere (ticket 75), and what an editor decided about a finding is not noise, so
+  // neither a decision nor a visibility other than `diagnostic` moves a row behind this
+  // toggle.
   const findings = useMemo(
-    () => derived.filter((finding) => noise || finding.shown),
+    () => derived.filter((finding) => noise || finding.visibility !== 'diagnostic'),
     [derived, noise],
   );
 
@@ -105,7 +107,9 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
     />
   );
 
-  const hiddenCount = derived.length - derived.filter((f) => f.shown).length;
+  // What the toggle would reveal, which is the `diagnostic` findings and nothing else.
+  // The label must count what it uncovers: an `information` finding is on screen already.
+  const noiseCount = derived.filter((f) => f.visibility === 'diagnostic').length;
 
   // Every badge counts **findings**, including Inhoud's. The content view is a list
   // of rows and a grouped finding covers several of them, so a row count here would
@@ -257,7 +261,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
                 `event.target.checked`. */}
             <Label className="ml-auto py-2 font-normal text-muted-foreground">
               <Checkbox checked={noise} onCheckedChange={chooseNoise} />
-              Ruis tonen ({hiddenCount})
+              Ruis tonen ({noiseCount})
             </Label>
           </div>
 

@@ -44,8 +44,8 @@ export const PROMO = /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\
  * The order is the argument. `casing` is asked first, because a difference that
  * is nothing but letter case is a `casing` finding whatever else the text
  * contains — otherwise a price with a capital letter change would report as
- * `price` and hide. `restructured` is asked last of the hidden three, because it
- * is the weakest claim: it says only that the markup moved.
+ * `price` and not count. `restructured` is asked last of the three that are not
+ * work, because it is the weakest claim: it says only that the markup moved.
  *
  * Ticket 62 puts equality before all of it. The pairing can hand this rule two
  * texts that are equal character for character. The LCS keeps document order, so
@@ -91,9 +91,9 @@ const isHeading = (unit) => unit.kind === 'heading';
  * and the fold does not weaken the reason for it: a folded block still carries the
  * tag it was emitted from.
  *
- * A heading on either side makes it `heading-level`, and it is shown. The outline
+ * A heading on either side makes it `heading-level`, and it is work. The outline
  * is what a reader and a search engine navigate by. Two non-headings make it
- * `tag-changed`, and it is hidden: production held the words in a `<p>` and the
+ * `tag-changed`, and it is a diagnostic: production held the words in a `<p>` and the
  * new site holds them in a `<td>`. That is a PageBuilder rebuild, and an editor
  * has nothing to do about it.
  *

@@ -10,7 +10,7 @@
 // stands, and answers the ticket's acceptance criterion:
 //
 //   1. the paragraph is **one** unit on each side;
-//   2. the `6036-T6` difference reaches a finding that is **shown**.
+//   2. the `6036-T6` difference reaches a finding that is **work**.
 //
 // It exits non-zero when either answer is no, so it is evidence and not a claim.
 // Unlike `probe-fold-detachment.mjs` it imports the extractor rather than copying
@@ -27,7 +27,7 @@ import { FindingCollector } from '../../compare/findings.mjs';
 import { diffRows, textFindings } from '../../compare/text.mjs';
 import { extractPage } from '../extract.mjs';
 import { fetchPage } from '../fetch-page.mjs';
-import { FINDING_CLASSES } from '../../compare/vocabulary.mjs';
+import { isWork, visibilityOf } from '../../compare/vocabulary.mjs';
 
 const ROOT = new URL('../../', import.meta.url);
 const STORE = 'nl';
@@ -101,14 +101,13 @@ const onAlloy = collector.all().filter(
 
 console.log(`\n${collector.all().length} text findings, ${onAlloy.length} on the ticket's paragraph.`);
 for (const finding of onAlloy) {
-  const shown = FINDING_CLASSES[finding.class].shown;
-  console.log(`  ${finding.class} ${shown ? 'shown' : 'HIDDEN'} ${finding.id}`);
+  console.log(`  ${finding.class} ${visibilityOf(finding.class)} ${finding.id}`);
   console.log(`    production: ${finding.prod?.slice(0, 140)}…`);
   console.log(`    new site:   ${finding.new?.slice(0, 140)}…`);
 }
 
-const shown = onAlloy.filter((finding) => FINDING_CLASSES[finding.class].shown);
-if (shown.length === 0) {
-  throw new Error('The alloy difference reaches no shown finding. The ticket is not met.');
+const work = onAlloy.filter((finding) => isWork(finding.class));
+if (work.length === 0) {
+  throw new Error('The alloy difference reaches no finding that counts as work. The ticket is not met.');
 }
-console.log(`\nThe 6036-T6 difference is reported, as ${shown.map((f) => f.class).join(', ')}.`);
+console.log(`\nThe 6036-T6 difference is reported, as ${work.map((f) => f.class).join(', ')}.`);

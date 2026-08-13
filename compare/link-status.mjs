@@ -25,7 +25,7 @@ const OUT = new URL('../data/link-status.json', import.meta.url);
  * Redirects are followed by hand, because `fetch` with `redirect: 'follow'`
  * reports no hop count and ticket 05 needs one: a redirect that lands on a 404,
  * and a redirect loop, are both `broken-link`, and a redirect that resolves is a
- * separate, hidden class.
+ * separate class, and a diagnostic one.
  *
  * `status: 0` is "no answer at all" — a DNS failure, a refused connection or a
  * timeout. The comparison treats it as broken.

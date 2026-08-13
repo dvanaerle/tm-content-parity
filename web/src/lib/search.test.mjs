@@ -30,7 +30,7 @@ const report = ({
   skipReason: null,
   findings,
   rows: [{ prod: 0, new: null, class: 'text-missing', score: null, finding: 'a' }],
-  summary: { shown: findings.length, hidden: 0, total: findings.length, byClass: {}, byCheck: {} },
+  summary: { work: findings.length, information: 0, diagnostic: 0, total: findings.length, byClass: {}, byCheck: {} },
   observationId: '2026-08-11T00:00:00Z-1',
   findingSetHash: 'hash',
   builtAt: '2026-08-11T00:00:00Z',
@@ -78,9 +78,11 @@ describe('indexStore', () => {
     expect(index.findings[0].page).toBe('garantie');
   });
 
-  it('leaves out a hidden class, for the reason the bar leaves it out', () => {
-    // `text-added` is content the new site invented, and ticket 33 hides it. A search
-    // that returned it would offer work the log does not count.
+  it('leaves out a class that is not work, for the reason the bar leaves it out', () => {
+    // `text-added` is content the new site invented; ticket 33 kept it out of the count
+    // and ticket 75 named it `information`. A search that returned it would offer work
+    // the log does not count. Widening the index to `information` is a payload decision
+    // and belongs to whichever ticket wants to pay for it.
     const index = indexStore('nl', [report({
       findings: [finding({ id: 'a' }), finding({ id: 'b', class: 'text-added', prod: null, new: 'Bekijk deals >' })],
     })]);

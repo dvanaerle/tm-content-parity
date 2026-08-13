@@ -151,8 +151,8 @@ function findingsBeforeAndAfter(production, next) {
   return {
     findingsBefore: before.findings.length,
     findingsAfter: after.findings.length,
-    shownBefore: before.summary.shown,
-    shownAfter: after.summary.shown,
+    workBefore: before.summary.work,
+    workAfter: after.summary.work,
     classesBefore: byClass(before),
     classesAfter: byClass(after),
     gone: before.findings.filter((f) => !afterIds.has(f.id)).length,

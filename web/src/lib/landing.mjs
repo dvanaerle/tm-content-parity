@@ -78,10 +78,14 @@ export function landingFor({ findings, focus }) {
     // decision is not noise, so a `genegeerd` row is on screen already and the toggle
     // is left where it was.
     //
+    // Since ticket 75 only a `diagnostic` is behind the toggle. A link to an
+    // `information` finding lands on a row that is already drawn, so it asks for
+    // nothing.
+    //
     // **Only when a tab would draw it.** The toggle is asked for so that the row the
     // reader was sent to appears, so with no such row there is nothing to ask for, and
     // switching it on would only fill the page with rows nobody asked to see.
-    needsNoise: Boolean(tab) && !target.shown,
+    needsNoise: Boolean(tab) && target.visibility === 'diagnostic',
     missing: Boolean(focus) && target === null,
     unplaced: Boolean(target) && tab === null,
   };

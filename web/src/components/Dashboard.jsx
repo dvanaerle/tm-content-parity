@@ -93,7 +93,7 @@ export default function Dashboard({
   const log = useStoreOverrides({ pages: comparable, editor });
 
   /** The open count **after** overrides, so the worst page is the worst remaining page. */
-  const openOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar.open ?? page.summary.shown;
+  const openOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar.open ?? page.summary.work;
   const barOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar;
 
   // A typed term puts the search on screen in place of either view. It answers past both
@@ -154,16 +154,19 @@ export default function Dashboard({
 
   const totals = useMemo(() => {
     const byClass = {};
-    let hidden = 0;
+    // The chip below says *verborgen (ruis)*, so it counts what is actually hidden:
+    // the `diagnostic` findings. Ticket 75 moved `information` out from behind the
+    // toggle, and it is on screen on the page it is on.
+    let diagnostic = 0;
     for (const page of comparable) {
-      hidden += page.summary.hidden;
+      diagnostic += page.summary.diagnostic;
       for (const [cls, count] of Object.entries(page.summary.byClass)) {
         byClass[cls] = (byClass[cls] ?? 0) + count;
       }
     }
     // Clean means clean **now**: no open findings after the overrides.
     const clean = comparable.filter((page) => openOf(page) === 0).length;
-    return { hidden, clean, byClass, ...log.derived.bar };
+    return { diagnostic, clean, byClass, ...log.derived.bar };
   }, [comparable, log.derived]);
 
   return (
@@ -206,7 +209,7 @@ export default function Dashboard({
           label="pagina's gecontroleerd"
           title="Een mens heeft alles op deze pagina bekeken, ook wat het gereedschap niet ziet."
         />
-        <Chip value={totals.hidden} label="verborgen (ruis)" />
+        <Chip value={totals.diagnostic} label="verborgen (ruis)" />
         <Chip
           value={oneSided.length}
           label="eenzijdig"
@@ -383,7 +386,7 @@ export default function Dashboard({
                       {page.summary.byCheck[check] ?? '—'}
                     </TableCell>
                   ))}
-                  <TableCell className="px-4 tabular-nums text-muted-foreground">{page.summary.hidden}</TableCell>
+                  <TableCell className="px-4 tabular-nums text-muted-foreground">{page.summary.diagnostic}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

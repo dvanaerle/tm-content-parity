@@ -93,7 +93,7 @@ create table overrides (
   -- chronologically by construction — see newObservationId().
   observation_id text,
 
-  -- On `reviewed`: the shown-class finding set at the moment of review. A review
+  -- On `reviewed`: the `work`-class finding set at the moment of review. A review
   -- goes stale when this stops matching, and never expires on its own.
   finding_set_hash text,
 

@@ -7,7 +7,7 @@ import { notCheckedInStore } from './not-checked.mjs';
 import { addPage, emptyIndex } from './search.mjs';
 import { CoverageTally } from '../../../compare/region-coverage.mjs';
 import { storeOfFile } from '../../../compare/contract.mjs';
-import { FINDING_CLASSES, STORES } from '../../../compare/vocabulary.mjs';
+import { isWork, STORES } from '../../../compare/vocabulary.mjs';
 
 /**
  * `compare/30-compare.mjs` writes one `PageReport` per store page into
@@ -81,9 +81,9 @@ export async function loadReports(store) {
  * the rest away, one file at a time. Ticket 38: the store narrows it again, so a
  * visitor who opens the German store does not download the other five.
  *
- * It keeps a **compact finding index** as well: every finding in a shown class,
- * with what the dashboard has a use for and nothing else. Hidden classes are left
- * out, because ticket 09 keeps them out of the bar entirely.
+ * It keeps a **compact finding index** as well: every finding in a `work` class,
+ * with what the dashboard has a use for and nothing else. Classes that are not `work`
+ * are left out, because ticket 09 keeps them out of the bar entirely.
  *
  * Two groups of fields, and each one is here for a named reason:
  *
@@ -91,8 +91,8 @@ export async function loadReports(store) {
  *   can sort on the state after overrides rather than on the raw snapshot — the
  *   worst page is then the worst *remaining* page.
  * - `prod`, `new`, `detail` and `occurrences` are the repeat grouping (ticket 81).
- *   They are the one costly part of this index: the two texts of every shown
- *   finding in the store now cross the wire. Measured on `nl`, 4,784 shown findings
+ *   They are the one costly part of this index: the two texts of every `work`
+ *   finding in the store now cross the wire. Measured on `nl`, 4,784 work findings
  *   (ticket 113): the index goes from 69 kB to 166 kB gzipped. It is paid once —
  *   the repeat list is derived in the browser from **this** array, so no second
  *   copy of the same text is serialised beside it, and a repeat is exactly the case
@@ -139,7 +139,7 @@ export async function loadSummaries(store) {
       skipReason: report.skipReason,
       summary: report.summary,
       findings: report.findings
-        .filter((finding) => FINDING_CLASSES[finding.class]?.shown)
+        .filter((finding) => isWork(finding.class))
         .map((finding) => ({
           id: finding.id,
           class: finding.class,

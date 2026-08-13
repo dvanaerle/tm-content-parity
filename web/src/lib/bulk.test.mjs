@@ -24,7 +24,7 @@ const on = (page, id) => ({ page, id, occurrences: 1 });
  */
 const byFinding = (states) => new Map(
   Object.entries(states).map(([id, state]) => [
-    id, { id, state, shown: true, class: 'copy' },
+    id, { id, state, visibility: 'work', class: 'copy' },
   ]),
 );
 

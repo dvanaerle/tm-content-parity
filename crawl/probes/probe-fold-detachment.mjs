@@ -35,7 +35,7 @@ import { parse } from 'node-html-parser';
 // precedence rule of ticket 09 and `reportFilename()` is ticket 60's.
 import { latestByKey } from '../../overrides/state.mjs';
 import { STORES, reportFilename } from '../../compare/contract.mjs';
-import { FINDING_CLASSES } from '../../compare/vocabulary.mjs';
+import { isWork } from '../../compare/vocabulary.mjs';
 import { collapse, tier1 } from '../normalise.mjs';
 import { fetchPage } from '../fetch-page.mjs';
 
@@ -339,23 +339,23 @@ for (const event of live) {
     // table has to read all of it.
     rows.push({ ...base, detached: false, reason: 'a withdrawn override, keyed on no text' });
   } else {
-    // A review records the hash over the **shown** finding ids, so it goes
+    // A review records the hash over the **work** finding ids, so it goes
     // stale when one of those ids moves — including a `copy` that becomes a
-    // hidden `restructured`, which leaves the shown set without any text
+    // `restructured`, which is not work, and that leaves the work set without any text
     // changing at all.
     const key = `${event.store}|${event.page}`;
     const effect = effects.get(key);
-    const shown = reports.get(key).findings.filter((finding) => FINDING_CLASSES[finding.class]?.shown);
-    const verdicts = shown.map((finding) => foldChangesId(finding, effect).detached);
+    const work = reports.get(key).findings.filter((finding) => isWork(finding.class));
+    const verdicts = work.map((finding) => foldChangesId(finding, effect).detached);
     const touched = ['production', 'new'].some(
       (side) => effect[side].lost.size > 0 || effect[side].created.size > 0,
     );
     if (verdicts.includes(true)) {
-      rows.push({ ...base, detached: true, reason: `${verdicts.filter(Boolean).length} shown findings change id` });
+      rows.push({ ...base, detached: true, reason: `${verdicts.filter(Boolean).length} work findings change id` });
     } else if (touched || verdicts.includes(null)) {
-      // The fold adds units, and a new unit can make a shown finding this
+      // The fold adds units, and a new unit can make a work finding this
       // probe cannot predict. Only the rebuild answers that.
-      rows.push({ ...base, detached: null, reason: 'the fold changes units on this page, so the shown set may move' });
+      rows.push({ ...base, detached: null, reason: 'the fold changes units on this page, so the work set may move' });
     } else {
       rows.push({ ...base, detached: false, reason: 'the fold touches nothing on this page' });
     }

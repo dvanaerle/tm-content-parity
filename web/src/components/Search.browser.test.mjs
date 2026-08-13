@@ -40,7 +40,7 @@ const pages = [
 ];
 
 const byFinding = new Map(
-  index.findings.map((one) => [one.id, { id: one.id, state: 'open', shown: true, class: one.class }]),
+  index.findings.map((one) => [one.id, { id: one.id, state: 'open', visibility: 'work', class: one.class }]),
 );
 
 let fetched;

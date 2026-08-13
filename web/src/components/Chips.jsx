@@ -31,7 +31,7 @@ export function Chip({ value, label, tone = 'neutral', title }) {
   );
 }
 
-/** One finding class, coloured by whether it is shown by default. */
+/** One finding class, coloured by whether it is work. */
 export function ClassPill({ class: cls }) {
   const info = classInfo(cls);
   return (
@@ -162,9 +162,9 @@ export function ClassFilterBanner({ classes, shown, total, noun, onClear, classN
 }
 
 /**
- * The parity bar. Ticket 09: shown classes on this snapshot only, and a hidden
- * class is not in it at all — a bar that counts what the editor was never asked
- * to look at cannot be read.
+ * The parity bar. Ticket 09: the `work` classes on this snapshot only, and a class
+ * that is not work is not in it at all — a bar that counts what the editor was never
+ * asked to look at cannot be read.
  */
 export function Bar({ shown, units }) {
   // The unit count is the only honest denominator available before overrides

@@ -65,8 +65,8 @@ const fixture = () => ({
     { class: 'text-missing', prod: 3, new: null, score: null, finding: 'lost1' },
   ],
   findings: [
-    { id: 'copy1', class: 'copy', shown: true, state: 'open', occurrences: 1 },
-    { id: 'lost1', class: 'text-missing', shown: true, state: 'open', occurrences: 1 },
+    { id: 'copy1', class: 'copy', visibility: 'work', state: 'open', occurrences: 1 },
+    { id: 'lost1', class: 'text-missing', visibility: 'work', state: 'open', occurrences: 1 },
   ],
 });
 
@@ -140,19 +140,42 @@ describe('prepareRows', () => {
     expect(rows).toHaveLength(2);
   });
 
-  it('hides a class the tool does not show, until the noise toggle is on', () => {
+  it('hides a diagnostic class until the noise toggle is on', () => {
     const base = fixture();
-    base.rows.push({ class: 'text-added', prod: null, new: 2, score: null, finding: 'added1' });
-    base.findings.push({ id: 'added1', class: 'text-added', shown: false, state: 'open', occurrences: 1 });
+    base.rows.push({ class: 'tag-changed', prod: null, new: 2, score: null, finding: 'tag1' });
+    base.findings.push({ id: 'tag1', class: 'tag-changed', visibility: 'diagnostic', state: 'open', occurrences: 1 });
 
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(4);
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(5);
   });
 
-  it('draws a row in a shown class whatever the log decided about it', () => {
+  it('draws an information row with the toggle off, because it is not noise', () => {
+    // Ticket 75. `information` is the half of the old hidden side that an editor may
+    // want to read: it is drawn beside the work and it counts nowhere. Only the
+    // `diagnostic` half is behind the toggle, and the toggle never moves this row.
+    const base = fixture();
+    base.rows.push({ class: 'text-added', prod: null, new: 2, score: null, finding: 'added1' });
+    base.findings.push({ id: 'added1', class: 'text-added', visibility: 'information', state: 'open', occurrences: 1 });
+
+    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(5);
+    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(5);
+  });
+
+  it('hides a row whose class the derivation could not name, as a diagnostic', () => {
+    // `visibilityOf()` answers `diagnostic` for a name the vocabulary does not hold, so a
+    // row that arrives without a derived finding stays behind the toggle rather than
+    // appearing as work. That is what `!finding?.shown` did before ticket 75.
+    const base = fixture();
+    base.rows.push({ class: 'copy', prod: null, new: 2, score: null, finding: 'gone1' });
+
+    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(4);
+    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(5);
+  });
+
+  it('draws a row in a work class whatever the log decided about it', () => {
     // The toggle asks about the **class**, and after ADR 0011 that is all it asks.
-    // A row that is hidden by class stays hidden by class; a decided row in a shown
-    // class is not noise and was never behind this toggle to begin with.
+    // A diagnostic row stays behind the toggle; a decided row in a work class is not
+    // noise and was never behind this toggle to begin with.
     const base = fixture();
     base.findings[0] = { ...base.findings[0], state: 'dismissed' };
 
@@ -310,7 +333,7 @@ describe('outlineFrom', () => {
     const base = fixture();
     base.elements.new.push(heading('Nieuw kopje', 3));
     base.rows.push({ class: 'text-added', prod: null, new: 3, score: null, finding: 'added1' });
-    base.findings.push({ id: 'added1', class: 'text-added', shown: false, state: 'open', occurrences: 1 });
+    base.findings.push({ id: 'added1', class: 'text-added', visibility: 'information', state: 'open', occurrences: 1 });
 
     const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: true });
     expect(outlineFrom(rows).map((entry) => entry.text)).toEqual(['Kleuren', 'Nieuw kopje']);
@@ -497,7 +520,7 @@ describe('groupRepeatsByClass', () => {
     expect(group.repeats.map((one) => one.prod)).toEqual(['Vaak', 'Zelden']);
   });
 
-  it('draws a shown class that has no repeats, and leaves it empty', () => {
+  it('draws a work class that has no repeats, and leaves it empty', () => {
     // "Nothing wrong here" and "this class does not exist" are two different answers. A
     // reader who cannot tell them apart does not know whether the rule ran at all.
     const groups = groupRepeatsByClass([repeat('copy', 2)]);
@@ -507,11 +530,11 @@ describe('groupRepeatsByClass', () => {
     expect(casing.repeats).toEqual([]);
   });
 
-  it('gives a hidden class a group of its own rather than mixing it into a shown one', () => {
-    // With the noise toggle on, hidden repeats arrive. `text-added` is hidden and `copy`
-    // is shown, and a hidden row inside the `copy` group would be drawn as if the editor
-    // had been asked to look at it. An empty hidden class is drawn nowhere: it is behind
-    // the toggle, so it is not an answer anybody asked for.
+  it('gives a class that is not work a group of its own rather than mixing it into one', () => {
+    // `text-added` is `information` and `copy` is `work`, and a row of the first inside
+    // the `copy` group would be drawn as if the editor had been asked to look at it. A
+    // class that is not work and holds nothing is drawn nowhere: an empty group is the
+    // answer *the rule ran and found none*, and that is only owed for the work.
     const groups = groupRepeatsByClass([repeat('copy', 1), repeat('text-added', 2)]);
     const of = (cls) => groups.find((group) => group.class === cls);
 

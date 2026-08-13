@@ -113,8 +113,8 @@ function findingsBeforeAndAfter(production, next) {
   return {
     findingsBefore: before.findings.length,
     findingsAfter: after.findings.length,
-    shownBefore: before.summary.shown,
-    shownAfter: after.summary.shown,
+    workBefore: before.summary.work,
+    workAfter: after.summary.work,
     appeared: appeared.map((f) => `${f.class}: ${String(f.new ?? f.production).slice(0, 60)}`),
   };
 }
@@ -148,7 +148,7 @@ for (const job of jobs) {
   if (findings) {
     console.log(
       `  findings ${findings.findingsBefore}→${findings.findingsAfter}, `
-      + `shown ${findings.shownBefore}→${findings.shownAfter}, `
+      + `work ${findings.workBefore}→${findings.workAfter}, `
       + `${findings.appeared.length} appeared`
     );
   }

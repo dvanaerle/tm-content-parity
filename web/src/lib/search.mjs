@@ -6,7 +6,7 @@
  * search was a box that matched a page name.
  *
  * **One index per store, emitted at build time, scanned linearly.** No search library.
- * A store holds a few thousand shown findings, and a linear pass over that many
+ * A store holds a few thousand work findings, and a linear pass over that many
  * objects is fast enough that a dependency would be paid for nothing. `web/probes/
  * probe-search-index.mjs` is the measurement that says so, and it is what a later
  * reader re-runs before adding one.
@@ -62,7 +62,7 @@
  */
 
 import { latestByKey } from '../../../overrides/state.mjs';
-import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
+import { FINDING_CLASSES, isWork } from '../../../compare/vocabulary.mjs';
 import { findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
 
 /**
@@ -105,8 +105,8 @@ import { findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
  * page, so they have to come off the extract's link records, and the extract is the
  * half that the dashboard's own finding index throws away.
  *
- * Hidden classes are left out, for the reason ticket 09 keeps them out of the bar: a
- * result that offered them would offer work the log does not count.
+ * Classes that are not `work` are left out, for the reason ticket 09 keeps them out of
+ * the bar: a result that offered them would offer work the log does not count.
  *
  * @param {string} store
  * @param {import('../../../compare/contract.mjs').PageReport[]} reports
@@ -151,7 +151,10 @@ export function addPage(index, report) {
   const linkText = linkTextByKey(report);
 
   for (const finding of report.findings) {
-    if (!FINDING_CLASSES[finding.class]?.shown) continue;
+    // `work` only, as before ticket 75: the index is what the dashboard's derived state
+    // can name, and that is the bar's set. Widening it to `information` is a payload
+    // decision and not a rename, so it is not this ticket's to make.
+    if (!isWork(finding.class)) continue;
     index.findings.push({
       id: finding.id,
       page: report.page,

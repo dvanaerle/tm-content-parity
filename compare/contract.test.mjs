@@ -7,6 +7,7 @@ import {
   newObservationId,
   reportFilename,
   storeOfFile,
+  VISIBILITIES,
 } from './contract.mjs';
 
 const base = {
@@ -149,11 +150,22 @@ describe('storeOfFile', () => {
 });
 
 describe('FINDING_CLASSES', () => {
-  it('gives every class a check that exists and a default', () => {
+  it('gives every class a check that exists and one visibility', () => {
     for (const [name, cls] of Object.entries(FINDING_CLASSES)) {
       expect(CHECKS, name).toContain(cls.check);
-      expect(typeof cls.shown, name).toBe('boolean');
+      expect(VISIBILITIES, name).toContain(cls.visibility);
+      // Ticket 75: one field replacing one field. A boolean beside the enum would put
+      // back the second axis ticket 02 removed, and a class that is hidden and also
+      // work has no meaning.
+      expect(cls, name).not.toHaveProperty('shown');
     }
+  });
+
+  it('has no fourth visibility for an excluded region', () => {
+    // ADR 0005: a region leaves the log at extraction (ADR 0003), so it never reaches
+    // a class. A fourth value would claim the log can see inside one and chose not to
+    // report it. The log is blind there.
+    expect(VISIBILITIES).toEqual(['work', 'information', 'diagnostic']);
   });
 
   it('is closed at 22 classes', () => {
@@ -171,24 +183,24 @@ describe('FINDING_CLASSES', () => {
     expect(FINDING_CLASSES).not.toHaveProperty('structure');
   });
 
-  it('splits every one-sided text class by direction, shown lost and hidden added', () => {
-    expect(FINDING_CLASSES['text-missing']).toMatchObject({ check: 'text', shown: true });
-    expect(FINDING_CLASSES['text-added']).toMatchObject({ check: 'text', shown: false });
+  it('splits every one-sided text class by direction, lost is work and added is information', () => {
+    expect(FINDING_CLASSES['text-missing']).toMatchObject({ check: 'text', visibility: 'work' });
+    expect(FINDING_CLASSES['text-added']).toMatchObject({ check: 'text', visibility: 'information' });
   });
 
-  it('shows a heading-level change and hides a plain tag change', () => {
-    expect(FINDING_CLASSES['heading-level']).toMatchObject({ check: 'text', shown: true });
-    expect(FINDING_CLASSES['tag-changed']).toMatchObject({ check: 'text', shown: false });
+  it('counts a heading-level change and diagnoses a plain tag change', () => {
+    expect(FINDING_CLASSES['heading-level']).toMatchObject({ check: 'text', visibility: 'work' });
+    expect(FINDING_CLASSES['tag-changed']).toMatchObject({ check: 'text', visibility: 'diagnostic' });
   });
 
-  it('gives the same direction the same default on all three checks', () => {
+  it('gives the same direction the same visibility on all three checks', () => {
     // `missing-link`, `image-missing` and `text-missing` are one idea on three
     // checks, and an editor who learns the rule on one must not be surprised on
     // the next. The test reads `direction` rather than a list of names, so a
     // fourth one-sided class is covered on the day it is added.
     for (const [name, cls] of Object.entries(FINDING_CLASSES)) {
-      if (cls.direction === 'lost') expect(cls.shown, name).toBe(true);
-      if (cls.direction === 'added') expect(cls.shown, name).toBe(false);
+      if (cls.direction === 'lost') expect(cls.visibility, name).toBe('work');
+      if (cls.direction === 'added') expect(cls.visibility, name).toBe('information');
     }
   });
 
@@ -202,15 +214,35 @@ describe('FINDING_CLASSES', () => {
     ]);
   });
 
-  it('shows copy, casing, text-missing and heading-level, and hides the rest of text', () => {
-    const byDefault = (shown) => Object.entries(FINDING_CLASSES)
-      .filter(([, cls]) => cls.check === 'text' && cls.shown === shown)
+  /*
+   * The regression gate of ticket 75. It used to pin the sorted list of hidden classes,
+   * and the enum splits that list in two rather than deleting it — so the pin is the
+   * three groups, whole. The twelve in `work` are exactly the twelve that were
+   * `shown: true`, which is what makes the migration count-neutral: the denominator is
+   * every finding in a `work` class and nothing else.
+   */
+  it('pins the three visibility groups', () => {
+    const group = (visibility) => Object.entries(FINDING_CLASSES)
+      .filter(([, cls]) => cls.visibility === visibility)
       .map(([name]) => name)
       .sort();
-    expect(byDefault(true)).toEqual(['casing', 'copy', 'heading-level', 'text-missing']);
-    expect(byDefault(false)).toEqual([
-      'campaign', 'price', 'restructured', 'tag-changed', 'text-added',
+
+    expect(group('work')).toEqual([
+      'alt-changed', 'alt-lost', 'broken-link', 'casing', 'copy', 'cross-store-link',
+      'heading-level', 'image-missing', 'leakage', 'link-target', 'missing-link',
+      'text-missing',
     ]);
+    expect(group('information')).toEqual([
+      'extra-link', 'image-added', 'price', 'restructured', 'text-added',
+    ]);
+    expect(group('diagnostic')).toEqual([
+      'campaign', 'image-campaign', 'no-declared-alternate', 'redirect', 'tag-changed',
+    ]);
+  });
+
+  it('counts twelve classes as work, which is the denominator this ticket did not move', () => {
+    const work = Object.values(FINDING_CLASSES).filter((cls) => cls.visibility === 'work');
+    expect(work.length).toBe(12);
   });
 });
 

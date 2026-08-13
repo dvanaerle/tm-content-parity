@@ -64,7 +64,7 @@ export function skipReason(production, next) {
  * It is emitted whether or not the page is comparable, because the alternate is
  * missing either way. **No view states it yet.** `Ledger.jsx` renders the "not
  * comparable" panel before any finding, so on a one-sided page nothing shows it,
- * and on a comparable page it sits behind the hidden-class filter. The record has
+ * and on a comparable page it sits behind the noise toggle. The record has
  * to exist before a view can read it; tickets 20 and 56 own that surface.
  *
  * @param {{ store: import('./contract.mjs').Store, page: string }} scope
@@ -225,7 +225,7 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
   const coverage = new CoverageTally();
   let comparable = 0;
   let findings = 0;
-  let shown = 0;
+  let work = 0;
 
   for (const file of files) {
     const sides = JSON.parse(await readFile(file, 'utf8'));
@@ -247,7 +247,7 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
 
     if (report.comparable) comparable += 1;
     findings += report.summary.total;
-    shown += report.summary.shown;
+    work += report.summary.work;
   }
 
   // `regions` is what the next run compares against, so it is written whether or
@@ -264,7 +264,7 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
       pages: files.length,
       comparable,
       findings,
-      shown,
+      work,
       regions: current.regions,
       regionsChanged,
     }, null, 2),
@@ -272,7 +272,7 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
 
   console.log(
     `${files.length} pages, ${comparable} comparable, `
-    + `${findings} findings of which ${shown} shown by default.`,
+    + `${findings} findings of which ${work} count as work.`,
   );
   // Ticket 64: an entry that stopped matching is one line, and it is here rather
   // than 2,600 rows down in the report.

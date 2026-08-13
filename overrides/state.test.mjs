@@ -17,7 +17,7 @@ let seq = 0;
 
 /**
  * @param {string} id
- * @param {string} [cls] `copy` is shown, `restructured` is hidden (ticket 02).
+ * @param {string} [cls] `copy` is `work`, `restructured` is `information` (ticket 75).
  * @returns {import('../compare/contract.mjs').Finding}
  */
 const finding = (id, cls = 'copy', anchorHeading = null) => ({
@@ -46,7 +46,7 @@ const report = (findings, overrides = {}) => ({
   skipReason: null,
   findings,
   rows: [],
-  summary: /** @type {any} */ ({ shown: 0, hidden: 0, total: 0, byClass: {}, byCheck: {} }),
+  summary: /** @type {any} */ ({ work: 0, information: 0, diagnostic: 0, total: 0, byClass: {}, byCheck: {} }),
   observationId: CURRENT,
   findingSetHash: findingSetHash(findings),
   builtAt: '2026-08-06T10:00:00.000Z',
@@ -251,7 +251,7 @@ describe('the event that clears one decision', () => {
 describe('bar arithmetic', () => {
   const four = report(['A', 'B', 'C', 'D'].map((id) => finding(id)));
 
-  it('counts every shown finding in the denominator when nothing is overridden', () => {
+  it('counts every work finding in the denominator when nothing is overridden', () => {
     expect(derivePageState({ report: four, events: [] }).bar).toMatchObject({
       closed: 0, denominator: 4, open: 4,
     });
@@ -265,7 +265,7 @@ describe('bar arithmetic', () => {
 
   it('nothing leaves the denominator, and there is no fourth number', () => {
     // ADR 0011 withdrew the one override that used to take findings out of the
-    // denominator, so a difference in a shown class is now either open work or work an
+    // denominator, so a difference in a `work` class is now either open work or work an
     // editor closed. The historical rows cannot put the subtraction back.
     const bar = derivePageState({ report: four, events: [withdrawnRow()] }).bar;
 
@@ -274,11 +274,21 @@ describe('bar arithmetic', () => {
       .toEqual(['closed', 'contradicted', 'denominator', 'dismissed', 'fixed', 'open']);
   });
 
-  it('a hidden class is in neither the numerator nor the denominator', () => {
-    // Ticket 02 defaults `restructured` to hidden. If it counted, the bar could
-    // never reach zero.
+  it('a class that is not work is in neither the numerator nor the denominator', () => {
+    // Ticket 75 triaged `restructured` to `information`: it is drawn and it counts
+    // nowhere. If it counted, the bar could never reach zero.
     const mixed = report([finding('A'), finding('H', 'restructured')]);
     expect(derivePageState({ report: mixed, events: [] }).bar).toMatchObject({ denominator: 1 });
+  });
+
+  it('carries the class visibility onto every derived finding', () => {
+    // One reader asks the vocabulary — `decided()` — and the bar, the ledger's toggle
+    // and a landing all read the answer off the finding. Two readers would be two
+    // chances to disagree about what an editor is being asked to do.
+    const mixed = report([finding('A'), finding('H', 'restructured'), finding('R', 'redirect')]);
+    const { findings } = derivePageState({ report: mixed, events: [] });
+
+    expect(findings.map((one) => one.visibility)).toEqual(['work', 'information', 'diagnostic']);
   });
 
   it('a contradicted claim reads as open and closes nothing', () => {
@@ -327,9 +337,12 @@ describe('page review', () => {
     expect(reviewOf(one, grown.findingSetHash).fresh).toBe(false);
   });
 
-  it('is not staled by a hidden class, because the hash covers the shown ones only', () => {
-    const withHidden = report([finding('A'), finding('H', 'restructured')]);
-    expect(withHidden.findingSetHash).toBe(one.findingSetHash);
+  it('is not staled by a class that is not work, because the hash covers the work only', () => {
+    // Ticket 75 renamed the field this filter reads and did not move the set: the
+    // twelve `work` classes are exactly the twelve that were `shown: true`. Ticket 118
+    // is the one that argues the filter away.
+    const withInformation = report([finding('A'), finding('H', 'restructured')]);
+    expect(withInformation.findingSetHash).toBe(one.findingSetHash);
   });
 
   it('is revoked by a clear on the page scope', () => {

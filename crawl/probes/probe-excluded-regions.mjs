@@ -108,8 +108,8 @@ function findingsBeforeAndAfter(production, next) {
   return {
     findingsBefore: before.findings.length,
     findingsAfter: after.findings.length,
-    shownBefore: before.summary.shown,
-    shownAfter: after.summary.shown,
+    workBefore: before.summary.work,
+    workAfter: after.summary.work,
     textAddedBefore: added(before).length,
     textAddedAfter: added(after).length,
     // A row that leaves is the point. A row that appears would mean the cut moved
@@ -140,7 +140,7 @@ for (const job of jobs) {
   if (findings) {
     console.log(
       `  findings ${findings.findingsBefore}→${findings.findingsAfter}, `
-      + `shown ${findings.shownBefore}→${findings.shownAfter}, `
+      + `work ${findings.workBefore}→${findings.workAfter}, `
       + `text-added ${findings.textAddedBefore}→${findings.textAddedAfter} `
       + `(${findings.gone.length} gone, ${findings.appeared.length} appeared)`
     );

@@ -12,15 +12,16 @@
  * ADR 0011, but it is still the unit **visibility** is decided on — one enum, triaged once
  * in git, and the only thing that can say *this is not work at all* (ADR 0005). So one
  * class is one such decision: each name must be a name an editor knows, and each new class
- * must give its default.
+ * must say which of the three it is.
  *
  * **A one-sided difference is named by its direction, on every check.** Content
- * production has and the new site lost is shown. Content the new site invented is
- * hidden, because it is mostly a PageBuilder rebuild and not a defect. It is one
- * idea an editor learns once, so the direction is a **field** on the class rather
- * than a rule three names have to remember: `direction` carries it, and the
- * `shown` default follows from it. The tone in `web/src/lib/classes.mjs` reads the
- * same field, so rose cannot come apart from the meaning.
+ * production has and the new site lost is `work`. Content the new site invented is
+ * `information`, because it is mostly a PageBuilder rebuild and not a defect, and an
+ * editor may still want to read it. It is one idea an editor learns once, so the
+ * direction is a **field** on the class rather than a rule three names have to
+ * remember: `direction` carries it, and the `visibility` follows from it. The tone in
+ * `web/src/lib/classes.mjs` reads the same field, so rose cannot come apart from the
+ * meaning.
  */
 
 /** @typedef {import('../shared/stores.mjs').Store} Store */
@@ -30,59 +31,118 @@
 /** @typedef {'text' | 'links' | 'images' | 'meta'} Check */
 
 /**
+ * What a class is **for**, in one word (ADR 0005, ticket 75). It replaced the `shown`
+ * boolean rather than joining it: `shown: false` said two different things and nothing
+ * said which, and a boolean beside an enum would let a class be hidden and also be work.
+ *
+ * - `work` — migration work. It counts: it is the bar's denominator and nothing else is.
+ * - `information` — a difference an editor may want to read. It renders and it does not
+ *   count. It is a finding you can link to and cannot decide.
+ * - `diagnostic` — it tells the author of a rule what the rule saw. It stays behind the
+ *   noise toggle.
+ *
+ * There is no fourth value for "excluded from comparison". An excluded region leaves at
+ * extraction (ADR 0003) and never reaches a class, so a fourth value would claim the log
+ * can see inside one.
+ *
+ * @typedef {'work' | 'information' | 'diagnostic'} Visibility
+ */
+
+/** @type {Visibility[]} */
+export const VISIBILITIES = ['work', 'information', 'diagnostic'];
+
+/**
  * @typedef {object} FindingClass
  * @property {Check} check
- * @property {boolean} shown  Whether the class is shown before an editor changes a filter.
+ * @property {Visibility} visibility  What the class is for. The only axis there is.
  * @property {string} meaning
  * @property {'lost' | 'added'} [direction]  On a one-sided class only. `lost` is always
- *                                           shown, `added` is always hidden.
+ *                                           `work`, `added` is always `information`.
  */
 
 /** @type {Record<string, FindingClass>} */
 export const FINDING_CLASSES = {
   // Ticket 02 — text
-  copy: { check: 'text', shown: true, meaning: 'The text changed. Both sides are present.' },
-  casing: { check: 'text', shown: true, meaning: 'Only letter case or trailing punctuation is different.' },
-  restructured: { check: 'text', shown: false, meaning: 'The same content, but a different element on each side.' },
-  price: { check: 'text', shown: false, meaning: 'Only the numbers are different.' },
-  campaign: { check: 'text', shown: false, meaning: 'Promotional copy. The pattern must match both sides.' },
+  copy: { check: 'text', visibility: 'work', meaning: 'The text changed. Both sides are present.' },
+  casing: { check: 'text', visibility: 'work', meaning: 'Only letter case or trailing punctuation is different.' },
+  // Triaged by ticket 75. It is the class that tells *moved* from *gone* (ADR 0006), which
+  // is a difference an editor reads and not a report about the rule.
+  restructured: { check: 'text', visibility: 'information', meaning: 'The same content, but a different element on each side.' },
+  // Triaged by ticket 75. A number that differs is a real content difference worth reading;
+  // it is nobody's migration work.
+  price: { check: 'text', visibility: 'information', meaning: 'Only the numbers are different.' },
+  // Triaged by ticket 75. The finding exists because a promotional pattern matched on both
+  // sides — it reports what the rule matched, which is a diagnostic.
+  campaign: { check: 'text', visibility: 'diagnostic', meaning: 'Promotional copy. The pattern must match both sides.' },
 
   // Ticket 33 — text, by direction. These replace `structure`.
-  'text-missing': { check: 'text', shown: true, direction: 'lost', meaning: 'Production has the text. The new site does not.' },
-  'text-added': { check: 'text', shown: false, direction: 'added', meaning: 'The new site has text that production does not have.' },
+  'text-missing': { check: 'text', visibility: 'work', direction: 'lost', meaning: 'Production has the text. The new site does not.' },
+  // Triaged by ticket 75, and it is the example ADR 0005 argues from: content the new site
+  // invented is usually not a defect, and an editor may want to read it.
+  'text-added': { check: 'text', visibility: 'information', direction: 'added', meaning: 'The new site has text that production does not have.' },
 
   // Ticket 33 — the same text in a different element. Silent before this ticket.
   // One class covers a level change and a promotion to or from a heading. The
   // class is the unit visibility is decided on, so one decision covers both. That is
   // accepted: both are the same defect to the outline.
-  'heading-level': { check: 'text', shown: true, meaning: 'The text is the same, and it is a heading on one side or at another level.' },
-  'tag-changed': { check: 'text', shown: false, meaning: 'The text is the same, and it sits in a different element. Neither side is a heading.' },
+  'heading-level': { check: 'text', visibility: 'work', meaning: 'The text is the same, and it is a heading on one side or at another level.' },
+  // Triaged by ticket 75. The same words in a different element, neither of them a heading:
+  // nothing moved for a reader, and what it reports is what the alignment saw.
+  'tag-changed': { check: 'text', visibility: 'diagnostic', meaning: 'The text is the same, and it sits in a different element. Neither side is a heading.' },
 
   // Ticket 05 — links
-  'broken-link': { check: 'links', shown: true, meaning: 'The target does not answer. It fires also if production is broken.' },
-  'missing-link': { check: 'links', shown: true, direction: 'lost', meaning: 'Production has the link. The new site does not.' },
-  'link-target': { check: 'links', shown: true, meaning: 'The two sides point at different targets.' },
-  leakage: { check: 'links', shown: true, meaning: 'The new site points at the live domain, and that path exists as a new-site page.' },
-  'cross-store-link': { check: 'links', shown: true, meaning: 'The link goes to the host of a different store.' },
-  redirect: { check: 'links', shown: false, meaning: 'The target answers, after a redirect.' },
-  'extra-link': { check: 'links', shown: false, direction: 'added', meaning: 'The new site has a link that production does not have.' },
+  'broken-link': { check: 'links', visibility: 'work', meaning: 'The target does not answer. It fires also if production is broken.' },
+  'missing-link': { check: 'links', visibility: 'work', direction: 'lost', meaning: 'Production has the link. The new site does not.' },
+  'link-target': { check: 'links', visibility: 'work', meaning: 'The two sides point at different targets.' },
+  leakage: { check: 'links', visibility: 'work', meaning: 'The new site points at the live domain, and that path exists as a new-site page.' },
+  'cross-store-link': { check: 'links', visibility: 'work', meaning: 'The link goes to the host of a different store.' },
+  // Triaged by ticket 75, and it is the other example ADR 0005 argues from: the target
+  // answers, so it tells the author of the link rule what the rule saw.
+  redirect: { check: 'links', visibility: 'diagnostic', meaning: 'The target answers, after a redirect.' },
+  // Triaged by ticket 75. The `added` side of the direction rule, the same on all three
+  // checks: a link the new site invented is not work, and it is worth reading.
+  'extra-link': { check: 'links', visibility: 'information', direction: 'added', meaning: 'The new site has a link that production does not have.' },
 
   // Ticket 06 — images
-  'image-missing': { check: 'images', shown: true, direction: 'lost', meaning: 'Production has the image. The new site does not.' },
-  'alt-lost': { check: 'images', shown: true, meaning: 'Production has alt text. The new site has none.' },
-  'alt-changed': { check: 'images', shown: true, meaning: 'Both sides have alt text, and it is different.' },
-  'image-added': { check: 'images', shown: false, direction: 'added', meaning: 'The new site has an image that production does not have.' },
-  'image-campaign': { check: 'images', shown: false, meaning: 'A campaign image. The pattern matches on either side.' },
+  'image-missing': { check: 'images', visibility: 'work', direction: 'lost', meaning: 'Production has the image. The new site does not.' },
+  'alt-lost': { check: 'images', visibility: 'work', meaning: 'Production has alt text. The new site has none.' },
+  'alt-changed': { check: 'images', visibility: 'work', meaning: 'Both sides have alt text, and it is different.' },
+  // Triaged by ticket 75. The `added` side of the direction rule, on the images check.
+  'image-added': { check: 'images', visibility: 'information', direction: 'added', meaning: 'The new site has an image that production does not have.' },
+  // Triaged by ticket 75, as `campaign`: it reports a pattern the rule matched.
+  'image-campaign': { check: 'images', visibility: 'diagnostic', meaning: 'A campaign image. The pattern matches on either side.' },
 
   // Ticket 54 — the page metadata, not the page. `CONTEXT.md` separates "no NL
   // page" from "no declared alternate": the first says the store has content NL
   // does not have, the second says production does not say which NL page is the
-  // counterpart. This is the second, so it is hidden — it is a defect of the
-  // sitemap and there is nothing on the page for an editor to change. It is the
+  // counterpart. This is the second, so ticket 75 triaged it `diagnostic` — it is a
+  // defect of the sitemap, there is nothing on the page for an editor to read or to
+  // change, and what it reports is why the log could not place the page. It is the
   // `meta` check because it is metadata about the page; it reaches the log
   // through the page key and not through the `<head>`.
-  'no-declared-alternate': { check: 'meta', shown: false, meaning: 'Production declares no hreflang alternate for this page, so the log cannot put it beside the other stores.' },
+  'no-declared-alternate': { check: 'meta', visibility: 'diagnostic', meaning: 'Production declares no hreflang alternate for this page, so the log cannot put it beside the other stores.' },
 };
+
+/**
+ * The visibility of a class, and the answer for a name the vocabulary does not hold.
+ *
+ * An unknown class reads as `diagnostic`: it is not work, so it cannot enter a
+ * denominator by accident, and it stays behind the noise toggle where a rule author
+ * will find it. That is what `shown ?? false` did before ticket 75, said in one word.
+ *
+ * @param {string} cls
+ * @returns {Visibility}
+ */
+export const visibilityOf = (cls) => FINDING_CLASSES[cls]?.visibility ?? 'diagnostic';
+
+/**
+ * Whether a finding in this class **counts**. It is the one question the bar, the
+ * summary and the finding-set hash ask, and they must all ask it in one place.
+ *
+ * @param {string} cls
+ */
+export const isWork = (cls) => visibilityOf(cls) === 'work';
+
 
 /** @type {Check[]} */
 export const CHECKS = ['text', 'links', 'images', 'meta'];

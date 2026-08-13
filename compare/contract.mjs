@@ -6,7 +6,7 @@
  */
 
 import { createHash, randomUUID } from 'node:crypto';
-import { FINDING_CLASSES as CLASSES, STORES } from './vocabulary.mjs';
+import { isWork, STORES } from './vocabulary.mjs';
 
 /**
  * The class vocabulary lives in `vocabulary.mjs` and is re-exported here, so a
@@ -15,7 +15,9 @@ import { FINDING_CLASSES as CLASSES, STORES } from './vocabulary.mjs';
  * Vite build of an island that reaches this file fails on that import. Ids are
  * made in `compare/`, never in the browser.
  */
-export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
+export {
+  CHECKS, FINDING_CLASSES, isWork, STORES, VISIBILITIES, visibilityOf,
+} from './vocabulary.mjs';
 
 /** @typedef {import('./vocabulary.mjs').Store} Store */
 
@@ -24,6 +26,8 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
 /** @typedef {import('./vocabulary.mjs').Check} Check */
 
 /** @typedef {import('./vocabulary.mjs').FindingClass} FindingClass */
+
+/** @typedef {import('./vocabulary.mjs').Visibility} Visibility */
 
 /**
  * One content unit inside the content boundary, in document order. This is the
@@ -202,13 +206,19 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  */
 
 /**
- * The counts the dashboard and the page bar read. Ticket 09: a hidden class is
- * not in the bar, and absolute numbers are always shown, because the denominator
+ * The counts the dashboard and the page bar read. Ticket 09: a class that is not work
+ * is not in the bar, and absolute numbers are always shown, because the denominator
  * moves.
  *
+ * **The count is named after the visibility it counts.** Ticket 75 kept `shown` as a
+ * candidate name and refused it: `information` is shown and is not in this number, so
+ * the old name would have become false on the day the enum landed. One tally per
+ * visibility, and `total` is their sum.
+ *
  * @typedef {object} ReportSummary
- * @property {number} shown
- * @property {number} hidden
+ * @property {number} work         The denominator, and nothing else is.
+ * @property {number} information  Rendered, not counted.
+ * @property {number} diagnostic   Behind the noise toggle.
  * @property {number} total
  * @property {Record<string, number>} byClass
  * @property {Record<string, number>} byCheck
@@ -232,7 +242,7 @@ export { CHECKS, FINDING_CLASSES, STORES } from './vocabulary.mjs';
  * @property {DiffRow[]} rows
  * @property {ReportSummary} summary
  * @property {string} observationId  The run that produced this report. See `newObservationId()`.
- * @property {string} findingSetHash Over the **shown** finding ids only. Page-review staleness.
+ * @property {string} findingSetHash Over the `work` finding ids only. Page-review staleness.
  * @property {string} builtAt       ISO 8601.
  */
 
@@ -270,19 +280,23 @@ export function newObservationId() {
 }
 
 /**
- * A hash over the sorted ids of the findings in **shown** classes.
+ * A hash over the sorted ids of the findings in `work` classes.
  *
- * A page review records this, and goes stale when it stops matching. It must be
- * the shown set only: over every class, hiding a class would change the hash and make
- * every review on the page stale, and a review must go stale because the **work**
- * changed and never because the tool was told what to put up as work (ADR 0005).
+ * A page review records this, and goes stale when it stops matching. It is the work set
+ * only: over every class, a class leaving `work` would change the hash and make every
+ * review on the page stale, and a review must go stale because the **work** changed and
+ * never because the tool was told what to put up as work (ADR 0005).
+ *
+ * Ticket 75 renamed the field this reads and did not touch the set: `work` is exactly
+ * the twelve classes that were `shown: true`. Ticket 118 is the one that argues this
+ * filter away.
  *
  * @param {Pick<Finding, 'id' | 'class'>[]} findings
  * @returns {string} 16 base64url characters.
  */
 export function findingSetHash(findings) {
   const ids = findings
-    .filter((finding) => CLASSES[finding.class]?.shown)
+    .filter((finding) => isWork(finding.class))
     .map((finding) => finding.id)
     .sort();
   return createHash('sha256').update(ids.join('|'), 'utf8').digest('base64url').slice(0, 16);

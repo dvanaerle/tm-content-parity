@@ -26,7 +26,7 @@ describe('findingAnchor', () => {
 describe('landingFor', () => {
   /** A derived finding, as `derivePageState()` hands them over. */
   const finding = (part) => ({
-    id: 'a1', check: 'text', class: 'text-missing', shown: true, state: 'open', ...part,
+    id: 'a1', check: 'text', class: 'text-missing', visibility: 'work', state: 'open', ...part,
   });
 
   // The link can name a finding on any of the three checks, and two of them are not in
@@ -45,31 +45,35 @@ describe('landingFor', () => {
   });
 
   // The dashboard lists a `genegeerd` row as well as an open one, so both can be
-  // clicked. A finding of a hidden class is behind *Ruis tonen*, and a landing that did
+  // clicked. A `diagnostic` finding is behind *Ruis tonen*, and a landing that did
   // not switch it on would send the reader to an empty screen and say nothing about why.
   it('asks for the noise toggle when the finding is behind it', () => {
     const open = finding({ id: 'a1' });
     const dismissed = finding({ id: 'b2', state: 'dismissed' });
     const decided = finding({ id: 'c3', state: 'fixed' });
-    const hiddenClass = finding({ id: 'd4', shown: false });
-    const findings = [open, dismissed, decided, hiddenClass];
+    const information = finding({ id: 'd4', visibility: 'information' });
+    const diagnostic = finding({ id: 'e5', visibility: 'diagnostic' });
+    const findings = [open, dismissed, decided, information, diagnostic];
 
     // A decision is not noise: the row stays on screen whatever the decision was, so
-    // the toggle is left where the reader had it. Only the class puts a row behind it.
+    // the toggle is left where the reader had it. Only the class puts a row behind it,
+    // and since ticket 75 only the `diagnostic` third of the vocabulary does — an
+    // `information` row is drawn already, so a link to one asks for nothing.
     expect(landingFor({ findings, focus: 'a1' }).needsNoise).toBe(false);
     expect(landingFor({ findings, focus: 'b2' }).needsNoise).toBe(false);
     expect(landingFor({ findings, focus: 'c3' }).needsNoise).toBe(false);
-    expect(landingFor({ findings, focus: 'd4' }).needsNoise).toBe(true);
+    expect(landingFor({ findings, focus: 'd4' }).needsNoise).toBe(false);
+    expect(landingFor({ findings, focus: 'e5' }).needsNoise).toBe(true);
   });
 
   // Not every finding of a page is drawn on one of the four tabs. `no-declared-alternate`
   // is the one `meta` rule, and the Meta tab is `metaRows()` — display only, no findings
   // in it at all. So a link naming it has nothing to land on, and the wrong answer is the
-  // one this had: `shown: false` made it ask for *Ruis tonen*, which floods the
+  // one this had: a class behind the toggle made it ask for *Ruis tonen*, which floods the
   // page with noise rows on the way to a row that is not there. Asking for the toggle only
   // makes sense when switching it on would draw the thing.
   it('asks for nothing and says so when no tab draws the finding', () => {
-    const findings = [finding({ id: 'm1', check: 'meta', class: 'no-declared-alternate', shown: false })];
+    const findings = [finding({ id: 'm1', check: 'meta', class: 'no-declared-alternate', visibility: 'diagnostic' })];
 
     expect(landingFor({ findings, focus: 'm1' })).toEqual({
       tab: null, needsNoise: false, missing: false, unplaced: true,

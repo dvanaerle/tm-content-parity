@@ -352,7 +352,7 @@ describe('diffRows', () => {
     expect(samePairedText('h3', 'p')).toEqual(['heading-level']);
   });
 
-  it('parks a tag change between two non-headings as hidden', () => {
+  it('parks a tag change between two non-headings as a diagnostic', () => {
     expect(samePairedText('p', 'div')).toEqual(['tag-changed']);
     expect(samePairedText('li', 'p')).toEqual(['tag-changed']);
   });
@@ -446,9 +446,10 @@ describe('textFindings', () => {
     ]);
   });
 
-  it('leaves the invented side out of the shown count', () => {
-    // Ticket 33: `text-added` is hidden, so a PageBuilder rebuild cannot bury
-    // the content that was actually lost.
+  it('leaves the invented side out of the work count', () => {
+    // Ticket 33: `text-added` does not count, so a PageBuilder rebuild cannot bury
+    // the content that was actually lost. Ticket 75 named what it is instead —
+    // `information`, drawn and not counted — and moved neither number.
     const findings = collect((collector) => textFindings(
       diffRows(
         extract({ elements: units(['Wij leveren door heel Nederland']) }),
@@ -456,7 +457,7 @@ describe('textFindings', () => {
       ),
       collector,
     ));
-    expect(summarise(findings)).toMatchObject({ shown: 1, hidden: 1, total: 2 });
+    expect(summarise(findings)).toMatchObject({ work: 1, information: 1, total: 2 });
   });
 
   it('says what changed when the two sides of text are equal', () => {
@@ -1364,7 +1365,7 @@ describe('comparePage', () => {
   });
 
   it('leaves the bar alone, because the metadata is not a content difference', () => {
-    // A hidden class is out of the denominator (ticket 09) and out of the
+    // A class that is not work is out of the denominator (ticket 09) and out of the
     // find-set hash (ticket 09 again), so 96 of the 123 French pages do not each
     // arrive carrying an open finding an editor cannot close.
     const anchored = comparePage({
@@ -1376,7 +1377,7 @@ describe('comparePage', () => {
         new: extract({ store: 'fr', page: '(fr)heavy-duty-veranda', side: 'new' }),
       },
     });
-    expect(unanchored.summary.shown).toBe(anchored.summary.shown);
+    expect(unanchored.summary.work).toBe(anchored.summary.work);
     expect(unanchored.findingSetHash).toBe(anchored.findingSetHash);
   });
 
@@ -1406,7 +1407,7 @@ describe('comparePage', () => {
     expect(row.finding).toBe(report.findings[0].id);
   });
 
-  it('counts a shown and a hidden class apart', () => {
+  it('counts the three visibilities apart', () => {
     const report = comparePage({
       sides: {
         production: extract({ elements: units(['Vanaf € 799', 'Gratis bezorging']) }),
@@ -1414,20 +1415,32 @@ describe('comparePage', () => {
       },
     });
     // `Gratis bezorging` → `Snelle bezorging vandaag` scores 0.4, so it does not
-    // pair: it is a loss and an addition, and ticket 33 hides the addition.
+    // pair: it is a loss and an addition, and ticket 33 keeps the addition out of the
+    // count. `price` and `text-added` are both `information` since ticket 75.
     expect(report.summary.byClass).toEqual({
       price: 1, 'text-missing': 1, 'text-added': 1,
     });
-    expect(report.summary).toMatchObject({ shown: 1, hidden: 2, total: 3 });
+    expect(report.summary).toMatchObject({
+      work: 1, information: 2, diagnostic: 0, total: 3,
+    });
   });
 });
 
 describe('summarise', () => {
-  it('leaves a hidden class out of the shown count', () => {
+  it('tallies one count per visibility, and totals them', () => {
     expect(summarise([
       { class: 'copy', check: 'text' },
       { class: 'extra-link', check: 'links' },
-    ])).toMatchObject({ shown: 1, hidden: 1, total: 2 });
+      { class: 'redirect', check: 'links' },
+    ])).toMatchObject({ work: 1, information: 1, diagnostic: 1, total: 3 });
+  });
+
+  it('refuses a class the vocabulary does not name', () => {
+    // The writer fails the run loudly rather than tallying an unknown class as *not
+    // work*: a report on disk that quietly holds a name nothing can render is worse
+    // than a compare that stops. The browser's `visibilityOf()` is the tolerant half,
+    // and it reads what this refused to write.
+    expect(() => summarise([{ class: 'invented', check: 'text' }])).toThrow();
   });
 });
 
@@ -1452,11 +1465,13 @@ describe('summariseReports', () => {
   /**
    * @param {boolean} comparable
    * @param {Record<string, number>} byClass
-   * @param {{ shown: number, total: number }} counts
+   * @param {{ work: number, total: number }} counts
    */
   const report = (comparable, byClass, counts) => ({
     comparable,
-    summary: { ...counts, hidden: counts.total - counts.shown, byClass, byCheck: {} },
+    summary: {
+      ...counts, information: counts.total - counts.work, diagnostic: 0, byClass, byCheck: {},
+    },
   });
 
   it('counts every crawled page but measures only the comparable ones', () => {
@@ -1464,37 +1479,37 @@ describe('summariseReports', () => {
     // counting its zero would drag the median down for a reason that has nothing
     // to do with the rules.
     const result = summariseReports([
-      report(true, { copy: 4 }, { shown: 4, total: 4 }),
-      report(true, { copy: 40 }, { shown: 40, total: 40 }),
-      report(false, {}, { shown: 0, total: 0 }),
+      report(true, { copy: 4 }, { work: 4, total: 4 }),
+      report(true, { copy: 40 }, { work: 40, total: 40 }),
+      report(false, {}, { work: 0, total: 0 }),
     ]);
     expect(result).toMatchObject({
       crawled: 3,
       comparable: 2,
       findings: 44,
-      shown: 44,
-      medianShown: 22,
+      work: 44,
+      medianWork: 22,
       cleanPages: 0,
     });
   });
 
   it('adds the class tally over the pages', () => {
     const result = summariseReports([
-      report(true, { copy: 2, 'text-added': 1 }, { shown: 2, total: 3 }),
-      report(true, { copy: 3 }, { shown: 3, total: 3 }),
+      report(true, { copy: 2, 'text-added': 1 }, { work: 2, total: 3 }),
+      report(true, { copy: 3 }, { work: 3, total: 3 }),
     ]);
     expect(result.byClass).toEqual({ copy: 5, 'text-added': 1 });
   });
 
-  it('counts a page with only hidden findings as clean', () => {
-    // The gate reads `shown`, because a hidden class is not work for an editor.
-    const result = summariseReports([report(true, { 'text-added': 6 }, { shown: 0, total: 6 })]);
-    expect(result).toMatchObject({ cleanPages: 1, shown: 0, findings: 6 });
+  it('counts a page with no work on it as clean', () => {
+    // The gate reads `work`, because nothing else is work for an editor.
+    const result = summariseReports([report(true, { 'text-added': 6 }, { work: 0, total: 6 })]);
+    expect(result).toMatchObject({ cleanPages: 1, work: 0, findings: 6 });
   });
 
   it('gives zeroes rather than NaN when nothing is comparable', () => {
-    const result = summariseReports([report(false, {}, { shown: 0, total: 0 })]);
-    expect(result).toMatchObject({ crawled: 1, comparable: 0, medianShown: 0, medianTotal: 0 });
+    const result = summariseReports([report(false, {}, { work: 0, total: 0 })]);
+    expect(result).toMatchObject({ crawled: 1, comparable: 0, medianWork: 0, medianTotal: 0 });
   });
 });
 

@@ -19,7 +19,7 @@
 
 // The closed vocabulary, for the **order** of the class groups and nothing else. The
 // import site is `vocabulary.mjs` for the reason `classes.mjs` states.
-import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
+import { FINDING_CLASSES, isWork } from '../../../compare/vocabulary.mjs';
 
 /**
  * @typedef {object} ContentFilter
@@ -85,7 +85,7 @@ export function toggleClass(filter, cls) {
  * @property {boolean} equal            Both sides are present and their `norm` is the
  *                                     same string. The renderer must not diff it.
  * @property {number | null} score
- * @property {object | null} finding    The **derived** finding, with `state` and `shown`.
+ * @property {object | null} finding    The **derived** finding, with `state` and `visibility`.
  * @property {ContentUnit | null} prod
  * @property {ContentUnit | null} new
  */
@@ -109,10 +109,15 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
   for (const row of rows) {
     const finding = row.finding ? byId.get(row.finding) ?? null : null;
 
-    // The toggle asks about the **class** and about nothing else. A row a rule saw
-    // but does not draw as work is noise; what an editor decided about a row in a
-    // shown class never moves it out from under this toggle.
-    const noise = Boolean(row.class) && !finding?.shown;
+    // The toggle asks about the **class** and about nothing else. Noise is a
+    // `diagnostic` row — what the rule saw, for the author of the rule. An
+    // `information` row is drawn beside the work and simply counts nowhere, and what
+    // an editor decided about a row never moves it out from under this toggle.
+    //
+    // A row that carries a class the derivation did not reach is noise as well: that
+    // is `visibilityOf()`'s answer for a name the vocabulary does not hold, and it is
+    // the behaviour `!finding?.shown` had before ticket 75.
+    const noise = Boolean(row.class) && (finding?.visibility ?? 'diagnostic') === 'diagnostic';
     if (noise && !showNoise) continue;
 
     const prod = row.prod === null ? null : elements.production[row.prod] ?? null;
@@ -264,9 +269,9 @@ export function pagesWithClasses(pages, classes) {
  * hold at most one finding with this key — measured over the corpus, 25,657 repeats
  * and no exception. `on` says it in its shape: one entry is a page and its finding.
  *
- * The caller decides which findings reach here. `loadSummaries()` keeps the shown
- * classes only, so a hidden class is out of this list for the same reason ticket 09
- * keeps it out of the bar.
+ * The caller decides which findings reach here. `loadSummaries()` keeps the `work`
+ * classes only, so a class that is not work is out of this list for the same reason
+ * ticket 09 keeps it out of the bar.
  *
  * @typedef {object} Repeat
  * @property {string} key       The grouping, printable. Not an identity.
@@ -387,14 +392,14 @@ export function groupRepeatsByClass(repeats, classes = []) {
 
   // Which classes are drawn. With a pill on it is the selected ones and nothing else:
   // opening a group is not a filter, so the two controls must not be able to tell
-  // different stories about what is included. With no pill on it is every shown class,
+  // different stories about what is included. With no pill on it is every `work` class,
   // empty ones as well — *nothing wrong here* and *this class does not exist* are two
   // different answers, and a reader who cannot tell them apart does not know whether the
-  // rule ran. A hidden class is drawn only when it holds something, which is the noise
-  // toggle's repeats arriving in a group of their own rather than mixed into a shown one.
+  // rule ran. Any other class is drawn only when it holds something, which is the noise
+  // toggle's repeats arriving in a group of their own rather than mixed into a work one.
   const isDrawn = classes.length > 0
     ? (cls) => classes.includes(cls)
-    : (cls) => FINDING_CLASSES[cls]?.shown || byClass.has(cls);
+    : (cls) => isWork(cls) || byClass.has(cls);
 
   // A class the closed vocabulary does not name cannot be ordered by it, so it goes last
   // rather than nowhere. Nothing reaches here today that is not in the vocabulary; the

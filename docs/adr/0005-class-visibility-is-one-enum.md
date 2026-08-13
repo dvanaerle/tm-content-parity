@@ -44,6 +44,13 @@ once, in git, into `information` or `diagnostic`. So the denominator is unchange
 the day the field lands, and the change is legible: it renames a boolean and splits
 the false side.
 
+> **Landed 2026-08-13, ticket 75, and the migration held.** Twelve classes are `work`,
+> five `information`, five `diagnostic` — ten on the false side and not the nine this ADR
+> counted, because ticket 54 added `no-declared-alternate` in between. Re-measured over
+> the same 816 reports: **28,462 work findings before and after, on every store**, no
+> `findingSetHash` and no class tally changed. What did change is that **11,643 findings
+> left the noise toggle** and are drawn by default, which is the split doing its job.
+
 `work` counts. `information` renders and does not count. `diagnostic` stays behind
 the noise toggle. A dismissal moves findings into the numerator.
 

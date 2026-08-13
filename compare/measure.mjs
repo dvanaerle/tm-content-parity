@@ -14,7 +14,7 @@
 
 import { readdir, readFile } from 'node:fs/promises';
 
-import { FINDING_CLASSES } from './contract.mjs';
+import { visibilityOf } from './contract.mjs';
 import { summariseReports } from './findings.mjs';
 
 const REPORTS = new URL('../data/reports/', import.meta.url);
@@ -34,15 +34,15 @@ console.log(`store            ${only ?? '(all)'}`);
 console.log(`crawled          ${result.crawled}`);
 console.log(`comparable       ${result.comparable}`);
 console.log(`findings         ${result.findings}`);
-console.log(`shown            ${result.shown}`);
-console.log(`median shown     ${result.medianShown} a page`);
+console.log(`work             ${result.work}`);
+console.log(`median work      ${result.medianWork} a page`);
 console.log(`median total     ${result.medianTotal} a page`);
 console.log(`pages with none  ${result.cleanPages}`);
 console.log('\nby class:');
 
 const rows = Object.entries(result.byClass).sort((a, b) => b[1] - a[1]);
 for (const [cls, count] of rows) {
-  const visibility = FINDING_CLASSES[cls]?.shown ? 'shown ' : 'hidden';
+  const visibility = visibilityOf(cls).padEnd(11);
   const share = result.findings ? ((count / result.findings) * 100).toFixed(1) : '0.0';
   console.log(`  ${String(count).padStart(6)}  ${share.padStart(5)}%  ${visibility}  ${cls}`);
 }

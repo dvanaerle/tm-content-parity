@@ -105,8 +105,8 @@ async function run(job) {
     unitsRemoved: region?.units ?? 0,
     findingsBefore: before.findings.length,
     findingsAfter: after.findings.length,
-    shownBefore: before.summary.shown,
-    shownAfter: after.summary.shown,
+    workBefore: before.summary.work,
+    workAfter: after.summary.work,
     goneByClass: countBy(gone),
     appearedByClass: countBy(appeared),
     appearedRows: appeared.map((f) => ({ class: f.class, prod: f.prod, new: f.new })),
@@ -149,8 +149,8 @@ const total = (list) => ({
   pagesWithBanner: list.filter((row) => row.matches > 0).length,
   findingsBefore: sum(list, 'findingsBefore'),
   findingsAfter: sum(list, 'findingsAfter'),
-  shownBefore: sum(list, 'shownBefore'),
-  shownAfter: sum(list, 'shownAfter'),
+  workBefore: sum(list, 'workBefore'),
+  workAfter: sum(list, 'workAfter'),
   gone: sum(list, 'findingsBefore') - sum(list, 'findingsAfter'),
   appeared: list.reduce((n, row) => n + Object.values(row.appearedByClass ?? {}).reduce((a, b) => a + b, 0), 0),
 });
@@ -167,7 +167,7 @@ console.log(`\ncorpus: ${corpus.pages} pages, ${corpus.comparable} comparable, `
   + `banner on ${corpus.pagesWithBanner}.`);
 console.log(`findings ${corpus.findingsBefore} → ${corpus.findingsAfter} `
   + `(${corpus.gone} gone, ${(100 * corpus.gone / corpus.findingsBefore).toFixed(1)}%), `
-  + `shown ${corpus.shownBefore} → ${corpus.shownAfter}.`);
+  + `work ${corpus.workBefore} → ${corpus.workAfter}.`);
 console.log(`appeared: ${corpus.appeared}`);
 
 console.log('\nby store:');

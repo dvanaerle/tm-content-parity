@@ -238,7 +238,7 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Class group** — the repeats of one class in *Verschillen*, under a label carrying
   the class and how many repeats it holds. The groups are in the vocabulary's order
   and never in the counts' order, because a group that moves position as the work is
-  done is a group nobody can learn where to look for. A shown class with no repeats is
+  done is a group nobody can learn where to look for. A `work` class with no repeats is
   a group that says so: "nothing wrong here" and "this class does not exist" are two
   different answers. **Opening a group is not a filter**: it changes what is drawn and
   never what is included, so it is session state, it never enters the amber strip and
@@ -399,9 +399,9 @@ this list already defines.
   twice.
 - **Closed** — a finding that is absent from the snapshot, or dismissed, or
   claimed fixed and not contradicted.
-- **Denominator** — the findings in **shown** classes on this snapshot. A dismissal moves
+- **Denominator** — the findings in **`work`** classes on this snapshot. A dismissal moves
   them into the numerator. Nothing takes them out of it: the mute did, and ADR 0011
-  withdrew it, so a difference in a shown class is either open work or work an editor
+  withdrew it, so a difference in a `work` class is either open work or work an editor
   closed. Whether something is work at all is a property of the **class** — its
   visibility — and never of a place on a page.
 - **Absolute counts go next to each percentage.** The denominator moves at each

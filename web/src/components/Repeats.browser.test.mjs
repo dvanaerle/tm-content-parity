@@ -45,7 +45,7 @@ const other = {
 };
 
 const derived = (id, extra = {}) => ({
-  id, state: 'open', shown: true, class: 'copy', anchorHeading: 'Afmetingen', occurrences: 1, ...extra,
+  id, state: 'open', visibility: 'work', class: 'copy', anchorHeading: 'Afmetingen', occurrences: 1, ...extra,
 });
 
 const byFinding = (overrides = {}) => new Map(

@@ -94,8 +94,8 @@ export function compareImages(production, next, collector) {
   for (const [key, image] of newImages) {
     if (prodImages.has(key)) continue;
     collector.add({
-      // Hidden for the same reason as `extra-link`: unhidden it double-counts
-      // every content block the text diff already reports as an addition.
+      // Out of the count for the same reason as `extra-link`: counted, it would
+      // double every content block the text diff already reports as an addition.
       class: IMAGE_CAMPAIGN.test(key) ? 'image-campaign' : 'image-added',
       prod: null,
       new: key,

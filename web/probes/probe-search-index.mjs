@@ -192,7 +192,7 @@ function queryTable(measured) {
 
 // Worst case is the largest store, and largest is counted in findings rather than in
 // pages or in bytes: the scan is a loop over `findings`, so that is the number the query
-// time is a function of. It is **be_fr** and not nl — the French stores carry more shown
+// time is a function of. It is **be_fr** and not nl — the French stores carry more work
 // findings than the Dutch one — so nl is timed beside it, because nl is the store the
 // comment in `reports.mjs` measured its own payload on.
 const asked = process.argv.slice(2);

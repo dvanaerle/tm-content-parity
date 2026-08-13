@@ -17,7 +17,7 @@
  * | `severe`    | the new site is wrong on its own terms — a dead or leaked link |
  * | `attention` | something changed and an editor decides what to do about it  |
  * | `info`      | done, or information the editor did not ask for              |
- * | `neutral`   | hidden, or off, or carrying no judgement                     |
+ * | `neutral`   | not work, or off, or carrying no judgement                   |
  * | `dark`      | a total, which is not a judgement at all                     |
  *
  * `lost` and `added` are the only red and the only green in the interface. No

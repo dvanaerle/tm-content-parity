@@ -4,14 +4,16 @@
  * label an editor reads. The tone's pixels come from `palette.mjs`, which is the
  * one place a colour is defined.
  *
- * The tone rule is one rule: a class hidden by default is grey. Ticket 09 gives
- * a hidden class no place in the bar either, so nothing coloured is ever
- * something the editor was not asked to look at.
+ * The tone rule is one rule: a class that is not `work` is grey. Ticket 09 gives it
+ * no place in the bar either, so nothing coloured is ever something the editor was
+ * not asked to look at. Ticket 75 split the grey half in two — `information` renders
+ * and `diagnostic` sits behind the noise toggle — and it is one tone, because the
+ * colour answers *is this work* and that answer is the same for both.
  */
 
 // `vocabulary.mjs`, not `contract.mjs`: the contract also makes finding ids and
 // needs `node:crypto`, which a browser bundle cannot resolve.
-import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
+import { FINDING_CLASSES, isWork, visibilityOf } from '../../../compare/vocabulary.mjs';
 import { PILL } from './palette.mjs';
 
 /**
@@ -46,31 +48,35 @@ export const CHECK_LABEL = {
 };
 
 /**
+ * The class is the whole input. It was the class and its record, and the record was
+ * the caller's second reading of the same table — which is one more place for a
+ * class that is not in it to be handled differently.
+ *
  * @param {string} cls
- * @param {import('../../../compare/vocabulary.mjs').FindingClass | undefined} record
  * @returns {import('./palette.mjs').Tone}
  */
-function toneOf(cls, record) {
-  if (!record?.shown) return 'neutral';
-  if (record.direction === 'lost') return 'lost';
+function toneOf(cls) {
+  if (!isWork(cls)) return 'neutral';
+  if (FINDING_CLASSES[cls].direction === 'lost') return 'lost';
   return TONE[cls] ?? 'attention';
 }
 
 /**
  * @param {string} cls
- * @returns {{ class: string, check: string, shown: boolean, meaning: string,
+ * @returns {{ class: string, check: string,
+ *   visibility: import('../../../compare/vocabulary.mjs').Visibility, meaning: string,
  *   direction: 'lost' | 'added' | null, tone: import('./palette.mjs').Tone, pill: string }}
  */
 export function classInfo(cls) {
   const record = FINDING_CLASSES[cls];
-  const tone = toneOf(cls, record);
+  const tone = toneOf(cls);
   return {
     class: cls,
     check: record?.check ?? 'text',
-    shown: record?.shown ?? false,
+    visibility: visibilityOf(cls),
     meaning: record?.meaning ?? '',
     // The diff paints a whole cell only on a one-sided class, so it needs the
-    // direction itself and not the tone: `text-added` is hidden by default and
+    // direction itself and not the tone: `text-added` is `information` and
     // therefore grey, and its cell is still green.
     direction: record?.direction ?? null,
     tone,
@@ -78,7 +84,4 @@ export function classInfo(cls) {
   };
 }
 
-/** @param {string} cls */
-export const isShown = (cls) => FINDING_CLASSES[cls]?.shown ?? false;
-
-export { FINDING_CLASSES };
+export { FINDING_CLASSES, isWork, visibilityOf };

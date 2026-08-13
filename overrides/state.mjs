@@ -11,7 +11,7 @@
  * what they add up to. `contradicted` in particular is derived and never written.
  */
 
-import { FINDING_CLASSES } from '../compare/vocabulary.mjs';
+import { visibilityOf } from '../compare/vocabulary.mjs';
 
 /**
  * One row of the append-only `overrides` table, in the shape the port hands over.
@@ -145,7 +145,10 @@ export function derivePageState({ report, events, observationId = report.observa
 const decided = (finding, state, override) => ({
   ...finding,
   state,
-  shown: Boolean(FINDING_CLASSES[finding.class]?.shown),
+  // The class's visibility, carried on the finding so that every reader of a derived
+  // finding — the bar, the ledger's toggle, a landing — asks the vocabulary once and
+  // in one place. `work` counts, `information` renders, `diagnostic` is noise.
+  visibility: visibilityOf(finding.class),
   override: override
     ? {
       action: override.action,
@@ -182,9 +185,11 @@ export function clearedEventFor(finding) {
 /**
  * The page bar, from ticket 09.
  *
- * - A **hidden class is in neither** the numerator nor the denominator, or the bar
- *   could never reach zero.
- * - **Nothing leaves the denominator.** It is the shown findings on this snapshot,
+ * - **Only `work` is in the bar.** Anything else is in neither the numerator nor the
+ *   denominator, or the bar could never reach zero. Since ticket 75 that is one word
+ *   on the class and not a boolean: `information` renders beside the work and counts
+ *   nowhere, `diagnostic` stays behind the noise toggle.
+ * - **Nothing leaves the denominator.** It is the `work` findings on this snapshot,
  *   full stop. The one override that used to take findings out of it was withdrawn by
  *   ADR 0011, and whether something is work at all is now a property of the class alone
  *   and never of a place on a page. So there is no count of findings that are *outside*
@@ -205,13 +210,13 @@ export function clearedEventFor(finding) {
  * @param {ReturnType<typeof decided>[]} findings
  */
 export function barOf(findings) {
-  const shown = findings.filter((finding) => finding.shown);
-  const count = (/** @type {FindingState} */ state) => shown.filter((f) => f.state === state).length;
+  const work = findings.filter((finding) => finding.visibility === 'work');
+  const count = (/** @type {FindingState} */ state) => work.filter((f) => f.state === state).length;
 
   const dismissed = count('dismissed');
   const fixed = count('fixed');
   const contradicted = count('contradicted');
-  const denominator = shown.length;
+  const denominator = work.length;
 
   return {
     closed: dismissed + fixed,
@@ -228,7 +233,7 @@ export function barOf(findings) {
  * when that set stops matching — *changed since review*, never *needs review*.
  * Ticket 09: a review never expires on its own, or the log manufactures work.
  *
- * The hash covers the shown classes only (`findingSetHash()`), so a change confined to
+ * The hash covers the `work` classes only (`findingSetHash()`), so a change confined to
  * what the tool does not put up as work does not stale every review on the page.
  *
  * @param {Map<string, OverrideEvent>} current

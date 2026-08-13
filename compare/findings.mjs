@@ -11,7 +11,7 @@
  * dismissal.
  */
 
-import { FINDING_CLASSES, findingId } from './contract.mjs';
+import { FINDING_CLASSES, findingId, VISIBILITIES } from './contract.mjs';
 
 export class FindingCollector {
   /**
@@ -93,24 +93,33 @@ export class FindingCollector {
 
 /**
  * The counts the dashboard and the page bar read. Ticket 09: always show
- * absolute numbers, because the denominator moves; a hidden class is not in the
- * bar at all, because the tool must never make a finding it then hides.
+ * absolute numbers, because the denominator moves; a class that is not `work` is
+ * not in the bar at all, because the tool must never count a finding it does not
+ * put up as work.
+ *
+ * One tally per visibility since ticket 75. `total` is their sum, and no reader has
+ * to subtract two numbers to learn how many findings are behind the noise toggle.
  *
  * @param {import('./contract.mjs').Finding[]} findings
- * @returns {{ shown: number, hidden: number, total: number, byClass: Record<string, number>, byCheck: Record<string, number> }}
+ * @returns {import('./contract.mjs').ReportSummary}
  */
 export function summarise(findings) {
   const byClass = /** @type {Record<string, number>} */ ({});
   const byCheck = /** @type {Record<string, number>} */ ({});
-  let shown = 0;
+  // Built from `VISIBILITIES` rather than written out, so the enum is named in one
+  // file: a fourth value would arrive here as a zero and never as a missing key.
+  const byVisibility = Object.fromEntries(VISIBILITIES.map((one) => [one, 0]));
 
   for (const finding of findings) {
     byClass[finding.class] = (byClass[finding.class] ?? 0) + 1;
     byCheck[finding.check] = (byCheck[finding.check] ?? 0) + 1;
-    if (FINDING_CLASSES[finding.class].shown) shown += 1;
+    // Not `visibilityOf()`: this is the writer, and a class the vocabulary does not
+    // name must fail the run loudly here rather than be tallied as *not work*. The
+    // tolerant reading belongs to the browser, which is handed whatever is on disk.
+    byVisibility[FINDING_CLASSES[finding.class].visibility] += 1;
   }
 
-  return { shown, hidden: findings.length - shown, total: findings.length, byClass, byCheck };
+  return { ...byVisibility, total: findings.length, byClass, byCheck };
 }
 
 /**
@@ -144,13 +153,13 @@ export function summariseReports(reports) {
   /** @type {Record<string, number>} */
   const byClass = {};
   let findings = 0;
-  let shown = 0;
+  let work = 0;
   let clean = 0;
 
   for (const report of comparable) {
     findings += report.summary.total;
-    shown += report.summary.shown;
-    if (report.summary.shown === 0) clean += 1;
+    work += report.summary.work;
+    if (report.summary.work === 0) clean += 1;
     for (const [cls, count] of Object.entries(report.summary.byClass)) {
       byClass[cls] = (byClass[cls] ?? 0) + count;
     }
@@ -159,8 +168,8 @@ export function summariseReports(reports) {
     crawled: reports.length,
     comparable: comparable.length,
     findings,
-    shown,
-    medianShown: median(comparable.map((report) => report.summary.shown)),
+    work,
+    medianWork: median(comparable.map((report) => report.summary.work)),
     medianTotal: median(comparable.map((report) => report.summary.total)),
     cleanPages: clean,
     byClass,

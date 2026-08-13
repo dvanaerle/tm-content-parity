@@ -172,7 +172,7 @@ const NO_EDITOR = 'Vul bovenaan je naam in om hier te beslissen. Elke beslissing
  * one roll-up **summed over findings, never over pages**.
  *
  * A `PageSummary` is a valid input to the derivation — it carries the store, the
- * page, the shown findings, the observation and the finding-set hash, which is
+ * page, the work findings, the observation and the finding-set hash, which is
  * everything `derivePageState()` reads. So the dashboard and the page agree by
  * construction rather than by two implementations of the same rules.
  *
