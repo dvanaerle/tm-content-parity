@@ -1,7 +1,12 @@
 # PRD — The log becomes a workspace
 
 Type: prd
-Status: ready-for-agent
+Status: live, half delivered — 2026-08-13: of the twenty tickets it names, **ten have
+landed** (31, 72, 73, 75, 76, 81, 82, 88, 89, 90), **one is parked** (84, `wontfix` with
+20), and **nine are open** (74, 77, 78, 79, 80, 83, 85, 86, 87). A PRD is not an agent
+task and takes no triage role; the roles in `docs/agents/triage-labels.md` belong to the
+tickets. **This document does not track the tickets opened after it** — 91 onwards are in
+`map.md`, which is where the working order lives.
 Parent: map.md
 Origin: the product proposal of 2026-08-10, and the grilling session that read it
 against the code and the corpus.
@@ -11,7 +16,10 @@ words this repo has retired and asked for several things that were refused with 
 The corrections are in **Further notes**. Where this document and the draft disagree,
 this one is live.
 
-Nineteen tickets carry the work. Five ADRs carry the decisions. This document says why.
+Nineteen tickets carry the work — **72 to 90**, opened together in commit `11d4f4b`.
+**Ticket 31 makes a twentieth**: it pre-dates this document and was folded into the list
+rather than reopened, which is why *The tickets* below names twenty. Five ADRs carry the
+decisions. This document says why.
 
 > **The mute is withdrawn, 2026-08-13.** [ADR
 > 0011](../../docs/adr/0011-the-mute-is-withdrawn.md) supersedes ADR 0008 and removes the

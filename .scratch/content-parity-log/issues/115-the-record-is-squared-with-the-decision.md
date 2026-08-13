@@ -43,7 +43,10 @@ No source changes. This is the half of a deprecation that gets skipped.
       through — it was built and it worked.
 - [x] **`PRD.md:457`** — *Remove Class Mute | refused* — is annotated with the reversal, its
       date and the ADR. The refusal stays legible; a reader must be able to see that this
-      was decided twice and why the second answer differs.
+      was decided twice and why the second answer differs. — *the line number is the file as
+      it stood before this ticket's own annotations moved it. The row is in the*
+      Corrections to the superseded draft *table, and every live citation of the PRD by
+      line was replaced with a section anchor on 2026-08-13.*
 - [x] ~~**`WORKLIST.md:170`**~~ — the open step *"00b — Make the first real mute. Nobody has made
       one yet"* — is closed as *will not happen*, with the reason. It is the cleanest
       statement of the evidence in the repo and it should not simply disappear.

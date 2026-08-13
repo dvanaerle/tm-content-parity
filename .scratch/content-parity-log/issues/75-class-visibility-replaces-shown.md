@@ -1,7 +1,11 @@
 # 75 — Class visibility replaces the shown boolean
 
 Type: task
-Status: done
+Status: resolved 2026-08-13 — built and measured; every criterion met and the denominator
+moved on no store. The answer is under `## Comments` below rather than `## Answer`.
+(Recorded as `done` until 2026-08-13; that word is not in the vocabulary
+`docs/agents/triage-labels.md` sets, and a frontier scan reads it as neither open nor
+resolved.)
 Blocked by: None — can start immediately. **The sequencing question is settled: 114 landed
 first, 2026-08-13.** So the second branch of the note below is the live one — the mute
 criterion is already void, it is struck in place, and the count-neutrality this ticket

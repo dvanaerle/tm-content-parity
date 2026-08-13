@@ -4,8 +4,9 @@ Supersedes [ADR 0008](0008-the-mute-key-carries-the-anchor-heading.md).
 
 The `muted` override and the `page-class` scope leave the model. A dismissal — keyed on
 the finding id, expiring the moment either text changes — is the only judgement an editor
-can make about a difference. This reverses the refusal recorded in `PRD.md:457`
-(*Remove Class Mute | refused*), and it reverses it for two reasons, in this order.
+can make about a difference. This reverses the refusal recorded in `PRD.md` — *Further
+notes* → *Corrections to the superseded draft*, the row reading *Remove Class Mute |
+refused* — and it reverses it for two reasons, in this order.
 
 ## The evidence: it was built, tried, and never adopted
 

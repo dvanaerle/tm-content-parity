@@ -214,8 +214,8 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   admits a search. See
   [102](issues/102-the-class-pills-survive-a-search.md).
 - **The mute is withdrawn, and a dismissal is the only judgement.** This reverses the
-  refusal three entries above — *class mute is not removed* — and `PRD.md:457` carries the
-  reversal beside the refusal. Two reasons, in this order. **The evidence**: the table holds
+  refusal three entries above — *class mute is not removed* — and `PRD.md`'s *Corrections to
+  the superseded draft* table carries the reversal beside the refusal. Two reasons, in this order. **The evidence**: the table holds
   eleven `muted` rows, every one on `nl`, every one by the same editor, **ten revoked by
   their own author**, six noted `Test` or a misspelling of it; the one left standing was
   annotated `"Negeren"`, the name of the other control. Nobody ever made the first real

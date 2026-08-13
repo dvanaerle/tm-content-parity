@@ -1,7 +1,10 @@
 # 15 — Malformed markup in the header on the new site
 
 Type: task
-Status: closed — out of scope
+Status: wontfix — out of scope. (Recorded as `closed` until 2026-08-13; `closed` is not in
+the vocabulary `docs/agents/triage-labels.md` sets. It is a storefront defect the log
+found, not a request for this tool, so it stays here rather than moving to
+`.out-of-scope/`, which is the knowledge base of refused feature requests.)
 Blocked by: —
 Parent: ../map.md
 
