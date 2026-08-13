@@ -33,15 +33,15 @@ describe('pageHref, asked for a finding', () => {
   // names it, and the page lands on it.
   it('carries the finding id', () => {
     expect(pageHref('nl', 'lighting-system/productinformatie', { finding: 'abc123' }))
-      .toBe('/nl/lighting-system/productinformatie/?bevinding=abc123');
+      .toBe('/nl/lighting-system/productinformatie/?finding=abc123');
   });
 
   // The screen the editor left, so the way back is that screen and not a bare store.
   // It is a query string inside a query string, so it has to arrive encoded or the
   // page would read the dashboard's own keys as its own.
   it('carries the dashboard it was clicked from, encoded', () => {
-    expect(pageHref('nl', 'faq', { finding: 'abc123', back: 'weergave=pages&soort=copy' }))
-      .toBe('/nl/faq/?bevinding=abc123&terug=weergave%3Dpages%26soort%3Dcopy');
+    expect(pageHref('nl', 'faq', { finding: 'abc123', back: 'view=pages&classes=copy' }))
+      .toBe('/nl/faq/?finding=abc123&back=view%3Dpages%26classes%3Dcopy');
   });
 });
 
@@ -51,17 +51,17 @@ describe('reading a link back', () => {
   // must read as null rather than as an empty string somebody has to remember to
   // check.
   it('reads the finding and the way back off a link it wrote', () => {
-    const href = pageHref('nl', 'faq', { finding: 'abc123', back: 'weergave=pages&soort=copy' });
+    const href = pageHref('nl', 'faq', { finding: 'abc123', back: 'view=pages&classes=copy' });
     const search = href.slice(href.indexOf('?'));
 
     expect(findingInSearch(search)).toBe('abc123');
-    expect(backInSearch(search)).toBe('weergave=pages&soort=copy');
+    expect(backInSearch(search)).toBe('view=pages&classes=copy');
   });
 
   it('says null when a link asked for nothing', () => {
     expect(findingInSearch('')).toBe(null);
     expect(backInSearch('')).toBe(null);
-    expect(findingInSearch('?bevinding=')).toBe(null);
+    expect(findingInSearch('?finding=')).toBe(null);
   });
 });
 
@@ -75,7 +75,7 @@ describe('storeHref', () => {
   });
 
   it('returns to the screen that was left', () => {
-    expect(storeHref('nl', 'weergave=pages&soort=copy')).toBe('/nl/?weergave=pages&soort=copy');
+    expect(storeHref('nl', 'view=pages&classes=copy')).toBe('/nl/?view=pages&classes=copy');
   });
 });
 

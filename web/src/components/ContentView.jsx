@@ -141,8 +141,8 @@ function Controls({ classes, filter, setFilter, production, next, page, store })
 
       <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
         Markdown:
-        <Export markdown={production.markdown} name={`${store}-${slug(page)}-productie.md`}>productie</Export>
-        <Export markdown={next.markdown} name={`${store}-${slug(page)}-nieuw.md`}>nieuwe site</Export>
+        <Export markdown={production.markdown} name={`${store}-${slug(page)}-production.md`}>production</Export>
+        <Export markdown={next.markdown} name={`${store}-${slug(page)}-new.md`}>new site</Export>
       </span>
     </div>
   );

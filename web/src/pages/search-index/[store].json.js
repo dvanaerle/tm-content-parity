@@ -8,7 +8,7 @@ import { loadSearchIndex, storesInLog } from '../../lib/reports.mjs';
  * meant to be — ticket 38 settled that there is no all-stores surface, and a cross-store
  * index would be the back door to one.
  *
- * It sits at `/zoekindex/<store>.json` and not under `/<store>/`, where the catch-all
+ * It sits at `/search-index/<store>.json` and not under `/<store>/`, where the catch-all
  * `[...page].astro` would be its neighbour: a page key can hold a slash, so a route under
  * the store is a route in the same space the page keys live in.
  */

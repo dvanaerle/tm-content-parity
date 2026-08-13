@@ -23,7 +23,7 @@ const encodePage = (page) => page.split('/').map(encodeURIComponent).join('/');
  * row anchor `p12` is production's document position, which only the page's own report
  * knows. So the link names the finding and the page resolves it.
  */
-export const FINDING_PARAM = 'bevinding';
+export const FINDING_PARAM = 'finding';
 
 /**
  * The screen a link came from: the dashboard's own query string, carried through so
@@ -33,7 +33,7 @@ export const FINDING_PARAM = 'bevinding';
  * drops the rest. That is what makes it safe to put a value off the address bar into
  * a link the page draws.
  */
-export const BACK_PARAM = 'terug';
+export const BACK_PARAM = 'back';
 
 /**
  * The link to one page of the log.

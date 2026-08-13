@@ -118,7 +118,7 @@ export default function Search({
           </strong>
           <span className="text-muted-foreground">
             {result.repeats.length > 1 && ` in ${result.repeats.length} verschillen`}
-            . Uit de snapshot van {new Date(index.builtAt).toLocaleDateString('nl-NL')} —
+            . Uit de snapshot van {new Date(index.builtAt).toLocaleDateString('en-GB')} —
             de getallen bovenaan veranderen niet mee.
           </span>
         </p>
@@ -229,7 +229,7 @@ function Notes({ notes, link }) {
               </a>
               <span className="ml-2 text-muted-foreground">{note.note}</span>
               <span className="ml-2 text-xs text-muted-foreground">
-                {note.editor}, {new Date(note.createdAt).toLocaleDateString('nl-NL')}
+                {note.editor}, {new Date(note.createdAt).toLocaleDateString('en-GB')}
               </span>
             </li>
           ))}

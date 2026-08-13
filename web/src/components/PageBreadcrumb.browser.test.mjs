@@ -32,11 +32,11 @@ afterEach(() => {
 
 describe('PageBreadcrumb', () => {
   it('returns to the screen the editor left', () => {
-    history.replaceState(null, '', '?bevinding=a1&terug=weergave%3Dpages%26soort%3Dcopy');
+    history.replaceState(null, '', '?finding=a1&back=view%3Dpages%26classes%3Dcopy');
 
     const unmount = mount();
 
-    expect(storeRung().getAttribute('href')).toBe('/nl/?weergave=pages&soort=copy');
+    expect(storeRung().getAttribute('href')).toBe('/nl/?view=pages&classes=copy');
     unmount();
   });
 
@@ -49,19 +49,19 @@ describe('PageBreadcrumb', () => {
     unmount();
   });
 
-  // The seam this file exists for. `terug` is a query string that travelled through a link
+  // The seam this file exists for. `back` is a query string that travelled through a link
   // and came back off the address bar, so anyone can put anything in it. What reaches the
   // href is only ever the keys this dashboard has.
-  it('launders a terug value a stranger wrote', () => {
+  it('launders a back value a stranger wrote', () => {
     history.replaceState(
       null,
       '',
-      '?terug=' + encodeURIComponent('weergave=pages&onbekend=x&script=<img src=x onerror=alert(1)>'),
+      '?back=' + encodeURIComponent('view=pages&unknown=x&script=<img src=x onerror=alert(1)>'),
     );
 
     const unmount = mount();
 
-    expect(storeRung().getAttribute('href')).toBe('/nl/?weergave=pages');
+    expect(storeRung().getAttribute('href')).toBe('/nl/?view=pages');
     unmount();
   });
 

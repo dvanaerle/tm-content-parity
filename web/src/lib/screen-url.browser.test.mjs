@@ -54,7 +54,7 @@ describe('useScreen', () => {
   // The case the ticket exists for, from the receiving end: an editor presses Back onto
   // a dashboard whose URL carries a filter, and the pills have to come back on.
   it('restores the screen the address bar carries', () => {
-    history.replaceState(null, '', '?weergave=pages&soort=copy');
+    history.replaceState(null, '', '?view=pages&classes=copy');
 
     const { seen, unmount } = mount();
 
@@ -67,11 +67,11 @@ describe('useScreen', () => {
   // effect, so the mirror must not fire before that read or it writes the default
   // screen over the query it was about to restore.
   it('does not wipe the query it is about to read', () => {
-    history.replaceState(null, '', '?soort=copy');
+    history.replaceState(null, '', '?classes=copy');
 
     const { seen, unmount } = mount();
 
-    expect(location.search).toBe('?soort=copy');
+    expect(location.search).toBe('?classes=copy');
     expect(seen.screen.classes).toEqual(['copy']);
     unmount();
   });
@@ -83,7 +83,7 @@ describe('useScreen', () => {
     act(() => seen.patch({ classes: ['casing'] }));
     await mirrored();
 
-    expect(location.search).toBe('?soort=casing');
+    expect(location.search).toBe('?classes=casing');
     unmount();
   });
 
@@ -98,7 +98,7 @@ describe('useScreen', () => {
 
     await mirrored();
 
-    expect(location.search).toBe('?zoek=terras');
+    expect(location.search).toBe('?query=terras');
     unmount();
   });
 

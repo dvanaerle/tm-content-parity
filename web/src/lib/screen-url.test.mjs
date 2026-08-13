@@ -24,7 +24,7 @@ describe('the class pills', () => {
   it('survive the trip out to a link and back', () => {
     const filtered = { ...SCREEN, classes: ['copy', 'casing'] };
 
-    expect(searchFromScreen(filtered)).toBe('soort=copy%2Ccasing');
+    expect(searchFromScreen(filtered)).toBe('classes=copy%2Ccasing');
     expect(screenFromSearch(searchFromScreen(filtered))).toEqual(filtered);
   });
 
@@ -32,7 +32,7 @@ describe('the class pills', () => {
   // rules no longer have would narrow the list to nothing, and the screen would look
   // broken rather than looking like the link was stale.
   it('drop a class the vocabulary does not name', () => {
-    expect(screenFromSearch('soort=copy,verzonnen,casing').classes).toEqual(['copy', 'casing']);
+    expect(screenFromSearch('classes=copy,invented,casing').classes).toEqual(['copy', 'casing']);
   });
 });
 
@@ -40,45 +40,45 @@ describe('the view and the search term', () => {
   it('survive the trip out to a link and back', () => {
     const screen = { ...SCREEN, view: 'pages', query: 'bekijk alle deals' };
 
-    expect(searchFromScreen(screen)).toBe('weergave=pages&zoek=bekijk+alle+deals');
+    expect(searchFromScreen(screen)).toBe('view=pages&query=bekijk+alle+deals');
     expect(screenFromSearch(searchFromScreen(screen))).toEqual(screen);
   });
 
   // There are two views and a link can name a third. The default wins, because a
   // dashboard drawing neither list is not a state this screen has.
   it('refuse a view this screen does not have', () => {
-    expect(screenFromSearch('weergave=taken').view).toBe('repeats');
+    expect(screenFromSearch('view=taken').view).toBe('repeats');
   });
 });
 
 describe('reading a query that came from outside', () => {
-  // This is the boundary. `terug` is a query string that travelled through a link and
+  // This is the boundary. `back` is a query string that travelled through a link and
   // came back off the address bar, and the page draws a link out of it — so what comes
   // out of here has to be a screen this dashboard has and nothing else. A round trip
   // through both functions is what the back link does, and it is what launders it.
   it('keeps the keys it knows and drops everything else', () => {
-    const outside = 'weergave=pages&onbekend=x&script=%3Cimg+src%3Dx+onerror%3Dalert(1)%3E';
+    const outside = 'view=pages&unknown=x&script=%3Cimg+src%3Dx+onerror%3Dalert(1)%3E';
 
     expect(screenFromSearch(outside)).toEqual({ ...SCREEN, view: 'pages' });
-    expect(searchFromScreen(screenFromSearch(outside))).toBe('weergave=pages');
+    expect(searchFromScreen(screenFromSearch(outside))).toBe('view=pages');
   });
 });
 
 describe('a control that belongs to one view', () => {
-  // The sort orders the page list. Carried into *Verschillen* it would be a link
+  // The sort orders the page list. Carried into *Repeats* it would be a link
   // promising an order that orders nothing on screen.
   it('writes the sort only while the page list is the view', () => {
     expect(searchFromScreen({ ...SCREEN, sort: 'name' })).toBe('');
     expect(searchFromScreen({ ...SCREEN, view: 'pages', sort: 'name' }))
-      .toBe('weergave=pages&sortering=name');
+      .toBe('view=pages&sort=name');
   });
 
-  // *Inclusief afgesloten* belongs to the search, and there is no search without a
+  // *Include closed* belongs to the search, and there is no search without a
   // term. `Dashboard.jsx` says as much: the views answer about the work that is left.
-  it('writes inclusief afgesloten only while something is typed', () => {
+  it('writes include closed only while something is typed', () => {
     expect(searchFromScreen({ ...SCREEN, includeClosed: true })).toBe('');
     expect(searchFromScreen({ ...SCREEN, query: 'deals', includeClosed: true }))
-      .toBe('zoek=deals&afgesloten=1');
-    expect(screenFromSearch('zoek=deals&afgesloten=1').includeClosed).toBe(true);
+      .toBe('query=deals&closed=1');
+    expect(screenFromSearch('query=deals&closed=1').includeClosed).toBe(true);
   });
 });

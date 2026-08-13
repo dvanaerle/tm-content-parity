@@ -105,7 +105,7 @@ export default function PageView({ report: built }) {
       {/* A restored re-check must not look like a crawl result. */}
       <p className="text-xs text-muted-foreground">
         {source === 'recheck' ? 'Hercontrole van ' : 'Momentopname van '}
-        {new Date(report.builtAt).toLocaleString('nl-NL')}
+        {new Date(report.builtAt).toLocaleString('en-GB')}
         {' · '}waarneming <code>{report.observationId}</code>
         {!recheckAvailable && ' · hercontrole vereist de lokale service'}
       </p>

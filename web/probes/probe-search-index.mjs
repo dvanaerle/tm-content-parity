@@ -9,7 +9,7 @@
  * pass is fast enough, and it is what a later reader re-runs before adding a library.
  * `search.mjs`' module docblock points here for exactly that.
  *
- * It reads the **emitted** files under `dist/zoekindex/`, not a freshly built index. The
+ * It reads the **emitted** files under `dist/search-index/`, not a freshly built index. The
  * bytes an editor's browser downloads are the bytes the build wrote, so a size measured
  * off `JSON.stringify()` in this process would be measuring something else.
  *
@@ -31,7 +31,7 @@ import { gzipSync } from 'node:zlib';
 import { repeatsInStore } from '../src/lib/view.mjs';
 import { searchStore } from '../src/lib/search.mjs';
 
-const EMITTED = new URL('../../dist/zoekindex/', import.meta.url);
+const EMITTED = new URL('../../dist/search-index/', import.meta.url);
 
 /** Kept runs per query. The median is the number to read and the worst is the tail. */
 const RUNS = 20;
@@ -101,7 +101,7 @@ for (const file of files) {
   });
 }
 
-console.log(`\nEmitted indexes under dist/zoekindex/, gzip at zlib's default level.`);
+console.log(`\nEmitted indexes under dist/search-index/, gzip at zlib's default level.`);
 console.log('\n  store     pages   findings      raw bytes     gzip bytes    gzip share');
 for (const one of stores) {
   console.log(

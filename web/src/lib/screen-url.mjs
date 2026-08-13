@@ -5,7 +5,7 @@
  * views was on screen, which class pills were on, what was typed in the search box.
  * So opening a page threw all of it away. An editor working down a `copy` filter
  * opened the third page on the list, pressed Back, and got the unfiltered
- * *Verschillen* queue from the top — and there was no link they could send a
+ * *Repeats* queue from the top — and there was no link they could send a
  * colleague that showed what they were looking at.
  *
  * The screen is not a filter's meaning and it is not a count. It is **what is drawn**,
@@ -23,7 +23,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
 
 /**
- * The screen an untouched dashboard draws. *Verschillen* lands first, worst-first,
+ * The screen an untouched dashboard draws. *Repeats* lands first, worst-first,
  * nothing typed, no pill on, closed work out of the way.
  *
  * @typedef {object} Screen
@@ -44,15 +44,20 @@ export const SCREEN = Object.freeze({
 });
 
 /**
- * The parameter names, in the language the interface speaks. They are part of every
- * link an editor copies, so they are as stable as the page keys are.
+ * The parameter names, in the language the interface speaks — English, on every store
+ * (ADR 0014). They are part of every link an editor copies, so they are as stable as
+ * the page keys are. The Dutch names they replace are **not** accepted as aliases: a
+ * half-migrated contract is a second contract to keep.
+ *
+ * `classes` is plural because the parameter has always carried a list. `soort` was the
+ * thing that read as one.
  */
 const PARAM = Object.freeze({
-  view: 'weergave',
-  sort: 'sortering',
-  query: 'zoek',
-  classes: 'soort',
-  includeClosed: 'afgesloten',
+  view: 'view',
+  sort: 'sort',
+  query: 'query',
+  classes: 'classes',
+  includeClosed: 'closed',
 });
 
 /**
@@ -81,12 +86,12 @@ export function searchFromScreen(screen) {
 
   if (screen.view !== SCREEN.view) written.set(PARAM.view, screen.view);
   // The sort belongs to the page list, so it is written only while that list is the
-  // view. Otherwise a reader switching to *Verschillen* would carry an order that
+  // view. Otherwise a reader switching to *Repeats* would carry an order that
   // orders nothing on screen, in a link that promises it does.
   if (screen.view === 'pages' && screen.sort !== SCREEN.sort) written.set(PARAM.sort, screen.sort);
   if (screen.query.trim()) written.set(PARAM.query, screen.query);
   if (screen.classes.length > 0) written.set(PARAM.classes, screen.classes.join(','));
-  // *Inclusief afgesloten* belongs to the search, and there is no search without a
+  // *Include closed* belongs to the search, and there is no search without a
   // term, so it goes the same way the sort does.
   if (screen.query.trim() && screen.includeClosed) written.set(PARAM.includeClosed, '1');
 
