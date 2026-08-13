@@ -1365,9 +1365,14 @@ describe('comparePage', () => {
   });
 
   it('leaves the bar alone, because the metadata is not a content difference', () => {
-    // A class that is not work is out of the denominator (ticket 09) and out of the
-    // find-set hash (ticket 09 again), so 96 of the 123 French pages do not each
-    // arrive carrying an open finding an editor cannot close.
+    // A class that is not work is out of the denominator (ticket 09), so 96 of the 123
+    // French pages do not each arrive carrying an open finding an editor cannot close.
+    //
+    // It is **not** out of the finding-set hash. That half of this pin was true until
+    // ticket 118 and ADR 0013, which took the visibility filter out: the hash answers
+    // *did this page change*, and a page that gained a `no-declared-alternate` did
+    // change. The bar and the hash have stopped answering the same question, which is
+    // the point — one is what an editor must close, the other is what they last read.
     const anchored = comparePage({
       sides: { production: extract({}), new: extract({ side: 'new' }) },
     });
@@ -1378,7 +1383,7 @@ describe('comparePage', () => {
       },
     });
     expect(unanchored.summary.work).toBe(anchored.summary.work);
-    expect(unanchored.findingSetHash).toBe(anchored.findingSetHash);
+    expect(unanchored.findingSetHash).not.toBe(anchored.findingSetHash);
   });
 
   it('holds rows as unit indices, not copies of the text', () => {

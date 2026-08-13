@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CHECKS,
   FINDING_CLASSES,
   findingId,
+  findingSetHash,
   newObservationId,
   reportFilename,
   storeOfFile,
@@ -86,6 +87,97 @@ describe('findingId', () => {
       ),
     );
     expect(ids.size).toBe(200);
+  });
+});
+
+
+/**
+ * Ticket 118 and ADR 0013. The hash is what a page review's staleness is measured
+ * against, so the question it must answer is *did the page change*, and the vocabulary
+ * is not the page.
+ */
+describe('findingSetHash', () => {
+  afterEach(() => {
+    vi.resetModules();
+    vi.doUnmock('./vocabulary.mjs');
+  });
+
+  /** One finding per class, which is the widest page the vocabulary can produce. */
+  const everyClass = Object.keys(FINDING_CLASSES).map((cls) => ({ id: `id-${cls}`, class: cls }));
+
+  /**
+   * `contract.mjs` re-imported with the vocabulary re-triaged — the same edit ticket 86
+   * makes to `FINDING_CLASSES` by hand, made from a test so it can be made for every
+   * class at once rather than for the one class being flipped this week.
+   *
+   * `isWork()` and `visibilityOf()` close over the real map inside `vocabulary.mjs`, so
+   * replacing the exported map alone would not reach them. The mock rebuilds all three
+   * from the patched map, which is what editing the source does — **for these three, and
+   * only these three**. A fourth export derived from `FINDING_CLASSES` would not be
+   * rebuilt here, and this test would keep passing while no longer modelling the edit it
+   * claims to. Add it to the mock on the day it is added to the module.
+   *
+   * @param {(name: string) => string} triage The visibility each class now has.
+   */
+  const retriaged = async (triage) => {
+    vi.resetModules();
+    vi.doMock('./vocabulary.mjs', async () => {
+      const actual = await vi.importActual('./vocabulary.mjs');
+      const classes = Object.fromEntries(
+        Object.entries(actual.FINDING_CLASSES)
+          .map(([name, cls]) => [name, { ...cls, visibility: triage(name) }]),
+      );
+      const visibilityOf = (name) => classes[name]?.visibility ?? 'diagnostic';
+      return {
+        ...actual,
+        FINDING_CLASSES: classes,
+        visibilityOf,
+        isWork: (name) => visibilityOf(name) === 'work',
+      };
+    });
+    return import('./contract.mjs');
+  };
+
+  // The assertion the whole ticket exists for, made at its widest: not one class
+  // moving, but every class in the vocabulary moving at once. Under the old hash,
+  // flipping `heading-level` alone printed "changed since review" on all 392 pages that
+  // carry one, on a day when not a word on any of those pages had moved.
+  it.each(VISIBILITIES)('is byte-identical when every class becomes %s', async (visibility) => {
+    const reloaded = await retriaged(() => visibility);
+    expect(reloaded.findingSetHash(everyClass)).toBe(findingSetHash(everyClass));
+  });
+
+  it('is byte-identical across the flip ticket 86 makes', async () => {
+    // The flip this ticket exists to unblock, spelled out: `heading-level` from `work`
+    // to `information`, and nothing else touched.
+    const reloaded = await retriaged((name) => (
+      name === 'heading-level' ? 'information' : FINDING_CLASSES[name].visibility
+    ));
+    expect(reloaded.FINDING_CLASSES['heading-level'].visibility).toBe('information');
+    expect(reloaded.findingSetHash(everyClass)).toBe(findingSetHash(everyClass));
+  });
+
+  it('does not move a finding id when a class changes visibility', async () => {
+    // Visibility was never a term of `findingId()` and this ticket must not make it
+    // one: no override detaches on the vocabulary flips this run enables.
+    const reloaded = await retriaged(() => 'information');
+    expect(reloaded.findingId(base)).toBe(findingId(base));
+  });
+
+  it('covers a finding in a class that is not work', () => {
+    // The old hash filtered these out. A human reviewed the page, not the shown
+    // subset of it, so a hidden class changing now marks the review stale.
+    const work = [{ id: 'A', class: 'copy' }];
+    expect(findingSetHash([...work, { id: 'B', class: 'tag-changed' }])).not.toBe(findingSetHash(work));
+    expect(findingSetHash([...work, { id: 'C', class: 'text-added' }])).not.toBe(findingSetHash(work));
+  });
+
+  it('is stable under the order the findings arrive in', () => {
+    expect(findingSetHash([...everyClass].reverse())).toBe(findingSetHash(everyClass));
+  });
+
+  it('is 16 base64url characters', () => {
+    expect(findingSetHash(everyClass)).toMatch(/^[A-Za-z0-9_-]{16}$/);
   });
 });
 

@@ -343,6 +343,12 @@ for (const event of live) {
     // stale when one of those ids moves — including a `copy` that becomes a
     // `restructured`, which is not work, and that leaves the work set without any text
     // changing at all.
+    //
+    // **That rule was retired on 2026-08-13 by ticket 118 and ADR 0013**: the hash now
+    // covers every finding, in any class. This branch is left as it ran, because the
+    // probe is spent — ticket 67 landed 2026-08-10 and the header already says a run
+    // after the fold measures the wrong thing. It is evidence of the day, not a rule.
+    // Anyone reviving this file must take the `isWork` filter below out with it.
     const key = `${event.store}|${event.page}`;
     const effect = effects.get(key);
     const work = reports.get(key).findings.filter((finding) => isWork(finding.class));

@@ -337,12 +337,15 @@ describe('page review', () => {
     expect(reviewOf(one, grown.findingSetHash).fresh).toBe(false);
   });
 
-  it('is not staled by a class that is not work, because the hash covers the work only', () => {
-    // Ticket 75 renamed the field this filter reads and did not move the set: the
-    // twelve `work` classes are exactly the twelve that were `shown: true`. Ticket 118
-    // is the one that argues the filter away.
+  it('goes stale on a class that is not work, because a reviewer read the page', () => {
+    // Ticket 118 and ADR 0013 took the visibility filter out of the hash. This pin used
+    // to hold the two hashes equal, so that a change confined to what the tool does not
+    // put up as work left every review fresh. That reading is withdrawn: a human
+    // reviewed the page, not the shown subset of it, so `restructured` appearing on it
+    // is the page changing. What the trade buys is the other direction — a vocabulary
+    // edit can no longer stale a review, which `findingSetHash` pins in contract.test.mjs.
     const withInformation = report([finding('A'), finding('H', 'restructured')]);
-    expect(withInformation.findingSetHash).toBe(one.findingSetHash);
+    expect(reviewOf(withInformation, one.findingSetHash).fresh).toBe(false);
   });
 
   it('is revoked by a clear on the page scope', () => {

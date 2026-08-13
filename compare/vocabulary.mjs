@@ -136,8 +136,12 @@ export const FINDING_CLASSES = {
 export const visibilityOf = (cls) => FINDING_CLASSES[cls]?.visibility ?? 'diagnostic';
 
 /**
- * Whether a finding in this class **counts**. It is the one question the bar, the
- * summary and the finding-set hash ask, and they must all ask it in one place.
+ * Whether a finding in this class **counts**. It is the one question the bar and the
+ * summary ask, and they must both ask it in one place.
+ *
+ * **The finding-set hash does not ask it.** It did until ticket 118 and ADR 0013: the
+ * hash answers *did this page change*, and what the tool counts is not a fact about the
+ * page. That is the one place where counting and identity deliberately come apart.
  *
  * @param {string} cls
  */

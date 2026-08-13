@@ -6,7 +6,7 @@
  */
 
 import { createHash, randomUUID } from 'node:crypto';
-import { isWork, STORES } from './vocabulary.mjs';
+import { STORES } from './vocabulary.mjs';
 
 /**
  * The class vocabulary lives in `vocabulary.mjs` and is re-exported here, so a
@@ -242,7 +242,7 @@ export {
  * @property {DiffRow[]} rows
  * @property {ReportSummary} summary
  * @property {string} observationId  The run that produced this report. See `newObservationId()`.
- * @property {string} findingSetHash Over the `work` finding ids only. Page-review staleness.
+ * @property {string} findingSetHash Over every finding id on the page. Page-review staleness.
  * @property {string} builtAt       ISO 8601.
  */
 
@@ -280,25 +280,28 @@ export function newObservationId() {
 }
 
 /**
- * A hash over the sorted ids of the findings in `work` classes.
+ * A hash over the sorted ids of **every** finding on the page, in any class.
  *
- * A page review records this, and goes stale when it stops matching. It is the work set
- * only: over every class, a class leaving `work` would change the hash and make every
- * review on the page stale, and a review must go stale because the **work** changed and
- * never because the tool was told what to put up as work (ADR 0005).
+ * A page review records this, and goes stale when it stops matching. Ticket 118 and
+ * ADR 0013 took the visibility filter out: visibility is a property of the vocabulary
+ * and not of the page, so under the filter one word changed in `FINDING_CLASSES` marked
+ * reviews stale on pages where not a word had moved — flipping `heading-level` to
+ * `information` would have said *"changed since review"* on all 392 pages that carry
+ * one. `CONTEXT.md` defines stale as a review made against a page whose findings
+ * changed, and the findings had not changed.
  *
- * Ticket 75 renamed the field this reads and did not touch the set: `work` is exactly
- * the twelve classes that were `shown: true`. Ticket 118 is the one that argues this
- * filter away.
+ * So the hash is independent of `FINDING_CLASSES`, and a change in a class that is not
+ * work now marks a review stale. That is the same reading: a human reviewed the page,
+ * not the shown subset of it.
  *
- * @param {Pick<Finding, 'id' | 'class'>[]} findings
+ * This is page-review staleness only. The run log is keyed on the finding id alone and
+ * is untouched.
+ *
+ * @param {Pick<Finding, 'id'>[]} findings
  * @returns {string} 16 base64url characters.
  */
 export function findingSetHash(findings) {
-  const ids = findings
-    .filter((finding) => isWork(finding.class))
-    .map((finding) => finding.id)
-    .sort();
+  const ids = findings.map((finding) => finding.id).sort();
   return createHash('sha256').update(ids.join('|'), 'utf8').digest('base64url').slice(0, 16);
 }
 

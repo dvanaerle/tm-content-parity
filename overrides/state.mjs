@@ -233,8 +233,9 @@ export function barOf(findings) {
  * when that set stops matching — *changed since review*, never *needs review*.
  * Ticket 09: a review never expires on its own, or the log manufactures work.
  *
- * The hash covers the `work` classes only (`findingSetHash()`), so a change confined to
- * what the tool does not put up as work does not stale every review on the page.
+ * The hash covers every finding on the page (`findingSetHash()`), in any class. Ticket 118
+ * took the visibility filter out so that a vocabulary edit cannot stale a review: the
+ * question the flag answers is whether the **page** changed, and a class is not the page.
  *
  * @param {Map<string, OverrideEvent>} current
  * @param {import('../compare/contract.mjs').PageReport} report
