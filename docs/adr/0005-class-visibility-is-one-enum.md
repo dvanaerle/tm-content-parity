@@ -37,8 +37,13 @@ the day the field lands, and the change is legible: it renames a boolean and spl
 the false side.
 
 `work` counts. `information` renders and does not count. `diagnostic` stays behind
-the noise toggle. A mute still takes findings out of the denominator, and a dismissal
-still moves them into the numerator.
+the noise toggle. A dismissal moves findings into the numerator.
+
+> **Amended by [ADR 0011](0011-the-mute-is-withdrawn.md), 2026-08-13.** This section read
+> *"a mute still takes findings out of the denominator"*. Nothing takes findings out of it
+> any more: the denominator is the shown findings on the snapshot, and whether something is
+> work at all is decided by the visibility this ADR designs and by nothing else. That makes
+> the enum the **only** answer to that question, which is what 0011 relies on.
 
 ## Consequences
 

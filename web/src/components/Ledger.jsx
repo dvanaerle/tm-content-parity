@@ -88,10 +88,11 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
 
   const { production, new: next } = report.sides;
 
-  // A muted finding stays **visible behind the toggle**: muting is not deleting,
-  // and an editor who muted a class by mistake must be able to find it again.
+  // The toggle asks about the **class**: a class the tool does not show is what a rule
+  // saw and does not put up as work. What an editor decided about a finding is not
+  // noise, so no decision ever moves a row behind this toggle.
   const findings = useMemo(
-    () => derived.filter((finding) => noise || (finding.shown && finding.state !== 'muted')),
+    () => derived.filter((finding) => noise || finding.shown),
     [derived, noise],
   );
 
@@ -104,7 +105,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
     />
   );
 
-  const hiddenCount = derived.length - derived.filter((f) => f.shown && f.state !== 'muted').length;
+  const hiddenCount = derived.length - derived.filter((f) => f.shown).length;
 
   // Every badge counts **findings**, including Inhoud's. The content view is a list
   // of rows and a grouped finding covers several of them, so a row count here would
@@ -256,7 +257,7 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
                 `event.target.checked`. */}
             <Label className="ml-auto py-2 font-normal text-muted-foreground">
               <Checkbox checked={noise} onCheckedChange={chooseNoise} />
-              Ruis en gedempt tonen ({hiddenCount})
+              Ruis tonen ({hiddenCount})
             </Label>
           </div>
 

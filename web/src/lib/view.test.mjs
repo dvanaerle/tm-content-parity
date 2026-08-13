@@ -149,11 +149,14 @@ describe('prepareRows', () => {
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(5);
   });
 
-  it('keeps a muted row behind the same toggle, because muting is not deleting', () => {
+  it('draws a row in a shown class whatever the log decided about it', () => {
+    // The toggle asks about the **class**, and after ADR 0011 that is all it asks.
+    // A row that is hidden by class stays hidden by class; a decided row in a shown
+    // class is not noise and was never behind this toggle to begin with.
     const base = fixture();
     base.findings[0] = { ...base.findings[0], state: 'muted' };
 
-    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(3);
+    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(4);
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(4);
   });
 

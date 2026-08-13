@@ -236,8 +236,11 @@ export function muteCoverage(findings, key) {
  *
  * - A **hidden class is in neither** the numerator nor the denominator, or the bar
  *   could never reach zero.
- * - A **mute leaves the denominator**: "this class is never a defect here" is a
- *   statement that the work does not exist, not that it is done.
+ * - **Nothing leaves the denominator.** It is the shown findings on this snapshot,
+ *   full stop. The mute took findings out of it until ADR 0011 withdrew the mute,
+ *   and whether something is work at all is now a property of the class alone and
+ *   never of a place on a page. So there is no count of findings that are *outside*
+ *   the bar for the bar to report beside itself.
  * - A **dismissal enters the numerator**: "I read this and accepted it" is work.
  * - **`contradicted` reads as open.** A claim that did not survive a later
  *   observation has closed nothing.
@@ -257,17 +260,15 @@ export function barOf(findings) {
   const shown = findings.filter((finding) => finding.shown);
   const count = (/** @type {FindingState} */ state) => shown.filter((f) => f.state === state).length;
 
-  const muted = count('muted');
   const dismissed = count('dismissed');
   const fixed = count('fixed');
   const contradicted = count('contradicted');
-  const denominator = shown.length - muted;
+  const denominator = shown.length;
 
   return {
     closed: dismissed + fixed,
     denominator,
     open: denominator - dismissed - fixed,
-    muted,
     dismissed,
     fixed,
     contradicted,
@@ -279,8 +280,8 @@ export function barOf(findings) {
  * when that set stops matching — *changed since review*, never *needs review*.
  * Ticket 09: a review never expires on its own, or the log manufactures work.
  *
- * The hash covers the shown classes only (`findingSetHash()`), so muting
- * something does not stale every review on the page.
+ * The hash covers the shown classes only (`findingSetHash()`), so a change confined to
+ * what the tool does not put up as work does not stale every review on the page.
  *
  * @param {Map<string, OverrideEvent>} current
  * @param {import('../compare/contract.mjs').PageReport} report
@@ -312,7 +313,7 @@ export function deriveStoreState({ reports, events, observationId }) {
     ...derivePageState({ report, events, observationId }),
   }));
 
-  const totals = { closed: 0, denominator: 0, open: 0, muted: 0, dismissed: 0, fixed: 0, contradicted: 0 };
+  const totals = { closed: 0, denominator: 0, open: 0, dismissed: 0, fixed: 0, contradicted: 0 };
   let reviewed = 0;
   let reviewedFresh = 0;
 

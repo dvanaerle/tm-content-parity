@@ -44,29 +44,28 @@ describe('landingFor', () => {
     expect(landingFor({ findings, focus: 'c3' }).tab).toBe('Afbeeldingen');
   });
 
-  // The dashboard lists a `genegeerd` row and a muted one, so both can be clicked. A
-  // muted finding and one of a hidden class are behind *Ruis en gedempt tonen*, and a
-  // landing that did not switch it on would send the reader to an empty screen and say
-  // nothing about why.
+  // The dashboard lists a `genegeerd` row as well as an open one, so both can be
+  // clicked. A finding of a hidden class is behind *Ruis tonen*, and a landing that did
+  // not switch it on would send the reader to an empty screen and say nothing about why.
   it('asks for the noise toggle when the finding is behind it', () => {
     const open = finding({ id: 'a1' });
     const dismissed = finding({ id: 'b2', state: 'dismissed' });
-    const muted = finding({ id: 'c3', state: 'muted' });
+    const decided = finding({ id: 'c3', state: 'muted' });
     const hiddenClass = finding({ id: 'd4', shown: false });
-    const findings = [open, dismissed, muted, hiddenClass];
+    const findings = [open, dismissed, decided, hiddenClass];
 
-    // A dismissal is a decision and not noise: the row stays on screen, so the toggle
-    // is left where the reader had it.
+    // A decision is not noise: the row stays on screen whatever the decision was, so
+    // the toggle is left where the reader had it. Only the class puts a row behind it.
     expect(landingFor({ findings, focus: 'a1' }).needsNoise).toBe(false);
     expect(landingFor({ findings, focus: 'b2' }).needsNoise).toBe(false);
-    expect(landingFor({ findings, focus: 'c3' }).needsNoise).toBe(true);
+    expect(landingFor({ findings, focus: 'c3' }).needsNoise).toBe(false);
     expect(landingFor({ findings, focus: 'd4' }).needsNoise).toBe(true);
   });
 
   // Not every finding of a page is drawn on one of the four tabs. `no-declared-alternate`
   // is the one `meta` rule, and the Meta tab is `metaRows()` — display only, no findings
   // in it at all. So a link naming it has nothing to land on, and the wrong answer is the
-  // one this had: `shown: false` made it ask for *Ruis en gedempt tonen*, which floods the
+  // one this had: `shown: false` made it ask for *Ruis tonen*, which floods the
   // page with noise rows on the way to a row that is not there. Asking for the toggle only
   // makes sense when switching it on would draw the thing.
   it('asks for nothing and says so when no tab draws the finding', () => {

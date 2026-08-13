@@ -42,13 +42,17 @@
  * Four names over two columns. Without this split, typing a URL would report a hit in
  * "production text", and typing a sentence would claim to have matched a target.
  *
- * **2. `linkText` is the whole reason this index is emitted at build time.** Every other
- * searchable field is already in `loadSummaries()`'s finding index, which the dashboard
- * has in memory. The anchor text is not on a finding at all — it is on
- * `report.sides.*.links[].text`, in the extract, which is the half `loadSummaries()`
- * throws away. A browser cannot derive it, so the build resolves it by target key. If a
- * later reader wonders why the search does not simply reuse the dashboard's array: this
- * one field is why.
+ * **2. Two fields are why this index is emitted at build time.** If a later reader wonders
+ * why the search does not simply reuse the dashboard's array, which the dashboard already
+ * has in memory: that array does not hold everything the search looks in.
+ *
+ * `linkText` is the older half and the sharper case. The anchor text is not on a finding at
+ * all — it is on `report.sides.*.links[].text`, in the extract, which is the half
+ * `loadSummaries()` throws away. A browser cannot derive it, so the build resolves it by
+ * target key. `anchorHeading` is the newer half: ADR 0011 took it off the dashboard's index
+ * with the mute that put it there, and it stays a searchable field here because it is a
+ * **locator** — *onder "…"* is how an editor finds a difference on a long page, which never
+ * had anything to do with the judgement.
  *
  * **3. A search result must not extend `Repeat.on`.** The grouping is ticket 81's
  * `repeatsInStore()` and it is reused rather than rewritten, as this ticket's trap
@@ -365,16 +369,16 @@ export function searchNotes({ events, term }) {
 /**
  * Whether this finding is still work, in the log's own terms.
  *
- * `dismissed` and `fixed` are what `barOf` counts as closed, and `muted` is what it
- * takes out of the denominator — none of the three is work an editor is looking for.
- * A `contradicted` claim is a fix the newest observation did not agree with, and the bar
- * reads it as open, so search does too. It asks the same question rather than forming a
- * fifth opinion: a finding that is open in the bar must be findable by the search meant
- * to find it.
+ * `dismissed` and `fixed` are what `barOf` counts as closed, and they are the whole of
+ * what an editor is not looking for. A `contradicted` claim is a fix the newest
+ * observation did not agree with, and the bar reads it as open, so search does too — as
+ * does the mute, which after ADR 0011 closes nothing and takes nothing out of the
+ * denominator. Search asks the bar's question rather than forming a second opinion: a
+ * finding that is open in the bar must be findable by the search meant to find it.
  *
  * @param {import('../../../overrides/state.mjs').FindingState} state
  */
-const isActive = (state) => state === 'open' || state === 'contradicted';
+const isActive = (state) => state !== 'dismissed' && state !== 'fixed';
 
 /**
  * A term and a field, folded to the one form they are compared in.

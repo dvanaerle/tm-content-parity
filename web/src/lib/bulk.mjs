@@ -114,6 +114,12 @@ export function bulkMute({ repeat, byFinding, findingsByPage, note, selected }) 
   // disagree. A finding the derivation does not hold is `undefined` here and stays
   // `undefined`: *I do not know which section this is* and *this is the content before
   // the first heading* are two different answers, and `?? null` would merge them.
+  //
+  // **This seam is inert as of ticket 113.** The dashboard's `byFinding` is built from
+  // `loadSummaries()`, which no longer carries `anchorHeading`, so every entry is now
+  // `unknown` and this refuses whatever it is handed. That is this function obeying its
+  // own rule above rather than a fault in it — but it has had no component caller since
+  // 112, and only its own fixtures still exercise it. Ticket 114 deletes it.
   const on = chosen.map((entry) => ({
     page: entry.page,
     anchorHeading: byFinding.get(entry.id)?.anchorHeading,

@@ -49,8 +49,8 @@ const TAB_OF_CHECK = { text: 'Inhoud', links: 'Links', images: 'Afbeeldingen' };
  * @typedef {object} Landing
  * @property {string | null} tab  The tab that must be on screen, or null when there is
  *                                nothing to land on and the reader's own choice stands.
- * @property {boolean} needsNoise Whether *Ruis en gedempt tonen* has to be on for the
- *                                finding to be drawn at all.
+ * @property {boolean} needsNoise Whether *Ruis tonen* has to be on for the finding to be
+ *                                drawn at all.
  * @property {boolean} missing    A link named a finding and this snapshot has no such
  *                                finding. A finding id is a term of the text, so it
  *                                expires when the text does: the difference was fixed,
@@ -74,13 +74,14 @@ export function landingFor({ findings, focus }) {
     tab,
     // The same test `Ledger.jsx` and `prepareRows()` already apply, asked the other way
     // round: those two decide what to hide, and this decides whether what the reader
-    // was sent to is one of them. A dismissal is a decision and not noise, so a
-    // `genegeerd` row is on screen already and the toggle is left where it was.
+    // was sent to is one of them. It is a question about the **class** only — a
+    // decision is not noise, so a `genegeerd` row is on screen already and the toggle
+    // is left where it was.
     //
     // **Only when a tab would draw it.** The toggle is asked for so that the row the
     // reader was sent to appears, so with no such row there is nothing to ask for, and
     // switching it on would only fill the page with rows nobody asked to see.
-    needsNoise: Boolean(tab) && !(target.shown && target.state !== 'muted'),
+    needsNoise: Boolean(tab) && !target.shown,
     missing: Boolean(focus) && target === null,
     unplaced: Boolean(target) && tab === null,
   };
@@ -110,7 +111,7 @@ export const landedRowProps = (landed) => ({
 /**
  * The two controls a landing borrows, and the reader taking either one back.
  *
- * A landing needs a tab on screen and, sometimes, *Ruis en gedempt tonen* switched on.
+ * A landing needs a tab on screen and, sometimes, *Ruis tonen* switched on.
  * Both are the reader's controls, so the landing only borrows them: it holds until the
  * reader touches that control, and from then on their choice stands.
  *
@@ -120,9 +121,9 @@ export const landedRowProps = (landed) => ({
  * the toggle released the tab, so a reader who landed on Links was thrown to Inhoud.
  * Two controls, two answers.
  *
- * It is not a one-shot either. A finding's `state` arrives with the override log a beat
- * after the tab has to be chosen, so `asked` can change under the reader — which is why
- * this holds an *untaken* flag rather than seeding state from the first answer.
+ * It is not a one-shot either. The finding id arrives in an effect, a beat after the
+ * first render, so `asked` changes under the reader — which is why this holds an
+ * *untaken* flag rather than seeding state from the first answer.
  *
  * @param {{ tab: string | null, needsNoise: boolean }} asked  From `landingFor()`.
  * @param {string} defaultTab  The tab a reader who was sent nowhere gets.

@@ -34,11 +34,6 @@ export function PageBar({ bar, ready }) {
         {ready && bar.contradicted > 0 && (
           <span className={cn('tabular-nums', INK.attention)}>{bar.contradicted} nog niet opgelost</span>
         )}
-        {ready && bar.muted > 0 && (
-          // A mute leaves the denominator, so it is reported beside the bar and
-          // never inside it: "this is not a defect here" is not work done.
-          <span className="tabular-nums text-muted-foreground">{bar.muted} gedempt (buiten de teller)</span>
-        )}
       </div>
       {/* The bar stays hand-rolled. shadcn's `Progress` builds its own track and
           indicator inside itself and exposes a `className` for the root only, so

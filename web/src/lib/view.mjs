@@ -13,8 +13,8 @@
  * things (spec 32, decision 25).
  *
  * The noise toggle is **not** part of the filter. It belongs to the whole ledger
- * and it survives a click on *filter wissen*: an editor who asked to see the muted
- * rows did not ask a question about classes.
+ * and it survives a click on *filter wissen*: an editor who asked to see what a rule
+ * saw did not ask a question about classes.
  */
 
 // The closed vocabulary, for the **order** of the class groups and nothing else. The
@@ -96,7 +96,7 @@ export function toggleClass(filter, cls) {
  * @param {object[]} input.findings   Derived findings, from `derivePageState()`.
  * @param {{ production: ContentUnit[], new: ContentUnit[] }} input.elements
  * @param {ContentFilter} input.filter
- * @param {boolean} input.showNoise   The ledger's toggle: hidden classes and muted rows.
+ * @param {boolean} input.showNoise   The ledger's toggle: the classes it does not show.
  * @returns {{ rows: ContentRow[], total: number, classes: { class: string, rows: number }[] }}
  *   `total` counts the rows the page has under the noise toggle, so the interface can
  *   say *42 van 310 regels*. It is a row count and never a finding count.
@@ -109,9 +109,10 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
   for (const row of rows) {
     const finding = row.finding ? byId.get(row.finding) ?? null : null;
 
-    // A muted finding stays visible behind the toggle: muting is not deleting, and
-    // an editor who muted a class by mistake must be able to find it again.
-    const noise = Boolean(row.class) && !(finding?.shown && finding.state !== 'muted');
+    // The toggle asks about the **class** and about nothing else. A row a rule saw
+    // but does not draw as work is noise; what an editor decided about a row in a
+    // shown class never moves it out from under this toggle.
+    const noise = Boolean(row.class) && !finding?.shown;
     if (noise && !showNoise) continue;
 
     const prod = row.prod === null ? null : elements.production[row.prod] ?? null;

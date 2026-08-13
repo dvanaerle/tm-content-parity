@@ -259,11 +259,6 @@ describe('a mute names a section', () => {
     expect(stateOf(renamed, [muteSection('copy', HEAVY)]).A).toBe('open');
   });
 
-  it('takes its own section out of the denominator and no more', () => {
-    expect(derivePageState({ report: page, events: [muteSection('copy', HEAVY)] }).bar)
-      .toMatchObject({ muted: 2, denominator: 2, open: 2, closed: 0 });
-  });
-
   it('leaves a muted finding shown, because muting is not deleting', () => {
     const derived = derivePageState({ report: page, events: [muteSection('copy', HEAVY)] });
     expect(derived.findings.find((f) => f.id === 'A')).toMatchObject({ shown: true, state: 'muted' });
@@ -368,12 +363,15 @@ describe('bar arithmetic', () => {
     });
   });
 
-  it('a mute leaves the denominator', () => {
-    // "This class is never a defect here" says the work does not exist, not that
-    // it is done — so it cannot be the numerator.
-    expect(derivePageState({ report: four, events: [mute('copy')] }).bar).toMatchObject({
-      closed: 0, denominator: 0, open: 0, muted: 4,
-    });
+  it('nothing leaves the denominator, and there is no fourth number', () => {
+    // ADR 0011 withdrew the one thing that used to take findings out of the
+    // denominator. A difference in a shown class is now either open work or work
+    // an editor closed, so the mute the derivation still produces is invisible to
+    // the bar rather than a category beside it.
+    const bar = derivePageState({ report: four, events: [mute('copy')] }).bar;
+
+    expect(bar).toMatchObject({ closed: 0, denominator: 4, open: 4 });
+    expect(bar).not.toHaveProperty('muted');
   });
 
   it('a hidden class is in neither the numerator nor the denominator', () => {
