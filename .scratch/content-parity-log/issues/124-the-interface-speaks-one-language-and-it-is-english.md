@@ -1,7 +1,11 @@
 # 124 — The interface speaks one language, and it is English
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-13 — the interface is English (UK) on all six stores, in four
+commits: the contract, the labels, the guard and the documents. Two words were renamed
+beyond the list below, both under the trap's own test — *does it reach the address bar* —
+namely `terug` and `bevinding`, and the `bevinding-` DOM anchor followed them. No count,
+bar, denominator or derivation moved.
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
@@ -90,55 +94,55 @@ closed**, **one-sided**, **Fixed**, **Dismiss**, **Re-check**, **Snapshot**,
 
 ## Acceptance criteria
 
-- [ ] Every string the log draws is English (UK) in Simplified Technical English:
+- [x] Every string the log draws is English (UK) in Simplified Technical English:
       doorway, shell, breadcrumb, switcher, dashboard, page, and every tooltip,
       empty state, banner, placeholder and failure sentence.
-- [ ] The three corrections and the `Text` tab are as above. Nothing reads
+- [x] The three corrections and the `Text` tab are as above. Nothing reads
       *Resolved*, *Undo* or *Differences* for the view, in the interface or in the
       code.
-- [ ] `<html lang="en-GB">` on all six stores, and `en-GB` dates.
-- [ ] The six English store names, and the guard message without "Dutch".
-- [ ] The five parameters, the route and the export filenames are renamed. The old
+- [x] `<html lang="en-GB">` on all six stores, and `en-GB` dates.
+- [x] The six English store names, and the guard message without "Dutch".
+- [x] The five parameters, the route and the export filenames are renamed. The old
       Dutch parameter names are **not** accepted as aliases: a half-migrated
       contract is a second contract to keep. Back still restores the screen and a
       copied link still carries it.
-- [ ] `excluded-regions.mjs` reason prose is English.
-- [ ] `docs/adr/0014-the-interface-speaks-english.md` records the decision, the
+- [x] `excluded-regions.mjs` reason prose is English.
+- [x] `docs/adr/0014-the-interface-speaks-english.md` records the decision, the
       alternative (per-store chrome with i18n machinery) and why it lost. It names
       all four reversed statements — `38-six-stores.md:46`,
       `32-scannable-log-and-six-stores.md:176` and `:398`, and ADR `0010:93-94` —
       and states that the surviving half of decision 42 is **no translation
       affordance**, so the reversal is not permission to add i18n.
-- [ ] The ADR also records: the copied-link promise retracted knowingly; ticket
+- [x] The ADR also records: the copied-link promise retracted knowingly; ticket
       56 and 85's "labels Dutch, reasons English" convention retired, because with
       English labels it has no two sides; ticket 80's ban on "Resolved" surviving
       and gaining teeth; and the accepted regression that on `/uk/` the chrome and
       the content are one language, distinguished by the two columns, the diff
       cells and the class pill rather than by accident.
-- [ ] ADR 0010 gains a note that its parameter-name clause is amended by 0014. It
+- [x] ADR 0010 gains a note that its parameter-name clause is amended by 0014. It
       is not superseded; the rest stands.
-- [ ] Ticket 38's criterion and both of spec 32's statements are struck through in
+- [x] Ticket 38's criterion and both of spec 32's statements are struck through in
       place and dated, each pointing at ADR 0014. The tick on 38's stays: it was
       met, and then the decision changed. The standing caveat in the two `notes/`
       files — "The interface is Dutch, so translate this before it goes out" — is
       struck and dated too.
-- [ ] `CONTEXT.md` carries the English labels throughout, with each Dutch one
+- [x] `CONTEXT.md` carries the English labels throughout, with each Dutch one
       struck and dated. The **Cleared** entry restates the no-`un-`-words rule
       against *Undo*, its first real test.
-- [ ] `CONTEXT.md` states that **untranslated** is a finding class on scraped
+- [x] `CONTEXT.md` states that **untranslated** is a finding class on scraped
       store content — a store page showing NL text — and never a description of
       this interface. Two meanings for one word is what that file exists to stop,
       and this stream is where the collision becomes available.
-- [ ] The UK spelling rule is written beside `map.md`'s Simplified Technical
+- [x] The UK spelling rule is written beside `map.md`'s Simplified Technical
       English line. It has been a convention by usage only: `behaviour`,
       `honouring`, `normalisation`, and no rule anywhere.
-- [ ] A stopword guard runs in `npm test` over `web/src/**`, excluding
+- [x] A stopword guard runs in `npm test` over `web/src/**`, excluding
       `*.test.mjs`, and fails on `pagina`, `winkel`, `verschil`, `wissen`, `geen`,
       `niet` and `resolved`. Its job is labels, not fixtures.
-- [ ] Every existing test passes, with the Dutch assertions rewritten to the
+- [x] Every existing test passes, with the Dutch assertions rewritten to the
       English labels by name. No count, bar, denominator or derivation moves, and
       the tests that pin that rule pass unchanged.
-- [ ] `map.md` carries the entry, and ticket 42 lists 124 as a blocker.
+- [x] `map.md` carries the entry, and ticket 42 lists 124 as a blocker.
 
 ## Traps
 
