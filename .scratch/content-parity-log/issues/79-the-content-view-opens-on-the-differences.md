@@ -44,6 +44,15 @@ answer it. That is why the rows collapse instead of leaving.
 
 - [ ] The content view opens with the differing rows visible and every run of equal
       rows collapsed into one marker naming its block count.
+- [ ] **`equal` is narrowed for the marker: a row that carries a class is not equal.**
+      68 set the operational rule as `prod.norm === next.norm` and said a row "can carry
+      `heading-level` or `tag-changed` and agree about every word" and still be equal.
+      That is right for a clamp, which compacts a row with nothing to read, and wrong
+      for a marker, which **removes** it — the criterion above says the differing rows
+      are visible, and a `heading-level` finding is a difference. Collapse less, not
+      more. Found by the grilling of [48](48-open-and-done-board.md) on 2026-08-13,
+      which widens this predicate again — to "no open work" — once 80 has defined
+      Closed. Narrowing here is what makes that widening a single deliberate step.
 - [ ] A marker expands and collapses, and an expanded run shows the same rows the view
       shows today, unchanged.
 - [ ] The row tint is absent while the markers are collapsed, and the class pill is on

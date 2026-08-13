@@ -1556,10 +1556,19 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     — **parked `wontfix` on 2026-08-11**, built once and kept on the branch
     `park/ticket-37-leesweergave`.
   - [38 — Six stores, not one](issues/38-six-stores.md) — **resolved**, above.
-  - [48 — Openstaande en afgeronde taken: the content view as a board](issues/48-open-and-done-board.md)
-    — `needs-triage`, and **no longer blocked**: 37 was parked, so that edge is void.
-    48 now inherits the mode question — whether a board is a mode at all, and if so
-    what a mode may do to document order.
+  - [48 — A row collapses when it holds no open work](issues/48-open-and-done-board.md)
+    — **triaged 2026-08-13, and the board is refused.** `ready-for-agent`, blocked by
+    79 and 80. The mode question it inherited from 37 is not answered but **not asked**:
+    nothing here is a mode. What is left of the ticket is one sentence — a row collapses
+    when it holds no **open work**, not when its two texts match — so it is 79's missing
+    predicate and not a second reading of the page. *Afgerond* is 80's **Closed** bucket;
+    a contradicted row is Needs attention and stays visible. The "is a ×6 finding one
+    task or six" question dissolved: only a thing that counts tasks had to answer it, and
+    a fold counts nothing. The grilling also found that **79 and 68 disagree about
+    `equal`** — 68's rule collapses a row carrying an open `heading-level` finding, which
+    79's own first criterion forbids — so 79 gains a criterion narrowing it, and 48 is
+    the deliberate widening afterwards. This makes 48 a correctness fix, not a
+    convenience. `CONTEXT.md`'s **Context marker** entry is corrected; no new term, no ADR.
   - [49 — The be/be_fr shared-host blind spot, measured](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md)
     — **closed `wontfix`** on 2026-08-07 and moved to `issues/.out-of-scope/`.
   - [59 — `link-status.mjs` erases the other stores](issues/59-link-status-overwrite.md)

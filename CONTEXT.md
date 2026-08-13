@@ -173,10 +173,14 @@ element any more: it folds the links inside it. Both the word and the rule are g
   inside it and not the interface. Markdown is an export beside it and never the
   spine, because Markdown flattens the element identity the finding id needs.
   See `docs/adr/0006-the-content-view-is-the-spine.md`.
-- **Context marker** — one row that stands for a run of equal rows and says how
-  many blocks it holds. It expands. The content view shows the differing rows by
-  default and collapses the rest into markers, so position survives and nobody
-  scrolls past agreement. In this state every visible row is a difference, so the
+- **Context marker** — one row that stands for a run of rows holding **no open work**
+  and says how many blocks it holds. It expands. The content view shows the rows that
+  need a decision by default and collapses the rest into markers, so position survives
+  and nobody scrolls past agreement or past their own finished work. Two things
+  collapse: a row whose texts agree, and a row whose finding is **Closed**. A
+  **contradicted** row does not, because it is Needs attention. Equal text is therefore
+  not the rule — a row can agree about every word and carry an open `heading-level`
+  finding, and that row stays (ticket 48). In this state every visible row is work, so the
   **row tint carries no signal and it goes**; the class pill carries the class. The
   retired *Diff* tab is what happens without the marker and without that rule.
 - **Clamp** — a row that shows some lines of each side, with a control that opens it.

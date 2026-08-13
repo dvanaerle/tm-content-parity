@@ -1180,8 +1180,9 @@ collapsing is not a view mode and ticket 37 keeps that question.
 
 ### Then triage again
 
-Tickets 16, 20 and 48 come back when their blockers land. **16 and 20 are settled** —
-16 closed and 20 parked, both 2026-08-11. Only 48 is still owed a triage.
+Tickets 16, 20 and 48 come back when their blockers land. **All three are settled** —
+16 closed and 20 parked, both 2026-08-11; **48 triaged 2026-08-13**, the board refused,
+surviving as one predicate (`ready-for-agent`, blocked by 79 and 80). Nothing is owed.
 
 ---
 
