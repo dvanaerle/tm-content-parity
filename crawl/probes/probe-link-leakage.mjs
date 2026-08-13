@@ -10,11 +10,11 @@ import { parse } from 'node-html-parser';
 const CONCURRENCY = 8;
 const CHROME = ['header', 'footer', 'nav', 'script', 'style', '[class*="menu"]', '[class*="cookie"]'];
 const NEW_HOSTS = new Set([
-  'valanticnl.intern.systems',
-  'valanticbe.intern.systems',
-  'valanticde.intern.systems',
-  'valanticfr.intern.systems',
-  'valanticuk.intern.systems',
+  'm2stagingnl.intern.systems',
+  'm2stagingbe.intern.systems',
+  'm2stagingde.intern.systems',
+  'm2stagingfr.intern.systems',
+  'm2staginguk.intern.systems',
 ]);
 const LIVE = /(^|\.)tuinmaximaal\.[a-z.]+$/i;
 
@@ -159,7 +159,7 @@ lines.push(
 );
 lines.push(
   section(
-    'CROSS-STORE LEAKAGE (other valantic* host)',
+    'CROSS-STORE LEAKAGE (other m2staging* host)',
     `pages affected ${cross.pages.size} / ${ok.length}   unique targets ${cross.targets.size}\n` +
       dedupe(cross.examples).slice(0, 20).join('\n')
   )

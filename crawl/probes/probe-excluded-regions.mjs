@@ -33,7 +33,7 @@ const CONTROL = ['(home)', 'downloads', 'showroom-contact', 'betaalmethoden'];
 const PRODUCT = {
   page: '(a product page)',
   prodUrl: 'https://www.tuinmaximaal.nl/moderne-terrasoverkapping-in-mat-antraciet-van-3-06-x-2-5-meter-met-opaal-polycarbonaat',
-  newUrl: 'https://valanticnl.intern.systems/moderne-terrasoverkapping-in-mat-antraciet-van-3-06-x-2-5-meter-met-opaal-polycarbonaat',
+  newUrl: 'https://m2stagingnl.intern.systems/moderne-terrasoverkapping-in-mat-antraciet-van-3-06-x-2-5-meter-met-opaal-polycarbonaat',
 };
 
 const seeds = JSON.parse(await readFile(SEEDS, 'utf8'));

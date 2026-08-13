@@ -1,7 +1,7 @@
 // THROWAWAY probe for ticket 38 — the be/be_fr shared-host blind spot.
 //
 // `cross-store-link` compares hosts and not stores, because `be` and `be_fr`
-// share one host (`valanticbe.intern.systems`) and a store-based test would
+// share one host (`m2stagingbe.intern.systems`) and a store-based test would
 // report every be_fr page against itself. The cost of that decision is a blind
 // spot: a French page that links into the Dutch Belgian half of the same host is
 // not flagged.

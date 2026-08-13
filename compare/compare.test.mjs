@@ -530,7 +530,7 @@ describe('textFindings', () => {
  */
 function link(url, text, overrides = {}) {
   const parsed = new URL(url);
-  const self = ['www.tuinmaximaal.nl', 'valanticnl.intern.systems'].includes(parsed.host);
+  const self = ['www.tuinmaximaal.nl', 'm2stagingnl.intern.systems'].includes(parsed.host);
   return {
     index: overrides.index ?? 0,
     href: url,
@@ -914,7 +914,7 @@ function untrimmedWordDiff(prod, next) {
   return spans;
 }
 
-const newUrl = 'https://valanticnl.intern.systems/overkappingen';
+const newUrl = 'https://m2stagingnl.intern.systems/overkappingen';
 
 /**
  * The `<head>` panel (ticket 35, phase 6 of spec 32). It emits **no findings** —
@@ -954,7 +954,7 @@ describe('metaRows', () => {
     // hostname is the environment rather than a content difference.
     const canonical = row(rows(
       { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
-      { canonical: 'https://valanticnl.intern.systems/overkappingen/' },
+      { canonical: 'https://m2stagingnl.intern.systems/overkappingen/' },
     ), 'canonical');
     expect(canonical.state).toBe('same');
     // It compares the folded pair and reports the raw one, so `state` is the only
@@ -962,13 +962,13 @@ describe('metaRows', () => {
     // the hostname on all 18 pages, which is why the cells key on `state` and not
     // on the two strings they show.
     expect(canonical.prod).toBe('https://www.tuinmaximaal.nl/overkappingen');
-    expect(canonical.new).toBe('https://valanticnl.intern.systems/overkappingen/');
+    expect(canonical.new).toBe('https://m2stagingnl.intern.systems/overkappingen/');
   });
 
   it('still reports a canonical that points at another page', () => {
     const canonical = row(rows(
       { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
-      { canonical: 'https://valanticnl.intern.systems/veranda' },
+      { canonical: 'https://m2stagingnl.intern.systems/veranda' },
     ), 'canonical');
     expect(canonical.state).toBe('changed');
   });
@@ -976,7 +976,7 @@ describe('metaRows', () => {
   it('hides the canonical row when production has none and the new site has one', () => {
     // 147 of 179 nl pages. The content team cannot set a canonical, so it was
     // never a difference an editor could act on.
-    expect(row(rows({ canonical: null }, { canonical: 'https://valanticnl.intern.systems/overkappingen' }), 'canonical'))
+    expect(row(rows({ canonical: null }, { canonical: 'https://m2stagingnl.intern.systems/overkappingen' }), 'canonical'))
       .toBeUndefined();
   });
 
@@ -1049,7 +1049,7 @@ describe('compareLinks', () => {
     const next = extract({
       side: 'new',
       url: newUrl,
-      links: [link('https://valanticnl.intern.systems/carports', 'Bekijk carports')],
+      links: [link('https://m2stagingnl.intern.systems/carports', 'Bekijk carports')],
     });
     const findings = collect((collector) => compareLinks({ production, new: next, collector }));
     expect(findings.map((f) => f.class)).toEqual(['link-target']);
@@ -1068,8 +1068,8 @@ describe('compareLinks', () => {
       side: 'new',
       url: newUrl,
       links: [
-        link('https://valanticnl.intern.systems/a', 'Lees meer'),
-        link('https://valanticnl.intern.systems/c', 'Lees meer'),
+        link('https://m2stagingnl.intern.systems/a', 'Lees meer'),
+        link('https://m2stagingnl.intern.systems/c', 'Lees meer'),
       ],
     });
     const findings = collect((collector) => compareLinks({ production, new: next, collector }));
@@ -1078,7 +1078,7 @@ describe('compareLinks', () => {
   });
 
   it('fires broken-link even when production is broken too', () => {
-    const target = 'https://valanticnl.intern.systems/weg';
+    const target = 'https://m2stagingnl.intern.systems/weg';
     const next = extract({ side: 'new', url: newUrl, links: [link(target, 'Weg')] });
     const findings = collect((collector) => compareLinks({
       production: extract({ links: [link('https://www.tuinmaximaal.nl/weg', 'Weg')] }),
@@ -1093,7 +1093,7 @@ describe('compareLinks', () => {
   });
 
   it('does not guess about a broken link without a status map', () => {
-    const next = extract({ side: 'new', url: newUrl, links: [link('https://valanticnl.intern.systems/weg', 'Weg')] });
+    const next = extract({ side: 'new', url: newUrl, links: [link('https://m2stagingnl.intern.systems/weg', 'Weg')] });
     const findings = collect((collector) => compareLinks({ production: extract({}), new: next, collector }));
     expect(findings.some((f) => f.class === 'broken-link')).toBe(false);
   });
@@ -1503,8 +1503,8 @@ describe('newSitePathsFor', () => {
   it('reads the paths from the seeds, with no network', () => {
     const seeds = {
       rows: [
-        { page: 'garantie', stores: { nl: { newUrl: 'https://valanticnl.intern.systems/garantie' } } },
-        { page: 'alleen-be', stores: { be: { newUrl: 'https://valanticbe.intern.systems/waarborg' } } },
+        { page: 'garantie', stores: { nl: { newUrl: 'https://m2stagingnl.intern.systems/garantie' } } },
+        { page: 'alleen-be', stores: { be: { newUrl: 'https://m2stagingbe.intern.systems/waarborg' } } },
       ],
     };
     expect(newSitePathsFor(seeds, 'nl')).toEqual(new Set(['/garantie']));

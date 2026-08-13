@@ -18,7 +18,7 @@ const row = (page, stores) => ({
 const cell = (path, host = 'nl') => ({
   path,
   prodUrl: `https://www.tuinmaximaal.${host}/${path}`,
-  newUrl: `https://valantic${host}.intern.systems/${path}`,
+  newUrl: `https://m2staging${host}.intern.systems/${path}`,
   source: 'sitemap-daily',
 });
 
@@ -36,7 +36,7 @@ describe('what the status pass visits', () => {
         store: 'nl',
         page: 'garantie',
         side: 'new',
-        url: 'https://valanticnl.intern.systems/garantie',
+        url: 'https://m2stagingnl.intern.systems/garantie',
       },
     ]);
   });

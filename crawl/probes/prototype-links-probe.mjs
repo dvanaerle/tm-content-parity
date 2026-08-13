@@ -4,7 +4,7 @@ import { parse } from 'node-html-parser';
 const SLUG = process.argv[2] ?? 'heavy-duty-terrasoverkapping';
 const SITES = {
   prod: `https://www.tuinmaximaal.nl/${SLUG}`,
-  new: `https://valanticnl.intern.systems/${SLUG}`,
+  new: `https://m2stagingnl.intern.systems/${SLUG}`,
 };
 
 const CHROME = ['header', 'footer', 'nav', 'script', 'style', '[class*="menu"]', '[class*="cookie"]'];

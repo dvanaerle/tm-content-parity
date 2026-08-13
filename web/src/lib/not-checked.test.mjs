@@ -12,7 +12,7 @@ import {
 const both = (path) => ({
   path,
   prodUrl: `https://www.tuinmaximaal.nl/${path}`,
-  newUrl: `https://valanticnl.intern.systems/${path}`,
+  newUrl: `https://m2stagingnl.intern.systems/${path}`,
 });
 
 const row = (page, stores) => ({ page, stores });

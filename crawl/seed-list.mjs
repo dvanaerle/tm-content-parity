@@ -30,12 +30,12 @@ export const PROD_HOST = {
 };
 
 export const NEW_HOST = {
-  nl: 'valanticnl.intern.systems',
-  be: 'valanticbe.intern.systems',
-  be_fr: 'valanticbe.intern.systems',
-  de: 'valanticde.intern.systems',
-  fr: 'valanticfr.intern.systems',
-  uk: 'valanticuk.intern.systems',
+  nl: 'm2stagingnl.intern.systems',
+  be: 'm2stagingbe.intern.systems',
+  be_fr: 'm2stagingbe.intern.systems',
+  de: 'm2stagingde.intern.systems',
+  fr: 'm2stagingfr.intern.systems',
+  uk: 'm2staginguk.intern.systems',
 };
 
 /**

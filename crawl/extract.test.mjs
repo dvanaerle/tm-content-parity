@@ -16,7 +16,7 @@ const CONTEXT = {
   side: 'production',
   url: 'https://www.tuinmaximaal.nl/overkappingen',
   prodHost: 'www.tuinmaximaal.nl',
-  newHost: 'valanticnl.intern.systems',
+  newHost: 'm2stagingnl.intern.systems',
   onWarn: () => {},
 };
 
@@ -282,11 +282,11 @@ describe('content units', () => {
 });
 
 describe('linkKey', () => {
-  const hosts = { prodHost: 'www.tuinmaximaal.nl', newHost: 'valanticnl.intern.systems' };
+  const hosts = { prodHost: 'www.tuinmaximaal.nl', newHost: 'm2stagingnl.intern.systems' };
   const key = (href) => linkKey(new URL(href), hosts);
 
   it('folds the page\'s own two hosts to one token', () => {
-    expect(key('https://www.tuinmaximaal.nl/carport')).toBe(key('https://valanticnl.intern.systems/carport'));
+    expect(key('https://www.tuinmaximaal.nl/carport')).toBe(key('https://m2stagingnl.intern.systems/carport'));
   });
 
   it('keeps another host apart', () => {
@@ -335,10 +335,10 @@ describe('links', () => {
     expect(extract.links[1].internal).toBe(false);
   });
 
-  it('marks a live-domain and a valantic host as internal', () => {
+  it('marks a live-domain and a m2staging host as internal', () => {
     const extract = extractPage(page(`
       <a href="https://www.tuinmaximaal.de/carport">DE</a>
-      <a href="https://valanticbe.intern.systems/carport">BE</a>`), CONTEXT);
+      <a href="https://m2stagingbe.intern.systems/carport">BE</a>`), CONTEXT);
     expect(extract.links.map((link) => link.internal)).toEqual([true, true]);
   });
 });
@@ -406,7 +406,7 @@ describe('imageKey', () => {
 
   it('matches across the two environment paths', () => {
     expect(imageKey('https://www.tuinmaximaal.nl/media/wysiwyg/tm/nl-nl/afbeeldingen/Veranda.jpg'))
-      .toBe(imageKey('https://valanticnl.intern.systems/media/wysiwyg/Veranda.jpg'));
+      .toBe(imageKey('https://m2stagingnl.intern.systems/media/wysiwyg/Veranda.jpg'));
   });
 
   it('removes a true size suffix', () => {

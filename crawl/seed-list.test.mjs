@@ -299,7 +299,7 @@ describe('the seed list', () => {
   it('swaps the host for the new-site url and changes nothing else', () => {
     const { rows } = buildSeedList({ entries, carriedRows: [] });
     expect(rows.find((r) => r.page === 'terrasoverkapping').stores.de.newUrl).toBe(
-      'https://valanticde.intern.systems/terrassenueberdachung'
+      'https://m2stagingde.intern.systems/terrassenueberdachung'
     );
   });
 
@@ -408,7 +408,7 @@ describe('the seed list', () => {
     expect(rows.find((r) => r.page === 'blog').stores.nl).toEqual({
       path: 'blog',
       prodUrl: url('blog'),
-      newUrl: 'https://valanticnl.intern.systems/blog',
+      newUrl: 'https://m2stagingnl.intern.systems/blog',
       provenance: 'carried-over',
     });
   });
@@ -486,7 +486,7 @@ describe('the seed schema', () => {
           nl: {
             path: 'garantie',
             prodUrl: url('garantie'),
-            newUrl: 'https://valanticnl.intern.systems/garantie',
+            newUrl: 'https://m2stagingnl.intern.systems/garantie',
             provenance: 'sitemap-daily',
           },
           be: null,
@@ -519,7 +519,7 @@ describe('the seed schema', () => {
 
   it('refuses a new-site url that is not the host swap of the path', () => {
     const seeds = good();
-    seeds.rows[0].stores.nl.newUrl = 'https://valanticnl.intern.systems/iets-anders';
+    seeds.rows[0].stores.nl.newUrl = 'https://m2stagingnl.intern.systems/iets-anders';
     expect(schemaDisagreements(seeds)).toContain(
       'garantie/nl: the new url is not the host swap of the path'
     );

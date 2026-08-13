@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 
 const SLUG = process.argv[2] ?? 'heavy-duty-terrasoverkapping';
 const PROD = `https://www.tuinmaximaal.nl/${SLUG}`;
-const NEW = `https://valanticnl.intern.systems/${SLUG}`;
+const NEW = `https://m2stagingnl.intern.systems/${SLUG}`;
 
 const TEXT_TAGS = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,dt,dd,button,a,figcaption,th,td';
 
