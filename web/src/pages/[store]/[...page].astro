@@ -21,7 +21,7 @@ const { production, new: next } = report.sides;
 ---
 
 <Shell title={`${report.store} — ${report.page}`} store={report.store}>
-  <header class="p-6 bg-surface">
+  <header slot="banner">
     <!-- Where this page sits, and the way back out of it (ticket 109). It replaces the
          lone *← alle pagina's van nl* link, which pointed at the bare store and so threw
          away the pills, the view and the search term. It is a `client:load` island only

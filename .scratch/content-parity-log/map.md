@@ -1238,8 +1238,8 @@ new and live on the ref's third parent. Ticket
 [48](issues/48-open-and-done-board.md) was blocked by 37; that edge is **void** and
 cleared, and 48 inherits the mode question 37 would have answered.
 
-**Axis B is parked.** Tickets 39 to 45 stay a named stream and nobody starts
-them. The grilling of 2026-08-10 put axis B out of scope for the workspace work,
+**Axis B is parked.** Tickets 39 to 44 stay a named stream and nobody starts
+them. 45 left the stream on 2026-08-13, `wontfix`. The grilling of 2026-08-10 put axis B out of scope for the workspace work,
 and this line makes that a decision instead of a silence. Nothing about the
 tickets changes, and the edges in the axis B section below still hold.
 
@@ -1272,6 +1272,53 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   it. 6 reviews survive, because a page whose findings are all `work` hashes the same
   under either rule, and 43 were already stale for reasons that predate the decision.
   **86 is unblocked.**
+
+- **The interface speaks one language, and it is English** — two tickets from the
+  grilling session of 2026-08-13, which started from ticket 42 and found that the
+  question it raises is not 42's at all. Decision:
+  [ADR 0014](../../docs/adr/0014-the-interface-speaks-english.md), which reverses
+  ticket 38's criterion, spec 32's story 39 and decision 42, and amends ADR 0010's
+  parameter-name clause.
+
+  Spec 32's rule survives and only its value changes: **one** interface language
+  for all six stores, because matching two strings needs no comprehension of
+  either. No i18n machinery and no translation affordance. The insight that shaped
+  the work is that `CONTEXT.md` is already in English and already names nearly
+  every control, so this is not a translation job — it is making the labels agree
+  with the glossary, which **wins** where they disagree. That corrects three
+  long-standing mismatches: the `Verschillen` view becomes **Repeats**, the unit it
+  actually lists; `Ongedaan maken` becomes **Clear**, because the glossary refuses
+  `un-` words; and `nog niet opgelost` becomes **claimed fixed, still differs**,
+  the sentence the glossary always prescribed. The `Inhoud` tab becomes **Text**,
+  because "Content" is a retired tab name and *content view* is the spine it draws.
+
+  - [124 — The interface speaks one language, and it is English](issues/124-the-interface-speaks-one-language-and-it-is-english.md)
+    — one ticket and one merge: every label in `web/src`, `lang="en-GB"` and
+    `en-GB` dates, the five URL parameters and the search-index route and the
+    export filenames, the Dutch reason prose in `shared/excluded-regions.mjs`, the
+    English store names, the glossary renames with each Dutch label struck and
+    dated, and a stopword guard in `npm test`. A half-Dutch application is worse
+    than either end state, and the guard cannot pass until the labels are done, so
+    the split is a commit per area and not a second ticket. It **blocks 42**, which
+    builds the axis B tab and would otherwise write Dutch labels a week before
+    deleting them.
+  - [125 — A content cell says which language it is in](issues/125-a-content-cell-says-which-language-it-is-in.md)
+    — `ready-for-agent`, blocked by 124. `lang="nl"` has been wrong on five of six
+    stores since the shell was written, so a German paragraph on `/de/` is
+    announced as Dutch. Triaged 2026-08-13: **the page key carries no language**,
+    in the breadcrumb or the `<h1>`, because a url key is an identifier and not
+    prose — it inherits the shell's `en-GB` and is announced in English. Tagging
+    it `nl` would make the one non-content element the loudest language claim on a
+    `/de/` page; tagging it `en-GB` explicitly sounds the same and asserts
+    something false. The accepted cost is a Dutch slug read with English
+    phonetics.
+
+  Two things the session settled that the tickets record rather than decide. **The
+  editor's notes are data** and stay exactly as typed, in any language, because a
+  tool must not rewrite a judgement somebody recorded. And **one regression is
+  accepted**: on `/uk/` the chrome and the content become one language, which the
+  Dutch chrome was distinguishing by accident — the two columns, the diff cells and
+  the class pill do it on purpose, and 125 adds the machine-readable half.
 
 - **The log becomes a workspace** — nineteen tickets from the grilling session of
   2026-08-10, which read a product proposal against the code and the corpus. Five ADRs
@@ -1789,7 +1836,7 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   33 ✓ (spec 32) ──> 39 ──> 40 ──> 41
                       └──────────────> 42 ──> 43
        38 ✓ (spec 32) ┘        └──────────────> 44
-                               └──> 45
+                               └──> 45 ✗
   ```
 
   - [39 — The class vocabulary learns about axes](issues/39-class-vocabulary-axes.md)
@@ -1804,7 +1851,17 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     check on the axis.
   - [43 — Alt language and meta](issues/43-alt-language-and-meta.md)
   - [44 — Heading outline shape](issues/44-heading-outline-shape.md)
-  - [45 — Images across stores](issues/45-images-across-stores.md)
+  - [45 — Images across stores](issues/.out-of-scope/45-images-across-stores.md)
+    — **parked `wontfix` 2026-08-13**, on value and on the stability of its own key.
+    Store-specific images are coming and filenames will be renamed, so the basename key
+    moves under the check and its output would be churn. Three findings are kept in the
+    file: the set difference makes a false `image-missing-store` on every replacement;
+    `image-store-variant` was written for a naming convention this site does not use,
+    because the asset path carries the language in a `<locale>` **folder** and the
+    basename is identical across the stores; and the defect worth catching is an image
+    whose locale segment is neither `global` nor the page's own store, which reads one
+    store page, needs no NL page, reaches the unanchored pages too, and is therefore not
+    an axis B ticket. That is the re-open trigger, and it wants a measurement first.
 
   **Two edges cross into spec 32, and both are real.** Ticket 39 adds an `axis`
   to the same class table that ticket 33 rewrote, so 39 is **unblocked**: 33 landed
@@ -1813,11 +1870,12 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   ticket 58 lands**, so 39 gets cheaper the earlier it runs. Ticket 44 is now
   the nearest owner for spec 32's user story 24, which 33 could not close — a page
   whose first heading is not an `h1` (11 pages) or that has no `h1` at all (3).
-  Tickets 42 and 45 need the five stores crawled, which is
+  Ticket 42 needs the five stores crawled, which is
   ticket 38, not a ticket of their own —
   [46](issues/46-crawl-five-stores.md) asked for the same crawl and is closed as
-  a duplicate. **38 is resolved, so 42 and 45 have their data**: 269 non-NL rows
-  are extracted on disk, and Axis B needs the new side only.
+  a duplicate. **38 is resolved, so 42 has its data**: 269 non-NL rows
+  are extracted on disk, and Axis B needs the new side only. Ticket 45 wanted the same
+  crawl and is parked, so the stream is **four checks and not five**.
 
 - [58 — The head becomes a check](issues/58-axis-a-meta-check.md)
   — builds what ticket 21 decided, `ready-for-agent`, blocked by nothing. Nine

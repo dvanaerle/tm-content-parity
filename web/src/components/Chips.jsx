@@ -19,14 +19,14 @@ import { BANNER, FILL, PILL, SOLID, severityTone } from '../lib/palette.mjs';
 
 /**
  * The count row from the won prototype: a number in bold, its label beside it.
- * Ticket 09 requires absolute counts everywhere, because the denominator moves as
- * soon as an editor mutes a class.
+ * Ticket 09 requires absolute counts everywhere, because the denominator moves: a
+ * corrected difference leaves the snapshot, and a class switched off leaves the count.
  */
 export function Chip({ value, label, tone = 'neutral', title }) {
   return (
     <Badge className={cn('h-auto gap-1.5 px-2 py-1', PILL[tone])} title={title}>
       <strong className="font-semibold">{value}</strong>
-      <span className="opacity-80">{label}</span>
+      <span>{label}</span>
     </Badge>
   );
 }
@@ -88,7 +88,7 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
             // `data-pressed`, but the tone is chosen here rather than in a
             // `data-pressed:` prefix, because the prefix would have to be assembled
             // around a palette value at runtime and Tailwind cannot see such a name.
-            selected.includes(cls) ? 'ring-2 ring-primary' : 'opacity-70 hover:opacity-100',
+            selected.includes(cls) && 'ring-2 ring-primary',
           )}
         >
           <ClassPill class={cls} />

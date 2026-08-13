@@ -24,9 +24,10 @@ criteria hold. The deep-link one does not, and it was ticked in error. See
 > `compare/locate.mjs:63` (`textFragmentUrl`), and the occurrence badge at
 > `web/src/components/Annotations.jsx:69-84`. The ninth fails in two ways, both at
 > `Annotations.jsx:47-57` — `Section` returns `null` when `anchorHeading` is falsy, so a
-> row without one gets **no link at all**; and where it does render, both `Locate` calls
+> row without one gets **no link at all**; and ~~where it does render, both `Locate` calls
 > (`:52-53`) are handed the **same** heading string, so the new-site link is built from
-> production's heading. An agent taking this ticket builds the ninth criterion only.
+> production's heading~~ — *fixed 2026-08-13, and stated too narrowly here; see "The dead
+> deep link" below.* An agent taking this ticket builds the ninth criterion only.
 > One thing has moved under it since: ticket 113 took `anchorHeading` out of part of the
 > derivation (`web/src/lib/reports.mjs:101`) and ADR 0011 took it off the dashboard index
 > (`web/src/lib/search.mjs:52`). The field still exists on the ledger row
@@ -70,11 +71,18 @@ Only the Diff tab links the words themselves. On the Links, Afbeeldingen and Tak
 tabs the fragment carries the section heading, because a link target and an image
 key are not words on the page.
 
-**Both deep links are built from the production heading.** `links.mjs` and
+~~**Both deep links are built from the production heading.** `links.mjs` and
 `images.mjs` pass `prodHeading(...)` for the finding, and `Section` then makes the
 production url and the new-site url from that one string. On a page where the
 heading itself changed, the new-site fragment cannot resolve, and it fails
-silently.
+silently.~~
+
+> **Fixed 2026-08-13, and the diagnosis above was too narrow.** The rule was not
+> "production's heading wins" but *the row held **one** heading and rendered **two**
+> links*, so whichever side did not supply it got the dead one. `text.mjs` takes the
+> heading from production **when there is a production side** and from the new site
+> otherwise — so a `text-added` finding's **production** link was broken in exactly the
+> same way, which this paragraph missed. See "The dead deep link" below.
 
 Spec 32's user story 29 asks for the link "for both production and the new site,
 so that I can see the difference in situ on both", so the second and third points
@@ -158,6 +166,68 @@ A text fragment is matched by the browser against what it **rendered**, so
 folded curly quote is not on the page to be found. It is not yet known how often
 the browser fails to find a string the extractor read. Watch it on the first
 editor pass.
+
+## The dead deep link, 2026-08-13
+
+One of the ninth criterion's three failures is closed. **The criterion is still open**,
+and the failure that was already its stated blocker is still its blocker.
+
+### What was wrong
+
+A finding carried one `anchorHeading` and `Annotations.jsx:52-53` spent it on both
+`Locate` calls. Reproduced against the real compare stage on a page whose heading was
+reworded from `Kleuren en RAL` to `Kleuren en kleurkeuze`:
+
+| finding | heading it held | the dead link |
+|---|---|---|
+| `copy` on the paragraph below | `Kleuren en RAL`, from production | **new-site** link |
+| `text-added` under that heading | `Kleuren en kleurkeuze`, from the new site | **production** link |
+
+A text fragment that matches nothing scrolls nowhere and raises no error, so a dead link
+and a live one were indistinguishable until an editor clicked one.
+
+### What was built
+
+`Finding` gains `anchorHeadings: { production, new }` — the same section as **each side
+words it** — set by all three producers from the `prodHeading`/`newHeading` pair each
+already computed. `anchorHeading` is untouched: still production-preferred, still the
+section's displayed name, still what a mute keys on. Both stay out of the id and the
+grouping key, so the Resolution section's rule above is unchanged.
+
+**A decision this needed, which the ticket had not taken.** A side the finding is not on
+gets `null` and offers **no link**: a `missing-link` has no position on the new site to
+scroll to, so the alternative was a link to the wrong place. This narrows user story 29's
+*"for both production and the new site"* for one-sided findings, and it is recorded here
+rather than left in the code — the story asks to see a difference *in situ on both*, and
+a finding that exists on one side has no *both*.
+
+### Still not done
+
+- **The 1,622 rows with no anchor heading still offer no link at all.** `Section` returns
+  `null` on a falsy heading, unchanged. This is the decision the ticket defers to a ticket
+  of its own, and nothing here touches it.
+- **Where a link renders on Links, Afbeeldingen and Taken it still points at the heading,
+  not at the finding.** Unchanged.
+
+### Two notes for whoever ships this
+
+- **The reports must be regenerated before this is deployed.** `Section` now reads
+  `anchorHeadings`, which exists only in a fresh compare run. Against the report JSON on
+  disk the field is `undefined`, `Locate` gets falsy text, and **both** links vanish while
+  the row still renders `onder “…”` — the same silent failure class as the bug itself. A
+  fallback to `anchorHeading` was rejected: it would quietly reinstate the dead link.
+- **`links.mjs:140` has an unreachable branch.** `production: counterpart ? … : null` —
+  `prodState` is only set when `counterpart` exists and the enclosing `if` requires
+  `prodState?.status === 200`, so no counterpart means no finding. Confirmed by deleting
+  the guard and running the suite green. Left in place for review rather than refactored.
+
+### Tests
+
+Seven, at the seams the ticket already uses. Two for the render (`Section` mounted, each
+link checked against the text of the page it opens) and five at `compareLinks()` /
+`compareImages()` for the per-side headings. The render tests are browser tests on purpose:
+`locate.mjs` builds a correct fragment from whatever it is handed, so every unit test of it
+passed while the call site was wrong — ticket 31's failure mode exactly. Suite: 679 green.
 
 ## Review follow-up, 2026-08-07
 

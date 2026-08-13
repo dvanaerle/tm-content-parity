@@ -31,6 +31,8 @@ export class FindingCollector {
    * @param {string | null} parts.new
    * @param {string | null} [parts.detail]  What changed when the two texts are equal.
    * @param {string | null} [parts.anchorHeading]  The heading it sits under (ticket 34).
+   * @param {import('./contract.mjs').AnchorHeadings} [parts.anchorHeadings]  That same
+   *   section as each side words it, for aiming the two deep links.
    * @param {number | null} [parts.score]  On `copy` findings only.
    * @returns {string} The finding id this occurrence belongs to.
    *
@@ -40,7 +42,10 @@ export class FindingCollector {
    * override control on a row has to act on the finding. The browser cannot
    * recompute the id, because `findingId()` needs `node:crypto`.
    */
-  add({ class: cls, prod, new: next, detail = null, anchorHeading = null, score = null }) {
+  add({
+    class: cls, prod, new: next, detail = null,
+    anchorHeading = null, anchorHeadings = { production: null, new: null }, score = null,
+  }) {
     const record = FINDING_CLASSES[cls];
     if (!record) throw new Error(`Unknown finding class: ${cls}. The vocabulary is closed.`);
 
@@ -50,6 +55,8 @@ export class FindingCollector {
     // Ticket 34 keeps `anchorHeading` **out** of this key as well as out of the
     // id. The same rename under six different headings is still one rename; the
     // heading names the first of them and `occurrences` says there are more.
+    // `anchorHeadings` is out for the same reason, and names that same first
+    // occurrence on both sides — so the two links stay a matched pair.
     const key = [cls, prod ?? '', next ?? '', detail ?? ''].join('|');
     const seen = this.byKey.get(key);
     if (seen) {
@@ -79,6 +86,7 @@ export class FindingCollector {
       new: next,
       detail,
       anchorHeading,
+      anchorHeadings,
       occurrences: 1,
       score,
     });

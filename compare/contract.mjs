@@ -149,6 +149,16 @@ export {
  */
 
 /**
+ * A section heading per side, `null` where the finding is not on that side at all — a
+ * paragraph production has and the new site does not is not on the new site to be
+ * scrolled to, so that side offers no link rather than a link to the wrong place.
+ *
+ * @typedef {object} AnchorHeadings
+ * @property {string | null} production
+ * @property {string | null} new
+ */
+
+/**
  * @typedef {object} Finding
  * @property {string} id
  * @property {Store} store
@@ -172,6 +182,20 @@ export {
  *                                  editor's dismissal of the words below it.
  *                                  Named in full because `anchor` alone is the `<a>`
  *                                  element everywhere else. See `CONTEXT.md`.
+ * @property {AnchorHeadings} anchorHeadings
+ *                                  The same section, as **each side words it**. A row
+ *                                  offers a deep link per side, and a link opens a page
+ *                                  at some text, so the text it carries has to be on the
+ *                                  page it opens. One heading could not do that: where
+ *                                  the new site reworded the heading, the side that did
+ *                                  not supply it got a fragment matching nothing —
+ *                                  which scrolls nowhere and reports no error, so a dead
+ *                                  link and a live one looked the same until clicked.
+ *                                  `anchorHeading` above is still the section's *name*,
+ *                                  production-preferred, and is what the row displays and
+ *                                  what a mute keys on. These two are for aiming the
+ *                                  links. **Not part of the id or the grouping key**, for
+ *                                  the same reason `anchorHeading` is not.
  * @property {number} occurrences   Not part of the id.
  * @property {number | null} score  The similarity score. On `copy` findings only.
  */

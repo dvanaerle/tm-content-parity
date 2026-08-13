@@ -92,7 +92,6 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
   return (
     <Button
       variant="outline"
-      size="xs"
       onClick={() => append({ scope: 'page', action: 'reviewed', findingSetHash })}
     >
       Pagina gecontroleerd
@@ -115,11 +114,10 @@ export function EditorPrompt({ editor, save }) {
         name="editor"
         defaultValue={editor}
         placeholder="Je naam"
-        className="w-36"
       />
       {/* Base UI's button is a `type="button"` by default, so the submit is
           declared here rather than assumed. */}
-      <Button type="submit" variant="outline" size="xs">
+      <Button type="submit" variant="outline">
         {editor ? 'Naam wijzigen' : 'Opslaan'}
       </Button>
     </form>

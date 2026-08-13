@@ -35,6 +35,8 @@ export const PROMO = /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\
  * @property {import('./contract.mjs').ContentUnit | null} new
  * @property {number | null} score
  * @property {string | null} [anchorHeading]  The heading this position sits under (ticket 34).
+ * @property {import('./contract.mjs').AnchorHeadings} [anchorHeadings]  That heading as
+ *                                            each side words it, for the two deep links.
  */
 
 /**
@@ -206,7 +208,17 @@ export function diffRows(production, next) {
   const prodHeading = anchorHeadingFor(prodUnits);
   const newHeading = anchorHeadingFor(newUnits);
   for (const row of sorted) {
-    row.anchorHeading = row.prod ? prodHeading(row.prod.index) : newHeading(row.new?.index);
+    // Each side's own wording of the section, for the deep link that opens **that**
+    // side. A row is on one side or both, and the side it is not on gets `null`: there
+    // is no position there to scroll to, and a link built from the other side's heading
+    // would name text the page does not contain and scroll nowhere in silence.
+    row.anchorHeadings = {
+      production: row.prod ? prodHeading(row.prod.index) : null,
+      new: row.new ? newHeading(row.new.index) : null,
+    };
+    // The section's name, which the row displays and a mute keys on. Production is the
+    // source of truth, so it names the section wherever it has one.
+    row.anchorHeading = row.prod ? row.anchorHeadings.production : row.anchorHeadings.new;
   }
   return sorted;
 }
@@ -298,6 +310,7 @@ export function textFindings(rows, collector) {
       // same id as an `h2` → `h4`. The detail is what changed.
       detail: tagChange(row),
       anchorHeading: row.anchorHeading ?? null,
+      anchorHeadings: row.anchorHeadings ?? { production: null, new: null },
       score: row.score,
     });
   }

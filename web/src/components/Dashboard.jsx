@@ -170,7 +170,7 @@ export default function Dashboard({
   }, [comparable, log.derived]);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <LogBanner
         connected={log.connected}
         notConnectedReason={log.notConnectedReason}

@@ -75,16 +75,23 @@ and do not open them again in a later ticket.
    direction is the correct key and `Diff.jsx` must read it. If it cannot, delete
    the field. Either way, add the test.
 
-## The nine new classes
+## The seven new classes
 
 `missing-page`, `orphan-page`, `untranslated`, `alt-untranslated`,
-`meta-untranslated`, `meta-presence`, `outline-shape` and `image-missing-store`
-are shown. `image-store-variant` is hidden.
+`meta-untranslated`, `meta-presence` and `outline-shape` are shown.
+
+**There were nine until 2026-08-13.** `image-missing-store` and
+`image-store-variant` are **not declared**: ticket 45 is parked `wontfix` at
+`.out-of-scope/45-images-across-stores.md`, so neither class will ever get a producer.
+`orphan-page` is declared without one on purpose, because it is a class the coverage view
+must leave room for; these two are a check that is refused. Do not add them on the
+strength of the older prose in tickets 11, 23 or 24.
 
 ## Acceptance criteria
 
-- [ ] `FINDING_CLASSES` holds ticket 33's table plus the nine axis B classes.
+- [ ] `FINDING_CLASSES` holds ticket 33's table plus the seven axis B classes.
       Each record carries an axis.
+- [ ] Neither image class is in the table.
 - [ ] The three questions above have a written answer in this ticket.
 - [ ] `npm test` is green, and the tests cover the axis filter.
 - [ ] The nl dashboard counts do not move against **ticket 33's** measured

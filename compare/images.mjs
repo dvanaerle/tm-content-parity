@@ -52,6 +52,12 @@ export function compareImages(production, next, collector) {
   for (const [key, prod] of prodImages) {
     const image = newImages.get(key);
     const anchorHeading = prodHeading(prod.index);
+    // The same section as each side words it. An image the new site does not have is
+    // not there to be scrolled to, so that side offers no heading and so no link.
+    const anchorHeadings = {
+      production: anchorHeading,
+      new: image ? newHeading(image.index) : null,
+    };
 
     if (!image) {
       collector.add({
@@ -59,6 +65,7 @@ export function compareImages(production, next, collector) {
         prod: key,
         new: null,
         anchorHeading,
+        anchorHeadings,
       });
       continue;
     }
@@ -71,7 +78,7 @@ export function compareImages(production, next, collector) {
     if (prodAlt === newAlt) continue;
 
     if (prodAlt && !newAlt) {
-      collector.add({ class: 'alt-lost', prod: prodAlt, new: null, anchorHeading });
+      collector.add({ class: 'alt-lost', prod: prodAlt, new: null, anchorHeading, anchorHeadings });
       continue;
     }
     // The new site gained an alt where production had none. Production is the
@@ -88,6 +95,7 @@ export function compareImages(production, next, collector) {
       prod: prodAlt,
       new: newAlt,
       anchorHeading,
+      anchorHeadings,
     });
   }
 
@@ -100,6 +108,7 @@ export function compareImages(production, next, collector) {
       prod: null,
       new: key,
       anchorHeading: newHeading(image.index),
+      anchorHeadings: { production: null, new: newHeading(image.index) },
     });
   }
 }

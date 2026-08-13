@@ -353,7 +353,11 @@ function FindingTable({ findings, check, control, sides, landing }) {
                 <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
                 {/* A target key and an alt text are not words on the page, so the
                     heading above them is the only thing a browser can scroll to. */}
-                <Section anchorHeading={finding.anchorHeading} sides={sides} />
+                <Section
+                  anchorHeading={finding.anchorHeading}
+                  anchorHeadings={finding.anchorHeadings}
+                  sides={sides}
+                />
                 <div className="mt-1">{control(finding)}</div>
               </TableCell>
               {/* The same component the content rows use. A link finding word-diffs

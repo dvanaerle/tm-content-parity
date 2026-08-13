@@ -135,7 +135,9 @@ element any more: it folds the links inside it. Both the word and the rule are g
   See `docs/adr/0005-class-visibility-is-one-enum.md`.
 - **Finding** — one actionable difference. The tool never makes a finding that
   it then hides. A row that is equal after tier-1 normalisation is not a
-  finding.
+  finding. Read "hides" strictly: it means *never renders*. A finding that is
+  **collapsed** into a context marker is not hidden, because the marker says it is there
+  and it expands.
 - **Occurrence count** — how many times the same difference is on the page. It
   is not part of the finding id.
 - **Repeat** — every finding in **one store** with the same class, the same two
@@ -151,7 +153,8 @@ element any more: it folds the links inside it. Both the word and the rule are g
   differ, and it is a different question: the same difference more than once on a
   single page.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
-  `heading-level` or a `tag-changed` finding, and null on every other class. It is
+  `heading-level` or a `tag-changed` finding, `p + p → p` on a `regrouped` one, and null
+  on every other class. It is
   part of the finding id, because without it two different demotions of the same
   words are one finding.
 - **Difference** — any place the two sides do not agree. Wider than a finding:
@@ -166,6 +169,27 @@ element any more: it folds the links inside it. Both the word and the rule are g
   is usually not. Every one-sided check names the two directions as two classes,
   and hides the invented side. It is a field on the class (`lost` or `added`), so
   the default and the colour both follow from it.
+- **Regrouped** — the same words on both sides, divided into blocks differently. One
+  production block that the new site sends as several, or several that it sends as one.
+  The test is **total coverage**, and not containment: one side's block is exactly the
+  other side's run of blocks, with nothing left over. "These words appear over there
+  somewhere" is not the claim; "these blocks **are** that block" is. A side that
+  regrouped **and** added a sentence therefore stays `copy`, because the remainder
+  answers to no block, and a rule that swallowed it would hide invented content — the one
+  failure this list exists to stop.
+  A run is **adjacent and uninterrupted**, and the arity is one-to-many or many-to-one and
+  never many-to-many: a reader can verify that two blocks are one block at a glance, and
+  cannot verify that three are two. Each member of a run is a block that **nothing else
+  claims**, or the block's own counterpart. A member the other side already answers for is
+  what separates a regrouping from a page somebody rewrote.
+  It has **no direction**: nothing is lost and nothing is added, so the arity is a fact
+  the reader sees and not a class. Tags are no part of the test, because a change of
+  structure is the thing itself; they are the **detail**, in the manner of
+  `heading-level`: `p + p → p`, `p → h2 + 4×li`. It carries **no score**: a score on an
+  exact match is decoration, and the score belongs to `copy`.
+  It is not **restructured**, which is a pair whose text differs and whose tag differs.
+  It is the false `text-missing` and the false `copy` that ADR 0002 accepted while
+  many-to-one matching waited for a measurement.
 - **Anchor heading** — the nearest heading before an element in document order.
   It is how a finding says where it is on the page, and it is null for an element
   that precedes every heading. The code says `anchorHeading` in full, never
@@ -372,7 +396,10 @@ who wins against re-check.
   with the name of the person who claimed it. It is derived, never kept.
 - **Stale** — a page review made against a page whose findings changed after it.
   The interface says **"changed since review"**, not "needs review", because a
-  page also becomes stale when an editor corrects things.
+  page also becomes stale when an editor corrects things. **Its findings** means
+  every finding on the page, in any class: a reviewer read the page and not the
+  counted subset of it, and a hash that filtered on visibility made a change to the
+  vocabulary look like a change to the page (ticket 118, ADR 0013).
 - **Migration decision** — ~~an override on a one-sided page: **migrate**,
   **not migrated**, **replaced** or **redirected**~~. **Withdrawn from the vocabulary
   2026-08-11.** It never existed in the code: the override actions are

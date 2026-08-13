@@ -956,21 +956,23 @@ Ticket 11 (11-axis-b-coverage.md) holds every rule. Ticket 39 must reach 30
 classes, because ticket 58 has landed.
 ```
 
-### Session 8
+### Session 8 — **empty, 2026-08-13. Do not sit it.**
 
-```
-/clear
-```
+Both of its tickets are parked `wontfix`, so there is nothing to implement here.
 
-```
-/implement .scratch/content-parity-log/issues/45-images-across-stores.md
-```
+**Ticket 41** is at `issues/.out-of-scope/41-coverage-matrix-bulk-mute.md`: the whole of its
+second half is bulk muting, and ADR 0011 withdrew the mute. The coverage matrix itself is
+not refused, and a revival starts from ticket 40, which is `needs-triage` for the same
+reason.
 
-**Ticket 41 has left this session, 2026-08-13.** It is parked `wontfix` at
-`issues/.out-of-scope/41-coverage-matrix-bulk-mute.md`: the whole of its second half is bulk
-muting, and ADR 0011 withdrew the mute. The coverage matrix itself is not refused, and a
-revival starts from ticket 40, which is `needs-triage` for the same reason. So this sitting
-is one ticket, and axis B is parked anyway.
+**Ticket 45** is at `issues/.out-of-scope/45-images-across-stores.md`, parked later the same
+day: store-specific images are coming and filenames will be renamed, so the basename key
+moves under the check. Its re-open trigger is a different check on a different axis — an
+image whose `<locale>` path segment is neither `global` nor the page's own store — and that
+wants a measurement before it wants a ticket.
+
+Axis B is parked anyway, and the stream is now **four checks** — 40, 42, 43 and 44 —
+behind the one prefactor, 39.
 
 ### Session 9
 

@@ -1245,6 +1245,40 @@ describe('the heading a finding sits under', () => {
       .toEqual([['text-added', 'Kleuren en RAL']]);
   });
 
+  // A row has two deep links and used to hold one heading, so whichever side did not
+  // supply that heading got a link naming text that side does not have. A text
+  // fragment that matches nothing scrolls nowhere and reports no error, so the row
+  // looked identical to a working one until an editor clicked it.
+  it('words the section as each side words it, so neither deep link is a dead one', () => {
+    const before = outline([['Kleuren en RAL', 'h2'], ['Antraciet en creme', 'p']]);
+    const after = outline([['Kleuren en kleurkeuze', 'h2'], ['Antraciet en cremewit', 'p']]);
+    const findings = collect((collector) => textFindings(
+      diffRows(prod(before), extract({ side: 'new', elements: after })),
+      collector,
+    ));
+
+    const copy = findings.find((finding) => finding.class === 'copy' && finding.prod === 'Antraciet en creme');
+    expect(copy.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: 'Kleuren en kleurkeuze' });
+    // The displayed section keeps naming production, which is the source of truth.
+    expect(copy.anchorHeading).toBe('Kleuren en RAL');
+  });
+
+  it('offers no heading for a side the finding is not on', () => {
+    const findings = collect((collector) => textFindings(
+      diffRows(
+        prod(outline([['Kleuren en RAL', 'h2'], ['Antraciet en creme', 'p']])),
+        extract({ side: 'new', elements: outline([['Kleuren en kleurkeuze', 'h2']]) }),
+      ),
+      collector,
+    ));
+
+    // A paragraph production has and the new site does not is not on the new site to
+    // be scrolled to, so that side offers nothing rather than a link to the wrong place.
+    // The renamed heading is a finding of its own here, and it is on both sides.
+    const dropped = findings.find((finding) => finding.class === 'text-missing');
+    expect(dropped.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: null });
+  });
+
   it('positions an image finding, so "which of the eleven images" has an answer', () => {
     const findings = collect((collector) => compareImages(
       extract({ elements: PAGE, images: [image('dak.jpg', 'Glazen dak', 5)] }),
@@ -1266,6 +1300,131 @@ describe('the heading a finding sits under', () => {
     }));
     expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
       .toEqual([['missing-link', 'Kleuren en RAL']]);
+  });
+
+  it('words a retargeted link\'s section as each side words it', () => {
+    // The same anchor, a different target — the one link class that is on both sides,
+    // so the one that offers two links. The new site both reworded the heading and
+    // moved the anchor into a later section, so each side has to be read on its own
+    // terms: production's heading against production's index, the new site's against
+    // the new site's.
+    const findings = collect((collector) => compareLinks({
+      production: extract({
+        elements: outline([['Onze overkappingen', 'h1'], ['Kleuren en RAL', 'h2']]),
+        links: [link('https://www.tuinmaximaal.nl/carport', 'Bekijk carports', { index: 2 })],
+      }),
+      new: extract({
+        side: 'new',
+        url: newUrl,
+        elements: outline([
+          ['Onze overkappingen', 'h1'],
+          ['Kleuren en kleurkeuze', 'h2'],
+          ['Montage', 'h2'],
+        ]),
+        links: [link('https://m2stagingnl.intern.systems/carports', 'Bekijk carports', { index: 3 })],
+      }),
+      collector,
+    }));
+
+    const retarget = findings.find((finding) => finding.class === 'link-target');
+    expect(retarget.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: 'Montage' });
+  });
+
+  it('gives a one-sided link finding no heading on the side it is not on', () => {
+    // A link production has and the new site does not is not on the new site to be
+    // scrolled to, and the reverse for one the new site gained. Both sides of that
+    // rule in one comparison, because it is one rule.
+    const findings = collect((collector) => compareLinks({
+      production: extract({
+        elements: outline([['Kleuren en RAL', 'h2']]),
+        links: [link('https://www.tuinmaximaal.nl/carport', 'Carports', { index: 1 })],
+      }),
+      new: extract({
+        side: 'new',
+        url: newUrl,
+        elements: outline([['Montage', 'h2']]),
+        links: [link('https://m2stagingnl.intern.systems/veranda', 'Veranda dak', { index: 1 })],
+      }),
+      collector,
+    }));
+
+    // The comparative pass reports what production lost before what the new site gained.
+    expect(findings.map((finding) => [finding.class, finding.anchorHeadings])).toEqual([
+      ['missing-link', { production: 'Kleuren en RAL', new: null }],
+      ['extra-link', { production: null, new: 'Montage' }],
+    ]);
+  });
+
+  it('words a changed alt\'s section as each side words it', () => {
+    // The image is on both sides, so it has a position on both — and the new site put
+    // it under a different heading. The alt is what changed; where to go and look at
+    // it differs per side.
+    const findings = collect((collector) => compareImages(
+      extract({
+        elements: outline([['Kleuren en RAL', 'h2']]),
+        images: [image('dak.jpg', 'Glazen dak', 1)],
+      }),
+      extract({
+        side: 'new',
+        elements: outline([['Onze overkappingen', 'h1'], ['Montage', 'h2']]),
+        images: [image('dak.jpg', 'Glazen dakplaat', 2)],
+      }),
+      collector,
+    ));
+
+    expect(findings.map((finding) => [finding.class, finding.anchorHeadings]))
+      .toEqual([['alt-changed', { production: 'Kleuren en RAL', new: 'Montage' }]]);
+  });
+
+  it('gives a one-sided image finding no heading on the side it is not on', () => {
+    const findings = collect((collector) => compareImages(
+      extract({
+        elements: outline([['Kleuren en RAL', 'h2']]),
+        images: [image('dak.jpg', 'Glazen dak', 1)],
+      }),
+      extract({
+        side: 'new',
+        elements: outline([['Montage', 'h2']]),
+        images: [image('zijwand.jpg', 'Zijwand', 1)],
+      }),
+      collector,
+    ));
+
+    expect(findings.map((finding) => [finding.class, finding.anchorHeadings])).toEqual([
+      ['image-missing', { production: 'Kleuren en RAL', new: null }],
+      ['image-added', { production: null, new: 'Montage' }],
+    ]);
+  });
+
+  it('words a redirect\'s section from production\'s own copy of the link', () => {
+    // `redirect` is reported walking the **new** site's links, so production's heading
+    // has to come from the counterpart it looks up rather than from the link in hand.
+    const prodTarget = 'https://www.tuinmaximaal.nl/carport';
+    const newTarget = 'https://m2stagingnl.intern.systems/carport';
+    const findings = collect((collector) => compareLinks({
+      production: extract({
+        // A second production heading *between* the two links' positions, so reading
+        // the new link's index against production answers `Montage` and the test can
+        // tell the two apart. Without it both indices land in the same section and a
+        // wrong lookup goes unnoticed.
+        elements: [unit('Kleuren en RAL', { tag: 'h2', index: 0 }), unit('Montage', { tag: 'h2', index: 2 })],
+        links: [link(prodTarget, 'Carports', { index: 1 })],
+      }),
+      new: extract({
+        side: 'new',
+        url: newUrl,
+        elements: outline([['Onze overkappingen', 'h1'], ['Dakgoot', 'h2']]),
+        links: [link(newTarget, 'Carports', { index: 3 })],
+      }),
+      collector,
+      statuses: new Map([
+        [newTarget, { status: 200, hops: 1 }],
+        [prodTarget, { status: 200, hops: 0 }],
+      ]),
+    }));
+
+    const redirect = findings.find((finding) => finding.class === 'redirect');
+    expect(redirect.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: 'Dakgoot' });
   });
 
   it('stays out of the finding id, so a heading edit never detaches a dismissal', () => {

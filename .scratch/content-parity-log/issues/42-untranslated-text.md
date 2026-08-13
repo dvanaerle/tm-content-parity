@@ -2,7 +2,7 @@
 
 Type: task
 Status: ready-for-agent
-Blocked by: 39, 38
+Blocked by: 39, 38, 124
 Parent: ../map.md
 
 ## What to build
@@ -35,6 +35,12 @@ the presence checks stay in the Coverage view. Ticket 12 owns the ledger tabs.
   editor who changes the rules hold two different powers, and ticket 03 made that
   table append-only and unauthenticated on purpose.
 - The class is `untranslated`, and it is shown.
+- **`untranslated` is about the store's content and never about this interface.**
+  Ticket 124 puts the log's own chrome into English, which translates no sentence
+  on any Tuinmaximaal page: a `de` page carrying the NL sentence is exactly as
+  broken after it. 124 blocks this ticket only because the axis B tab needs
+  labels, and writing Dutch ones a week before they are deleted is writing the
+  same text twice. The rule above is unchanged.
 
 ## Acceptance criteria
 

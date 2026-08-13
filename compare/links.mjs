@@ -81,6 +81,12 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
   const prodHeading = anchorHeadingFor(production.elements);
   const newHeading = anchorHeadingFor(next.elements);
 
+  // The same section as each side words it, for the two deep links a row offers. A
+  // link the other side does not have is not there to be scrolled to, so that side
+  // gets `null` and offers no link — rather than one naming text it does not contain.
+  const onNewOnly = (heading) => ({ production: null, new: heading });
+  const onProdOnly = (heading) => ({ production: heading, new: null });
+
   // --- Absolute checks on the new site -----------------------------------
   // These run first, because a leaked or cross-store link is already fully
   // explained. Reporting it a second time as `extra-link` would inflate the
@@ -95,14 +101,16 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     if (LIVE_HOST.test(host) && !LEAKAGE_ALLOWED_HOSTS.has(host) && path && newSitePaths?.has(path)) {
       // A bare-home target has no path and falls out here, which is what spares
       // the `disclaimer` boilerplate on all six stores.
-      collector.add({ class: 'leakage', prod: null, new: link.key, anchorHeading });
+      collector.add({ class: 'leakage', prod: null, new: link.key, anchorHeading, anchorHeadings: onNewOnly(anchorHeading) });
       explained.add(link.key);
     }
 
     if (INTERNAL_HOST.test(host) && host !== newHost) {
       // Host-based, not store-based: `be` and `be_fr` share one host, and a
       // store-based test would report every be_fr page against itself.
-      collector.add({ class: 'cross-store-link', prod: null, new: link.key, anchorHeading });
+      collector.add({
+        class: 'cross-store-link', prod: null, new: link.key, anchorHeading, anchorHeadings: onNewOnly(anchorHeading),
+      });
       explained.add(link.key);
     }
 
@@ -114,7 +122,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     if (state.status >= 400 || state.status === 0) {
       // Absolute, not comparative: it fires even when production is broken too,
       // because a dead link is actionable with near-zero false positives.
-      collector.add({ class: 'broken-link', prod: null, new: link.key, anchorHeading });
+      collector.add({ class: 'broken-link', prod: null, new: link.key, anchorHeading, anchorHeadings: onNewOnly(anchorHeading) });
       continue;
     }
 
@@ -123,7 +131,16 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
       const prodState = counterpart ? statuses.get(counterpart.url) : undefined;
       // Never a finding when both sides redirect alike.
       if (prodState?.status === 200 && prodState.hops === 0) {
-        collector.add({ class: 'redirect', prod: counterpart?.key ?? null, new: link.key, anchorHeading });
+        collector.add({
+          class: 'redirect',
+          prod: counterpart?.key ?? null,
+          new: link.key,
+          anchorHeading,
+          anchorHeadings: {
+            production: counterpart ? prodHeading(counterpart.index) : null,
+            new: anchorHeading,
+          },
+        });
       }
     }
   }
@@ -138,7 +155,12 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     if (!newLink || newLink.key === prodLink.key) continue;
     // The same anchor, a different target.
     collector.add({
-      class: 'link-target', prod: prodLink.key, new: newLink.key, anchorHeading: prodHeading(prodLink.index),
+      class: 'link-target',
+      prod: prodLink.key,
+      new: newLink.key,
+      anchorHeading: prodHeading(prodLink.index),
+      // The one class here that is on both sides, so it is the one that gets two links.
+      anchorHeadings: { production: prodHeading(prodLink.index), new: newHeading(newLink.index) },
     });
     retargeted.add(prodLink.key);
     retargeted.add(newLink.key);
@@ -150,13 +172,19 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     // broken: the new site did not lose anything worth having.
     const state = link.internal ? statuses?.get(link.url) : undefined;
     if (state && (state.status >= 400 || state.status === 0)) continue;
-    collector.add({ class: 'missing-link', prod: key, new: null, anchorHeading: prodHeading(link.index) });
+    collector.add({
+      class: 'missing-link', prod: key, new: null,
+      anchorHeading: prodHeading(link.index), anchorHeadings: onProdOnly(prodHeading(link.index)),
+    });
   }
 
   for (const [key, link] of newLinks) {
     if (prodLinks.has(key) || retargeted.has(key) || explained.has(key)) continue;
     // Hidden by default: the new site legitimately gained content, and flagging
     // an added link invites editors to delete good work.
-    collector.add({ class: 'extra-link', prod: null, new: key, anchorHeading: newHeading(link.index) });
+    collector.add({
+      class: 'extra-link', prod: null, new: key,
+      anchorHeading: newHeading(link.index), anchorHeadings: onNewOnly(newHeading(link.index)),
+    });
   }
 }

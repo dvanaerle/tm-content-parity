@@ -43,14 +43,22 @@ export const Detail = ({ detail }) => (
  * not words on the page — a link target and an image key are not there to scroll
  * to. A content row does not pass them, because its own cells carry a link to the
  * exact words, which is closer.
+ *
+ * Each link is aimed with **its own side's** wording of the section, which is why
+ * `anchorHeadings` is a pair and not the one string displayed beside it. Both links
+ * were once built from the displayed heading, and on a page where the new site
+ * reworded that heading the new-site fragment matched nothing: it scrolled nowhere
+ * and reported no error, so a dead link looked exactly like a live one. A side the
+ * finding is not on has no heading and offers no link at all — there is no position
+ * there to open.
  */
-export const Section = ({ anchorHeading, sides = null }) => (
+export const Section = ({ anchorHeading, anchorHeadings = null, sides = null }) => (
   anchorHeading
     ? (
       <div className="mt-1 flex items-baseline gap-1 text-xs text-muted-foreground">
         <span className="truncate" title={anchorHeading}>onder “{anchorHeading}”</span>
-        {sides && <Locate url={sides.production.url} text={anchorHeading} side="productie" />}
-        {sides && <Locate url={sides.new.url} text={anchorHeading} side="de nieuwe site" />}
+        {sides && <Locate url={sides.production.url} text={anchorHeadings?.production} side="productie" />}
+        {sides && <Locate url={sides.new.url} text={anchorHeadings?.new} side="de nieuwe site" />}
       </div>
     )
     : null
