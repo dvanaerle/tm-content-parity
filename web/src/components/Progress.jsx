@@ -7,6 +7,7 @@
  * trust is the count, and the bar is the glance.
  */
 
+import { logState } from '../lib/log-read.mjs';
 import { BANNER, CHROME, FILL, INK, PILL } from '../lib/palette.mjs';
 import { Alert, AlertDescription } from './ui/alert.jsx';
 import { Badge } from './ui/badge.jsx';
@@ -126,9 +127,18 @@ export function EditorPrompt({ editor, save }) {
  * would read an empty list as "nobody has done anything" and a dropped click as
  * "saved". Both destroy trust in the log, and both look exactly like a bug in the
  * comparison rules. So the failure is loud, and the page says so.
+ *
+ * **What state the log is in is read by `logState()`, and what to say about it is decided
+ * here.** The two used to be one cascade, and there were three of them over the same five
+ * fields — this one, `whyNotWriting()` and the notes half of a search — free to disagree
+ * about whether an unreachable log and an unconfigured one are one thing or two. They are
+ * two, and this is the component that says so; the notes half collapses them, which it may
+ * do only because this one does not.
  */
-export function LogBanner({ connected, notConnectedReason, ready, error }) {
-  if (error) {
+export function LogBanner(log) {
+  const { state, ready, reason } = logState(log);
+
+  if (state === 'failed') {
     // Amber, not red. An unreachable log is a status, however bad it is, and
     // ticket 35 keeps red for "production had this and the new site lost it".
     return (
@@ -143,19 +153,19 @@ export function LogBanner({ connected, notConnectedReason, ready, error }) {
         {ready
           ? 'You see the state that was read last; it can be out of date.'
           : 'The log was not read, so you see the snapshot without the overrides.'}{' '}
-        ({error})
+        ({reason})
       </Banner>
     );
   }
-  if (!connected) {
+  if (state === 'disconnected') {
     return (
       <Banner tone="attention">
-        <strong>No connection to the override log.</strong> {notConnectedReason} The Fixed tick and
-        Dismiss are off; the rest of the log works.
+        <strong>No connection to the override log.</strong> {reason} The Fixed tick and Dismiss are
+        off; the rest of the log works.
       </Banner>
     );
   }
-  if (!ready) return <Banner tone="neutral">The override log is loading…</Banner>;
+  if (state === 'reading') return <Banner tone="neutral">The override log is loading…</Banner>;
   return null;
 }
 

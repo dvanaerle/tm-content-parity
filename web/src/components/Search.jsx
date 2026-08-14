@@ -3,10 +3,12 @@ import Repeats from './Repeats.jsx';
 import { PageNote } from './Annotate.jsx';
 import { ClassFilterBanner } from './Chips.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx';
 import { Label } from './ui/label.jsx';
 import { Separator } from './ui/separator.jsx';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
+import { logState } from '../lib/log-read.mjs';
 import { searchNotes, searchStore } from '../lib/search.mjs';
 import { pagesWithClasses } from '../lib/view.mjs';
 
@@ -76,12 +78,17 @@ export default function Search({
   // (ticket 123). This component does not decide that — an empty list and an unread log
   // look identical from here, which is exactly how the block came to say "no notes"
   // about a log nobody had read yet.
+  //
+  // The state and not the object: the hook builds a fresh one every render, so a
+  // dependency on it would re-scan the whole log on every keystroke elsewhere on the
+  // screen. It used to be the four flags spelled out one by one, which hard-coded what
+  // `searchNotes` reads and went stale the moment it read a fifth (the review of 123).
+  // `logState()` is what it reads them through, so the events and that state are the whole
+  // of what this answer depends on.
+  const read = logState(log);
   const notes = useMemo(
     () => searchNotes({ log, term }),
-    // The five fields and not the object: the hook builds a fresh one every render, so
-    // a dependency on it would re-scan the whole log on every keystroke elsewhere on
-    // the screen. These are the five `searchNotes` actually reads.
-    [log.events, log.ready, log.error, log.connected, log.notConnectedReason, term],
+    [log.events, read.state, read.ready, read.reason, term],
   );
 
   // The pages whose **name** holds the term, which the removed box used to narrow the
@@ -238,17 +245,21 @@ function Named({ store, pages, link }) {
  * already in memory.
  */
 function Notes({ result, link }) {
-  if (result.state === 'reading') return <NotesAside>Still reading the log…</NotesAside>;
+  if (result.state === 'reading') return <NotesAside>The override log is loading…</NotesAside>;
 
   if (result.state === 'failed')
     return (
       <NotesAside>
-        The override log could not be read ({result.reason}), so this half of the answer is missing.
-        It fills in by itself once the log answers.
+        The override log was not read ({result.reason}), so this half of the answer is missing.
+        Reload the page to try again.
       </NotesAside>
     );
 
-  const notes = result.notes ?? [];
+  // `result.notes` and not `result.notes ?? []`. The state above is what says whether there
+  // are notes to draw, and a coercion here would put the ticket's own bug back one layer
+  // down: an unhandled fourth state would quietly draw the empty block again, which is
+  // exactly what the three branches exist to stop (the review of ticket 123).
+  const { notes } = result;
   if (notes.length === 0) return null;
 
   return (
@@ -295,20 +306,26 @@ function Notes({ result, link }) {
 }
 
 /**
- * What the notes half says when it has no matches to say it with, in the shape of the
- * block it stands in place of.
+ * What the notes half says when it has no matches to say it with.
  *
- * It carries a heading of its own, because a reader who does not know a second half exists
+ * It carries a title of its own, because a reader who does not know a second half exists
  * cannot tell a half that is missing from a half that found nothing — and telling those two
  * apart is the whole of ticket 123.
+ *
+ * shadcn's `Empty` gives the shape, as ADR 0007's amendment requires of an empty state and
+ * as `Ledger.jsx` and `ContentView.jsx` already draw one. It was a hand-rolled `section`
+ * until the review of this ticket, copied off the block below it rather than shared with
+ * it — two shapes free to drift, and the case the amendment names.
  */
 const NotesAside = ({ children }) => (
   <>
     <Separator />
-    <section className="bg-muted px-4 py-3">
-      <h3 className="text-sm font-medium">Notes in the log</h3>
-      <p className="text-sm text-muted-foreground">{children}</p>
-    </section>
+    <Empty className="py-6">
+      <EmptyHeader>
+        <EmptyTitle>Notes in the log</EmptyTitle>
+        <EmptyDescription>{children}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   </>
 );
 

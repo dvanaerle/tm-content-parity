@@ -712,6 +712,15 @@ describe('searchNotes, before the log has answered', () => {
     expect(result.notes).toHaveLength(1);
   });
 
+  it('cannot be told that an unread log holds nothing', () => {
+    // The review's second finding, at this seam. `searchNotes` used to coerce
+    // `log.events ?? []` on the answered branch, so a caller claiming `ready` over no
+    // events got a confident empty answer — the very lie, one layer down and now with a
+    // state field beside it saying `answered`. The coercion is gone, so the contradiction
+    // breaks where it stands instead of being drawn.
+    expect(() => searchNotes({ log: { events: null, ready: true }, term: 'deals' })).toThrow();
+  });
+
   it('answers with nothing for a log that was read and holds no match', () => {
     // The true statement this ticket exists to keep sayable, and the one case that may
     // draw an empty block.

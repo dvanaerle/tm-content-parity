@@ -124,6 +124,66 @@ worth quoting, because it is the bug verbatim: the assertion failed against a sc
 742 tests pass. No count, bar or denominator moves — nothing here reaches the derivation,
 and the notes drawn for a log that has loaded are the ones drawn before.
 
+## The review, answered
+
+A two-axis review of `0b4615e` found six things on each axis. Five are fixed here; the rest
+are recorded below as declined, with the reason.
+
+**Three of them were the same mistake in three places: a state read off the wrong thing.**
+
+- **`result.notes ?? []` in `Search.jsx` gave the trap back everything the type had won.**
+  The Answer above claims that a caller forgetting the state "gets `undefined` and breaks
+  where it stands" — and its only caller coerced that `undefined` into an empty array and
+  drew the empty block from it. The same coercion was in `searchNotes()` itself, one line
+  from the comment forbidding it (`latestByKey(log.events ?? [])`). Both are gone. A node
+  case pins the second: a log claiming `ready` over no events now throws rather than
+  answering *no notes* on its own authority.
+- **A connected log with no store to read said *still reading* forever.** The effect in
+  `useStoreOverrides()` returned early on an empty store list and left `events` null with no
+  request outstanding, which is the one state this ticket's own value cannot name honestly.
+  *Nothing to read* is now decided **before** whether the log could be reached — it does not
+  depend on being able to read — and `overrides.browser.test.mjs` has the case.
+- **"It fills in by itself once the log answers" was not true.** `usePort()` is a
+  `useMemo(…, [])` and the read keys on `[port, stores]`, so a failed read is not retried
+  while the page is open, and `LogBanner` offers nothing to press. Criterion 3 is met in the
+  value and was over-claimed on screen. The block now says what is true — the log was not
+  read, and a reload is what tries again — because a retry is a new request and this
+  ticket's last trap forbids one. **A real retry is a ticket of its own**, and this is the
+  gap it would close.
+
+**One log, one reading of it.** Three places cascaded over the same five fields in three
+orders and three vocabularies: `LogBanner`, `whyNotWriting()` and `searchNotes()`. They
+disagreed about whether *the log does not answer* and *there is no connection* are one thing
+or two, and this ticket's fix invented a third phrasing of the loading state while its own
+comment said the two must not tell an editor different stories. `logState()` in
+`web/src/lib/log-read.mjs` is now the one reading — a state, a reason, and `ready` beside
+them — and the three are readers of it. What each one *says* is still its own: the banner
+names whose fault it is, and the notes half collapses the two failures, which it may do only
+because the banner does not. Five node cases pin it, and `LogBanner`'s four sentences got the
+browser test it never had, written green before the cascade under them was replaced.
+
+The words follow ADR 0014 now: the notes block says *The override log is loading…*, which is
+the banner's own sentence, instead of a third phrasing of it.
+
+**The empty state is a shadcn `Empty`** (ADR 0007's amendment, which names empty states).
+`NotesAside` was a hand-rolled `section` copied off the block below it rather than shared
+with it — two shapes free to drift — and it is now drawn as `Ledger.jsx` and
+`ContentView.jsx` draw one.
+
+**The `useMemo` no longer spells out what `searchNotes` reads.** It depended on the four
+flags one by one, which went stale the moment that function read a fifth. It depends on the
+events and the state now, which is the whole of what the answer turns on.
+
+### Declined, and why
+
+- **`live: true` on all three branches.** The review reads it as carrying no information on
+  `reading`, and that is fair. It is 82's field and 82's reason — a caller drawing both
+  halves has to say which is which — so removing it is a change to that ticket's shape and
+  not to this one's. Left alone deliberately.
+- **The deleted `Notes` docblock.** It was orphaned above `Named` and said nothing about the
+  component it sat on. Its 82 rationale is in `Search.jsx`'s own opening, which still states
+  the two freshnesses and why the halves are never one list.
+
 ### What this leaves for 105
 
 105's seventh criterion — *a scoped notes block never says "none" about a log it has not

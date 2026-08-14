@@ -179,7 +179,9 @@ describe('the notes half, before the log has answered', () => {
     const { unmount } = await mount({ log: { events: null, ready: false, connected: true } });
 
     expect(document.body.textContent).toContain('Notes in the log');
-    expect(document.body.textContent).toContain('Still reading the log…');
+    // The banner's own sentence about the same state, and not a third phrasing of it
+    // (ADR 0014, and the review of this ticket): one log, one vocabulary.
+    expect(document.body.textContent).toContain('The override log is loading…');
     unmount();
   });
 
@@ -188,8 +190,22 @@ describe('the notes half, before the log has answered', () => {
       log: { events: null, ready: false, error: 'TypeError: Failed to fetch', connected: true },
     });
 
-    expect(document.body.textContent).toContain('The override log could not be read');
+    expect(document.body.textContent).toContain('The override log was not read');
     expect(document.body.textContent).toContain('TypeError: Failed to fetch');
+    unmount();
+  });
+
+  it('does not promise that a failed read will fill itself in', async () => {
+    // The review's first finding. The block used to say *it fills in by itself once the
+    // log answers*, and nothing re-reads the log: `useStoreOverrides()` reads once per
+    // store list and never retries, so on screen that moment does not come. What is
+    // offered is the thing that does work.
+    const { unmount } = await mount({
+      log: { events: null, ready: false, error: 'TypeError: Failed to fetch', connected: true },
+    });
+
+    expect(document.body.textContent).toContain('Reload the page to try again.');
+    expect(document.body.textContent).not.toContain('fills in by itself');
     unmount();
   });
 
@@ -211,13 +227,13 @@ describe('the notes half, before the log has answered', () => {
     const { rerender, unmount } = await mount({
       log: { events: null, ready: false, error: 'TypeError: Failed to fetch', connected: true },
     });
-    expect(document.body.textContent).toContain('The override log could not be read');
+    expect(document.body.textContent).toContain('The override log was not read');
 
     await rerender({ log: { events: [note], ready: true, error: null, connected: true } });
 
     expect(document.body.textContent).toContain('1 note with these words');
     expect(document.body.textContent).toContain('deals blijft zo staan');
-    expect(document.body.textContent).not.toContain('The override log could not be read');
+    expect(document.body.textContent).not.toContain('The override log was not read');
     unmount();
   });
 

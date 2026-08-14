@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { appendEach } from '../../../overrides/bulk.mjs';
 import { derivePageState, deriveStoreState } from '../../../overrides/state.mjs';
 import { createOverridesPort } from '../../../overrides/supabase.mjs';
+import { logState } from './log-read.mjs';
 
 const EDITOR_KEY = 'tm-content-parity.editor';
 
@@ -163,10 +164,17 @@ export function useOverrides({ report, editor }) {
  * and now, so it is asked for before anything they cannot.
  */
 function whyNotWriting({ port, editor, events, error }) {
-  if (!port) return 'No connection to the log, so a decision cannot be made.';
-  if (error) return 'The log does not answer, so this is read-only.';
+  // The log's own four states come from `logState()`, which is the one reading of them in
+  // this repo since the review of ticket 123. What is different here is the **fifth**
+  // condition, which is not about the log at all: a name. It keeps its place in the order —
+  // it is the one thing an editor can fix here and now, so it is asked for before anything
+  // they cannot — and that is why this is still a cascade and not a lookup.
+  const { state } = logState({ ready: events !== null, error, connected: Boolean(port) });
+
+  if (state === 'disconnected') return 'No connection to the log, so a decision cannot be made.';
+  if (state === 'failed') return 'The log does not answer, so this is read-only.';
   if (!editor) return NO_EDITOR;
-  if (events === null) return 'The log is still loading.';
+  if (state === 'reading') return 'The log is still loading.';
   return null;
 }
 
@@ -201,7 +209,17 @@ export function useStoreOverrides({ pages, editor = '' }) {
   );
 
   useEffect(() => {
-    if (!port || !stores) return;
+    // **No store to read is an answer, not a wait**, and it is decided before the port:
+    // whether the log could be reached does not come into it, because there is nothing to
+    // ask it about. Both early returns used to be one, which left `events` null with no
+    // request outstanding — and the notes half reads that as *still reading*, a sentence
+    // that would then never stop being said (the review of ticket 123).
+    if (!stores) {
+      setEvents([]);
+      setError(null);
+      return;
+    }
+    if (!port) return;
     let live = true;
     Promise.all(stores.split(',').map((store) => port.readEventsForStore(store)))
       .then((lists) => {

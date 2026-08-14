@@ -14,8 +14,10 @@ import { useStoreOverrides } from './overrides.mjs';
  * log nobody had read.
  *
  * It is a browser test because a hook needs a renderer, and it needs no Supabase project:
- * with nothing configured the port cannot be created, which is exactly the state this
- * asserts about — a log there is no read of.
+ * with nothing configured the port cannot be created, which is exactly the state the first
+ * case asserts about — a log there is no read of. Nothing is mocked, which the lint rules
+ * forbid and which these two cases do not need: what they turn on is the **store list**,
+ * and that is a prop.
  */
 
 /** The hook's return, captured from a render. */
@@ -46,6 +48,27 @@ describe('useStoreOverrides, before a read has succeeded', () => {
     // been read and the other says it holds nothing.
     expect(held.events).toBeNull();
     expect(held.ready).toBe(false);
+    unmount();
+  });
+});
+
+/**
+ * The state the fix left unnamed, found by the review of ticket 123: **no store to read**.
+ * The effect returned early on an empty store list and left `events` null with no request
+ * outstanding, which the notes half reads as *still reading* — forever, for a page it will
+ * never read anything for.
+ *
+ * An empty list is the true answer there, and it is one of the two cases in which an empty
+ * notes block is honest: there is no store to ask about, so nothing in the log is about
+ * these pages. That is decided **before** whether the log could be reached, which is why
+ * this case needs no project: *nothing to read* does not depend on being able to read.
+ */
+describe('useStoreOverrides, with no store to read', () => {
+  it('says the log holds nothing, rather than reading forever', () => {
+    const { held, unmount } = renderHook([]);
+
+    expect(held.events).toEqual([]);
+    expect(held.ready).toBe(true);
     unmount();
   });
 });

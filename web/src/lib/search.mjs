@@ -63,6 +63,7 @@
 
 import { latestByKey } from '../../../overrides/state.mjs';
 import { FINDING_CLASSES, isWork } from '../../../compare/vocabulary.mjs';
+import { logState } from './log-read.mjs';
 import { findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
 
 /**
@@ -389,17 +390,28 @@ export function searchStore({
  * and breaks where it stands, rather than quietly drawing nothing.
  *
  * Two of the branches follow `LogBanner`, because the two must not tell an editor
- * different stories about one log:
+ * different stories about one log — and since the review of this ticket they do not merely
+ * agree by hand: `logState()` is the one reading of the five fields, and this function and
+ * the banner are two readers of it. What is left here is what this half *says* about that
+ * state, which is its own:
  *
  * - **No connection is a log that could not be read.** It is not the editor's fault and
- *   the banner says so in its own words; down here the truth about the notes half is
- *   simply that there is no log to read, and `notConnectedReason` is the why.
+ *   the banner says so in its own words; down here the two failures collapse into one,
+ *   because the truth about the notes half is the same either way — there is no log to
+ *   read — and the state's `reason` is the why.
  * - **An error over a log that *was* read still answers.** A failed write leaves the last
  *   good read standing, and the banner already says it can be out of date. Throwing away
  *   notes that are on screen would be the second lie in the other direction.
  *
  * Nothing latches. The state is derived from the read on every call, so the moment the
  * log arrives the same term is answered — no retry here, no second request, no reload.
+ *
+ * **That is a property of this function and not a promise about the screen**, and the
+ * review of this ticket caught the block above making the second claim out of the first.
+ * `useStoreOverrides()` reads once per `[port, stores]` and never retries, so a read that
+ * failed is not re-attempted while the page is open. The words in `Search.jsx` say what is
+ * true of that: the log was not read, and a reload is what tries again. A retry is a new
+ * request, which this ticket's last trap forbids, so it stays a ticket of its own.
  *
  * @param {object} args
  * @param {object} args.log The store page's read of the override log.
@@ -415,9 +427,13 @@ export function searchStore({
  *   | { live: true, state: 'answered', notes: import('../../../overrides/state.mjs').OverrideEvent[] }}
  */
 export function searchNotes({ log, term }) {
-  if (!log.ready) {
-    const reason = log.error ?? (log.connected === false ? log.notConnectedReason : null);
-    return reason ? { live: true, state: 'failed', reason } : { live: true, state: 'reading' };
+  const read = logState(log);
+
+  // `ready` first, and the state after it: a write that failed over a good read leaves the
+  // events standing, and this half depends on the read, which succeeded.
+  if (!read.ready) {
+    if (read.state === 'reading') return { live: true, state: 'reading' };
+    return { live: true, state: 'failed', reason: read.reason };
   }
 
   const needle = fold(term);
@@ -427,7 +443,10 @@ export function searchNotes({ log, term }) {
   // withdrew are still in it, and returning them would offer a reason for a decision
   // that has since been taken back. `latestByKey()` is the log's own answer to which
   // event counts, so search asks it rather than deciding for itself.
-  const notes = [...latestByKey(log.events ?? []).values()]
+  // `log.events` and not `log.events ?? []`. A read has succeeded, so there is a list; a
+  // caller that says otherwise is contradicting itself, and coercing here would answer
+  // *no notes* on its behalf — the ticket's own bug, one layer down.
+  const notes = [...latestByKey(log.events).values()]
     .filter((one) => one.note?.toLowerCase().includes(needle))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
