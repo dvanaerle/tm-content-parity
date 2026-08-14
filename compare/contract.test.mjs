@@ -241,12 +241,15 @@ describe('FINDING_CLASSES', () => {
     expect(VISIBILITIES).toEqual(['work', 'information', 'diagnostic']);
   });
 
-  it('is closed at 22 classes', () => {
+  it('is closed at 31 classes', () => {
     // Ticket 33 took it from 18 to 21: `structure` out, `text-missing`,
     // `text-added`, `heading-level` and `tag-changed` in. Ticket 54 added the
     // twenty-second, `no-declared-alternate`, and it is the first `meta` class:
     // `CHECKS` had declared the check since ticket 08 with nothing using it.
-    expect(Object.keys(FINDING_CLASSES).length).toBe(22);
+    // Ticket 96 adds the nine the head check will emit. It says 21 → 30, which was
+    // written before ticket 54 landed the twenty-second class; the nine are the nine,
+    // so the pin is 31.
+    expect(Object.keys(FINDING_CLASSES).length).toBe(31);
   });
 
   it('has retired structure', () => {
@@ -299,18 +302,33 @@ describe('FINDING_CLASSES', () => {
       'extra-link',
       'image-added',
       'image-missing',
+      'meta-description-added',
+      'meta-description-lost',
+      'meta-title-added',
+      'meta-title-lost',
       'missing-link',
       'text-added',
       'text-missing',
     ]);
   });
 
+  it("gives no meta class an axis, which is ticket 39's question", () => {
+    // Ticket 33 dropped `axis` on purpose so that ticket 39, the prefactor, would
+    // still have one. Ticket 96 hands 39 a wider table and answers nothing about
+    // axes, so the nine arrive without the field rather than with a guess at it.
+    for (const [name, cls] of Object.entries(FINDING_CLASSES)) {
+      if (cls.check === 'meta') expect(cls, name).not.toHaveProperty('axis');
+    }
+  });
+
   /*
    * The regression gate of ticket 75. It used to pin the sorted list of hidden classes,
    * and the enum splits that list in two rather than deleting it — so the pin is the
-   * three groups, whole. The twelve in `work` are exactly the twelve that were
-   * `shown: true`, which is what makes the migration count-neutral: the denominator is
-   * every finding in a `work` class and nothing else.
+   * three groups, whole. The twelve in `work` were exactly the twelve that were
+   * `shown: true`, which is what made that migration count-neutral: the denominator is
+   * every finding in a `work` class and nothing else. Two tickets have moved the group
+   * since — 86 took `heading-level` out, 96 put the seven head classes in — so it is
+   * eighteen now, and the pin is what makes each of those moves say so out loud.
    */
   it('pins the three visibility groups', () => {
     const group = (visibility) =>
@@ -329,13 +347,22 @@ describe('FINDING_CLASSES', () => {
       'image-missing',
       'leakage',
       'link-target',
+      'meta-casing',
+      'meta-description-changed',
+      'meta-description-lost',
+      'meta-title-changed',
+      'meta-title-lost',
       'missing-link',
+      'robots-index-lost',
+      'robots-noindex-lost',
       'text-missing',
     ]);
     expect(group('information')).toEqual([
       'extra-link',
       'heading-level',
       'image-added',
+      'meta-description-added',
+      'meta-title-added',
       'price',
       'restructured',
       'text-added',
@@ -349,12 +376,13 @@ describe('FINDING_CLASSES', () => {
     ]);
   });
 
-  it('counts eleven classes as work, which is the denominator ticket 86 moved', () => {
+  it('counts eighteen classes as work, seven of them the head check', () => {
     // Twelve until 2026-08-13. Ticket 75 landed the enum count-neutral at twelve, and
     // ticket 86 is the first move that was **meant** to move the denominator: one class
     // out of `work`, on its own commit, so that one number never hides two movements.
+    // Ticket 96 adds seven, and moves no number: nothing emits them yet.
     const work = Object.values(FINDING_CLASSES).filter((cls) => cls.visibility === 'work');
-    expect(work.length).toBe(11);
+    expect(work.length).toBe(18);
   });
 });
 

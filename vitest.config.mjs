@@ -9,6 +9,17 @@ import { defineConfig } from 'vitest/config';
 const WEB_SRC = fileURLToPath(new URL('./web/src', import.meta.url));
 
 /**
+ * What neither project ever collects.
+ *
+ * `.claude/worktrees/` is the one that is not obvious. A lane is a git worktree, and
+ * `claude --worktree` puts it *inside* this checkout — so every test file in the repo
+ * exists again under each open lane, and a recursive include from the repo root finds all
+ * of them. Ignoring the directory in git does not help: an include glob does not read
+ * `.gitignore`. Excluding it here is what keeps a run counting each test once.
+ */
+const IGNORED = ['**/node_modules/**', 'dist/**', '**/.claude/**'];
+
+/**
  * Two projects, because this repo has two kinds of seam.
  *
  * Nearly everything here is a pure function and runs in Node: the compare rules, the
@@ -31,7 +42,7 @@ export default defineConfig({
         test: {
           name: 'node',
           include: ['**/*.test.mjs'],
-          exclude: ['**/node_modules/**', 'dist/**', '**/*.browser.test.mjs'],
+          exclude: [...IGNORED, '**/*.browser.test.mjs'],
         },
       },
       {
@@ -45,7 +56,7 @@ export default defineConfig({
         test: {
           name: 'browser',
           include: ['**/*.browser.test.mjs'],
-          exclude: ['**/node_modules/**', 'dist/**'],
+          exclude: IGNORED,
           setupFiles: ['./vitest.browser-setup.mjs'],
           browser: {
             enabled: true,

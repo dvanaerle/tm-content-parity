@@ -8,7 +8,8 @@
  * never in the browser, so the split costs nothing.
  *
  * Ticket 02 fixes the text classes, ticket 05 the link classes, ticket 06 the
- * image classes, ticket 33 the directional text split. A class **keys nothing** since
+ * image classes, ticket 33 the directional text split, ticket 96 the nine head
+ * classes. A class **keys nothing** since
  * ADR 0011, but it is still the unit **visibility** is decided on — one enum, triaged once
  * in git, and the only thing that can say *this is not work at all* (ADR 0005). So one
  * class is one such decision: each name must be a name an editor knows, and each new class
@@ -218,6 +219,87 @@ export const FINDING_CLASSES = {
     visibility: 'diagnostic',
     meaning:
       'Production declares no hreflang alternate for this page, so the log cannot put it beside the other stores.',
+  },
+
+  // Ticket 96 — the `<head>`, one class per field and per direction. No producer emits
+  // these yet; ticket 97 writes it. They arrive first so that the vocabulary is true
+  // before anything reads it, and they depend on no crawled field.
+  //
+  // The four `lost` and `added` classes fire zero times on today's corpus: both sides
+  // always send a title and a description. They ship anyway, because a one-sided
+  // difference is named by its direction on every check, and a title that disappears
+  // after a later content edit is the exact defect this log exists to catch.
+  //
+  // **None of the nine carries `axis`.** That field is ticket 39's question; ticket 33
+  // dropped it on purpose so 39 would still have one, and this ticket hands 39 a wider
+  // table rather than an answer.
+  //
+  // **Seven of them are `work`, and that contradicts `CONTEXT.md` as it stands.** The
+  // glossary says a display-only difference "has no id, no override and no place in a
+  // bar" and that "the `<head>` panel is made of these", and the Landing entry says
+  // *Meta is display only*. Ticket 21 decided the reverse and recorded the price: a head
+  // finding is not a body element, so a short page with two of them reads worse than the
+  // page bar's arithmetic deserves, and that distortion is accepted as the cost of one
+  // counter. The glossary is not edited here, because nothing emits these yet and a
+  // glossary that describes an unbuilt screen is worse than one a ticket is about to
+  // correct: ticket 98 rewrites both entries when the Meta tab lands. Stated here rather
+  // than left for a reader to find, per `docs/agents/domain.md`.
+  'meta-title-changed': {
+    check: 'meta',
+    visibility: 'work',
+    meaning: 'Both sides have a title, and it is different.',
+  },
+  'meta-title-lost': {
+    check: 'meta',
+    visibility: 'work',
+    direction: 'lost',
+    meaning: 'Production has a title. The new site has none.',
+  },
+  'meta-title-added': {
+    check: 'meta',
+    visibility: 'information',
+    direction: 'added',
+    meaning: 'The new site has a title that production does not have.',
+  },
+  'meta-description-changed': {
+    check: 'meta',
+    visibility: 'work',
+    meaning: 'Both sides have a description, and it is different.',
+  },
+  'meta-description-lost': {
+    check: 'meta',
+    visibility: 'work',
+    direction: 'lost',
+    meaning: 'Production has a description. The new site has none.',
+  },
+  'meta-description-added': {
+    check: 'meta',
+    visibility: 'information',
+    direction: 'added',
+    meaning: 'The new site has a description that production does not have.',
+  },
+  // A new class, and deliberately **not** the existing `casing`: that one carries
+  // `check: 'text'`, so re-using it here would file a head defect under the Inhoud tab.
+  // Tier 2 is not folded in the head — folding it would make the `<head>` the one place
+  // in the log where a dropped full stop is invisible.
+  'meta-casing': {
+    check: 'meta',
+    visibility: 'work',
+    meaning: 'Only letter case or trailing punctuation is different, in a head field.',
+  },
+  // Robots is measured in both directions, and neither is a `direction` in the contract's
+  // sense: both sides send a robots value, so nothing is one-sided. `robots-index-lost`
+  // is the worse of the two — the page leaves Google. Rarity is the argument for the
+  // pair: three pages carry one on today's corpus, and nobody finds these by eye.
+  'robots-index-lost': {
+    check: 'meta',
+    visibility: 'work',
+    meaning: 'Production is indexable. The new site is noindex.',
+  },
+  'robots-noindex-lost': {
+    check: 'meta',
+    visibility: 'work',
+    meaning: 'Production is noindex. The new site is indexable.',
   },
 };
 
