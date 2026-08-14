@@ -270,9 +270,7 @@ export default function Dashboard({
         byClass[cls] = (byClass[cls] ?? 0) + count;
       }
     }
-    // Clean means clean **now**: no open findings after the overrides.
-    const clean = comparable.filter((page) => openOf(page) === 0).length;
-    return { diagnostic, clean, byClass, ...log.derived.bar };
+    return { diagnostic, byClass, ...log.derived.bar };
   }, [comparable, log.derived]);
 
   return (
@@ -326,18 +324,18 @@ export default function Dashboard({
           />
         ))}
 
-        <Chip value={totals.clean} label="pages equal" tone="added" />
+        {/* *pages equal* stood here until ticket 79. It counted the pages with no open
+            finding — a thing nobody works on, and the one number on this strip that
+            could only ever go up while the work went nowhere. The equal **rows** stay,
+            behind the content view's context markers, because they answer *where does
+            this text belong*; a tally of the pages holding them answers nothing. */}
         <Chip
           value={log.derived.reviewedFresh}
           label="pages reviewed"
           title="A human looked at everything on this page, also at what the tool cannot see."
         />
         <Chip value={totals.diagnostic} label="hidden (noise)" />
-        <Chip
-          value={oneSided.length}
-          label="one-sided"
-          title="Only one site has this page."
-        />
+        <Chip value={oneSided.length} label="one-sided" title="Only one site has this page." />
         <Chip
           value={notChecked.length}
           label="not checked"
@@ -591,10 +589,7 @@ export default function Dashboard({
         </CardContent>
       </Card>
 
-      <Aside
-        title={`One-sided pages (${oneSided.length})`}
-        note="Only one site has these pages."
-      >
+      <Aside title={`One-sided pages (${oneSided.length})`} note="Only one site has these pages.">
         {oneSided.map((page) => (
           <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
             <a className={`hover:underline ${CHROME.link}`} href={link(page.store, page.page)}>
@@ -605,10 +600,7 @@ export default function Dashboard({
         ))}
       </Aside>
 
-      <Aside
-        title={`Not checked (${notChecked.length})`}
-        note="Pages found but not compared."
-      >
+      <Aside title={`Not checked (${notChecked.length})`} note="Pages found but not compared.">
         {groupNotChecked(notChecked).map((group) => (
           <li key={group.key} className="border-t py-2 first:border-0">
             <strong className="font-medium">
@@ -625,10 +617,7 @@ export default function Dashboard({
         )}
       </Aside>
 
-      <Aside
-        title={`Excluded regions (${regions.length})`}
-        note="Page areas outside editor work."
-      >
+      <Aside title={`Excluded regions (${regions.length})`} note="Page areas outside editor work.">
         {regions.map((region) => (
           <li key={region.selector} className="py-1">
             <code className="font-medium">{region.selector}</code>

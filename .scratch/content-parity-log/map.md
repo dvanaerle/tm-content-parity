@@ -1404,7 +1404,21 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
 
   Then the interface and the rest:
   [78 the history note](issues/78-a-closed-finding-leaves-a-history-note.md),
-  [79 the context marker](issues/79-the-content-view-opens-on-the-differences.md),
+  [79 the context marker](issues/79-the-content-view-opens-on-the-differences.md) —
+  **resolved 2026-08-14. The content view opens on the work**: the nl store draws 5,290
+  rows where it drew 6,977, a fall of 24.2%, with 2,560 agreeing blocks behind 873
+  markers and nothing removed from the page. The predicate is deliberately **narrower**
+  than 68's `equal` — a row that carries a class is not collapsed, even when its words
+  agree — which is the disagreement the grilling of 48 found, and 48 widens it to *no
+  open work* in one expression. *Differences only* **went** rather than being reworded: it
+  narrowed the view, which is the one thing ADR 0006 forbids here, and *Show unchanged
+  blocks* opens every marker instead. `rowKeyFromHash()` came back three days after 68
+  withdrew it with the clamp, because this is the caller it was written for and the run
+  must open before the browser looks for the row. **The marker does not help the worst
+  page**: `fotogalerij/zonwering` is 446 findings over 185 rows and draws no marker at
+  all, because almost every row is one-sided and therefore carries a class — 64 of 179 nl
+  pages are the same. It helps the middle, and that is the honest claim. `pages equal`
+  left the dashboard strip,
   [80 three buckets](issues/80-three-buckets-and-the-third-is-closed.md),
   [81 the repeat is the queue](issues/81-the-repeat-is-the-queue.md),
   [31 one reason, many findings](issues/31-bulk-dismissal.md),

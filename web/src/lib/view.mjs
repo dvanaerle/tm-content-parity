@@ -27,35 +27,23 @@ import { canDecide } from './classes.mjs';
 
 /**
  * @typedef {object} ContentFilter
- * @property {boolean} onlyDifferences  The inverse control. Matched rows are the default.
- * @property {string[]} classes         Empty means every class.
+ * @property {string[]} classes  Empty means every class. The **only** narrowing left:
+ *                               *Differences only* went out with ticket 79, whose
+ *                               marker makes the default a differences view and keeps
+ *                               the agreeing rows one click away instead of removing
+ *                               them.
  */
 
 /** @type {ContentFilter} */
-export const NO_FILTER = Object.freeze({ onlyDifferences: false, classes: Object.freeze([]) });
+export const NO_FILTER = Object.freeze({ classes: Object.freeze([]) });
 
 /** @param {ContentFilter} filter */
-export const isNarrowed = (filter) => filter.onlyDifferences || filter.classes.length > 0;
-
-/**
- * What *Differences only* must draw. A class filter already implies the differences
- * — `prepareRows` drops every matched row as soon as a class is on — so an unticked
- * box over a differences-only view is a control that says one thing while the view
- * does another. While a class is on the box is on, and it is disabled, because
- * turning it off would change nothing.
- *
- * @param {ContentFilter} filter
- * @returns {{ checked: boolean, disabled: boolean }}
- */
-export function onlyDifferencesState(filter) {
-  const impliedByClass = filter.classes.length > 0;
-  return { checked: impliedByClass || filter.onlyDifferences, disabled: impliedByClass };
-}
+export const isNarrowed = (filter) => filter.classes.length > 0;
 
 /**
  * Add or remove one item. The dashboard holds a bare class list and the content view
  * holds a whole filter, so the set operation is separate from the filter it lives in:
- * a caller with no `onlyDifferences` to carry must not have to invent one.
+ * a caller with no wrapper to carry must not have to invent one.
  *
  * @template T
  * @param {readonly T[]} list
@@ -200,12 +188,137 @@ function classCounts(rows) {
 }
 
 /**
+ * Whether a row belongs behind a **context marker** rather than on screen (ticket 79,
+ * ADR 0006).
+ *
+ * It is **not** `row.equal`, and the difference is the decision this ticket carries.
+ * Ticket 68 set `equal` as `prod.norm === next.norm` and said plainly that a row "can
+ * carry `heading-level` or `tag-changed` and agree about every word" and still be
+ * equal. That is right for a clamp, which compacts a row with nothing to read, and
+ * wrong for a marker, which **removes** it: a `heading-level` finding is a difference,
+ * and the view is supposed to open with the differing rows visible. So `equal` stays
+ * exactly as 68 left it — the word diff still skips those rows and that saving is
+ * untouched — and the marker reads a narrower rule of its own.
+ *
+ * **Narrowing is the safe direction**: it collapses less. Ticket 48 widens this again,
+ * to *no open work* — a row is also behind the marker once its finding is Closed, or
+ * once it is not `decidable` — and it can widen it in one deliberate step because this
+ * rule is here rather than spread through a component. `ContentRow.decidable` is
+ * already on the row for that.
+ *
+ * @param {{ equal: boolean, class: string | null }} row
+ * @returns {boolean}
+ */
+export const collapses = (row) => row.equal && row.class === null;
+
+/**
+ * One thing the content view draws: a row, or a marker standing for a run of them.
+ *
+ * @typedef {object} ContextMarker
+ * @property {'marker'} kind
+ * @property {string} key      `run-<the first row's anchor>`. Its own name, because a
+ *                             marker and a row are in one document and two anchors that
+ *                             can collide is a hash link landing on the wrong one.
+ * @property {number} blocks   How many blocks the run holds. A **distance between two
+ *                             findings** and never a denominator: it counts rows, the
+ *                             bar counts findings, and no bar is reachable from here.
+ * @property {boolean} open    Whether the run is expanded.
+ * @property {ContentRow[]} rows
+ *
+ * @typedef {{ kind: 'row', key: string, row: ContentRow } | ContextMarker} ContentItem
+ */
+
+/**
+ * The content view as it is drawn: the whole page in document order, with each run of
+ * collapsible rows folded into one context marker (ticket 79, ADR 0006).
+ *
+ * **This is not a view mode.** It is one order with a fold in it. No row moves, no row
+ * is filtered away, and the heading outline still names the same places — a marker
+ * states the distance between two findings and gives the blocks back on one click,
+ * where the retired *Diff* tab deleted the position outright. Ticket 37 held the mode
+ * question and was parked, so nothing defines what a mode may do to document order;
+ * this function must not be read as the first answer to that.
+ *
+ * The measurement behind the default: a comparable page holds a median of 37 shown
+ * findings, 151 at the p90 and 399 on the worst page. At that density an editor pays
+ * for the context at nearly every row and reads it at few of them. It stays reachable
+ * because 82% of shown findings are one-sided, and for those the question is not what
+ * changed but whether the text is gone or moved — which only the neighbouring blocks
+ * answer.
+ *
+ * @param {ContentRow[]} rows          From `prepareRows()`, already filtered.
+ * @param {object} [reader]
+ * @param {string[]} [reader.open]     The markers the reader opened, by marker key.
+ * @param {string | null} [reader.reveal]  A row key a jump named. The run holding it
+ *                                     opens with it, or the link lands on a marker.
+ * @returns {ContentItem[]}
+ */
+export function collapseRuns(rows, { open = [], reveal = null } = {}) {
+  const opened = new Set(open);
+
+  /** @type {ContentItem[]} */
+  const drawn = [];
+  /** @type {ContentRow[]} */
+  let run = [];
+
+  const closeRun = () => {
+    if (run.length === 0) return;
+    const key = `run-${run[0].key}`;
+    drawn.push({
+      kind: 'marker',
+      key,
+      blocks: run.length,
+      open: opened.has(key) || run.some((row) => row.key === reveal),
+      rows: run,
+    });
+    run = [];
+  };
+
+  for (const row of rows) {
+    if (collapses(row)) {
+      run.push(row);
+      continue;
+    }
+    closeRun();
+    drawn.push({ kind: 'row', key: row.key, row });
+  }
+  closeRun();
+
+  return drawn;
+}
+
+/**
+ * The row a hash link names, or null.
+ *
+ * Ticket 68 wrote this rule so a jump could open the clamped row it landed on, and it
+ * went out with the clamp on 2026-08-14. It comes back for the marker, which is the one
+ * criterion 68 could not finish: a run holding this key has to be open in the same
+ * render, or the browser lands on a marker and the outline stops reaching its headings.
+ *
+ * A row anchor is `p<n>` or `n<n>` — production's document position, or the new site's
+ * on a row that exists there only. `finding-<digest>` is the other scheme in this
+ * document and belongs to the Links and Images tables, so anything that is not a row
+ * anchor answers null rather than opening nothing quietly.
+ *
+ * @param {string | null | undefined} hash  `location.hash`, with its `#`.
+ * @returns {string | null}
+ */
+export function rowKeyFromHash(hash) {
+  return /^#([pn]\d+)$/.exec(hash ?? '')?.[1] ?? null;
+}
+
+/**
  * The heading jump-list, from the rows that are on screen (spec 32, decision 19).
  *
  * Outline was production's unit list indented by heading level, which the merged
  * view now contains. What is left is navigation, and it is derived from the
  * **rendered** rows so that a narrowed view never offers a jump to a row that is
  * filtered away.
+ *
+ * It is given the rows and never `collapseRuns()`'s items, which is the difference
+ * between a filter and a fold: a filtered row is not on the page, and a collapsed row
+ * is one click away. So a heading inside a run keeps its entry, and `rowKeyFromHash()`
+ * is what opens the run the jump lands in.
  *
  * @param {ContentRow[]} rows
  * @returns {{ key: string, level: number, text: string }[]}

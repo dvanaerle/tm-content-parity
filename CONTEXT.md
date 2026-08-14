@@ -226,6 +226,15 @@ element any more: it folds the links inside it. Both the word and the rule are g
   In this state every visible row is work, so the
   **row tint carries no signal and it goes**; the class pill carries the class. The
   retired *Diff* tab is what happens without the marker and without that rule.
+  **Built on 2026-08-14 by ticket 79, which collapses the first of the three only**: a
+  row whose texts agree **and which carries no class**. The predicate is `collapses()` in
+  `web/src/lib/view.mjs`, and 48 widens it to the sentence above once it lands. The entry
+  is left describing the whole rule on purpose — the two later terms are decided and only
+  the widening is outstanding, and 79 narrowed deliberately so that widening is one step.
+  Collapsing is **not a view mode**: it is one order with a fold in it. Nothing is
+  reordered and nothing is filtered away, which is the whole distinction — and since
+  ticket 37 was parked there is nothing else that says what a mode may do to document
+  order, so do not read the marker as an answer to that question.
 - **Clamp** — *retired 2026-08-14, ticket 68, which is `wontfix` for the clamp and stands
   for everything else in it.* A row used to show four lines of each side with a control
   that opened it. **A row now shows its block whole**, and no control shortens it: most

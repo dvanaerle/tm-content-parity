@@ -11,8 +11,12 @@ work** — not when its two texts happen to match. Nothing is reordered, nothing
 grouped, nothing is counted, and no mode is added.
 
 Status: ready-for-agent
-Blocked by: [79](79-the-content-view-opens-on-the-differences.md),
-[80](80-three-buckets-and-the-third-is-closed.md)
+Blocked by: ~~[79](79-the-content-view-opens-on-the-differences.md),
+[80](80-three-buckets-and-the-third-is-closed.md)~~ — **both landed, and the edge is
+cleared 2026-08-14.** 79 built the marker and narrowed the predicate as this ticket asked:
+`collapses()` in `web/src/lib/view.mjs` is `row.equal && row.class === null`, and what is
+left here is one expression — `equal || closed || !decidable` — plus the marker's copy,
+which 79 left to this ticket and provisionally reads *N unchanged blocks*.
 
 ---
 

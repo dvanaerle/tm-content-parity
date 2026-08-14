@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   NO_FILTER,
+  collapseRuns,
+  collapses,
   findingsIn,
   isNarrowed,
-  onlyDifferencesState,
   outlineFrom,
   pagesWithClasses,
   pagesWithPriorities,
@@ -11,6 +12,7 @@ import {
   prepareRows,
   repeatsInStore,
   repeatsWithClasses,
+  rowKeyFromHash,
   toggleClass,
   toggleIn,
 } from './view.mjs';
@@ -103,13 +105,6 @@ describe('prepareRows', () => {
 
     expect(rows[1].finding.id).toBe('copy1');
     expect(rows[0].finding).toBeNull();
-  });
-
-  it('drops the matched rows when the editor asks for differences only', () => {
-    const filter = { ...NO_FILTER, onlyDifferences: true };
-    const { rows } = prepareRows({ ...fixture(), filter, showNoise: false });
-
-    expect(rows.map((row) => row.class)).toEqual(['copy', 'text-missing']);
   });
 
   it('narrows to the selected classes, and to those only', () => {
@@ -328,14 +323,17 @@ describe('the filter itself', () => {
     expect(isNarrowed(NO_FILTER)).toBe(false);
   });
 
-  it('is narrowed by a class and by the differences-only switch alike', () => {
+  it('is narrowed by a class, which is the only narrowing left', () => {
+    // *Differences only* was the other one until ticket 79. It is gone: the marker
+    // makes the default a differences view already, so a box that removed the equal
+    // rows outright was a control that took away the answer to *where does this text
+    // belong*.
     expect(isNarrowed({ ...NO_FILTER, classes: ['copy'] })).toBe(true);
-    expect(isNarrowed({ ...NO_FILTER, onlyDifferences: true })).toBe(true);
   });
 
   it('adds and removes a class without touching the rest of the filter', () => {
-    const on = toggleClass({ onlyDifferences: true, classes: [] }, 'copy');
-    expect(on).toEqual({ onlyDifferences: true, classes: ['copy'] });
+    const on = toggleClass({ classes: [] }, 'copy');
+    expect(on).toEqual({ classes: ['copy'] });
 
     expect(toggleClass(on, 'copy').classes).toEqual([]);
   });
@@ -347,41 +345,131 @@ describe('the filter itself', () => {
   });
 });
 
-describe('onlyDifferencesState', () => {
-  // The control must report the view it is over. `prepareRows` drops every matched
-  // row as soon as a class is on, so an unticked box beside a class pill would say
-  // "you are seeing the whole page" over a differences-only view.
-  it('is off and live when no class is on', () => {
-    expect(onlyDifferencesState(NO_FILTER)).toEqual({ checked: false, disabled: false });
+/**
+ * The context marker (ticket 79, ADR 0006).
+ *
+ * The rows here are the two fields the rule reads and a key, because those two fields
+ * are what the rule actually stands on. A whole `prepareRows` row would say that this
+ * function needs one, and it does not.
+ */
+const differs = (key, cls = 'copy') => ({ key, equal: false, class: cls });
+const agrees = (key) => ({ key, equal: true, class: null });
+
+describe('collapses', () => {
+  it('collapses a row whose two sides agree and which carries no class', () => {
+    expect(collapses(agrees('p1'))).toBe(true);
   });
 
-  it('is on and live when the editor ticked it', () => {
-    expect(onlyDifferencesState({ onlyDifferences: true, classes: [] })).toEqual({
-      checked: true,
-      disabled: false,
+  it('keeps a row that carries a class, even when every word agrees', () => {
+    // The narrowing this ticket carries. Ticket 68 set `equal` as `prod.norm ===
+    // next.norm` and said a row "can carry `heading-level` or `tag-changed` and agree
+    // about every word" — right for a clamp, which compacts a row with nothing to
+    // read, and wrong for a marker, which removes it. Ticket 48 widens this again to
+    // *no open work*, and narrowing here is what makes that one deliberate step.
+    expect(collapses({ key: 'p2', equal: true, class: 'tag-changed' })).toBe(false);
+  });
+
+  it('keeps a row whose two sides differ', () => {
+    expect(collapses(differs('p3'))).toBe(false);
+  });
+});
+
+describe('collapseRuns', () => {
+  it('opens on the differences, with each run of agreeing rows one marker', () => {
+    const items = collapseRuns([differs('p1'), agrees('p2'), agrees('p3'), differs('p4')]);
+
+    expect(items.map((item) => item.kind)).toEqual(['row', 'marker', 'row']);
+    expect(items[1].blocks).toBe(2);
+  });
+
+  it('names a marker apart from any row, so the two anchors cannot collide', () => {
+    const [marker] = collapseRuns([agrees('p1'), agrees('p2')]);
+
+    expect(marker.key).toBe('run-p1');
+  });
+
+  it('leaves document order untouched: no row moves and none is dropped', () => {
+    const rows = [agrees('p1'), differs('p2'), agrees('p3'), differs('p4'), agrees('p5')];
+    const items = collapseRuns(rows);
+
+    const drawn = items.flatMap((item) => (item.kind === 'marker' ? item.rows : [item.row]));
+    expect(drawn).toEqual(rows);
+  });
+
+  it('is one marker for a page that agrees everywhere', () => {
+    // The trap: a run of agreeing rows can be the whole page. The marker is right
+    // here — what the component must not do is draw it alone with no sentence.
+    const items = collapseRuns([agrees('p1'), agrees('p2'), agrees('p3')]);
+
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ kind: 'marker', blocks: 3, open: false });
+  });
+
+  it('opens the marker the reader opened, and no other', () => {
+    const items = collapseRuns([agrees('p1'), differs('p2'), agrees('p3')], {
+      open: ['run-p1'],
     });
+
+    expect(items.filter((item) => item.kind === 'marker').map((item) => item.open)).toEqual([
+      true,
+      false,
+    ]);
   });
 
-  it('is on and dead while a class filter implies it', () => {
-    expect(onlyDifferencesState({ onlyDifferences: false, classes: ['copy'] })).toEqual({
-      checked: true,
-      disabled: true,
-    });
+  it('gives an open run the same rows it was given, unchanged', () => {
+    const rows = [agrees('p1'), agrees('p2')];
+    const [marker] = collapseRuns(rows, { open: ['run-p1'] });
+
+    expect(marker.rows).toEqual(rows);
   });
 
-  it('matches what prepareRows does: a class filter leaves no matched row', () => {
-    const filter = { onlyDifferences: false, classes: ['copy'] };
-    const { rows } = prepareRows({ ...fixture(), filter, showNoise: false });
+  it('opens the run that holds the row a jump names', () => {
+    // Handed over by ticket 68, which built the other half: a jump already lands on
+    // the row it names. A run holding that row must open with it, or a hash link and
+    // an outline entry land on a marker.
+    const items = collapseRuns([differs('p1'), agrees('p2'), agrees('p3')], { reveal: 'p3' });
 
-    expect(rows.every((row) => row.class)).toBe(true);
-    expect(onlyDifferencesState(filter).checked).toBe(true);
+    expect(items[1]).toMatchObject({ kind: 'marker', open: true });
+  });
+
+  it('opens no run for a jump that lands on a row already on screen', () => {
+    const items = collapseRuns([differs('p1'), agrees('p2')], { reveal: 'p1' });
+
+    expect(items[1].open).toBe(false);
+  });
+
+  it('moves no count: it returns the rows it was given and nothing else', () => {
+    // The rule that outranks every other in this module. A marker states the size of
+    // the run it holds, which is a distance between two findings — never a
+    // denominator, and `blocks` counts rows and not findings.
+    const items = collapseRuns([differs('p1'), agrees('p2')]);
+
+    expect(Object.keys(items[1]).sort()).toEqual(['blocks', 'key', 'kind', 'open', 'rows']);
+  });
+});
+
+describe('rowKeyFromHash', () => {
+  // Ticket 68 wrote this rule for the clamp and it went out with the clamp on
+  // 2026-08-14. It comes back for the marker, which is the criterion 68 could not
+  // finish: the run holding this key has to open before the browser can land on it.
+  it('reads the row a hash link names', () => {
+    expect(rowKeyFromHash('#p12')).toBe('p12');
+    expect(rowKeyFromHash('#n4')).toBe('n4');
+  });
+
+  it('answers nothing for a hash that names something else', () => {
+    // `finding-<digest>` is the other anchor scheme in this document, and the Links
+    // and Images tables own it. A row key is `p<n>` or `n<n>` and nothing else.
+    expect(rowKeyFromHash('#finding-a1b2')).toBeNull();
+    expect(rowKeyFromHash('')).toBeNull();
+    expect(rowKeyFromHash(null)).toBeNull();
   });
 });
 
 describe('toggleIn', () => {
   // The dashboard holds a bare class list and the content view holds a whole filter.
-  // The set operation is shared so that the dashboard does not have to invent an
-  // `onlyDifferences` it has no use for.
+  // The set operation is shared so that the dashboard does not have to invent the
+  // wrapper it has no use for.
   it('adds an absent item and removes a held one', () => {
     expect(toggleIn(['copy'], 'casing')).toEqual(['copy', 'casing']);
     expect(toggleIn(['copy', 'casing'], 'copy')).toEqual(['casing']);
