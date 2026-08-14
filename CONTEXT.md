@@ -473,7 +473,21 @@ check ticket 80's rule has had.
 - **Bucket** — one of the three groups a finding is in. There are three and no more:
   **Open**, **Needs attention** and **Closed**. A bucket is a grouping of the derived
   states, and it is not a state itself. Nothing is stored on a finding to put it in
-  one.
+  one. Built by ticket 80 as `bucketOf()` in `overrides/state.mjs` — a pure function over
+  the four states, total over them, so a fifth state cannot fall silently into Closed.
+  The **interface words are those three**, in that order, and they live once in
+  `web/src/lib/buckets.mjs`. Ticket 80 asked for a Dutch word for the third and ADR 0014
+  answered that question for the whole interface instead: it speaks English, so the word
+  is **Closed**. `Gesloten`, `Aandacht nodig` and `Afgerond` were the candidates and none
+  of them is used.
+  The grouping **counts and never filters**: the dashboard draws three counts per page and
+  three totals per store, and the ledger draws the same three above its tabs. Closed is
+  reachable and is not the default — on the two finding tables it is a disclosure that
+  names how many it holds, and never a filter, because a filter would make a row vanish
+  the moment an editor ticked it fixed.
+  A bucket does **not** determine the bar. An absent finding is Closed and is in neither
+  of the bar's terms, and Open plus Needs attention is the bar's own open count, because
+  a contradicted claim reads as open there.
 - **Open** — a finding that waits for a decision.
 - **Needs attention** — a finding that is **contradicted**, and nothing else. A page
   review that went stale is a fact about a page, so it is a badge on the page and

@@ -45,6 +45,42 @@ import { isPriority, PRIORITIES } from '../shared/priorities.mjs';
 
 /** @typedef {'open' | 'dismissed' | 'fixed' | 'contradicted'} FindingState */
 
+/** @typedef {'open' | 'needs-attention' | 'closed'} Bucket */
+
+/**
+ * The three groups a finding is read in (ticket 80), over the four states above.
+ *
+ * A bucket is **a grouping and not a state**. Nothing is stored on a finding to put it in
+ * one, no column carries it, and this map is the whole of the rule — which is why it is a
+ * pure function here rather than a `switch` in whichever component needed it first.
+ *
+ * **Needs attention is `contradicted`, and nothing else.** A page review that went stale
+ * is a fact about a *page*, so it stays a badge on the page: two scopes in one bucket
+ * would count one thing twice. The proposal that started ticket 80 listed "Fix not
+ * verified" beside contradicted as if they were two things, and they are one — a fix
+ * claim the current snapshot disagrees with.
+ *
+ * The third bucket is **Closed** and not "Resolved". `CONTEXT.md` retires that word for
+ * hiding the difference between a claim of fact and a judgement, and since 2026-08-13 the
+ * stopword guard in `web/src/interface-language.test.mjs` enforces it.
+ *
+ * @type {Record<FindingState, Bucket>}
+ */
+const BUCKET = {
+  open: 'open',
+  contradicted: 'needs-attention',
+  dismissed: 'closed',
+  fixed: 'closed',
+};
+
+/**
+ * @param {FindingState} state
+ * @returns {Bucket}
+ */
+export function bucketOf(state) {
+  return BUCKET[state];
+}
+
 /**
  * The append-only table is keyed on `(scope, store, page, finding_id ?? class)`, and
  * `overrides_current` takes the latest row per key.
@@ -159,6 +195,7 @@ export function derivePageState({ report, events, observationId = report.observa
   return {
     findings,
     bar: barOf(findings),
+    buckets: bucketsOf(findings),
     review: review(current, report),
     annotations: annotationsOf(current, report),
   };
@@ -317,6 +354,32 @@ export function barOf(findings) {
 }
 
 /**
+ * The three counts the dashboard and the ledger group by, over one set of findings.
+ *
+ * It counts the **`work` findings only**, which is the denominator `barOf()` already
+ * uses, so the three numbers add up to the bar they are drawn beside rather than to some
+ * other total. An `information` finding is in no bucket at all.
+ *
+ * This is a **reading of the same states the bar reads** and never a second arithmetic:
+ * Open plus Needs attention is the bar's own `open`, because a contradicted claim reads
+ * as open there too. A bucket therefore does not determine the bar — an absent finding is
+ * Closed and is in neither of its terms.
+ *
+ * Keyed on the bucket names themselves so there is one spelling of each, rather than a
+ * camel-cased second set for callers to translate between.
+ *
+ * @param {ReturnType<typeof decided>[]} findings
+ * @returns {Record<Bucket, number>}
+ */
+export function bucketsOf(findings) {
+  const counts = { open: 0, 'needs-attention': 0, closed: 0 };
+  for (const finding of findings) {
+    if (finding.visibility === 'work') counts[bucketOf(finding.state)] += 1;
+  }
+  return counts;
+}
+
+/**
  * A page review records the finding set it was made against and goes **stale**
  * when that set stops matching — *changed since review*, never *needs review*.
  * Ticket 09: a review never expires on its own, or the log manufactures work.
@@ -356,16 +419,20 @@ export function deriveStoreState({ reports, events, observationId }) {
   }));
 
   const totals = { closed: 0, denominator: 0, open: 0, dismissed: 0, fixed: 0, contradicted: 0 };
+  // Summed over **findings, never over pages** — the same rule the bar beside it obeys, so
+  // a page with one casing nit does not weigh as much as a page with forty.
+  const buckets = { open: 0, 'needs-attention': 0, closed: 0 };
   let reviewed = 0;
   let reviewedFresh = 0;
 
   for (const page of pages) {
     for (const key of Object.keys(totals)) totals[key] += page.bar[key];
+    for (const key of Object.keys(buckets)) buckets[key] += page.buckets[key];
     if (page.review) {
       reviewed += 1;
       if (page.review.fresh) reviewedFresh += 1;
     }
   }
 
-  return { pages, bar: totals, pagesTotal: pages.length, reviewed, reviewedFresh };
+  return { pages, bar: totals, buckets, pagesTotal: pages.length, reviewed, reviewedFresh };
 }

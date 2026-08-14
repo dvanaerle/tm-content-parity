@@ -25,6 +25,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
 import { CHECK_LABEL } from '../lib/classes.mjs';
+import { BUCKETS, BUCKET_LABEL, BUCKET_MEANING, BUCKET_TONE } from '../lib/buckets.mjs';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { useEditor, useStoreOverrides } from '../lib/overrides.mjs';
@@ -118,7 +119,19 @@ export default function Dashboard({
   /** The open count **after** overrides, so the worst page is the worst remaining page. */
   const openOf = (page) =>
     log.byPage.get(`${page.store}/${page.page}`)?.bar.open ?? page.summary.work;
-  const barOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar;
+  /**
+   * The page's three counts (ticket 80), off the same derivation the bar comes from.
+   *
+   * A page the log has not answered for yet has no buckets, and the fallback puts its
+   * work in Open: before any override is known, nothing is decided and nothing is
+   * contradicted, which is what an empty log means rather than a blank cell.
+   */
+  const bucketsOfPage = (page) =>
+    log.byPage.get(`${page.store}/${page.page}`)?.buckets ?? {
+      open: page.summary.work,
+      'needs-attention': 0,
+      closed: 0,
+    };
 
   // A typed term puts the search on screen in place of either view. It answers past both
   // of them — a finding anywhere in the store, with the pages it is on — so narrowing one
@@ -286,17 +299,29 @@ export default function Dashboard({
 
       <section className="flex flex-wrap items-center gap-2">
         <Chip value={comparable.length} label="pages compared" />
-        <Chip value={totals.open} label="differences open" tone="attention" />
-        <Chip value={totals.closed} label="closed" tone="added" />
-        <Chip value={totals.clean} label="pages equal" tone="added" />
-        {totals.contradicted > 0 && (
+
+        {/* The store's three totals (ticket 80), in the strip's own order and with the
+            same three words the ledger uses. They are **absolute counts and no
+            percentage**, because the denominator moves at each crawl: a genuinely
+            corrected difference leaves the snapshot, so the same store can have fewer
+            open findings and an unchanged share.
+
+            These replace *differences open* + *closed* + *claimed fixed, still differs*.
+            The old strip counted the contradicted claims twice on purpose and said so
+            twice over — the bar's `open` includes them, because a claim that did not
+            survive has closed nothing, and the fourth chip then named the same findings
+            again. Three buckets partition the same denominator exactly once. */}
+        {BUCKETS.map((bucket) => (
           <Chip
-            value={totals.contradicted}
-            label="claimed fixed, still differs"
-            tone="attention"
-            title="Claimed fixed, but a later observation still sees the difference."
+            key={bucket}
+            value={log.derived.buckets[bucket]}
+            label={BUCKET_LABEL[bucket].toLowerCase()}
+            tone={BUCKET_TONE[bucket]}
+            title={BUCKET_MEANING[bucket]}
           />
-        )}
+        ))}
+
+        <Chip value={totals.clean} label="pages equal" tone="added" />
         <Chip
           value={log.derived.reviewedFresh}
           label="pages reviewed"
@@ -477,7 +502,11 @@ export default function Dashboard({
                     <span className="sr-only">Select</span>
                   </TableHead>
                   <TableHead className="px-4 text-muted-foreground">Page</TableHead>
-                  <TableHead className="w-40 px-4 text-muted-foreground">Open</TableHead>
+                  {/* The three buckets name themselves in the head, so the three numbers
+                      under it need no legend of their own. */}
+                  <TableHead className="w-56 px-4 text-muted-foreground">
+                    Open · needs attention · closed
+                  </TableHead>
                   {CHECKS.map((check) => (
                     <TableHead key={check} className="w-24 text-muted-foreground">
                       {CHECK_LABEL[check]}
@@ -518,19 +547,7 @@ export default function Dashboard({
                     </TableCell>
                     <TableCell className="px-4">
                       <Bar shown={openOf(page)} units={page.sides.production.units} />
-                      <span
-                        className={cn(
-                          'ml-2 tabular-nums',
-                          openOf(page) ? 'font-semibold' : INK.added,
-                        )}
-                      >
-                        {openOf(page)}
-                      </span>
-                      {barOf(page)?.closed > 0 && (
-                        <span className={cn('ml-1 text-xs', INK.added)}>
-                          +{barOf(page).closed} closed
-                        </span>
-                      )}
+                      <PageBuckets buckets={bucketsOfPage(page)} />
                     </TableCell>
                     {CHECKS.map((check) => (
                       <TableCell key={check} className="text-muted-foreground tabular-nums">
@@ -652,6 +669,41 @@ export default function Dashboard({
  * checked box.
  */
 const PRESSED_TONE = 'aria-pressed:bg-brand aria-pressed:hover:bg-brand-dark';
+
+/**
+ * One page's three counts, in the same order and the same words as the store strip above
+ * and the ledger inside (ticket 80).
+ *
+ * **Absolute counts and no percentage**, for the reason `CONTEXT.md` gives: the
+ * denominator moves at each crawl, so a share alone reads as a regression when the page
+ * only grew. The bar beside these is the share, and it is unchanged by this ticket.
+ *
+ * A zero is drawn muted rather than left out. Three numbers in a fixed order are read by
+ * position, and a cell that sometimes has two of them cannot be.
+ */
+const PageBuckets = ({ buckets }) => (
+  <span className="ml-2 text-sm tabular-nums">
+    {BUCKETS.map((bucket, index) => (
+      <span key={bucket}>
+        {index > 0 && <span className="mx-1 text-muted-foreground">·</span>}
+        <span
+          title={`${BUCKET_LABEL[bucket]} — ${BUCKET_MEANING[bucket]}`}
+          className={cn(
+            buckets[bucket] === 0 && 'text-muted-foreground',
+            // Open carries the weight when there is work in it, and the other two carry
+            // their tone. `INK` has no neutral, which is the palette saying that a plain
+            // number is the neutral — so Open asks for no colour at all.
+            buckets[bucket] > 0 && bucket === 'open' && 'font-semibold',
+            buckets[bucket] > 0 && bucket === 'needs-attention' && INK.attention,
+            buckets[bucket] > 0 && bucket === 'closed' && INK.added,
+          )}
+        >
+          {buckets[bucket]}
+        </span>
+      </span>
+    ))}
+  </span>
+);
 
 /**
  * The tick that selects every page on screen, and clears from the mixed state.

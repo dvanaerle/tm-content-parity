@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { findingSetHash } from '../compare/contract.mjs';
 import { PRIORITIES } from '../shared/priorities.mjs';
 import {
+  bucketOf,
   clearedEventFor,
   derivePageState,
   deriveStoreState,
@@ -359,6 +360,46 @@ describe('bar arithmetic', () => {
     const bar = derivePageState({ report: four, events: [] }).bar;
     expect(bar.denominator).toBe(4);
     expect(bar).not.toHaveProperty('percent');
+  });
+});
+
+/**
+ * Ticket 80. A **bucket** is a grouping over the four derived states, and it is not a
+ * fifth state: nothing is stored on a finding to put it in one.
+ */
+describe('the three buckets', () => {
+  it.each([
+    ['open waits for a decision', 'open', 'open'],
+    // Needs attention is `contradicted` and nothing else. A page review that went stale
+    // is a fact about a page, and two scopes in one bucket would count one thing twice.
+    ['a contradicted claim needs attention', 'contradicted', 'needs-attention'],
+    ['a dismissal is closed, because a judgement decided it', 'dismissed', 'closed'],
+    ['an uncontradicted fix claim is closed', 'fixed', 'closed'],
+  ])('%s', (_name, state, bucket) => {
+    expect(bucketOf(state)).toBe(bucket);
+  });
+
+  it('counts a page into three, over the work findings the bar already counts', () => {
+    // `information` renders beside the work and is in no bucket, or the three counts
+    // would not add up to the denominator of the bar they are drawn next to.
+    const mixed = report([finding('A'), finding('B'), finding('H', 'restructured')]);
+    const derived = derivePageState({ report: mixed, events: [dismiss('A'), fix('B', EARLIER)] });
+
+    expect(derived.buckets).toEqual({ open: 0, 'needs-attention': 1, closed: 1 });
+  });
+
+  it('sums the three over the store, beside the bar and without moving it', () => {
+    const four = report(['A', 'B', 'C', 'D'].map((id) => finding(id)));
+    const other = report([finding('E')], { page: 'schuttingen' });
+    const derived = deriveStoreState({
+      reports: [four, other],
+      events: [dismiss('A'), fix('B', EARLIER)],
+    });
+
+    expect(derived.buckets).toEqual({ open: 3, 'needs-attention': 1, closed: 1 });
+    // Ticket 80 changes no total. The bar is what it was before the grouping existed,
+    // and Open plus Needs attention is still its own open count.
+    expect(derived.bar).toMatchObject({ denominator: 5, open: 4, closed: 1 });
   });
 });
 

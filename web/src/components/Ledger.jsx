@@ -22,8 +22,10 @@ import {
   useLandOn,
 } from '../lib/landing.mjs';
 import { findingInSearch } from '../lib/page-url.mjs';
-import { BANNER, CHROME, INK } from '../lib/palette.mjs';
+import { BANNER, CHROME, INK, PILL } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
+import { bucketOf, bucketsOf } from '../../../overrides/state.mjs';
+import { BUCKETS, BUCKET_LABEL, BUCKET_TONE } from '../lib/buckets.mjs';
 
 /**
  * The column heads of both tables here and of the content view are the same small
@@ -127,6 +129,14 @@ export default function Ledger({
       />
     ) : null;
 
+  /**
+   * The three buckets of this page (ticket 80), counted off the **derivation** and never
+   * re-decided here. It reads `derived` and not the noise-filtered list on purpose:
+   * `bucketsOf()` counts `work` findings, a `diagnostic` is not work, and so the toggle
+   * cannot move a number that says how much work is left.
+   */
+  const buckets = useMemo(() => bucketsOf(derived), [derived]);
+
   // What the toggle would reveal, which is the `diagnostic` findings and nothing else.
   // The label must count what it uncovers: an `information` finding is on screen already.
   const noiseCount = derived.filter((f) => f.visibility === 'diagnostic').length;
@@ -162,6 +172,17 @@ export default function Ledger({
 
   return (
     <>
+      {/* The three buckets, over this page's findings.
+
+          It **summarises and does not filter**: every row stays where it is, and a state
+          pill still says what each finding is. A bucket is a grouping, so it must not
+          become a fourth thing an editor has to set — and it must not determine the bar
+          either, because an absent finding is Closed and is in neither of the bar's terms.
+
+          The same three words and the same order as the store dashboard. That is the
+          whole question ticket 80 asked: whether one grouping reads the same on both. */}
+      <BucketStrip buckets={buckets} />
+
       {/* Two ways a link can arrive with nothing to land on, and both of them have to be
           said out loud — otherwise the page simply does not move and the reader is left
           wondering whether they missed it.
@@ -328,8 +349,50 @@ export default function Ledger({
   );
 }
 
+/**
+ * The three counts, in one line above the tabs.
+ *
+ * Absolute counts and no percentage. `CONTEXT.md`'s rule is that the denominator moves at
+ * each crawl — a genuinely corrected difference leaves the snapshot altogether — so a
+ * share on its own reads as a regression when the dataset merely grew.
+ *
+ * `data-bucket` is what the browser test reads the strip back through. It is a stable
+ * name for a thing the interface already draws, which is the point: the assertion then
+ * does not depend on the class names or the element the badge happens to be.
+ */
+const BucketStrip = ({ buckets }) => (
+  <section aria-label="Findings by bucket" className="mb-3 flex flex-wrap items-center gap-2">
+    {BUCKETS.map((bucket) => (
+      <Badge
+        key={bucket}
+        data-bucket={bucket}
+        className={cn('tabular-nums', PILL[BUCKET_TONE[bucket]])}
+      >
+        {BUCKET_LABEL[bucket]} {buckets[bucket]}
+      </Badge>
+    ))}
+  </section>
+);
+
 function FindingTable({ findings, check, control, sides, landing }) {
-  const rows = findings.filter((finding) => finding.check === check);
+  const all = findings.filter((finding) => finding.check === check);
+
+  /**
+   * The bucket split, on the two tabs whose rows **are** findings (ticket 80).
+   *
+   * The active work comes first, in the strip's own order, and Closed collapses into a
+   * section under it. It is a **disclosure and not a filter**: ticking a finding fixed
+   * moves it into the section rather than deleting it from the screen, and the section
+   * says how many are in it, so nothing silently leaves.
+   *
+   * Text is deliberately not grouped this way. That tab is the content view, which is the
+   * page in **document order** — ADR 0006 calls it the spine — and a finding's place in
+   * the page is the context that makes it decidable. Sorting it by bucket would trade the
+   * one thing that tab is for. The strip above counts all three either way.
+   */
+  const active = all.filter((finding) => bucketOf(finding.state) !== 'closed');
+  const closed = all.filter((finding) => bucketOf(finding.state) === 'closed');
+  const [opened, setOpened] = useState(false);
 
   // A link can name a finding on either of these two tabs, and neither has a document
   // position to anchor on the way the content view does — their rows *are* findings. So
@@ -337,11 +400,18 @@ function FindingTable({ findings, check, control, sides, landing }) {
   // The **mark** is drawn at once and the **landing** waits for the log, which is the
   // hook's own rule.
   const focus = landing?.focus ?? null;
+
+  // A link that names a **closed** finding opens the section on the way in. Without this
+  // the landing would scroll to a row that is not on screen, which is the same silent
+  // nothing-happens ticket 109 wrote the two banners above to stop.
+  const showClosed = opened || closed.some((finding) => finding.id === focus);
+  const rows = showClosed ? [...active, ...closed] : active;
+
   const landed =
     focus && rows.some((finding) => finding.id === focus) ? findingAnchor(focus) : null;
   useLandOn(landed, landing?.settled);
 
-  if (!rows.length) return <Empty>No findings for {CHECK_LABEL[check]}.</Empty>;
+  if (!all.length) return <Empty>No findings for {CHECK_LABEL[check]}.</Empty>;
 
   return (
     /* `table-fixed` survives the swap. shadcn's Table is auto-layout and wraps itself
@@ -365,44 +435,78 @@ function FindingTable({ findings, check, control, sides, landing }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map((finding) => {
-          // The mark of a landed row is `landing.mjs`'s rule, and the class it carries is
-          // merged with this table's own rather than replacing them.
-          const { className, ...mark } = landedRowProps(finding.id === focus);
+        {active.map((finding) => findingRow(finding, { focus, control, sides }))}
 
-          return (
-            <TableRow
-              key={finding.id}
-              id={findingAnchor(finding.id)}
-              {...mark}
-              className={cn('scroll-mt-4 align-top', className)}
-            >
-              <TableCell className="px-2 py-2 align-top whitespace-normal">
-                <ClassPill class={finding.class} />
-                <Detail detail={finding.detail} />
-                <Occurrences
-                  count={finding.occurrences}
-                  title={onePageTitle(finding.occurrences)}
-                />
-                {/* A target key and an alt text are not words on the page, so the
-                    heading above them is the only thing a browser can scroll to. */}
-                <Section
-                  anchorHeading={finding.anchorHeading}
-                  anchorHeadings={finding.anchorHeadings}
-                  sides={sides}
-                />
-                <div className="mt-1">{control(finding)}</div>
-              </TableCell>
-              {/* The same component the content rows use. A link finding word-diffs
-                  two target keys, which makes a changed path segment jump out. */}
-              <DiffCells prod={finding.prod} new={finding.new} mono />
-            </TableRow>
-          );
-        })}
+        {/* The section header, drawn only when there is closed work to reach. It is a row
+            in the same table rather than a control beside it, so the closed findings open
+            where they belong — under the work, in the columns they share with it. */}
+        {closed.length > 0 && (
+          <TableRow className="hover:bg-transparent">
+            <TableCell colSpan={3} className="px-2 py-2">
+              <button
+                type="button"
+                aria-expanded={showClosed}
+                onClick={() => setOpened(!showClosed)}
+                className={cn(
+                  'text-xs font-medium text-muted-foreground hover:underline',
+                  'flex items-center gap-1',
+                )}
+              >
+                {/* The count is in the label, so the section says how much it is holding
+                    while it is shut. A disclosure that only says "Closed" hides an amount
+                    as well as a list. */}
+                {BUCKET_LABEL.closed} ({closed.length}) {showClosed ? '▾' : '▸'}
+              </button>
+            </TableCell>
+          </TableRow>
+        )}
+
+        {showClosed && closed.map((finding) => findingRow(finding, { focus, control, sides }))}
       </TableBody>
     </Table>
   );
 }
+
+/**
+ * One finding's row, drawn the same whichever bucket section it is in.
+ *
+ * It is a function and not a second copy inside the closed branch for the plainest of
+ * reasons: a bucket is a grouping, so a Closed row is the *same row* in a different place.
+ * Two copies would be two chances for it to stop being the same row.
+ */
+const findingRow = (finding, { focus, control, sides }) => {
+  // The mark of a landed row is `landing.mjs`'s rule, and the class it carries is
+  // merged with this table's own rather than replacing them.
+  const { className, ...mark } = landedRowProps(finding.id === focus);
+
+  return (
+    <TableRow
+      key={finding.id}
+      id={findingAnchor(finding.id)}
+      {...mark}
+      className={cn('scroll-mt-4 align-top', className)}
+    >
+      <TableCell className="px-2 py-2 align-top whitespace-normal">
+        <ClassPill class={finding.class} />
+        <Detail detail={finding.detail} />
+        <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
+        {/* A target key and an alt text are not words on the page, so the
+            heading above them is the only thing a browser can scroll to. */}
+        <Section
+          anchorHeading={finding.anchorHeading}
+          anchorHeadings={finding.anchorHeadings}
+          sides={sides}
+        />
+        {/* The state pill is still here, inside the bucket. A bucket summarises; it does
+            not replace what an editor decided about one finding. */}
+        <div className="mt-1">{control(finding)}</div>
+      </TableCell>
+      {/* The same component the content rows use. A link finding word-diffs
+          two target keys, which makes a changed path segment jump out. */}
+      <DiffCells prod={finding.prod} new={finding.new} mono />
+    </TableRow>
+  );
+};
 
 /**
  * Display only, and now with the diff colours (ticket 35). An editor reads a changed
