@@ -12,6 +12,7 @@
  */
 
 import { visibilityOf } from '../compare/vocabulary.mjs';
+import { isPriority, PRIORITIES } from '../shared/priorities.mjs';
 
 /**
  * One row of the append-only `overrides` table, in the shape the port hands over.
@@ -28,14 +29,18 @@ import { visibilityOf } from '../compare/vocabulary.mjs';
  * @property {string} createdAt      ISO 8601. Latest per key wins; events may arrive unsorted.
  * @property {string} editor         A name from `localStorage`. There is no login.
  * @property {'finding' | 'page'} scope
- * @property {'fixed' | 'dismissed' | 'reviewed' | 'cleared'} action
+ * @property {'fixed' | 'dismissed' | 'reviewed' | 'cleared' | 'prioritised' | 'noted'} action
  * @property {string} store
  * @property {string} page
  * @property {string | null} [findingId]      When `scope === 'finding'`.
  * @property {string | null} [class]          Only on the historical rows above.
  * @property {string | null} [observationId]  What a `fixed` claim was made against.
  * @property {string | null} [findingSetHash] On `reviewed`, for staleness.
- * @property {string | null} [note]           Required on `dismissed`.
+ * @property {string | null} [note]           Required on `dismissed`; the page note on `noted`.
+ * @property {import('../shared/priorities.mjs').Priority | null} [priority]
+ *   On `prioritised`. One of the closed list, or `null`, which is how the annotation is
+ *   cleared. The two annotations of ticket 83 are the only `page`-scope actions that carry
+ *   a value, and they are keyed apart from the review — see `eventKey()`.
  */
 
 /** @typedef {'open' | 'dismissed' | 'fixed' | 'contradicted'} FindingState */
@@ -55,9 +60,27 @@ import { visibilityOf } from '../compare/vocabulary.mjs';
  * @returns {string}
  */
 export function eventKey(event) {
-  const key = event.scope === 'finding' ? event.findingId : event.class;
+  const key = event.scope === 'finding' ? event.findingId : pageScopeKey(event) ?? event.class;
   return [event.scope, event.store, event.page, key ?? ''].join('|');
 }
+
+/**
+ * Which of the page's three things an event is about (ticket 83).
+ *
+ * The page scope carried exactly one key until this ticket, so the review owned it
+ * outright. Two annotations arriving on the same scope have to be keyed apart from it or
+ * `latestByKey()` would let a priority be the newest event on the review's key — and
+ * `review()` reads null the moment that event is not a `reviewed`, so annotating a page
+ * would have withdrawn the review of it.
+ *
+ * The review's own key term stays the **empty string** it has always been, so every row
+ * already on disk keeps the key it was written under and `cleared` goes on keying to the
+ * review, which is the one thing it has ever revoked on this scope.
+ */
+const PAGE_KEY = { prioritised: 'priority', noted: 'note' };
+
+/** @param {OverrideEvent} event */
+const pageScopeKey = (event) => (event.scope === 'page' ? PAGE_KEY[event.action] ?? '' : null);
 
 /**
  * Latest event per key. Events may arrive in any order — Supabase is asked for
@@ -134,7 +157,33 @@ export function derivePageState({ report, events, observationId = report.observa
     return decided(finding, 'open', null);
   });
 
-  return { findings, bar: barOf(findings), review: review(current, report) };
+  return {
+    findings,
+    bar: barOf(findings),
+    review: review(current, report),
+    annotations: annotationsOf(current, report),
+  };
+}
+
+/**
+ * The two annotations a page carries (ticket 83): a priority from a closed list, and a
+ * free-text note. Both describe the page and neither describes a finding.
+ *
+ * @param {Map<string, OverrideEvent>} current
+ * @param {import('../compare/contract.mjs').PageReport} report
+ */
+function annotationsOf(current, report) {
+  const place = { scope: /** @type {const} */ ('page'), store: report.store, page: report.page };
+  /** @param {'prioritised' | 'noted'} action */
+  const held = (action) => current.get(eventKey({ ...place, action }));
+
+  // Each annotation is read off **its own key**, so a note cannot be picked up from a
+  // dismissal and a priority cannot be picked up from anything. The `note` column is
+  // shared with the reason a dismissal carries; the key is what tells the two apart.
+  return {
+    priority: held('prioritised')?.priority ?? null,
+    note: held('noted')?.note || null,
+  };
 }
 
 /**
@@ -180,6 +229,44 @@ const decided = (finding, state, override) => ({
  */
 export function clearedEventFor(finding) {
   return { scope: 'finding', action: 'cleared', findingId: finding.id };
+}
+
+/**
+ * The two events an annotation is written as (ticket 83).
+ *
+ * They are functions for the reason `clearedEventFor()` is one: **two callers must write
+ * the same event** — the control on the page in front of an editor, and the bulk press
+ * over the ticked pages of the store list. Neither may answer it for itself, and the
+ * validation below must not be a thing one of the two remembers to do.
+ *
+ * `store` and `page` are the caller's to add. The single control's hook puts the page it
+ * is on into every event; the bulk press names the page per row.
+ *
+ * **Clearing is a new event carrying no value**, never an edit and never a delete. It is
+ * deliberately not the `cleared` action: on `scope: 'page'` that already means *withdraw
+ * the review*, and reusing it for three annotation families on one scope would make one
+ * action mean three things and need a fourth column to say which one it meant.
+ *
+ * @param {import('../shared/priorities.mjs').Priority | null} priority  `null` clears it.
+ */
+export function priorityEventFor(priority) {
+  if (priority !== null && !isPriority(priority)) {
+    throw new Error(`Not a priority: ${JSON.stringify(priority)}. `
+      + `The list is ${PRIORITIES.join(', ')}, and it is closed.`);
+  }
+  return { scope: 'page', action: 'prioritised', priority };
+}
+
+/**
+ * A page note is **optional and explains nothing in particular**, which is the whole of
+ * how it differs from the note a dismissal carries: that one is mandatory and explains one
+ * judgement about two strings. So there is no non-blank check here — an empty note is how
+ * an editor takes the note back.
+ *
+ * @param {string} note
+ */
+export function noteEventFor(note) {
+  return { scope: 'page', action: 'noted', note: note.trim() };
 }
 
 /**

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { findingSetHash } from '../compare/contract.mjs';
+import { PRIORITIES } from '../shared/priorities.mjs';
 import {
   clearedEventFor, derivePageState, deriveStoreState, eventKey, latestByKey,
+  noteEventFor, priorityEventFor,
 } from './state.mjs';
 
 /**
@@ -354,6 +356,163 @@ describe('page review', () => {
       event({ scope: 'page', action: 'cleared' }),
     ];
     expect(derivePageState({ report: one, events }).review).toBeNull();
+  });
+});
+
+describe('the two page annotations', () => {
+  const one = report([finding('A')]);
+
+  it('gives the page the priority an editor set on it', () => {
+    const events = [event({ scope: 'page', action: 'prioritised', priority: 'high' })];
+    expect(derivePageState({ report: one, events }).annotations.priority).toBe('high');
+  });
+
+  /**
+   * The page scope had exactly one key until this ticket, so a third page-scope action
+   * arriving after a review would have been the latest event on the review's own key —
+   * and `review()` returns null the moment that event is not a `reviewed`. Annotating a
+   * page would have silently withdrawn the review of it.
+   */
+  it('does not withdraw a page review, because an annotation is not a review', () => {
+    const events = [
+      event({ scope: 'page', action: 'reviewed', findingSetHash: one.findingSetHash }),
+      event({ scope: 'page', action: 'prioritised', priority: 'high' }),
+    ];
+    const derived = derivePageState({ report: one, events });
+    expect(derived.review).toMatchObject({ fresh: true });
+    expect(derived.annotations.priority).toBe('high');
+  });
+
+  it('takes the later of two priorities on one page', () => {
+    const events = [
+      event({ scope: 'page', action: 'prioritised', priority: 'low' }),
+      event({ scope: 'page', action: 'prioritised', priority: 'high' }),
+    ];
+    // Handed over in both orders: the events are reduced by their own timestamps, and a
+    // caller that concatenates two reads does not hand them over sorted.
+    expect(derivePageState({ report: one, events }).annotations.priority).toBe('high');
+    expect(derivePageState({ report: one, events: [...events].reverse() }).annotations.priority)
+      .toBe('high');
+  });
+
+  /**
+   * A cleared annotation is a **new event**, never an edit and never a delete: the table
+   * has insert and select policies only.
+   *
+   * It is not the `cleared` action, and that is this ticket's one refusal to explain. On
+   * `scope: 'page'`, `cleared` already means *withdraw the review* — it is the only thing
+   * it has ever revoked there. Reusing it for three annotation families on one scope would
+   * make one action mean three things and need a fourth column to say which, so instead
+   * the value-carrying action clears itself by carrying nothing.
+   */
+  it('is cleared by a later event carrying no value, and not by `cleared`', () => {
+    const events = [
+      event({ scope: 'page', action: 'reviewed', findingSetHash: one.findingSetHash }),
+      event({ scope: 'page', action: 'prioritised', priority: 'high' }),
+      event({ scope: 'page', action: 'prioritised', priority: null }),
+    ];
+    const derived = derivePageState({ report: one, events });
+    expect(derived.annotations.priority).toBeNull();
+    // The clearing aimed at the priority, so the review is untouched by it.
+    expect(derived.review).toMatchObject({ fresh: true });
+  });
+
+  it('carries a note beside the priority, and each one keeps its own value', () => {
+    const events = [
+      event({ scope: 'page', action: 'prioritised', priority: 'high' }),
+      event({ scope: 'page', action: 'noted', note: 'Campagne-update' }),
+    ];
+    expect(derivePageState({ report: one, events }).annotations).toMatchObject({
+      priority: 'high',
+      note: 'Campagne-update',
+    });
+  });
+
+  /**
+   * The ticket's first trap. A dismissal note is mandatory and explains one judgement
+   * about two strings; a page note is optional and explains nothing in particular. They
+   * share a column, so a derivation that read the column without asking what the event
+   * was would put a colleague's reason for dismissing one finding up as the note on the
+   * whole page.
+   */
+  it('does not read a dismissal note as the page note', () => {
+    const derived = derivePageState({ report: one, events: [dismiss('A')] });
+    expect(derived.annotations.note).toBeNull();
+    expect(derived.findings[0].override.note).toBe('Prijs verschilt per omgeving.');
+  });
+
+  it('clears a note with an empty one, the same way a priority is cleared', () => {
+    const events = [
+      event({ scope: 'page', action: 'noted', note: 'Campagne-update' }),
+      event({ scope: 'page', action: 'noted', note: '' }),
+    ];
+    expect(derivePageState({ report: one, events }).annotations.note).toBeNull();
+  });
+});
+
+/**
+ * Ticket 83: *neither annotation moves any count*. An annotation describes a page; the bar
+ * counts decisions about findings. The two are not the same thing, and the moment an
+ * annotation could move a number it would become a fifth way to close work.
+ */
+describe('an annotation is not work', () => {
+  const four = report(['A', 'B', 'C', 'D'].map((id) => finding(id)));
+  const annotated = [
+    event({ scope: 'page', action: 'prioritised', priority: 'high' }),
+    event({ scope: 'page', action: 'noted', note: 'Campagne-update' }),
+  ];
+
+  it('moves neither the bar, nor the denominator, nor a bucket', () => {
+    const before = derivePageState({ report: four, events: [] });
+    const after = derivePageState({ report: four, events: annotated });
+    expect(after.bar).toEqual(before.bar);
+    expect(after.bar).toMatchObject({ denominator: 4, open: 4, closed: 0 });
+  });
+
+  it('puts no finding of the page into a different state', () => {
+    expect(stateOf(four, annotated)).toEqual(stateOf(four, []));
+  });
+
+  it('moves nothing in the store roll-up, and adds no fourth number to it', () => {
+    const before = deriveStoreState({ reports: [four], events: [] });
+    const after = deriveStoreState({ reports: [four], events: annotated });
+    expect(after.bar).toEqual(before.bar);
+    // Annotating a page is not reviewing it, so the two page counts stay put as well.
+    expect(after).toMatchObject({ pagesTotal: 1, reviewed: 0, reviewedFresh: 0 });
+  });
+});
+
+describe('the events an annotation is written as', () => {
+  /**
+   * The closed list is in `shared/`, not in the table: the schema holds no list of these
+   * words to check a row against, on purpose, so **this builder is the only thing standing
+   * between a typo and a permanent row.** The table is append-only, so a refused write is
+   * the only kind of undo there is.
+   */
+  it('refuses a priority outside the closed list', () => {
+    for (const value of ['Hoog', 'HIGH', 'urgent', 'normal']) {
+      expect(() => priorityEventFor(value)).toThrow(/priority/i);
+    }
+  });
+
+  it('builds the event for each word the list does hold', () => {
+    expect(priorityEventFor('high')).toEqual({
+      scope: 'page', action: 'prioritised', priority: 'high',
+    });
+    expect(PRIORITIES.map((one) => priorityEventFor(one).priority)).toEqual(PRIORITIES);
+  });
+
+  it('builds the clearing of a priority, which is the one absent value it accepts', () => {
+    expect(priorityEventFor(null)).toEqual({
+      scope: 'page', action: 'prioritised', priority: null,
+    });
+  });
+
+  it('builds a note, trimmed, and an empty note is the clearing of one', () => {
+    expect(noteEventFor('  Campagne-update  ')).toEqual({
+      scope: 'page', action: 'noted', note: 'Campagne-update',
+    });
+    expect(noteEventFor('   ')).toEqual({ scope: 'page', action: 'noted', note: '' });
   });
 });
 

@@ -42,8 +42,15 @@ create table overrides (
   --
   -- `cleared` is valid on every scope. It is what replaces four `un-` verbs and
   -- the `active` flag the earlier model carried.
+  -- `prioritised` and `noted` are ticket 83's two page annotations. They are two actions
+  -- and not one, because one event means one thing and the latest-event-per-key derivation
+  -- stays trivial that way. **There is no third**: the moment two annotations exist a third
+  -- looks free, and it is not — a third is the schema editor this ticket refused.
   action      text        not null check (
-                action in ('fixed', 'dismissed', 'muted', 'reviewed', 'cleared')
+                action in (
+                  'fixed', 'dismissed', 'muted', 'reviewed', 'cleared',
+                  'prioritised', 'noted'
+                )
               ),
 
   store       text        not null,
@@ -87,6 +94,18 @@ create table overrides (
     end
   ) stored,
 
+  -- Which of the page's three things a `page` row is about (ticket 83). It mirrors
+  -- `PAGE_KEY` in `overrides/state.mjs`, and `overrides_current` keys on it — see the note
+  -- on the view. The review keeps the empty slot it has always had, so no row already on
+  -- disk changes key.
+  annotation_slot text generated always as (
+    case action
+      when 'prioritised' then 'priority'
+      when 'noted' then 'note'
+      else ''
+    end
+  ) stored,
+
   -- The observation a `fixed` claim was made against. A claim is contradicted
   -- only by a LATER observation that still gives the finding, so without this
   -- column the button could not work on a frozen snapshot. Ids sort
@@ -98,6 +117,23 @@ create table overrides (
   finding_set_hash text,
 
   note        text,
+
+  -- Ticket 83: the page priority, on a `prioritised` row. One of `high | medium | low`.
+  --
+  -- **There is deliberately no check constraint listing those words.** The list is
+  -- `shared/priorities.mjs` and it is closed there, in git, because the proposal's schema
+  -- editor — add, rename, reorder, edit the options — needs UPDATE and DELETE policies this
+  -- table does not have, and authentication this project does not have either. A list in
+  -- two places is a list that can drift, and the copy that would win is the one nobody can
+  -- read in a diff. `priorityEventFor()` in `overrides/state.mjs` is the guard.
+  --
+  -- A **null on a `prioritised` row is a value**: it is how the annotation is cleared. The
+  -- table is append-only, so clearing is a new row and never an edit of this column.
+  priority    text,
+
+  -- There is no **owner** column, and ticket 83 refused to add one. With any name typeable
+  -- by anyone in `localStorage`, an owner column invites an accountability reading it cannot
+  -- support. If ownership is wanted, that is an authentication ticket.
 
   -- RETIRED 2026-08-13, ADR 0011: the `page-class` branch of this constraint and of
   -- `override_action` below permit a row the app can no longer build. They stay because
@@ -111,11 +147,20 @@ create table overrides (
   ),
 
   -- Each scope allows only the actions that mean something on it.
+  --
+  -- The two annotations join the `page` scope, which gains **no new scope of its own**: an
+  -- annotation describes a page, and the page scope is what already names one.
   constraint override_action check (
     action = 'cleared'
     or (scope = 'finding'    and action in ('fixed', 'dismissed'))
     or (scope = 'page-class' and action = 'muted')
-    or (scope = 'page'       and action = 'reviewed')
+    or (scope = 'page'       and action in ('reviewed', 'prioritised', 'noted'))
+  ),
+
+  -- Only a `prioritised` row carries a priority. Every other action leaves the column
+  -- alone, so a stray value cannot sit on a review waiting to be read as one.
+  constraint override_priority check (
+    action = 'prioritised' or priority is null
   ),
 
   -- RETIRED 2026-08-13, ADR 0011: nothing sets `names_section` any more, so every new
@@ -135,6 +180,11 @@ create table overrides (
   -- A dismissal accepts a real difference for good, so the next reader must be told why;
   -- a fix claim is a one-line correction and must not cost a sentence of prose. Ticket 88
   -- added the mute here: it was the one override nobody could review later.
+  --
+  -- Ticket 83's `noted` is deliberately **not** in this list, and that is the difference
+  -- between the two things that share this column. A dismissal note is mandatory and
+  -- explains one judgement about two strings. A page note is optional, explains nothing in
+  -- particular, and an empty one is how an editor takes it back.
   constraint override_note check (
     action not in ('dismissed', 'muted') or length(trim(coalesce(note, ''))) > 0
   )
@@ -151,10 +201,26 @@ create policy "anon can read"   on overrides for select to anon using (true);
 
 -- The current state: the newest row wins, per key. The history underneath still
 -- answers "who dismissed this, and who cleared it".
+--
+-- `annotation_slot` mirrors `PAGE_KEY` in `overrides/state.mjs`, and the two have to agree.
+-- Without it the page scope has one key, and ticket 83's two annotations would each be the
+-- newest row on the **review's** key — so this view would report a priority where a caller
+-- asked what the review was. That is the same trap `eventKey()` names, answered the same
+-- way: the review's own slot stays the empty string it has always been, so every row
+-- already on disk keeps the key it was written under, and `cleared` goes on keying to the
+-- review, which is the one thing it has ever revoked on this scope.
+--
+-- This is the one divergence from `anchor_heading_slot` above that is **not** accepted:
+-- that slot keys eleven retired rows nothing looks up, and this one keys rows the app
+-- writes every time an editor annotates a page.
 create view overrides_current as
-select distinct on (scope, store, page, coalesce(finding_id, class, ''), anchor_heading_slot)
+select distinct on (
+    scope, store, page, coalesce(finding_id, class, ''), anchor_heading_slot, annotation_slot
+  )
   id, created_at, editor, scope, action, store, page,
   finding_id, class, anchor_heading, names_section,
-  observation_id, finding_set_hash, note
+  observation_id, finding_set_hash, note, priority
 from overrides
-order by scope, store, page, coalesce(finding_id, class, ''), anchor_heading_slot, created_at desc, id desc;
+order by
+  scope, store, page, coalesce(finding_id, class, ''), anchor_heading_slot, annotation_slot,
+  created_at desc, id desc;

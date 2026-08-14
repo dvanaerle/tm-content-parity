@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { noteEventFor, priorityEventFor } from './state.mjs';
 import { toEvent, toRow } from './supabase.mjs';
 
 /**
@@ -113,5 +114,31 @@ describe('what the app writes', () => {
     expect(roundTrip({
       ...dismissal, scope: 'page', action: 'reviewed', findingId: undefined, findingSetHash: 'h1', note: undefined,
     })).toMatchObject({ scope: 'page', action: 'reviewed', findingSetHash: 'h1' });
+  });
+
+  const annotation = {
+    ...dismissal, findingId: undefined, note: undefined, ...priorityEventFor('high'),
+  };
+
+  it('round-trips a page priority', () => {
+    expect(roundTrip(annotation)).toMatchObject({
+      scope: 'page', action: 'prioritised', priority: 'high',
+    });
+  });
+
+  it('carries a cleared priority as an explicit null and not as an absent column', () => {
+    // The clearing **is** the value here: a row with no `priority` column named would take
+    // the column default, and the derivation reads the latest `prioritised` event's value
+    // whatever it is. Absent and null are not the same thing to Postgres.
+    const row = toRow({ ...annotation, ...priorityEventFor(null) });
+    expect(row).toHaveProperty('priority');
+    expect(row.priority).toBeNull();
+  });
+
+  it('round-trips a page note without it becoming a dismissal note', () => {
+    // Both live in the `note` column, and the action is what tells them apart.
+    expect(roundTrip({ ...annotation, ...noteEventFor('Campagne-update') })).toMatchObject({
+      scope: 'page', action: 'noted', note: 'Campagne-update',
+    });
   });
 });

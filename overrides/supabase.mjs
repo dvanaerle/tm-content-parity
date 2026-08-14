@@ -31,7 +31,7 @@ const TABLE = 'overrides';
  * `anchorHeading` survives on a **finding**, where it says where on the page a difference
  * sits. That comes off the snapshot and never off this table.
  */
-const COLUMNS = 'id, created_at, editor, scope, action, store, page, finding_id, class, observation_id, finding_set_hash, note';
+const COLUMNS = 'id, created_at, editor, scope, action, store, page, finding_id, class, observation_id, finding_set_hash, note, priority';
 
 /**
  * The two mappers are exported for their own test.
@@ -57,6 +57,7 @@ export const toEvent = (row) => ({
   observationId: row.observation_id,
   findingSetHash: row.finding_set_hash,
   note: row.note,
+  priority: row.priority ?? null,
 });
 
 /**
@@ -73,6 +74,10 @@ export const toRow = (event) => ({
   observation_id: event.observationId ?? null,
   finding_set_hash: event.findingSetHash ?? null,
   note: event.note ?? null,
+  // Named on every row, including as an explicit null. On a `prioritised` event the null
+  // **is** the value — it is how ticket 83 clears the annotation — so this column is one
+  // the app writes rather than one it leaves to a default.
+  priority: event.priority ?? null,
 });
 
 /**
