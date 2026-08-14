@@ -50,6 +50,7 @@ differences, act on it, press Recheck, and watch the count fall to zero.
 
   `data/` is gitignored, so a fresh clone needs the three commands before the
   front end has anything to show.
+
 - The baseline crawl lives in `devdva02/.scratch/sitemap-content-overview/`. Do not
   read that folder whole — it is about 56 MB, and read `index.md` first. Its
   `_prototype/` and `_scripts/` are **superseded** by the repo: judge the built
@@ -63,7 +64,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   site. The new site is unreleased, so it is the cheap side to change.
 - **Status is derived from re-check**, not self-reported. ~~A manual checkbox
   overrides it and wins until cleared.~~ **Amended by ticket 09**: a manual
-  *judgement* beats re-check, a manual *claim of fact* loses to it.
+  _judgement_ beats re-check, a manual _claim of fact_ loses to it.
 - **Overrides live in Supabase**, called straight from the browser. The webhost
   runs no server code, so this is the only way editor ticks are shared.
 - **Front end is an Astro static build** — one real HTML page per site page,
@@ -72,7 +73,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
   hosted build feature-detects it and hides the button.
 - **Two comparison axes, kept apart**: Axis A is parity per store, prod to new.
   Axis B is coverage, NL to the other stores. Separate tabs, separate tasks.
-  **Extended by ticket 11**: separate *bars* too, and Axis B reads the new site
+  **Extended by ticket 11**: separate _bars_ too, and Axis B reads the new site
   only.
 - **Six-store data model from day one; NL populated first.**
 - **The content unit is every text element in document order.** The content
@@ -86,7 +87,7 @@ Settled while charting, in the destination-naming session. No ticket holds them.
 - **The log runs.** Ticket 26 joined the extractor to the front end, and the tool
   is browsable on the whole nl store. Everything after this is adjustment to a
   working thing, not construction of a missing one.
-- **A storefront defect is not a map ticket.** The log's *output* belongs in
+- **A storefront defect is not a map ticket.** The log's _output_ belongs in
   `devdva02/docs/storefront-defects.md`, not on the route to the
   destination. Tickets 15, 17 and 18 were closed on that ground.
 - **`tm-content-parity` is hosted on GitHub**, at `dvanaerle/tm-content-parity`.
@@ -133,7 +134,7 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   position: gone, or moved. The view opens on the differences with runs of equal rows
   collapsed into a **context marker**, because a comparable page holds a median of 37
   shown findings, 151 at p90 and 399 at worst. The row tint goes in that state, because
-  a tint on every visible row says nothing — which is why ticket 12 retired the *Diff*
+  a tint on every visible row says nothing — which is why ticket 12 retired the _Diff_
   tab. See `docs/adr/0006-the-content-view-is-the-spine.md`.
 - **shadcn on Base UI is taken for behaviour only.** Seven primitives, for focus traps
   and keyboard menus. `web/src/lib/palette.mjs` keeps meaning, and `Chips.jsx` and
@@ -141,7 +142,7 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   nine, bounded by the list of seven.
   See `docs/adr/0007-shadcn-is-taken-for-behaviour-only.md`.
 - **The mute key carries the anchor heading, and a mute says what it hides.** One press
-  of *Klasse dempen* can hide **173 findings** today, with no reason asked and no author
+  of _Klasse dempen_ can hide **173 findings** today, with no reason asked and no author
   to review, for ever. Measured: `page + class` gives 2,101 groups at a median of 4 and
   a p90 of 25; adding the heading gives 7,639 groups at a median of 1. **The page-wide
   form stays**, because on a gallery page the headings are per-photo captions and the
@@ -173,7 +174,7 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   was the key, so the key narrows.~~ **The first refusal is reversed, 2026-08-13, ADR 0011
   — see the entry at the end of this list.** The key did narrow, in ticket 88, and
   narrowing it is what made the feature reviewable enough to measure: eleven `muted` rows,
-  ten revoked by their own author. *The only override that survives a text change* was
+  ten revoked by their own author. _The only override that survives a text change_ was
   true and was not enough. The hard-coded campaign exclusion is not handed to
   editors as search-and-dismiss: it was **4,055 findings, 11.8% of the corpus**, and a
   dismissal expires whenever the campaign copy changes. The durable answer is that the
@@ -183,7 +184,7 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
 - **The one-sided campaign rule is refused, and the region entry stays.** Ticket 89
   measured it over the 816 reports on disk: 938 shown `text-missing`/`copy` findings
   carry `PROMO` on production and not on the new side, **880 banner and 58 editorial**
-  — 26 of them the price label `Nu vanaf`, 22 the substring in *ideal* / *ideale*, and
+  — 26 of them the price label `Nu vanaf`, 22 the substring in _ideal_ / _ideale_, and
   four of them `copy` rows with real lost sentences. Worse, the pattern is Dutch: it
   matches **0** banner lines in `de`, `fr` and `be_fr` and one per page in `uk`, which
   is the objection ADR 0003 already sustained. And it cannot reach links: the banner
@@ -207,8 +208,8 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   [90](issues/90-a-campaign-is-a-class-not-a-commit.md).
 - **A term composes with the class pills; it does not replace them.** A search used to
   answer over every class as though the pills had never been pressed, and the amber strip
-  sat behind a `!searching` guard — so the editor's answer to *which kind of difference am
-  I working on* was discarded the moment they asked a second question. The classes now
+  sat behind a `!searching` guard — so the editor's answer to _which kind of difference am
+  I working on_ was discarded the moment they asked a second question. The classes now
   reach `searchStore()` and are applied through `repeatsWithClasses()`, **after** the
   grouping, so a search row is still a repeat. The strip is one `ClassFilterBanner` for all
   three narrowed lists. The term itself stays out of the strip — it becomes a filter in
@@ -217,8 +218,8 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   admits a search. See
   [102](issues/102-the-class-pills-survive-a-search.md).
 - **The mute is withdrawn, and a dismissal is the only judgement.** This reverses the
-  refusal three entries above — *class mute is not removed* — and `PRD.md`'s *Corrections to
-  the superseded draft* table carries the reversal beside the refusal. Two reasons, in this order. **The evidence**: the table holds
+  refusal three entries above — _class mute is not removed_ — and `PRD.md`'s _Corrections to
+  the superseded draft_ table carries the reversal beside the refusal. Two reasons, in this order. **The evidence**: the table holds
   eleven `muted` rows, every one on `nl`, every one by the same editor, **ten revoked by
   their own author**, six noted `Test` or a misspelling of it; the one left standing was
   annotated `"Negeren"`, the name of the other control. Nobody ever made the first real
@@ -232,7 +233,7 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   what produced the evidence against it. **Nothing is deleted**: the eleven rows stay, ADR
   0008 stays superseded rather than wrong, and ticket 41 is parked in
   `issues/.out-of-scope/` rather than removed. The denominator loses its subtraction —
-  nothing is now outside the count, and *this is not work at all* is a property of the class
+  nothing is now outside the count, and _this is not work at all_ is a property of the class
   and not of a place on a page. Five tickets carry it:
   [111](issues/111-revoke-the-last-mute.md) revoked the last mute by hand,
   [112](issues/112-dempen-leaves-the-interface.md) took both presses out of the interface,
@@ -265,12 +266,12 @@ repeated in each:
   schema editor the proposal asked for is **refused**: rename and reorder are mutations, and
   the table has insert and select policies only. There is no **owner** field. Neither
   annotation moves any count, and a test pins it. Two things below are now wrong wherever
-  they appear: *the page scope has one key* — it has three, keyed by `PAGE_KEY`, and the
-  review keeps the empty term so no row on disk changed key — and *`cleared` revokes the last
-  override on any key*, which on the page scope still means the review alone. An annotation
+  they appear: _the page scope has one key_ — it has three, keyed by `PAGE_KEY`, and the
+  review keeps the empty term so no row on disk changed key — and _`cleared` revokes the last
+  override on any key_, which on the page scope still means the review alone. An annotation
   clears by carrying no value, and the answer on the ticket says why `cleared` could not be
-  reused. `supabase/page-annotations.sql` is written and **not yet applied**; until it is,
-  nothing can write an annotation.
+  reused. `supabase/page-annotations.sql` was **applied by hand on 2026-08-14** and the
+  annotations write.
 
 - [01 — Finding identity: stable ids across re-crawls](issues/01-finding-identity.md)
   — Ids are content-addressed and deliberately expire. "Resolved" needs no stable
@@ -467,7 +468,7 @@ repeated in each:
   — A finding has **no stored state**; it has overrides, and an override is either
   a **claim of fact** or a **judgement**. That split answers precedence:
   `dismissed` and `muted` beat re-check, `fixed` loses to it and shows as
-  **contradicted** — *claimed fixed, still differs*, attributed. The old "manual
+  **contradicted** — _claimed fixed, still differs_, attributed. The old "manual
   checkbox always wins" rule is amended above, because it hid the one case where a
   tick permanently buries a real defect. `fixed` exists because **re-check is
   local and the hosted build hides the button**, so an editor on a frozen snapshot
@@ -506,8 +507,7 @@ repeated in each:
   taking the contract from 18 to 27, and the class records gain an `axis` field.
   **Amends ticket 09**: Axis B gets its own bar, never summed with the parity bar.
   Renders in two places — a store-level Coverage view for presence, one more tab
-  per page for the rest. Graduated tickets 21, 22, 23, 24; re-worded 12; unblocked
-  16.
+  per page for the rest. Graduated tickets 21, 22, 23, 24; re-worded 12; unblocked 16.
 
 - [19 — Pages that plain `fetch` cannot read](issues/19-client-rendered-pages.md)
   — The premise was wrong and the correction is the answer: `veranda-configurator`
@@ -522,14 +522,14 @@ repeated in each:
   stays visible in a **Not checked** list. **Browser rendering is ruled out for
   good** — no Playwright anywhere. The guard is **absolute emptiness, never a
   ratio**, and implementing it corrected the agreed shape: an **image-only `<main>`
-  is a legitimate page**, so the invariant is no text *and* no image *and* no link
+  is a legitimate page**, so the invariant is no text _and_ no image _and_ no link
   on a 200 response. It throws, like ticket 14. Built and validated live: 58 tests
   green, 359 extractions, guard fired **0** times. Graduated ticket 25.
 
 - [26 — Build the Axis A compare stage](issues/26-axis-a-compare-stage.md)
   — **The ticket that was missing from this map.** 02, 05 and 06 wrote the rules, 07
   built the extractor, 08 built the shell, and nothing joined them: `data/reports/`
-  never existed, so the dashboard rendered its own *"run the comparison first"*
+  never existed, so the dashboard rendered its own _"run the comparison first"_
   message while thirteen tickets read as resolved. Built as
   `compare/{match,text,links,images,findings,link-status,30-compare}.mjs` plus
   `crawl/21-crawl-store.mjs`, and the front end is now the tool — a dashboard over
@@ -538,7 +538,7 @@ repeated in each:
   Measured on nl: **179 crawled, 124 comparable** — the same 124 ticket 06 counted
   from the other direction — **8,573 shown findings, median 41 a page, no page
   clean**. Six decisions the tickets did not give, of which two matter most:
-  `restructured` never fires on unchanged text, so it means "the text differs *and*
+  `restructured` never fires on unchanged text, so it means "the text differs _and_
   the element moved"; and `link-target` identifies an anchor by its text, only when
   that text is unique on both sides. The class vocabulary split into
   `compare/vocabulary.mjs` so a browser island can read it without `node:crypto`.
@@ -556,7 +556,7 @@ repeated in each:
   implicit, of which two matter most: **the bar is computed over the current
   snapshot only**, so a corrected difference leaves both sides of the fraction and
   the absolute open count is the number that moves; and **observation ids sort
-  chronologically by construction**, which is what lets "contradicted by a *later*
+  chronologically by construction**, which is what lets "contradicted by a _later_
   observation" be a string comparison inside a pure function. A `DiffRow` gained
   a `finding` id, because a row is a position and a finding is grouped, and the
   browser cannot recompute the id. **The Supabase project was not yet wired** at the time
@@ -580,7 +580,7 @@ repeated in each:
   — **A category page stays in the log; the grid leaves it as a region.** The log
   gains the word **non-editorial region**: a region inside the content boundary whose
   text the catalogue or an extension makes. This ticket's own objection decided
-  *where*: the extract carries no DOM path, so the exclusion runs **at extraction**,
+  _where_: the extract carries no DOM path, so the exclusion runs **at extraction**,
   from a committed list, and a check stays ignorant of regions. One selector cuts both
   hosts and removes 50 units on production against 21 on the new site — the grilling
   said 69 and 48, and ticket 63 re-measured. `pageType` was
@@ -630,12 +630,12 @@ repeated in each:
   one number would have hidden both.** Baseline reproduced exactly first
   (10,076 / 8,573 / median 41), then:
 
-  | | findings | shown | median shown |
-  |---|---|---|---|
-  | baseline | 10,076 | 8,573 | 41 |
-  | 1. the directional split | 10,076 | **7,010** | **34.5** |
-  | 2. + the two new classes | **10,814** | **7,477** | **37** |
-  | 3. + the heading-leaf bug fix | 10,796 | 7,456 | 37 |
+  |                               | findings   | shown     | median shown |
+  | ----------------------------- | ---------- | --------- | ------------ |
+  | baseline                      | 10,076     | 8,573     | 41           |
+  | 1. the directional split      | 10,076     | **7,010** | **34.5**     |
+  | 2. + the two new classes      | **10,814** | **7,477** | **37**       |
+  | 3. + the heading-leaf bug fix | 10,796     | 7,456     | 37           |
 
   The split is a pure rename — the total does not move, and the whole reduction is
   hiding the invented side: the 5,049 `structure` findings were **3,486 lost** and
@@ -675,14 +675,14 @@ repeated in each:
   nearest heading before a position, and a `#:~:text=` url that opens the live
   page scrolled to it. No DOM path — ticket 01 stands.
 
-  | | |
-  |---|---|
-  | findings carrying an anchor heading | **9,174** of 10,796 |
-  | findings with none, all above the first heading | 1,622 |
-  | rows the ordering fix moves | **6,990**, on **109** of 124 pages |
+  |                                                 |                                    |
+  | ----------------------------------------------- | ---------------------------------- |
+  | findings carrying an anchor heading             | **9,174** of 10,796                |
+  | findings with none, all above the first heading | 1,622                              |
+  | rows the ordering fix moves                     | **6,990**, on **109** of 124 pages |
 
   **The row-ordering defect was bigger than the ticket guessed.** A new-only row
-  sorted on its index in the *new* document against *production* indices; it is
+  sorted on its index in the _new_ document against _production_ indices; it is
   now anchored to the production position of the nearest matched pair before it.
   Invisible while the Diff tab showed only the differing rows. Ticket 36 shows the
   whole document, so it is visible now.
@@ -708,15 +708,15 @@ repeated in each:
   270 rows crawled — `be/faq/offerte` is the one loss, and it is ticket 17's
   production redirect loop, not a tool failure.
 
-  | store | crawled | comparable | findings | shown | median shown |
-  |---|---|---|---|---|---|
-  | nl | 179 | 124 | 10,796 | 7,456 | 37 |
-  | be | 125 | 117 | 9,690 | 6,562 | 34 |
-  | de | 45 | 42 | 4,166 | 2,830 | 38.5 |
-  | uk | 42 | 40 | 5,137 | 3,642 | 40 |
-  | be_fr | 29 | 25 | 2,582 | 1,762 | 28 |
-  | fr | 28 | 25 | 2,539 | 1,709 | 27 |
-  | **all six** | **448** | **373** | **34,910** | **23,961** | |
+  | store       | crawled | comparable | findings   | shown      | median shown |
+  | ----------- | ------- | ---------- | ---------- | ---------- | ------------ |
+  | nl          | 179     | 124        | 10,796     | 7,456      | 37           |
+  | be          | 125     | 117        | 9,690      | 6,562      | 34           |
+  | de          | 45      | 42         | 4,166      | 2,830      | 38.5         |
+  | uk          | 42      | 40         | 5,137      | 3,642      | 40           |
+  | be_fr       | 29      | 25         | 2,582      | 1,762      | 28           |
+  | fr          | 28      | 25         | 2,539      | 1,709      | 27           |
+  | **all six** | **448** | **373**    | **34,910** | **23,961** |              |
 
   **Every nl number held exactly**, which is what a phase that adds no rule must
   do. Production was verified live on all ten hosts before the run and no
@@ -726,15 +726,15 @@ repeated in each:
   **Re-measured on 2026-08-10 by ticket 55, and every non-NL row above was a
   floor.** The counts read the old page list. The new table:
 
-  | store | crawled | comparable | findings | shown | median shown |
-  |---|---|---|---|---|---|
-  | nl | 179 | 124 | 9,635 | 6,747 | 37 |
-  | be | 130 | 122 | 9,744 | 6,572 | 34 |
-  | de | 134 | 123 | 8,932 | 6,149 | 29 |
-  | uk | 128 | 121 | 10,027 | 6,820 | 30 |
-  | be_fr | 122 | 115 | 8,231 | 5,546 | 26 |
-  | fr | 123 | 117 | 8,154 | 5,495 | 25 |
-  | **all six** | **816** | **722** | **54,723** | **37,329** | |
+  | store       | crawled | comparable | findings   | shown      | median shown |
+  | ----------- | ------- | ---------- | ---------- | ---------- | ------------ |
+  | nl          | 179     | 124        | 9,635      | 6,747      | 37           |
+  | be          | 130     | 122        | 9,744      | 6,572      | 34           |
+  | de          | 134     | 123        | 8,932      | 6,149      | 29           |
+  | uk          | 128     | 121        | 10,027     | 6,820      | 30           |
+  | be_fr       | 122     | 115        | 8,231      | 5,546      | 26           |
+  | fr          | 123     | 117        | 8,154      | 5,495      | 25           |
+  | **all six** | **816** | **722**    | **54,723** | **37,329** |              |
 
   **The two tables are not a before and an after.** The page list grew (ticket 55)
   and tickets 62, 63 and 64 removed findings, and the two effects pull opposite
@@ -808,7 +808,7 @@ repeated in each:
   Three decisions the ticket did not ask for. **A tenth class was drafted and
   removed by measurement**: `meta-brand-suffix` would have folded a trailing
   ` | Tuinmaximaal`, but only **3 of 45** title differences collapse when it is
-  stripped, and the suffix sits on ~45% of titles on *both* sides, so it is editor
+  stripped, and the suffix sits on ~45% of titles on _both_ sides, so it is editor
   text and not a template. The other 42 are real rewrites. No rule was written and
   no brand string enters the code. **The head labels are English** in a Dutch
   interface, because they name the Magento admin field the editor goes to fix —
@@ -935,8 +935,8 @@ repeated in each:
 
 - [81 — The repeat is the queue](issues/81-the-repeat-is-the-queue.md)
   — **Built 2026-08-11, and one acceptance criterion refused.** The dashboard holds two
-  views over one derivation: *Verschillen*, the store's repeats worst-first, and
-  *Pagina's*, the page list it always had. One class-pill set filters both, so the
+  views over one derivation: _Verschillen_, the store's repeats worst-first, and
+  _Pagina's_, the page list it always had. One class-pill set filters both, so the
   quick-filter want is the repeat list with a class pre-selected and not a second
   surface. The `Taken` tab is gone and nothing it held is unreachable.
 
@@ -945,7 +945,7 @@ repeated in each:
   measured, 25,657 repeats and zero exceptions. The row states pages, and
   `occurrences` is named apart as what it is.
 
-  **The measurement in *Ready to build* below is superseded.** It describes 448
+  **The measurement in _Ready to build_ below is superseded.** It describes 448
   reports. The disk holds **816 reports, 722 comparable, 35,503 shown findings**, and
   the per-store table is in ticket 81's answer. The shape of the answer holds and the
   scale of the win does not: `nl` is **6,004 findings in 4,152 repeats**, its largest
@@ -978,7 +978,7 @@ repeated in each:
     mute half was struck by ADR 0011, not built.**
 
 - [122 — Verschillen groups by class](issues/122-verschillen-groups-by-class.md)
-  *(renumbered from 100 on 2026-08-13; 100 was already taken)*
+  _(renumbered from 100 on 2026-08-13; 100 was already taken)_
   — **Built 2026-08-12.** The queue arrives as a **class group** for each class of the
   closed vocabulary, ordered by the vocabulary and never by the counts, so no group moves
   as the work is done. `groupRepeatsByClass()` is a pure derivation over 81's repeats: it
@@ -992,15 +992,15 @@ repeated in each:
   controls cannot tell different stories. Groups start closed unless one of them is the
   only one holding anything.
 
-  **The ticket's word "section" is refused**, and `CONTEXT.md` gains *class group* instead.
+  **The ticket's word "section" is refused**, and `CONTEXT.md` gains _class group_ instead.
   "Section" is the mute scope, a run of one page under an anchor heading (ADR 0008), and
   one word with two meanings is what that glossary exists to stop. **Two of the ticket's
   own rules collide** — one at a time, against a pill opening what it selects — and the
   pills win: one-at-a-time governs the clicks, because a two-class filter answered with one
   class drawn open is the queue disagreeing with the control that narrowed it.
 
-  An empty **shown** class is drawn and says so, because *nothing wrong here* and *this
-  class does not exist* are two different answers; `fr` ships eleven groups and one such
+  An empty **shown** class is drawn and says so, because _nothing wrong here_ and _this
+  class does not exist_ are two different answers; `fr` ships eleven groups and one such
   sentence. A class the vocabulary does not name is drawn **last** rather than nowhere: it
   cannot arrive today, and the guard exists because the failure would otherwise be silent —
   the row leaves the screen while the footer keeps counting it. The search keeps the flat
@@ -1009,7 +1009,7 @@ repeated in each:
 - [111 — The last mute is revoked](issues/111-revoke-the-last-mute.md)
   — **Done 2026-08-13, and the ticket's own premise refused.** The one live mute is
   cleared, so no key in the table has `muted` as its latest event and no page bar in any
-  store draws *N gedempt (buiten de teller)*. ADR 0011 may proceed.
+  store draws _N gedempt (buiten de teller)_. ADR 0011 may proceed.
 
   **`nl`'s numbers did not move** — 4632 open of 4784, before and after. The mute had
   **drifted off the section it named**: its key was `nl|downloads|text-missing|*none`, the
@@ -1036,7 +1036,7 @@ repeated in each:
     — resolved 2026-08-10; the identity half landed on the day and the crawl
     followed. One of the four tickets that grew the seed list past 04's numbers.
   - [56 — An excluded page says why](issues/56-an-excluded-page-says-why.md)
-    — an excluded page stays visible in a *Not checked* list carrying its reason,
+    — an excluded page stays visible in a _Not checked_ list carrying its reason,
     which is what ticket 19 promised and did not build.
 
 ### Facts found while charting
@@ -1148,7 +1148,7 @@ repeated in each:
   That anchor holds no other text element, so it is a leaf, and `structuredText`
   handed the CSS and the JavaScript over as copy: **151 elements on 23 of 179
   pages**, each a `structure` finding nobody can act on. Ticket 02 had measured that
-  the chrome list removes no *element* inside `<main>` — true, and it never asked
+  the chrome list removes no _element_ inside `<main>` — true, and it never asked
   whether the text **inside** one bleeds into an ancestor that is in `TEXT_TAGS`.
   Fixed in ticket 26: `script`, `style` and `noscript` go before any text is read.
   `<template>` deliberately stays, because Alpine renders what is inside it.
@@ -1178,7 +1178,7 @@ repeated in each:
   in spec 32's table reproduced exactly — 3,659 exact-text pairs, 762 tag changes,
   467 level changes, 434 `kind` changes — so the page count is the one to distrust.
 - **Ticket 02's headline example does not pair.** `Kleuren:` → `Verkrijgbaar in de
-  volgende kleuren:` scores **0.33**, below the 0.6 threshold and below the
+volgende kleuren:` scores **0.33**, below the 0.6 threshold and below the
   prototype's 0.55 as well. It reports as two `structure` findings, each grouped to
   four occurrences. The grouping does the work the ticket wanted; the pairing never
   could. `Bekijk alle deals` → `Bekijk alle FAQs` scores 0.67 and does pair, so the
@@ -1202,8 +1202,8 @@ repeated in each:
   changed, so nothing was orphaned.~~ ADR 0008 and ticket
   [88](issues/88-the-mute-says-what-it-hides.md). — **withdrawn 2026-08-13 by ADR 0011**,
   which supersedes ADR 0008. Built, and it did what it says; the note it made mandatory is
-  what let the feature be measured, and the measurement withdrew it. *Zero mutes were live
-  when the key changed* held on the day, and an editor wrote one at 11:07 the same day.
+  what let the feature be measured, and the measurement withdrew it. _Zero mutes were live
+  when the key changed_ held on the day, and an editor wrote one at 11:07 the same day.
 
 ## Working order
 
@@ -1279,11 +1279,11 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
 
   [118 — the finding-set hash ignores visibility](issues/118-the-finding-set-hash-ignores-visibility.md)
   — **resolved 2026-08-13.** `findingSetHash()` no longer filters on class visibility, so
-  a vocabulary edit can never again print *changed since review* on a page where nothing
+  a vocabulary edit can never again print _changed since review_ on a page where nothing
   moved. It landed first and alone so its churn is attributable to it: **84 of 133 live
   page reviews go stale on the run**, announced in advance by
   [notes/2026-08-13-your-page-reviews-go-stale-once.md](notes/2026-08-13-your-page-reviews-go-stale-once.md).
-  Both the ticket and ADR 0013 predicted 121 and *all* of them. The ADR's paragraph is
+  Both the ticket and ADR 0013 predicted 121 and _all_ of them. The ADR's paragraph is
   rewritten, and the ticket's trap is struck through in place with the measurement beside
   it. 6 reviews survive, because a page whose findings are all `work` hashes the same
   under either rule, and 43 were already stale for reasons that predate the decision.
@@ -1306,7 +1306,7 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   actually lists; `Ongedaan maken` becomes **Clear**, because the glossary refuses
   `un-` words; and `nog niet opgelost` becomes **claimed fixed, still differs**,
   the sentence the glossary always prescribed. The `Inhoud` tab becomes **Text**,
-  because "Content" is a retired tab name and *content view* is the spine it draws.
+  because "Content" is a retired tab name and _content view_ is the spine it draws.
 
   - [124 — The interface speaks one language, and it is English](issues/124-the-interface-speaks-one-language-and-it-is-english.md)
     — one ticket and one merge: every label in `web/src`, `lang="en-GB"` and
@@ -1325,13 +1325,14 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     stopword guard, and the documents. **No count, bar, denominator or derivation moved**
     — the tests that pin that rule pass **unchanged**, and `view.mjs` and `bulk.mjs` are
     edited in their comments only, which is the whole claim of a relabelling. The guard
-    caught one real hit on its way in: *resolved* as an ordinary verb in `view.mjs`,
+    caught one real hit on its way in: _resolved_ as an ordinary verb in `view.mjs`,
     reworded rather than excused. Two words were renamed
-    beyond the ticket's list, both under the trap's own test — *does it reach the address
-    bar* — namely `bevinding` and `terug`; and the `bevinding-` DOM anchor followed them.
+    beyond the ticket's list, both under the trap's own test — _does it reach the address
+    bar_ — namely `bevinding` and `terug`; and the `bevinding-` DOM anchor followed them.
     The old Dutch parameters are **not** aliases, so a link copied before today opens the
     default screen. **125 is unblocked**, and it owns the `lang` on a content cell, which
     this ticket deliberately did not touch.
+
   - [125 — A content cell says which language it is in](issues/125-a-content-cell-says-which-language-it-is-in.md)
     — `ready-for-agent`, blocked by 124. `lang="nl"` has been wrong on five of six
     stores since the shell was written, so a German paragraph on `/de/` is
@@ -1597,7 +1598,7 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   **64 is resolved**, 2026-08-07, and it is **the largest single removal in the
   project**. The promo banner is the list's first `legacy-only` entry. Its anchor is
   the campaign option ids in a link href — `.mgz-element-section:has(a[href*=
-  "_model=6039,6040"])`, and the same selector again for `6039%2C6040`, because
+"_model=6039,6040"])`, and the same selector again for `6039%2C6040`, because
   `[href*=]` reads the **raw** attribute and one page sends both encodings. The
   banner has no other hook: its wrapper class is a generated hash, a different hash
   in each store, and its text is translated per store.
@@ -1640,7 +1641,7 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   URL set. The cause is the filter. `nl`, `be` and `uk` mark their store-local
   content `changefreq=daily`; `de`, `fr` and `be_fr` mark the same content
   `never`. The new rule is `(alternates < 6 or daily in any file) and not a
-  product signature` — a product page carries all six hreflang alternates, and
+product signature` — a product page carries all six hreflang alternates, and
   exactly 4,444 locs for each store do. Verified on the live navigation of three
   stores: 88–91% coverage, against 40% for French under the old rule. The store
   page count goes from 451 to about 800.
@@ -1760,7 +1761,7 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   **The filter is a pure module, and that is the load-bearing decision.**
   `web/src/lib/view.mjs` decides what is on screen; the components are pixels. It
   returns rows, the classes the page carries, and a row total — and a test pins
-  that it returns *nothing else*, because the one rule that outranks the rest here
+  that it returns _nothing else_, because the one rule that outranks the rest here
   is that a filter never moves a count. Measured: filtering the dashboard to
   `casing` narrows 124 pages to 58 and leaves `7455 verschillen open` where it was.
 
@@ -1769,11 +1770,11 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   class filter implies the differences: narrowing to `copy` does not also keep the
   matched rows, because the pass an editor asked for is the copy edits.
 
-  | | |
-  |---|---|
-  | rows on the largest page, `terrasoverkapping` | **288** |
-  | `fotogalerij/zonwering`, the worst case | 399 findings over 178 rows |
-  | filter re-render there | **21 ms** — no virtualisation needed, none added |
+  |                                               |                                                  |
+  | --------------------------------------------- | ------------------------------------------------ |
+  | rows on the largest page, `terrasoverkapping` | **288**                                          |
+  | `fotogalerij/zonwering`, the worst case       | 399 findings over 178 rows                       |
+  | filter re-render there                        | **21 ms** — no virtualisation needed, none added |
 
   The "Opgelost" button is a **checkbox** with three states: unticked, ticked, and
   ticked-but-contradicted. Dismissal ~~and mute~~ keeps its menu, because a note is
@@ -1815,7 +1816,7 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     79 and 80. The mode question it inherited from 37 is not answered but **not asked**:
     nothing here is a mode. What is left of the ticket is one sentence — a row collapses
     when it holds no **open work**, not when its two texts match — so it is 79's missing
-    predicate and not a second reading of the page. *Afgerond* is 80's **Closed** bucket;
+    predicate and not a second reading of the page. _Afgerond_ is 80's **Closed** bucket;
     a contradicted row is Needs attention and stays visible. The "is a ×6 finding one
     task or six" question dissolved: only a thing that counts tasks had to answer it, and
     a fold counts nothing. The grilling also found that **79 and 68 disagree about
@@ -1838,11 +1839,11 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     functions and no number moved.
 
   **The review of 36 acted, and one finding became 48.** `CONTEXT.md` gained the
-  words the merged view brought — *content view*, *filter*, *noise toggle* — and it
-  names *Diff*, *Content* and *Outline* as retired tab names. The class pills and the
+  words the merged view brought — _content view_, _filter_, _noise toggle_ — and it
+  names _Diff_, _Content_ and _Outline_ as retired tab names. The class pills and the
   amber strip became one `ClassFilterPills` and one `FilterBanner`, shared by the
   content view and the dashboard, because ticket 36 asks for the same semantics in
-  both and two copies of one affordance drift. *Alleen verschillen* now draws ticked
+  both and two copies of one affordance drift. _Alleen verschillen_ now draws ticked
   and disabled while a class filter is on: a class filter already leaves no matched
   row, so the unticked box was a control that lied. **235 and 288 are the same page** —
   235 rows under the default noise toggle, 288 rows in all — and the ticket now says
@@ -1943,8 +1944,8 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
     arithmetic predates `no-declared-alternate`).
   - [97 — The producer: one finding per head row](issues/97-the-meta-producer-one-finding-per-row.md)
   - [98 — The Meta tab becomes a checklist an editor can tick](issues/98-the-meta-tab-becomes-a-checklist.md)
-    — this is what retires spec 32's decision 31, *the meta panel is display
-    only*. The panel is display-only **until 98 lands**, and not by principle.
+    — this is what retires spec 32's decision 31, _the meta panel is display
+    only_. The panel is display-only **until 98 lands**, and not by principle.
   - [99 — Measure: what the meta check added, beside what the prefactor removed](issues/99-measure-what-the-meta-check-added.md)
     — the second of the two numbers.
 
@@ -1975,13 +1976,13 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   - [107 — Typing a slash offers the page keys](issues/107-typing-a-slash-offers-the-page-keys.md)
   - [108 — A page row hands its key to the search](issues/108-a-page-row-hands-its-key-to-the-search.md)
   - [123 — An unloaded log is not an empty one](issues/123-an-unloaded-log-is-not-an-empty-one.md)
-    — *renumbered from 101 on 2026-08-13.* A search in the first moment after a
+    — _renumbered from 101 on 2026-08-13._ A search in the first moment after a
     store loads must not answer "none" about a log it has not read.
 
 - ~~**Two tickets are `ready-for-human`, and the map did not say so.** Neither is
   blocked and neither is delegable as written.~~ — **both are built and were resolved
   2026-08-13.** A triage sweep of all 44 open tickets found the code in the tree and the
-  status lines never moved. See *Resolved tickets*.
+  status lines never moved. See _Resolved tickets_.
 
   - [109 — A difference opens the page at the difference](issues/109-a-difference-opens-the-page-at-the-difference.md)
     — carries [ADR 0010](../../docs/adr/0010-the-dashboard-screen-is-the-url.md),

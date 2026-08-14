@@ -1,9 +1,9 @@
--- NOT YET APPLIED. Ticket 83: a page carries a priority and a note.
+-- APPLIED 2026-08-14. Ticket 83: a page carries a priority and a note.
 --
 -- `schema.sql` holds the same thing as one whole file, and **running that file drops the
 -- override log**. This file is the same change applied to a live table, so the log
--- survives. Apply it once, then the two agree — and then change the line above to
--- `APPLIED <date>`, which is the convention `mute-anchor-heading.sql` set.
+-- survived. The two now agree. Kept as the record of what the live table was asked to do,
+-- which is the convention `mute-anchor-heading.sql` set.
 --
 -- Two new actions on the existing `page` scope, one carrying a priority from a closed list
 -- and one carrying free text. No new scope, no new table, and no schema editor: the
@@ -34,16 +34,15 @@ alter table overrides add column annotation_slot text generated always as (
 -- The action vocabulary gains the two. `muted` and `page-class` stay in their checks for
 -- the reason ADR 0011 gives: eleven historical rows have to keep satisfying the table.
 --
--- **Check this name before running the file.** The action check is written inline on the
--- column in `schema.sql`, so Postgres named it rather than we did, and `drop ... if exists`
--- against the wrong name silently does nothing — leaving the old check in place to refuse
--- every `prioritised` row while this file reports success. Run this first and expect to see
--- `overrides_action_check` among the results:
+-- **The name was checked before this file ran, and it matched.** That check mattered: the
+-- action check is written inline on the column in `schema.sql`, so Postgres named it rather
+-- than we did, and `drop ... if exists` against the wrong name silently does nothing —
+-- leaving the old check in place to refuse every `prioritised` row while this file reports
+-- success. The query that confirmed `overrides_action_check`, for the next migration that
+-- has to drop a constraint it did not name:
 --
 --   select conname, pg_get_constraintdef(oid) from pg_constraint
 --   where conrelid = 'overrides'::regclass and contype = 'c';
---
--- If the name differs, correct the two lines below to match it.
 alter table overrides drop constraint if exists overrides_action_check;
 alter table overrides add constraint overrides_action_check check (
   action in ('fixed', 'dismissed', 'muted', 'reviewed', 'cleared', 'prioritised', 'noted')

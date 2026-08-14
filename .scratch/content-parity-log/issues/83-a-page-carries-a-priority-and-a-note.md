@@ -5,7 +5,7 @@ Status: resolved
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
-**What to build:** an editor marks a page **Hoog** and writes *Campagne-update* beside
+**What to build:** an editor marks a page **Hoog** and writes _Campagne-update_ beside
 it, on one page or on twenty selected at once. They can then filter the store to the
 high-priority pages, and the note is findable by search.
 
@@ -92,14 +92,14 @@ reads the latest event on the key whatever its value is, so no branch was needed
 
 The page scope had **exactly one key** (`page|store|page|`) in both `eventKey()` and the
 `overrides_current` view. A third page-scope action would therefore have been the newest
-event on the *review's* key, and `review()` returns null the moment that event is not a
+event on the _review's_ key, and `review()` returns null the moment that event is not a
 `reviewed` — so annotating a page would have silently withdrawn the review of it. That was a
 genuine red in the second slice, not a hypothetical.
 
 `PAGE_KEY` in `overrides/state.mjs` gives each annotation its own key term and leaves the
 review's as the empty string it has always been, so **no row already on disk changes key**
 and `cleared` goes on keying to the review. `annotation_slot` mirrors it in SQL. Unlike
-`anchor_heading_slot`, this divergence is *not* accepted as harmless: that slot keys eleven
+`anchor_heading_slot`, this divergence is _not_ accepted as harmless: that slot keys eleven
 retired rows nothing looks up, and this one keys rows the app writes whenever an editor
 annotates.
 
@@ -113,14 +113,14 @@ annotates.
   `priorityEventFor()` is the only guard, and it is the only thing between a typo and a
   permanent row.
 - The **priority filter belongs to the page list**, the way the sort does. A repeat is a
-  difference across pages rather than a page, so on *Repeats* the filter would narrow nothing
+  difference across pages rather than a page, so on _Repeats_ the filter would narrow nothing
   while the link promised it did.
 - The **selection is session state, not in the URL** — the one control here that ADR 0010
   does not reach. A selection is not a screen: a link carrying twenty ticked pages would be a
   press somebody else half-made. It is cleared when the filter or the view changes, so a
   press cannot reach pages that left the screen.
 - The interface is English throughout (ADR 0014), so the values are English. The ticket's
-  *Hoog* and *Campagne-update* are what a Dutch editor types, and `Hoog` is pinned as a
+  _Hoog_ and _Campagne-update_ are what a Dutch editor types, and `Hoog` is pinned as a
   refused value in three tests.
 
 ### Seams tested, and one not
@@ -129,18 +129,21 @@ Agreed with the user before any test was written: the derivation and its event b
 URL and view filters, the bulk press, and `searchNotes`. 717 tests pass; 823 pages build.
 
 Two things are worth naming as deliberately untested. The **DOM** seam was not among the
-agreed four, so the *page note is not drawn like a dismissal note* rule is enforced by
+agreed four, so the _page note is not drawn like a dismissal note_ rule is enforced by
 `PageNote` / `NoteKind` being the single renderer and is not pinned by a browser test. And
 there is **no test Supabase project** in this repo, so the SQL is unexercised — see below.
 
-### One hand step, and one hazard in it
+### One hand step, taken
 
-`supabase/page-annotations.sql` is written and **not applied**. Running `schema.sql` whole
-drops the log, so the live change is the separate file, per the `mute-anchor-heading.sql`
-convention.
+`supabase/page-annotations.sql` was **applied by hand on 2026-08-14** and the annotations
+write. Running `schema.sql` whole drops the log, so the live change was the separate file,
+per the `mute-anchor-heading.sql` convention.
 
-The hazard is named in the file: the action check is written inline on the column, so
-Postgres named it, and `drop constraint if exists` against a wrong name silently does
-nothing — leaving the old check to refuse every `prioritised` row while the migration reports
-success. The file opens with the `pg_constraint` query to confirm the name first. Nothing in
-the interface can write an annotation until this is applied.
+The hazard is named in the file, and the check it asks for was made: the action check is
+written inline on the column, so Postgres named it, and `drop constraint if exists` against a
+wrong name silently does nothing — leaving the old check to refuse every `prioritised` row
+while the migration reports success. The name matched, so the widened check took.
+
+The log was backed up before the change: 1127 rows, 545 of them carrying a note, via
+`overrides/dump.mjs`. The migration touches no row — it adds two columns, widens two checks
+and rebuilds a view — so the dump was proportion rather than necessity.
