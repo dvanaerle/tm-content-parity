@@ -108,17 +108,20 @@ decision refuses, wearing a test and inheriting its false confidence. A guard ov
 the link rather than the policy. The enforcement is a reader and a review, and the ADR says
 that in its Consequences so the absence is chosen rather than overlooked.
 
-**The test evidence for the last criterion, stated exactly, because "the suite is green"
-would not be true.** `npm test` gives **13 test files failed, 27 passed, 679 tests passed**.
-The failures are all collection failures — `Failed to fetch dynamically imported module` —
-and they are **pre-existing and unrelated**: the suite was run against a stashed clean tree
-at `f66fd34` and returned the identical 13 failed / 27 passed / 679 passed. The node project
-alone reproduces the same way, 2 files failing to collect (`landing.test.mjs` and
-`screen-url.test.mjs`) with the same 679 passing, before and after.
+**The test evidence for the last criterion.** `npm test` on `main` with this change merged
+is **green: 40 test files, 794 tests**. No count, bar, derivation or rendered rule moved,
+which is what a documentation-only change must do.
 
-So the claim this ticket makes is the narrow one it can support: **no test moved.** Every
-test that ran before still runs and still passes, and a comment-only diff cannot reach a
-module import. The suite breakage is real and it is somebody's ticket; it is not this one,
-and 127 does not pretend to have found or fixed it. `oxlint` is clean. `oxfmt --check` fails
-on `app.css` and 185 other files, and did so before this change as well, so formatting is
-untouched rather than passing.
+*This paragraph first reported 13 failed test files and 679 passing, and called the failures
+"pre-existing and unrelated" repo breakage. That was wrong and is corrected here, 2026-08-14.
+The failures were real but they were **the worktree's**, not the repo's: `tm-127-browser-floor`
+is a `git worktree` and it has a root `node_modules` but no `web/node_modules`, so every test
+file that resolves a dependency through `web/` failed to import. Running the suite against a
+stashed clean tree was a sound control for the only question it was asked — did this change
+break them, and it did not — but the same missing folder was present on both sides of that
+comparison, so it could not detect the cause, and the conclusion drawn from it about the
+repo was not supported. The suite was never broken; the check was run somewhere it could not
+see that. There is no ticket owed to anybody.*
+
+`oxlint` is clean. `oxfmt --check` fails on `app.css` and 185 other files, and did so before
+this change as well, so formatting is untouched rather than passing.
