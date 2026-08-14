@@ -1,7 +1,11 @@
 # 119 — Spec: the same words, divided differently
 
 Type: spec
-Status: ready-for-agent
+Status: resolved — the spec is written and its decisions are recorded in
+[ADR 0012](../../../docs/adr/0012-regrouped-requires-total-coverage.md) and
+[ADR 0013](../../../docs/adr/0013-the-finding-set-hash-ignores-visibility.md).
+118 and 86 are built; 116, 120 and 121 carry the rest and read this file as
+their governing spec. A spec decides; it is not itself implemented.
 Parent: ../map.md
 
 Implementation tickets, in dependency order:
