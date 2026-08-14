@@ -687,7 +687,7 @@ const PageBuckets = ({ buckets }) => (
             // their tone. `INK` has no neutral, which is the palette saying that a plain
             // number is the neutral — so Open asks for no colour at all.
             buckets[bucket] > 0 && bucket === 'open' && 'font-semibold',
-            buckets[bucket] > 0 && bucket === 'needs-attention' && INK.attention,
+            buckets[bucket] > 0 && bucket === 'needs-attention' && INK.caution,
             buckets[bucket] > 0 && bucket === 'closed' && INK.added,
           )}
         >

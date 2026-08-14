@@ -74,10 +74,10 @@ export default function PageView({ report: built }) {
       />
 
       {/* An `Alert` and not the library's `variant="destructive"`: the tone of a
-          message is the palette's to say, and this one is `attention` — a condition
+          message is the palette's to say, and this one is `caution` — a condition
           an editor decides about, not a loss. */}
       {recheck.error && (
-        <Alert className={BANNER.attention}>
+        <Alert className={BANNER.caution}>
           {/* `text-current` because `AlertDescription` hard-codes `text-muted-foreground`,
               which would repaint the banner's ink in the interface's grey and lose the
               tone. The structure is worth keeping over dropping the description entirely:

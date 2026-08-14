@@ -191,7 +191,7 @@
    * --- Warning ------------------------------------------------------------ *
    * Status. Amber says an editor must look at this. Two weights: `warning-subtle`
    * under `on-warning` is the quiet one, and solid `warning` under white is the loud
-   * one. `palette.mjs` calls them `attention` and `severe`.
+   * one. `palette.mjs` calls them `caution` and `warning`.
    */
   --color-warning-subtle: var(--color-amber-50);
   --color-warning: var(--color-amber-600);

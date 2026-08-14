@@ -109,8 +109,12 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
  * priority is a human's judgement about a page — so the three take the status weights, the
  * way a stale review does. Amber is the loudest thing here on purpose: `danger` red is the
  * ink of a real absence, and an editor's *look at this first* is not that.
+ *
+ * The middle rung is `info` and not `closed`. A medium priority is not done, so `closed`
+ * would be a false statement; `info` is spent here as the blue rung between the amber and
+ * the grey.
  */
-const PRIORITY_TONE = { high: 'attention', medium: 'info', low: 'neutral' };
+const PRIORITY_TONE = { high: 'caution', medium: 'info', low: 'neutral' };
 
 /** One page priority, worn wherever the page is named. */
 export function PriorityPill({ priority, className = '' }) {
@@ -185,11 +189,11 @@ export function PriorityFilterPills({ selected, onToggle, counts = {} }) {
  */
 export function FilterBanner({ onClear, className = '', children }) {
   return (
-    /* `Alert` for the shape and `BANNER.attention` for the tone. Alert's `destructive`
+    /* `Alert` for the shape and `BANNER.caution` for the tone. Alert's `destructive`
        variant is refused for the reason above: a live filter is a status, and status
        never wears a diff hue. `border-current` on the button keeps the outline in the
        banner's own ink rather than the interface's border grey. */
-    <Alert className={cn('flex flex-wrap items-center gap-2 text-sm', BANNER.attention, className)}>
+    <Alert className={cn('flex flex-wrap items-center gap-2 text-sm', BANNER.caution, className)}>
       {children}
       <Button
         variant="outline"

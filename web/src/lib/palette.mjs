@@ -8,21 +8,34 @@
  * "what does green mean here?" had no answer.
  *
  * It has an answer now. Each colour in a component comes from this file. Each
- * entry is one of seven **tones**. A tone is a meaning, and not a hue:
+ * entry is one of eight **tones**. A tone is a meaning, and not a hue:
  *
- * | tone        | meaning                                                     |
- * |-------------|-------------------------------------------------------------|
- * | `lost`      | production has this and the new site does not                |
- * | `added`     | the new site has this and production does not                |
- * | `severe`    | the new site is wrong on its own terms — a dead or leaked link |
- * | `attention` | something changed and an editor decides what to do about it  |
- * | `info`      | done, or information the editor did not ask for              |
- * | `neutral`   | not work, or off, or carrying no judgement                   |
- * | `dark`      | a total, which is not a judgement at all                     |
+ * | tone      | meaning                                                        |
+ * |-----------|----------------------------------------------------------------|
+ * | `lost`    | production has this and the new site does not                  |
+ * | `added`   | the new site has this and production does not                  |
+ * | `warning` | the new site is wrong on its own terms — a dead or leaked link  |
+ * | `caution` | something changed and an editor decides what to do about it    |
+ * | `closed`  | done                                                           |
+ * | `info`    | information the editor did not ask for                         |
+ * | `neutral` | carrying no judgement                                          |
+ * | `total`   | a total                                                        |
+ *
+ * **The vocabulary is generic where the hue is free and the domain's where it is
+ * not** (ticket 131). `warning`, `caution`, `info` and `neutral` are ordinary words
+ * because amber, blue and grey are this file's to spend. The other four are not.
+ * `lost` and `added` are `CONTEXT.md`'s **Direction** — which side a one-sided
+ * difference is missing from — and `error` and `success` were refused for them:
+ * `error` promises red over an amber tone, and new-only content is a difference an
+ * editor still has to resolve, so green claiming *this went well* would be a false
+ * statement in the interface. `closed` is the real success state and it is blue,
+ * which is the second reason `success` would mislead. `total` is worn by any total
+ * and so is not the glossary's **Roll-up**, which is a summed number of a particular
+ * kind.
  *
  * `lost` and `added` are the only red and the only green in the interface. No
  * status uses them. This rule is what makes the diff readable: red shows a loss,
- * and nothing else. `severe` and `attention` are two weights of one amber for the
+ * and nothing else. `warning` and `caution` are two weights of one amber for the
  * same reason. A third loud hue must be the brand orange, and brand colour is
  * for chrome only.
  *
@@ -30,82 +43,115 @@
  * rebuilt from the Figma styleguide, `app.css` holds styleguide names only —
  * `danger-subtle`, `on-warning`, `info-text` — and the tone names above are this
  * tool's, not the styleguide's. The translation happens here and nowhere else, so
- * the answer to "which styleguide colour is `attention`?" is one grep away. The
+ * the answer to "which styleguide colour is `caution`?" is one grep away. The
  * mapping is:
  *
- * | tone        | styleguide group                                    |
- * |-------------|-----------------------------------------------------|
- * | `lost`      | `Danger` — spent on direction, not on status        |
- * | `added`     | `Success` — likewise                                |
- * | `severe`    | `Warning`, solid step                               |
- * | `attention` | `Warning`, subtle step                              |
- * | `info`      | `Info`                                              |
- * | `neutral`   | `Surface/surface-strong` ground, `Text/text-muted`  |
- * | `dark`      | `Border/border-strong`                              |
+ * | tone      | styleguide group                                    |
+ * |-----------|-----------------------------------------------------|
+ * | `lost`    | `Danger` — spent on direction, not on status        |
+ * | `added`   | `Success` — likewise                                |
+ * | `warning` | `Warning`, solid step                               |
+ * | `caution` | `Warning`, subtle step                              |
+ * | `closed`  | `Info`                                              |
+ * | `info`    | `Info`                                              |
+ * | `neutral` | `Surface/surface-strong` ground, `Text/text-muted`  |
+ * | `total`   | `Border/border-strong`                              |
+ *
+ * Two tones on one styleguide group is not new — `warning` and `caution` have always
+ * shared `Warning`. Those two take **different steps** of it and must print different
+ * pixels, because one reports a failure and the other a condition. `closed` and `info`
+ * take the **same** step on purpose: they were one tone until ticket 131, the split is
+ * about which of two meanings a reader is being handed, and it moved no pixel.
  *
  * Tailwind finds class names in the source text. Therefore each value in this
  * file is a literal, and no value is assembled from parts.
  */
 
-/** @typedef {'lost' | 'added' | 'severe' | 'attention' | 'info' | 'neutral' | 'dark'} Tone */
+/**
+ * The eight, in the order the tables above read. It is exported so the guard in
+ * `palette.test.mjs` has something to check every map against, and `Tone` is derived
+ * from it so the union and the list cannot come apart.
+ */
+export const TONES = /** @type {const} */ ([
+  'lost',
+  'added',
+  'warning',
+  'caution',
+  'closed',
+  'info',
+  'neutral',
+  'total',
+]);
+
+/** @typedef {(typeof TONES)[number]} Tone */
 
 /** A tinted label. The default shape for a class name or a state. */
 export const PILL = {
   lost: 'bg-danger-subtle text-danger-text',
   added: 'bg-success-subtle text-success-text',
-  severe: 'bg-warning-subtle text-on-warning',
-  attention: 'bg-warning-subtle text-on-warning',
+  warning: 'bg-warning-subtle text-on-warning',
+  caution: 'bg-warning-subtle text-on-warning',
+  closed: 'bg-info-subtle text-info-text',
   info: 'bg-info-subtle text-info-text',
   neutral: 'bg-muted text-muted-foreground',
-  dark: 'bg-border-strong text-white',
+  total: 'bg-border-strong text-white',
 };
 
 /** A filled chip. Use it for a number that must be legible at a distance. */
 export const SOLID = {
   lost: 'bg-danger text-white',
   added: 'bg-success text-white',
-  severe: 'bg-warning text-white',
-  attention: 'bg-warning-subtle text-on-warning',
+  warning: 'bg-warning text-white',
+  // Not solid, and not a mistake: the quiet amber has no solid step that keeps its ink
+  // legible, so the pair stays apart here by the subtle one staying subtle.
+  caution: 'bg-warning-subtle text-on-warning',
+  closed: 'bg-info text-white',
   info: 'bg-info text-white',
   neutral: 'bg-surface-strong text-text-muted',
-  dark: 'bg-border-strong text-white',
+  total: 'bg-border-strong text-white',
 };
 
 /**
  * A bar fill or a dot. One flat colour, no ink.
  *
- * `severe` takes `warning-text` and `attention` takes `warning`, which is the one
+ * `warning` takes `warning-text` and `caution` takes `warning`, which is the one
  * place the two amber weights run darker rather than lighter. With no ink on top,
  * the subtle step is invisible against the page, so the pair has to come from the
  * other end of the ramp — and the deeper of the two is still the louder of the two.
+ *
+ * `secondary` is not a tone. It is the brand step a progress track fills with, and it
+ * is here because a fill is what it is; `TONES` does not hold it and the guard in
+ * `palette.test.mjs` names it as the one exception.
  */
 export const FILL = {
   lost: 'bg-danger',
   added: 'bg-success',
-  severe: 'bg-warning-text',
-  attention: 'bg-warning',
+  warning: 'bg-warning-text',
+  caution: 'bg-warning',
+  closed: 'bg-info',
   info: 'bg-info',
   neutral: 'bg-border',
-  dark: 'bg-border-strong',
+  total: 'bg-border-strong',
   secondary: 'bg-secondary',
 };
 
 /**
  * A whole-width message. Border, ground and ink.
  *
- * `severe` gets the deeper amber ground and `attention` the pale one. The two
- * tones must not print the same pixels: a `severe` banner reports a failure, an
- * `attention` banner reports a condition, and a reader who sees one shape cannot
+ * `warning` gets the deeper amber ground and `caution` the pale one. The two
+ * tones must not print the same pixels: a `warning` banner reports a failure, a
+ * `caution` banner reports a condition, and a reader who sees one shape cannot
  * tell which of the two they have.
  */
 export const BANNER = {
   lost: 'border-danger bg-danger-subtle text-danger-text',
   added: 'border-success bg-success-subtle text-success-text',
-  severe: 'border-warning-text bg-warning text-white',
-  attention: 'border-warning bg-warning-subtle text-on-warning',
+  warning: 'border-warning-text bg-warning text-white',
+  caution: 'border-warning bg-warning-subtle text-on-warning',
+  closed: 'border-info bg-info-subtle text-info-text',
   info: 'border-info bg-info-subtle text-info-text',
   neutral: 'border-border bg-surface text-text-muted',
-  dark: 'border-border-strong bg-border-strong text-white',
+  total: 'border-border-strong bg-border-strong text-white',
 };
 
 /**
@@ -118,7 +164,7 @@ export const BANNER = {
 export const INK = {
   lost: 'text-danger-text',
   added: 'text-success-text',
-  attention: 'text-on-warning',
+  caution: 'text-on-warning',
   info: 'text-info-text',
 };
 
@@ -151,15 +197,15 @@ export const TOKEN = {
 
 /**
  * A native form control's own colour. The fix checkbox (ticket 36) has three
- * visual states, and two of them are ticked: `info` for a claim that stands, and
- * `attention` for a claim a later observation contradicted.
+ * visual states, and two of them are ticked: `closed` for a claim that stands, and
+ * `caution` for a claim a later observation contradicted.
  *
  * It holds status tones only. A checkbox is a work state, and a work state never
  * wears the diff hues.
  */
 export const ACCENT = {
-  info: 'accent-info',
-  attention: 'accent-warning',
+  closed: 'accent-info',
+  caution: 'accent-warning',
 };
 
 /**
@@ -182,7 +228,7 @@ export const CHROME = {
   // The row a link landed on (ticket 109). It is chrome and not a finding: it says
   // *this is the one you clicked*, which is a fact about the navigation and not a
   // claim about the content — so it must not borrow a diff hue, and it must not
-  // borrow `attention` either, which would read as a condition to decide about. An
+  // borrow `caution` either, which would read as a condition to decide about. An
   // outline and not a ground, because the cells inside it carry the diff tints and a
   // second ground would sit underneath them and change what they print.
   landed: 'outline outline-2 -outline-offset-2 outline-primary',
@@ -198,6 +244,6 @@ export const CHROME = {
  * @returns {Tone}
  */
 export function severityTone(share) {
-  if (share === 0) return 'info';
-  return share > 0.5 ? 'severe' : 'attention';
+  if (share === 0) return 'closed';
+  return share > 0.5 ? 'warning' : 'caution';
 }

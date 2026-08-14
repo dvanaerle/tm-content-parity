@@ -159,11 +159,11 @@ export default function Ledger({
 
   if (!report.comparable) {
     return (
-      /* The tone is `BANNER.attention` and not Alert's own `destructive` variant. An
+      /* The tone is `BANNER.caution` and not Alert's own `destructive` variant. An
          uncomparable page is a status, and palette rule 2 keeps status out of the diff
          hues; Alert's `destructive` reads from `--destructive`, which this repo has
          already pointed at the amber ink for exactly that reason. */
-      <Alert className={`p-4 ${BANNER.attention}`}>
+      <Alert className={`p-4 ${BANNER.caution}`}>
         <AlertTitle className="font-semibold">Cannot be compared</AlertTitle>
         <AlertDescription className="text-current">
           <p className="text-sm">{report.skipReason}</p>
@@ -194,9 +194,9 @@ export default function Ledger({
           measured again. The second is a finding this page has and no tab draws — the one
           `meta` rule, which the display-only Meta tab does not list.
 
-          `attention` and not `severe` for both: a condition, not a loss. */}
+          `caution` and not `warning` for both: a condition, not a loss. */}
       {(asked.missing || asked.unplaced) && (
-        <Alert className={`mb-3 ${BANNER.attention}`}>
+        <Alert className={`mb-3 ${BANNER.caution}`}>
           <AlertTitle className="font-semibold">
             {asked.missing
               ? 'This difference is not in this snapshot.'

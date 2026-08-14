@@ -46,7 +46,7 @@ export const STATE = {
   open: { label: 'open', tone: 'neutral' },
   fixed: { label: 'fixed', tone: 'added' },
   dismissed: { label: 'dismissed', tone: 'neutral' },
-  contradicted: { label: 'claimed fixed, still differs', tone: 'attention' },
+  contradicted: { label: 'claimed fixed, still differs', tone: 'caution' },
 };
 
 export default function OverrideControl({ finding, observationId, append, canWrite }) {
@@ -106,7 +106,7 @@ export default function OverrideControl({ finding, observationId, append, canWri
       <Badge className={PILL[STATE[state].tone]}>{STATE[state].label}</Badge>
 
       {state === 'contradicted' && (
-        <span className={`text-xs ${INK.attention}`}>
+        <span className={`text-xs ${INK.caution}`}>
           claimed fixed by {override.editor}, still differs
         </span>
       )}
@@ -163,7 +163,7 @@ function FixCheckbox({ finding, canWrite, onTick }) {
 
   return (
     <Checkbox
-      className={contradicted ? TICK.attention : TICK.added}
+      className={contradicted ? TICK.caution : TICK.added}
       checked={state === 'fixed' || contradicted}
       disabled={!canWrite || closedByJudgement}
       onCheckedChange={(ticked) => onTick(ticked)}
@@ -195,17 +195,21 @@ function FixCheckbox({ finding, canWrite, onTick }) {
  * **A standing claim is green, decided 2026-08-13, and it is the one exception to
  * the rule that `added` is direction and never status.** `palette.mjs` reserves the
  * only green in the interface for *the new site has this and production does not*,
- * and this checkbox spends it on *I corrected this*. It was `info` blue in the
+ * and this checkbox spends it on *I corrected this*. It was `closed` blue in the
  * design and the colour is a preference, taken deliberately and recorded here so
  * the next reader does not read it as the drift the one colour map exists to stop.
- * `attention` is unchanged and still means a claim a later observation contradicted.
- * `info` stays defined and unused, so restoring the blue is a one-word change.
+ * `caution` is unchanged and still means a claim a later observation contradicted.
+ * `closed` stays defined and unused, so restoring the blue is a one-word change.
+ *
+ * The blue is `closed` and not `info`: a standing fix claim is *done*, which is what
+ * `closed` says. `ACCENT` in `palette.mjs` holds the same pair for the same reason.
  */
 const TICK = {
   added:
     'data-checked:border-success data-checked:bg-success data-checked:text-white dark:data-checked:bg-success',
-  info: 'data-checked:border-info data-checked:bg-info data-checked:text-white dark:data-checked:bg-info',
-  attention:
+  closed:
+    'data-checked:border-info data-checked:bg-info data-checked:text-white dark:data-checked:bg-info',
+  caution:
     'data-checked:border-warning data-checked:bg-warning data-checked:text-white dark:data-checked:bg-warning',
 };
 
