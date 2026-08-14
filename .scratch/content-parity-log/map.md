@@ -2030,9 +2030,74 @@ product signature` — a product page carries all six hreflang alternates, and
 
 - [101 — The image campaign rule hides editorial images](issues/101-the-image-campaign-rule-hides-editorial-images.md)
   — `ready-for-agent`, unblocked, and **the live collateral ticket 89 measured
-  and 90 could not close**: 24 of the `IMAGE_CAMPAIGN` rule's 530 findings are
-  one editorial image hidden unnoticed. 90 fixed the text side by anchoring on an
-  id; the image side is still a pattern.
+  and 90 could not close**. 90 fixed the text side by anchoring on an id; the
+  image side is still a pattern.
+
+  **Re-measured 2026-08-14 in triage, and it is worse than 89 reported.** The 530
+  findings and the "4.9% collateral" describe the 2026-08-10 corpus, 446 of whose
+  extracts were crawled before ticket 64's entry landed and still carried the
+  banner. On the corpus on disk — 816 reports, `builtAt 2026-08-13T13:40Z` —
+  `image-campaign` is **29 findings and every one is collateral**: 26
+  `ontwerp_je_ideale_overkapping.jpg` and 3 `actie-updates_*.jpg`. **No key in the
+  corpus contains `korting`** — `#campaign-banner` cuts the artwork at extraction,
+  so the rule catches no campaign image at all, and 89's "the image half of the
+  banner needs no work" is now "the image half of the banner is not there".
+  `ideal-wero.svg`, a payment logo, is matched on both sides and is one edit from
+  being hidden as a campaign. **What the rule actually hides, located:** the 26 are
+  two different pictures under one basename — 20 the customer-service contact block
+  at `/media/wysiwyg/`, 6 a blog photo — plus a reviews-page image and a payment
+  logo. None was ever campaign artwork; the filename is a leftover from a blog
+  article called `ontwerp-je-ideale-overkapping`.
+  **The German store already agrees**: `aktions-update_erhalten.jpg` on the German
+  reviews page is the same block as `actie-updates_nl.jpg` and is already
+  `image-missing`, because the pattern says `actie` and not `aktion`. The fix makes
+  all six stores read the block the same way, in the direction `de` already had.
+
+  Two of the ticket's five acceptance criteria were unsatisfiable and the brief was
+  rewritten. **`\b` is the wrong tool**, and wrong towards the campaign side: `_` is
+  a word character, so `\bsale\b` drops `summer_sale_2026.svg`. A letter-only
+  boundary is the measured fix, the `actie` arm goes with a named cost, and the rule
+  is kept rather than deleted. Its one out-of-scope question is **closed**, not
+  deferred: 126 answered the vocabulary bullet on 2026-08-14 with "add none".
+  **Still `ready-for-agent` on 2026-08-14 — the pattern at `compare/images.mjs:25`
+  is unchanged**, so every count 126 records is a pre-101 count.
+
+- [126 — The campaign rule and the other five stores](issues/126-the-campaign-rule-and-the-other-five-stores.md)
+  — **resolved 2026-08-14, and the answer is "add none".** The last open bullet 101
+  left behind: should `IMAGE_CAMPAIGN` learn `rabatt`, `angebot`, `aktion`,
+  `réduction`, `promotion`, `discount` and `offre`? It should not, and **the reason
+  is not that the corpus is empty**. The campaign artwork this project recorded was
+  named `kortingactie` in **all six stores** — `2026-07-23-kortingactie-{nl,de,fr,en}-16aug.svg`
+  in ticket 90's probe, where the suffix is a language tag and the campaign word is
+  Dutch every time. `korting` catches 4 of 4; every foreign word catches **0 of 4,
+  in its own store**. **A filename is not translated even though the copy is**, so
+  ADR 0003's objection to a Dutch anchor holds on the text side and does not carry
+  to the image side — the one surface where a Dutch word reaches all six stores.
+  That is the finding, and the first measurement could not see it, because it
+  scanned the corpus and the artwork is not in the corpus.
+
+  The cost side was confirmed and corrected. Zero true positives and **seven `work`
+  findings** hidden — six `icon_offerte.png`, a quote-request icon on the FAQ page
+  in all six stores whose `alt` reads `Offerte`/`Devis`/`Angebot`/`Quotation`, and
+  the German reviews-page image 101 decided is not a campaign — but **seven is the
+  price of an unbounded arm, and it is 1 under 101's own letter boundary**:
+  `(?<![a-z])offers?(?![a-z])` does not match `icon_offerte.png`, while `aktion`
+  survives no boundary, because `-` is a separator. **The asymmetry is accepted**,
+  and it dissolves rather than being fixed: after 101 the `actie` arm is gone, so
+  `zomeractie-2027.jpg` and `sonderaktion-2027.jpg` are both `image-missing` in
+  every store. **101 had not landed when this was measured**, so every class in it
+  is the pre-101 class and the ticket says which conclusions survive if 101 is
+  abandoned — "add none" does; the asymmetry verdict does not, and the fix for it
+  stays 101's.
+
+  Two things worth keeping. **The corpus holds no campaign artwork in any
+  language** — `#campaign-banner` cuts it on 811 of 816 production page-sides — so
+  "this word catches nothing" is the expected result for every word **including the
+  Dutch ones**, and zero matches is evidence about no word at all; each is judged on
+  what it would wrongly take. And a page key with a slash is stored as a
+  **subdirectory** under `data/extract/<store>/`, so a scan that reads one level
+  finds 444 of 816 files and 6,082 of 11,122 records. The first pass did exactly
+  that and lost `be_fr`. A scan of this corpus must recurse.
 
 - [31 — Bulk dismissal across pages](issues/31-bulk-dismissal.md) — the one user
   story in spec 29 that shipped as nothing, found by the code review of the
