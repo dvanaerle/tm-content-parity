@@ -611,7 +611,7 @@ function link(url, text, overrides = {}) {
  */
 describe('wordDiff', () => {
   /** @param {import('./worddiff.mjs').DiffSpan[]} spans */
-  const shape = (spans) => spans.map((span) => `${span.type}:${span.text}`);
+  const labels = (spans) => spans.map((span) => `${span.type}:${span.text}`);
 
   it('gives two identical strings one unchanged span', () => {
     expect(wordDiff('Gratis bezorging', 'Gratis bezorging')).toEqual([
@@ -633,7 +633,7 @@ describe('wordDiff', () => {
   });
 
   it('keeps the unchanged words around a substitution in place', () => {
-    expect(shape(wordDiff('een twee drie', 'een vier drie'))).toEqual([
+    expect(labels(wordDiff('een twee drie', 'een vier drie'))).toEqual([
       'same:een ',
       'removed:twee',
       'added:vier',
@@ -642,18 +642,21 @@ describe('wordDiff', () => {
   });
 
   it('reports an insertion at the head', () => {
-    expect(shape(wordDiff('twee drie', 'een twee drie'))).toEqual(['added:een ', 'same:twee drie']);
+    expect(labels(wordDiff('twee drie', 'een twee drie'))).toEqual([
+      'added:een ',
+      'same:twee drie',
+    ]);
   });
 
   it('reports an insertion at the tail', () => {
-    expect(shape(wordDiff('een twee', 'een twee drie'))).toEqual(['same:een twee', 'added: drie']);
+    expect(labels(wordDiff('een twee', 'een twee drie'))).toEqual(['same:een twee', 'added: drie']);
   });
 
   it('picks out the changed segment of a link target', () => {
     // The reason the four surfaces share one component: two link keys are two
     // word lists, and this is what makes a changed path segment jump out
     // instead of reading as "the whole target changed".
-    expect(shape(wordDiff('self/overkappingen/veranda', 'self/overkappingen/tuinkamer'))).toEqual([
+    expect(labels(wordDiff('self/overkappingen/veranda', 'self/overkappingen/tuinkamer'))).toEqual([
       'same:self/overkappingen/',
       'removed:veranda',
       'added:tuinkamer',
@@ -691,7 +694,7 @@ describe('wordDiff', () => {
     // Ticket 35: character-level on a Dutch compound produces confetti.
     // `terrasoverkapping` and `tuinoverkapping` share eleven letters and the
     // whole word is what changed.
-    expect(shape(wordDiff('Onze terrasoverkapping', 'Onze tuinoverkapping'))).toEqual([
+    expect(labels(wordDiff('Onze terrasoverkapping', 'Onze tuinoverkapping'))).toEqual([
       'same:Onze ',
       'removed:terrasoverkapping',
       'added:tuinoverkapping',
@@ -700,18 +703,18 @@ describe('wordDiff', () => {
 
   it('shows each side only its own words', () => {
     const spans = wordDiff('een twee drie', 'een vier drie');
-    expect(shape(spansFor(spans, 'production'))).toEqual([
+    expect(labels(spansFor(spans, 'production'))).toEqual([
       'same:een ',
       'removed:twee',
       'same: drie',
     ]);
-    expect(shape(spansFor(spans, 'new'))).toEqual(['same:een ', 'added:vier', 'same: drie']);
+    expect(labels(spansFor(spans, 'new'))).toEqual(['same:een ', 'added:vier', 'same: drie']);
   });
 
   it('merges neighbouring words of the same kind into one span', () => {
     // Two removed words in a row are one edit to a reader, so they are one
     // highlight and not two boxes with a gap between them.
-    expect(shape(wordDiff('een twee drie vier', 'een vier'))).toEqual([
+    expect(labels(wordDiff('een twee drie vier', 'een vier'))).toEqual([
       'same:een ',
       'removed:twee drie ',
       'same:vier',

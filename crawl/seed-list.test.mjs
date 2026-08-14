@@ -220,25 +220,25 @@ describe('the language groups', () => {
   // production puts in one alternate block. These read them back out of the
   // committed extract, so a change in production breaks the claim and not the
   // prose beside it.
-  const shapesOfContentPages = () => {
+  const storeGroupsOfContentPages = () => {
     const extract = JSON.parse(
       readFileSync(new URL('../data/sitemap-extract.json', import.meta.url), 'utf8'),
     );
-    const shapes = new Map();
+    const groups = new Map();
     for (const entry of extract.entries.filter(isContentPage)) {
       const stores = Object.keys(entry.alternates)
         .map((lang) => HREFLANG_STORE[lang])
         .filter(Boolean)
         .sort()
         .join(',');
-      shapes.set(stores, (shapes.get(stores) ?? 0) + 1);
+      groups.set(stores, (groups.get(stores) ?? 0) + 1);
     }
-    return shapes;
+    return groups;
   };
 
   it('carries the store-local content in `{be_fr, fr}` and `{be, nl}`', () => {
-    const shapes = shapesOfContentPages();
-    const largest = [...shapes]
+    const groups = storeGroupsOfContentPages();
+    const largest = [...groups]
       .filter(([stores]) => stores)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 2);
@@ -263,12 +263,12 @@ describe('the language groups', () => {
     expect(none).toEqual({ nl: 6, be: 5, be_fr: 1, de: 87, fr: 3, uk: 85 });
   });
 
-  it('holds sixteen shapes of alternate block, and not four groups', () => {
+  it('holds sixteen store groups of alternate block, and not four', () => {
     // Ticket 50 says `{nl, be}`, `{be_fr, fr}`, `{de}` and `{uk}`, and that no
     // other pairing exists. Against the extract of 2026-08-10 that is wrong:
     // `de,nl,uk` holds `serre`, `wintergarten` and `pergola`, and `de,uk` holds
     // `showroom-berlin`. It changes no rule here, and axis B must know it.
-    expect(shapesOfContentPages().size).toBe(16);
+    expect(storeGroupsOfContentPages().size).toBe(16);
   });
 });
 
@@ -449,7 +449,7 @@ describe('the seed list', () => {
 
   it('sorts by codepoint, so the bytes do not depend on the locale', () => {
     const { rows } = buildSeedList({ entries, carriedRows: [] });
-    expect(rows.map((r) => r.page)).toEqual([...rows.map((r) => r.page)].sort());
+    expect(rows.map((r) => r.page)).toEqual(rows.map((r) => r.page).sort());
   });
 });
 

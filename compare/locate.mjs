@@ -30,7 +30,7 @@ export function anchorHeadingFor(units) {
   const headings = units.filter((unit) => unit.kind === 'heading');
 
   return (index) => {
-    if (typeof index !== 'number') return null;
+    if (index == null) return null;
     let found = null;
     for (const heading of headings) {
       if (heading.index >= index) break;

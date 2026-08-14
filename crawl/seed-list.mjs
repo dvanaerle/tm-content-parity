@@ -440,6 +440,22 @@ export function countDisagreements(counts) {
   return said;
 }
 
+/*
+ * The two decoders of the seed schema, and the only `typeof` the repo keeps.
+ *
+ * `no-runtime-typeof` asks for input to be parsed at its I/O boundary and for
+ * everything downstream to branch on the domain value. `schemaDisagreements` below
+ * *is* that boundary: the seed list arrives as parsed JSON that promises nothing,
+ * and these two say what a field has to be before six stages read it. The rule is
+ * off for these two lines and nowhere else.
+ */
+// oxlint-disable anti-slop/no-runtime-typeof
+/** @param {unknown} value */
+const isText = (value) => typeof value === 'string';
+/** @param {unknown} value */
+const isRecord = (value) => value !== null && typeof value === 'object';
+// oxlint-enable anti-slop/no-runtime-typeof
+
 /**
  * Everything the seed schema promises and this list does not keep.
  *
@@ -451,7 +467,7 @@ export function countDisagreements(counts) {
  */
 export function schemaDisagreements(seeds) {
   const said = [];
-  if (!seeds || typeof seeds !== 'object') return ['the seed list is not an object'];
+  if (!isRecord(seeds)) return ['the seed list is not an object'];
   if (!/^\d{4}-\d{2}-\d{2}$/.test(seeds.generated ?? '')) {
     said.push('`generated` is not an ISO date');
   }
@@ -463,22 +479,20 @@ export function schemaDisagreements(seeds) {
   } else {
     for (const entry of seeds.dropped) {
       for (const field of ['loc', 'path', 'rule']) {
-        if (typeof entry?.[field] !== 'string') said.push(`a drop has no \`${field}\``);
+        if (!isText(entry?.[field])) said.push(`a drop has no \`${field}\``);
       }
       if (entry?.store !== null && !STORES.includes(entry?.store)) {
         said.push(`${entry?.loc}: \`store\` is not one of the six, and not null`);
       }
     }
-    said.push(
-      ...unknownDropRules(seeds.dropped.filter((entry) => typeof entry?.rule === 'string')),
-    );
+    said.push(...unknownDropRules(seeds.dropped.filter((entry) => isText(entry?.rule))));
   }
 
   if (!Array.isArray(seeds.rows)) return [...said, '`rows` is not an array'];
 
   const seen = new Set();
   for (const row of seeds.rows) {
-    if (typeof row?.page !== 'string' || !row.page) {
+    if (!isText(row?.page) || !row.page) {
       said.push('a row has no `page`');
       continue;
     }
@@ -498,12 +512,12 @@ export function schemaDisagreements(seeds) {
       const cell = row.stores?.[store];
       if (cell === null || cell === undefined) continue;
       for (const field of ['path', 'prodUrl', 'newUrl', 'provenance']) {
-        if (typeof cell[field] !== 'string') said.push(`${row.page}/${store}: no \`${field}\``);
+        if (!isText(cell[field])) said.push(`${row.page}/${store}: no \`${field}\``);
       }
-      if (typeof cell.path === 'string' && cell.newUrl !== newUrl(store, cell.path)) {
+      if (isText(cell.path) && cell.newUrl !== newUrl(store, cell.path)) {
         said.push(`${row.page}/${store}: the new url is not the host swap of the path`);
       }
-      if (typeof cell.prodUrl === 'string' && storePageOf(cell.prodUrl)?.store !== store) {
+      if (isText(cell.prodUrl) && storePageOf(cell.prodUrl)?.store !== store) {
         said.push(`${row.page}/${store}: the production url is not of this store`);
       }
     }

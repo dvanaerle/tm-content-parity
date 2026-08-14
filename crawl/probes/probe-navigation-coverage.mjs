@@ -118,7 +118,7 @@ for (const store of stores) {
   const inSeeds = new Set(
     seeds.rows
       .map((row) => row.stores?.[store]?.path)
-      .filter((path) => typeof path === 'string')
+      .filter((path) => path != null)
       .map((path) => path.replace(/\/+$/, '')),
   );
 

@@ -142,16 +142,18 @@ function Cell({ side, value, spans, tint, prefix, raw, mono, strong, clamped, no
   // prose or a long url, and both must wrap and both must sit at the top of a row
   // whose other cell may be four times as tall. The three overrides below are
   // layout, and `cn()` resolves each of them against the default in the same group.
-  const shape = 'px-2 py-3 align-top whitespace-normal';
+  const layout = 'px-2 py-3 align-top whitespace-normal';
 
   if (value === null || value === '') {
     return (
-      <TableCell className={`${shape} text-sm text-muted-foreground italic`}>not present</TableCell>
+      <TableCell className={`${layout} text-sm text-muted-foreground italic`}>
+        not present
+      </TableCell>
     );
   }
 
   return (
-    <TableCell className={cn(shape, 'break-words', tint, mono ? 'font-mono text-xs' : 'text-sm')}>
+    <TableCell className={cn(layout, 'break-words', tint, mono ? 'font-mono text-xs' : 'text-sm')}>
       {prefix}
       {note && <p className="mb-1 text-xs text-muted-foreground italic">{note}</p>}
       <span className={`${strong ? 'font-semibold' : ''} ${clamped ? 'line-clamp-4' : ''}`}>

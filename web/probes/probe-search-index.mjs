@@ -90,7 +90,7 @@ for (const file of files) {
   // answer to what this ticket added over what was already crossing the wire.
   const withoutLinkText = JSON.stringify({
     ...index,
-    findings: index.findings.map(({ linkText, ...rest }) => rest),
+    findings: index.findings.map(({ linkText: _dropped, ...rest }) => rest),
   });
 
   stores.push({

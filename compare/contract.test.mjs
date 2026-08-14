@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   CHECKS,
@@ -99,76 +99,51 @@ describe('findingId', () => {
  * is not the page.
  */
 describe('findingSetHash', () => {
-  afterEach(() => {
-    vi.resetModules();
-    vi.doUnmock('./vocabulary.mjs');
-  });
-
   /** One finding per class, which is the widest page the vocabulary can produce. */
   const everyClass = Object.keys(FINDING_CLASSES).map((cls) => ({ id: `id-${cls}`, class: cls }));
 
-  /**
-   * `contract.mjs` re-imported with the vocabulary re-triaged — the same edit ticket 86
-   * makes to `FINDING_CLASSES` by hand, made from a test so it can be made for every
-   * class at once rather than for the one class being flipped this week.
-   *
-   * `isWork()` and `visibilityOf()` close over the real map inside `vocabulary.mjs`, so
-   * replacing the exported map alone would not reach them. The mock rebuilds all three
-   * from the patched map, which is what editing the source does — **for these three, and
-   * only these three**. A fourth export derived from `FINDING_CLASSES` would not be
-   * rebuilt here, and this test would keep passing while no longer modelling the edit it
-   * claims to. Add it to the mock on the day it is added to the module.
-   *
-   * @param {(name: string) => string} triage The visibility each class now has.
+  /*
+   * These tests used to re-import `contract.mjs` over a mocked `vocabulary.mjs` with
+   * every class re-triaged. The property they were reaching for is simpler and is
+   * asserted directly here: the hash survives *every* future edit to `FINDING_CLASSES`
+   * exactly when the vocabulary is not a term of it. Mocking the module asserted that
+   * one indirection further away, and it kept a standing hazard — the mock had to
+   * rebuild each vocabulary export by hand, so a new derived export would have left it
+   * silently no longer modelling the edit it claimed to.
    */
-  const retriaged = async (triage) => {
-    vi.resetModules();
-    vi.doMock('./vocabulary.mjs', async () => {
-      const actual = await vi.importActual('./vocabulary.mjs');
-      const classes = Object.fromEntries(
-        Object.entries(actual.FINDING_CLASSES).map(([name, cls]) => [
-          name,
-          { ...cls, visibility: triage(name) },
-        ]),
-      );
-      const visibilityOf = (name) => classes[name]?.visibility ?? 'diagnostic';
-      return {
-        ...actual,
-        FINDING_CLASSES: classes,
-        visibilityOf,
-        isWork: (name) => visibilityOf(name) === 'work',
-      };
-    });
-    return import('./contract.mjs');
-  };
 
-  // The assertion the whole ticket exists for, made at its widest: not one class
-  // moving, but every class in the vocabulary moving at once. Under the old hash,
-  // flipping `heading-level` alone printed "changed since review" on all 392 pages that
-  // carry one, on a day when not a word on any of those pages had moved.
-  it.each(VISIBILITIES)('is byte-identical when every class becomes %s', async (visibility) => {
-    const reloaded = await retriaged(() => visibility);
-    expect(reloaded.findingSetHash(everyClass)).toBe(findingSetHash(everyClass));
+  // The assertion the whole ticket exists for. Under the old hash, flipping
+  // `heading-level` printed "changed since review" on all 392 pages that carry one, on a
+  // day when not a word on any of those pages had moved.
+  it('reads the ids, and nothing the vocabulary knows', () => {
+    // A class the vocabulary has never heard of hashes to the same bytes. If the hash
+    // ever consulted `FINDING_CLASSES`, this is where it would show.
+    const unknown = everyClass.map((finding) => ({ ...finding, class: 'no-such-class' }));
+    expect(findingSetHash(unknown)).toBe(findingSetHash(everyClass));
   });
 
-  it('is byte-identical across a flip of one single class', async () => {
+  it.each(VISIBILITIES)('is byte-identical when every class reads as %s', (visibility) => {
+    const retriaged = everyClass.map((finding) => ({ ...finding, visibility }));
+    expect(findingSetHash(retriaged)).toBe(findingSetHash(everyClass));
+  });
+
+  it('is byte-identical across a flip of one single class', () => {
     // The flip this ticket unblocked has landed: ticket 86 moved `heading-level` out of
-    // `work` on 2026-08-13, so the edit is modelled from where the class now sits, back
-    // the way it came. One class moving is the case that matters beside the sweep above,
-    // because it is the shape every future re-triage has.
-    const reloaded = await retriaged((name) =>
-      name === 'heading-level' ? 'work' : FINDING_CLASSES[name].visibility,
-    );
+    // `work` on 2026-08-13. One class moving is the case that matters beside the sweep
+    // above, because it is the shape every future re-triage has.
     expect(FINDING_CLASSES['heading-level'].visibility).toBe('information');
-    expect(reloaded.FINDING_CLASSES['heading-level'].visibility).toBe('work');
-    expect(reloaded.findingSetHash(everyClass)).toBe(findingSetHash(everyClass));
+    const flipped = everyClass.map((finding) =>
+      finding.class === 'heading-level' ? { ...finding, visibility: 'work' } : finding,
+    );
+    expect(findingSetHash(flipped)).toBe(findingSetHash(everyClass));
   });
 
-  it('does not move a finding id when a class changes visibility', async () => {
+  it('does not move a finding id when a class changes visibility', () => {
     // Visibility was never a term of `findingId()` and this ticket must not make it
     // one: no override detaches on the vocabulary flips this run enables.
-    const reloaded = await retriaged(() => 'information');
-    expect(reloaded.findingId(base)).toBe(findingId(base));
+    expect(findingId({ ...base, class: 'heading-level', visibility: 'information' })).toBe(
+      findingId({ ...base, class: 'heading-level', visibility: 'work' }),
+    );
   });
 
   it('covers a finding in a class that is not work', () => {

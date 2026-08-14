@@ -130,7 +130,7 @@ function extract(html, origin) {
       src,
       host,
       pathname: isData ? 'data:' : pathname,
-      shape: isData ? 'data-uri' : src ? classifyPath(pathname) : 'none',
+      urlKind: isData ? 'data-uri' : src ? classifyPath(pathname) : 'none',
       base,
       noExt: stripExt(base),
       loose: loose(base),
@@ -206,7 +206,7 @@ const blank = () => ({
   sources: 0,
   noMain: 0,
   noBody: 0,
-  shapes: {},
+  urlKinds: {},
   exts: {},
   hasSrc: 0,
   onlyDataSrc: 0,
@@ -243,7 +243,7 @@ for (const p of usable) {
     if (!d.hasMain) s.noMain++;
     if (!d.hasBody) s.noBody++;
     for (const img of d.imgs) {
-      bump(s.shapes, img.shape);
+      bump(s.urlKinds, img.urlKind);
       bump(s.exts, img.ext || '(none)');
       if (img.host) bump(s.hosts, img.host);
       if (img.hasSrc) s.hasSrc++;
@@ -253,7 +253,7 @@ for (const p of usable) {
       if (img.loading === 'lazy') s.lazy++;
       if (img.loading === 'eager') s.eager++;
       if (img.inPicture) s.inPicture++;
-      if (img.shape === 'data-uri') s.dataUri++;
+      if (img.urlKind === 'data-uri') s.dataUri++;
       else if (img.ext === 'svg') s.svg++;
       else s.raster++;
       if (img.altMissing) s.altMissing++;
@@ -429,7 +429,7 @@ for (const side of ['prod', 'new']) {
     `  alt missing            ${s.altMissing}   alt="" ${s.altEmpty}   alt non-empty ${s.altText}`,
   );
   L.push(`  width attr             ${s.width}   height attr ${s.height}   both ${s.bothDims}`);
-  L.push(`  url shapes:\n${top(s.shapes)}`);
+  L.push(`  url kinds:\n${top(s.urlKinds)}`);
   L.push(`  extensions:\n${top(s.exts, 10)}`);
   L.push(`  hosts:\n${top(s.hosts, 8)}`);
 }

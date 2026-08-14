@@ -32,5 +32,4 @@ export const PRIORITIES = /** @type {Priority[]} */ (['high', 'medium', 'low']);
  * @param {unknown} value
  * @returns {boolean}
  */
-export const isPriority = (value) =>
-  typeof value === 'string' && /** @type {string[]} */ (PRIORITIES).includes(value);
+export const isPriority = (value) => /** @type {unknown[]} */ (PRIORITIES).includes(value);

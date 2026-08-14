@@ -642,17 +642,15 @@ describe('deriveStoreState', () => {
   );
   const light = report([finding('L0')], { page: 'meettool' });
 
-  const events = [
-    ...Array.from({ length: 40 }, (_, i) =>
-      event({
-        scope: 'finding',
-        action: 'dismissed',
-        page: 'fotogalerij',
-        findingId: `H${i}`,
-        note: 'ok',
-      }),
-    ),
-  ];
+  const events = Array.from({ length: 40 }, (_, i) =>
+    event({
+      scope: 'finding',
+      action: 'dismissed',
+      page: 'fotogalerij',
+      findingId: `H${i}`,
+      note: 'ok',
+    }),
+  );
 
   it('sums over findings and never over pages', () => {
     // Two pages, one with forty findings and one with one. Summed over pages this

@@ -251,8 +251,8 @@ for (const key of pages) {
     sides[side] = foldEffect(html, { onWarn: (m) => console.warn(`${key} ${name}: ${m}`) });
   }
   effects.set(key, sides);
-  const shape = (side) => `+${side.created.size} -${side.lost.size} ~${side.retagged.size}`;
-  console.log(`${key}  production ${shape(sides.production)}  new ${shape(sides.new)}`);
+  const tally = (side) => `+${side.created.size} -${side.lost.size} ~${side.retagged.size}`;
+  console.log(`${key}  production ${tally(sides.production)}  new ${tally(sides.new)}`);
 }
 
 /** @type {Map<string, any>} */

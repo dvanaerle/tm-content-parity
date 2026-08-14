@@ -233,7 +233,7 @@ export function matchedFields(entry, term) {
   if (!needle) return [];
 
   const holds = (/** @type {string | null} */ value) =>
-    typeof value === 'string' && value.toLowerCase().includes(needle);
+    value?.toLowerCase().includes(needle) ?? false;
 
   // The two columns are read under one name or two, by the class's check. This is
   // decision 1, and it is the whole reason the field list is six names and not four.

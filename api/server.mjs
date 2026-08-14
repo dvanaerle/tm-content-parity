@@ -115,11 +115,24 @@ export async function savedRecheck(store, page) {
   }
 }
 
-/** @param {import('node:http').ServerResponse} response */
-const send = (response, status, body, type = 'application/json; charset=utf-8') => {
+/**
+ * One writer, and the content type decides what the body already is. A caller that
+ * has text says so by calling `sendText`; every other answer is JSON.
+ *
+ * @param {import('node:http').ServerResponse} response
+ */
+const write = (response, status, type, body) => {
   response.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' });
-  response.end(typeof body === 'string' ? body : JSON.stringify(body));
+  response.end(body);
 };
+
+/** @param {import('node:http').ServerResponse} response */
+const send = (response, status, body) =>
+  write(response, status, 'application/json; charset=utf-8', JSON.stringify(body));
+
+/** @param {import('node:http').ServerResponse} response */
+const sendText = (response, status, body) =>
+  write(response, status, 'text/plain; charset=utf-8', body);
 
 /**
  * The router, with the work injected. The extraction and the comparison have
@@ -204,11 +217,10 @@ async function serveStatic(pathname, response) {
     }
   }
 
-  return send(
+  return sendText(
     response,
     404,
     'Not found. Run `npm run build` in the root first, or `npm start`.',
-    'text/plain; charset=utf-8',
   );
 }
 

@@ -81,10 +81,10 @@ const seeds = {
   rows,
 };
 
-const wrongShape = schemaDisagreements(seeds);
-if (wrongShape.length) {
+const brokenPromises = schemaDisagreements(seeds);
+if (brokenPromises.length) {
   console.error('\nThe seed list does not keep its own schema:');
-  for (const said of wrongShape.slice(0, 20)) console.error(`  ${said}`);
+  for (const said of brokenPromises.slice(0, 20)) console.error(`  ${said}`);
   console.error('Nothing was written.');
   process.exit(1);
 }

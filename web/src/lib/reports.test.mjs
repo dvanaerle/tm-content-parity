@@ -117,6 +117,7 @@ describe('regionsChangedInLog', () => {
 
     expect(read).toHaveProperty('store');
     expect(Array.isArray(read.changes)).toBe(true);
-    expect(read.reason === null || typeof read.reason === 'string').toBe(true);
+    // `null` or a sentence, and nothing else — `undefined` fails this too.
+    expect(read.reason === null ? '' : read.reason).toEqual(expect.any(String));
   });
 });

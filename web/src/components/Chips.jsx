@@ -5,13 +5,13 @@ import { Alert } from './ui/alert.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
-import { BANNER, FILL, PILL, SOLID, severityTone } from '../lib/palette.mjs';
+import { BANNER, FILL, PILL, severityTone } from '../lib/palette.mjs';
 
 /*
  * Every chip in this file is a shadcn `Badge` for its shape and a palette token for
  * its colour. Badge's own variants — `default`, `secondary`, `destructive` — are
  * refused on purpose: they read from `--primary` and `--destructive`, and a class tone
- * is not a brand colour and is not a status. `SOLID`, `PILL` and `FILL` are the only
+ * is not a brand colour and is not a status. `BANNER`, `PILL` and `FILL` are the only
  * things that know what a class means, so they arrive through `className` and win.
  *
  * That is a deliberate breach of shadcn's own guidance that `className` is for layout

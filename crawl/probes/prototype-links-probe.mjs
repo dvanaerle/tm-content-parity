@@ -85,7 +85,7 @@ const results = await Promise.all(
         signal: AbortSignal.timeout(15000),
       });
       return { u, status: r.status };
-    } catch (e) {
+    } catch {
       return { u, status: 'ERR' };
     }
   }),

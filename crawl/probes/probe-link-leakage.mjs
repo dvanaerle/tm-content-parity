@@ -3,7 +3,7 @@
 //
 // Classifies hrefs, it does not status-check them. Answers: how much links back
 // to a live tuinmaximaal domain, how much crosses store hosts, what external
-// surface exists, and which href shapes a link checker has to skip.
+// surface exists, and which href forms a link checker has to skip.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { parse } from 'node-html-parser';
 
@@ -96,7 +96,7 @@ let totalAnchors = 0;
 const live = { pages: new Set(), targets: new Set(), examples: [] };
 const cross = { pages: new Set(), targets: new Set(), examples: [] };
 const externalHosts = new Map(); // host -> Set of "store|page"
-const shapes = {
+const skippedHrefs = {
   mailto: 0,
   tel: 0,
   hashOnly: 0,
@@ -111,14 +111,14 @@ for (const page of ok) {
     totalAnchors++;
     const href = a.href;
 
-    if (/^mailto:/i.test(href)) shapes.mailto++;
-    else if (/^tel:/i.test(href)) shapes.tel++;
-    else if (/^javascript:/i.test(href)) shapes.javascript++;
-    else if (href.startsWith('#')) shapes.hashOnly++;
-    else if (href.startsWith('//')) shapes.protocolRelative++;
+    if (/^mailto:/i.test(href)) skippedHrefs.mailto++;
+    else if (/^tel:/i.test(href)) skippedHrefs.tel++;
+    else if (/^javascript:/i.test(href)) skippedHrefs.javascript++;
+    else if (href.startsWith('#')) skippedHrefs.hashOnly++;
+    else if (href.startsWith('//')) skippedHrefs.protocolRelative++;
 
     if (!a.abs) {
-      shapes.unparseable++;
+      skippedHrefs.unparseable++;
       continue;
     }
     if (!/^https?:$/.test(new URL(a.abs).protocol)) continue;
@@ -192,8 +192,8 @@ lines.push(
 );
 lines.push(
   section(
-    'SCHEME / SHAPE STATS',
-    Object.entries(shapes)
+    'SCHEME / SKIPPED-HREF STATS',
+    Object.entries(skippedHrefs)
       .map(([k, v]) => `${k.padEnd(18)} ${v}`)
       .join('\n'),
   ),
@@ -225,7 +225,7 @@ writeFileSync(
           .sort((a, b) => b[1].size - a[1].size)
           .map(([h, p]) => [h, p.size]),
       ),
-      shapes,
+      skippedHrefs,
       nonOkPages: bad.map((r) => ({ store: r.store, page: r.page, url: r.url, status: r.status })),
     },
     null,

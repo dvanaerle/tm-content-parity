@@ -69,11 +69,13 @@ const workers = Array.from({ length: 8 }, async () => {
       queue.length = 0;
       throw error;
     }
+    // A url that redirected nowhere and failed with nothing says so by leaving the
+    // column out. `undefined` is how `JSON.stringify` is told to omit a key.
     results.push({
       ...target,
       status: answer.status,
-      ...(answer.redirect ? { redirect: answer.redirect } : {}),
-      ...(answer.error ? { error: answer.error } : {}),
+      redirect: answer.redirect || undefined,
+      error: answer.error || undefined,
     });
     if (++done % 100 === 0) console.log(`  ${done}/${targets.length}`);
   }
