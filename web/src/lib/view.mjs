@@ -19,7 +19,7 @@
 
 // The closed vocabulary, for the **order** of the class groups and nothing else. The
 // import site is `vocabulary.mjs` for the reason `classes.mjs` states.
-import { FINDING_CLASSES, isWork } from '../../../compare/vocabulary.mjs';
+import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
 // `canDecide()` is the interface's other rule derived from the visibility, and it lives
 // beside `toneOf()` rather than here: two of its three callers are the Links and
 // Images tabs, which have no rows at all (ticket 86).
@@ -415,6 +415,12 @@ export const findingsIn = (repeats) => repeats.reduce((sum, repeat) => sum + rep
  * selected groups exist and they are open, so the two controls cannot tell different
  * stories.
  *
+ * A class that holds nothing gets **no group**. It used to get an empty one saying so, to
+ * keep *nothing wrong here* apart from *this class does not exist*; that is a row of
+ * clutter apiece in the list an editor reads to find work, and a store where most rules
+ * come back clean paid it on every line. Which rules ran is a property of the run and not
+ * of this queue.
+ *
  * @typedef {object} ClassGroup
  * @property {string} class
  * @property {Repeat[]} repeats
@@ -433,15 +439,17 @@ export function groupRepeatsByClass(repeats, classes = []) {
     byClass.get(repeat.class).push(repeat);
   }
 
-  // Which classes are drawn. With a pill on it is the selected ones and nothing else:
-  // opening a group is not a filter, so the two controls must not be able to tell
-  // different stories about what is included. With no pill on it is every `work` class,
-  // empty ones as well — *nothing wrong here* and *this class does not exist* are two
-  // different answers, and a reader who cannot tell them apart does not know whether the
-  // rule ran. Any other class is drawn only when it holds something, which is the noise
-  // toggle's repeats arriving in a group of their own rather than mixed into a work one.
-  const isDrawn =
-    classes.length > 0 ? (cls) => classes.includes(cls) : (cls) => isWork(cls) || byClass.has(cls);
+  // Which classes are drawn: the ones that **hold something**. Every `work` class used to
+  // be drawn with no pill on, empty ones as well, saying *no difference of this class in
+  // this store* — *nothing wrong here* kept apart from *this class does not exist*. That
+  // answer costs a row apiece in the list an editor reads to find work, and a store where
+  // most rules come back clean pays it on every line. Which rules ran is a property of the
+  // run, and this queue is for what is there.
+  //
+  // With a pill on the selected classes narrow it further: opening a group is not a
+  // filter, so the two controls must not be able to tell different stories about what is
+  // included.
+  const isDrawn = (cls) => byClass.has(cls) && (classes.length === 0 || classes.includes(cls));
 
   // A class the closed vocabulary does not name cannot be ordered by it, so it goes last
   // rather than nowhere. Nothing reaches here today that is not in the vocabulary; the
@@ -456,9 +464,9 @@ export function groupRepeatsByClass(repeats, classes = []) {
     .map((cls) => ({ class: cls, repeats: byClass.get(cls) ?? [] }));
 
   // Groups start closed, and two of them is the case this ticket exists for: the editor
-  // chooses. A lone non-empty group opens, because a closed single group is a click that
-  // asks nothing — and so does a selected one, because the pill was that choice already.
-  // An empty group never opens: there is nothing behind it to read.
+  // chooses. A lone group opens, because a closed single group is a click that asks
+  // nothing — and so does a selected one, because the pill was that choice already. There
+  // is no empty group to keep shut any more: every group here holds something.
   //
   // Two pills therefore open two groups, which the ticket also asks to be one at a time.
   // The two rules meet only here, and the pills win: they are the control that chose those
@@ -469,9 +477,8 @@ export function groupRepeatsByClass(repeats, classes = []) {
   // `opensOnLoad` is the **initial** state and not the state itself. Which group is open
   // is session state in the component, it is not a filter, and it never enters the amber
   // strip.
-  const filled = groups.filter((group) => group.repeats.length > 0);
-  const chosen = classes.length > 0 ? filled.map((group) => group.class) : [];
-  const lone = filled.length === 1 ? [filled[0].class] : [];
+  const chosen = classes.length > 0 ? groups.map((group) => group.class) : [];
+  const lone = groups.length === 1 ? [groups[0].class] : [];
   const opening = new Set([...chosen, ...lone]);
 
   return groups.map((group) => ({ ...group, opensOnLoad: opening.has(group.class) }));

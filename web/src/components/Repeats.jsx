@@ -180,10 +180,10 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
 /**
  * One class, its repeat count, and its rows behind a click.
  *
- * An empty group is drawn and says so, and it is **not** a trigger: *nothing wrong here*
- * and *this class does not exist* are two different answers, and a reader who cannot tell
- * them apart does not know whether the rule ran. It states no number, because the sentence
- * is the number and *0 differences* beside it would say one thing twice.
+ * Every group here holds something: `groupRepeatsByClass()` leaves an empty class out
+ * rather than drawing a group that says *no difference of this class in this store*. That
+ * sentence kept *nothing wrong here* apart from *this class does not exist*, and it cost a
+ * row apiece in the list an editor reads to find work.
  *
  * Most repeats are singletons — 78.8% of them in `nl`, measured in ticket 81 — and grouping
  * makes that tail navigable; it does not get to decide the tail is not work. So no group is
@@ -191,15 +191,6 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
  */
 function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, link }) {
   const count = group.repeats.length;
-
-  if (count === 0) {
-    return (
-      <li className="flex items-center gap-2 border-b border-border px-4 py-2 text-sm last:border-0">
-        <ClassPill class={group.class} />
-        <span className="text-muted-foreground">No difference of this class in this store.</span>
-      </li>
-    );
-  }
 
   return (
     <li className="border-b border-border last:border-0">

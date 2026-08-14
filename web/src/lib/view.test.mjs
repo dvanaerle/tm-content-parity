@@ -706,14 +706,14 @@ describe('groupRepeatsByClass', () => {
     expect(group.repeats.map((one) => one.prod)).toEqual(['Vaak', 'Zelden']);
   });
 
-  it('draws a work class that has no repeats, and leaves it empty', () => {
-    // "Nothing wrong here" and "this class does not exist" are two different answers. A
-    // reader who cannot tell them apart does not know whether the rule ran at all.
+  it('draws no group for a work class that has no repeats', () => {
+    // The empty group used to be drawn and to say so, keeping *nothing wrong here* apart
+    // from *this class does not exist*. It costs a row apiece in the list an editor reads
+    // to find work, and a store where most rules come back clean pays it on every line.
+    // Which rules ran is a property of the run and not of this queue.
     const groups = groupRepeatsByClass([repeat('copy', 2)]);
-    const casing = groups.find((group) => group.class === 'casing');
 
-    expect(casing).toBeDefined();
-    expect(casing.repeats).toEqual([]);
+    expect(groups.map((group) => group.class)).toEqual(['copy']);
   });
 
   it('gives a class that is not work a group of its own rather than mixing it into one', () => {
@@ -729,17 +729,17 @@ describe('groupRepeatsByClass', () => {
     expect(of('tag-changed')).toBeUndefined();
   });
 
-  it('draws no empty group for a class that has left work', () => {
-    // Ticket 86. `heading-level` was `work` and therefore had an empty group owed to it;
-    // it is `information` now, so it forms no group at all unless it holds something —
-    // and it never will, because `loadSummaries()` keeps the work classes only. The rule
-    // is `isWork(cls) || byClass.has(cls)`, which needed no edit for this: it already read
-    // the visibility. Written as a special case for the class name it would need one, and
-    // ticket 116 would need a second.
-    const groups = groupRepeatsByClass([repeat('copy', 2)]).map((group) => group.class);
+  it('draws a class wherever it holds something, whatever its visibility', () => {
+    // Ticket 86 asked whether a class that has left `work` still has an empty group owed
+    // to it. No class has one now, so the question is closed from the other side: the rule
+    // is `byClass.has(cls)`, which reads the repeats and never the vocabulary. A class
+    // changing sides moves nothing here, and ticket 116 will need no edit either.
+    const groups = groupRepeatsByClass([repeat('copy', 2), repeat('heading-level', 1)]).map(
+      (group) => group.class,
+    );
 
-    expect(groups).toContain('casing');
-    expect(groups).not.toContain('heading-level');
+    expect(groups).toContain('heading-level');
+    expect(groups).not.toContain('casing');
   });
 
   it('draws only the selected classes when a class pill is on', () => {
@@ -772,9 +772,10 @@ describe('groupRepeatsByClass', () => {
     expect(groups.map((group) => group.opensOnLoad)).toEqual([true, true]);
   });
 
-  it('never opens an empty group', () => {
-    // Selected or lone, there is nothing behind it to read.
-    expect(groupRepeatsByClass([], ['copy']).map((group) => group.opensOnLoad)).toEqual([false]);
+  it('draws nothing at all when a pill is on and nothing is under it', () => {
+    // There is no empty group left to open or to keep shut. The selected class holds
+    // nothing, so it forms no group, and the list says *no difference found* above it.
+    expect(groupRepeatsByClass([], ['copy'])).toEqual([]);
   });
 
   it('draws a class the vocabulary does not name, last rather than nowhere', () => {
