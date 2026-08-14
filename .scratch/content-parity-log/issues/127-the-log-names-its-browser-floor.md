@@ -1,7 +1,10 @@
 # 127 — The log names its browser floor
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-14 — **Baseline Widely Available, as a rule and not a version
+list**, in `docs/adr/0015-the-css-floor-is-baseline-widely-available.md`, with
+`overscroll-behavior` recorded as the first exception. `app.css` carries the pointer. No
+`browserslist` was added, no stylesheet rule changed and no component changed.
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
@@ -30,25 +33,25 @@ Chrome 63 / Firefox 59 / Safari 16. A policy with no exception mechanism does no
 obeyed; it gets quietly ignored by whoever first meets a label that disagrees with reality.
 So the exception is allowed and it costs a sentence naming the feature and the reason.
 
-- [ ] An ADR states the policy: Baseline Widely Available, as a rule and not as a version
+- [x] An ADR states the policy: Baseline Widely Available, as a rule and not as a version
       list, with the reason a list was refused.
-- [ ] The ADR states the exception mechanism and records `overscroll-behavior` as the first
+- [x] The ADR states the exception mechanism and records `overscroll-behavior` as the first
       exception, with the spec detail that makes its label misleading.
-- [ ] The ADR names the floor the build already imposes — Tailwind v4's `@property` and
+- [x] The ADR names the floor the build already imposes — Tailwind v4's `@property` and
       `color-mix()` requirement — so a reader can tell the policy from the mechanism, and
       knows which one moves if the dependency does.
-- [ ] `app.css` carries a pointer to the ADR, positioned where somebody reaching for a
+- [x] `app.css` carries a pointer to the ADR, positioned where somebody reaching for a
       newer feature would be standing.
-- [ ] The features this policy currently refuses are named with their status, so the next
+- [x] The features this policy currently refuses are named with their status, so the next
       reader does not re-derive them: `content-visibility`, `::details-content`, the Popover
       API, `@starting-style`, `transition-behavior`, `light-dark()`, `text-wrap: balance`,
       `field-sizing`, container **style** queries — all Newly Available — and `@scope`,
       `if()`, `@function`, typed `attr()`, anchor positioning, `interestfor`,
       `appearance: base-select`, `interpolate-size`, `sibling-index()` and scroll-state
       queries, all worse.
-- [ ] Container **size** queries are named as permitted (Widely Available since August
+- [x] Container **size** queries are named as permitted (Widely Available since August
       2025), because ticket 87 needs that answer and this is where it lives.
-- [ ] Nothing on screen moves. No stylesheet rule and no component changes.
+- [x] Nothing on screen moves. No stylesheet rule and no component changes.
 
 ## Traps
 
@@ -65,3 +68,45 @@ So the exception is allowed and it costs a sentence naming the feature and the r
   fails destructively where the rest of the list fails cosmetically.
 - This ticket writes a decision and touches no component. Resist doing 128's work here
   because the ADR made it obvious.
+
+## Answer
+
+**Resolved 2026-08-14.** Two files: `docs/adr/0015-the-css-floor-is-baseline-widely-available.md`
+and a block comment at the head of `web/src/styles/app.css`. Every criterion above is met,
+and all four traps held — no `browserslist` key, no version triple as the policy, `@scope`
+has its own sentence about failing destructively, and no component was touched.
+
+**The repo-side facts were verified rather than taken from the ticket.** There is no
+`browserslist` key in either `package.json`, no `.browserslistrc` and no `postcss.config.*`
+anywhere; the only `browserslist` strings in the tree are transitive entries in
+`web/package-lock.json`. The only stated floor is `node >=22.12.0` in both `package.json`
+files. Tailwind is v4 through `@tailwindcss/vite` (`^4.1.14`).
+
+**Two things found while writing, and both went into the ADR.**
+
+- **`color-mix()` is written by hand, not only emitted by Tailwind.**
+  `web/src/components/ui/button.jsx:15` mixes `var(--secondary)` with `var(--foreground)`
+  for a hover ground. So the Chrome 111 / Safari 16.4 / Firefox 128 floor is the
+  interface's own and not purely a dependency's, which makes it a slightly harder floor
+  than the ticket described.
+- **Container size queries and `:has()` are already in the tree**, arriving with shadcn
+  rather than by a decision: `@container/card-header` in `card.jsx`, `@container/field-group`
+  in `field.jsx`, and `has-*` variants throughout `alert.jsx`, `card.jsx` and `field.jsx`.
+  Ticket 87's answer is therefore *permitted and already used*, which is a stronger answer
+  than *permitted*.
+
+**`overscroll-behavior` is not in the source today.** The ADR says so and grants the
+exception ahead of use, naming ticket 128 as the ticket that reaches for it, rather than
+implying a case that already exists.
+
+**One decision the ticket did not give: no mechanical guard, knowingly.** The repo's
+precedent is that a rule with no test is not a rule — ticket 38's review, and the stopword
+guard ADR 0014 built. It does not apply here. Baseline status is a moving external fact, so
+the only committable guard would be a list of allowed features, which is the dated list this
+decision refuses, wearing a test and inheriting its false confidence. A guard over the
+*pointer* — that `app.css` names an ADR that exists — was considered and dropped as testing
+the link rather than the policy. The enforcement is a reader and a review, and the ADR says
+that in its Consequences so the absence is chosen rather than overlooked.
+
+`npm test` passes unchanged, which is the evidence for the last criterion: no derivation, no
+count and no rendered rule moved.

@@ -243,6 +243,31 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   [115](issues/115-the-record-is-squared-with-the-decision.md) squared the record with the
   decision. See `docs/adr/0011-the-mute-is-withdrawn.md`.
 
+- **The stylesheet may use Baseline Widely Available, and nothing newer.** The log had no
+  written browser floor at all — no `browserslist`, no `.browserslistrc`, no build target,
+  and the only stated floor was Node's, which does not run a stylesheet. The real floor was
+  Tailwind v4's `@property` and `color-mix()`, so **Chrome 111 / Safari 16.4 / Firefox 128
+  by accident of a dependency**. The policy is written as a **rule and not a version list**,
+  because a list rots: `:has()` crossed into Widely Available in June 2026 and
+  `content-visibility` will not until about 2028, so any list is wrong within months and
+  looks authoritative while it is. The version triple is the **mechanism's** floor, not the
+  policy — a feature can clear it and still be years from Widely Available — so if Tailwind
+  v5 moves it, the mechanism moves and the policy does not. **No `browserslist` key was
+  added**: nothing in this toolchain reads one, and a machine-readable declaration no
+  machine reads is a lie with a schema. One **exception mechanism**, costing a sentence
+  naming the feature and the reason; `overscroll-behavior` is the first, because its
+  *limited availability* label turns entirely on a scroll container with no scrollable
+  overflow while `contain` on an element that does scroll has worked since Chrome 63. The
+  refused features are named with their status so nobody re-derives them, and `@scope`
+  carries its own sentence: an unsupporting browser drops **every rule inside the block**,
+  so it fails destructively where the rest of the list fails cosmetically. **Container size
+  queries are permitted** — Widely Available since August 2025, and already in the tree
+  through shadcn's `card.jsx` and `field.jsx` — which is the answer ticket 87 needs.
+  Nothing on screen moved. See
+  [ADR 0015](../../docs/adr/0015-the-css-floor-is-baseline-widely-available.md) and
+  [127](issues/127-the-log-names-its-browser-floor.md). It unblocks
+  [128](issues/128-the-carve-out-reaches-for-css-and-primitives-first.md).
+
 ### Resolved tickets
 
 Each entry is the record of what that ticket decided **on the day it resolved**, in the
