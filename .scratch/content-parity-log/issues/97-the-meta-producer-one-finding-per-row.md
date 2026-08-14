@@ -46,7 +46,7 @@ Read these and nothing else. If you need more, the ticket is wrong: say so and s
 
 ## Ticket 91's table
 
-Measured 2026-08-14 by `crawl/probes/probe-meta-classes.mjs`, against `data/extract/`
+Measured 2026-08-14 by `crawl/probes/probe-91-meta-classes.mjs`, against `data/extract/`
 and `data/reports/` as they stand: **816 extract files, 722 comparable**. Ticket 21's
 figures were taken on 2026-08-07 over **373** comparable pages and every one of them
 is stale.
@@ -75,7 +75,12 @@ derived `noindex` boolean.
 **All 197 are `work`.** The only two classes that are not are `meta-title-added` and
 `meta-description-added`, and they fire zero times.
 
-### The share, which is the figure the gate reads
+### The share, measured against today's log
+
+**This is the share as the log stands, not the figure the gate will print.** Ticket 21's
+method is reproduced exactly — meta over `work` — but the meta findings do not exist yet,
+so `work` here is the denominator *before* this ticket adds to it. See the gate below for
+the figure `measure.mjs` will actually read.
 
 | | today | ticket 21 |
 |---|---|---|
@@ -93,6 +98,41 @@ findings out of `work`. Both movements push the ratio the same way.
 `summariseReports()` over comparable reports — what `node compare/measure.mjs` prints,
 which is this ticket's gate. It is not `data/snapshot.json`'s 40,966: that counts every
 report file, including 19 non-comparable ones each carrying one `no-declared-alternate`.
+
+### The baseline your gate is read against
+
+From the same probe run, as the log stands **before** you start. Take `nl` down the left
+of your gate.
+
+**Where each row comes from, because the two are not the same command.** `findings` and
+`work` are what `node compare/measure.mjs <store>` prints. **The per-check rows are not:
+`measure.mjs` has no per-check output at all** — it prints findings, work, medians and a
+by-*class* table. The check split lives in `report.summary.byCheck` in `data/reports/`,
+and `crawl/probes/probe-91-meta-classes.mjs` totals it under `=== THE GATE BASELINE ===`.
+Re-run that probe after your change to read the per-check rows again.
+
+| `measure.mjs` | nl | be | be_fr | de | fr | uk | **total** |
+|---|---|---|---|---|---|---|---|
+| findings | 7,354 | 6,571 | 6,607 | 6,780 | 6,522 | 7,113 | **40,947** |
+| work | 3,832 | 3,293 | 3,645 | 3,873 | 3,614 | 3,746 | **22,003** |
+| `text` | 4,394 | 4,049 | 3,847 | 3,975 | 3,821 | 4,192 | **24,278** |
+| `links` | 1,476 | 1,245 | 1,358 | 1,353 | 1,296 | 1,409 | **8,137** |
+| `images` | 1,484 | 1,272 | 1,312 | 1,371 | 1,313 | 1,431 | **8,183** |
+| `meta` | **0** | 5 | 90 | 81 | 92 | 81 | **349** |
+
+**`check: 'meta'` is not empty today, and the ticket's own framing is loose about it.**
+It already holds 349 `no-declared-alternate` findings, so this ticket does not create the
+fourth check — it adds the head rows to a check that already fires. Two consequences:
+
+- On the gate store, the existing count happens to be **0**, so `nl` reads a clean
+  `0 → 46`. Do not generalise that: on `fr` the same check goes `92 → 118`.
+- `no-declared-alternate` is `diagnostic`, so none of the 349 sits in `work`. The share
+  arithmetic above and below is unaffected by it.
+
+**After this ticket lands**, on today's corpus: `check: 'meta'` is **349 + 197 = 546**
+findings, `work` is **22,003 + 197 = 22,200**, and the meta share `measure.mjs` reads is
+**197 / 22,200 = 0.89%** — not the 0.90% above. All 197 are `work`, so the numerator and
+the denominator move together; a gate that checks for 0.90% is checking the wrong number.
 
 ### `no-route` is inside these numbers
 
@@ -154,9 +194,30 @@ implementation. Then the next criterion. Do not plan across all six.
 
 ## Gate
 
-`npm test`, then `node compare/measure.mjs nl`.
+`npm test`, then `node compare/measure.mjs nl`, then
+`node crawl/probes/probe-91-meta-classes.mjs`. **Two commands, because one of them cannot
+show you half the gate** — `measure.mjs` prints no per-check breakdown, so the four `check`
+rows below are read off the probe's `=== THE GATE BASELINE ===` section instead.
 
-Findings appear on `check: 'meta'` at roughly ticket 91's counts. **Text, link and
-image counts are unmoved** — this ticket adds a check and must not disturb the other
-three. Ticket [99](99-measure-what-the-meta-check-added.md) states the number
-properly.
+Read it against the baseline table above, on `nl`:
+
+| | before | after | why | read from |
+|---|---|---|---|---|
+| findings | 7,354 | **7,400** | all 46 are new | `measure.mjs nl` |
+| work | 3,832 | **3,878** | all 46 are `work` | `measure.mjs nl` |
+| `check: 'meta'` | 0 | **46** | the 46 head findings 91 measured on `nl` | the probe |
+| `check: 'text'` | 4,394 | 4,394 | unmoved | the probe |
+| `check: 'links'` | 1,476 | 1,476 | unmoved | the probe |
+| `check: 'images'` | 1,484 | 1,484 | unmoved | the probe |
+
+**The three existing checks are unmoved** — this ticket adds head rows and must not
+disturb text, links or images. If one of them moves, you have changed the body-copy
+comparison and the gate has failed, whatever the meta count says.
+
+**Trap: `measure.mjs nl` already prints a `46`.** It is `casing`, an unrelated `work`
+class that happens to sit at 46 on this store. It is not your meta count and it must not
+move. Your 46 is on `check: 'meta'`, which that command does not print at all.
+
+If ticket 93 lands first, `nl` is unaffected: all three `no-route` meta findings are on
+`be_fr` and `fr`. Ticket [99](99-measure-what-the-meta-check-added.md) states the
+whole-corpus number properly.

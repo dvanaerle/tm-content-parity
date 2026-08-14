@@ -54,7 +54,7 @@ is not the producer, and ticket 97 does not import it.
 
 ## Answer
 
-Measured 2026-08-14 by `crawl/probes/probe-meta-classes.mjs`, against `data/extract/`
+Measured 2026-08-14 by `crawl/probes/probe-91-meta-classes.mjs`, against `data/extract/`
 and `data/reports/` copied beside a `read` lane. **816 extract files, 722 comparable**,
 40,947 findings, 22,003 `work`. No crawl and no network.
 
@@ -75,9 +75,14 @@ ratio and expect 250.
 
 **The share is 0.90%, not 0.54%, and drift is only half the reason.** The denominator
 *fell* while meta rose: ticket 86 moved 2,846 `heading-level` findings out of `work`, so
-22,003 replaces 23,961. Both movements push the ratio the same way. The ratio is the
-figure the gate reads, and it nearly doubled — but it is still under 1%, so ticket 21's
-argument that the head is a small addition to the count survives its own restatement.
+22,003 replaces 23,961. Both movements push the ratio the same way. It nearly doubled —
+but it is still under 1%, so ticket 21's argument that the head is a small addition to the
+count survives its own restatement.
+
+0.90% is the share **against today's log**, reproducing ticket 21's method so the two are
+comparable. It is **not** the figure the gate will read: all 197 are `work`, so when the
+producer lands the denominator moves with the numerator and `measure.mjs` prints
+197 / 22,200 = **0.89%**. Ticket 97 carries both numbers and says which is which.
 
 **`robots-index-lost` fires twice, and the second one is a finding about a head.**
 Ticket 21 found `be/bedrijfsinformatie`. `de/(de)erfolg-probepaket` is new: production
@@ -99,6 +104,15 @@ still all a dropped trailing full stop on a description, on the same two pages
 (`aluminium-zijwand/productinformatie`, `showroom-berlijn`) in `nl` and `be`. That the
 casing count is unchanged while the two changed classes grew by half is the evidence
 that they are not claiming each other's rows.
+
+**`check: 'meta'` is not empty, so ticket 97 does not create the fourth check.** It
+already holds **349** `no-declared-alternate` findings across five stores — `be_fr` 90,
+`fr` 92, `de` 81, `uk` 81, `be` 5, and **`nl` 0**. Ticket 58 and ticket 97 both read as
+though the head arrives on an empty check; it arrives on one that already fires. The 349
+are all `diagnostic`, so none is in `work` and none of the share arithmetic above moves.
+It matters only for 97's gate, which counts findings on `check: 'meta'` and happens to
+run on the one store where the existing count is 0. The per-check baseline is pasted into
+97 beside the meta table for exactly this reason.
 
 ### Two notes for whoever measures next
 

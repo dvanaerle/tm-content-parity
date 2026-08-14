@@ -268,6 +268,31 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   [127](issues/127-the-log-names-its-browser-floor.md). It unblocks
   [128](issues/128-the-carve-out-reaches-for-css-and-primitives-first.md).
 
+- **Both of ticket 58's meta figures were stale, and neither moved the way it was
+  estimated to.** Ticket 21 measured 130 meta findings and about 150 `no-route` findings
+  over **373** comparable pages on 2026-08-07; step 03 took the corpus to **722**, so two
+  build tickets were waiting on numbers a week out of date. Measured again: meta is **197
+  findings, all of them `work`**, and `no-route` is **85 findings over six stores, not
+  ~150**. The share of `work` rose from 0.54% to **0.90%** — that is ticket 21's method
+  reproduced against today's log, and it is **not** the figure the gate will print: all 197
+  are `work`, so when the producer lands the denominator moves with the numerator and
+  `measure.mjs` reads 197 / 22,200 = **0.89%**. **Neither raw count is the reason the share
+  rose** — meta rose 52% with the corpus while ticket 86 took 2,846
+  `heading-level` findings *out* of the denominator, and both movements push the ratio the
+  same way. Two findings beyond the counts: **`robots-index-lost` fires twice, not once**
+  — `de/(de)erfolg-probepaket` is new and is the severe direction, a page production
+  serves indexable that the new site serves `noindex`, invisible for the seven days
+  between the two measurements, which is the argument for the class — and **`check:
+  'meta'` is not empty today**, holding 349 `diagnostic` `no-declared-alternate`
+  findings, so ticket 97 adds head rows to a check that already fires rather than creating
+  the fourth check. The four `lost`/`added` classes still fire zero times and
+  `meta-casing` is still exactly 4, all a dropped trailing full stop on a description. The
+  probe counts as `summariseReports()` does, over comparable reports only, so its
+  denominator is the one `measure.mjs` prints and not `data/snapshot.json`'s 40,966. See
+  [91](issues/91-measure-meta-classes-on-todays-corpus.md); the meta table and the gate
+  baseline are pasted into [97](issues/97-the-meta-producer-one-finding-per-row.md) and
+  the `no-route` table into [93](issues/93-no-route-leaves-the-log.md).
+
 ### Resolved tickets
 
 Each entry is the record of what that ticket decided **on the day it resolved**, in the
@@ -1980,7 +2005,9 @@ product signature` — a product page carries all six hreflang alternates, and
   `data/`.
 
   **Cut into nine build tickets, and the map had not indexed one of them until
-  2026-08-13.** All nine are `ready-for-agent`. Two measurements go first,
+  2026-08-13.** 91 is **resolved** (2026-08-14) and the other eight are
+  `ready-for-agent`. Both of 58's "about" figures were its estimates and both are
+  now measured: see Decisions so far. Two measurements go first,
   because 58's own instruction is that the two halves must not be counted as one
   number; the re-crawl is the hinge, and nothing else may touch `data/` while it
   runs.
@@ -1993,6 +2020,9 @@ product signature` — a product page carries all six hreflang alternates, and
   ```
 
   - [91 — Measure: what the nine meta classes would fire, on today's corpus](issues/91-measure-meta-classes-on-todays-corpus.md)
+    — **resolved 2026-08-14.** 197 meta findings, not about 130, and `no-route` is
+    85 findings, not about 150. Both tables are pasted into the tickets that
+    waited on them.
   - [92 — Measure: does either side send `<meta name="title">` or keywords?](issues/92-measure-meta-title-and-keywords-presence.md)
   - [93 — `no-route` leaves the log, and an aborted run writes its failures](issues/93-no-route-leaves-the-log.md)
     — the prefactor half, the one that **removes** about 150 findings.

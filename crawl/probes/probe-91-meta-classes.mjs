@@ -17,15 +17,16 @@
 //
 // Reads `data/extract/` and `data/reports/` from disk. No network.
 //
-//   node crawl/probes/probe-meta-classes.mjs
+//   node crawl/probes/probe-91-meta-classes.mjs
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 
-import { FINDING_CLASSES, visibilityOf } from '../../compare/contract.mjs';
+import { CHECKS, FINDING_CLASSES, isWork, visibilityOf } from '../../compare/contract.mjs';
 import { tier2 } from '../../compare/match.mjs';
 import { STORES } from '../../shared/stores.mjs';
 
 const EXTRACTS = new URL('../../data/extract/', import.meta.url);
 const REPORTS = new URL('../../data/reports/', import.meta.url);
+const OUT = new URL('../../data/probe-91-meta-classes.json', import.meta.url);
 
 /** The page ticket 93 is about: production's 404 page against the new site's 404 page. */
 const NO_ROUTE = 'no-route';
@@ -43,27 +44,40 @@ const META_CLASSES = [
   'robots-noindex-lost',
 ];
 
+/** The robots row's two classes, named once so the three sites that want them agree. */
+const ROBOTS_CLASSES = ['robots-index-lost', 'robots-noindex-lost'];
+
 /**
- * `work` is what ticket 21 called *shown*, before ticket 75 and ADR 0005 replaced the
- * boolean with the visibility enum.
- *
- * Ticket 96 put all nine in `vocabulary.mjs`, so this asks the vocabulary rather than
- * keeping a second table of the same names. That matters beyond tidiness: a class
- * re-triaged there must not need a second edit here, and a hand-kept list would let this
- * probe and the log disagree about what counts. It also means the probe now **fails
- * loudly** if a name here is not a name there — `assertKnown()` below.
+ * The four ticket 21 expects to fire zero times. Named rather than recovered from the
+ * `-lost` / `-added` suffix: the suffixes are not the head's to own, so a later
+ * `nav-item-added` would read as one of these four and be named in the wrong table.
  */
-const isMetaWork = (cls) => visibilityOf(cls) === 'work';
+const LOST_ADDED_CLASSES = [
+  'meta-title-lost',
+  'meta-title-added',
+  'meta-description-lost',
+  'meta-description-added',
+];
 
 /**
  * The nine names in this file must be the nine in the vocabulary. `visibilityOf()`
  * answers `diagnostic` for a name it does not hold, so a typo would otherwise read as
  * "not work" and quietly shrink the count rather than stop the run.
+ *
+ * The two subset arrays are checked against the nine for the same reason one step further
+ * in: a typo there is not counted wrong, it is *named* wrong — the class fires, the total
+ * is right, and the by-name table the two build tickets read is quietly short a row.
  */
 function assertKnown() {
   const missing = META_CLASSES.filter((cls) => !(cls in FINDING_CLASSES));
   if (missing.length) {
     throw new Error(`Not in the vocabulary: ${missing.join(', ')}. Ticket 96 owns that list.`);
+  }
+  const strays = [...ROBOTS_CLASSES, ...LOST_ADDED_CLASSES].filter(
+    (cls) => !META_CLASSES.includes(cls),
+  );
+  if (strays.length) {
+    throw new Error(`Named but not one of the nine: ${strays.join(', ')}.`);
   }
 }
 
@@ -104,21 +118,39 @@ function classifyField(field, prod, next) {
 }
 
 /**
+ * The `noindex` of one side, read at the disk boundary so the classifier below can take a
+ * boolean and nothing else.
+ *
+ * An absent field throws rather than coercing. `PageMeta` declares it non-nullable and
+ * all 888 sides on disk hold a boolean, so this cannot fire today — but the `Boolean()`
+ * this replaces read an absent field as *indexable*, which would invent a
+ * `robots-index-lost` or hide one, and that is the silent-shrink failure `assertKnown()`
+ * exists to stop.
+ *
+ * @param {Record<string, unknown> | undefined} meta
+ * @param {string} where
+ * @returns {boolean}
+ */
+function metaNoindex(meta, where) {
+  const value = meta?.noindex;
+  if (value === true || value === false) return value;
+  throw new Error(`${where}: noindex is ${JSON.stringify(value)}, not a boolean.`);
+}
+
+/**
  * The robots row, off the derived boolean. The raw string is not on disk — ticket 21
  * asks for it and no crawl has run since.
  *
  * `robots-index-lost` is the severe direction: production is indexable and the new site
  * is `noindex`, so the page leaves Google.
  *
- * @param {boolean | undefined} prod
- * @param {boolean | undefined} next
+ * @param {boolean} prod
+ * @param {boolean} next
  * @returns {string | null}
  */
 function classifyRobots(prod, next) {
-  const before = Boolean(prod);
-  const after = Boolean(next);
-  if (before === after) return null;
-  return after ? 'robots-index-lost' : 'robots-noindex-lost';
+  if (prod === next) return null;
+  return next ? 'robots-index-lost' : 'robots-noindex-lost';
 }
 
 /** @param {URL} dir */
@@ -151,9 +183,9 @@ for (const store of STORES) {
   byStore[store] = row;
 
   for (const file of await jsonFiles(new URL(`${store}/`, EXTRACTS))) {
-    const { production, new: next } = JSON.parse(await readFile(file, 'utf8'));
+    const { production, new: newSite } = JSON.parse(await readFile(file, 'utf8'));
     row.crawled += 1;
-    if (production.status !== 200 || next.status !== 200) continue;
+    if (production.status !== 200 || newSite.status !== 200) continue;
     row.comparable += 1;
 
     const page = production.page;
@@ -162,28 +194,27 @@ for (const store of STORES) {
     const rows = [];
     for (const field of /** @type {const} */ (['title', 'description'])) {
       const prod = metaValue(production.meta, field);
-      const value = metaValue(next.meta, field);
-      const cls = classifyField(field, prod, value);
-      if (cls) rows.push({ field, cls, prod, new: value });
+      const next = metaValue(newSite.meta, field);
+      const cls = classifyField(field, prod, next);
+      if (cls) rows.push({ field, cls, prod, next });
     }
-    const robots = classifyRobots(production.meta?.noindex, next.meta?.noindex);
-    if (robots) rows.push({ field: 'robots', cls: robots, prod: null, new: null });
+    const where = `${store}:${page}`;
+    const robots = classifyRobots(
+      metaNoindex(production.meta, `${where} (production)`),
+      metaNoindex(newSite.meta, `${where} (new site)`),
+    );
+    if (robots) rows.push({ field: 'robots', cls: robots, prod: null, next: null });
 
     if (rows.length) row.pagesWithMeta += 1;
 
-    for (const { field, cls, prod, new: value } of rows) {
+    for (const { field, cls, prod, next } of rows) {
       row.classes[cls] += 1;
       if (page === NO_ROUTE) noRouteMeta[cls] += 1;
-      if (cls === 'robots-index-lost' || cls === 'robots-noindex-lost') {
-        named[cls].push({ store, page });
-      }
-      // The four ticket 21 expects to fire zero times. A non-zero count means a page
-      // lost a title or a description since 2026-08-07 and wants naming.
-      if (cls.endsWith('-lost') && cls.startsWith('meta-')) {
-        named.lostAdded.push({ store, page, cls });
-      }
-      if (cls.endsWith('-added')) named.lostAdded.push({ store, page, cls });
-      if (cls === 'meta-casing') named.casing.push({ store, page, field, prod, new: value });
+      if (ROBOTS_CLASSES.includes(cls)) named[cls].push({ store, page });
+      // A non-zero count here means a page lost or gained a title or a description since
+      // 2026-08-07 and wants naming.
+      if (LOST_ADDED_CLASSES.includes(cls)) named.lostAdded.push({ store, page, cls });
+      if (cls === 'meta-casing') named.casing.push({ store, page, field, prod, next });
     }
   }
 }
@@ -201,26 +232,44 @@ for (const store of STORES) {
 // so counting every file gives 40,966 where the gate gives 40,947. (`data/snapshot.json`
 // records the first of those two, which is a separate inconsistency and not this ticket's.)
 
-/** @type {Record<string, {findings: number, work: number}>} */
+// `CHECKS` comes from the vocabulary for the same reason the nine classes do: a second
+// hand-kept table of the same names would let this probe and the log disagree.
+//
+// `meta` is **not** empty today — it holds 349 `no-declared-alternate` findings, so ticket
+// 97 does not create the check, it adds the head rows to one that already fires. That
+// matters for 97's gate, which reads `measure.mjs nl`, and `nl` is the one store where the
+// existing `meta` count is 0. All 349 are `diagnostic`, so none is in `work`.
+
+/** @type {Record<string, {findings: number, work: number, byCheck: Record<string, number>}>} */
 const totals = {};
 /** @type {Record<string, {findings: number, work: number, byClass: Record<string, number>}>} */
 const noRoute = {};
 for (const store of STORES) {
-  totals[store] = { findings: 0, work: 0 };
+  totals[store] = { findings: 0, work: 0, byCheck: Object.fromEntries(CHECKS.map((c) => [c, 0])) };
   noRoute[store] = { findings: 0, work: 0, byClass: {} };
 }
 
 /** The comparable set as the reports declare it, to check the extract walk against. */
 const comparablePages = new Set();
+/** Reports for a store `shared/stores.mjs` does not hold. Skipping one silently would
+ *  shrink the denominator below the gate's, which is the one thing it may not do. */
+const unknownStores = new Set();
 
 for (const name of (await readdir(REPORTS)).filter((n) => n.endsWith('.json'))) {
   const report = JSON.parse(await readFile(new URL(name, REPORTS), 'utf8'));
   const store = report.store;
-  if (!totals[store] || !report.comparable) continue;
+  if (!(store in totals)) {
+    unknownStores.add(store);
+    continue;
+  }
+  if (!report.comparable) continue;
   comparablePages.add(`${store}:${report.page}`);
 
   totals[store].findings += report.summary.total;
   totals[store].work += report.summary.work;
+  // `byCheck` is the baseline ticket 97's gate is read against: it adds the head rows and
+  // must leave text, links and images where they are.
+  for (const check of CHECKS) totals[store].byCheck[check] += report.summary.byCheck[check] ?? 0;
 
   if (report.page !== NO_ROUTE) continue;
   noRoute[store].findings = report.summary.total;
@@ -240,6 +289,17 @@ if (onlyWalked.length || onlyReported.length) {
       `Extract-only: ${JSON.stringify(onlyWalked)}. Report-only: ${JSON.stringify(onlyReported)}.`,
   );
 }
+// This throws where the set mismatch above only warns, and the difference is deliberate:
+// a parted comparable set makes the meta count and the denominator describe slightly
+// different corpora, which is worth saying out loud but still leaves both readable, while
+// a skipped store puts the denominator *under* the one `measure.mjs` prints — and a
+// denominator that disagrees with the gate is not a denominator.
+if (unknownStores.size) {
+  throw new Error(
+    `Reports for ${[...unknownStores].join(', ')}, which shared/stores.mjs does not hold. ` +
+      `Skipping them would put the denominator under the one measure.mjs reads.`,
+  );
+}
 
 // ─── the report ─────────────────────────────────────────────────────────────────────
 
@@ -252,108 +312,146 @@ const allFindings = sum((s) => totals[s].findings);
 const allWork = sum((s) => totals[s].work);
 
 const metaTotal = (store) => META_CLASSES.reduce((n, cls) => n + byStore[store].classes[cls], 0);
+
+/**
+ * `work` is what ticket 21 called *shown*, before ticket 75 and ADR 0005 replaced the
+ * boolean with the visibility enum.
+ *
+ * Ticket 96 put all nine in `vocabulary.mjs`, so this asks the vocabulary rather than
+ * keeping a second table of the same names. That matters beyond tidiness: a class
+ * re-triaged there must not need a second edit here, and a hand-kept list would let this
+ * probe and the log disagree about what counts. It also means the probe **fails loudly**
+ * if a name here is not a name there — `assertKnown()` above.
+ */
 const metaWork = (store) =>
-  META_CLASSES.reduce((n, cls) => n + (isMetaWork(cls) ? byStore[store].classes[cls] : 0), 0);
+  META_CLASSES.reduce((n, cls) => n + (isWork(cls) ? byStore[store].classes[cls] : 0), 0);
 
 const grandMeta = sum(metaTotal);
 const grandMetaWork = sum(metaWork);
 const noRouteMetaTotal = META_CLASSES.reduce((n, cls) => n + noRouteMeta[cls], 0);
 
-const L = [];
-L.push(`corpus            data/extract/ and data/reports/`);
-L.push(`extract files     ${crawled}`);
-L.push(`comparable        ${comparable}   (both sides 200)`);
-L.push(`findings today    ${allFindings}`);
-L.push(`work today        ${allWork}   (ticket 21 called this "shown")`);
+const lines = [];
+lines.push(`corpus            data/extract/ and data/reports/`);
+lines.push(`extract files     ${crawled}`);
+lines.push(`comparable        ${comparable}   (both sides 200)`);
+lines.push(`findings today    ${allFindings}`);
+lines.push(`work today        ${allWork}   (ticket 21 called this "shown")`);
 
-const W = 26;
-L.push(`\n=== THE NINE CLASSES, PER STORE ===\n`);
-L.push(`${'class'.padEnd(W)}${STORES.map((s) => pad(s, 8)).join('')}${pad('total', 9)}`);
-L.push('-'.repeat(W + STORES.length * 8 + 9));
+const LABEL_W = 26;
+const RULE = '-'.repeat(LABEL_W + STORES.length * 8 + 9);
+
+/**
+ * One `label / per-store / total` row. The total is always the sum of the cells beside
+ * it, so no row can be read against a differently-derived total.
+ *
+ * @param {string} label
+ * @param {(store: string) => number} pick
+ */
+const storeRow = (label, pick) =>
+  `${label.padEnd(LABEL_W)}${STORES.map((s) => pad(pick(s), 8)).join('')}${pad(sum(pick), 9)}`;
+
+lines.push(`\n=== THE NINE CLASSES, PER STORE ===\n`);
+lines.push(`${'class'.padEnd(LABEL_W)}${STORES.map((s) => pad(s, 8)).join('')}${pad('total', 9)}`);
+lines.push(RULE);
 for (const cls of META_CLASSES) {
-  const row = STORES.map((s) => pad(byStore[s].classes[cls], 8)).join('');
-  L.push(
-    `${cls.padEnd(W)}${row}${pad(
-      sum((s) => byStore[s].classes[cls]),
-      9,
-    )}`,
-  );
+  lines.push(storeRow(cls, (s) => byStore[s].classes[cls]));
 }
-L.push('-'.repeat(W + STORES.length * 8 + 9));
-L.push(
-  `${'meta findings'.padEnd(W)}${STORES.map((s) => pad(metaTotal(s), 8)).join('')}${pad(grandMeta, 9)}`,
+lines.push(RULE);
+lines.push(storeRow('meta findings', metaTotal));
+lines.push(storeRow('  ...of them work', metaWork));
+lines.push(storeRow('pages compared', (s) => byStore[s].comparable));
+lines.push(storeRow('pages with a meta row', (s) => byStore[s].pagesWithMeta));
+lines.push(storeRow('pages with none', (s) => byStore[s].comparable - byStore[s].pagesWithMeta));
+
+// The baseline the two gates are read against. Ticket 97 adds a fourth check and its gate
+// is `measure.mjs nl` plus "text, link and image counts are unmoved"; ticket 93 removes
+// six pages and reads the same figures per store. Both are derived here so neither ticket
+// carries a typed-in number that the next crawl makes stale.
+lines.push(`\n=== THE GATE BASELINE, PER STORE ===\n`);
+lines.push(
+  `${'measure.mjs'.padEnd(LABEL_W)}${STORES.map((s) => pad(s, 8)).join('')}${pad('total', 9)}`,
 );
-L.push(
-  `${'  ...of them work'.padEnd(W)}${STORES.map((s) => pad(metaWork(s), 8)).join('')}${pad(grandMetaWork, 9)}`,
+lines.push(RULE);
+lines.push(storeRow('findings', (s) => totals[s].findings));
+lines.push(storeRow('work', (s) => totals[s].work));
+for (const check of CHECKS) {
+  lines.push(storeRow(`  ${check}`, (s) => totals[s].byCheck[check]));
+}
+// Every finding must fall under one of the four names above, or the baseline is short of
+// the one the gate reads and the ticket would be measured against a number nothing prints.
+const unattributed = sum(
+  (s) => totals[s].findings - CHECKS.reduce((n, c) => n + totals[s].byCheck[c], 0),
 );
-L.push(
-  `${'pages compared'.padEnd(W)}${STORES.map((s) => pad(byStore[s].comparable, 8)).join('')}${pad(comparable, 9)}`,
-);
-L.push(
-  `${'pages with a meta row'.padEnd(W)}${STORES.map((s) => pad(byStore[s].pagesWithMeta, 8)).join('')}${pad(
-    sum((s) => byStore[s].pagesWithMeta),
-    9,
-  )}`,
-);
-L.push(
-  `${'pages with none'.padEnd(W)}${STORES.map((s) => pad(byStore[s].comparable - byStore[s].pagesWithMeta, 8)).join('')}${pad(comparable - sum((s) => byStore[s].pagesWithMeta), 9)}`,
+if (unattributed !== 0) {
+  throw new Error(`${unattributed} findings carry a check outside ${CHECKS.join(', ')}.`);
+}
+
+// What the gate will print once the head rows land: the meta findings join `work`, so the
+// denominator moves with the numerator and the share is not today's 0.90%.
+lines.push(
+  `\nafter ticket 97: meta check ${sum((s) => totals[s].byCheck.meta)} + ${grandMeta} = ` +
+    `${sum((s) => totals[s].byCheck.meta) + grandMeta} findings, ` +
+    `work ${allWork} + ${grandMetaWork} = ${allWork + grandMetaWork}, ` +
+    `meta share ${((grandMeta / (allWork + grandMetaWork)) * 100).toFixed(2)}%`,
 );
 
 const share = (n, d) => (d ? ((n / d) * 100).toFixed(2) : '0.00');
-L.push(`\n=== THE SHARE ===`);
-L.push(`meta findings              ${grandMeta}`);
-L.push(`  of them work             ${grandMetaWork}`);
-L.push(`work findings today        ${allWork}`);
+lines.push(`\n=== THE SHARE ===`);
+lines.push(`meta findings              ${grandMeta}`);
+lines.push(`  of them work             ${grandMetaWork}`);
+lines.push(`work findings today        ${allWork}`);
 // Ticket 21's ratio is the meta **total** over shown, not the meta-work subset: it read
 // 130 / 23,961. The two agree only while both `-added` classes fire zero, so the
 // numerator is the total here and the work-only ratio is printed beside it.
-L.push(`share of work              ${share(grandMeta, allWork)}%   (ticket 21: 0.54%)`);
-L.push(`  ...work numerator only   ${share(grandMetaWork, allWork)}%`);
-L.push(`share of all findings      ${share(grandMeta, allFindings)}%`);
-L.push(
+lines.push(`share of work              ${share(grandMeta, allWork)}%   (ticket 21: 0.54%)`);
+lines.push(`  ...work numerator only   ${share(grandMetaWork, allWork)}%`);
+lines.push(`share of all findings      ${share(grandMeta, allFindings)}%`);
+lines.push(
   `pages with no meta row     ${share(comparable - sum((s) => byStore[s].pagesWithMeta), comparable)}%   (ticket 21: 68%)`,
 );
 
 // The counts are derived, never typed in: this probe exists because typed-in figures go
 // stale, and a literal here would go stale on the next crawl exactly as ticket 21's did.
 const noRoutePages = STORES.filter((store) => walked.has(`${store}:${NO_ROUTE}`)).length;
-L.push(`\n=== WHAT no-route CONTRIBUTES TO THE META COUNTS ===`);
-L.push(`(ticket 93 removes these ${noRoutePages} pages before ticket 97 measures again)`);
+lines.push(`\n=== WHAT no-route CONTRIBUTES TO THE META COUNTS ===`);
+lines.push(`(ticket 93 removes these ${noRoutePages} pages before ticket 97 measures again)`);
 for (const cls of META_CLASSES) {
-  if (noRouteMeta[cls]) L.push(`  ${pad(noRouteMeta[cls], 5)}  ${cls}`);
+  if (noRouteMeta[cls]) lines.push(`  ${pad(noRouteMeta[cls], 5)}  ${cls}`);
 }
-L.push(`  ${pad(noRouteMetaTotal, 5)}  total`);
-L.push(
+lines.push(`  ${pad(noRouteMetaTotal, 5)}  total`);
+lines.push(
   `  ${pad(grandMeta - noRouteMetaTotal, 5)}  meta findings on the ${comparable - noRoutePages} pages that remain`,
 );
 
-L.push(`\n=== ROBOTS, BY NAME ===`);
-for (const cls of ['robots-index-lost', 'robots-noindex-lost']) {
-  L.push(`  ${cls}: ${named[cls].length}`);
-  for (const hit of named[cls]) L.push(`    ${hit.store.padEnd(6)} ${hit.page}`);
+lines.push(`\n=== ROBOTS, BY NAME ===`);
+for (const cls of ROBOTS_CLASSES) {
+  lines.push(`  ${cls}: ${named[cls].length}`);
+  for (const hit of named[cls]) lines.push(`    ${hit.store.padEnd(6)} ${hit.page}`);
 }
 
-L.push(`\n=== meta-casing, BY NAME ===`);
-L.push(`(the tier-2-only difference the two changed classes must not also claim)`);
+lines.push(`\n=== meta-casing, BY NAME ===`);
+lines.push(`(the tier-2-only difference the two changed classes must not also claim)`);
 for (const hit of named.casing) {
-  L.push(`  ${hit.store.padEnd(6)} ${hit.field.padEnd(12)} ${hit.page}`);
-  L.push(`    prod ${JSON.stringify(hit.prod)}`);
-  L.push(`    new  ${JSON.stringify(hit.new)}`);
+  lines.push(`  ${hit.store.padEnd(6)} ${hit.field.padEnd(12)} ${hit.page}`);
+  lines.push(`    prod ${JSON.stringify(hit.prod)}`);
+  lines.push(`    new  ${JSON.stringify(hit.next)}`);
 }
 
-L.push(`\n=== THE FOUR lost/added CLASSES ===`);
-L.push(`  ${named.lostAdded.length} firings (ticket 21 expects 0)`);
+lines.push(`\n=== THE FOUR lost/added CLASSES ===`);
+lines.push(`  ${named.lostAdded.length} firings (ticket 21 expects 0)`);
 for (const hit of named.lostAdded)
-  L.push(`    ${hit.store.padEnd(6)} ${hit.cls.padEnd(26)} ${hit.page}`);
+  lines.push(`    ${hit.store.padEnd(6)} ${hit.cls.padEnd(26)} ${hit.page}`);
 
-L.push(`\n=== no-route, PER STORE ===\n`);
-L.push(`${'store'.padEnd(10)}${pad('findings', 10)}${pad('work', 8)}`);
-L.push('-'.repeat(28));
+lines.push(`\n=== no-route, PER STORE ===\n`);
+lines.push(`${'store'.padEnd(10)}${pad('findings', 10)}${pad('work', 8)}`);
+lines.push('-'.repeat(28));
 for (const store of STORES) {
-  L.push(`${store.padEnd(10)}${pad(noRoute[store].findings, 10)}${pad(noRoute[store].work, 8)}`);
+  lines.push(
+    `${store.padEnd(10)}${pad(noRoute[store].findings, 10)}${pad(noRoute[store].work, 8)}`,
+  );
 }
-L.push('-'.repeat(28));
-L.push(
+lines.push('-'.repeat(28));
+lines.push(
   `${'total'.padEnd(10)}${pad(
     sum((s) => noRoute[s].findings),
     10,
@@ -362,7 +460,7 @@ L.push(
     8,
   )}`,
 );
-L.push(
+lines.push(
   `\nas a share of today: ${share(
     sum((s) => noRoute[s].findings),
     allFindings,
@@ -372,16 +470,15 @@ L.push(
   )}% of work`,
 );
 
-L.push(`\n=== no-route, BY CLASS (nl, as the example) ===`);
+lines.push(`\n=== no-route, BY CLASS (nl, as the example) ===`);
 for (const [cls, n] of Object.entries(noRoute.nl.byClass).sort((a, b) => b[1] - a[1])) {
-  L.push(`  ${pad(n, 5)}  ${visibilityOf(cls).padEnd(11)}  ${cls}`);
+  lines.push(`  ${pad(n, 5)}  ${visibilityOf(cls).padEnd(11)}  ${cls}`);
 }
 
-const report = L.join('\n');
-console.log(report);
+console.log(lines.join('\n'));
 
 await writeFile(
-  new URL('../../data/probe-meta-classes.json', import.meta.url),
+  OUT,
   JSON.stringify(
     {
       generated: new Date().toISOString(),
@@ -395,4 +492,4 @@ await writeFile(
     2,
   ),
 );
-console.log(`\nwrote data/probe-meta-classes.json`);
+console.log(`\nwrote ${OUT.pathname}`);

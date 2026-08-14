@@ -32,7 +32,7 @@ Ticket 20 owns the 404 cell. Cross-reference it; do not change it.
 
 ## Ticket 91's table — what excluding `no-route` actually removes
 
-Measured 2026-08-14 by `crawl/probes/probe-meta-classes.mjs` against `data/reports/`
+Measured 2026-08-14 by `crawl/probes/probe-91-meta-classes.mjs` against `data/reports/`
 as it stands: 816 reports, **722 comparable**, 40,947 findings, 22,003 `work`.
 
 **The number in the ticket above is wrong, and so is ticket 58's.** Both say `no-route`
