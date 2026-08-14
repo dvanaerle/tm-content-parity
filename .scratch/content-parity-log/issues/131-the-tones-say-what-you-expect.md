@@ -1,7 +1,11 @@
 # 131 — The tones say what you expect
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-14 — built in `7f350dc`, merged in `8d18933`. The eighth tone shipped
+as **`info`**, not `information`. This ticket names it both ways — `information` at the `info`
+split above, `info` in the summary line — and the two live call sites (the `casing` class, the
+`medium` priority) carry `visibility: 'work'`, so `information` would have asserted the
+opposite of their visibility. The parity log records **`info`**.
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
@@ -44,19 +48,23 @@ So the vocabulary is generic where the hues are free and domain-named where they
 **This is JavaScript only and it changes no pixel.** It runs first because 132 transcribes
 these names into the stylesheet, and renaming after the move means writing every name twice.
 
-- [ ] The eight tones are named as above, and every call site names the new one.
-- [ ] The docblock's tone table is rewritten: eight rows, each meaning stated once, and
-      `neutral` reduced to one.
-- [ ] The table mapping a tone to its styleguide group covers all eight.
-- [ ] `severityTone()` answers with the new names.
-- [ ] `palette.test.mjs` pins the new vocabulary. Its existing assertions survive in the new
+- [x] The eight tones are named as above, and every call site names the new one. — `TONES` at
+      `web/src/lib/palette.mjs:76-83`; the call-site sweep at `palette.test.mjs:106` holds it.
+- [x] The docblock's tone table is rewritten: eight rows, each meaning stated once, and
+      `neutral` reduced to one. — `palette.mjs:15-22`.
+- [x] The table mapping a tone to its styleguide group covers all eight. —
+      `palette.mjs:51-58`.
+- [x] `severityTone()` answers with the new names. — `palette.mjs:246-249`.
+- [x] `palette.test.mjs` pins the new vocabulary. Its existing assertions survive in the new
       words: the status tones never carry a direction hue, the two ambers print different
       pixels, the fix checkbox has two ticked colours and no direction, and a cell tint is
-      `lost` or `added` and nothing else.
-- [ ] A test fails if a tone outside the eight is used.
-- [ ] Every screenshot baseline is unchanged. A moved baseline means a colour moved, which
-      this ticket does not do.
-- [ ] `CONTEXT.md` is not touched. Tone names are the palette's vocabulary and not the
+      `lost` or `added` and nothing else. — `palette.test.mjs:199`, `:207`, `:213`, `:219`.
+- [x] A test fails if a tone outside the eight is used. — `palette.test.mjs:34` and `:51`, with
+      the stale-name catcher at `:133` pinning `severe`, `attention` and `PILL.dark`.
+- [x] Every screenshot baseline is unchanged. A moved baseline means a colour moved, which
+      this ticket does not do. — taken from the commit's byte-identical colour-string
+      assertion against `f66fd34`; the baselines were not re-run during this audit.
+- [x] `CONTEXT.md` is not touched. Tone names are the palette's vocabulary and not the
       domain's, and the glossary stays free of implementation.
 
 ## Traps

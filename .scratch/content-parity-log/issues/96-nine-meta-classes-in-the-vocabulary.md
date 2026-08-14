@@ -1,7 +1,10 @@
 # 96 — Nine meta classes enter the vocabulary
 
 Type: build
-Status: ready-for-agent
+Status: resolved 2026-08-14 — built in `1cf4f94`, on `main`. Every criterion met, and the
+class-count pin reads **31** rather than the 30 written below: ticket 54's
+`no-declared-alternate` landed after this ticket was written. The deviation is recorded in
+the pin's own test comment and in the commit body.
 Blocked by: —
 Parent: 58-axis-a-meta-check.md
 
@@ -50,13 +53,15 @@ In build order. **Criterion 1 is your first failing test.** Run
 `npm test -- compare/contract.test.mjs` and show the red before you write the
 implementation.
 
-- [ ] 1 The class-count pin reads **30**, and fails.
-- [ ] 2 The nine records exist with the shown defaults above. Shown goes 13 → 20,
-      hidden 8 → 10.
-- [ ] 3 The `direction` pin — the sorted list of classes carrying it — gains the four
-      `lost`/`added` classes.
-- [ ] 4 A test asserts no `meta` class carries `axis`, so ticket 39 inherits a clean
-      table.
+- [x] 1 The class-count pin reads **30**, and fails. — shipped as **31**; see the Status
+      note. `compare/contract.test.mjs:244-252`.
+- [x] 2 The nine records exist with the shown defaults above. Shown goes 13 → 20,
+      hidden 8 → 10. — `compare/vocabulary.mjs:247-302`, seven `work` and two
+      `information`.
+- [x] 3 The `direction` pin — the sorted list of classes carrying it — gains the four
+      `lost`/`added` classes. — `compare/contract.test.mjs:296-313`.
+- [x] 4 A test asserts no `meta` class carries `axis`, so ticket 39 inherits a clean
+      table. — `compare/contract.test.mjs:315-321`.
 
 ## Gate
 

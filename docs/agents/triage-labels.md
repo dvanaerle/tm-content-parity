@@ -12,6 +12,20 @@ Because issues live as local markdown files, the "label" is the value written on
 | `ready-for-human`          | `ready-for-human`    | Requires human implementation            |
 | `wontfix`                  | `wontfix`            | Will not be actioned                     |
 
+Two further labels have no counterpart in the skills' five roles, because they describe work
+that has already left triage:
+
+| Label in our tracker | Meaning                                                  |
+| -------------------- | -------------------------------------------------------- |
+| `claimed`            | An agent or human has started; not yet finished          |
+| `resolved`           | Built and verified. Carries the date, and the commit      |
+
+A `resolved` line is expected to say *where* — the date and the commit or branch — and to
+record any criterion that shipped differently from the ticket, so the ticket stays readable as
+the account of what happened. Closing a ticket also means ticking its acceptance criteria from
+`- [ ]` to `- [x]`; a `resolved` status over unticked criteria is the signature of a status
+line written without the work being checked.
+
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the right-hand column to match whatever vocabulary you actually use.
