@@ -108,5 +108,17 @@ decision refuses, wearing a test and inheriting its false confidence. A guard ov
 the link rather than the policy. The enforcement is a reader and a review, and the ADR says
 that in its Consequences so the absence is chosen rather than overlooked.
 
-`npm test` passes unchanged, which is the evidence for the last criterion: no derivation, no
-count and no rendered rule moved.
+**The test evidence for the last criterion, stated exactly, because "the suite is green"
+would not be true.** `npm test` gives **13 test files failed, 27 passed, 679 tests passed**.
+The failures are all collection failures — `Failed to fetch dynamically imported module` —
+and they are **pre-existing and unrelated**: the suite was run against a stashed clean tree
+at `f66fd34` and returned the identical 13 failed / 27 passed / 679 passed. The node project
+alone reproduces the same way, 2 files failing to collect (`landing.test.mjs` and
+`screen-url.test.mjs`) with the same 679 passing, before and after.
+
+So the claim this ticket makes is the narrow one it can support: **no test moved.** Every
+test that ran before still runs and still passes, and a comment-only diff cannot reach a
+module import. The suite breakage is real and it is somebody's ticket; it is not this one,
+and 127 does not pretend to have found or fixed it. `oxlint` is clean. `oxfmt --check` fails
+on `app.css` and 185 other files, and did so before this change as well, so formatting is
+untouched rather than passing.

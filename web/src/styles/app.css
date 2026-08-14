@@ -3,9 +3,7 @@
  *
  * **Baseline Widely Available, and nothing newer.** It is a rule and not a list of
  * browser versions: check the feature's Baseline status at the moment you reach for
- * it. A dated list rots — `:has()` crossed into Widely Available in June 2026 and
- * `content-visibility` will not until about 2028 — so any list here would be wrong
- * within months and would look authoritative while it was.
+ * it. A dated list rots, and it looks authoritative while it is wrong.
  *
  * The rule covers the components as well as this file. Most CSS in this interface is
  * written as Tailwind classes in `.jsx`, so reading this as a rule about `app.css`
@@ -15,10 +13,10 @@
  * autoprefixer, no PostCSS config, and Lightning CSS is driven by Tailwind's own
  * target, so nothing here would read one.
  *
- * The floor this build already imposes — Chrome 111 / Safari 16.4 / Firefox 128, from
- * Tailwind v4's `@property` and `color-mix()` — is the **mechanism's** floor and not
+ * The version floor Tailwind v4 already imposes is the **mechanism's** floor and not
  * the policy. A feature can clear those numbers and still be years from Widely
- * Available.
+ * Available, which is why they are not repeated here: ADR 0015 states them once, so a
+ * dependency that moves the floor moves one sentence and not four.
  *
  * An exception is allowed and costs one sentence naming the feature and the reason.
  * ADR 0015 holds the exceptions, the features currently refused with their status, and

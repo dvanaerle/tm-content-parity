@@ -108,10 +108,14 @@ usefulness.
 
 **Container size queries are permitted.** They have been Widely Available since **August
 2025**. Ticket 87 asks whether a component may respond to the width of its own container
-rather than to the viewport, and this is where that answer lives. shadcn's primitives
-already declare container contexts — `@container/card-header` in `card.jsx`,
-`@container/field-group` in `field.jsx` — so the feature is in the tree already, arriving
-with the library rather than by a decision.
+rather than to the viewport, and this is where that answer lives.
+
+The feature is in the tree already, and it arrived with the library rather than by a
+decision. `card.jsx` declares `@container/card-header` and is **rendered** — `Dashboard.jsx`
+and `Ledger.jsx` both import `Card` — so a container context is on screen today. `field.jsx`
+declares `@container/field-group` and nothing imports it, so that one is installed and not
+drawn. Both are shadcn's, under ADR 0007's amended list of nineteen and not its original
+seven.
 
 Container **style** queries are a different feature with a different status, and they are
 refused. The two share a syntax and not a Baseline row.
@@ -131,6 +135,10 @@ refused. The two share a syntax and not a Baseline row.
   external fact, so a committed list of allowed features would be the dated list this
   decision refuses, wearing a test. The enforcement is a reader and a review.
 - **A dependency that raises the floor is a ticket**, not a silent change. Today it is
-  Tailwind v4's `@property` and `color-mix()`. If that moves, the record of it moves here.
+  Tailwind v4's `@property` and `color-mix()`. **This ADR is the one live copy of those
+  numbers**, and it is the only place they need editing when they move. The `app.css`
+  pointer deliberately does not repeat them, and the map entry and ticket 127 do — but
+  those are dated records of what was decided on the day, which the map says of itself,
+  and a record is not a copy that can go stale.
 - **The exception list grows in this file.** `overscroll-behavior` is the first entry, and
   the next one is a sentence appended under the same heading rather than a new decision.
