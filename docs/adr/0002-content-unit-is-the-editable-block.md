@@ -51,8 +51,11 @@ product-spec regression — production says `6063-T6`, the new site says `6036-T
   old id keys text that is no longer a unit.
 - Two changes in one paragraph become one finding. This is acceptable for the same
   reason the decision was taken: the fix is one edit of one paragraph.
-- The interface must clamp a row. A folded paragraph is 20 to 24 wrapped lines, and
-  the content view exists so that a difference is found by scanning.
+- A row is tall. A folded paragraph is 20 to 24 wrapped lines. Ticket 68 answered this by
+  clamping a row to four lines, and on 2026-08-14 that clamp was withdrawn as redundant —
+  most blocks are shorter than it was, and a reader deciding on a paragraph wants the
+  paragraph. Scanning is carried by the collapsed runs of equal rows and by the class pill
+  instead, and a row is read whole. Ticket 68 carries the reversal.
 - The word diff must trim the common prefix and suffix before it makes its table. A
   folded block is about 380 tokens on each side.
 - A production block that the new site splits in two gives one `copy` row and one

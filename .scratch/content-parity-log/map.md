@@ -1463,6 +1463,14 @@ is one click, ticket 34's deep link wants a grilling before it wants code, and
   61, 62, 63, 64, 65, 66, 67 and 68 are resolved. 70 needs the new environment, which
   answered HTTP 500 on all six hosts while this was written.
 
+  **The clamp was withdrawn on 2026-08-14 and 68 is `wontfix` for that half.** A row shows
+  its block whole: most blocks are shorter than four lines, so the clamp changed nothing on
+  them while its control drew itself on every row, and where a block is long the complete
+  overview beats a window onto its first change. **The diff-cost numbers below stand** —
+  the trim, the cap and the `equal` fact are untouched — and the 105-pixel row is now the
+  record of what the clamp did, not a fact about the interface. Read the rest of this entry
+  as of the day it resolved.
+
   **68 is resolved**, 2026-08-10, and it ran **before 79 rather than after it**. A row
   clamps to four lines, so the rows on `nl__privacy-beleid` are **105 pixels at the
   median** where they were 450 to 550, and a 900-pixel screen carries eight of them. The

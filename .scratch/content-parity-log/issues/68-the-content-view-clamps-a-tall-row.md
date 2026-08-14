@@ -15,7 +15,28 @@ cap.
 
 Blocked by: 67. **Sequenced after 79**, which collapses the runs of equal rows.
 
-Status: resolved 2026-08-10
+Status: wontfix 2026-08-14. Resolved 2026-08-10 and **the clamp is withdrawn**, in this
+ticket rather than in a new one: the feature is redundant for this team, and a ticket that
+only says so would carry nothing the reversal does not already say here.
+
+**Why it goes.** A lot of the time a block is shorter than four lines, so the clamp
+changed nothing about those rows while its control still drew itself on every one of them
+— 68 decided against a measuring pass, so the common row paid furniture for an affordance
+it had no use for. And where a block *is* long, the complete overview beats the window: an
+editor deciding about a paragraph wants the paragraph, not its first change with the
+context cut away, and would open the row by hand every time to get it. Scanning is already
+carried by 79's collapsed runs and by the class pill.
+
+**What that label does and does not cover.** The clamp is gone: the four-line window
+`clampedSpans()`, `CLAMP_LEAD`, the `clamped` prop, the `line-clamp-4` class, the control,
+the `open` row set and `rowKeyFromHash()`, whose only caller was the effect that opened a
+jumped-to row. **The diff-cost half of this ticket shipped and stays** — the prefix and
+suffix trim, the 50,000-cell cap and the `equal` fact are what produced the 97.5% fall,
+and none of them is touched. So `wontfix` is about the clamp and not about everything
+below it. The accepted cost is that a long page goes back to 450–550 pixel rows.
+
+The measurements below are kept exactly as measured on the day. They are the record of
+what the clamp did, and no longer a description of the interface.
 
 **Origin:** the grilling of 2026-08-07 on the content unit, questions 7 and 8. The
 numbers, the criteria and the decisions below come from the grilling of 2026-08-10.

@@ -178,25 +178,6 @@ function anchorKey(prod, next) {
   return prod ? `p${prod.index}` : `n${next?.index}`;
 }
 
-/** The shape `anchorKey()` writes, and nothing else. */
-const ROW_ANCHOR = /^[pn]\d+$/;
-
-/**
- * The row a hash link names, or null (ticket 68).
- *
- * **A jump is a request to read that one row**, so the row it lands on opens. The
- * clamp is what makes a jump land somewhere legible, and a reader who followed a
- * link to a row and then found four lines of it would have to open it by hand every
- * time.
- *
- * @param {string | null | undefined} hash  `location.hash`, with the `#`.
- * @returns {string | null}
- */
-export function rowKeyFromHash(hash) {
-  const key = (hash ?? '').replace(/^#/, '');
-  return ROW_ANCHOR.test(key) ? key : null;
-}
-
 /**
  * @param {ContentRow} row
  * @param {ContentFilter} filter

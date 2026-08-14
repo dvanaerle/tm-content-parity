@@ -226,12 +226,12 @@ element any more: it folds the links inside it. Both the word and the rule are g
   In this state every visible row is work, so the
   **row tint carries no signal and it goes**; the class pill carries the class. The
   retired *Diff* tab is what happens without the marker and without that rule.
-- **Clamp** — a row that shows some lines of each side, with a control that opens it.
-  It is about length and not about findings: a row that agrees can be as tall as a row
-  that differs. A clamp holds the two cells of a row at one height, because a row is
-  read across. It shows the lines that hold the first difference, or the first lines
-  when there is no difference. A clamp hides no finding and it moves no count. A jump
-  to a row opens that row.
+- **Clamp** — *retired 2026-08-14, ticket 68, which is `wontfix` for the clamp and stands
+  for everything else in it.* A row used to show four lines of each side with a control
+  that opened it. **A row now shows its block whole**, and no control shortens it: most
+  blocks are shorter than the clamp was, and a reader deciding on a long paragraph wants
+  the paragraph and not a window onto its first change. Do not reintroduce the word for a
+  shortened row.
 - **Uncompared** — a two-sided row that is too large for a word comparison. Both
   versions are shown in full, and neither one is coloured. It is a budget and not a
   judgement: the log says that the comparison did not run. It never says that somebody
@@ -334,7 +334,7 @@ same section line.
 One word is reserved. **"Fold"** has two meanings in this list and no more: a content
 unit folds the words of an inline link, and tier 1 folds a character to nothing. A run
 of equal rows **collapses**, and the row that stands for the run is a **context
-marker**. Do not write "fold" for that, and do not write it for a clamp.
+marker**. Do not write "fold" for that.
 
 ## Identity
 

@@ -11,7 +11,6 @@ import {
   prepareRows,
   repeatsInStore,
   repeatsWithClasses,
-  rowKeyFromHash,
   toggleClass,
   toggleIn,
 } from './view.mjs';
@@ -75,28 +74,6 @@ const fixture = () => ({
     { id: 'copy1', class: 'copy', visibility: 'work', state: 'open', occurrences: 1 },
     { id: 'lost1', class: 'text-missing', visibility: 'work', state: 'open', occurrences: 1 },
   ],
-});
-
-/**
- * A jump is a request to read one row, so the row it lands on opens (ticket 68).
- * This is the rule at the seam: the browser holds the hash, and the view has to know
- * which row that hash names — and which hash names no row at all.
- */
-describe('rowKeyFromHash', () => {
-  it('names the row a hash link jumps to', () => {
-    expect(rowKeyFromHash('#p11')).toBe('p11');
-    expect(rowKeyFromHash('#n4')).toBe('n4');
-  });
-
-  it('names no row when the hash is not a row anchor', () => {
-    // A page carries other anchors. A hash that is not one of ours must open
-    // nothing rather than open the first row.
-    expect(rowKeyFromHash('')).toBeNull();
-    expect(rowKeyFromHash('#')).toBeNull();
-    expect(rowKeyFromHash('#taken')).toBeNull();
-    expect(rowKeyFromHash('#r3')).toBeNull();
-    expect(rowKeyFromHash(undefined)).toBeNull();
-  });
 });
 
 describe('prepareRows', () => {

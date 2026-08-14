@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
-import { clampedSpans, isUncompared, spansFor, wordDiff } from '../../../compare/worddiff.mjs';
+import { isUncompared, spansFor, wordDiff } from '../../../compare/worddiff.mjs';
 import { cn } from '../lib/utils.js';
 import { Button } from './ui/button.jsx';
 import { TableCell } from './ui/table.jsx';
@@ -53,7 +53,6 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
  * @param {boolean} [props.strong]
  * @param {boolean} [props.equal]  The caller compared the two sides and got equal, on
  *                                 values it does not show. Both cells stay plain.
- * @param {boolean} [props.clamped]  Show four lines, starting at the first difference.
  * @returns Two `TableCell`s, for a caller that owns the `TableRow`.
  */
 export function DiffCells({
@@ -66,7 +65,6 @@ export function DiffCells({
   mono = false,
   strong = false,
   equal = false,
-  clamped = false,
 }) {
   // The diff is computed on `norm` and `norm` is what is rendered. Tier 1 folds
   // curly quotes, NBSP, dashes and entities deliberately, so diffing `raw` would
@@ -88,35 +86,29 @@ export function DiffCells({
   );
 
   const uncompared = isUncompared(spans);
-  const shown = useMemo(
-    () => (spans && !uncompared && clamped ? clampedSpans(spans) : spans),
-    [spans, uncompared, clamped],
-  );
 
   return (
     <>
       <Cell
         side="production"
         value={prod}
-        spans={uncompared ? null : shown}
+        spans={uncompared ? null : spans}
         tint={!equal && next === null ? SURFACE.lost : null}
         prefix={prodPrefix}
         raw={prodRaw}
         mono={mono}
         strong={strong}
-        clamped={clamped}
         note={uncompared ? UNCOMPARED : null}
       />
       <Cell
         side="new"
         value={next}
-        spans={uncompared ? null : shown}
+        spans={uncompared ? null : spans}
         tint={!equal && prod === null ? SURFACE.added : null}
         prefix={newPrefix}
         raw={newRaw}
         mono={mono}
         strong={strong}
-        clamped={clamped}
         note={uncompared ? UNCOMPARED : null}
       />
     </>
@@ -129,14 +121,13 @@ export function DiffCells({
  * 0.97 reaches it as well as a rewrite does. *Rewritten* is refused for the reason
  * `CONTEXT.md` retires "changed" — the tool cannot know it.
  *
- * It does not promise the whole text on the screen either. The cell holds both versions
- * whole, and the clamp is still over it until the row is opened, so a sentence saying
- * *both versions are here in full* would be false for four lines of every row.
+ * The cell holds both versions whole, so *nothing was compared* is the whole of the
+ * loss: an editor reads the two texts and does the comparison by eye.
  */
 const UNCOMPARED = 'This block is too large for the word comparison. Nothing was compared.';
 
 /** @param {{ spans: import('../../../compare/worddiff.mjs').DiffSpan[] | null }} props */
-function Cell({ side, value, spans, tint, prefix, raw, mono, strong, clamped, note }) {
+function Cell({ side, value, spans, tint, prefix, raw, mono, strong, note }) {
   // `TableCell` defaults to `whitespace-nowrap align-middle`, which is right for a
   // dashboard row and wrong for every cell here: these hold a paragraph of Dutch
   // prose or a long url, and both must wrap and both must sit at the top of a row
@@ -156,7 +147,7 @@ function Cell({ side, value, spans, tint, prefix, raw, mono, strong, clamped, no
     <TableCell className={cn(layout, 'break-words', tint, mono ? 'font-mono text-xs' : 'text-sm')}>
       {prefix}
       {note && <p className="mb-1 text-xs text-muted-foreground italic">{note}</p>}
-      <span className={`${strong ? 'font-semibold' : ''} ${clamped ? 'line-clamp-4' : ''}`}>
+      <span className={strong ? 'font-semibold' : ''}>
         {spans ? <Spans spans={spansFor(spans, side)} /> : value}
       </span>
       {raw !== null && raw !== value && <CopyButton text={raw} />}

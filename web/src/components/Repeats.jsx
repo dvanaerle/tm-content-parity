@@ -229,9 +229,8 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, 
 /**
  * The rows, and how many of them are drawn.
  *
- * A rendering budget, in the manner of the clamp: it is about length and not about
- * findings. The line below says how many rows there are, so nothing here is hidden —
- * only not drawn yet.
+ * A rendering budget: it is about length and not about findings. The line below says how
+ * many rows there are, so nothing here is hidden — only not drawn yet.
  *
  * The budget is a prop when a class group owns it and state here when nobody else does,
  * which is the flat list a search draws. A list that is never taken off screen cannot lose

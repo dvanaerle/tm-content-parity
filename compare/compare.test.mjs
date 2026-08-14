@@ -8,7 +8,7 @@ import { textFragmentUrl } from './locate.mjs';
 import { lcsPairs, mayPair, maskNumbers, similarity, tier2 } from './match.mjs';
 import { metaRows } from './meta.mjs';
 import { classifyPair, diffRows, textFindings } from './text.mjs';
-import { clampedSpans, diffCost, isUncompared, spansFor, wordDiff } from './worddiff.mjs';
+import { diffCost, isUncompared, spansFor, wordDiff } from './worddiff.mjs';
 
 let seq = 0;
 
@@ -861,56 +861,6 @@ describe('the word diff trims and caps', () => {
     expect(isUncompared(wordDiff('de kap', 'de tuin'))).toBe(false);
     expect(isUncompared([])).toBe(false);
     expect(isUncompared(null)).toBe(false);
-  });
-});
-
-/**
- * The clamp (ticket 68). A clamped row is four lines, and those four lines have to
- * hold the first difference: a clamp that shows the first four lines of a 24-line
- * paragraph hides the one thing the row exists to show.
- *
- * The height is the stylesheet's work. **Which words the four lines start at** is a
- * rule with judgement in it, so it is a pure function here and not a measuring pass
- * over 288 rows in a component.
- */
-describe('clampedSpans', () => {
-  it('drops the agreement in front of a late difference', () => {
-    const lead = Array.from({ length: 40 }, (_, at) => `woord${at}`).join(' ');
-    const spans = wordDiff(`${lead} zwart`, `${lead} wit`);
-
-    expect(clampedSpans(spans, 20)).toEqual([
-      { type: 'same', text: '… woord38 woord39 ' },
-      { type: 'removed', text: 'zwart' },
-      { type: 'added', text: 'wit' },
-    ]);
-  });
-
-  it('leaves a row alone when the difference is already in the first lines', () => {
-    const spans = wordDiff('de kap is zwart', 'de kap is wit');
-    expect(clampedSpans(spans)).toEqual(spans);
-  });
-
-  it('starts the window at a word and never inside one', () => {
-    const spans = wordDiff('aaaaaaaaaa bbbbbbbbbb zwart', 'aaaaaaaaaa bbbbbbbbbb wit');
-    expect(clampedSpans(spans, 15)[0].text).toBe('… bbbbbbbbbb ');
-  });
-
-  it('leaves a row alone when the agreement in front is one long word', () => {
-    // There is no word boundary to start at, so a window would cut inside the
-    // word. The row shows its first lines instead.
-    const long = `${'a'.repeat(200)}zwart`;
-    const spans = wordDiff(long, `${'a'.repeat(200)}wit`);
-    expect(clampedSpans(spans, 20)).toEqual(spans);
-  });
-
-  it('leaves a row with no difference alone', () => {
-    const body = Array.from({ length: 100 }, (_, at) => `woord${at}`).join(' ');
-    expect(clampedSpans(wordDiff(body, body), 20)).toEqual([{ type: 'same', text: body }]);
-  });
-
-  it('leaves an uncompared row alone', () => {
-    const spans = wordDiff(...wordsApart(113));
-    expect(clampedSpans(spans, 20)).toEqual(spans);
   });
 });
 

@@ -19,7 +19,7 @@ function pageWithTargetBelowTheFold(id = 'finding-a1') {
   const target = document.createElement('div');
   target.id = id;
   target.textContent = 'the row the link named';
-  // The clamp offset the content view puts on every row, so this pins that a landing
+  // The `scroll-mt-4` the content view puts on every row, so this pins that a landing
   // honours it rather than putting the row flush against the top edge.
   target.style.scrollMarginTop = '16px';
   // Only the landed row is focusable, which is what the two tables do to their rows.

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
-import { Button } from './ui/button.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Empty, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
 import { Label } from './ui/label.jsx';
@@ -16,7 +15,6 @@ import {
   onlyDifferencesState,
   outlineFrom,
   prepareRows,
-  rowKeyFromHash,
   toggleClass,
 } from '../lib/view.mjs';
 
@@ -234,52 +232,18 @@ function Outline({ entries }) {
 /**
  * Three columns: status, production as the reference, the new site.
  *
- * **A row is clamped until it is opened** (ticket 68). After ticket 67 a row holds a
- * whole block, so one paragraph is 20 to 24 wrapped lines and about 500 pixels: a jump
- * landed inside a row that was taller than the screen, and the view stopped being
- * something a reader scans. Four lines holds a change with a line above and below it,
- * and a 900-pixel screen then carries seven or eight rows.
- *
- * The clamp state belongs to the **row** and not to a cell, because a row is one
- * comparison and two cells at two heights cannot be read against each other.
+ * **Every row shows its block whole.** Ticket 68 held a row at four lines and gave the
+ * reader a control to open it; both are withdrawn, and 68 is `wontfix` for that half.
+ * Most blocks are shorter than the clamp was, so the control changed nothing on them and
+ * cost a line of furniture on every row — and where a block *was* long, four lines of it
+ * is the wrong answer: an editor deciding on a paragraph wants the paragraph, not a
+ * window onto its first change. A jump still lands on a row and marks it; there is no
+ * longer anything to open.
  */
 function Rows({ rows, control, sides, landed, settled }) {
-  const [open, setOpen] = useState(() => new Set());
-
-  // A landing is a jump, so it obeys the same rule the hash jump below obeys: the row it
-  // lands on opens. It is a separate effect because it arrives from the query string and
-  // not from the hash, and because it can change while the page stays put — a re-check
-  // replaces the report without touching the address bar.
-  useEffect(() => {
-    if (landed) setOpen((held) => new Set(held).add(landed));
-  }, [landed]);
-
-  // The **mark** and the open row are drawn at once; the landing itself waits for the
-  // log, which is the hook's own rule.
+  // The **mark** is drawn at once; the landing itself waits for the log, which is the
+  // hook's own rule.
   useLandOn(landed, settled);
-
-  // A jump is a request to read one row, so the row it lands on opens — and it opens
-  // downwards from its own top, which the native jump has already put at the top of
-  // the screen. **Nothing is added for a scroll offset**: nothing above the table is
-  // sticky, so the native jump and `scroll-mt-4` are the whole of it. Ticket 87 is
-  // what could break that.
-  useEffect(() => {
-    const openTheTarget = () => {
-      const key = rowKeyFromHash(window.location.hash);
-      if (key) setOpen((held) => new Set(held).add(key));
-    };
-
-    openTheTarget();
-    window.addEventListener('hashchange', openTheTarget);
-    return () => window.removeEventListener('hashchange', openTheTarget);
-  }, []);
-
-  const toggle = (key) =>
-    setOpen((held) => {
-      const next = new Set(held);
-      if (!next.delete(key)) next.add(key);
-      return next;
-    });
 
   return (
     /* `table-fixed`, for the reason `Ledger.jsx` gives: an auto layout would let the
@@ -327,7 +291,6 @@ function Rows({ rows, control, sides, landed, settled }) {
                 {row.score !== null && (
                   <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>
                 )}
-                <ClampControl open={open.has(row.key)} onToggle={() => toggle(row.key)} />
                 <Occurrences
                   count={row.finding?.occurrences}
                   title={onePageTitle(row.finding?.occurrences)}
@@ -366,41 +329,11 @@ function Rows({ rows, control, sides, landed, settled }) {
                 }
                 strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
                 equal={row.equal}
-                clamped={!open.has(row.key)}
               />
             </TableRow>
           );
         })}
       </TableBody>
     </Table>
-  );
-}
-
-/**
- * The one control of the clamp, beside the class pill.
- *
- * **It is always rendered**, on a two-line row as well as on a twenty-line one. To
- * hide it where it changes nothing the view would have to measure every row, and a
- * measuring pass over 288 rows to remove one small piece of furniture is the trade
- * backwards. So it is quiet instead: text, no border, and the size of the score
- * beside it.
- *
- * **It says what the reader gets, and it borrows no other word.** *Unfold* is the fold,
- * which `CONTEXT.md` reserves to two meanings and refuses to a clamp; *collapse* is what a
- * run of equal rows does, which is ticket 79's context marker and not this; and *open* is
- * the word the finding state beside it already uses.
- */
-function ClampControl({ open, onToggle }) {
-  return (
-    <Button
-      variant="ghost"
-      size="xs"
-      onClick={onToggle}
-      aria-expanded={open}
-      title={open ? 'Show four lines of this block' : 'Show all of this block'}
-      className="ml-2 text-xs font-normal text-muted-foreground"
-    >
-      {open ? 'four lines' : 'whole block'}
-    </Button>
   );
 }

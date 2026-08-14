@@ -47,9 +47,6 @@
  * its own, and is not part of a neighbour token. Thus a join of one side's spans
  * gives that side's input, character for character. A renderer that must put the
  * spaces back cannot know where they were.
- *
- * That rejoin is a property of what `wordDiff` returns. `clampedSpans` is a **window**
- * over it and does not carry it.
  */
 const TOKENS = /[\s/?&=#]+|[^\s/?&=#]+/g;
 
@@ -206,46 +203,6 @@ export function wordDiff(prod, next) {
   for (let at = right.length - tail; at < right.length; at += 1) push('same', right[at]);
 
   return spans;
-}
-
-/**
- * How much agreement a clamped cell keeps in front of the first difference, in
- * characters. About one line at the width the content view gives a cell, which
- * leaves the other three lines of the clamp for the change itself.
- */
-export const CLAMP_LEAD = 80;
-
-/**
- * The spans a **clamped** row shows: the first difference, with a little of the
- * agreement in front of it (ticket 68).
- *
- * The trim already found where the two sides start to differ, so nothing is measured
- * again here. The window is computed on the **whole** span list and not on one
- * side's, thus the two cells of a row start at the same words and stay one height.
- *
- * A row with no difference is not shortened: the clamp is the stylesheet's four
- * lines, and a one-sided row and an uncompared row show their first lines.
- *
- * @param {DiffSpan[]} spans
- * @param {number} [lead]
- * @returns {DiffSpan[]}
- */
-export function clampedSpans(spans, lead = CLAMP_LEAD) {
-  const first = spans.findIndex((span) => span.type === 'removed' || span.type === 'added');
-  if (first <= 0) return spans;
-
-  const agreement = spans
-    .slice(0, first)
-    .map((span) => span.text)
-    .join('');
-  if (agreement.length <= lead) return spans;
-
-  // The window starts at a word and never inside one. A cut that lands in the
-  // middle of `terrasoverkapping` reads as a different word.
-  const kept = agreement.slice(-lead).replace(/^\S+/, '').trimStart();
-  if (!kept) return spans;
-
-  return [{ type: 'same', text: `… ${kept}` }, ...spans.slice(first)];
 }
 
 /**
