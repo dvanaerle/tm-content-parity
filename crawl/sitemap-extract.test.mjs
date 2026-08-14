@@ -27,7 +27,7 @@ const url = (loc, changefreq, alternates = {}) =>
     `<changefreq>${changefreq}</changefreq>`,
     '<priority>0.5</priority>',
     ...Object.entries(alternates).map(
-      ([lang, href]) => `<xhtml:link hreflang="${lang}" rel="alternate" href="${href}"/>`
+      ([lang, href]) => `<xhtml:link hreflang="${lang}" rel="alternate" href="${href}"/>`,
     ),
     '</url>',
   ].join('\n');
@@ -46,7 +46,7 @@ const sixFiles = (xml) => Object.fromEntries(SITEMAP_FILES.map((file) => [file, 
 describe('parseSitemap', () => {
   it('reads the loc, the changefreq and the alternates of each block', () => {
     const entries = parseSitemap(
-      sitemap(url('https://www.tuinmaximaal.nl/p', 'never', ALL_SIX), url('https://x/q', 'daily'))
+      sitemap(url('https://www.tuinmaximaal.nl/p', 'never', ALL_SIX), url('https://x/q', 'daily')),
     );
     expect(entries).toEqual([
       { loc: 'https://www.tuinmaximaal.nl/p', changefreq: 'never', alternates: ALL_SIX },
@@ -66,7 +66,14 @@ describe('reduceSitemaps', () => {
     expect(reduceSitemaps(files).entries).toEqual([
       {
         loc: 'https://x/p',
-        changefreq: { nl: 'daily', be: 'never', be_fr: 'never', de: 'never', fr: 'never', uk: 'never' },
+        changefreq: {
+          nl: 'daily',
+          be: 'never',
+          be_fr: 'never',
+          de: 'never',
+          fr: 'never',
+          uk: 'never',
+        },
         alternates: {},
       },
     ]);
@@ -77,7 +84,7 @@ describe('reduceSitemaps', () => {
     // all six alternates, and those are the product pages. Dropping them is what
     // takes 181 MB down to a few hundred kilobytes.
     expect(reduceSitemaps(sixFiles(sitemap(url('https://x/p', 'never', ALL_SIX)))).entries).toEqual(
-      []
+      [],
     );
   });
 
@@ -106,7 +113,9 @@ describe('reduceSitemaps', () => {
     // The reduction throws away 26,664 product locs of each file. The count of
     // what was there is the only way a reader can tell a full fetch from a
     // truncated one, so it is kept even though the entries are not.
-    const files = sixFiles(sitemap(url('https://x/p', 'never', ALL_SIX), url('https://x/q', 'daily')));
+    const files = sixFiles(
+      sitemap(url('https://x/p', 'never', ALL_SIX), url('https://x/q', 'daily')),
+    );
     files.nl = sitemap(url('https://x/q', 'daily'));
 
     expect(reduceSitemaps(files).locs).toEqual({
@@ -135,7 +144,9 @@ describe('reduceSitemaps', () => {
 
 describe('serialiseExtract', () => {
   const extract = reduceSitemaps(
-    sixFiles(sitemap(url('https://x/b', 'daily', { 'nl-NL': 'https://x/a' }), url('https://x/a', 'daily')))
+    sixFiles(
+      sitemap(url('https://x/b', 'daily', { 'nl-NL': 'https://x/a' }), url('https://x/a', 'daily')),
+    ),
   );
 
   it('writes one entry on one line, so a review reads the diff', () => {
@@ -153,7 +164,7 @@ describe('serialiseExtract', () => {
 
 describe('buildManifest', () => {
   const extract = reduceSitemaps(
-    sixFiles(sitemap(url('https://x/p', 'never', ALL_SIX), url('https://x/q', 'daily')))
+    sixFiles(sitemap(url('https://x/p', 'never', ALL_SIX), url('https://x/q', 'daily'))),
   );
   const sources = SITEMAP_FILES.map((file) => ({
     file,
@@ -218,7 +229,7 @@ describe('the committed evidence', () => {
 
   it('is the bytes the reduction gives, so the file was not edited by hand', () => {
     expect(serialiseExtract(extract)).toBe(
-      readFileSync(new URL('../data/sitemap-extract.json', import.meta.url), 'utf8')
+      readFileSync(new URL('../data/sitemap-extract.json', import.meta.url), 'utf8'),
     );
   });
 });

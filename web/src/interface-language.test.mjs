@@ -43,9 +43,10 @@ const DRAWN = ['.jsx', '.mjs', '.astro', '.js'];
 async function filesUnder(directory) {
   const entries = await readdir(directory, { recursive: true, withFileTypes: true });
   return entries
-    .filter((entry) => entry.isFile()
-      && DRAWN.includes(extname(entry.name))
-      && !entry.name.endsWith('.test.mjs'))
+    .filter(
+      (entry) =>
+        entry.isFile() && DRAWN.includes(extname(entry.name)) && !entry.name.endsWith('.test.mjs'),
+    )
     .map((entry) => join(entry.parentPath, entry.name));
 }
 
@@ -68,7 +69,10 @@ describe('the interface speaks one language', () => {
     // Read together rather than one after the other. The files are small and there are
     // hundreds of them, so the cost is the round trips and not the bytes.
     const read = await Promise.all(
-      files.map(async (file) => /** @type {[string, string]} */ ([file, await readFile(file, 'utf8')])),
+      files.map(async (file) => /** @type {[string, string]} */ ([
+        file,
+        await readFile(file, 'utf8'),
+      ])),
     );
 
     /** @type {string[]} */
@@ -92,7 +96,7 @@ describe('the interface speaks one language', () => {
   // The guard has to be able to fail. Without this the list could be emptied, or the
   // matcher could be broken, and the file would go on reporting success.
   it('catches the label a regression would write', () => {
-    expect(STOPWORDS.some((word) => holds("Geen pagina gevonden.", word))).toBe(true);
+    expect(STOPWORDS.some((word) => holds('Geen pagina gevonden.', word))).toBe(true);
     expect(STOPWORDS.some((word) => holds('Filter wissen', word))).toBe(true);
     expect(STOPWORDS.some((word) => holds('nog niet opgelost', word))).toBe(true);
     expect(STOPWORDS.some((word) => holds('Resolved', word))).toBe(true);

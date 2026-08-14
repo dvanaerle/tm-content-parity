@@ -97,7 +97,7 @@ export function statusDisagreements(counts) {
       const answered = side[`${name}Ok`] + side[`${name}Redirect`] + side[`${name}Missing`];
       if (answered === 0 && side[`${name}Failed`] > 0) {
         said.push(
-          `${store}: no url of ${SIDE_NAME[name]} answered, over ${side[`${name}Failed`]} pages`
+          `${store}: no url of ${SIDE_NAME[name]} answered, over ${side[`${name}Failed`]} pages`,
         );
       }
     }

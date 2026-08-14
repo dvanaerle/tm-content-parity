@@ -72,7 +72,9 @@ export function storesInLog() {
  */
 export async function loadReports(store) {
   const names = await reportFiles(store);
-  return Promise.all(names.map(async (name) => JSON.parse(await readFile(join(DIR, name), 'utf8'))));
+  return Promise.all(
+    names.map(async (name) => JSON.parse(await readFile(join(DIR, name), 'utf8'))),
+  );
 }
 
 /**
@@ -187,8 +189,10 @@ const side = (extract) => ({
   url: extract.url,
   status: extract.status,
   units: extract.elements.length,
-  regionsExcluded: (extract.diagnostics?.regionsExcluded ?? [])
-    .map((region) => ({ selector: region.selector, units: region.units })),
+  regionsExcluded: (extract.diagnostics?.regionsExcluded ?? []).map((region) => ({
+    selector: region.selector,
+    units: region.units,
+  })),
 });
 
 /**
@@ -249,7 +253,8 @@ export async function regionsChangedInLog() {
   try {
     snapshot = JSON.parse(await readFile(SNAPSHOT, 'utf8'));
   } catch (error) {
-    if (/** @type {any} */ (error).code === 'ENOENT') return { store: null, reason: null, changes: [] };
+    if (/** @type {any} */ (error).code === 'ENOENT')
+      return { store: null, reason: null, changes: [] };
     throw error;
   }
   return {

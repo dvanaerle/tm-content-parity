@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
-  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
 } from './ui/breadcrumb.jsx';
 import { CHROME } from '../lib/palette.mjs';
 import { backInSearch, storeHref } from '../lib/page-url.mjs';
@@ -44,11 +49,15 @@ export default function PageBreadcrumb({ store, page }) {
     <Breadcrumb aria-label="Breadcrumb" className="mb-1">
       <BreadcrumbList className="text-xs">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/" className={CHROME.link}>All stores</BreadcrumbLink>
+          <BreadcrumbLink href="/" className={CHROME.link}>
+            All stores
+          </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href={storeHref(store, back)} className={CHROME.link}>{store}</BreadcrumbLink>
+          <BreadcrumbLink href={storeHref(store, back)} className={CHROME.link}>
+            {store}
+          </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>

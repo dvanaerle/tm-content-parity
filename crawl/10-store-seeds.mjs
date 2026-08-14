@@ -31,14 +31,14 @@ const readInput = (name, holds) => {
 
 const extract = readInput(
   'sitemap-extract.json',
-  'the reduced production sitemaps, made by crawl/09-sitemaps.mjs'
+  'the reduced production sitemaps, made by crawl/09-sitemaps.mjs',
 );
 // The 49 store pages that no sitemap declares live here and nowhere else. The
 // generator that first found them read `data/03-merged.json`, which does not
 // exist, so they cannot be made again.
 const previous = readInput(
   '10-store-seeds.json',
-  'the previous seed list, which carries the 49 pages no sitemap declares'
+  'the previous seed list, which carries the 49 pages no sitemap declares',
 );
 
 const { rows, dropped, collisions, carried } = buildSeedList({
@@ -66,7 +66,8 @@ const seeds = {
     // The origin of the 49, and not the run that last copied them. The
     // generator reads its own output, so a date taken from it would move at
     // every run and say the pages came from where they were last written.
-    carriedFrom: previous.inputs?.carriedFrom ?? `data/10-store-seeds.json of ${previous.generated}`,
+    carriedFrom:
+      previous.inputs?.carriedFrom ?? `data/10-store-seeds.json of ${previous.generated}`,
   },
   counts,
   candidates: extract.entries.length,
@@ -90,7 +91,7 @@ if (wrongShape.length) {
 
 writeFileSync(
   new URL('../data/10-store-seeds.json', import.meta.url),
-  `${JSON.stringify(seeds, null, 2)}\n`
+  `${JSON.stringify(seeds, null, 2)}\n`,
 );
 
 // A readable companion to the JSON. One row for each page, one column for each
@@ -118,8 +119,10 @@ const markdown = [
   ...rows.map(
     (row) =>
       `| ${row.page} | ` +
-      STORES.map((store) => (row.stores[store] ? MARK[row.stores[store].provenance] : '·')).join(' | ') +
-      ' |'
+      STORES.map((store) => (row.stores[store] ? MARK[row.stores[store].provenance] : '·')).join(
+        ' | ',
+      ) +
+      ' |',
   ),
   '',
   '## Counts',

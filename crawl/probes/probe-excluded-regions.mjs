@@ -32,8 +32,10 @@ const CONTROL = ['(home)', 'downloads', 'showroom-contact', 'betaalmethoden'];
 /** A product page is not in the seeds: the log holds content pages only. */
 const PRODUCT = {
   page: '(a product page)',
-  prodUrl: 'https://www.tuinmaximaal.nl/moderne-terrasoverkapping-in-mat-antraciet-van-3-06-x-2-5-meter-met-opaal-polycarbonaat',
-  newUrl: 'https://m2stagingnl.intern.systems/moderne-terrasoverkapping-in-mat-antraciet-van-3-06-x-2-5-meter-met-opaal-polycarbonaat',
+  prodUrl:
+    'https://www.tuinmaximaal.nl/moderne-terrasoverkapping-in-mat-antraciet-van-3-06-x-2-5-meter-met-opaal-polycarbonaat',
+  newUrl:
+    'https://m2stagingnl.intern.systems/moderne-terrasoverkapping-in-mat-antraciet-van-3-06-x-2-5-meter-met-opaal-polycarbonaat',
 };
 
 const seeds = JSON.parse(await readFile(SEEDS, 'utf8'));
@@ -51,13 +53,15 @@ const jobs = [...CATEGORY, ...CONTROL].map(cellFor).concat(PRODUCT);
  * the ceiling: a candidate that wide is a wrong selector, and the throw is the
  * answer the probe wanted.
  */
-const ENTRY = [{
-  selector: SELECTOR,
-  kind: 'non-editorial',
-  reason: 'The entry under test. The committed reason is in shared/excluded-regions.mjs.',
-  measured: { pages: CATEGORY, production: 0, new: 0 },
-  maxUnits: ABSOLUTE_MAX_UNITS,
-}];
+const ENTRY = [
+  {
+    selector: SELECTOR,
+    kind: 'non-editorial',
+    reason: 'The entry under test. The committed reason is in shared/excluded-regions.mjs.',
+    measured: { pages: CATEGORY, production: 0, new: 0 },
+    maxUnits: ABSOLUTE_MAX_UNITS,
+  },
+];
 
 /** @param {string} page @param {string} side @param {string} url */
 async function measure(page, side, url) {
@@ -93,15 +97,17 @@ async function measure(page, side, url) {
  * and this probe asks nothing about link status.
  */
 function findingsBeforeAndAfter(production, next) {
-  const run = (a, b) => comparePage({
-    sides: { production: a, new: b },
-    newSitePaths: new Set(),
-    statuses: new Map(),
-  });
+  const run = (a, b) =>
+    comparePage({
+      sides: { production: a, new: b },
+      newSitePaths: new Set(),
+      statuses: new Map(),
+    });
 
   const before = run(production.kept, next.kept);
   const after = run(production.cut, next.cut);
-  const added = (report) => report.findings.filter((f) => f.class === 'text-added').map((f) => f.new);
+  const added = (report) =>
+    report.findings.filter((f) => f.class === 'text-added').map((f) => f.new);
   const afterAdded = new Set(added(after));
   const beforeAdded = new Set(added(before));
 
@@ -131,21 +137,24 @@ for (const job of jobs) {
   rows.push({ page: job.page, production: production.numbers, new: next.numbers, findings });
 
   const line = (side, m) =>
-    `${side.padEnd(10)} ${String(m.status).padEnd(4)} ${(m.pageType ?? '-').padEnd(9)} `
-    + `matches=${m.matches} units ${m.unitsBefore}→${m.unitsAfter} `
-    + `(-${m.unitsRemoved}) links -${m.linksRemoved} images -${m.imagesRemoved}`;
+    `${side.padEnd(10)} ${String(m.status).padEnd(4)} ${(m.pageType ?? '-').padEnd(9)} ` +
+    `matches=${m.matches} units ${m.unitsBefore}→${m.unitsAfter} ` +
+    `(-${m.unitsRemoved}) links -${m.linksRemoved} images -${m.imagesRemoved}`;
   console.log(job.page);
   console.log(`  ${line('production', production.numbers)}`);
   console.log(`  ${line('new', next.numbers)}`);
   if (findings) {
     console.log(
-      `  findings ${findings.findingsBefore}→${findings.findingsAfter}, `
-      + `work ${findings.workBefore}→${findings.workAfter}, `
-      + `text-added ${findings.textAddedBefore}→${findings.textAddedAfter} `
-      + `(${findings.gone.length} gone, ${findings.appeared.length} appeared)`
+      `  findings ${findings.findingsBefore}→${findings.findingsAfter}, ` +
+        `work ${findings.workBefore}→${findings.workAfter}, ` +
+        `text-added ${findings.textAddedBefore}→${findings.textAddedAfter} ` +
+        `(${findings.gone.length} gone, ${findings.appeared.length} appeared)`,
     );
   }
 }
 
-await writeFile(OUT, JSON.stringify({ selector: SELECTOR, at: new Date().toISOString(), rows }, null, 2));
+await writeFile(
+  OUT,
+  JSON.stringify({ selector: SELECTOR, at: new Date().toISOString(), rows }, null, 2),
+);
 console.log(`\nwrote ${OUT.pathname}`);

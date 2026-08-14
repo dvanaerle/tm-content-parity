@@ -207,7 +207,14 @@ function linkTextByKey(report) {
  * The order is the order a result lists them in: the page first, because it is where
  * the words are, then the words themselves.
  */
-export const SEARCH_FIELDS = ['page', 'prodText', 'newText', 'linkTarget', 'linkText', 'anchorHeading'];
+export const SEARCH_FIELDS = [
+  'page',
+  'prodText',
+  'newText',
+  'linkTarget',
+  'linkText',
+  'anchorHeading',
+];
 
 /**
  * Which of the six fields on this entry hold the term.
@@ -234,13 +241,20 @@ export function matchedFields(entry, term) {
 
   return SEARCH_FIELDS.filter((field) => {
     switch (field) {
-      case 'page': return holds(entry.page);
-      case 'prodText': return !target && holds(entry.prod);
-      case 'newText': return !target && holds(entry.new);
-      case 'linkTarget': return target && (holds(entry.prod) || holds(entry.new));
-      case 'linkText': return entry.linkText.some(holds);
-      case 'anchorHeading': return holds(entry.anchorHeading);
-      default: return false;
+      case 'page':
+        return holds(entry.page);
+      case 'prodText':
+        return !target && holds(entry.prod);
+      case 'newText':
+        return !target && holds(entry.new);
+      case 'linkTarget':
+        return target && (holds(entry.prod) || holds(entry.new));
+      case 'linkText':
+        return entry.linkText.some(holds);
+      case 'anchorHeading':
+        return holds(entry.anchorHeading);
+      default:
+        return false;
     }
   });
 }
@@ -276,7 +290,11 @@ export function matchedFields(entry, term) {
  * }}
  */
 export function searchStore({
-  index, term, stateOf = () => 'open', includeClosed = false, classes = [],
+  index,
+  term,
+  stateOf = () => 'open',
+  includeClosed = false,
+  classes = [],
 }) {
   /** @type {Map<string, IndexEntry[]>} */
   const byPage = new Map();
@@ -300,8 +318,8 @@ export function searchStore({
   // exactly that one: a term can be in one page's key and not another's.
   const matchedRepeats = repeatsInStore(pages).map((repeat) => ({
     ...repeat,
-    fields: SEARCH_FIELDS.filter(
-      (field) => repeat.on.some((one) => fieldsById.get(one.id)?.includes(field)),
+    fields: SEARCH_FIELDS.filter((field) =>
+      repeat.on.some((one) => fieldsById.get(one.id)?.includes(field)),
     ),
   }));
 

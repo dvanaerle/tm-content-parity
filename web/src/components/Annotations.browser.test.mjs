@@ -50,10 +50,11 @@ function mount(props) {
  * The `start,end` form is split on the comma so a long fragment is checked at both ends,
  * which is the form `textFragmentUrl()` emits above twelve words.
  */
-const links = () => [...document.querySelectorAll('a')].map((anchor) => {
-  const [url, fragment] = anchor.getAttribute('href').split('#:~:text=');
-  return { url, text: fragment.split(',').map(decodeURIComponent), title: anchor.title };
-});
+const links = () =>
+  [...document.querySelectorAll('a')].map((anchor) => {
+    const [url, fragment] = anchor.getAttribute('href').split('#:~:text=');
+    return { url, text: fragment.split(',').map(decodeURIComponent), title: anchor.title };
+  });
 
 let unmount = () => {};
 afterEach(() => unmount());

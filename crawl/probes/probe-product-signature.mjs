@@ -73,7 +73,7 @@ for (const row of results) byKind[row.kind] = (byKind[row.kind] ?? 0) + 1;
 
 await writeFile(
   OUT,
-  `${JSON.stringify({ fetchedAt: new Date().toISOString().slice(0, 10), byKind, results }, null, 2)}\n`
+  `${JSON.stringify({ fetchedAt: new Date().toISOString().slice(0, 10), byKind, results }, null, 2)}\n`,
 );
 
 console.log(`\n${results.length} candidates`);

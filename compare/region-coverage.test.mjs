@@ -1,15 +1,29 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  CoverageTally, coverageChanges, coverageDelta, coverageReport, whyNotComparable,
+  CoverageTally,
+  coverageChanges,
+  coverageDelta,
+  coverageReport,
+  whyNotComparable,
 } from './region-coverage.mjs';
 
 const BANNER = '.mgz-element-section:has(a)';
 const GRID = '#grid';
 
 const ENTRIES = [
-  { selector: BANNER, kind: 'legacy-only', reason: 'x', measured: { pages: ['a', 'b', 'c'], production: 9, new: 0 } },
-  { selector: GRID, kind: 'non-editorial', reason: 'x', measured: { pages: ['a', 'b', 'c'], production: 4, new: 4 } },
+  {
+    selector: BANNER,
+    kind: 'legacy-only',
+    reason: 'x',
+    measured: { pages: ['a', 'b', 'c'], production: 9, new: 0 },
+  },
+  {
+    selector: GRID,
+    kind: 'non-editorial',
+    reason: 'x',
+    measured: { pages: ['a', 'b', 'c'], production: 4, new: 4 },
+  },
 ];
 
 /** @param {string[]} selectors */
@@ -30,8 +44,16 @@ describe('CoverageTally', () => {
     ]);
 
     expect(coverage).toEqual([
-      { selector: BANNER, kind: 'legacy-only', removedOn: { production: { pages: 2, units: 18 }, new: { pages: 0, units: 0 } } },
-      { selector: GRID, kind: 'non-editorial', removedOn: { production: { pages: 1, units: 9 }, new: { pages: 1, units: 9 } } },
+      {
+        selector: BANNER,
+        kind: 'legacy-only',
+        removedOn: { production: { pages: 2, units: 18 }, new: { pages: 0, units: 0 } },
+      },
+      {
+        selector: GRID,
+        kind: 'non-editorial',
+        removedOn: { production: { pages: 1, units: 9 }, new: { pages: 1, units: 9 } },
+      },
     ]);
   });
 
@@ -85,8 +107,10 @@ describe('coverageChanges', () => {
   ]);
 
   it('calls an entry unchanged when both sides hold the same page count', () => {
-    expect(coverageChanges(before, before).map((change) => change.verdict))
-      .toEqual(['unchanged', 'unchanged']);
+    expect(coverageChanges(before, before).map((change) => change.verdict)).toEqual([
+      'unchanged',
+      'unchanged',
+    ]);
   });
 
   it('calls out an entry that matched and now matches nowhere', () => {
@@ -101,8 +125,9 @@ describe('coverageChanges', () => {
   it('tells a narrower match apart from one that stopped', () => {
     const after = tallyOf([{ production: cut(BANNER), new: [] }]);
 
-    expect(coverageChanges(before, after).find((c) => c.selector === BANNER).verdict)
-      .toBe('narrowed');
+    expect(coverageChanges(before, after).find((c) => c.selector === BANNER).verdict).toBe(
+      'narrowed',
+    );
   });
 
   it('reports an entry that started matching, because a new entry is also news', () => {
@@ -111,8 +136,9 @@ describe('coverageChanges', () => {
       { production: cut(BANNER), new: cut(BANNER) },
     ]);
 
-    expect(coverageChanges(before, after).find((c) => c.selector === BANNER).verdict)
-      .toBe('widened');
+    expect(coverageChanges(before, after).find((c) => c.selector === BANNER).verdict).toBe(
+      'widened',
+    );
   });
 
   it('reports an entry the list gained, and one it lost', () => {
@@ -131,16 +157,14 @@ describe('coverageReport', () => {
   ]);
 
   it('says nothing when nothing moved, so a quiet run stays quiet', () => {
-    expect(coverageReport({ store: null, regions: before }, { store: null, regions: before }))
-      .toEqual([]);
+    expect(
+      coverageReport({ store: null, regions: before }, { store: null, regions: before }),
+    ).toEqual([]);
   });
 
   it('says a region that stopped matching in one line, and names both numbers', () => {
     const after = tallyOf([{ production: cut(GRID), new: cut(GRID) }]);
-    const lines = coverageReport(
-      { store: null, regions: before },
-      { store: null, regions: after },
-    );
+    const lines = coverageReport({ store: null, regions: before }, { store: null, regions: after });
 
     expect(lines).toHaveLength(1);
     expect(lines[0]).toContain(BANNER);
@@ -150,8 +174,9 @@ describe('coverageReport', () => {
   });
 
   it('gives the reason in one line when the two runs cannot be compared', () => {
-    expect(coverageReport(null, { store: null, regions: before }))
-      .toEqual([expect.stringMatching(/No previous snapshot/)]);
+    expect(coverageReport(null, { store: null, regions: before })).toEqual([
+      expect.stringMatching(/No previous snapshot/),
+    ]);
   });
 });
 

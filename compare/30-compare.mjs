@@ -176,7 +176,7 @@ export function newSitePathsFor(seeds, store) {
 async function jsonFiles(dir) {
   const out = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.isDirectory()) out.push(...await jsonFiles(new URL(`${entry.name}/`, dir)));
+    if (entry.isDirectory()) out.push(...(await jsonFiles(new URL(`${entry.name}/`, dir))));
     else if (entry.name.endsWith('.json')) out.push(fileURLToPath(new URL(entry.name, dir)));
   }
   return out;
@@ -204,8 +204,8 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
   const statuses = rawStatuses ? new Map(Object.entries(rawStatuses)) : undefined;
   if (!statuses) {
     console.warn(
-      'No data/link-status.json: broken-link and redirect are not checked. '
-      + 'Run compare/link-status.mjs to add them.',
+      'No data/link-status.json: broken-link and redirect are not checked. ' +
+        'Run compare/link-status.mjs to add them.',
     );
   }
 
@@ -238,7 +238,10 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
     });
 
     const report = comparePage({
-      sides, newSitePaths: pathsByStore.get(store), statuses, observationId,
+      sides,
+      newSitePaths: pathsByStore.get(store),
+      statuses,
+      observationId,
     });
     await writeFile(
       new URL(reportFilename(report.store, report.page), REPORTS),
@@ -257,22 +260,26 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
 
   await writeFile(
     SNAPSHOT,
-    JSON.stringify({
-      observationId,
-      builtAt: new Date().toISOString(),
-      store: current.store,
-      pages: files.length,
-      comparable,
-      findings,
-      work,
-      regions: current.regions,
-      regionsChanged,
-    }, null, 2),
+    JSON.stringify(
+      {
+        observationId,
+        builtAt: new Date().toISOString(),
+        store: current.store,
+        pages: files.length,
+        comparable,
+        findings,
+        work,
+        regions: current.regions,
+        regionsChanged,
+      },
+      null,
+      2,
+    ),
   );
 
   console.log(
-    `${files.length} pages, ${comparable} comparable, `
-    + `${findings} findings of which ${work} count as work.`,
+    `${files.length} pages, ${comparable} comparable, ` +
+      `${findings} findings of which ${work} count as work.`,
   );
   // Ticket 64: an entry that stopped matching is one line, and it is here rather
   // than 2,600 rows down in the report.

@@ -46,7 +46,9 @@ describe('the drop vocabulary', () => {
  * failing test and not a quiet change in a dashboard nobody opened.
  */
 describe('the committed drop list', () => {
-  const seeds = JSON.parse(readFileSync(new URL('../data/10-store-seeds.json', import.meta.url), 'utf8'));
+  const seeds = JSON.parse(
+    readFileSync(new URL('../data/10-store-seeds.json', import.meta.url), 'utf8'),
+  );
 
   it('is a list and not a count', () => {
     expect(Array.isArray(seeds.dropped)).toBe(true);

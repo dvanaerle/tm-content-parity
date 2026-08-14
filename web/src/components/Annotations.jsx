@@ -14,9 +14,8 @@ import { textFragmentUrl } from '../../../compare/locate.mjs';
  * The unit's own tag beside its words. On a `heading-level` row it is the whole
  * finding: the two texts are identical and the tag is what changed.
  */
-export const Tag = ({ unit }) => (
-  unit ? <span className="mr-2 font-mono text-xs text-muted-foreground">{unit.tag}</span> : null
-);
+export const Tag = ({ unit }) =>
+  unit ? <span className="mr-2 font-mono text-xs text-muted-foreground">{unit.tag}</span> : null;
 
 /**
  * Ticket 33. On `heading-level` and `tag-changed` the two text columns are equal,
@@ -28,11 +27,8 @@ export const Tag = ({ unit }) => (
  * repeat row wears the same mark. A prop named `finding` there would be a lie about
  * the one distinction that ticket keeps.
  */
-export const Detail = ({ detail }) => (
-  detail
-    ? <span className="ml-2 font-mono text-xs text-muted-foreground">{detail}</span>
-    : null
-);
+export const Detail = ({ detail }) =>
+  detail ? <span className="ml-2 font-mono text-xs text-muted-foreground">{detail}</span> : null;
 
 /**
  * Ticket 34. A finding reading `hier` or `carports` used to send an editor hunting
@@ -52,17 +48,18 @@ export const Detail = ({ detail }) => (
  * finding is not on has no heading and offers no link at all — there is no position
  * there to open.
  */
-export const Section = ({ anchorHeading, anchorHeadings = null, sides = null }) => (
-  anchorHeading
-    ? (
-      <div className="mt-1 flex items-baseline gap-1 text-xs text-muted-foreground">
-        <span className="truncate" title={anchorHeading}>under “{anchorHeading}”</span>
-        {sides && <Locate url={sides.production.url} text={anchorHeadings?.production} side="production" />}
-        {sides && <Locate url={sides.new.url} text={anchorHeadings?.new} side="the new site" />}
-      </div>
-    )
-    : null
-);
+export const Section = ({ anchorHeading, anchorHeadings = null, sides = null }) =>
+  anchorHeading ? (
+    <div className="mt-1 flex items-baseline gap-1 text-xs text-muted-foreground">
+      <span className="truncate" title={anchorHeading}>
+        under “{anchorHeading}”
+      </span>
+      {sides && (
+        <Locate url={sides.production.url} text={anchorHeadings?.production} side="production" />
+      )}
+      {sides && <Locate url={sides.new.url} text={anchorHeadings?.new} side="the new site" />}
+    </div>
+  ) : null;
 
 /**
  * One rename repeated six times is one finding, and the tick acts on all six. The
@@ -75,17 +72,16 @@ export const Section = ({ anchorHeading, anchorHeadings = null, sides = null }) 
  * sentence, and confusing the two counts is that ticket's named trap — so the caller
  * that knows which count it holds is the caller that writes the words.
  */
-export const Occurrences = ({ count, title }) => (
-  count > 1
-    ? (
-      <Badge className="ml-2" title={title}>×{count}</Badge>
-    )
-    : null
-);
+export const Occurrences = ({ count, title }) =>
+  count > 1 ? (
+    <Badge className="ml-2" title={title}>
+      ×{count}
+    </Badge>
+  ) : null;
 
 /** What the badge means on a finding: the same difference, several times on this page. */
-export const onePageTitle = (count) => `This finding is ${count} times on the page. `
-  + `One tick closes all ${count}.`;
+export const onePageTitle = (count) =>
+  `This finding is ${count} times on the page. ` + `One tick closes all ${count}.`;
 
 /**
  * Opens the live page scrolled to this text, with a `#:~:text=` fragment the

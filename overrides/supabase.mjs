@@ -31,7 +31,8 @@ const TABLE = 'overrides';
  * `anchorHeading` survives on a **finding**, where it says where on the page a difference
  * sits. That comes off the snapshot and never off this table.
  */
-const COLUMNS = 'id, created_at, editor, scope, action, store, page, finding_id, class, observation_id, finding_set_hash, note, priority';
+const COLUMNS =
+  'id, created_at, editor, scope, action, store, page, finding_id, class, observation_id, finding_set_hash, note, priority';
 
 /**
  * The two mappers are exported for their own test.
@@ -110,7 +111,8 @@ export function createOverridesPort({ url, anonKey }) {
       client.from(TABLE).select(COLUMNS).order('created_at', { ascending: true }),
     );
     // Loud on purpose. An empty list is an answer; a failure is not.
-    if (error) throw new Error(`Could not read the override log: ${error.message}`, { cause: error });
+    if (error)
+      throw new Error(`Could not read the override log: ${error.message}`, { cause: error });
     return (data ?? []).map(toEvent);
   }
 
@@ -127,7 +129,10 @@ export function createOverridesPort({ url, anonKey }) {
      */
     async appendEvent(event) {
       const { data, error } = await client
-        .from(TABLE).insert(toRow(event)).select(COLUMNS).single();
+        .from(TABLE)
+        .insert(toRow(event))
+        .select(COLUMNS)
+        .single();
       if (error) {
         throw new Error(`Could not save to the override log: ${error.message}`, { cause: error });
       }

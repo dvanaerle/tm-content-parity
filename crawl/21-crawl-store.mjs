@@ -73,7 +73,7 @@ async function crawlStore(store, force) {
       const out = new URL(`${store}/${job.page}.json`, EXTRACTS);
 
       try {
-        if (!force && await exists(out)) {
+        if (!force && (await exists(out))) {
           done += 1;
           continue;
         }
@@ -102,10 +102,16 @@ async function crawlStore(store, force) {
   }
 
   const failuresFile = new URL(failuresFilename(store), DATA);
-  await writeFile(failuresFile, JSON.stringify({ store, at: new Date().toISOString(), failures }, null, 2));
-  console.log(`\n${written} written, ${jobs.length - failures.length} usable, ${failures.length} failed.`);
+  await writeFile(
+    failuresFile,
+    JSON.stringify({ store, at: new Date().toISOString(), failures }, null, 2),
+  );
+  console.log(
+    `\n${written} written, ${jobs.length - failures.length} usable, ${failures.length} failed.`,
+  );
   for (const failure of failures.slice(0, 20)) console.log(`  ${failure.page}: ${failure.error}`);
-  if (failures.length > 20) console.log(`  … and ${failures.length - 20} more, in ${fileURLToPath(failuresFile)}`);
+  if (failures.length > 20)
+    console.log(`  … and ${failures.length - 20} more, in ${fileURLToPath(failuresFile)}`);
 
   return { aborted: null, jobs: jobs.length, written, failures };
 }

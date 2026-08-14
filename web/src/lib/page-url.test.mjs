@@ -32,16 +32,18 @@ describe('pageHref, asked for a finding', () => {
   // top, and on a 399-row page the difference had to be found again by eye. The link
   // names it, and the page lands on it.
   it('carries the finding id', () => {
-    expect(pageHref('nl', 'lighting-system/productinformatie', { finding: 'abc123' }))
-      .toBe('/nl/lighting-system/productinformatie/?finding=abc123');
+    expect(pageHref('nl', 'lighting-system/productinformatie', { finding: 'abc123' })).toBe(
+      '/nl/lighting-system/productinformatie/?finding=abc123',
+    );
   });
 
   // The screen the editor left, so the way back is that screen and not a bare store.
   // It is a query string inside a query string, so it has to arrive encoded or the
   // page would read the dashboard's own keys as its own.
   it('carries the dashboard it was clicked from, encoded', () => {
-    expect(pageHref('nl', 'faq', { finding: 'abc123', back: 'view=pages&classes=copy' }))
-      .toBe('/nl/faq/?finding=abc123&back=view%3Dpages%26classes%3Dcopy');
+    expect(pageHref('nl', 'faq', { finding: 'abc123', back: 'view=pages&classes=copy' })).toBe(
+      '/nl/faq/?finding=abc123&back=view%3Dpages%26classes%3Dcopy',
+    );
   });
 });
 
@@ -85,10 +87,10 @@ describe('recheckPath', () => {
   // literals from the other side, so the round trip is fixed in both directions.
   it('gives the path the re-check service parses', () => {
     expect(recheckPath('nl', 'faq/productinformatie')).toBe(
-      '/api/recheck/nl/faq/productinformatie'
+      '/api/recheck/nl/faq/productinformatie',
     );
     expect(recheckPath('fr', '(fr)heavy-duty-veranda')).toBe(
-      '/api/recheck/fr/(fr)heavy-duty-veranda'
+      '/api/recheck/fr/(fr)heavy-duty-veranda',
     );
   });
 });

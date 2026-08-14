@@ -36,10 +36,16 @@ import {
  * @param {Partial<{ tag: string, kind: string, level: number | null, raw: string, index: number }>} part
  */
 const unit = (part) => ({
-  tag: 'p', kind: 'text', level: null, raw: part.raw ?? 'tekst', norm: part.raw ?? 'tekst', ...part,
+  tag: 'p',
+  kind: 'text',
+  level: null,
+  raw: part.raw ?? 'tekst',
+  norm: part.raw ?? 'tekst',
+  ...part,
 });
 
-const heading = (raw, level = 2, index = 0) => unit({ tag: `h${level}`, kind: 'heading', level, raw, index });
+const heading = (raw, level = 2, index = 0) =>
+  unit({ tag: `h${level}`, kind: 'heading', level, raw, index });
 
 /**
  * Production: a heading, a paragraph that changed, a paragraph that matches, and a
@@ -100,7 +106,10 @@ describe('prepareRows', () => {
     const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
 
     expect(rows.map((row) => row.prod?.raw ?? null)).toEqual([
-      'Kleuren', 'Verkrijgbaar in drie kleuren', 'Gelijk', 'Weg',
+      'Kleuren',
+      'Verkrijgbaar in drie kleuren',
+      'Gelijk',
+      'Weg',
     ]);
   });
 
@@ -144,7 +153,13 @@ describe('prepareRows', () => {
   it('hides a diagnostic class until the noise toggle is on', () => {
     const base = fixture();
     base.rows.push({ class: 'tag-changed', prod: null, new: 2, score: null, finding: 'tag1' });
-    base.findings.push({ id: 'tag1', class: 'tag-changed', visibility: 'diagnostic', state: 'open', occurrences: 1 });
+    base.findings.push({
+      id: 'tag1',
+      class: 'tag-changed',
+      visibility: 'diagnostic',
+      state: 'open',
+      occurrences: 1,
+    });
 
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(4);
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(5);
@@ -156,7 +171,13 @@ describe('prepareRows', () => {
     // `diagnostic` half is behind the toggle, and the toggle never moves this row.
     const base = fixture();
     base.rows.push({ class: 'text-added', prod: null, new: 2, score: null, finding: 'added1' });
-    base.findings.push({ id: 'added1', class: 'text-added', visibility: 'information', state: 'open', occurrences: 1 });
+    base.findings.push({
+      id: 'added1',
+      class: 'text-added',
+      visibility: 'information',
+      state: 'open',
+      occurrences: 1,
+    });
 
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(5);
     expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(5);
@@ -203,7 +224,13 @@ describe('prepareRows', () => {
     const before = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
 
     const withInvented = fixture();
-    withInvented.rows.unshift({ class: 'text-added', prod: null, new: 0, score: null, finding: null });
+    withInvented.rows.unshift({
+      class: 'text-added',
+      prod: null,
+      new: 0,
+      score: null,
+      finding: null,
+    });
     const after = prepareRows({ ...withInvented, filter: NO_FILTER, showNoise: true });
 
     const keyOf = (rows, raw) => rows.find((row) => row.prod?.raw === raw).key;
@@ -251,7 +278,14 @@ describe('prepareRows', () => {
     // be built a second time for ticket 116.
     const base = fixture();
     base.rows.push({ class: 'heading-level', prod: 0, new: 0, score: null, finding: 'level1' });
-    base.findings.push({ id: 'level1', class: 'heading-level', visibility: 'information', state: 'open', occurrences: 1, detail: 'h2 → h3' });
+    base.findings.push({
+      id: 'level1',
+      class: 'heading-level',
+      visibility: 'information',
+      state: 'open',
+      occurrences: 1,
+      detail: 'h2 → h3',
+    });
 
     const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: false });
     const level = rows.find((row) => row.class === 'heading-level');
@@ -269,7 +303,13 @@ describe('prepareRows', () => {
     // it keeps the control it has today.
     const base = fixture();
     base.rows.push({ class: 'tag-changed', prod: null, new: 2, score: null, finding: 'tag1' });
-    base.findings.push({ id: 'tag1', class: 'tag-changed', visibility: 'diagnostic', state: 'open', occurrences: 1 });
+    base.findings.push({
+      id: 'tag1',
+      class: 'tag-changed',
+      visibility: 'diagnostic',
+      state: 'open',
+      occurrences: 1,
+    });
 
     const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: true });
 
@@ -284,13 +324,20 @@ describe('prepareRows', () => {
     // 79's context marker read one rule instead of two.
     const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
 
-    expect(rows.filter((row) => row.class === null).map((row) => row.decidable)).toEqual([false, false]);
+    expect(rows.filter((row) => row.class === null).map((row) => row.decidable)).toEqual([
+      false,
+      false,
+    ]);
   });
 
   it('never returns a count a bar could be built from', () => {
     // Decision 25 of spec 32. Two people quoting "the number" must mean the same
     // number, so nothing here may look like a denominator.
-    const narrowed = prepareRows({ ...fixture(), filter: { ...NO_FILTER, classes: ['copy'] }, showNoise: false });
+    const narrowed = prepareRows({
+      ...fixture(),
+      filter: { ...NO_FILTER, classes: ['copy'] },
+      showNoise: false,
+    });
 
     expect(Object.keys(narrowed).sort()).toEqual(['classes', 'rows', 'total']);
     // `total` is rows on the page, and the page has 4 rows against 2 findings. A
@@ -332,13 +379,17 @@ describe('onlyDifferencesState', () => {
   });
 
   it('is on and live when the editor ticked it', () => {
-    expect(onlyDifferencesState({ onlyDifferences: true, classes: [] }))
-      .toEqual({ checked: true, disabled: false });
+    expect(onlyDifferencesState({ onlyDifferences: true, classes: [] })).toEqual({
+      checked: true,
+      disabled: false,
+    });
   });
 
   it('is on and dead while a class filter implies it', () => {
-    expect(onlyDifferencesState({ onlyDifferences: false, classes: ['copy'] }))
-      .toEqual({ checked: true, disabled: true });
+    expect(onlyDifferencesState({ onlyDifferences: false, classes: ['copy'] })).toEqual({
+      checked: true,
+      disabled: true,
+    });
   });
 
   it('matches what prepareRows does: a class filter leaves no matched row', () => {
@@ -381,7 +432,13 @@ describe('outlineFrom', () => {
     const base = fixture();
     base.elements.new.push(heading('Nieuw kopje', 3));
     base.rows.push({ class: 'text-added', prod: null, new: 3, score: null, finding: 'added1' });
-    base.findings.push({ id: 'added1', class: 'text-added', visibility: 'information', state: 'open', occurrences: 1 });
+    base.findings.push({
+      id: 'added1',
+      class: 'text-added',
+      visibility: 'information',
+      state: 'open',
+      occurrences: 1,
+    });
 
     const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: true });
     expect(outlineFrom(rows).map((entry) => entry.text)).toEqual(['Kleuren', 'Nieuw kopje']);
@@ -409,7 +466,10 @@ describe('pagesWithClasses', () => {
 
   it('keeps a page that carries any of the selected classes', () => {
     expect(pagesWithClasses(pages, ['copy']).map((page) => page.page)).toEqual(['a']);
-    expect(pagesWithClasses(pages, ['copy', 'casing']).map((page) => page.page)).toEqual(['a', 'b']);
+    expect(pagesWithClasses(pages, ['copy', 'casing']).map((page) => page.page)).toEqual([
+      'a',
+      'b',
+    ]);
   });
 
   it('drops a page whose count for the class is zero rather than absent', () => {
@@ -447,8 +507,9 @@ describe('pagesWithPriorities', () => {
   });
 
   it('never keeps an unannotated page, because absence is not a priority', () => {
-    expect(pagesWithPriorities(pages, ['high', 'medium', 'low'], priorityOf).map((p) => p.page))
-      .toEqual(['a', 'b']);
+    expect(
+      pagesWithPriorities(pages, ['high', 'medium', 'low'], priorityOf).map((p) => p.page),
+    ).toEqual(['a', 'b']);
   });
 
   /**
@@ -460,8 +521,9 @@ describe('pagesWithPriorities', () => {
     const both = pagesWithPriorities(pagesWithClasses(pages, ['copy']), ['high'], priorityOf);
     expect(both.map((p) => p.page)).toEqual(['a']);
     // And in the other order, because two pure filters over one list have to commute.
-    expect(pagesWithClasses(pagesWithPriorities(pages, ['high'], priorityOf), ['copy']))
-      .toEqual(both);
+    expect(pagesWithClasses(pagesWithPriorities(pages, ['high'], priorityOf), ['copy'])).toEqual(
+      both,
+    );
   });
 });
 
@@ -476,7 +538,13 @@ describe('repeatsInStore', () => {
    * @param {Partial<{ class: string, prod: string | null, new: string | null, detail: string | null, occurrences: number }>} part
    */
   const finding = (id, part) => ({
-    id, class: 'text-missing', prod: 'Montage', new: null, detail: null, occurrences: 1, ...part,
+    id,
+    class: 'text-missing',
+    prod: 'Montage',
+    new: null,
+    detail: null,
+    occurrences: 1,
+    ...part,
   });
 
   const page = (store, name, findings) => ({ store, page: name, findings });
@@ -542,14 +610,25 @@ describe('repeatsInStore', () => {
     // finding, so the two numbers cannot come apart.
     const [repeat] = repeatsInStore([page('nl', 'afhalen', [finding('a', {})])]);
 
-    expect(Object.keys(repeat).sort())
-      .toEqual(['class', 'detail', 'key', 'new', 'occurrences', 'on', 'prod', 'store']);
+    expect(Object.keys(repeat).sort()).toEqual([
+      'class',
+      'detail',
+      'key',
+      'new',
+      'occurrences',
+      'on',
+      'prod',
+      'store',
+    ]);
     expect(Object.keys(repeat.on[0]).sort()).toEqual(['id', 'occurrences', 'page']);
   });
 });
 
 describe('repeatsWithClasses', () => {
-  const repeats = [{ class: 'copy', on: [{}, {}] }, { class: 'casing', on: [{}] }];
+  const repeats = [
+    { class: 'copy', on: [{}, {}] },
+    { class: 'casing', on: [{}] },
+  ];
 
   it('is every repeat when no class pill is on', () => {
     expect(repeatsWithClasses(repeats, [])).toHaveLength(2);
@@ -579,9 +658,13 @@ describe('repeatsWithClasses', () => {
  * of findings, and the rows in a group are the very objects `repeatsInStore()` returned.
  */
 describe('groupRepeatsByClass', () => {
-  const repeat = (cls, pages) => ({ key: `${cls}|${pages}`, class: cls, on: Array(pages).fill({}) });
+  const repeat = (cls, pages) => ({
+    key: `${cls}|${pages}`,
+    class: cls,
+    on: Array(pages).fill({}),
+  });
 
-  it('is one group for a class, carrying that class\'s repeats', () => {
+  it("is one group for a class, carrying that class's repeats", () => {
     const groups = groupRepeatsByClass([repeat('copy', 3), repeat('casing', 1), repeat('copy', 2)]);
 
     const of = (cls) => groups.find((group) => group.class === cls).repeats;
@@ -593,8 +676,9 @@ describe('groupRepeatsByClass', () => {
     // A group that moves position as work is done is a group nobody can learn. The
     // vocabulary declares `copy` before `casing`, and one repeat against forty does not
     // change that.
-    const order = groupRepeatsByClass([repeat('casing', 40), repeat('copy', 1)])
-      .map((group) => group.class);
+    const order = groupRepeatsByClass([repeat('casing', 40), repeat('copy', 1)]).map(
+      (group) => group.class,
+    );
 
     expect(order.indexOf('copy')).toBeLessThan(order.indexOf('casing'));
   });
@@ -603,7 +687,14 @@ describe('groupRepeatsByClass', () => {
     // The list is already sorted worst-first, so this ticket changes nothing about which
     // work is on top — only how much of it arrives at once. A group is a slice of today's
     // ungrouped list and never a second opinion about its order.
-    const finding = (id, prod) => ({ id, class: 'copy', prod, new: 'x', detail: null, occurrences: 1 });
+    const finding = (id, prod) => ({
+      id,
+      class: 'copy',
+      prod,
+      new: 'x',
+      detail: null,
+      occurrences: 1,
+    });
     const repeats = repeatsInStore([
       { store: 'nl', page: 'a', findings: [finding('a1', 'Zelden'), finding('a2', 'Vaak')] },
       { store: 'nl', page: 'b', findings: [finding('b1', 'Vaak')] },
@@ -713,7 +804,10 @@ describe('groupRepeatsByClass', () => {
 });
 
 describe('findingsIn', () => {
-  const repeats = [{ class: 'copy', on: [{}, {}] }, { class: 'casing', on: [{}] }];
+  const repeats = [
+    { class: 'copy', on: [{}, {}] },
+    { class: 'casing', on: [{}] },
+  ];
 
   it('counts the findings of the list it is given, and of no other list', () => {
     // Two callers ask this — the repeats footer and a search result — and one of them

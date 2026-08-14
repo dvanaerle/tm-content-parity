@@ -97,10 +97,12 @@ describe('similarity', () => {
   });
 
   it('scores an edited sentence above the 0.6 pair threshold', () => {
-    expect(similarity(
-      'Onze terrasoverkapping wordt gratis bij u thuis bezorgd',
-      'Onze terrasoverkapping wordt gratis thuis bezorgd',
-    )).toBeGreaterThan(0.6);
+    expect(
+      similarity(
+        'Onze terrasoverkapping wordt gratis bij u thuis bezorgd',
+        'Onze terrasoverkapping wordt gratis thuis bezorgd',
+      ),
+    ).toBeGreaterThan(0.6);
   });
 
   it('scores a replaced sentence below it', () => {
@@ -138,16 +140,17 @@ describe('mayPair', () => {
     // The new site keeps a bare `<a>`, which reads `cta`. The kind now records
     // how the unit is wrapped, and a wrapper is not an editorial fact. Refusing
     // this pair made one `copy` row into two one-sided rows.
-    expect(mayPair(unit('Lees meer >', { tag: 'p' }), unit('Lees meer >', { tag: 'a' }))).toBe(true);
+    expect(mayPair(unit('Lees meer >', { tag: 'p' }), unit('Lees meer >', { tag: 'a' }))).toBe(
+      true,
+    );
   });
 });
 
 describe('classifyPair', () => {
   it('calls a case-only difference casing, not copy', () => {
-    expect(classifyPair(
-      unit('Stijl Modern of Klassiek'),
-      unit('Stijl modern of klassiek'),
-    )).toBe('casing');
+    expect(classifyPair(unit('Stijl Modern of Klassiek'), unit('Stijl modern of klassiek'))).toBe(
+      'casing',
+    );
   });
 
   it('calls a trailing full stop casing', () => {
@@ -163,31 +166,39 @@ describe('classifyPair', () => {
     // `Bekijk alle deals` → `Bekijk alle FAQs` was hidden as a campaign. It is a
     // real CTA change.
     expect(classifyPair(unit('Bekijk alle deals'), unit('Bekijk alle FAQs'))).toBe('copy');
-    expect(classifyPair(
-      unit('Nu 10% korting op alle overkappingen'),
-      unit('Nu 15% korting op alle overkappingen en zonwering'),
-    )).toBe('campaign');
+    expect(
+      classifyPair(
+        unit('Nu 10% korting op alle overkappingen'),
+        unit('Nu 15% korting op alle overkappingen en zonwering'),
+      ),
+    ).toBe('campaign');
   });
 
   it('does not hide a wrong value in a table cell', () => {
     // The old rule was "the tag is td or th", which hid every specification
     // defect. The tag must differ across the sides, so two `td` cells that
     // disagree stay visible as `copy`.
-    expect(classifyPair(
-      unit('Dakdikte 16 mm gehard glas', { tag: 'td' }),
-      unit('Dakdikte 8 mm gehard glas', { tag: 'td' }),
-    )).toBe('price');
-    expect(classifyPair(
-      unit('Dakdikte gehard glas', { tag: 'td' }),
-      unit('Dakdikte gelaagd glas', { tag: 'td' }),
-    )).toBe('copy');
+    expect(
+      classifyPair(
+        unit('Dakdikte 16 mm gehard glas', { tag: 'td' }),
+        unit('Dakdikte 8 mm gehard glas', { tag: 'td' }),
+      ),
+    ).toBe('price');
+    expect(
+      classifyPair(
+        unit('Dakdikte gehard glas', { tag: 'td' }),
+        unit('Dakdikte gelaagd glas', { tag: 'td' }),
+      ),
+    ).toBe('copy');
   });
 
   it('calls the same content in a moved unit restructured', () => {
-    expect(classifyPair(
-      unit('Verkrijgbaar in RAL 7016 antraciet', { tag: 'p' }),
-      unit('Verkrijgbaar in RAL 7016 antracietgrijs', { tag: 'td' }),
-    )).toBe('restructured');
+    expect(
+      classifyPair(
+        unit('Verkrijgbaar in RAL 7016 antraciet', { tag: 'p' }),
+        unit('Verkrijgbaar in RAL 7016 antracietgrijs', { tag: 'td' }),
+      ),
+    ).toBe('restructured');
   });
 
   it('names no class for two texts that are equal character for character', () => {
@@ -211,7 +222,12 @@ describe('diffRows', () => {
   });
   const next = extract({
     side: 'new',
-    elements: units(['Overkappingen', 'Gratis bezorging', 'Onze prijzen zijn heel scherp', 'Nieuw blok']),
+    elements: units([
+      'Overkappingen',
+      'Gratis bezorging',
+      'Onze prijzen zijn heel scherp',
+      'Nieuw blok',
+    ]),
   });
   const rows = diffRows(production, next);
 
@@ -266,8 +282,16 @@ describe('diffRows', () => {
   // documents are about the same length, and on `fotogalerij` production holds 163
   // content units against the new site's 47 (2026-08-10, after the fold).
   const LONG = [
-    'Overkappingen', 'Aluminium profielen', 'Glazen dak', 'Zonwering', 'Montage',
-    'Levertijd', 'Garantie', 'Kleuren en RAL', 'Onderhoud', 'Contact',
+    'Overkappingen',
+    'Aluminium profielen',
+    'Glazen dak',
+    'Zonwering',
+    'Montage',
+    'Levertijd',
+    'Garantie',
+    'Kleuren en RAL',
+    'Onderhoud',
+    'Contact',
   ];
 
   it('anchors a new-only row to the production position of the nearest matched pair', () => {
@@ -279,7 +303,9 @@ describe('diffRows', () => {
     // Under the old rule the addition carried new index 1 and landed second, six
     // paragraphs above the content it follows.
     expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
-      ...LONG.slice(0, 8), '+Nieuw fotoblok', ...LONG.slice(8),
+      ...LONG.slice(0, 8),
+      '+Nieuw fotoblok',
+      ...LONG.slice(8),
     ]);
   });
 
@@ -289,7 +315,9 @@ describe('diffRows', () => {
       extract({ side: 'new', elements: units(['Nieuw fotoblok', 'Kleuren en RAL']) }),
     );
     expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
-      ...LONG.slice(0, 7), '+Nieuw fotoblok', ...LONG.slice(7),
+      ...LONG.slice(0, 7),
+      '+Nieuw fotoblok',
+      ...LONG.slice(7),
     ]);
   });
 
@@ -299,7 +327,10 @@ describe('diffRows', () => {
       extract({ side: 'new', elements: units(['Nieuw fotoblok', 'Tweede fotoblok']) }),
     );
     expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
-      'Overkappingen', 'Aluminium profielen', '+Nieuw fotoblok', '+Tweede fotoblok',
+      'Overkappingen',
+      'Aluminium profielen',
+      '+Nieuw fotoblok',
+      '+Tweede fotoblok',
     ]);
   });
 
@@ -314,16 +345,24 @@ describe('diffRows', () => {
       extract({ side: 'new', elements: units(additions) }),
     );
     expect(rows.map((row) => row.prod?.raw ?? `+${row.new?.raw}`)).toEqual([
-      'Overkappingen', 'Aluminium profielen', ...additions.map((raw) => `+${raw}`),
+      'Overkappingen',
+      'Aluminium profielen',
+      ...additions.map((raw) => `+${raw}`),
     ]);
   });
 
   it('keeps two additions after one pair in the order the new site has them', () => {
     const rows = diffRows(
       extract({ elements: units(LONG) }),
-      extract({ side: 'new', elements: units(['Kleuren en RAL', 'Eerste fotoblok', 'Tweede fotoblok']) }),
+      extract({
+        side: 'new',
+        elements: units(['Kleuren en RAL', 'Eerste fotoblok', 'Tweede fotoblok']),
+      }),
     );
-    expect(rows.slice(8, 10).map((row) => row.new?.raw)).toEqual(['Eerste fotoblok', 'Tweede fotoblok']);
+    expect(rows.slice(8, 10).map((row) => row.new?.raw)).toEqual([
+      'Eerste fotoblok',
+      'Tweede fotoblok',
+    ]);
   });
 
   /** @param {string} prodTag @param {string} newTag */
@@ -361,13 +400,15 @@ describe('diffRows', () => {
     expect(samePairedText('p', 'p')).toEqual([null]);
     expect(samePairedText('h2', 'h2')).toEqual([null]);
 
-    const findings = collect((collector) => textFindings(
-      diffRows(
-        extract({ elements: [unit('Kleuren', { tag: 'h2' })] }),
-        extract({ side: 'new', elements: [unit('Kleuren', { tag: 'h2' })] }),
+    const findings = collect((collector) =>
+      textFindings(
+        diffRows(
+          extract({ elements: [unit('Kleuren', { tag: 'h2' })] }),
+          extract({ side: 'new', elements: [unit('Kleuren', { tag: 'h2' })] }),
+        ),
+        collector,
       ),
-      collector,
-    ));
+    );
     expect(findings).toEqual([]);
   });
 
@@ -435,7 +476,9 @@ describe('textFindings', () => {
     // Ticket 02 quotes it as its example of one change counted many times, but
     // it is one loss and one addition, each grouped to four occurrences. The
     // grouping still does the work the ticket wanted; the pairing cannot.
-    const production = extract({ elements: units(['Kleuren:', 'Kleuren:', 'Kleuren:', 'Kleuren:']) });
+    const production = extract({
+      elements: units(['Kleuren:', 'Kleuren:', 'Kleuren:', 'Kleuren:']),
+    });
     const label = 'Verkrijgbaar in de volgende kleuren:';
     const next = extract({ side: 'new', elements: units([label, label, label, label]) });
 
@@ -450,13 +493,15 @@ describe('textFindings', () => {
     // Ticket 33: `text-added` does not count, so a PageBuilder rebuild cannot bury
     // the content that was actually lost. Ticket 75 named what it is instead —
     // `information`, drawn and not counted — and moved neither number.
-    const findings = collect((collector) => textFindings(
-      diffRows(
-        extract({ elements: units(['Wij leveren door heel Nederland']) }),
-        extract({ side: 'new', elements: units(['Bekijk onze showrooms in de buurt']) }),
+    const findings = collect((collector) =>
+      textFindings(
+        diffRows(
+          extract({ elements: units(['Wij leveren door heel Nederland']) }),
+          extract({ side: 'new', elements: units(['Bekijk onze showrooms in de buurt']) }),
+        ),
+        collector,
       ),
-      collector,
-    ));
+    );
     expect(summarise(findings)).toMatchObject({ work: 1, information: 1, total: 2 });
   });
 
@@ -464,13 +509,15 @@ describe('textFindings', () => {
     // Without a detail the record reads `prod` and `new` as the same string, so
     // the finding says "identical" about a finding.
     const text = 'Kleuren en afwerking';
-    const findings = collect((collector) => textFindings(
-      diffRows(
-        extract({ elements: [unit(text, { tag: 'h2' })] }),
-        extract({ side: 'new', elements: [unit(text, { tag: 'h3' })] }),
+    const findings = collect((collector) =>
+      textFindings(
+        diffRows(
+          extract({ elements: [unit(text, { tag: 'h2' })] }),
+          extract({ side: 'new', elements: [unit(text, { tag: 'h3' })] }),
+        ),
+        collector,
       ),
-      collector,
-    ));
+    );
     expect(findings.map((finding) => [finding.class, finding.detail])).toEqual([
       ['heading-level', 'h2 → h3'],
     ]);
@@ -479,36 +526,46 @@ describe('textFindings', () => {
   it('separates two demotions of the same words, so a worse one detaches', () => {
     const text = 'Kleuren en afwerking';
     /** @param {string} newTag */
-    const idFor = (newTag) => collect((collector) => textFindings(
-      diffRows(
-        extract({ elements: [unit(text, { tag: 'h2' })] }),
-        extract({ side: 'new', elements: [unit(text, { tag: newTag })] }),
-      ),
-      collector,
-    ))[0].id;
+    const idFor = (newTag) =>
+      collect((collector) =>
+        textFindings(
+          diffRows(
+            extract({ elements: [unit(text, { tag: 'h2' })] }),
+            extract({ side: 'new', elements: [unit(text, { tag: newTag })] }),
+          ),
+          collector,
+        ),
+      )[0].id;
     expect(idFor('h3')).not.toBe(idFor('h4'));
   });
 
   it('carries no detail on a class whose two sides already differ', () => {
-    const findings = collect((collector) => textFindings(
-      diffRows(
-        extract({ elements: units(['Vanaf € 799']) }),
-        extract({ side: 'new', elements: units(['Vanaf € 849']) }),
+    const findings = collect((collector) =>
+      textFindings(
+        diffRows(
+          extract({ elements: units(['Vanaf € 799']) }),
+          extract({ side: 'new', elements: units(['Vanaf € 849']) }),
+        ),
+        collector,
       ),
-      collector,
-    ));
+    );
     expect(findings.map((finding) => [finding.class, finding.detail])).toEqual([['price', null]]);
   });
 
   it('groups two occurrences of one demotion into one finding', () => {
     const text = 'Kleuren en afwerking';
-    const findings = collect((collector) => textFindings(
-      diffRows(
-        extract({ elements: [unit(text, { tag: 'h2' }), unit(text, { tag: 'h2' })] }),
-        extract({ side: 'new', elements: [unit(text, { tag: 'h3' }), unit(text, { tag: 'h3' })] }),
+    const findings = collect((collector) =>
+      textFindings(
+        diffRows(
+          extract({ elements: [unit(text, { tag: 'h2' }), unit(text, { tag: 'h2' })] }),
+          extract({
+            side: 'new',
+            elements: [unit(text, { tag: 'h3' }), unit(text, { tag: 'h3' })],
+          }),
+        ),
+        collector,
       ),
-      collector,
-    ));
+    );
     expect(findings.map((finding) => [finding.class, finding.occurrences])).toEqual([
       ['heading-level', 2],
     ]);
@@ -536,8 +593,9 @@ function link(url, text, overrides = {}) {
     index: overrides.index ?? 0,
     href: url,
     url,
-    key: overrides.key
-      ?? `${self ? 'self' : parsed.host}${parsed.pathname.toLowerCase().replace(/\/+$/, '')}`,
+    key:
+      overrides.key ??
+      `${self ? 'self' : parsed.host}${parsed.pathname.toLowerCase().replace(/\/+$/, '')}`,
     text,
     internal: overrides.internal ?? /intern\.systems$|tuinmaximaal\./.test(parsed.host),
   };
@@ -556,8 +614,9 @@ describe('wordDiff', () => {
   const shape = (spans) => spans.map((span) => `${span.type}:${span.text}`);
 
   it('gives two identical strings one unchanged span', () => {
-    expect(wordDiff('Gratis bezorging', 'Gratis bezorging'))
-      .toEqual([{ type: 'same', text: 'Gratis bezorging' }]);
+    expect(wordDiff('Gratis bezorging', 'Gratis bezorging')).toEqual([
+      { type: 'same', text: 'Gratis bezorging' },
+    ]);
   });
 
   it('gives a one-word substitution exactly one removed and one added span', () => {
@@ -565,31 +624,40 @@ describe('wordDiff', () => {
       'Onze terrasoverkapping wordt gratis bezorgd',
       'Onze terrasoverkapping wordt snel bezorgd',
     );
-    expect(spans.filter((span) => span.type === 'removed')).toEqual([{ type: 'removed', text: 'gratis' }]);
-    expect(spans.filter((span) => span.type === 'added')).toEqual([{ type: 'added', text: 'snel' }]);
+    expect(spans.filter((span) => span.type === 'removed')).toEqual([
+      { type: 'removed', text: 'gratis' },
+    ]);
+    expect(spans.filter((span) => span.type === 'added')).toEqual([
+      { type: 'added', text: 'snel' },
+    ]);
   });
 
   it('keeps the unchanged words around a substitution in place', () => {
-    expect(shape(wordDiff('een twee drie', 'een vier drie')))
-      .toEqual(['same:een ', 'removed:twee', 'added:vier', 'same: drie']);
+    expect(shape(wordDiff('een twee drie', 'een vier drie'))).toEqual([
+      'same:een ',
+      'removed:twee',
+      'added:vier',
+      'same: drie',
+    ]);
   });
 
   it('reports an insertion at the head', () => {
-    expect(shape(wordDiff('twee drie', 'een twee drie')))
-      .toEqual(['added:een ', 'same:twee drie']);
+    expect(shape(wordDiff('twee drie', 'een twee drie'))).toEqual(['added:een ', 'same:twee drie']);
   });
 
   it('reports an insertion at the tail', () => {
-    expect(shape(wordDiff('een twee', 'een twee drie')))
-      .toEqual(['same:een twee', 'added: drie']);
+    expect(shape(wordDiff('een twee', 'een twee drie'))).toEqual(['same:een twee', 'added: drie']);
   });
 
   it('picks out the changed segment of a link target', () => {
     // The reason the four surfaces share one component: two link keys are two
     // word lists, and this is what makes a changed path segment jump out
     // instead of reading as "the whole target changed".
-    expect(shape(wordDiff('self/overkappingen/veranda', 'self/overkappingen/tuinkamer')))
-      .toEqual(['same:self/overkappingen/', 'removed:veranda', 'added:tuinkamer']);
+    expect(shape(wordDiff('self/overkappingen/veranda', 'self/overkappingen/tuinkamer'))).toEqual([
+      'same:self/overkappingen/',
+      'removed:veranda',
+      'added:tuinkamer',
+    ]);
   });
 
   it('reproduces each side exactly when its spans are joined', () => {
@@ -598,7 +666,10 @@ describe('wordDiff', () => {
     const prod = 'Verkrijgbaar in de volgende kleuren:';
     const next = 'Beschikbare kleuren:';
     const spans = wordDiff(prod, next);
-    const join = (side) => spansFor(spans, side).map((span) => span.text).join('');
+    const join = (side) =>
+      spansFor(spans, side)
+        .map((span) => span.text)
+        .join('');
     expect(join('production')).toBe(prod);
     expect(join('new')).toBe(next);
   });
@@ -620,21 +691,31 @@ describe('wordDiff', () => {
     // Ticket 35: character-level on a Dutch compound produces confetti.
     // `terrasoverkapping` and `tuinoverkapping` share eleven letters and the
     // whole word is what changed.
-    expect(shape(wordDiff('Onze terrasoverkapping', 'Onze tuinoverkapping')))
-      .toEqual(['same:Onze ', 'removed:terrasoverkapping', 'added:tuinoverkapping']);
+    expect(shape(wordDiff('Onze terrasoverkapping', 'Onze tuinoverkapping'))).toEqual([
+      'same:Onze ',
+      'removed:terrasoverkapping',
+      'added:tuinoverkapping',
+    ]);
   });
 
   it('shows each side only its own words', () => {
     const spans = wordDiff('een twee drie', 'een vier drie');
-    expect(shape(spansFor(spans, 'production'))).toEqual(['same:een ', 'removed:twee', 'same: drie']);
+    expect(shape(spansFor(spans, 'production'))).toEqual([
+      'same:een ',
+      'removed:twee',
+      'same: drie',
+    ]);
     expect(shape(spansFor(spans, 'new'))).toEqual(['same:een ', 'added:vier', 'same: drie']);
   });
 
   it('merges neighbouring words of the same kind into one span', () => {
     // Two removed words in a row are one edit to a reader, so they are one
     // highlight and not two boxes with a gap between them.
-    expect(shape(wordDiff('een twee drie vier', 'een vier')))
-      .toEqual(['same:een ', 'removed:twee drie ', 'same:vier']);
+    expect(shape(wordDiff('een twee drie vier', 'een vier'))).toEqual([
+      'same:een ',
+      'removed:twee drie ',
+      'same:vier',
+    ]);
   });
 });
 
@@ -649,7 +730,12 @@ describe('the word diff trims and caps', () => {
 
     // Untrimmed this is 400 × 400 cells. Both sides agree on all of it but one
     // token, and that token is the only work the diff has.
-    expect(diffCost(`${body} slot`, `${body} einde`)).toEqual({ n: 1, m: 1, cells: 1, capped: false });
+    expect(diffCost(`${body} slot`, `${body} einde`)).toEqual({
+      n: 1,
+      m: 1,
+      cells: 1,
+      capped: false,
+    });
   });
 
   it('gives the spans the untrimmed diff gives, token for token', () => {
@@ -681,17 +767,28 @@ describe('the word diff trims and caps', () => {
     // optimal** — the same number of words is called shared, so the trim never
     // reports a change the untrimmed diff did not — and **each side still rejoins
     // to its own input**.
-    const sameWords = (spans) => spans
-      .filter((span) => span.type === 'same')
-      .reduce((count, span) => count + (span.text.match(/\S+/g) ?? []).length, 0);
+    const sameWords = (spans) =>
+      spans
+        .filter((span) => span.type === 'same')
+        .reduce((count, span) => count + (span.text.match(/\S+/g) ?? []).length, 0);
 
     for (const [prod, next] of repeatingPairs(500)) {
       const spans = wordDiff(prod, next);
       const note = `${prod} / ${next}`;
 
       expect(sameWords(spans), note).toBe(sameWords(untrimmedWordDiff(prod, next)));
-      expect(spansFor(spans, 'production').map((span) => span.text).join(''), note).toBe(prod);
-      expect(spansFor(spans, 'new').map((span) => span.text).join(''), note).toBe(next);
+      expect(
+        spansFor(spans, 'production')
+          .map((span) => span.text)
+          .join(''),
+        note,
+      ).toBe(prod);
+      expect(
+        spansFor(spans, 'new')
+          .map((span) => span.text)
+          .join(''),
+        note,
+      ).toBe(next);
     }
   });
 
@@ -841,7 +938,8 @@ function repeatingPairs(count) {
   const words = ['de', 'kap', 'zwart', 'wit', 'groot'];
   let seed = 12_345;
   const step = () => (seed = (seed * 1_103_515 + 12_345) % 2_147_483_648);
-  const sentence = () => Array.from({ length: step() % 9 }, () => words[step() % words.length]).join(' ');
+  const sentence = () =>
+    Array.from({ length: step() % 9 }, () => words[step() % words.length]).join(' ');
 
   return Array.from({ length: count }, () => [sentence(), sentence()]);
 }
@@ -866,10 +964,7 @@ function tiePairs(count) {
     const tail = run(step() % 5);
     const left = run(step() % 4);
     const right = run(step() % 4);
-    return [
-      [...head, ...left, ...tail].join(' '),
-      [...head, ...right, ...tail].join(' '),
-    ];
+    return [[...head, ...left, ...tail].join(' '), [...head, ...right, ...tail].join(' ')];
   });
 }
 
@@ -897,18 +992,25 @@ function untrimmedWordDiff(prod, next) {
   const table = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
   for (let i = n - 1; i >= 0; i -= 1) {
     for (let j = m - 1; j >= 0; j -= 1) {
-      table[i][j] = left[i] === right[j]
-        ? table[i + 1][j + 1] + 1
-        : Math.max(table[i + 1][j], table[i][j + 1]);
+      table[i][j] =
+        left[i] === right[j] ? table[i + 1][j + 1] + 1 : Math.max(table[i + 1][j], table[i][j + 1]);
     }
   }
 
   let i = 0;
   let j = 0;
   while (i < n && j < m) {
-    if (left[i] === right[j]) { push('same', left[i]); i += 1; j += 1; }
-    else if (table[i + 1][j] >= table[i][j + 1]) { push('removed', left[i]); i += 1; }
-    else { push('added', right[j]); j += 1; }
+    if (left[i] === right[j]) {
+      push('same', left[i]);
+      i += 1;
+      j += 1;
+    } else if (table[i + 1][j] >= table[i][j + 1]) {
+      push('removed', left[i]);
+      i += 1;
+    } else {
+      push('added', right[j]);
+      j += 1;
+    }
   }
   while (i < n) push('removed', left[i++]);
   while (j < m) push('added', right[j++]);
@@ -928,10 +1030,31 @@ describe('metaRows', () => {
    * @param {Partial<import('./contract.mjs').PageMeta>} prodMeta
    * @param {Partial<import('./contract.mjs').PageMeta>} newMeta
    */
-  const rows = (prodMeta, newMeta) => metaRows(
-    extract({ url: 'https://www.tuinmaximaal.nl/overkappingen', meta: { title: null, description: null, canonical: null, noindex: false, h1: null, ...prodMeta } }),
-    extract({ url: newUrl, meta: { title: null, description: null, canonical: null, noindex: false, h1: null, ...newMeta } }),
-  );
+  const rows = (prodMeta, newMeta) =>
+    metaRows(
+      extract({
+        url: 'https://www.tuinmaximaal.nl/overkappingen',
+        meta: {
+          title: null,
+          description: null,
+          canonical: null,
+          noindex: false,
+          h1: null,
+          ...prodMeta,
+        },
+      }),
+      extract({
+        url: newUrl,
+        meta: {
+          title: null,
+          description: null,
+          canonical: null,
+          noindex: false,
+          h1: null,
+          ...newMeta,
+        },
+      }),
+    );
 
   /** @param {string} field */
   const row = (all, field) => all.find((candidate) => candidate.field === field);
@@ -941,22 +1064,33 @@ describe('metaRows', () => {
     // inside the content boundary. Reporting it here as well would report the
     // same difference twice on two tabs.
     expect(row(rows({ h1: 'Overkappingen' }, { h1: 'Veranda' }), 'h1')).toBeUndefined();
-    expect(rows({}, {}).map((each) => each.field))
-      .toEqual(['title', 'description', 'canonical', 'noindex']);
+    expect(rows({}, {}).map((each) => each.field)).toEqual([
+      'title',
+      'description',
+      'canonical',
+      'noindex',
+    ]);
   });
 
   it('reads a changed title as changed and an equal one as equal', () => {
-    expect(row(rows({ title: 'Overkappingen' }, { title: 'Veranda' }), 'title').state).toBe('changed');
-    expect(row(rows({ title: 'Overkappingen' }, { title: 'Overkappingen' }), 'title').state).toBe('same');
+    expect(row(rows({ title: 'Overkappingen' }, { title: 'Veranda' }), 'title').state).toBe(
+      'changed',
+    );
+    expect(row(rows({ title: 'Overkappingen' }, { title: 'Overkappingen' }), 'title').state).toBe(
+      'same',
+    );
   });
 
   it('folds the two hosts before it compares a canonical', () => {
     // 18 of 179 nl pages differ on the canonical by hostname alone, and the
     // hostname is the environment rather than a content difference.
-    const canonical = row(rows(
-      { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
-      { canonical: 'https://m2stagingnl.intern.systems/overkappingen/' },
-    ), 'canonical');
+    const canonical = row(
+      rows(
+        { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
+        { canonical: 'https://m2stagingnl.intern.systems/overkappingen/' },
+      ),
+      'canonical',
+    );
     expect(canonical.state).toBe('same');
     // It compares the folded pair and reports the raw one, so `state` is the only
     // place the fold is readable. A panel that diffs `prod` against `new` paints
@@ -967,23 +1101,36 @@ describe('metaRows', () => {
   });
 
   it('still reports a canonical that points at another page', () => {
-    const canonical = row(rows(
-      { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
-      { canonical: 'https://m2stagingnl.intern.systems/veranda' },
-    ), 'canonical');
+    const canonical = row(
+      rows(
+        { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
+        { canonical: 'https://m2stagingnl.intern.systems/veranda' },
+      ),
+      'canonical',
+    );
     expect(canonical.state).toBe('changed');
   });
 
   it('hides the canonical row when production has none and the new site has one', () => {
     // 147 of 179 nl pages. The content team cannot set a canonical, so it was
     // never a difference an editor could act on.
-    expect(row(rows({ canonical: null }, { canonical: 'https://m2stagingnl.intern.systems/overkappingen' }), 'canonical'))
-      .toBeUndefined();
+    expect(
+      row(
+        rows(
+          { canonical: null },
+          { canonical: 'https://m2stagingnl.intern.systems/overkappingen' },
+        ),
+        'canonical',
+      ),
+    ).toBeUndefined();
   });
 
   it('keeps the canonical row when the new site lost one', () => {
     // The other direction, on 2 pages. The suppression above must not bury it.
-    const canonical = row(rows({ canonical: 'https://www.tuinmaximaal.nl/overkappingen' }, { canonical: null }), 'canonical');
+    const canonical = row(
+      rows({ canonical: 'https://www.tuinmaximaal.nl/overkappingen' }, { canonical: null }),
+      'canonical',
+    );
     expect(canonical.state).toBe('lost');
   });
 
@@ -1001,13 +1148,16 @@ describe('metaRows', () => {
   });
 
   it('reads a description the new site never wrote as lost', () => {
-    expect(row(rows({ description: 'Overkappingen op maat' }, { description: null }), 'description').state)
-      .toBe('lost');
+    expect(
+      row(rows({ description: 'Overkappingen op maat' }, { description: null }), 'description')
+        .state,
+    ).toBe('lost');
   });
 
   it('reads a description production never had as added', () => {
-    expect(row(rows({ description: null }, { description: 'Veranda op maat' }), 'description').state)
-      .toBe('added');
+    expect(
+      row(rows({ description: null }, { description: 'Veranda op maat' }), 'description').state,
+    ).toBe('added');
   });
 });
 
@@ -1023,12 +1173,14 @@ describe('compareLinks', () => {
         link('https://360tour.tuinmaximaal.com/tour', 'Bekijk de tour'),
       ],
     });
-    const findings = collect((collector) => compareLinks({
-      production,
-      new: next,
-      collector,
-      newSitePaths: new Set(['/garantie']),
-    }));
+    const findings = collect((collector) =>
+      compareLinks({
+        production,
+        new: next,
+        collector,
+        newSitePaths: new Set(['/garantie']),
+      }),
+    );
 
     // The bare home target has no path, which is what spares the `disclaimer`
     // boilerplate; `360tour` is an allowlisted separate service.
@@ -1041,12 +1193,16 @@ describe('compareLinks', () => {
       url: newUrl,
       links: [link('https://tuinmaximaalbe.intern.systems/garantie', 'BE garantie')],
     });
-    const findings = collect((collector) => compareLinks({ production: extract({}), new: next, collector }));
+    const findings = collect((collector) =>
+      compareLinks({ production: extract({}), new: next, collector }),
+    );
     expect(findings.some((f) => f.class === 'cross-store-link')).toBe(true);
   });
 
   it('reports a retargeted anchor once, not as a missing plus an extra link', () => {
-    const production = extract({ links: [link('https://www.tuinmaximaal.nl/carport', 'Bekijk carports')] });
+    const production = extract({
+      links: [link('https://www.tuinmaximaal.nl/carport', 'Bekijk carports')],
+    });
     const next = extract({
       side: 'new',
       url: newUrl,
@@ -1081,44 +1237,58 @@ describe('compareLinks', () => {
   it('fires broken-link even when production is broken too', () => {
     const target = 'https://m2stagingnl.intern.systems/weg';
     const next = extract({ side: 'new', url: newUrl, links: [link(target, 'Weg')] });
-    const findings = collect((collector) => compareLinks({
-      production: extract({ links: [link('https://www.tuinmaximaal.nl/weg', 'Weg')] }),
-      new: next,
-      collector,
-      statuses: new Map([
-        [target, { status: 404, hops: 0 }],
-        ['https://www.tuinmaximaal.nl/weg', { status: 404, hops: 0 }],
-      ]),
-    }));
+    const findings = collect((collector) =>
+      compareLinks({
+        production: extract({ links: [link('https://www.tuinmaximaal.nl/weg', 'Weg')] }),
+        new: next,
+        collector,
+        statuses: new Map([
+          [target, { status: 404, hops: 0 }],
+          ['https://www.tuinmaximaal.nl/weg', { status: 404, hops: 0 }],
+        ]),
+      }),
+    );
     expect(findings.some((f) => f.class === 'broken-link')).toBe(true);
   });
 
   it('does not guess about a broken link without a status map', () => {
-    const next = extract({ side: 'new', url: newUrl, links: [link('https://m2stagingnl.intern.systems/weg', 'Weg')] });
-    const findings = collect((collector) => compareLinks({ production: extract({}), new: next, collector }));
+    const next = extract({
+      side: 'new',
+      url: newUrl,
+      links: [link('https://m2stagingnl.intern.systems/weg', 'Weg')],
+    });
+    const findings = collect((collector) =>
+      compareLinks({ production: extract({}), new: next, collector }),
+    );
     expect(findings.some((f) => f.class === 'broken-link')).toBe(false);
   });
 
   it('suppresses missing-link when production its own target is broken', () => {
     const target = 'https://www.tuinmaximaal.nl/weg';
-    const findings = collect((collector) => compareLinks({
-      production: extract({ links: [link(target, 'Weg')] }),
-      new: extract({ side: 'new', url: newUrl, links: [] }),
-      collector,
-      statuses: new Map([[target, { status: 404, hops: 0 }]]),
-    }));
+    const findings = collect((collector) =>
+      compareLinks({
+        production: extract({ links: [link(target, 'Weg')] }),
+        new: extract({ side: 'new', url: newUrl, links: [] }),
+        collector,
+        statuses: new Map([[target, { status: 404, hops: 0 }]]),
+      }),
+    );
     expect(findings.length).toBe(0);
   });
 
   it('deduplicates a target the page links eight times', () => {
     const production = extract({
-      links: Array.from({ length: 8 }, () => link('https://www.tuinmaximaal.nl/carport', 'Carport')),
+      links: Array.from({ length: 8 }, () =>
+        link('https://www.tuinmaximaal.nl/carport', 'Carport'),
+      ),
     });
-    const findings = collect((collector) => compareLinks({
-      production,
-      new: extract({ side: 'new', url: newUrl, links: [] }),
-      collector,
-    }));
+    const findings = collect((collector) =>
+      compareLinks({
+        production,
+        new: extract({ side: 'new', url: newUrl, links: [] }),
+        collector,
+      }),
+    );
     expect(findings.length).toBe(1);
   });
 });
@@ -1132,40 +1302,48 @@ describe('compareImages', () => {
   it('hides production its campaign banner instead of calling it missing', () => {
     // 252 instances across 123 of 124 pages, with no new-site counterpart. Under
     // the both-sides rule this is the largest source of findings in the dataset.
-    const findings = collect((collector) => compareImages(
-      extract({ images: [image('2026-07-23-kortingactie-nl-16aug.svg', '')] }),
-      extract({ side: 'new', images: [] }),
-      collector,
-    ));
+    const findings = collect((collector) =>
+      compareImages(
+        extract({ images: [image('2026-07-23-kortingactie-nl-16aug.svg', '')] }),
+        extract({ side: 'new', images: [] }),
+        collector,
+      ),
+    );
     expect(findings.map((f) => f.class)).toEqual(['image-campaign']);
   });
 
   it('reports a lost alt but not an empty alt on both sides', () => {
-    const findings = collect((collector) => compareImages(
-      extract({ images: [image('dak.jpg', 'Glazen dak'), image('zij.jpg', '')] }),
-      extract({ side: 'new', images: [image('dak.jpg', ''), image('zij.jpg', '')] }),
-      collector,
-    ));
+    const findings = collect((collector) =>
+      compareImages(
+        extract({ images: [image('dak.jpg', 'Glazen dak'), image('zij.jpg', '')] }),
+        extract({ side: 'new', images: [image('dak.jpg', ''), image('zij.jpg', '')] }),
+        collector,
+      ),
+    );
     expect(findings.map((f) => f.class)).toEqual(['alt-lost']);
   });
 
   it('is silent when the new site gains an alt production never had', () => {
-    const findings = collect((collector) => compareImages(
-      extract({ images: [image('dak.jpg', null)] }),
-      extract({ side: 'new', images: [image('dak.jpg', 'Glazen dak')] }),
-      collector,
-    ));
+    const findings = collect((collector) =>
+      compareImages(
+        extract({ images: [image('dak.jpg', null)] }),
+        extract({ side: 'new', images: [image('dak.jpg', 'Glazen dak')] }),
+        collector,
+      ),
+    );
     expect(findings.length).toBe(0);
   });
 
   it('sends a case-only alt difference to the shared casing class', () => {
     // Casing is one kind of difference and it gets one visibility decision. A separate
     // `alt-casing` would split that decision across two classes and let it drift.
-    const findings = collect((collector) => compareImages(
-      extract({ images: [image('dak.jpg', 'Glazen Dak')] }),
-      extract({ side: 'new', images: [image('dak.jpg', 'Glazen dak')] }),
-      collector,
-    ));
+    const findings = collect((collector) =>
+      compareImages(
+        extract({ images: [image('dak.jpg', 'Glazen Dak')] }),
+        extract({ side: 'new', images: [image('dak.jpg', 'Glazen dak')] }),
+        collector,
+      ),
+    );
     expect(findings.map((f) => f.class)).toEqual(['casing']);
   });
 });
@@ -1198,24 +1376,32 @@ describe('the heading a finding sits under', () => {
       ['Montage', 'h2'],
       ['Wij monteren graag zelf', 'p'],
     ]);
-    const findings = collect((collector) => textFindings(
-      diffRows(prod(PAGE), extract({ side: 'new', elements: next })),
-      collector,
-    ));
-    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
-      .toEqual([['copy', 'Montage']]);
+    const findings = collect((collector) =>
+      textFindings(diffRows(prod(PAGE), extract({ side: 'new', elements: next })), collector),
+    );
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading])).toEqual([
+      ['copy', 'Montage'],
+    ]);
   });
 
   it('is null when the unit precedes every heading', () => {
-    const findings = collect((collector) => textFindings(
-      diffRows(
-        prod(outline([['Kruimelpad naar de winkel', 'p'], ['Kleuren en RAL', 'h2']])),
-        extract({ side: 'new', elements: outline([['Kleuren en RAL', 'h2']]) }),
+    const findings = collect((collector) =>
+      textFindings(
+        diffRows(
+          prod(
+            outline([
+              ['Kruimelpad naar de winkel', 'p'],
+              ['Kleuren en RAL', 'h2'],
+            ]),
+          ),
+          extract({ side: 'new', elements: outline([['Kleuren en RAL', 'h2']]) }),
+        ),
+        collector,
       ),
-      collector,
-    ));
-    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
-      .toEqual([['text-missing', null]]);
+    );
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading])).toEqual([
+      ['text-missing', null],
+    ]);
   });
 
   it('takes the heading above a heading, never the heading itself', () => {
@@ -1227,22 +1413,31 @@ describe('the heading a finding sits under', () => {
       ['Montage', 'h2'],
       ['Wij monteren zelf', 'p'],
     ]);
-    const findings = collect((collector) => textFindings(
-      diffRows(prod(PAGE), extract({ side: 'new', elements: after })),
-      collector,
-    ));
-    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
-      .toEqual([['heading-level', 'Onze overkappingen']]);
+    const findings = collect((collector) =>
+      textFindings(diffRows(prod(PAGE), extract({ side: 'new', elements: after })), collector),
+    );
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading])).toEqual([
+      ['heading-level', 'Onze overkappingen'],
+    ]);
   });
 
   it('falls back to the new site when the finding has no production side', () => {
-    const next = outline([['Kleuren en RAL', 'h2'], ['Ook in gepoedercoat wit', 'p']]);
-    const findings = collect((collector) => textFindings(
-      diffRows(prod(outline([['Kleuren en RAL', 'h2']])), extract({ side: 'new', elements: next })),
-      collector,
-    ));
-    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
-      .toEqual([['text-added', 'Kleuren en RAL']]);
+    const next = outline([
+      ['Kleuren en RAL', 'h2'],
+      ['Ook in gepoedercoat wit', 'p'],
+    ]);
+    const findings = collect((collector) =>
+      textFindings(
+        diffRows(
+          prod(outline([['Kleuren en RAL', 'h2']])),
+          extract({ side: 'new', elements: next }),
+        ),
+        collector,
+      ),
+    );
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading])).toEqual([
+      ['text-added', 'Kleuren en RAL'],
+    ]);
   });
 
   // A row has two deep links and used to hold one heading, so whichever side did not
@@ -1250,27 +1445,44 @@ describe('the heading a finding sits under', () => {
   // fragment that matches nothing scrolls nowhere and reports no error, so the row
   // looked identical to a working one until an editor clicked it.
   it('words the section as each side words it, so neither deep link is a dead one', () => {
-    const before = outline([['Kleuren en RAL', 'h2'], ['Antraciet en creme', 'p']]);
-    const after = outline([['Kleuren en kleurkeuze', 'h2'], ['Antraciet en cremewit', 'p']]);
-    const findings = collect((collector) => textFindings(
-      diffRows(prod(before), extract({ side: 'new', elements: after })),
-      collector,
-    ));
+    const before = outline([
+      ['Kleuren en RAL', 'h2'],
+      ['Antraciet en creme', 'p'],
+    ]);
+    const after = outline([
+      ['Kleuren en kleurkeuze', 'h2'],
+      ['Antraciet en cremewit', 'p'],
+    ]);
+    const findings = collect((collector) =>
+      textFindings(diffRows(prod(before), extract({ side: 'new', elements: after })), collector),
+    );
 
-    const copy = findings.find((finding) => finding.class === 'copy' && finding.prod === 'Antraciet en creme');
-    expect(copy.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: 'Kleuren en kleurkeuze' });
+    const copy = findings.find(
+      (finding) => finding.class === 'copy' && finding.prod === 'Antraciet en creme',
+    );
+    expect(copy.anchorHeadings).toEqual({
+      production: 'Kleuren en RAL',
+      new: 'Kleuren en kleurkeuze',
+    });
     // The displayed section keeps naming production, which is the source of truth.
     expect(copy.anchorHeading).toBe('Kleuren en RAL');
   });
 
   it('offers no heading for a side the finding is not on', () => {
-    const findings = collect((collector) => textFindings(
-      diffRows(
-        prod(outline([['Kleuren en RAL', 'h2'], ['Antraciet en creme', 'p']])),
-        extract({ side: 'new', elements: outline([['Kleuren en kleurkeuze', 'h2']]) }),
+    const findings = collect((collector) =>
+      textFindings(
+        diffRows(
+          prod(
+            outline([
+              ['Kleuren en RAL', 'h2'],
+              ['Antraciet en creme', 'p'],
+            ]),
+          ),
+          extract({ side: 'new', elements: outline([['Kleuren en kleurkeuze', 'h2']]) }),
+        ),
+        collector,
       ),
-      collector,
-    ));
+    );
 
     // A paragraph production has and the new site does not is not on the new site to
     // be scrolled to, so that side offers nothing rather than a link to the wrong place.
@@ -1280,51 +1492,64 @@ describe('the heading a finding sits under', () => {
   });
 
   it('positions an image finding, so "which of the eleven images" has an answer', () => {
-    const findings = collect((collector) => compareImages(
-      extract({ elements: PAGE, images: [image('dak.jpg', 'Glazen dak', 5)] }),
-      extract({ side: 'new', images: [] }),
-      collector,
-    ));
-    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
-      .toEqual([['image-missing', 'Montage']]);
+    const findings = collect((collector) =>
+      compareImages(
+        extract({ elements: PAGE, images: [image('dak.jpg', 'Glazen dak', 5)] }),
+        extract({ side: 'new', images: [] }),
+        collector,
+      ),
+    );
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading])).toEqual([
+      ['image-missing', 'Montage'],
+    ]);
   });
 
   it('positions a link finding', () => {
-    const findings = collect((collector) => compareLinks({
-      production: extract({
-        elements: PAGE,
-        links: [link('https://www.tuinmaximaal.nl/carport', 'Carports', { index: 3 })],
+    const findings = collect((collector) =>
+      compareLinks({
+        production: extract({
+          elements: PAGE,
+          links: [link('https://www.tuinmaximaal.nl/carport', 'Carports', { index: 3 })],
+        }),
+        new: extract({ side: 'new', url: newUrl, links: [] }),
+        collector,
       }),
-      new: extract({ side: 'new', url: newUrl, links: [] }),
-      collector,
-    }));
-    expect(findings.map((finding) => [finding.class, finding.anchorHeading]))
-      .toEqual([['missing-link', 'Kleuren en RAL']]);
+    );
+    expect(findings.map((finding) => [finding.class, finding.anchorHeading])).toEqual([
+      ['missing-link', 'Kleuren en RAL'],
+    ]);
   });
 
-  it('words a retargeted link\'s section as each side words it', () => {
+  it("words a retargeted link's section as each side words it", () => {
     // The same anchor, a different target — the one link class that is on both sides,
     // so the one that offers two links. The new site both reworded the heading and
     // moved the anchor into a later section, so each side has to be read on its own
     // terms: production's heading against production's index, the new site's against
     // the new site's.
-    const findings = collect((collector) => compareLinks({
-      production: extract({
-        elements: outline([['Onze overkappingen', 'h1'], ['Kleuren en RAL', 'h2']]),
-        links: [link('https://www.tuinmaximaal.nl/carport', 'Bekijk carports', { index: 2 })],
+    const findings = collect((collector) =>
+      compareLinks({
+        production: extract({
+          elements: outline([
+            ['Onze overkappingen', 'h1'],
+            ['Kleuren en RAL', 'h2'],
+          ]),
+          links: [link('https://www.tuinmaximaal.nl/carport', 'Bekijk carports', { index: 2 })],
+        }),
+        new: extract({
+          side: 'new',
+          url: newUrl,
+          elements: outline([
+            ['Onze overkappingen', 'h1'],
+            ['Kleuren en kleurkeuze', 'h2'],
+            ['Montage', 'h2'],
+          ]),
+          links: [
+            link('https://m2stagingnl.intern.systems/carports', 'Bekijk carports', { index: 3 }),
+          ],
+        }),
+        collector,
       }),
-      new: extract({
-        side: 'new',
-        url: newUrl,
-        elements: outline([
-          ['Onze overkappingen', 'h1'],
-          ['Kleuren en kleurkeuze', 'h2'],
-          ['Montage', 'h2'],
-        ]),
-        links: [link('https://m2stagingnl.intern.systems/carports', 'Bekijk carports', { index: 3 })],
-      }),
-      collector,
-    }));
+    );
 
     const retarget = findings.find((finding) => finding.class === 'link-target');
     expect(retarget.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: 'Montage' });
@@ -1334,19 +1559,21 @@ describe('the heading a finding sits under', () => {
     // A link production has and the new site does not is not on the new site to be
     // scrolled to, and the reverse for one the new site gained. Both sides of that
     // rule in one comparison, because it is one rule.
-    const findings = collect((collector) => compareLinks({
-      production: extract({
-        elements: outline([['Kleuren en RAL', 'h2']]),
-        links: [link('https://www.tuinmaximaal.nl/carport', 'Carports', { index: 1 })],
+    const findings = collect((collector) =>
+      compareLinks({
+        production: extract({
+          elements: outline([['Kleuren en RAL', 'h2']]),
+          links: [link('https://www.tuinmaximaal.nl/carport', 'Carports', { index: 1 })],
+        }),
+        new: extract({
+          side: 'new',
+          url: newUrl,
+          elements: outline([['Montage', 'h2']]),
+          links: [link('https://m2stagingnl.intern.systems/veranda', 'Veranda dak', { index: 1 })],
+        }),
+        collector,
       }),
-      new: extract({
-        side: 'new',
-        url: newUrl,
-        elements: outline([['Montage', 'h2']]),
-        links: [link('https://m2stagingnl.intern.systems/veranda', 'Veranda dak', { index: 1 })],
-      }),
-      collector,
-    }));
+    );
 
     // The comparative pass reports what production lost before what the new site gained.
     expect(findings.map((finding) => [finding.class, finding.anchorHeadings])).toEqual([
@@ -1355,40 +1582,48 @@ describe('the heading a finding sits under', () => {
     ]);
   });
 
-  it('words a changed alt\'s section as each side words it', () => {
+  it("words a changed alt's section as each side words it", () => {
     // The image is on both sides, so it has a position on both — and the new site put
     // it under a different heading. The alt is what changed; where to go and look at
     // it differs per side.
-    const findings = collect((collector) => compareImages(
-      extract({
-        elements: outline([['Kleuren en RAL', 'h2']]),
-        images: [image('dak.jpg', 'Glazen dak', 1)],
-      }),
-      extract({
-        side: 'new',
-        elements: outline([['Onze overkappingen', 'h1'], ['Montage', 'h2']]),
-        images: [image('dak.jpg', 'Glazen dakplaat', 2)],
-      }),
-      collector,
-    ));
+    const findings = collect((collector) =>
+      compareImages(
+        extract({
+          elements: outline([['Kleuren en RAL', 'h2']]),
+          images: [image('dak.jpg', 'Glazen dak', 1)],
+        }),
+        extract({
+          side: 'new',
+          elements: outline([
+            ['Onze overkappingen', 'h1'],
+            ['Montage', 'h2'],
+          ]),
+          images: [image('dak.jpg', 'Glazen dakplaat', 2)],
+        }),
+        collector,
+      ),
+    );
 
-    expect(findings.map((finding) => [finding.class, finding.anchorHeadings]))
-      .toEqual([['alt-changed', { production: 'Kleuren en RAL', new: 'Montage' }]]);
+    expect(findings.map((finding) => [finding.class, finding.anchorHeadings])).toEqual([
+      ['alt-changed', { production: 'Kleuren en RAL', new: 'Montage' }],
+    ]);
   });
 
   it('gives a one-sided image finding no heading on the side it is not on', () => {
-    const findings = collect((collector) => compareImages(
-      extract({
-        elements: outline([['Kleuren en RAL', 'h2']]),
-        images: [image('dak.jpg', 'Glazen dak', 1)],
-      }),
-      extract({
-        side: 'new',
-        elements: outline([['Montage', 'h2']]),
-        images: [image('zijwand.jpg', 'Zijwand', 1)],
-      }),
-      collector,
-    ));
+    const findings = collect((collector) =>
+      compareImages(
+        extract({
+          elements: outline([['Kleuren en RAL', 'h2']]),
+          images: [image('dak.jpg', 'Glazen dak', 1)],
+        }),
+        extract({
+          side: 'new',
+          elements: outline([['Montage', 'h2']]),
+          images: [image('zijwand.jpg', 'Zijwand', 1)],
+        }),
+        collector,
+      ),
+    );
 
     expect(findings.map((finding) => [finding.class, finding.anchorHeadings])).toEqual([
       ['image-missing', { production: 'Kleuren en RAL', new: null }],
@@ -1396,46 +1631,63 @@ describe('the heading a finding sits under', () => {
     ]);
   });
 
-  it('words a redirect\'s section from production\'s own copy of the link', () => {
+  it("words a redirect's section from production's own copy of the link", () => {
     // `redirect` is reported walking the **new** site's links, so production's heading
     // has to come from the counterpart it looks up rather than from the link in hand.
     const prodTarget = 'https://www.tuinmaximaal.nl/carport';
     const newTarget = 'https://m2stagingnl.intern.systems/carport';
-    const findings = collect((collector) => compareLinks({
-      production: extract({
-        // A second production heading *between* the two links' positions, so reading
-        // the new link's index against production answers `Montage` and the test can
-        // tell the two apart. Without it both indices land in the same section and a
-        // wrong lookup goes unnoticed.
-        elements: [unit('Kleuren en RAL', { tag: 'h2', index: 0 }), unit('Montage', { tag: 'h2', index: 2 })],
-        links: [link(prodTarget, 'Carports', { index: 1 })],
+    const findings = collect((collector) =>
+      compareLinks({
+        production: extract({
+          // A second production heading *between* the two links' positions, so reading
+          // the new link's index against production answers `Montage` and the test can
+          // tell the two apart. Without it both indices land in the same section and a
+          // wrong lookup goes unnoticed.
+          elements: [
+            unit('Kleuren en RAL', { tag: 'h2', index: 0 }),
+            unit('Montage', { tag: 'h2', index: 2 }),
+          ],
+          links: [link(prodTarget, 'Carports', { index: 1 })],
+        }),
+        new: extract({
+          side: 'new',
+          url: newUrl,
+          elements: outline([
+            ['Onze overkappingen', 'h1'],
+            ['Dakgoot', 'h2'],
+          ]),
+          links: [link(newTarget, 'Carports', { index: 3 })],
+        }),
+        collector,
+        statuses: new Map([
+          [newTarget, { status: 200, hops: 1 }],
+          [prodTarget, { status: 200, hops: 0 }],
+        ]),
       }),
-      new: extract({
-        side: 'new',
-        url: newUrl,
-        elements: outline([['Onze overkappingen', 'h1'], ['Dakgoot', 'h2']]),
-        links: [link(newTarget, 'Carports', { index: 3 })],
-      }),
-      collector,
-      statuses: new Map([
-        [newTarget, { status: 200, hops: 1 }],
-        [prodTarget, { status: 200, hops: 0 }],
-      ]),
-    }));
+    );
 
     const redirect = findings.find((finding) => finding.class === 'redirect');
     expect(redirect.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: 'Dakgoot' });
   });
 
   it('stays out of the finding id, so a heading edit never detaches a dismissal', () => {
-    const words = outline([['Kleuren en RAL', 'h2'], ['Antraciet en creme', 'p']]);
-    const renamed = outline([['Kleuren en kleurkeuze', 'h2'], ['Antraciet en creme', 'p']]);
+    const words = outline([
+      ['Kleuren en RAL', 'h2'],
+      ['Antraciet en creme', 'p'],
+    ]);
+    const renamed = outline([
+      ['Kleuren en kleurkeuze', 'h2'],
+      ['Antraciet en creme', 'p'],
+    ]);
     const withoutHeading = outline([['Antraciet en creme', 'p']]);
 
-    const id = (prodUnits, newUnits) => collect((collector) => textFindings(
-      diffRows(extract({ elements: prodUnits }), extract({ side: 'new', elements: newUnits })),
-      collector,
-    )).find((finding) => finding.prod === 'Antraciet en creme' && finding.new === null)?.id;
+    const id = (prodUnits, newUnits) =>
+      collect((collector) =>
+        textFindings(
+          diffRows(extract({ elements: prodUnits }), extract({ side: 'new', elements: newUnits })),
+          collector,
+        ),
+      ).find((finding) => finding.prod === 'Antraciet en creme' && finding.new === null)?.id;
 
     expect(id(words, [])).toBe(id(withoutHeading, []));
     expect(id(words, [])).toBe(id(renamed, []));
@@ -1451,8 +1703,9 @@ describe('textFragmentUrl', () => {
 
   it('takes the two ends of a long text, because the middle adds nothing', () => {
     const long = 'een twee drie vier vijf zes zeven acht negen tien elf twaalf dertien';
-    expect(textFragmentUrl(PROD, long))
-      .toBe(`${PROD}#:~:text=een%20twee%20drie%20vier%20vijf%20zes,acht%20negen%20tien%20elf%20twaalf%20dertien`);
+    expect(textFragmentUrl(PROD, long)).toBe(
+      `${PROD}#:~:text=een%20twee%20drie%20vier%20vijf%20zes,acht%20negen%20tien%20elf%20twaalf%20dertien`,
+    );
   });
 
   it('escapes the hyphen, which separates a prefix from a suffix in the directive', () => {
@@ -1470,10 +1723,12 @@ describe('textFragmentUrl', () => {
 
 describe('skipReason', () => {
   it('gates on 200, because a 404 page still extracts', () => {
-    expect(skipReason(extract({ status: 404 }), extract({ side: 'new' })))
-      .toMatch(/exists only on the new site/);
-    expect(skipReason(extract({}), extract({ side: 'new', status: 404 })))
-      .toMatch(/not been migrated/);
+    expect(skipReason(extract({ status: 404 }), extract({ side: 'new' }))).toMatch(
+      /exists only on the new site/,
+    );
+    expect(skipReason(extract({}), extract({ side: 'new', status: 404 }))).toMatch(
+      /not been migrated/,
+    );
     expect(skipReason(extract({}), extract({ side: 'new' }))).toBe(null);
   });
 });
@@ -1582,21 +1837,28 @@ describe('comparePage', () => {
     // pair: it is a loss and an addition, and ticket 33 keeps the addition out of the
     // count. `price` and `text-added` are both `information` since ticket 75.
     expect(report.summary.byClass).toEqual({
-      price: 1, 'text-missing': 1, 'text-added': 1,
+      price: 1,
+      'text-missing': 1,
+      'text-added': 1,
     });
     expect(report.summary).toMatchObject({
-      work: 1, information: 2, diagnostic: 0, total: 3,
+      work: 1,
+      information: 2,
+      diagnostic: 0,
+      total: 3,
     });
   });
 });
 
 describe('summarise', () => {
   it('tallies one count per visibility, and totals them', () => {
-    expect(summarise([
-      { class: 'copy', check: 'text' },
-      { class: 'extra-link', check: 'links' },
-      { class: 'redirect', check: 'links' },
-    ])).toMatchObject({ work: 1, information: 1, diagnostic: 1, total: 3 });
+    expect(
+      summarise([
+        { class: 'copy', check: 'text' },
+        { class: 'extra-link', check: 'links' },
+        { class: 'redirect', check: 'links' },
+      ]),
+    ).toMatchObject({ work: 1, information: 1, diagnostic: 1, total: 3 });
   });
 
   it('refuses a class the vocabulary does not name', () => {
@@ -1634,7 +1896,11 @@ describe('summariseReports', () => {
   const report = (comparable, byClass, counts) => ({
     comparable,
     summary: {
-      ...counts, information: counts.total - counts.work, diagnostic: 0, byClass, byCheck: {},
+      ...counts,
+      information: counts.total - counts.work,
+      diagnostic: 0,
+      byClass,
+      byCheck: {},
     },
   });
 
@@ -1681,8 +1947,14 @@ describe('newSitePathsFor', () => {
   it('reads the paths from the seeds, with no network', () => {
     const seeds = {
       rows: [
-        { page: 'garantie', stores: { nl: { newUrl: 'https://m2stagingnl.intern.systems/garantie' } } },
-        { page: 'alleen-be', stores: { be: { newUrl: 'https://m2stagingbe.intern.systems/waarborg' } } },
+        {
+          page: 'garantie',
+          stores: { nl: { newUrl: 'https://m2stagingnl.intern.systems/garantie' } },
+        },
+        {
+          page: 'alleen-be',
+          stores: { be: { newUrl: 'https://m2stagingbe.intern.systems/waarborg' } },
+        },
       ],
     };
     expect(newSitePathsFor(seeds, 'nl')).toEqual(new Set(['/garantie']));

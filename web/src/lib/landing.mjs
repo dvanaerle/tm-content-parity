@@ -67,8 +67,8 @@ const TAB_OF_CHECK = { text: 'Text', links: 'Links', images: 'Images' };
  * @returns {Landing}
  */
 export function landingFor({ findings, focus }) {
-  const target = focus ? findings.find((finding) => finding.id === focus) ?? null : null;
-  const tab = target ? TAB_OF_CHECK[target.check] ?? null : null;
+  const target = focus ? (findings.find((finding) => finding.id === focus) ?? null) : null;
+  const tab = target ? (TAB_OF_CHECK[target.check] ?? null) : null;
 
   return {
     tab,
@@ -141,8 +141,14 @@ export function useLanding(asked, defaultTab) {
   return {
     tab: !tabTaken && asked.tab ? asked.tab : chosenTab,
     noise: noiseTaken ? showNoise : asked.needsNoise,
-    chooseTab: (name) => { setTabTaken(true); setChosenTab(name); },
-    chooseNoise: (on) => { setNoiseTaken(true); setShowNoise(on); },
+    chooseTab: (name) => {
+      setTabTaken(true);
+      setChosenTab(name);
+    },
+    chooseNoise: (on) => {
+      setNoiseTaken(true);
+      setShowNoise(on);
+    },
   };
 }
 

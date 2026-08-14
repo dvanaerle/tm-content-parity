@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { EXCLUDED_REGIONS } from '../../../shared/excluded-regions.mjs';
 import {
-  notCheckedFor, regionsChangedInLog, regionsRemovedInStore, storesFromFilenames,
+  notCheckedFor,
+  regionsChangedInLog,
+  regionsRemovedInStore,
+  storesFromFilenames,
 } from './reports.mjs';
 
 /**
@@ -52,7 +55,9 @@ describe('notCheckedFor', () => {
   it('leaves out a page that has a report, so a crawled page is never listed', async () => {
     const [first] = await notCheckedFor('nl', []);
     const again = await notCheckedFor('nl', [{ page: first.page }]);
-    expect(again.some((entry) => entry.page === first.page && entry.kind === 'not-crawled')).toBe(false);
+    expect(again.some((entry) => entry.page === first.page && entry.kind === 'not-crawled')).toBe(
+      false,
+    );
   });
 });
 
@@ -96,8 +101,9 @@ describe('regionsRemovedInStore', () => {
   });
 
   it('gives every committed entry a count, so a new entry cannot read as absent', () => {
-    expect(regionsRemovedInStore([]).map((entry) => entry.selector))
-      .toEqual(EXCLUDED_REGIONS.map((entry) => entry.selector));
+    expect(regionsRemovedInStore([]).map((entry) => entry.selector)).toEqual(
+      EXCLUDED_REGIONS.map((entry) => entry.selector),
+    );
   });
 });
 

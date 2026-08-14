@@ -24,7 +24,7 @@ const EXTRACTS = new URL('../../data/extract/be_fr/', import.meta.url);
 async function jsonFiles(dir) {
   const out = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.isDirectory()) out.push(...await jsonFiles(new URL(`${entry.name}/`, dir)));
+    if (entry.isDirectory()) out.push(...(await jsonFiles(new URL(`${entry.name}/`, dir))));
     else if (entry.name.endsWith('.json')) out.push(new URL(entry.name, dir));
   }
   return out;
@@ -71,9 +71,9 @@ console.log(`be_fr: ${files.length} pages on disk.\n`);
 for (const side of ['production', 'new']) {
   const count = tally[side];
   console.log(
-    `${side.padEnd(11)} ${count.anchors} anchors, ${count.sharedHost} on the shared host, `
-    + `${count.leaves} of them outside /fr, on ${count.pages.size} pages `
-    + `(${count.targets.size} distinct targets).`,
+    `${side.padEnd(11)} ${count.anchors} anchors, ${count.sharedHost} on the shared host, ` +
+      `${count.leaves} of them outside /fr, on ${count.pages.size} pages ` +
+      `(${count.targets.size} distinct targets).`,
   );
 }
 
@@ -89,8 +89,8 @@ for (const side of ['production', 'new']) {
   const sum = (list) => list.reduce((total, [, n]) => total + n, 0);
 
   console.log(
-    `\n${side}: ${sum(pages)} anchors to a page of the other store, `
-    + `${sum(media)} to a shared /media/ file.`,
+    `\n${side}: ${sum(pages)} anchors to a page of the other store, ` +
+      `${sum(media)} to a shared /media/ file.`,
   );
   for (const [key, n] of pages) console.log(`  ${String(n).padStart(4)}  ${key}`);
 }

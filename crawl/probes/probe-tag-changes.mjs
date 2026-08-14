@@ -20,7 +20,7 @@ const store = process.argv[2] ?? 'nl';
 async function jsonFiles(dir) {
   const out = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.isDirectory()) out.push(...await jsonFiles(new URL(`${entry.name}/`, dir)));
+    if (entry.isDirectory()) out.push(...(await jsonFiles(new URL(`${entry.name}/`, dir))));
     else if (entry.name.endsWith('.json')) out.push(new URL(entry.name, dir));
   }
   return out;
@@ -75,8 +75,11 @@ for (const file of files) {
 }
 
 const sorted = (map) => [...map.entries()].sort((a, b) => b[1] - a[1]);
-const table = (map, limit = 20) => sorted(map).slice(0, limit)
-  .map(([key, count]) => `    ${String(count).padStart(5)}  ${key}`).join('\n');
+const table = (map, limit = 20) =>
+  sorted(map)
+    .slice(0, limit)
+    .map(([key, count]) => `    ${String(count).padStart(5)}  ${key}`)
+    .join('\n');
 
 /** A sample of one tag pair, spread over as many pages as possible. */
 function sample(from, to, limit = 20) {
@@ -108,7 +111,9 @@ for (const [pair] of sorted(byTagPair).slice(0, 6)) {
   const [from, to] = pair.split(' -> ');
   L.push(`\n=== SAMPLE ${pair} ===`);
   for (const row of sample(from, to)) {
-    L.push(`  ${row.page} [prod ${row.prodIndex} / new ${row.newIndex}] ${JSON.stringify(row.text.slice(0, 90))}`);
+    L.push(
+      `  ${row.page} [prod ${row.prodIndex} / new ${row.newIndex}] ${JSON.stringify(row.text.slice(0, 90))}`,
+    );
   }
 }
 
@@ -117,21 +122,25 @@ console.log(report);
 
 await writeFile(
   new URL(`../../data/probe-tag-changes-${store}.json`, import.meta.url),
-  JSON.stringify({
-    generated: new Date().toISOString(),
-    store,
-    totals: {
-      pages,
-      comparable,
-      exactPairs,
-      tagDiffers: cases.length,
-      pagesWithTagChange: pagesWithTagChange.size,
-      headingLevelChanges,
-      kindChanges,
+  JSON.stringify(
+    {
+      generated: new Date().toISOString(),
+      store,
+      totals: {
+        pages,
+        comparable,
+        exactPairs,
+        tagDiffers: cases.length,
+        pagesWithTagChange: pagesWithTagChange.size,
+        headingLevelChanges,
+        kindChanges,
+      },
+      byTagPair: Object.fromEntries(sorted(byTagPair)),
+      byKindPair: Object.fromEntries(sorted(byKindPair)),
+      cases,
     },
-    byTagPair: Object.fromEntries(sorted(byTagPair)),
-    byKindPair: Object.fromEntries(sorted(byKindPair)),
-    cases,
-  }, null, 2),
+    null,
+    2,
+  ),
 );
 console.log(`\nwrote data/probe-tag-changes-${store}.json`);

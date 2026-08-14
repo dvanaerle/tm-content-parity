@@ -7,7 +7,15 @@ const SITES = {
   new: `https://m2stagingnl.intern.systems/${SLUG}`,
 };
 
-const CHROME = ['header', 'footer', 'nav', 'script', 'style', '[class*="menu"]', '[class*="cookie"]'];
+const CHROME = [
+  'header',
+  'footer',
+  'nav',
+  'script',
+  'style',
+  '[class*="menu"]',
+  '[class*="cookie"]',
+];
 
 function linksOf(html, origin) {
   const root = parse(html);
@@ -18,8 +26,17 @@ function linksOf(html, origin) {
     const href = a.getAttribute('href');
     if (!href || href.startsWith('#') || /^(mailto|tel|javascript):/i.test(href)) continue;
     let abs;
-    try { abs = new URL(href, origin); } catch { continue; }
-    out.set(abs.href, { href, abs: abs.href, host: abs.host, text: (a.structuredText ?? a.text ?? '').replace(/\s+/g, ' ').trim().slice(0, 50) });
+    try {
+      abs = new URL(href, origin);
+    } catch {
+      continue;
+    }
+    out.set(abs.href, {
+      href,
+      abs: abs.href,
+      host: abs.host,
+      text: (a.structuredText ?? a.text ?? '').replace(/\s+/g, ' ').trim().slice(0, 50),
+    });
   }
   return out;
 }
@@ -36,12 +53,16 @@ console.log(`unique in-content links -- prod ${links.prod.size} | new ${links.ne
 
 // Domain leakage: the new site linking back to production is a classic
 // migration defect and is unambiguous.
-const leak = [...links.new.values()].filter((l) => /tuinmaximaal\.(nl|be|de|fr)|tuinmaximaal\.co\.uk/.test(l.host));
+const leak = [...links.new.values()].filter((l) =>
+  /tuinmaximaal\.(nl|be|de|fr)|tuinmaximaal\.co\.uk/.test(l.host),
+);
 console.log(`\nnew site links pointing at a LIVE domain: ${leak.length}`);
-for (const l of leak.slice(0, 12)) console.log(`  ${l.host}${new URL(l.abs).pathname}  "${l.text}"`);
+for (const l of leak.slice(0, 12))
+  console.log(`  ${l.host}${new URL(l.abs).pathname}  "${l.text}"`);
 
 // Path-level comparison, host normalised away.
-const paths = (m) => new Set([...m.values()].map((l) => new URL(l.abs).pathname.replace(/\/$/, '')));
+const paths = (m) =>
+  new Set([...m.values()].map((l) => new URL(l.abs).pathname.replace(/\/$/, '')));
 const pProd = paths(links.prod);
 const pNew = paths(links.new);
 const missing = [...pProd].filter((p) => !pNew.has(p));
@@ -55,12 +76,20 @@ added.slice(0, 10).forEach((p) => console.log('  + ' + p));
 const all = [...new Set([...links.prod.keys(), ...links.new.keys()])];
 console.log(`\nchecking ${all.length} unique URLs for status…`);
 const started = Date.now();
-const results = await Promise.all(all.map(async (u) => {
-  try {
-    const r = await fetch(u, { method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(15000) });
-    return { u, status: r.status };
-  } catch (e) { return { u, status: 'ERR' }; }
-}));
+const results = await Promise.all(
+  all.map(async (u) => {
+    try {
+      const r = await fetch(u, {
+        method: 'HEAD',
+        redirect: 'manual',
+        signal: AbortSignal.timeout(15000),
+      });
+      return { u, status: r.status };
+    } catch (e) {
+      return { u, status: 'ERR' };
+    }
+  }),
+);
 const bad = results.filter((r) => r.status === 'ERR' || Number(r.status) >= 400);
 const redir = results.filter((r) => Number(r.status) >= 300 && Number(r.status) < 400);
 console.log(`  done in ${((Date.now() - started) / 1000).toFixed(1)}s`);
@@ -84,12 +113,15 @@ const imgs = (h) => {
 };
 const iProd = imgs(html.prod);
 const iNew = imgs(html.new);
-let altDiff = 0; let altEmptyNew = 0;
+let altDiff = 0;
+let altEmptyNew = 0;
 for (const [file, alt] of iProd) {
   if (!iNew.has(file)) continue;
   if (iNew.get(file) !== alt) altDiff += 1;
   if (!iNew.get(file)) altEmptyNew += 1;
 }
-console.log(`\nimages -- prod ${iProd.size} | new ${iNew.size} | shared ${[...iProd.keys()].filter((f) => iNew.has(f)).length}`);
+console.log(
+  `\nimages -- prod ${iProd.size} | new ${iNew.size} | shared ${[...iProd.keys()].filter((f) => iNew.has(f)).length}`,
+);
 console.log(`  alt differs on shared images: ${altDiff}`);
 console.log(`  alt empty on new but set on prod: ${altEmptyNew}`);

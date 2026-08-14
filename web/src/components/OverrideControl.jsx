@@ -49,9 +49,7 @@ export const STATE = {
   contradicted: { label: 'claimed fixed, still differs', tone: 'attention' },
 };
 
-export default function OverrideControl({
-  finding, observationId, append, canWrite,
-}) {
+export default function OverrideControl({ finding, observationId, append, canWrite }) {
   /** @type {['dismiss' | null, Function]} */
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
@@ -59,7 +57,10 @@ export default function OverrideControl({
 
   const act = (partial) => append({ scope: 'finding', findingId: finding.id, ...partial });
 
-  const close = () => { setAsking(null); setNote(''); };
+  const close = () => {
+    setAsking(null);
+    setNote('');
+  };
 
   if (asking === 'dismiss') {
     return (
@@ -80,7 +81,9 @@ export default function OverrideControl({
           placeholder="Why is this not a defect?"
           className="w-52"
         />
-        <Action type="submit" disabled={!note.trim()}>Dismiss</Action>
+        <Action type="submit" disabled={!note.trim()}>
+          Dismiss
+        </Action>
         <Action onClick={close}>Cancel</Action>
       </form>
     );
@@ -91,11 +94,13 @@ export default function OverrideControl({
       <FixCheckbox
         finding={finding}
         canWrite={canWrite}
-        onTick={(ticked) => (ticked
-          // The claim records the observation it was made against, or it could
-          // never be contradicted by a later one.
-          ? act({ action: 'fixed', observationId })
-          : act({ action: 'cleared' }))}
+        onTick={(ticked) =>
+          ticked
+            ? // The claim records the observation it was made against, or it could
+              // never be contradicted by a later one.
+              act({ action: 'fixed', observationId })
+            : act({ action: 'cleared' })
+        }
       />
 
       <Badge className={PILL[STATE[state].tone]}>{STATE[state].label}</Badge>
@@ -124,9 +129,7 @@ export default function OverrideControl({
           same press to a whole difference; two copies of that rule would be two places
           for the next change to a key to land, and it would land in one of them. */}
       {canWrite && state === 'dismissed' && (
-        <Action onClick={() => append(clearedEventFor(finding))}>
-          Clear
-        </Action>
+        <Action onClick={() => append(clearedEventFor(finding))}>Clear</Action>
       )}
     </div>
   );
@@ -199,9 +202,11 @@ function FixCheckbox({ finding, canWrite, onTick }) {
  * `info` stays defined and unused, so restoring the blue is a one-word change.
  */
 const TICK = {
-  added: 'data-checked:border-success data-checked:bg-success data-checked:text-white dark:data-checked:bg-success',
+  added:
+    'data-checked:border-success data-checked:bg-success data-checked:text-white dark:data-checked:bg-success',
   info: 'data-checked:border-info data-checked:bg-info data-checked:text-white dark:data-checked:bg-info',
-  attention: 'data-checked:border-warning data-checked:bg-warning data-checked:text-white dark:data-checked:bg-warning',
+  attention:
+    'data-checked:border-warning data-checked:bg-warning data-checked:text-white dark:data-checked:bg-warning',
 };
 
 const Action = ({ children, ...props }) => (

@@ -102,7 +102,9 @@ export function useOverrides({ report, editor }) {
     }
   }, [port, store, page]);
 
-  useEffect(() => { reload(); }, [reload]);
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
   /**
    * The store, the page and the editor of the page on screen, unless the caller names
@@ -113,21 +115,24 @@ export function useOverrides({ report, editor }) {
    * @param {Partial<import('../../../overrides/state.mjs').OverrideEvent>} partial
    * @returns {Promise<boolean>} Whether it was stored.
    */
-  const append = useCallback(async (partial) => {
-    if (!port || !editor) return false;
-    setBusy(true);
-    try {
-      const stored = await port.appendEvent({ store, page, editor, ...partial });
-      setEvents((held) => [...(held ?? []), stored]);
-      setError(null);
-      return true;
-    } catch (failure) {
-      setError(/** @type {Error} */ (failure).message);
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }, [port, store, page, editor]);
+  const append = useCallback(
+    async (partial) => {
+      if (!port || !editor) return false;
+      setBusy(true);
+      try {
+        const stored = await port.appendEvent({ store, page, editor, ...partial });
+        setEvents((held) => [...(held ?? []), stored]);
+        setError(null);
+        return true;
+      } catch (failure) {
+        setError(/** @type {Error} */ (failure).message);
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [port, store, page, editor],
+  );
 
   const derived = useMemo(
     () => derivePageState({ report, events: events ?? [] }),
@@ -199,9 +204,18 @@ export function useStoreOverrides({ pages, editor = '' }) {
     if (!port || !stores) return;
     let live = true;
     Promise.all(stores.split(',').map((store) => port.readEventsForStore(store)))
-      .then((lists) => { if (live) { setEvents(lists.flat()); setError(null); } })
-      .catch((failure) => { if (live) setError(failure.message); });
-    return () => { live = false; };
+      .then((lists) => {
+        if (live) {
+          setEvents(lists.flat());
+          setError(null);
+        }
+      })
+      .catch((failure) => {
+        if (live) setError(failure.message);
+      });
+    return () => {
+      live = false;
+    };
   }, [port, stores]);
 
   const derived = useMemo(
@@ -227,23 +241,33 @@ export function useStoreOverrides({ pages, editor = '' }) {
    * the banner appears. The rows that *were* written still enter the list: they are in
    * the table, and a list that dropped them would disagree with the log it reports on.
    */
-  const appendMany = useCallback(async (toWrite) => {
-    if (!port || !editor) {
-      return {
-        stored: [], written: 0, total: toWrite.length, failedOn: null, error: NO_EDITOR,
-      };
-    }
+  const appendMany = useCallback(
+    async (toWrite) => {
+      if (!port || !editor) {
+        return {
+          stored: [],
+          written: 0,
+          total: toWrite.length,
+          failedOn: null,
+          error: NO_EDITOR,
+        };
+      }
 
-    setBusy(true);
-    try {
-      const result = await appendEach(port, toWrite.map((event) => ({ ...event, editor })));
-      if (result.stored.length > 0) setEvents((held) => [...(held ?? []), ...result.stored]);
-      setError(result.error);
-      return result;
-    } finally {
-      setBusy(false);
-    }
-  }, [port, editor]);
+      setBusy(true);
+      try {
+        const result = await appendEach(
+          port,
+          toWrite.map((event) => ({ ...event, editor })),
+        );
+        if (result.stored.length > 0) setEvents((held) => [...(held ?? []), ...result.stored]);
+        setError(result.error);
+        return result;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [port, editor],
+  );
 
   return {
     derived,

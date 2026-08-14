@@ -12,7 +12,10 @@ function call(handle, url, method = 'POST') {
   return new Promise((resolve) => {
     const chunks = [];
     const response = {
-      writeHead(status, headers) { this.status = status; this.headers = headers; },
+      writeHead(status, headers) {
+        this.status = status;
+        this.headers = headers;
+      },
       end(body) {
         if (body) chunks.push(body);
         resolve({ status: this.status, body: JSON.parse(String(chunks.join(''))) });
@@ -53,7 +56,9 @@ describe('the re-check endpoint', () => {
   it('refuses on maintenance mode rather than answering with findings', async () => {
     // Ticket 04: a run that records the maintenance page records phantom defects.
     const handle = createApi({
-      recheck: async () => { throw new MaintenanceError('https://example.test', 'HTTP 503'); },
+      recheck: async () => {
+        throw new MaintenanceError('https://example.test', 'HTTP 503');
+      },
     });
     const { status, body } = await call(handle, '/api/recheck/nl/overkappingen');
     expect(status).toBe(503);

@@ -38,13 +38,13 @@ export function bulkDismissal({ repeat, byFinding, note, selected }) {
   // **before** the press, and until a reason is typed there are no events to count.
   const events = reason
     ? on.map((entry) => ({
-      scope: 'finding',
-      action: 'dismissed',
-      store: repeat.store,
-      page: entry.page,
-      findingId: entry.id,
-      note: reason,
-    }))
+        scope: 'finding',
+        action: 'dismissed',
+        store: repeat.store,
+        page: entry.page,
+        findingId: entry.id,
+        note: reason,
+      }))
     : [];
 
   // Both numbers over the **selection**: *4 pages of the 6* is a sentence about the
@@ -96,9 +96,8 @@ export function bulkAnnotation({ pages, selected, event }) {
  * that has no selection to make — a test, a future caller with a whole repeat in hand —
  * ask the same question of the same function.
  */
-const ticked = (repeat, selected) => (
-  selected ? repeat.on.filter((entry) => selected.has(entry.id)) : repeat.on
-);
+const ticked = (repeat, selected) =>
+  selected ? repeat.on.filter((entry) => selected.has(entry.id)) : repeat.on;
 
 /**
  * The states a dismissal is offered on, which are `OverrideControl.jsx`'s two. An

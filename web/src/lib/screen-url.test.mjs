@@ -111,16 +111,18 @@ describe('a control that belongs to one view', () => {
   // promising an order that orders nothing on screen.
   it('writes the sort only while the page list is the view', () => {
     expect(searchFromScreen({ ...SCREEN, sort: 'name' })).toBe('');
-    expect(searchFromScreen({ ...SCREEN, view: 'pages', sort: 'name' }))
-      .toBe('view=pages&sort=name');
+    expect(searchFromScreen({ ...SCREEN, view: 'pages', sort: 'name' })).toBe(
+      'view=pages&sort=name',
+    );
   });
 
   // *Include closed* belongs to the search, and there is no search without a
   // term. `Dashboard.jsx` says as much: the views answer about the work that is left.
   it('writes include closed only while something is typed', () => {
     expect(searchFromScreen({ ...SCREEN, includeClosed: true })).toBe('');
-    expect(searchFromScreen({ ...SCREEN, query: 'deals', includeClosed: true }))
-      .toBe('query=deals&closed=1');
+    expect(searchFromScreen({ ...SCREEN, query: 'deals', includeClosed: true })).toBe(
+      'query=deals&closed=1',
+    );
     expect(screenFromSearch('query=deals&closed=1').includeClosed).toBe(true);
   });
 });

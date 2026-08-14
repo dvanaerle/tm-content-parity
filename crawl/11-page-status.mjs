@@ -49,7 +49,8 @@ async function ask(url) {
       return { status: response.status, redirect: response.headers.get('location') ?? '' };
     } catch (error) {
       if (error instanceof MaintenanceError) throw error;
-      if (attempt === 2) return { status: 0, redirect: '', error: String(error.cause?.code ?? error.message) };
+      if (attempt === 2)
+        return { status: 0, redirect: '', error: String(error.cause?.code ?? error.message) };
     }
   }
 }
@@ -89,7 +90,7 @@ if (failure instanceof MaintenanceError) {
 if (failure) throw failure;
 
 results.sort((a, b) =>
-  `${a.store} ${a.page} ${a.side}` < `${b.store} ${b.page} ${b.side}` ? -1 : 1
+  `${a.store} ${a.page} ${a.side}` < `${b.store} ${b.page} ${b.side}` ? -1 : 1,
 );
 
 const counts = summariseStatus(results);
@@ -113,8 +114,8 @@ writeFileSync(
       results,
     },
     null,
-    2
-  )}\n`
+    2,
+  )}\n`,
 );
 
 console.log(`\n${results.length} answers over ${targets.length} urls`);

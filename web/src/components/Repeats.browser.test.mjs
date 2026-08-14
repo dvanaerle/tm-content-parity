@@ -45,12 +45,17 @@ const other = {
 };
 
 const derived = (id, extra = {}) => ({
-  id, state: 'open', visibility: 'work', class: 'copy', anchorHeading: 'Afmetingen', occurrences: 1, ...extra,
+  id,
+  state: 'open',
+  visibility: 'work',
+  class: 'copy',
+  anchorHeading: 'Afmetingen',
+  occurrences: 1,
+  ...extra,
 });
 
-const byFinding = (overrides = {}) => new Map(
-  repeat.on.map((entry) => [entry.id, derived(entry.id, overrides[entry.id] ?? {})]),
-);
+const byFinding = (overrides = {}) =>
+  new Map(repeat.on.map((entry) => [entry.id, derived(entry.id, overrides[entry.id] ?? {})]));
 
 /**
  * The `bulk` bag the dashboard hands down, with a spy where the log is. `written` is what
@@ -76,24 +81,33 @@ function mount(props = {}) {
   document.body.append(host);
   const root = createRoot(host);
   const bulk = props.bulk ?? bulkBag();
-  act(() => root.render(createElement(Repeats, {
-    repeats: [repeat],
-    byFinding: byFinding(),
-    bulk,
-    link: (store, page) => `/${store}/${page}/`,
-    ...props,
-  })));
+  act(() =>
+    root.render(
+      createElement(Repeats, {
+        repeats: [repeat],
+        byFinding: byFinding(),
+        bulk,
+        link: (store, page) => `/${store}/${page}/`,
+        ...props,
+      }),
+    ),
+  );
   return { bulk, unmount: () => act(() => root.unmount()) };
 }
 
 /** Every button whose words start with these, which is how the two presses are found. */
-const button = (words) => [...document.querySelectorAll('button')]
-  .find((element) => element.textContent.trim().startsWith(words));
+const button = (words) =>
+  [...document.querySelectorAll('button')].find((element) =>
+    element.textContent.trim().startsWith(words),
+  );
 
 const press = (element) => act(() => element.click());
 
 /** A press that writes, which is awaited: `appendMany()` is a promise. */
-const pressAndWait = (element) => act(async () => { element.click(); });
+const pressAndWait = (element) =>
+  act(async () => {
+    element.click();
+  });
 
 /**
  * Typing the note, with the browser's own keyboard rather than a synthesised event. The
@@ -110,7 +124,9 @@ const selectAll = () => document.querySelector('thead [data-slot="checkbox"]');
 /** The page checkboxes, which are the ones on the rows and not the one in the header. */
 const pageTicks = () => [...document.querySelectorAll('tbody [data-slot="checkbox"]')];
 
-afterEach(() => { document.body.innerHTML = ''; });
+afterEach(() => {
+  document.body.innerHTML = '';
+});
 
 describe('the selection on a difference', () => {
   it('opens with nothing ticked and nothing to press', () => {
@@ -190,12 +206,12 @@ describe('the selection on a difference', () => {
     // Two open differences with ticks in both must never produce one count that does not
     // say what it counts, so the bar carries the words of its own difference.
     const bar = document.querySelector('[data-slot="bulk-bar"]');
-    expect(bar.textContent).toContain("2 of 3 pages");
+    expect(bar.textContent).toContain('2 of 3 pages');
     expect(bar.textContent).toContain('oud');
     expect(bar.textContent).toContain('nieuw');
 
     // The press states the **selected** count and not the repeat's size.
-    expect(button("Dismiss on 2 pages")).toBeDefined();
+    expect(button('Dismiss on 2 pages')).toBeDefined();
     unmount();
   });
 
@@ -205,14 +221,14 @@ describe('the selection on a difference', () => {
     press(differenceRow());
     press(pageTicks()[0]);
     press(pageTicks()[2]);
-    press(button("Dismiss on 2 pages"));
+    press(button('Dismiss on 2 pages'));
 
     // Ticking writes nothing: the press still costs a button, a note and a submit, and
     // there is no path from a checkbox to the log without all three.
     expect(bulk.calls).toHaveLength(0);
 
     await type('afgesproken met de redactie');
-    await pressAndWait(button("Dismiss on 2 pages"));
+    await pressAndWait(button('Dismiss on 2 pages'));
 
     expect(bulk.calls).toHaveLength(1);
     expect(bulk.calls[0].map((event) => event.page)).toEqual(['overkapping', 'carport']);
@@ -238,7 +254,7 @@ describe('the selection on a difference', () => {
 
     expect(selectAll()).not.toBeNull();
     press(selectAll());
-    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 of 3 pages");
+    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain('3 of 3 pages');
     unmount();
   });
 
@@ -273,15 +289,18 @@ describe('the selection on a difference', () => {
     press(differenceRow());
     press(selectAll());
 
-    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain("3 of 3 pages");
-    expect(pageTicks().map((tick) => tick.getAttribute('aria-checked')))
-      .toEqual(['true', 'true', 'true']);
+    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain('3 of 3 pages');
+    expect(pageTicks().map((tick) => tick.getAttribute('aria-checked'))).toEqual([
+      'true',
+      'true',
+      'true',
+    ]);
     expect(selectAll().getAttribute('aria-checked')).toBe('true');
 
     // The decided page is still drawn with its state, and the dismissal still leaves it
     // alone: two of the three, not three.
     expect(document.querySelector('table').textContent).toContain('dismissed');
-    expect(button("Dismiss on 2 pages")).toBeDefined();
+    expect(button('Dismiss on 2 pages')).toBeDefined();
     unmount();
   });
 
@@ -305,16 +324,18 @@ describe('the selection on a difference', () => {
     press(selectAll());
 
     const bar = document.querySelector('[data-slot="bulk-bar"]');
-    expect(bar.textContent).toContain("3 of 3 pages");
+    expect(bar.textContent).toContain('3 of 3 pages');
     expect(selectAll().getAttribute('aria-checked')).toBe('true');
 
     expect(button('Dismiss')).toBeUndefined();
     // *Afgehandeld* and never *beslist*: `f3` is a claim of fact and not a judgement, and
     // the third page is why the looser word would be a lie about a colleague's tick.
-    expect(bar.textContent).toContain('Every finding here is closed already, so there is nothing to dismiss');
+    expect(bar.textContent).toContain(
+      'Every finding here is closed already, so there is nothing to dismiss',
+    );
     // Two of the three: a claim of fact is not this control's to take back — `fixed` has
     // its own checkbox on the page, and two controls for one event would let them disagree.
-    expect(button("Clear on 2 pages")).toBeDefined();
+    expect(button('Clear on 2 pages')).toBeDefined();
     unmount();
   });
 
@@ -351,17 +372,25 @@ describe('the selection on a difference', () => {
     press(selectAll());
 
     // Over the ticked pages it can act on: the third is open and has nothing to undo.
-    await pressAndWait(button("Clear on 2 pages"));
+    await pressAndWait(button('Clear on 2 pages'));
 
     expect(bulk.calls).toHaveLength(1);
     // No note and no second press: a `cleared` event carries no reason, and the single
     // control it mirrors asks for none either.
     expect(bulk.calls[0]).toEqual([
       {
-        scope: 'finding', action: 'cleared', store: 'nl', page: 'overkapping', findingId: 'f1',
+        scope: 'finding',
+        action: 'cleared',
+        store: 'nl',
+        page: 'overkapping',
+        findingId: 'f1',
       },
       {
-        scope: 'finding', action: 'cleared', store: 'nl', page: 'veranda', findingId: 'f2',
+        scope: 'finding',
+        action: 'cleared',
+        store: 'nl',
+        page: 'veranda',
+        findingId: 'f2',
       },
     ]);
     unmount();
@@ -459,10 +488,14 @@ describe('the selection on a difference', () => {
 
     press(differenceRow());
     press(pageTicks()[0]);
-    const mixed = document.querySelector('[data-slot="checkbox-indicator"] svg').getAttribute('class');
+    const mixed = document
+      .querySelector('[data-slot="checkbox-indicator"] svg')
+      .getAttribute('class');
 
     press(selectAll());
-    const all = document.querySelector('[data-slot="checkbox-indicator"] svg').getAttribute('class');
+    const all = document
+      .querySelector('[data-slot="checkbox-indicator"] svg')
+      .getAttribute('class');
 
     expect(mixed).not.toBe(all);
     unmount();

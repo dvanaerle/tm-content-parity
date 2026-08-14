@@ -59,19 +59,26 @@ const PAGES = ['carport', 'terrasoverkapping', '(home)'];
  * on, and the campaign's own terms page, which is the one page whose editorial
  * copy is about this campaign.
  */
-const CONTROL = ['downloads', 'betaalmethoden', 'showroom-contact', 'actievoorwaarden-10-korting-terrasoverkappingen'];
+const CONTROL = [
+  'downloads',
+  'betaalmethoden',
+  'showroom-contact',
+  'actievoorwaarden-10-korting-terrasoverkappingen',
+];
 
 /**
  * The entry under test, capped at the ceiling rather than at its own number, so
  * the probe measures a candidate instead of throwing on it.
  */
-const ENTRY = [{
-  selector: SELECTOR,
-  kind: 'legacy-only',
-  reason: 'The entry under test. The committed reason is in shared/excluded-regions.mjs.',
-  measured: { pages: PAGES, production: 0, new: 0 },
-  maxUnits: ABSOLUTE_MAX_UNITS,
-}];
+const ENTRY = [
+  {
+    selector: SELECTOR,
+    kind: 'legacy-only',
+    reason: 'The entry under test. The committed reason is in shared/excluded-regions.mjs.',
+    measured: { pages: PAGES, production: 0, new: 0 },
+    maxUnits: ABSOLUTE_MAX_UNITS,
+  },
+];
 
 const seeds = JSON.parse(await readFile(SEEDS, 'utf8'));
 
@@ -129,11 +136,12 @@ async function measure(store, page, side, url, hosts) {
  * `redirect` are not counted here, on either side of the cut.
  */
 function findingsBeforeAndAfter(production, next) {
-  const run = (a, b) => comparePage({
-    sides: { production: a, new: b },
-    newSitePaths: new Set(),
-    statuses: new Map(),
-  });
+  const run = (a, b) =>
+    comparePage({
+      sides: { production: a, new: b },
+      newSitePaths: new Set(),
+      statuses: new Map(),
+    });
 
   const before = run(production.kept, next.kept);
   const after = run(production.cut, next.cut);
@@ -190,21 +198,27 @@ for (const store of STORES) {
       ]);
       const findings = findingsBeforeAndAfter(production, next);
       rows.push({
-        store, page, control: CONTROL.includes(page),
-        production: production.numbers, new: next.numbers, findings,
+        store,
+        page,
+        control: CONTROL.includes(page),
+        production: production.numbers,
+        new: next.numbers,
+        findings,
       });
 
       console.log(
-        `${page.padEnd(46)} ${store.padEnd(6)} `
-        + `prod matches=${production.numbers.matches} units -${production.numbers.unitsRemoved} `
-        + `links -${production.numbers.linksRemoved} | `
-        + `new matches=${next.numbers.matches} units -${next.numbers.unitsRemoved} | `
-        + `findings ${findings.findingsBefore}→${findings.findingsAfter} `
-        + `(${findings.gone} gone, ${findings.appeared} appeared)`
+        `${page.padEnd(46)} ${store.padEnd(6)} ` +
+          `prod matches=${production.numbers.matches} units -${production.numbers.unitsRemoved} ` +
+          `links -${production.numbers.linksRemoved} | ` +
+          `new matches=${next.numbers.matches} units -${next.numbers.unitsRemoved} | ` +
+          `findings ${findings.findingsBefore}→${findings.findingsAfter} ` +
+          `(${findings.gone} gone, ${findings.appeared} appeared)`,
       );
     } catch (error) {
       rows.push({ store, page, control: CONTROL.includes(page), error: String(error) });
-      console.log(`${page.padEnd(46)} ${store.padEnd(6)} ERR ${error.name}: ${error.message.slice(0, 80)}`);
+      console.log(
+        `${page.padEnd(46)} ${store.padEnd(6)} ERR ${error.name}: ${error.message.slice(0, 80)}`,
+      );
     }
   }
 }
@@ -220,15 +234,19 @@ for (const store of STORES) {
   const counts = [...new Set(mine.map((r) => r.production.unitsRemoved))].sort();
   const matches = [...new Set(mine.map((r) => r.production.matches))].sort();
   console.log(
-    `  ${store.padEnd(6)} pages=${mine.length} unitsRemoved=${counts.join('/')} `
-    + `matches=${matches.join('/')} `
-    + `${counts.length === 1 ? 'constant' : 'NOT CONSTANT — look at this'}`
+    `  ${store.padEnd(6)} pages=${mine.length} unitsRemoved=${counts.join('/')} ` +
+      `matches=${matches.join('/')} ` +
+      `${counts.length === 1 ? 'constant' : 'NOT CONSTANT — look at this'}`,
   );
 }
 
 const appeared = rows.filter((r) => r.findings?.appeared > 0);
 console.log(`\npages where a finding appeared: ${appeared.length}`);
-for (const row of appeared) console.log(`  ${row.store} ${row.page}`, JSON.stringify(row.findings.appearedRows));
+for (const row of appeared)
+  console.log(`  ${row.store} ${row.page}`, JSON.stringify(row.findings.appearedRows));
 
-await writeFile(OUT, JSON.stringify({ selector: SELECTOR, at: new Date().toISOString(), rows }, null, 2));
+await writeFile(
+  OUT,
+  JSON.stringify({ selector: SELECTOR, at: new Date().toISOString(), rows }, null, 2),
+);
 console.log(`\nwrote ${OUT.pathname}`);

@@ -27,12 +27,14 @@ export function PageBar({ bar, ready }) {
           closed` is the empty-read lie in another shape. The denominator is
           the snapshot's own and is true either way.
         */}
-        <span className="tabular-nums text-muted-foreground">
+        <span className="text-muted-foreground tabular-nums">
           {ready ? `${bar.closed} of ${bar.denominator} closed` : `${bar.denominator} differences`}
         </span>
-        {ready && <span className="tabular-nums text-muted-foreground">{bar.open} open</span>}
+        {ready && <span className="text-muted-foreground tabular-nums">{bar.open} open</span>}
         {ready && bar.contradicted > 0 && (
-          <span className={cn('tabular-nums', INK.attention)}>{bar.contradicted} claimed fixed, still differs</span>
+          <span className={cn('tabular-nums', INK.attention)}>
+            {bar.contradicted} claimed fixed, still differs
+          </span>
         )}
       </div>
       {/* The bar stays hand-rolled. shadcn's `Progress` builds its own track and
@@ -110,11 +112,7 @@ export function EditorPrompt({ editor, save }) {
         if (String(value).trim()) save(String(value));
       }}
     >
-      <Input
-        name="editor"
-        defaultValue={editor}
-        placeholder="Your name"
-      />
+      <Input name="editor" defaultValue={editor} placeholder="Your name" />
       {/* Base UI's button is a `type="button"` by default, so the submit is
           declared here rather than assumed. */}
       <Button type="submit" variant="outline">
@@ -139,8 +137,8 @@ export function LogBanner({ connected, notConnectedReason, ready, error }) {
     // ticket 35 keeps red for "production had this and the new site lost it".
     return (
       <Banner tone="severe">
-        <strong>The override log does not answer.</strong> The page is read-only, so you
-        cannot lose a change that you think is saved.{' '}
+        <strong>The override log does not answer.</strong> The page is read-only, so you cannot lose
+        a change that you think is saved.{' '}
         {/*
           A failed read keeps the last good one, so the two cases say different
           things. Telling an editor "no overrides" while their own dismissals are
@@ -156,8 +154,8 @@ export function LogBanner({ connected, notConnectedReason, ready, error }) {
   if (!connected) {
     return (
       <Banner tone="attention">
-        <strong>No connection to the override log.</strong> {notConnectedReason} The Fixed
-        tick and Dismiss are off; the rest of the log works.
+        <strong>No connection to the override log.</strong> {notConnectedReason} The Fixed tick and
+        Dismiss are off; the rest of the log works.
       </Banner>
     );
   }

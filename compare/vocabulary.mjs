@@ -64,22 +64,44 @@ export const VISIBILITIES = ['work', 'information', 'diagnostic'];
 export const FINDING_CLASSES = {
   // Ticket 02 — text
   copy: { check: 'text', visibility: 'work', meaning: 'The text changed. Both sides are present.' },
-  casing: { check: 'text', visibility: 'work', meaning: 'Only letter case or trailing punctuation is different.' },
+  casing: {
+    check: 'text',
+    visibility: 'work',
+    meaning: 'Only letter case or trailing punctuation is different.',
+  },
   // Triaged by ticket 75. It is the class that tells *moved* from *gone* (ADR 0006), which
   // is a difference an editor reads and not a report about the rule.
-  restructured: { check: 'text', visibility: 'information', meaning: 'The same content, but a different element on each side.' },
+  restructured: {
+    check: 'text',
+    visibility: 'information',
+    meaning: 'The same content, but a different element on each side.',
+  },
   // Triaged by ticket 75. A number that differs is a real content difference worth reading;
   // it is nobody's migration work.
   price: { check: 'text', visibility: 'information', meaning: 'Only the numbers are different.' },
   // Triaged by ticket 75. The finding exists because a promotional pattern matched on both
   // sides — it reports what the rule matched, which is a diagnostic.
-  campaign: { check: 'text', visibility: 'diagnostic', meaning: 'Promotional copy. The pattern must match both sides.' },
+  campaign: {
+    check: 'text',
+    visibility: 'diagnostic',
+    meaning: 'Promotional copy. The pattern must match both sides.',
+  },
 
   // Ticket 33 — text, by direction. These replace `structure`.
-  'text-missing': { check: 'text', visibility: 'work', direction: 'lost', meaning: 'Production has the text. The new site does not.' },
+  'text-missing': {
+    check: 'text',
+    visibility: 'work',
+    direction: 'lost',
+    meaning: 'Production has the text. The new site does not.',
+  },
   // Triaged by ticket 75, and it is the example ADR 0005 argues from: content the new site
   // invented is usually not a defect, and an editor may want to read it.
-  'text-added': { check: 'text', visibility: 'information', direction: 'added', meaning: 'The new site has text that production does not have.' },
+  'text-added': {
+    check: 'text',
+    visibility: 'information',
+    direction: 'added',
+    meaning: 'The new site has text that production does not have.',
+  },
 
   // Ticket 33 — the same text in a different element. Silent before this ticket.
   // One class covers a level change and a promotion to or from a heading. The
@@ -96,32 +118,92 @@ export const FINDING_CLASSES = {
   // nobody has decided about; it renders, it keeps its `detail` and its id, and it counts
   // nowhere. Where heading hierarchy is handled instead: nowhere yet — ticket 117 carries
   // the 14 pages whose `h1` moved, deliberately untriaged.
-  'heading-level': { check: 'text', visibility: 'information', meaning: 'The text is the same, and it is a heading on one side or at another level.' },
+  'heading-level': {
+    check: 'text',
+    visibility: 'information',
+    meaning: 'The text is the same, and it is a heading on one side or at another level.',
+  },
   // Triaged by ticket 75. The same words in a different element, neither of them a heading:
   // nothing moved for a reader, and what it reports is what the alignment saw.
-  'tag-changed': { check: 'text', visibility: 'diagnostic', meaning: 'The text is the same, and it sits in a different element. Neither side is a heading.' },
+  'tag-changed': {
+    check: 'text',
+    visibility: 'diagnostic',
+    meaning: 'The text is the same, and it sits in a different element. Neither side is a heading.',
+  },
 
   // Ticket 05 — links
-  'broken-link': { check: 'links', visibility: 'work', meaning: 'The target does not answer. It fires also if production is broken.' },
-  'missing-link': { check: 'links', visibility: 'work', direction: 'lost', meaning: 'Production has the link. The new site does not.' },
-  'link-target': { check: 'links', visibility: 'work', meaning: 'The two sides point at different targets.' },
-  leakage: { check: 'links', visibility: 'work', meaning: 'The new site points at the live domain, and that path exists as a new-site page.' },
-  'cross-store-link': { check: 'links', visibility: 'work', meaning: 'The link goes to the host of a different store.' },
+  'broken-link': {
+    check: 'links',
+    visibility: 'work',
+    meaning: 'The target does not answer. It fires also if production is broken.',
+  },
+  'missing-link': {
+    check: 'links',
+    visibility: 'work',
+    direction: 'lost',
+    meaning: 'Production has the link. The new site does not.',
+  },
+  'link-target': {
+    check: 'links',
+    visibility: 'work',
+    meaning: 'The two sides point at different targets.',
+  },
+  leakage: {
+    check: 'links',
+    visibility: 'work',
+    meaning: 'The new site points at the live domain, and that path exists as a new-site page.',
+  },
+  'cross-store-link': {
+    check: 'links',
+    visibility: 'work',
+    meaning: 'The link goes to the host of a different store.',
+  },
   // Triaged by ticket 75, and it is the other example ADR 0005 argues from: the target
   // answers, so it tells the author of the link rule what the rule saw.
-  redirect: { check: 'links', visibility: 'diagnostic', meaning: 'The target answers, after a redirect.' },
+  redirect: {
+    check: 'links',
+    visibility: 'diagnostic',
+    meaning: 'The target answers, after a redirect.',
+  },
   // Triaged by ticket 75. The `added` side of the direction rule, the same on all three
   // checks: a link the new site invented is not work, and it is worth reading.
-  'extra-link': { check: 'links', visibility: 'information', direction: 'added', meaning: 'The new site has a link that production does not have.' },
+  'extra-link': {
+    check: 'links',
+    visibility: 'information',
+    direction: 'added',
+    meaning: 'The new site has a link that production does not have.',
+  },
 
   // Ticket 06 — images
-  'image-missing': { check: 'images', visibility: 'work', direction: 'lost', meaning: 'Production has the image. The new site does not.' },
-  'alt-lost': { check: 'images', visibility: 'work', meaning: 'Production has alt text. The new site has none.' },
-  'alt-changed': { check: 'images', visibility: 'work', meaning: 'Both sides have alt text, and it is different.' },
+  'image-missing': {
+    check: 'images',
+    visibility: 'work',
+    direction: 'lost',
+    meaning: 'Production has the image. The new site does not.',
+  },
+  'alt-lost': {
+    check: 'images',
+    visibility: 'work',
+    meaning: 'Production has alt text. The new site has none.',
+  },
+  'alt-changed': {
+    check: 'images',
+    visibility: 'work',
+    meaning: 'Both sides have alt text, and it is different.',
+  },
   // Triaged by ticket 75. The `added` side of the direction rule, on the images check.
-  'image-added': { check: 'images', visibility: 'information', direction: 'added', meaning: 'The new site has an image that production does not have.' },
+  'image-added': {
+    check: 'images',
+    visibility: 'information',
+    direction: 'added',
+    meaning: 'The new site has an image that production does not have.',
+  },
   // Triaged by ticket 75, as `campaign`: it reports a pattern the rule matched.
-  'image-campaign': { check: 'images', visibility: 'diagnostic', meaning: 'A campaign image. The pattern matches on either side.' },
+  'image-campaign': {
+    check: 'images',
+    visibility: 'diagnostic',
+    meaning: 'A campaign image. The pattern matches on either side.',
+  },
 
   // Ticket 54 — the page metadata, not the page. `CONTEXT.md` separates "no NL
   // page" from "no declared alternate": the first says the store has content NL
@@ -131,7 +213,12 @@ export const FINDING_CLASSES = {
   // change, and what it reports is why the log could not place the page. It is the
   // `meta` check because it is metadata about the page; it reaches the log
   // through the page key and not through the `<head>`.
-  'no-declared-alternate': { check: 'meta', visibility: 'diagnostic', meaning: 'Production declares no hreflang alternate for this page, so the log cannot put it beside the other stores.' },
+  'no-declared-alternate': {
+    check: 'meta',
+    visibility: 'diagnostic',
+    meaning:
+      'Production declares no hreflang alternate for this page, so the log cannot put it beside the other stores.',
+  },
 };
 
 /**
@@ -157,7 +244,6 @@ export const visibilityOf = (cls) => FINDING_CLASSES[cls]?.visibility ?? 'diagno
  * @param {string} cls
  */
 export const isWork = (cls) => visibilityOf(cls) === 'work';
-
 
 /** @type {Check[]} */
 export const CHECKS = ['text', 'links', 'images', 'meta'];

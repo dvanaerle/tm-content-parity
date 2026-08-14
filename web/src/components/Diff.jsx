@@ -145,15 +145,15 @@ function Cell({ side, value, spans, tint, prefix, raw, mono, strong, clamped, no
   const shape = 'px-2 py-3 align-top whitespace-normal';
 
   if (value === null || value === '') {
-    return <TableCell className={`${shape} text-sm italic text-muted-foreground`}>not present</TableCell>;
+    return (
+      <TableCell className={`${shape} text-sm text-muted-foreground italic`}>not present</TableCell>
+    );
   }
 
   return (
-    <TableCell
-      className={cn(shape, 'break-words', tint, mono ? 'font-mono text-xs' : 'text-sm')}
-    >
+    <TableCell className={cn(shape, 'break-words', tint, mono ? 'font-mono text-xs' : 'text-sm')}>
       {prefix}
-      {note && <p className="mb-1 text-xs italic text-muted-foreground">{note}</p>}
+      {note && <p className="mb-1 text-xs text-muted-foreground italic">{note}</p>}
       <span className={`${strong ? 'font-semibold' : ''} ${clamped ? 'line-clamp-4' : ''}`}>
         {spans ? <Spans spans={spansFor(spans, side)} /> : value}
       </span>

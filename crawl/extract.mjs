@@ -7,7 +7,12 @@
  */
 
 import { parse } from 'node-html-parser';
-import { EXCLUDED_REGIONS, capBreachMessage, capFor, validateRegions } from '../shared/excluded-regions.mjs';
+import {
+  EXCLUDED_REGIONS,
+  capBreachMessage,
+  capFor,
+  validateRegions,
+} from '../shared/excluded-regions.mjs';
 import { imageKey, linkKey } from '../shared/keys.mjs';
 import { collapse, tier1 } from './normalise.mjs';
 
@@ -32,8 +37,13 @@ const TEXT_TAGS = `${BLOCK_TAGS},${FOLDABLE}`;
  * the `body` fallback only.
  */
 const CHROME = [
-  'header', 'footer', 'nav', 'form',
-  '[class*="breadcrumb"]', '[class*="menu"]', '[role="dialog"]',
+  'header',
+  'footer',
+  'nav',
+  'form',
+  '[class*="breadcrumb"]',
+  '[class*="menu"]',
+  '[role="dialog"]',
 ];
 
 /**
@@ -190,8 +200,11 @@ function removeExcludedRegions(scope, entries, where) {
 
     for (const node of matches) node.remove();
     removed.push({
-      selector: entry.selector, kind: entry.kind, reason: entry.reason,
-      matches: matches.length, units,
+      selector: entry.selector,
+      kind: entry.kind,
+      reason: entry.reason,
+      matches: matches.length,
+      units,
     });
   }
 
@@ -220,9 +233,9 @@ function assertHasContent(extract) {
   if (extract.elements.length || extract.images.length || extract.links.length) return;
 
   throw new Error(
-    'No text, image or link inside the content boundary on an HTTP 200 page. '
-    + 'Either the parse is broken, or this is an application page that '
-    + 'belongs in shared/excluded-pages.mjs.'
+    'No text, image or link inside the content boundary on an HTTP 200 page. ' +
+      'Either the parse is broken, or this is an application page that ' +
+      'belongs in shared/excluded-pages.mjs.',
   );
 }
 
@@ -475,7 +488,8 @@ export function toMarkdown(units) {
  */
 export function extractPage(html, context) {
   const { store, page, side, url, status = 200, prodHost, newHost } = context;
-  const warn = context.onWarn ?? ((message) => console.warn(`${store}/${page} ${side}: ${message}`));
+  const warn =
+    context.onWarn ?? ((message) => console.warn(`${store}/${page} ${side}: ${message}`));
 
   const root = parse(html, PARSE_OPTIONS);
   const { scope, boundary } = contentRoot(root, warn);

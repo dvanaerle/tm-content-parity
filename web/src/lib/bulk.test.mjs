@@ -23,11 +23,13 @@ const on = (page, id) => ({ page, id, occurrences: 1 });
  * keyed on one. The heading is still a field on a finding and is still rendered — it is how
  * a difference says where it is — but no press here reads it.
  */
-const byFinding = (states) => new Map(
-  Object.entries(states).map(([id, state]) => [
-    id, { id, state, visibility: 'work', class: 'copy' },
-  ]),
-);
+const byFinding = (states) =>
+  new Map(
+    Object.entries(states).map(([id, state]) => [
+      id,
+      { id, state, visibility: 'work', class: 'copy' },
+    ]),
+  );
 
 describe('bulkDismissal', () => {
   it('writes one dismissal per page of the repeat, aimed at that page', () => {
@@ -141,7 +143,10 @@ describe('a press narrowed to the ticked pages', () => {
     const decision = bulkDismissal({
       repeat: repeat([on('a', 'f1'), on('b', 'f2'), on('c', 'f3'), on('d', 'f4')]),
       byFinding: byFinding({
-        f1: 'open', f2: 'contradicted', f3: 'dismissed', f4: 'fixed',
+        f1: 'open',
+        f2: 'contradicted',
+        f3: 'dismissed',
+        f4: 'fixed',
       }),
       note: 'geen defect',
     });
@@ -169,15 +174,22 @@ describe('a press narrowed to the ticked pages', () => {
   it('presses nothing at all on an empty selection', () => {
     const empty = new Set();
 
-    expect(bulkDismissal({
-      repeat: three, byFinding: open3, note: 'geen defect', selected: empty,
-    })).toMatchObject({ covers: 0, decided: 0, events: [] });
+    expect(
+      bulkDismissal({
+        repeat: three,
+        byFinding: open3,
+        note: 'geen defect',
+        selected: empty,
+      }),
+    ).toMatchObject({ covers: 0, decided: 0, events: [] });
 
-    expect(bulkClear({
-      repeat: three,
-      byFinding: byFinding({ f1: 'dismissed', f2: 'dismissed', f3: 'dismissed' }),
-      selected: empty,
-    })).toMatchObject({ covers: 0, skipped: 0, events: [] });
+    expect(
+      bulkClear({
+        repeat: three,
+        byFinding: byFinding({ f1: 'dismissed', f2: 'dismissed', f3: 'dismissed' }),
+        selected: empty,
+      }),
+    ).toMatchObject({ covers: 0, skipped: 0, events: [] });
   });
 });
 
@@ -194,14 +206,28 @@ describe('bulkClear', () => {
   it('clears a dismissal on the finding it was made on', () => {
     const { events } = bulkClear({
       repeat: repeat([on('overkapping', 'f1')]),
-      byFinding: new Map([['f1', {
-        id: 'f1', state: 'dismissed', class: 'copy', override: { action: 'dismissed' },
-      }]]),
+      byFinding: new Map([
+        [
+          'f1',
+          {
+            id: 'f1',
+            state: 'dismissed',
+            class: 'copy',
+            override: { action: 'dismissed' },
+          },
+        ],
+      ]),
     });
 
-    expect(events).toEqual([{
-      scope: 'finding', action: 'cleared', store: 'nl', page: 'overkapping', findingId: 'f1',
-    }]);
+    expect(events).toEqual([
+      {
+        scope: 'finding',
+        action: 'cleared',
+        store: 'nl',
+        page: 'overkapping',
+        findingId: 'f1',
+      },
+    ]);
   });
 
   /**
@@ -214,23 +240,34 @@ describe('bulkClear', () => {
     const { events } = bulkClear({
       repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
       byFinding: new Map([
-        ['f1', {
-          id: 'f1',
-          state: 'dismissed',
-          class: 'copy',
-          anchorHeading: 'Afmetingen',
-          override: { action: 'dismissed' },
-        }],
+        [
+          'f1',
+          {
+            id: 'f1',
+            state: 'dismissed',
+            class: 'copy',
+            anchorHeading: 'Afmetingen',
+            override: { action: 'dismissed' },
+          },
+        ],
         ['f2', { id: 'f2', state: 'dismissed', class: 'copy', override: { action: 'dismissed' } }],
       ]),
     });
 
     expect(events).toEqual([
       {
-        scope: 'finding', action: 'cleared', store: 'nl', page: 'overkapping', findingId: 'f1',
+        scope: 'finding',
+        action: 'cleared',
+        store: 'nl',
+        page: 'overkapping',
+        findingId: 'f1',
       },
       {
-        scope: 'finding', action: 'cleared', store: 'nl', page: 'veranda', findingId: 'f2',
+        scope: 'finding',
+        action: 'cleared',
+        store: 'nl',
+        page: 'veranda',
+        findingId: 'f2',
       },
     ]);
     // Neither the class nor the section rides along. No override is keyed on either.
@@ -258,8 +295,10 @@ describe('bulkClear', () => {
     };
 
     expect(bulkClear(input).covers).toBe(1);
-    expect(bulkClear({ ...input, selected: new Set(['f2', 'f3']) }))
-      .toMatchObject({ covers: 0, events: [] });
+    expect(bulkClear({ ...input, selected: new Set(['f2', 'f3']) })).toMatchObject({
+      covers: 0,
+      events: [],
+    });
   });
 
   // No note, unlike the other two presses, and the same as the single control it mirrors:
@@ -268,9 +307,17 @@ describe('bulkClear', () => {
   it('writes without a note, because a cleared event has none to carry', () => {
     const { events } = bulkClear({
       repeat: repeat([on('overkapping', 'f1')]),
-      byFinding: new Map([['f1', {
-        id: 'f1', state: 'dismissed', class: 'copy', override: { action: 'dismissed' },
-      }]]),
+      byFinding: new Map([
+        [
+          'f1',
+          {
+            id: 'f1',
+            state: 'dismissed',
+            class: 'copy',
+            override: { action: 'dismissed' },
+          },
+        ],
+      ]),
     });
 
     expect(events[0]).not.toHaveProperty('note');
@@ -350,7 +397,9 @@ describe('bulkAnnotation', () => {
 
   it('writes one event per selected page, and none for a page nobody ticked', () => {
     const { events, covers } = bulkAnnotation({
-      pages, selected, event: priorityEventFor('high'),
+      pages,
+      selected,
+      event: priorityEventFor('high'),
     });
 
     expect(covers).toBe(2);
@@ -370,7 +419,9 @@ describe('bulkAnnotation', () => {
 
   it('writes nothing when nothing is ticked', () => {
     const { events, covers } = bulkAnnotation({
-      pages, selected: new Set(), event: priorityEventFor('high'),
+      pages,
+      selected: new Set(),
+      event: priorityEventFor('high'),
     });
     expect(events).toEqual([]);
     expect(covers).toBe(0);

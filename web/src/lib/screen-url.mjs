@@ -189,7 +189,11 @@ export function useScreen() {
     const write = setTimeout(() => {
       // The bare path when there is nothing to write, so clearing the last filter clears
       // the `?` as well rather than leaving an empty one behind to be copied.
-      window.history.replaceState(window.history.state, '', search ? `?${search}` : window.location.pathname);
+      window.history.replaceState(
+        window.history.state,
+        '',
+        search ? `?${search}` : window.location.pathname,
+      );
     }, MIRROR_DELAY);
 
     return () => clearTimeout(write);

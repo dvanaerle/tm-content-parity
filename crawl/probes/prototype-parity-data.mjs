@@ -16,19 +16,32 @@ const TEXT_TAGS = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,dt,dd,button,a,figcaption,t
 // Chrome nodes that are not page content. Boilerplate inflates the diff and is
 // the single biggest source of false positives.
 const CHROME = [
-  'header', 'footer', 'nav', 'form', 'script', 'style', 'noscript',
-  '[class*="breadcrumb"]', '[class*="cookie"]', '[class*="newsletter"]',
-  '[class*="menu"]', '[class*="modal"]', '[class*="drawer"]',
-  '[class*="usp-bar"]', '[class*="trustpilot"]', '[role="dialog"]',
+  'header',
+  'footer',
+  'nav',
+  'form',
+  'script',
+  'style',
+  'noscript',
+  '[class*="breadcrumb"]',
+  '[class*="cookie"]',
+  '[class*="newsletter"]',
+  '[class*="menu"]',
+  '[class*="modal"]',
+  '[class*="drawer"]',
+  '[class*="usp-bar"]',
+  '[class*="trustpilot"]',
+  '[role="dialog"]',
 ];
 
-const normalise = (s) => s
-  .replace(/ /g, ' ')
-  .replace(/[‘’‚‛]/g, "'")
-  .replace(/[“”„]/g, '"')
-  .replace(/[–—]/g, '-')
-  .replace(/\s+/g, ' ')
-  .trim();
+const normalise = (s) =>
+  s
+    .replace(/ /g, ' ')
+    .replace(/[‘’‚‛]/g, "'")
+    .replace(/[“”„]/g, '"')
+    .replace(/[–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 // Number-insensitive form. Prices, stock counts and review totals legitimately
 // differ between environments; masking them separates "content changed" from
@@ -41,10 +54,11 @@ function textOf(node) {
 
 function extractElements(html) {
   const root = parse(html);
-  const main = root.querySelector('main')
-    ?? root.querySelector('#maincontent')
-    ?? root.querySelector('body')
-    ?? root;
+  const main =
+    root.querySelector('main') ??
+    root.querySelector('#maincontent') ??
+    root.querySelector('body') ??
+    root;
 
   for (const selector of CHROME) {
     for (const node of main.querySelectorAll(selector)) node.remove();
@@ -59,8 +73,9 @@ function extractElements(html) {
 
     const tag = node.rawTagName.toLowerCase();
     if (tag === 'a') {
-      const isCta = node.getAttribute('data-element') === 'link'
-        || /button|btn|cta/i.test(node.getAttribute('class') ?? '');
+      const isCta =
+        node.getAttribute('data-element') === 'link' ||
+        /button|btn|cta/i.test(node.getAttribute('class') ?? '');
       if (!isCta) continue;
     }
 
@@ -71,7 +86,7 @@ function extractElements(html) {
     out.push({
       index: out.length,
       tag,
-      kind: /^h[1-6]$/.test(tag) ? 'heading' : (tag === 'a' || tag === 'button') ? 'cta' : 'text',
+      kind: /^h[1-6]$/.test(tag) ? 'heading' : tag === 'a' || tag === 'button' ? 'cta' : 'text',
       level: /^h[1-6]$/.test(tag) ? Number(tag.slice(1)) : null,
       raw,
       norm: raw.toLowerCase(),
@@ -87,17 +102,20 @@ function extractImages(html) {
   for (const selector of CHROME) {
     for (const node of main.querySelectorAll(selector)) node.remove();
   }
-  return main.querySelectorAll('img').map((img, i) => {
-    const src = img.getAttribute('src') ?? img.getAttribute('data-src') ?? '';
-    return {
-      index: i,
-      src,
-      // Magento rewrites cache paths per environment, so the filename is the
-      // only stable identity.
-      file: decodeURIComponent(src.split('?')[0].split('/').pop() ?? ''),
-      alt: normalise(img.getAttribute('alt') ?? ''),
-    };
-  }).filter((img) => img.file);
+  return main
+    .querySelectorAll('img')
+    .map((img, i) => {
+      const src = img.getAttribute('src') ?? img.getAttribute('data-src') ?? '';
+      return {
+        index: i,
+        src,
+        // Magento rewrites cache paths per environment, so the filename is the
+        // only stable identity.
+        file: decodeURIComponent(src.split('?')[0].split('/').pop() ?? ''),
+        alt: normalise(img.getAttribute('alt') ?? ''),
+      };
+    })
+    .filter((img) => img.file);
 }
 
 // Token overlap, 0..1. Cheap enough for a prototype and good enough to tell
@@ -119,9 +137,10 @@ function lcsPairs(left, right, key) {
   const table = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
   for (let i = n - 1; i >= 0; i -= 1) {
     for (let j = m - 1; j >= 0; j -= 1) {
-      table[i][j] = left[i][key] === right[j][key]
-        ? table[i + 1][j + 1] + 1
-        : Math.max(table[i + 1][j], table[i][j + 1]);
+      table[i][j] =
+        left[i][key] === right[j][key]
+          ? table[i + 1][j + 1] + 1
+          : Math.max(table[i + 1][j], table[i][j + 1]);
     }
   }
   const pairs = [];
@@ -180,7 +199,9 @@ function compare(prod, next) {
         prod: p,
         new: best,
         similarity: Number(bestScore.toFixed(2)),
-        note: numbersOnly ? 'Only numbers differ - likely a price or count, not a content defect' : null,
+        note: numbersOnly
+          ? 'Only numbers differ - likely a price or count, not a content defect'
+          : null,
       });
     } else {
       rows.push({ status: 'missing-on-new', prod: p, new: null });
@@ -243,16 +264,32 @@ function classify(row) {
 
   if (row.status === 'match') return { class: 'ok', confidence: 'high' };
   if (row.status === 'match-normalised') {
-    return { class: 'formatting', confidence: 'low', hint: 'Whitespace, casing or quote style only. Not a content defect.' };
+    return {
+      class: 'formatting',
+      confidence: 'low',
+      hint: 'Whitespace, casing or quote style only. Not a content defect.',
+    };
   }
   if (row.status === 'differs-numbers' || PRICE.test(text)) {
-    return { class: 'price', confidence: 'low', hint: 'Price or number. Environments hold different catalogue data - probably not a defect.' };
+    return {
+      class: 'price',
+      confidence: 'low',
+      hint: 'Price or number. Environments hold different catalogue data - probably not a defect.',
+    };
   }
   if (PROMO.test(text)) {
-    return { class: 'campaign', confidence: 'low', hint: 'Campaign or stock copy. Time-limited, so a mismatch is expected.' };
+    return {
+      class: 'campaign',
+      confidence: 'low',
+      hint: 'Campaign or stock copy. Time-limited, so a mismatch is expected.',
+    };
   }
   if (tag === 'td' || tag === 'th') {
-    return { class: 'restructured', confidence: 'low', hint: 'Table cell. The new site rebuilt this block as a table, so the same content reads as new.' };
+    return {
+      class: 'restructured',
+      confidence: 'low',
+      hint: 'Table cell. The new site rebuilt this block as a table, so the same content reads as new.',
+    };
   }
   if (row.status === 'differs') {
     return { class: 'copy', confidence: (row.similarity ?? 0) >= 0.8 ? 'medium' : 'high' };
@@ -311,7 +348,8 @@ const payload = {
     rawFindings: rows.reduce((n, r) => n + (r.status === 'match' ? 0 : r.occurrences), 0),
     groupedFindings: rows.filter((r) => r.status !== 'match').length,
     byClass: rows.reduce((acc, r) => ({ ...acc, [r.class]: (acc[r.class] ?? 0) + 1 }), {}),
-    byConfidence: rows.filter((r) => r.class !== 'ok')
+    byConfidence: rows
+      .filter((r) => r.class !== 'ok')
       .reduce((acc, r) => ({ ...acc, [r.confidence]: (acc[r.confidence] ?? 0) + 1 }), {}),
   },
   outline: prodEls,

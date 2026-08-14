@@ -6,7 +6,10 @@ import { EXCLUDED_PAGES } from '../../../shared/excluded-pages.mjs';
 import { DROP_RULES } from '../../../shared/drop-rules.mjs';
 import { STORES } from '../../../shared/stores.mjs';
 import {
-  excludedInStore, groupNotChecked, notCheckedInStore, storeTotals,
+  excludedInStore,
+  groupNotChecked,
+  notCheckedInStore,
+  storeTotals,
 } from './not-checked.mjs';
 
 const both = (path) => ({
@@ -30,7 +33,10 @@ const drop = (path, rule = 'product-signature', store = 'nl') => ({
  * gecontroleerd* on a store that does not have it.
  */
 describe('excludedInStore', () => {
-  const cell = { prodUrl: 'https://prod/veranda-configurator', newUrl: 'https://new/veranda-configurator' };
+  const cell = {
+    prodUrl: 'https://prod/veranda-configurator',
+    newUrl: 'https://new/veranda-configurator',
+  };
   const rows = (stores) => [row('veranda-configurator', stores)];
 
   it('gives the excluded page to a store that has both sides', () => {
@@ -48,7 +54,9 @@ describe('excludedInStore', () => {
     // The crawler needs both sides before it calls a page excluded. This asked
     // for the production url alone until ticket 38's review, so the two could
     // disagree on the same page.
-    expect(excludedInStore([row('veranda-configurator', { de: { prodUrl: 'https://p/x' } })], 'de')).toEqual([]);
+    expect(
+      excludedInStore([row('veranda-configurator', { de: { prodUrl: 'https://p/x' } })], 'de'),
+    ).toEqual([]);
   });
 
   it('gives nothing for a page that is not excluded', () => {
@@ -87,13 +95,21 @@ describe('notCheckedInStore', () => {
     // Ticket 38: a German dashboard that counted a Dutch drop would be reporting
     // a page the German store does not have.
     const found = notCheckedInStore({
-      rows, dropped: [drop('spuitbus-mat-wit')], crawled: [], store: 'de',
+      rows,
+      dropped: [drop('spuitbus-mat-wit')],
+      crawled: [],
+      store: 'de',
     });
     expect(found.filter((entry) => entry.kind === 'dropped-by-rule')).toEqual([]);
   });
 
   it('gives no store a drop of a foreign host, because it belongs to none', () => {
-    const foreign = { loc: 'https://www.example.com/veranda', store: null, path: 'veranda', rule: 'foreign-host' };
+    const foreign = {
+      loc: 'https://www.example.com/veranda',
+      store: null,
+      path: 'veranda',
+      rule: 'foreign-host',
+    };
     for (const store of STORES) {
       const found = notCheckedInStore({ rows, dropped: [foreign], crawled: [], store });
       expect(found.some((entry) => entry.url === foreign.loc)).toBe(false);
@@ -102,7 +118,10 @@ describe('notCheckedInStore', () => {
 
   it('carries the committed reason of an excluded page through unchanged', () => {
     const [entry] = notCheckedInStore({
-      rows, dropped: [], crawled: ['garantie', 'faq/offerte'], store: 'nl',
+      rows,
+      dropped: [],
+      crawled: ['garantie', 'faq/offerte'],
+      store: 'nl',
     }).filter((page) => page.kind === 'excluded-page');
 
     expect(entry.page).toBe('veranda-configurator');
@@ -121,7 +140,10 @@ describe('notCheckedInStore', () => {
 
   it('says nothing of a page that has a report', () => {
     const found = notCheckedInStore({
-      rows, dropped: [], crawled: ['garantie', 'faq/offerte'], store: 'nl',
+      rows,
+      dropped: [],
+      crawled: ['garantie', 'faq/offerte'],
+      store: 'nl',
     });
     expect(found.some((entry) => entry.page === 'garantie')).toBe(false);
   });
@@ -135,7 +157,10 @@ describe('notCheckedInStore', () => {
 
   it('gives the same list whatever order the input came in', () => {
     const input = {
-      rows, dropped: [drop('spuitbus-mat-wit'), drop('spuitbus-mat-zwart')], crawled: [], store: 'nl',
+      rows,
+      dropped: [drop('spuitbus-mat-wit'), drop('spuitbus-mat-zwart')],
+      crawled: [],
+      store: 'nl',
     };
     const forwards = notCheckedInStore(input);
     const backwards = notCheckedInStore({ ...input, dropped: [...input.dropped].reverse() });
@@ -148,10 +173,13 @@ describe('notCheckedInStore', () => {
 
   it('reaches the dashboard of the store it belongs to, on the committed list', () => {
     const seeds = JSON.parse(
-      readFileSync(new URL('../../../data/10-store-seeds.json', import.meta.url), 'utf8')
+      readFileSync(new URL('../../../data/10-store-seeds.json', import.meta.url), 'utf8'),
     );
     const found = notCheckedInStore({
-      rows: seeds.rows, dropped: seeds.dropped, crawled: [], store: 'uk',
+      rows: seeds.rows,
+      dropped: seeds.dropped,
+      crawled: [],
+      store: 'uk',
     });
     expect(found.filter((entry) => entry.kind === 'dropped-by-rule')).toHaveLength(10);
   });
@@ -188,7 +216,11 @@ describe('storeTotals', () => {
   it('counts an empty store as nothing rather than failing', () => {
     // A fresh clone has no reports and no seed file, and it must still build.
     expect(storeTotals({ pages: [], notChecked: [] })).toEqual({
-      found: 0, crawled: 0, comparable: 0, oneSided: 0, notChecked: 0,
+      found: 0,
+      crawled: 0,
+      comparable: 0,
+      oneSided: 0,
+      notChecked: 0,
     });
   });
 });
@@ -214,8 +246,20 @@ describe('groupNotChecked', () => {
 
   it('keeps two details apart, because the detail is part of the reason', () => {
     const two = [
-      { page: 'a', kind: 'dropped-by-rule', rule: 'duplicate-in-store', reason: 'Lost to x.', url: null },
-      { page: 'b', kind: 'dropped-by-rule', rule: 'duplicate-in-store', reason: 'Lost to y.', url: null },
+      {
+        page: 'a',
+        kind: 'dropped-by-rule',
+        rule: 'duplicate-in-store',
+        reason: 'Lost to x.',
+        url: null,
+      },
+      {
+        page: 'b',
+        kind: 'dropped-by-rule',
+        rule: 'duplicate-in-store',
+        reason: 'Lost to y.',
+        url: null,
+      },
     ];
     expect(groupNotChecked(two)).toHaveLength(2);
   });

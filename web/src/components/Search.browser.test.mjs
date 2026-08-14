@@ -17,8 +17,16 @@ import Search from './Search.jsx';
 
 /** One entry of the store's search index, as `indexStore()` emits it. */
 const entry = (part) => ({
-  id: 'a', page: 'afhalen', class: 'copy', prod: 'Bekijk deals >', new: null,
-  detail: null, anchorHeading: 'Montage', occurrences: 1, linkText: [], ...part,
+  id: 'a',
+  page: 'afhalen',
+  class: 'copy',
+  prod: 'Bekijk deals >',
+  new: null,
+  detail: null,
+  anchorHeading: 'Montage',
+  occurrences: 1,
+  linkText: [],
+  ...part,
 });
 
 /** A term that finds three differences of three classes, for the pills to cut down. */
@@ -40,7 +48,10 @@ const pages = [
 ];
 
 const byFinding = new Map(
-  index.findings.map((one) => [one.id, { id: one.id, state: 'open', visibility: 'work', class: one.class }]),
+  index.findings.map((one) => [
+    one.id,
+    { id: one.id, state: 'open', visibility: 'work', class: one.class },
+  ]),
 );
 
 let fetched;
@@ -65,29 +76,41 @@ async function mount(props = {}) {
   const root = createRoot(host);
   const cleared = [];
 
-  const render = (over) => act(async () => root.render(createElement(Search, {
-    store: 'nl',
-    pages,
-    term: 'deals',
-    classes: [],
-    onClearClasses: () => cleared.push(true),
-    byFinding,
-    events: [],
-    includeClosed: false,
-    onIncludeClosed: () => {},
-    bulk: { canWrite: false, busy: false, appendMany: async () => ({}), notWritingReason: 'no name' },
-    link: (store, page) => `/${store}/${page}/`,
-    ...props,
-    ...over,
-  })));
+  const render = (over) =>
+    act(async () =>
+      root.render(
+        createElement(Search, {
+          store: 'nl',
+          pages,
+          term: 'deals',
+          classes: [],
+          onClearClasses: () => cleared.push(true),
+          byFinding,
+          events: [],
+          includeClosed: false,
+          onIncludeClosed: () => {},
+          bulk: {
+            canWrite: false,
+            busy: false,
+            appendMany: async () => ({}),
+            notWritingReason: 'no name',
+          },
+          link: (store, page) => `/${store}/${page}/`,
+          ...props,
+          ...over,
+        }),
+      ),
+    );
 
   await render({});
   return { cleared, rerender: render, unmount: () => act(() => root.unmount()) };
 }
 
 /** The amber strip, found by the one action only it carries. */
-const strip = () => [...document.querySelectorAll('[data-slot="alert"]')]
-  .find((element) => element.textContent.includes('Clear filter'));
+const strip = () =>
+  [...document.querySelectorAll('[data-slot="alert"]')].find((element) =>
+    element.textContent.includes('Clear filter'),
+  );
 
 describe('a search under the class pills', () => {
   it('keeps the amber strip up, in the words it uses everywhere else', async () => {
@@ -107,8 +130,9 @@ describe('a search under the class pills', () => {
     // — that is ticket 106's business, and only for a scope.
     const { cleared, unmount } = await mount({ classes: ['copy'] });
 
-    const button = [...strip().querySelectorAll('button')]
-      .find((one) => one.textContent.trim() === 'Clear filter');
+    const button = [...strip().querySelectorAll('button')].find(
+      (one) => one.textContent.trim() === 'Clear filter',
+    );
     await act(async () => button.click());
 
     expect(cleared).toEqual([true]);

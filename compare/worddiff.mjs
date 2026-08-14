@@ -109,10 +109,8 @@ function commonEdges(left, right) {
   while (head < shortest && left[head] === right[head]) head += 1;
 
   let tail = 0;
-  while (
-    tail < shortest - head
-    && left[left.length - 1 - tail] === right[right.length - 1 - tail]
-  ) tail += 1;
+  while (tail < shortest - head && left[left.length - 1 - tail] === right[right.length - 1 - tail])
+    tail += 1;
 
   return { head, tail };
 }
@@ -178,9 +176,10 @@ export function wordDiff(prod, next) {
   const table = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
   for (let i = n - 1; i >= 0; i -= 1) {
     for (let j = m - 1; j >= 0; j -= 1) {
-      table[i][j] = middleLeft[i] === middleRight[j]
-        ? table[i + 1][j + 1] + 1
-        : Math.max(table[i + 1][j], table[i][j + 1]);
+      table[i][j] =
+        middleLeft[i] === middleRight[j]
+          ? table[i + 1][j + 1] + 1
+          : Math.max(table[i + 1][j], table[i][j + 1]);
     }
   }
 
@@ -235,7 +234,10 @@ export function clampedSpans(spans, lead = CLAMP_LEAD) {
   const first = spans.findIndex((span) => span.type === 'removed' || span.type === 'added');
   if (first <= 0) return spans;
 
-  const agreement = spans.slice(0, first).map((span) => span.text).join('');
+  const agreement = spans
+    .slice(0, first)
+    .map((span) => span.text)
+    .join('');
   if (agreement.length <= lead) return spans;
 
   // The window starts at a word and never inside one. A cut that lands in the

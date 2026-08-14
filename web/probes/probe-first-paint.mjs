@@ -111,11 +111,12 @@ async function measure(target, url, cpu) {
     else events.get(frame.method)?.();
   });
 
-  const send = (method, params = {}) => new Promise((done) => {
-    id += 1;
-    waiting.set(id, done);
-    socket.send(JSON.stringify({ id, method, params }));
-  });
+  const send = (method, params = {}) =>
+    new Promise((done) => {
+      id += 1;
+      waiting.set(id, done);
+      socket.send(JSON.stringify({ id, method, params }));
+    });
 
   await send('Page.enable');
   await send('Runtime.enable');
@@ -150,16 +151,20 @@ const browser = CHROMES.find(Boolean);
 const profile = await mkdtemp(join(tmpdir(), 'tm-paint-'));
 const port = 9333;
 
-const chrome = spawn(browser, [
-  '--headless=new',
-  `--remote-debugging-port=${port}`,
-  `--user-data-dir=${profile}`,
-  '--no-first-run',
-  '--no-default-browser-check',
-  '--disable-extensions',
-  '--window-size=1440,900',
-  'about:blank',
-], { stdio: 'ignore' });
+const chrome = spawn(
+  browser,
+  [
+    '--headless=new',
+    `--remote-debugging-port=${port}`,
+    `--user-data-dir=${profile}`,
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--disable-extensions',
+    '--window-size=1440,900',
+    'about:blank',
+  ],
+  { stdio: 'ignore' },
+);
 
 try {
   const version = await waitForChrome(port);
@@ -194,12 +199,12 @@ try {
       };
 
       console.log(
-        `  ${String(cpu).padEnd(6)}`
-        + `${`${Math.round(middle('lcp'))} ms`.padEnd(11)}`
-        + `${`${Math.round(middle('fcp'))} ms`.padEnd(11)}`
-        + `${`${Math.round(middle('tbt'))} ms`.padEnd(9)}`
-        + `${spread('lcp').padEnd(14)}`
-        + `${spread('tbt')}`,
+        `  ${String(cpu).padEnd(6)}` +
+          `${`${Math.round(middle('lcp'))} ms`.padEnd(11)}` +
+          `${`${Math.round(middle('fcp'))} ms`.padEnd(11)}` +
+          `${`${Math.round(middle('tbt'))} ms`.padEnd(9)}` +
+          `${spread('lcp').padEnd(14)}` +
+          `${spread('tbt')}`,
       );
     }
   }

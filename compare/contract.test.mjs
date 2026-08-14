@@ -39,8 +39,11 @@ describe('newObservationId', () => {
   });
 
   it('sorts by time, not by the random tail', () => {
-    const ids = ['2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.001Z', '2026-02-01T00:00:00.000Z']
-      .map((at) => `${at}-${'zzzzzzzz'}`);
+    const ids = [
+      '2026-01-01T00:00:00.000Z',
+      '2026-01-01T00:00:00.001Z',
+      '2026-02-01T00:00:00.000Z',
+    ].map((at) => `${at}-${'zzzzzzzz'}`);
     expect([...ids].reverse().sort()).toEqual(ids);
   });
 
@@ -90,7 +93,6 @@ describe('findingId', () => {
   });
 });
 
-
 /**
  * Ticket 118 and ADR 0013. The hash is what a page review's staleness is measured
  * against, so the question it must answer is *did the page change*, and the vocabulary
@@ -124,8 +126,10 @@ describe('findingSetHash', () => {
     vi.doMock('./vocabulary.mjs', async () => {
       const actual = await vi.importActual('./vocabulary.mjs');
       const classes = Object.fromEntries(
-        Object.entries(actual.FINDING_CLASSES)
-          .map(([name, cls]) => [name, { ...cls, visibility: triage(name) }]),
+        Object.entries(actual.FINDING_CLASSES).map(([name, cls]) => [
+          name,
+          { ...cls, visibility: triage(name) },
+        ]),
       );
       const visibilityOf = (name) => classes[name]?.visibility ?? 'diagnostic';
       return {
@@ -152,9 +156,9 @@ describe('findingSetHash', () => {
     // `work` on 2026-08-13, so the edit is modelled from where the class now sits, back
     // the way it came. One class moving is the case that matters beside the sweep above,
     // because it is the shape every future re-triage has.
-    const reloaded = await retriaged((name) => (
-      name === 'heading-level' ? 'work' : FINDING_CLASSES[name].visibility
-    ));
+    const reloaded = await retriaged((name) =>
+      name === 'heading-level' ? 'work' : FINDING_CLASSES[name].visibility,
+    );
     expect(FINDING_CLASSES['heading-level'].visibility).toBe('information');
     expect(reloaded.FINDING_CLASSES['heading-level'].visibility).toBe('work');
     expect(reloaded.findingSetHash(everyClass)).toBe(findingSetHash(everyClass));
@@ -171,8 +175,12 @@ describe('findingSetHash', () => {
     // The old hash filtered these out. A human reviewed the page, not the shown
     // subset of it, so a hidden class changing now marks the review stale.
     const work = [{ id: 'A', class: 'copy' }];
-    expect(findingSetHash([...work, { id: 'B', class: 'tag-changed' }])).not.toBe(findingSetHash(work));
-    expect(findingSetHash([...work, { id: 'C', class: 'text-added' }])).not.toBe(findingSetHash(work));
+    expect(findingSetHash([...work, { id: 'B', class: 'tag-changed' }])).not.toBe(
+      findingSetHash(work),
+    );
+    expect(findingSetHash([...work, { id: 'C', class: 'text-added' }])).not.toBe(
+      findingSetHash(work),
+    );
   });
 
   it('is stable under the order the findings arrive in', () => {
@@ -183,7 +191,6 @@ describe('findingSetHash', () => {
     expect(findingSetHash(everyClass)).toMatch(/^[A-Za-z0-9_-]{16}$/);
   });
 });
-
 
 /**
  * The report filename carries the store, and `web/` reads it back out. That makes
@@ -202,12 +209,8 @@ describe('reportFilename', () => {
     // The parenthesis is the sentinel because it survives all three writers. A
     // colon would not: it is the NTFS alternate-data-stream separator. More than
     // half of the pages carry this shape (ticket 53).
-    expect(reportFilename('fr', '(fr)heavy-duty-veranda')).toBe(
-      'fr__(fr)heavy-duty-veranda.json'
-    );
-    expect(reportFilename('be_fr', '(be_fr)fr/pergola')).toBe(
-      'be_fr__(be_fr)fr__pergola.json'
-    );
+    expect(reportFilename('fr', '(fr)heavy-duty-veranda')).toBe('fr__(fr)heavy-duty-veranda.json');
+    expect(reportFilename('be_fr', '(be_fr)fr/pergola')).toBe('be_fr__(be_fr)fr__pergola.json');
   });
 
   it('takes the store from the name it wrote, never from the sentinel', () => {
@@ -280,7 +283,10 @@ describe('FINDING_CLASSES', () => {
 
   it('splits every one-sided text class by direction, lost is work and added is information', () => {
     expect(FINDING_CLASSES['text-missing']).toMatchObject({ check: 'text', visibility: 'work' });
-    expect(FINDING_CLASSES['text-added']).toMatchObject({ check: 'text', visibility: 'information' });
+    expect(FINDING_CLASSES['text-added']).toMatchObject({
+      check: 'text',
+      visibility: 'information',
+    });
   });
 
   it('reads a heading-level change and diagnoses a plain tag change', () => {
@@ -288,8 +294,14 @@ describe('FINDING_CLASSES', () => {
     // question, and heading hierarchy is SEO work the log has always said is somebody
     // else's phase. It is not deleted — a real difference nobody has decided about
     // would be thrown away — so it renders and it counts nowhere.
-    expect(FINDING_CLASSES['heading-level']).toMatchObject({ check: 'text', visibility: 'information' });
-    expect(FINDING_CLASSES['tag-changed']).toMatchObject({ check: 'text', visibility: 'diagnostic' });
+    expect(FINDING_CLASSES['heading-level']).toMatchObject({
+      check: 'text',
+      visibility: 'information',
+    });
+    expect(FINDING_CLASSES['tag-changed']).toMatchObject({
+      check: 'text',
+      visibility: 'diagnostic',
+    });
   });
 
   it('gives the same direction the same visibility on all three checks', () => {
@@ -309,7 +321,12 @@ describe('FINDING_CLASSES', () => {
       .map(([name]) => name)
       .sort();
     expect(withDirection).toEqual([
-      'extra-link', 'image-added', 'image-missing', 'missing-link', 'text-added', 'text-missing',
+      'extra-link',
+      'image-added',
+      'image-missing',
+      'missing-link',
+      'text-added',
+      'text-missing',
     ]);
   });
 
@@ -321,20 +338,39 @@ describe('FINDING_CLASSES', () => {
    * every finding in a `work` class and nothing else.
    */
   it('pins the three visibility groups', () => {
-    const group = (visibility) => Object.entries(FINDING_CLASSES)
-      .filter(([, cls]) => cls.visibility === visibility)
-      .map(([name]) => name)
-      .sort();
+    const group = (visibility) =>
+      Object.entries(FINDING_CLASSES)
+        .filter(([, cls]) => cls.visibility === visibility)
+        .map(([name]) => name)
+        .sort();
 
     expect(group('work')).toEqual([
-      'alt-changed', 'alt-lost', 'broken-link', 'casing', 'copy', 'cross-store-link',
-      'image-missing', 'leakage', 'link-target', 'missing-link', 'text-missing',
+      'alt-changed',
+      'alt-lost',
+      'broken-link',
+      'casing',
+      'copy',
+      'cross-store-link',
+      'image-missing',
+      'leakage',
+      'link-target',
+      'missing-link',
+      'text-missing',
     ]);
     expect(group('information')).toEqual([
-      'extra-link', 'heading-level', 'image-added', 'price', 'restructured', 'text-added',
+      'extra-link',
+      'heading-level',
+      'image-added',
+      'price',
+      'restructured',
+      'text-added',
     ]);
     expect(group('diagnostic')).toEqual([
-      'campaign', 'image-campaign', 'no-declared-alternate', 'redirect', 'tag-changed',
+      'campaign',
+      'image-campaign',
+      'no-declared-alternate',
+      'redirect',
+      'tag-changed',
     ]);
   });
 

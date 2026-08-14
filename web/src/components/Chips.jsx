@@ -37,7 +37,7 @@ export function ClassPill({ class: cls }) {
   const info = classInfo(cls);
   return (
     <Badge
-      className={cn('h-auto px-1.5 py-0.5 text-xs uppercase tracking-wide', info.pill)}
+      className={cn('h-auto px-1.5 py-0.5 text-xs tracking-wide uppercase', info.pill)}
       title={info.meaning}
     >
       {cls}
@@ -71,7 +71,9 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
       toggleMultiple
       value={selected}
       onValueChange={(next) => {
-        const moved = next.find((cls) => !selected.includes(cls)) ?? selected.find((cls) => !next.includes(cls));
+        const moved =
+          next.find((cls) => !selected.includes(cls)) ??
+          selected.find((cls) => !next.includes(cls));
         if (moved !== undefined) onToggle(moved);
       }}
       className="flex-wrap"
@@ -93,7 +95,7 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
           )}
         >
           <ClassPill class={cls} />
-          <span className="pr-1 text-xs tabular-nums text-muted-foreground">{count}</span>
+          <span className="pr-1 text-xs text-muted-foreground tabular-nums">{count}</span>
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
@@ -116,7 +118,7 @@ export function PriorityPill({ priority, className = '' }) {
   return (
     <Badge
       className={cn(
-        'h-auto px-1.5 py-0.5 text-xs uppercase tracking-wide',
+        'h-auto px-1.5 py-0.5 text-xs tracking-wide uppercase',
         PILL[PRIORITY_TONE[priority]],
         className,
       )}
@@ -145,8 +147,9 @@ export function PriorityFilterPills({ selected, onToggle, counts = {} }) {
       toggleMultiple
       value={selected}
       onValueChange={(next) => {
-        const moved = next.find((one) => !selected.includes(one))
-          ?? selected.find((one) => !next.includes(one));
+        const moved =
+          next.find((one) => !selected.includes(one)) ??
+          selected.find((one) => !next.includes(one));
         if (moved !== undefined) onToggle(moved);
       }}
       className="flex-wrap"
@@ -156,15 +159,17 @@ export function PriorityFilterPills({ selected, onToggle, counts = {} }) {
         <ToggleGroupItem
           key={priority}
           value={priority}
-          title={`Show the pages an editor gave priority ${priority}. `
-            + 'The counts above do not change.'}
+          title={
+            `Show the pages an editor gave priority ${priority}. ` +
+            'The counts above do not change.'
+          }
           className={cn(
             'h-auto gap-1 px-0.5 py-0',
             selected.includes(priority) && 'ring-2 ring-primary',
           )}
         >
           <PriorityPill priority={priority} />
-          <span className="pr-1 text-xs tabular-nums text-muted-foreground">
+          <span className="pr-1 text-xs text-muted-foreground tabular-nums">
             {counts[priority] ?? 0}
           </span>
         </ToggleGroupItem>
@@ -186,7 +191,12 @@ export function FilterBanner({ onClear, className = '', children }) {
        banner's own ink rather than the interface's border grey. */
     <Alert className={cn('flex flex-wrap items-center gap-2 text-sm', BANNER.attention, className)}>
       {children}
-      <Button variant="outline" size="xs" onClick={onClear} className="border-current bg-transparent">
+      <Button
+        variant="outline"
+        size="xs"
+        onClick={onClear}
+        className="border-current bg-transparent"
+      >
         Clear filter
       </Button>
     </Alert>
@@ -226,7 +236,13 @@ export function FilterBanner({ onClear, className = '', children }) {
  * @param {string} [props.className]
  */
 export function ClassFilterBanner({
-  classes, priorities = [], shown, total, noun, onClear, className = '',
+  classes,
+  priorities = [],
+  shown,
+  total,
+  noun,
+  onClear,
+  className = '',
 }) {
   if (classes.length === 0 && priorities.length === 0) return null;
 
@@ -235,7 +251,9 @@ export function ClassFilterBanner({
   const on = [
     classes.length > 0 && classes.join(', '),
     priorities.length > 0 && `priority ${priorities.join(', ')}`,
-  ].filter(Boolean).join(' and ');
+  ]
+    .filter(Boolean)
+    .join(' and ');
 
   return (
     <FilterBanner onClear={onClear} className={className}>
@@ -244,8 +262,7 @@ export function ClassFilterBanner({
           children after it collapse into one anonymous item, and there the space has to
           be written. */}
       <strong>Filtered on {on}.</strong>
-      {`${shown} of ${total} ${noun}.`}
-      {' '}The counts above count everything.
+      {`${shown} of ${total} ${noun}.`} The counts above count everything.
     </FilterBanner>
   );
 }

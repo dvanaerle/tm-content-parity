@@ -138,23 +138,39 @@ for (const file of files) {
 const percent = (part, whole) => (whole === 0 ? 0 : Math.round((1 - part / whole) * 1000) / 10);
 const thousands = (number) => number.toLocaleString('en-GB');
 
-console.log(`\nReports: ${total.reports}. Two-sided rows: ${thousands(total.twoSided)}, of which ${thousands(total.equal)} already equal.`);
-console.log(`Cap: ${thousands(DIFF_CELL_CAP)} cells. It catches ${total.capped} rows (${(100 * total.capped / Math.max(1, total.twoSided)).toFixed(2)}%), classes: ${[...total.cappedClasses].join(', ') || 'none'}.`);
+console.log(
+  `\nReports: ${total.reports}. Two-sided rows: ${thousands(total.twoSided)}, of which ${thousands(total.equal)} already equal.`,
+);
+console.log(
+  `Cap: ${thousands(DIFF_CELL_CAP)} cells. It catches ${total.capped} rows (${((100 * total.capped) / Math.max(1, total.twoSided)).toFixed(2)}%), classes: ${[...total.cappedClasses].join(', ') || 'none'}.`,
+);
 
 console.log('\nLCS cells over the corpus');
 console.log(`  before                 ${thousands(total.before)}`);
-console.log(`  equal rows skipped     ${thousands(total.equalSkipped)}  (−${percent(total.equalSkipped, total.before)}%)`);
-console.log(`  + trim and cap         ${thousands(total.after)}  (−${percent(total.after, total.before)}% of before)`);
+console.log(
+  `  equal rows skipped     ${thousands(total.equalSkipped)}  (−${percent(total.equalSkipped, total.before)}%)`,
+);
+console.log(
+  `  + trim and cap         ${thousands(total.after)}  (−${percent(total.after, total.before)}% of before)`,
+);
 
 console.log('\nn · m for one row, untrimmed');
-console.log(`  median ${median(total.full)}, p95 ${quantile(total.full, 0.95)}, p99 ${quantile(total.full, 0.99)}, max ${thousands(Math.max(0, ...total.full))}`);
+console.log(
+  `  median ${median(total.full)}, p95 ${quantile(total.full, 0.95)}, p99 ${quantile(total.full, 0.99)}, max ${thousands(Math.max(0, ...total.full))}`,
+);
 console.log('n · m for one row, after the trim — the number the cap reads');
-console.log(`  median ${median(total.trimmed)}, p95 ${quantile(total.trimmed, 0.95)}, p99 ${quantile(total.trimmed, 0.99)}, max ${thousands(Math.max(0, ...total.trimmed))}`);
+console.log(
+  `  median ${median(total.trimmed)}, p95 ${quantile(total.trimmed, 0.95)}, p99 ${quantile(total.trimmed, 0.99)}, max ${thousands(Math.max(0, ...total.trimmed))}`,
+);
 console.log('tokens, one side');
-console.log(`  median ${median(total.tokens)}, p95 ${quantile(total.tokens, 0.95)}, p99 ${quantile(total.tokens, 0.99)}, max ${thousands(Math.max(0, ...total.tokens))}`);
+console.log(
+  `  median ${median(total.tokens)}, p95 ${quantile(total.tokens, 0.95)}, p99 ${quantile(total.tokens, 0.99)}, max ${thousands(Math.max(0, ...total.tokens))}`,
+);
 
 console.log('\nThe five worst pages before, and what they cost after');
 for (const page of total.pages.sort((a, b) => b.before - a.before).slice(0, 5)) {
-  console.log(`  ${page.file.replace('.json', '').padEnd(46)} ${thousands(page.before).padStart(10)} → ${thousands(page.after).padStart(8)}  (−${percent(page.after, page.before)}%, ${page.rows} rows)`);
+  console.log(
+    `  ${page.file.replace('.json', '').padEnd(46)} ${thousands(page.before).padStart(10)} → ${thousands(page.after).padStart(8)}  (−${percent(page.after, page.before)}%, ${page.rows} rows)`,
+  );
 }
 console.log();

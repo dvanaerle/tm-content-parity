@@ -52,9 +52,11 @@ export function PriorityPicker({ value, onPick, busy = false }) {
           aria-pressed={value === priority}
           onClick={() => onPick(value === priority ? null : priority)}
           className={cn('px-1.5', value === priority && 'ring-2 ring-primary')}
-          title={value === priority
-            ? `Take the ${priority} priority off this page.`
-            : `Set the priority of this page to ${priority}.`}
+          title={
+            value === priority
+              ? `Take the ${priority} priority off this page.`
+              : `Set the priority of this page to ${priority}.`
+          }
         >
           <PriorityPill priority={priority} />
         </Button>
@@ -181,11 +183,12 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         <p className="flex items-center gap-2 text-muted-foreground">
-          <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium tabular-nums text-primary-foreground">
+          <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground tabular-nums">
             {count}
+          </span>{' '}
+          <span>
+            <strong className="font-medium text-foreground">{noun}</strong> selected
           </span>
-          {' '}
-          <span><strong className="font-medium text-foreground">{noun}</strong> selected</span>
         </p>
 
         {bulk.canWrite ? (
@@ -193,7 +196,11 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
             {/* No value is shown as *current*, because N pages can hold N different
                 priorities and a picker claiming one of them would be lying about the rest.
                 Every press here sets, and the last button clears. */}
-            <PriorityPicker value={null} busy={bulk.busy} onPick={(next) => press(priorityEventFor(next))} />
+            <PriorityPicker
+              value={null}
+              busy={bulk.busy}
+              onPick={(next) => press(priorityEventFor(next))}
+            />
             <Button
               type="button"
               variant="outline"
@@ -207,7 +214,10 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
 
             <form
               className="flex flex-wrap items-center gap-1"
-              onSubmit={(submit) => { submit.preventDefault(); press(noteEventFor(typed)); }}
+              onSubmit={(submit) => {
+                submit.preventDefault();
+                press(noteEventFor(typed));
+              }}
             >
               <Input
                 value={typed}
@@ -260,10 +270,16 @@ function Report({ written, total, failedOn, error }) {
 
   return (
     <p className={cn('mb-2 text-xs', INK.attention)}>
-      <strong className="font-medium">{written} of {total} saved.</strong>{' '}
-      {failedOn
-        ? <>It stopped on <code>{failedOn}</code>, and the rest is not written. </>
-        : 'Nothing is written. '}
+      <strong className="font-medium">
+        {written} of {total} saved.
+      </strong>{' '}
+      {failedOn ? (
+        <>
+          It stopped on <code>{failedOn}</code>, and the rest is not written.{' '}
+        </>
+      ) : (
+        'Nothing is written. '
+      )}
       {written > 0 && 'What was saved is in the log and it is visible above. '}
       {error}
     </p>

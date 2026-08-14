@@ -21,7 +21,9 @@ function mount() {
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
-  act(() => root.render(createElement(PageBreadcrumb, { store: 'nl', page: 'faq/productinformatie' })));
+  act(() =>
+    root.render(createElement(PageBreadcrumb, { store: 'nl', page: 'faq/productinformatie' })),
+  );
   return () => act(() => root.unmount());
 }
 

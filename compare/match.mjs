@@ -20,7 +20,10 @@ export const PAIR_THRESHOLD = 0.6;
  * @returns {string}
  */
 export function tier2(text) {
-  return text.toLowerCase().replace(/[\s.,;:!?…]+$/u, '').trim();
+  return text
+    .toLowerCase()
+    .replace(/[\s.,;:!?…]+$/u, '')
+    .trim();
 }
 
 /**
@@ -72,9 +75,10 @@ export function lcsPairs(left, right) {
 
   for (let i = n - 1; i >= 0; i -= 1) {
     for (let j = m - 1; j >= 0; j -= 1) {
-      table[i][j] = left[i].norm === right[j].norm
-        ? table[i + 1][j + 1] + 1
-        : Math.max(table[i + 1][j], table[i][j + 1]);
+      table[i][j] =
+        left[i].norm === right[j].norm
+          ? table[i + 1][j + 1] + 1
+          : Math.max(table[i + 1][j], table[i][j + 1]);
     }
   }
 

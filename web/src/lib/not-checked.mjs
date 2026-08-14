@@ -29,9 +29,9 @@ import { cellWithBothSides } from '../../../shared/seed-rows.mjs';
 
 /** No committed rule owns this one. A failed fetch is not a decision. */
 const NOT_CRAWLED_REASON =
-  'No report. The seed list has this page on both sides of the comparison and the '
-  + 'crawl wrote no report for it, so the fetch failed. This is not an exclusion. '
-  + 'The next crawl can still bring it in.';
+  'No report. The seed list has this page on both sides of the comparison and the ' +
+  'crawl wrote no report for it, so the fetch failed. This is not an exclusion. ' +
+  'The next crawl can still bring it in.';
 
 /**
  * The excluded pages **this** store has. `veranda-configurator` is nl only, so a
@@ -67,8 +67,8 @@ export function excludedInStore(rows, store) {
 const KIND_ORDER = ['not-crawled', 'excluded-page', 'dropped-by-rule'];
 
 const byKindThenPage = (a, b) =>
-  KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind)
-  || (a.page < b.page ? -1 : a.page > b.page ? 1 : 0);
+  KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) ||
+  (a.page < b.page ? -1 : a.page > b.page ? 1 : 0);
 
 /**
  * Every page of one store that the log found and does not check.
@@ -185,8 +185,11 @@ export function groupNotChecked(entries) {
   const groups = new Map();
   for (const entry of entries) {
     const key = `${entry.kind}\n${entry.reason}`;
-    const group = groups.get(key)
-      ?? groups.set(key, { key, kind: entry.kind, rule: entry.rule, reason: entry.reason, pages: [] }).get(key);
+    const group =
+      groups.get(key) ??
+      groups
+        .set(key, { key, kind: entry.kind, rule: entry.rule, reason: entry.reason, pages: [] })
+        .get(key);
     group.pages.push(entry);
   }
   return [...groups.values()];

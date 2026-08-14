@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnnotateBar, PageNote } from './Annotate.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import {
-  Bar, Chip, ClassFilterBanner, ClassFilterPills, PriorityFilterPills, PriorityPill,
+  Bar,
+  Chip,
+  ClassFilterBanner,
+  ClassFilterPills,
+  PriorityFilterPills,
+  PriorityPill,
 } from './Chips.jsx';
 import { EditorPrompt, LogBanner } from './Progress.jsx';
 import { ClassGroups } from './Repeats.jsx';
@@ -10,7 +15,12 @@ import Search from './Search.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
 import { Input } from './ui/input.jsx';
 import {
-  Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from './ui/select.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
@@ -22,7 +32,11 @@ import { pageHref } from '../lib/page-url.mjs';
 import { useScreen } from '../lib/screen-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
 import {
-  pagesWithClasses, pagesWithPriorities, repeatsInStore, repeatsWithClasses, toggleIn,
+  pagesWithClasses,
+  pagesWithPriorities,
+  repeatsInStore,
+  repeatsWithClasses,
+  toggleIn,
 } from '../lib/view.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
@@ -53,7 +67,10 @@ const CHECKS = ['text', 'links', 'images'];
  * summed with this one, and ticket 23 owns its store-level view.
  */
 export default function Dashboard({
-  store, pages, notChecked = [], regions = [],
+  store,
+  pages,
+  notChecked = [],
+  regions = [],
   regionsChanged = { store: null, reason: null, changes: [] },
 }) {
   /*
@@ -99,7 +116,8 @@ export default function Dashboard({
   const log = useStoreOverrides({ pages: comparable, editor });
 
   /** The open count **after** overrides, so the worst page is the worst remaining page. */
-  const openOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar.open ?? page.summary.work;
+  const openOf = (page) =>
+    log.byPage.get(`${page.store}/${page.page}`)?.bar.open ?? page.summary.work;
   const barOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.bar;
 
   // A typed term puts the search on screen in place of either view. It answers past both
@@ -118,10 +136,14 @@ export default function Dashboard({
   const rows = useMemo(() => {
     // The two filters are **and**, not or: the high-priority `copy` pages is one question.
     // Both narrow what is drawn and neither moves a count — the rule `view.mjs` states.
-    const found = pagesWithPriorities(pagesWithClasses(comparable, classes), priorities, priorityOf);
-    return [...found].sort((a, b) => (
-      sort === 'worst' ? openOf(b) - openOf(a) : a.page.localeCompare(b.page)
-    ));
+    const found = pagesWithPriorities(
+      pagesWithClasses(comparable, classes),
+      priorities,
+      priorityOf,
+    );
+    return [...found].sort((a, b) =>
+      sort === 'worst' ? openOf(b) - openOf(a) : a.page.localeCompare(b.page),
+    );
   }, [comparable, classes, priorities, sort, log.byPage]);
 
   // The store's differences, grouped. It is derived from the **summaries the page
@@ -139,9 +161,10 @@ export default function Dashboard({
    * case is absent on purpose — a search counts its own result, and only `Search` holds
    * that count.
    */
-  const narrowed = view === 'repeats'
-    ? { shown: shownRepeats.length, total: repeats.length, noun: 'differences' }
-    : { shown: rows.length, total: comparable.length, noun: 'pages' };
+  const narrowed =
+    view === 'repeats'
+      ? { shown: shownRepeats.length, total: repeats.length, noun: 'differences' }
+      : { shown: rows.length, total: comparable.length, noun: 'pages' };
 
   /**
    * How many pages carry each priority, for the number beside each pill. It counts the
@@ -163,11 +186,16 @@ export default function Dashboard({
   const [selected, setSelected] = useState(/** @type {Set<string>} */ (new Set()));
   const keyOf = (page) => `${page.store}/${page.page}`;
 
-  const tick = useCallback((key, on) => setSelected((held) => {
-    const next = new Set(held);
-    if (on) next.add(key); else next.delete(key);
-    return next;
-  }), []);
+  const tick = useCallback(
+    (key, on) =>
+      setSelected((held) => {
+        const next = new Set(held);
+        if (on) next.add(key);
+        else next.delete(key);
+        return next;
+      }),
+    [],
+  );
 
   const tickAll = useCallback(
     (on) => setSelected(on ? new Set(rows.map(keyOf)) : new Set()),
@@ -205,14 +233,17 @@ export default function Dashboard({
    * reach the row that uses it, and it says **why** it cannot write rather than merely
    * that it cannot: a control that vanishes without a reason reads as a missing feature.
    */
-  const bulk = useMemo(() => ({
-    canWrite: log.canWrite,
-    busy: log.busy,
-    appendMany: log.appendMany,
-    // The hook's own sentence about its own flag, not a second reading of the four
-    // conditions behind it.
-    notWritingReason: log.notWritingReason,
-  }), [log.canWrite, log.busy, log.appendMany, log.notWritingReason]);
+  const bulk = useMemo(
+    () => ({
+      canWrite: log.canWrite,
+      busy: log.busy,
+      appendMany: log.appendMany,
+      // The hook's own sentence about its own flag, not a second reading of the four
+      // conditions behind it.
+      notWritingReason: log.notWritingReason,
+    }),
+    [log.canWrite, log.busy, log.appendMany, log.notWritingReason],
+  );
 
   const totals = useMemo(() => {
     const byClass = {};
@@ -309,7 +340,7 @@ export default function Dashboard({
               The search box gives up its fixed width on the way down for the same
               reason: `w-56` is 224 pixels of a 319 pixel card, which leaves the switch
               and the select nowhere to go. */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
             {/* One box, and it searches the content (ticket 82). It used to match a page
                 name and nothing else, and it lived with the page list because that was
                 the only list it could narrow. The page key is one of the six fields it
@@ -334,15 +365,20 @@ export default function Dashboard({
                 onToggle={(one) => patch({ priorities: toggleIn(priorities, one) })}
               />
             )}
-            {!searching && view === 'pages' && (
-              // A native select works without JavaScript and this one does not. Nothing is
-              // lost: the control and its state already live inside a `client:load` island,
-              // so the sort was inert without JavaScript before this swap as well.
-              <Select value={sort} onValueChange={(next) => patch({ sort: next })} items={SORT_LABEL}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                {/* The popup sizes to its own longest option, not to the trigger.
+            {!searching &&
+              view === 'pages' && (
+                // A native select works without JavaScript and this one does not. Nothing is
+                // lost: the control and its state already live inside a `client:load` island,
+                // so the sort was inert without JavaScript before this swap as well.
+                <Select
+                  value={sort}
+                  onValueChange={(next) => patch({ sort: next })}
+                  items={SORT_LABEL}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  {/* The popup sizes to its own longest option, not to the trigger.
                     shadcn's default is `w-(--anchor-width)`, which assumes the trigger
                     is the wider box — and against a `w-fit` trigger it never is. The
                     trigger keeps 30 pixels clear on the right for its chevron while a
@@ -359,15 +395,17 @@ export default function Dashboard({
 
                     It is corrected here and not in `ui/select.jsx`, which stays exactly
                     as shadcn ships it so a re-add can never drop a local fix. */}
-                <SelectContent className="w-auto min-w-[max(var(--anchor-width),9rem)] max-w-(--available-width)">
-                  <SelectGroup>
-                    {Object.entries(SORT_LABEL).map(([name, label]) => (
-                      <SelectItem key={name} value={name}>{label}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            )}
+                  <SelectContent className="w-auto max-w-(--available-width) min-w-[max(var(--anchor-width),9rem)]">
+                    <SelectGroup>
+                      {Object.entries(SORT_LABEL).map(([name, label]) => (
+                        <SelectItem key={name} value={name}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
           </div>
         </CardHeader>
         <CardContent className="px-0">
@@ -406,89 +444,106 @@ export default function Dashboard({
             />
           )}
 
-          {!searching && view === 'repeats' && (
-            // Keyed on the filter, so a narrowed list starts at the top of its own
-            // rendering budget, with its groups open on the pills that narrowed it.
-            // A budget carried over from the wider list would say *100 of 100
-            // drawn* over a list of 12.
-            //
-            // Ticket 100: the rows arrive in a class group for each class. The list is
-            // already narrowed to the pills here, and the classes go along so the groups
-            // can draw the selected ones only — the same filter said once, to two things
-            // that must agree about it.
-            <ClassGroups
-              key={classes.join(',')}
-              repeats={shownRepeats}
-              classes={classes}
-              byFinding={byFinding}
-              bulk={bulk}
-              link={link}
-            />
-          )}
+          {!searching &&
+            view === 'repeats' && (
+              // Keyed on the filter, so a narrowed list starts at the top of its own
+              // rendering budget, with its groups open on the pills that narrowed it.
+              // A budget carried over from the wider list would say *100 of 100
+              // drawn* over a list of 12.
+              //
+              // Ticket 100: the rows arrive in a class group for each class. The list is
+              // already narrowed to the pills here, and the classes go along so the groups
+              // can draw the selected ones only — the same filter said once, to two things
+              // that must agree about it.
+              <ClassGroups
+                key={classes.join(',')}
+                repeats={shownRepeats}
+                classes={classes}
+                byFinding={byFinding}
+                bulk={bulk}
+                link={link}
+              />
+            )}
 
           {!searching && view === 'pages' && (
-          <Table>
-            <TableHeader>
-              <TableRow className="text-xs uppercase tracking-wide">
-                {/* The header word is drawn for a screen reader and not for an eye, the
+            <Table>
+              <TableHeader>
+                <TableRow className="text-xs tracking-wide uppercase">
+                  {/* The header word is drawn for a screen reader and not for an eye, the
                     way `Repeats.jsx` draws its own: a header cell holding nothing but a
                     checkbox announces nothing. */}
-                <TableHead className="w-8 px-4">
-                  <SelectAllPages rows={rows} selected={selected} onTickAll={tickAll} />
-                  <span className="sr-only">Select</span>
-                </TableHead>
-                <TableHead className="px-4 text-muted-foreground">Page</TableHead>
-                <TableHead className="w-40 px-4 text-muted-foreground">Open</TableHead>
-                {CHECKS.map((check) => (
-                  <TableHead key={check} className="w-24 text-muted-foreground">{CHECK_LABEL[check]}</TableHead>
-                ))}
-                <TableHead className="w-24 px-4 text-muted-foreground">Hidden</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((page) => (
-                <TableRow
-                  key={`${page.store}/${page.page}`}
-                  data-state={selected.has(keyOf(page)) ? 'selected' : undefined}
-                >
-                  <TableCell className="px-4">
-                    <Checkbox
-                      checked={selected.has(keyOf(page))}
-                      onCheckedChange={(ticked) => tick(keyOf(page), ticked)}
-                      aria-label={`Select ${page.page}`}
-                    />
-                  </TableCell>
-                  <TableCell className="px-4">
-                    <a className={cn('font-medium hover:underline', CHROME.link)} href={link(page.store, page.page)}>
-                      {page.page}
-                    </a>
-                    <span className="ml-2 text-xs text-muted-foreground">{page.sides.production.units} blocks</span>
-                    {/* The two annotations, beside the page they are about. The note is
+                  <TableHead className="w-8 px-4">
+                    <SelectAllPages rows={rows} selected={selected} onTickAll={tickAll} />
+                    <span className="sr-only">Select</span>
+                  </TableHead>
+                  <TableHead className="px-4 text-muted-foreground">Page</TableHead>
+                  <TableHead className="w-40 px-4 text-muted-foreground">Open</TableHead>
+                  {CHECKS.map((check) => (
+                    <TableHead key={check} className="w-24 text-muted-foreground">
+                      {CHECK_LABEL[check]}
+                    </TableHead>
+                  ))}
+                  <TableHead className="w-24 px-4 text-muted-foreground">Hidden</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((page) => (
+                  <TableRow
+                    key={`${page.store}/${page.page}`}
+                    data-state={selected.has(keyOf(page)) ? 'selected' : undefined}
+                  >
+                    <TableCell className="px-4">
+                      <Checkbox
+                        checked={selected.has(keyOf(page))}
+                        onCheckedChange={(ticked) => tick(keyOf(page), ticked)}
+                        aria-label={`Select ${page.page}`}
+                      />
+                    </TableCell>
+                    <TableCell className="px-4">
+                      <a
+                        className={cn('font-medium hover:underline', CHROME.link)}
+                        href={link(page.store, page.page)}
+                      >
+                        {page.page}
+                      </a>
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {page.sides.production.units} blocks
+                      </span>
+                      {/* The two annotations, beside the page they are about. The note is
                         quoted and never labelled as a reason — a dismissal's note is the
                         other thing in this log that lives in the `note` column, and the
                         two must not read as one. */}
-                    <PriorityPill priority={priorityOf(page)} className="ml-2" />
-                    <PageNote note={annotationsOf(page)?.note} className="ml-2 text-xs" />
-                  </TableCell>
-                  <TableCell className="px-4">
-                    <Bar shown={openOf(page)} units={page.sides.production.units} />
-                    <span className={cn('ml-2 tabular-nums', openOf(page) ? 'font-semibold' : INK.added)}>
-                      {openOf(page)}
-                    </span>
-                    {barOf(page)?.closed > 0 && (
-                      <span className={cn('ml-1 text-xs', INK.added)}>+{barOf(page).closed} closed</span>
-                    )}
-                  </TableCell>
-                  {CHECKS.map((check) => (
-                    <TableCell key={check} className="tabular-nums text-muted-foreground">
-                      {page.summary.byCheck[check] ?? '—'}
+                      <PriorityPill priority={priorityOf(page)} className="ml-2" />
+                      <PageNote note={annotationsOf(page)?.note} className="ml-2 text-xs" />
                     </TableCell>
-                  ))}
-                  <TableCell className="px-4 tabular-nums text-muted-foreground">{page.summary.diagnostic}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <TableCell className="px-4">
+                      <Bar shown={openOf(page)} units={page.sides.production.units} />
+                      <span
+                        className={cn(
+                          'ml-2 tabular-nums',
+                          openOf(page) ? 'font-semibold' : INK.added,
+                        )}
+                      >
+                        {openOf(page)}
+                      </span>
+                      {barOf(page)?.closed > 0 && (
+                        <span className={cn('ml-1 text-xs', INK.added)}>
+                          +{barOf(page).closed} closed
+                        </span>
+                      )}
+                    </TableCell>
+                    {CHECKS.map((check) => (
+                      <TableCell key={check} className="text-muted-foreground tabular-nums">
+                        {page.summary.byCheck[check] ?? '—'}
+                      </TableCell>
+                    ))}
+                    <TableCell className="px-4 text-muted-foreground tabular-nums">
+                      {page.summary.diagnostic}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
           {!searching && view === 'pages' && rows.length === 0 && (
             <p className="px-4 py-6 text-sm text-muted-foreground">No page found.</p>
@@ -514,7 +569,9 @@ export default function Dashboard({
       >
         {oneSided.map((page) => (
           <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
-            <a className={`hover:underline ${CHROME.link}`} href={link(page.store, page.page)}>{page.page}</a>
+            <a className={`hover:underline ${CHROME.link}`} href={link(page.store, page.page)}>
+              {page.page}
+            </a>
             <span className="text-muted-foreground">{page.skipReason}</span>
           </li>
         ))}
@@ -547,13 +604,16 @@ export default function Dashboard({
         {regions.map((region) => (
           <li key={region.selector} className="py-1">
             <code className="font-medium">{region.selector}</code>
-            <span className="text-muted-foreground"> — {REGION_KIND[region.kind] ?? region.kind}. {region.reason}</span>
+            <span className="text-muted-foreground">
+              {' '}
+              — {REGION_KIND[region.kind] ?? region.kind}. {region.reason}
+            </span>
             <span className="block text-muted-foreground">
               {region.removedOn.production.pages === 0 && region.removedOn.new.pages === 0
                 ? 'Removed nowhere in this snapshot. Three possible causes: this store does not have the region, the selector no longer matches, or the snapshot is older than this rule.'
-                : `Removed on ${region.removedOn.production.pages} pages on production `
-                  + `(${region.removedOn.production.units} blocks) and on ${region.removedOn.new.pages} `
-                  + `on the new site (${region.removedOn.new.units} blocks).`}
+                : `Removed on ${region.removedOn.production.pages} pages on production ` +
+                  `(${region.removedOn.production.units} blocks) and on ${region.removedOn.new.pages} ` +
+                  `on the new site (${region.removedOn.new.units} blocks).`}
             </span>
           </li>
         ))}
@@ -681,40 +741,48 @@ function RegionCoverage({ store, reason, changes }) {
   return (
     <li className="mt-2 border-t pt-2">
       <strong className="font-medium">Compared with the previous snapshot ({scope})</strong>
-      {reason
-        ? <span className="block text-muted-foreground">Not compared. {REGION_VERDICT_REASON}</span>
-        : moved.map((change) => (
+      {reason ? (
+        <span className="block text-muted-foreground">Not compared. {REGION_VERDICT_REASON}</span>
+      ) : (
+        moved.map((change) => (
           <span key={change.selector} className="block text-muted-foreground">
             <code>{change.selector}</code>
             {' — '}
             {REGION_VERDICT[change.verdict](change)}
           </span>
-        ))}
+        ))
+      )}
     </li>
   );
 }
 
-const REGION_VERDICT_REASON = 'The previous snapshot has a different size, or it is absent. '
-  + 'The next run compares again.';
+const REGION_VERDICT_REASON =
+  'The previous snapshot has a different size, or it is absent. ' + 'The next run compares again.';
 
 /**
  * One sentence for each verdict. `unchanged` has none, because a run where
  * nothing moved must stay quiet.
  */
 const REGION_VERDICT = {
-  'stopped-matching': (change) => `removed on ${change.was.pages} pages in the previous snapshot, `
-    + `and now on ${change.now.pages}. This rule no longer matches, and the region is back in the log. `
-    + 'A rule anchored on a campaign stops to match when the campaign changes.',
-  'started-matching': (change) => `removed on ${change.was.pages} pages in the previous snapshot, `
-    + `and now on ${change.now.pages}. This rule matches since this run.`,
-  narrowed: (change) => `removed on ${change.was.pages} pages in the previous snapshot, `
-    + `and now on ${change.now.pages}. This rule matches fewer pages than before.`,
-  widened: (change) => `removed on ${change.was.pages} pages in the previous snapshot, `
-    + `and now on ${change.now.pages}. This rule matches more pages than before.`,
-  'new-entry': (change) => `new in the list, removed on ${change.now.pages} pages. `
-    + 'The previous snapshot has no number for it.',
-  'left-the-list': (change) => 'is no longer in the list. It was removed on '
-    + `${change.was.pages} pages in the previous snapshot.`,
+  'stopped-matching': (change) =>
+    `removed on ${change.was.pages} pages in the previous snapshot, ` +
+    `and now on ${change.now.pages}. This rule no longer matches, and the region is back in the log. ` +
+    'A rule anchored on a campaign stops to match when the campaign changes.',
+  'started-matching': (change) =>
+    `removed on ${change.was.pages} pages in the previous snapshot, ` +
+    `and now on ${change.now.pages}. This rule matches since this run.`,
+  narrowed: (change) =>
+    `removed on ${change.was.pages} pages in the previous snapshot, ` +
+    `and now on ${change.now.pages}. This rule matches fewer pages than before.`,
+  widened: (change) =>
+    `removed on ${change.was.pages} pages in the previous snapshot, ` +
+    `and now on ${change.now.pages}. This rule matches more pages than before.`,
+  'new-entry': (change) =>
+    `new in the list, removed on ${change.now.pages} pages. ` +
+    'The previous snapshot has no number for it.',
+  'left-the-list': (change) =>
+    'is no longer in the list. It was removed on ' +
+    `${change.was.pages} pages in the previous snapshot.`,
 };
 
 /**
@@ -740,7 +808,9 @@ function Aside({ title, note, children }) {
       <CardHeader className="gap-2">
         {/* `CardTitle` renders a div, and the heading is what puts these three panels
             in the page's outline, so the h2 stays inside it. */}
-        <CardTitle><h2 className="font-semibold">{title}</h2></CardTitle>
+        <CardTitle>
+          <h2 className="font-semibold">{title}</h2>
+        </CardTitle>
         <p className="text-sm text-muted-foreground">{note}</p>
       </CardHeader>
       <CardContent>

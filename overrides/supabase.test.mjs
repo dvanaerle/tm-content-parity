@@ -111,18 +111,30 @@ describe('what the app writes', () => {
   });
 
   it('round-trips a page review', () => {
-    expect(roundTrip({
-      ...dismissal, scope: 'page', action: 'reviewed', findingId: undefined, findingSetHash: 'h1', note: undefined,
-    })).toMatchObject({ scope: 'page', action: 'reviewed', findingSetHash: 'h1' });
+    expect(
+      roundTrip({
+        ...dismissal,
+        scope: 'page',
+        action: 'reviewed',
+        findingId: undefined,
+        findingSetHash: 'h1',
+        note: undefined,
+      }),
+    ).toMatchObject({ scope: 'page', action: 'reviewed', findingSetHash: 'h1' });
   });
 
   const annotation = {
-    ...dismissal, findingId: undefined, note: undefined, ...priorityEventFor('high'),
+    ...dismissal,
+    findingId: undefined,
+    note: undefined,
+    ...priorityEventFor('high'),
   };
 
   it('round-trips a page priority', () => {
     expect(roundTrip(annotation)).toMatchObject({
-      scope: 'page', action: 'prioritised', priority: 'high',
+      scope: 'page',
+      action: 'prioritised',
+      priority: 'high',
     });
   });
 
@@ -138,7 +150,9 @@ describe('what the app writes', () => {
   it('round-trips a page note without it becoming a dismissal note', () => {
     // Both live in the `note` column, and the action is what tells them apart.
     expect(roundTrip({ ...annotation, ...noteEventFor('Campagne-update') })).toMatchObject({
-      scope: 'page', action: 'noted', note: 'Campagne-update',
+      scope: 'page',
+      action: 'noted',
+      note: 'Campagne-update',
     });
   });
 });

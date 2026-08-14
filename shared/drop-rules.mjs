@@ -16,28 +16,28 @@
 export const DROP_RULES = {
   'product-signature': {
     reason:
-      'Product page. The last path segment names a measurement, or a colour '
-      + 'beside a finish. That names a variant of an article, which the catalogue '
-      + 'writes and an editor does not. Production agrees: it answers '
-      + '`catalog-product-view` on all 105 of these and on none of the other 771 '
-      + 'candidates (`crawl/probes/probe-product-signature.mjs`).',
+      'Product page. The last path segment names a measurement, or a colour ' +
+      'beside a finish. That names a variant of an article, which the catalogue ' +
+      'writes and an editor does not. Production agrees: it answers ' +
+      '`catalog-product-view` on all 105 of these and on none of the other 771 ' +
+      'candidates (`crawl/probes/probe-product-signature.mjs`).',
   },
   'six-alternates-never-daily': {
     reason:
-      'Catalogue page. The URL carries all six hreflang alternates and no sitemap '
-      + 'marks it `daily`, which is the shape of a page the catalogue generates. '
-      + 'A content page fails one of the two clauses.',
+      'Catalogue page. The URL carries all six hreflang alternates and no sitemap ' +
+      'marks it `daily`, which is the shape of a page the catalogue generates. ' +
+      'A content page fails one of the two clauses.',
   },
   'foreign-host': {
     reason:
-      'The host is not one of the five production hosts. The log can say nothing '
-      + 'about such a URL, because it belongs to no store.',
+      'The host is not one of the five production hosts. The log can say nothing ' +
+      'about such a URL, because it belongs to no store.',
   },
   'duplicate-in-store': {
     reason:
-      'Two production URLs of one store claim the same page. The first is kept and '
-      + 'this one is the loser, so the output does not depend on the order of the '
-      + 'sitemap.',
+      'Two production URLs of one store claim the same page. The first is kept and ' +
+      'this one is the loser, so the output does not depend on the order of the ' +
+      'sitemap.',
   },
 };
 

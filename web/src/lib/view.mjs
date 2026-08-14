@@ -116,7 +116,7 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
   /** @type {ContentRow[]} */
   const onThePage = [];
   for (const row of rows) {
-    const finding = row.finding ? byId.get(row.finding) ?? null : null;
+    const finding = row.finding ? (byId.get(row.finding) ?? null) : null;
 
     // The toggle asks about the **class** and about nothing else. Noise is a
     // `diagnostic` row — what the rule saw, for the author of the rule. An
@@ -129,8 +129,8 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
     const noise = Boolean(row.class) && (finding?.visibility ?? 'diagnostic') === 'diagnostic';
     if (noise && !showNoise) continue;
 
-    const prod = row.prod === null ? null : elements.production[row.prod] ?? null;
-    const next = row.new === null ? null : elements.new[row.new] ?? null;
+    const prod = row.prod === null ? null : (elements.production[row.prod] ?? null);
+    const next = row.new === null ? null : (elements.new[row.new] ?? null);
 
     onThePage.push({
       key: anchorKey(prod, next),
@@ -329,7 +329,13 @@ export function repeatsInStore(pages) {
 
   for (const page of pages) {
     for (const finding of page.findings) {
-      const key = JSON.stringify([page.store, finding.class, finding.prod, finding.new, finding.detail]);
+      const key = JSON.stringify([
+        page.store,
+        finding.class,
+        finding.prod,
+        finding.new,
+        finding.detail,
+      ]);
       if (!groups.has(key)) {
         groups.set(key, {
           key,
@@ -351,7 +357,9 @@ export function repeatsInStore(pages) {
 
   // Worst-first, which here is the repeat on the most pages. The tie-break is the
   // key, so two repeats of equal size never swap places between two renders.
-  return [...groups.values()].sort((a, b) => b.on.length - a.on.length || a.key.localeCompare(b.key));
+  return [...groups.values()].sort(
+    (a, b) => b.on.length - a.on.length || a.key.localeCompare(b.key),
+  );
 }
 
 /**
@@ -432,9 +440,8 @@ export function groupRepeatsByClass(repeats, classes = []) {
   // different answers, and a reader who cannot tell them apart does not know whether the
   // rule ran. Any other class is drawn only when it holds something, which is the noise
   // toggle's repeats arriving in a group of their own rather than mixed into a work one.
-  const isDrawn = classes.length > 0
-    ? (cls) => classes.includes(cls)
-    : (cls) => isWork(cls) || byClass.has(cls);
+  const isDrawn =
+    classes.length > 0 ? (cls) => classes.includes(cls) : (cls) => isWork(cls) || byClass.has(cls);
 
   // A class the closed vocabulary does not name cannot be ordered by it, so it goes last
   // rather than nowhere. Nothing reaches here today that is not in the vocabulary; the

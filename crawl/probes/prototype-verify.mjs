@@ -8,7 +8,9 @@ const browser = await chromium.launch();
 for (const v of ['A', 'B', 'C']) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('console', (m) => {
+    if (m.type() === 'error') errors.push(m.text());
+  });
   page.on('pageerror', (e) => errors.push(`PAGEERROR: ${e.message}`));
 
   await page.goto(`${base}?variant=${v}`, { waitUntil: 'networkidle' });
@@ -20,8 +22,13 @@ for (const v of ['A', 'B', 'C']) {
     bar: document.body.innerText.toLowerCase().includes('prototype'),
   }));
 
-  console.log(`variant ${v}: ${JSON.stringify(info)} errors: ${errors.length ? JSON.stringify(errors.slice(0, 3)) : 'none'}`);
-  await page.screenshot({ path: new URL(`variant-${v}.png`, outDir).pathname.slice(1), fullPage: false });
+  console.log(
+    `variant ${v}: ${JSON.stringify(info)} errors: ${errors.length ? JSON.stringify(errors.slice(0, 3)) : 'none'}`,
+  );
+  await page.screenshot({
+    path: new URL(`variant-${v}.png`, outDir).pathname.slice(1),
+    fullPage: false,
+  });
   await page.close();
 }
 

@@ -9,14 +9,22 @@ import { parse } from 'node-html-parser';
 const CONCURRENCY = 8;
 // Ticket 02's trimmed chrome list, with [class*="breadcrumb"] restored by 14.
 const CHROME = [
-  'header', 'footer', 'nav', 'form', 'script', 'style', 'noscript',
-  '[class*="breadcrumb"]', '[class*="menu"]', '[role="dialog"]',
+  'header',
+  'footer',
+  'nav',
+  'form',
+  'script',
+  'style',
+  'noscript',
+  '[class*="breadcrumb"]',
+  '[class*="menu"]',
+  '[role="dialog"]',
 ];
 // Ticket 14: without this the new site's <body>/<header> are silently deleted.
 const PARSE_OPTIONS = { closeAllByClosing: true };
 
 const seeds = JSON.parse(
-  readFileSync(new URL('../../data/10-store-seeds.json', import.meta.url), 'utf8')
+  readFileSync(new URL('../../data/10-store-seeds.json', import.meta.url), 'utf8'),
 );
 
 const jobs = [];
@@ -48,19 +56,24 @@ function maintenanceReason(status, html) {
 function basenameOf(src) {
   const noQuery = src.split('#')[0].split('?')[0];
   let base = noQuery.split('/').pop() ?? '';
-  try { base = decodeURIComponent(base); } catch { /* keep raw */ }
+  try {
+    base = decodeURIComponent(base);
+  } catch {
+    /* keep raw */
+  }
   return base;
 }
 const stripExt = (b) => b.replace(/\.[a-z0-9]{2,5}$/i, '');
 // (d) lowercase, strip trailing _1 / -1 / _1_ / _NNNxNNN / -NNNxNNN / @2x
 function loose(base) {
   let s = stripExt(base).toLowerCase();
-  for (let prev = null; prev !== s; ) {
+  for (let prev = null; prev !== s;) {
     prev = s;
-    s = s.replace(/[_-]\d+x\d+$/, '')
-         .replace(/@\d+x$/, '')
-         .replace(/[_-]\d{1,2}_?$/, '')
-         .replace(/[_-]$/, '');
+    s = s
+      .replace(/[_-]\d+x\d+$/, '')
+      .replace(/@\d+x$/, '')
+      .replace(/[_-]\d{1,2}_?$/, '')
+      .replace(/[_-]$/, '');
   }
   return s;
 }
@@ -92,8 +105,10 @@ function extract(html, origin) {
   const imgs = [];
   for (const [i, img] of scope.querySelectorAll('img').entries()) {
     const rawSrc = img.getAttribute('src');
-    const dataSrc = img.getAttribute('data-src') ?? img.getAttribute('data-original')
-      ?? img.getAttribute('data-lazy-src');
+    const dataSrc =
+      img.getAttribute('data-src') ??
+      img.getAttribute('data-original') ??
+      img.getAttribute('data-lazy-src');
     const src = (rawSrc ?? dataSrc ?? '').trim();
     const isData = /^data:/i.test(src);
     let pathname = src;
@@ -103,7 +118,9 @@ function extract(html, origin) {
         const u = new URL(src, origin);
         pathname = u.pathname;
         host = u.host;
-      } catch { /* keep raw */ }
+      } catch {
+        /* keep raw */
+      }
     }
     const base = isData ? '' : basenameOf(pathname);
     const altAttr = img.getAttribute('alt');
@@ -113,7 +130,7 @@ function extract(html, origin) {
       src,
       host,
       pathname: isData ? 'data:' : pathname,
-      shape: isData ? 'data-uri' : (src ? classifyPath(pathname) : 'none'),
+      shape: isData ? 'data-uri' : src ? classifyPath(pathname) : 'none',
       base,
       noExt: stripExt(base),
       loose: loose(base),
@@ -151,7 +168,10 @@ await Promise.all(
   Array.from({ length: CONCURRENCY }, async () => {
     for (let job = queue.shift(); job; job = queue.shift()) {
       const record = { page: job.page, prodUrl: job.prodUrl, newUrl: job.newUrl };
-      for (const [side, url] of [['prod', job.prodUrl], ['new', job.newUrl]]) {
+      for (const [side, url] of [
+        ['prod', job.prodUrl],
+        ['new', job.newUrl],
+      ]) {
         try {
           const { status, html, finalUrl } = await get(url);
           const reason = maintenanceReason(status, html);
@@ -165,7 +185,7 @@ await Promise.all(
       pages.push(record);
       if (++done % 25 === 0) console.log(`  ${done}/${jobs.length}`);
     }
-  })
+  }),
 );
 
 if (maintenanceHits.length > 3) {
@@ -175,23 +195,41 @@ if (maintenanceHits.length > 3) {
 }
 
 // -------------------------------------------------------------------- analysis
-const usable = pages.filter(
-  (p) => p.prod?.imgs && p.new?.imgs
-);
+const usable = pages.filter((p) => p.prod?.imgs && p.new?.imgs);
 const skipped = pages.filter((p) => !(p.prod?.imgs && p.new?.imgs));
 
 const blank = () => ({
-  pages: 0, inMain: 0, outsideMain: 0, allImgs: 0, sources: 0,
-  noMain: 0, noBody: 0,
-  shapes: {}, exts: {},
-  hasSrc: 0, onlyDataSrc: 0, neither: 0, srcset: 0, lazy: 0, eager: 0,
-  inPicture: 0, dataUri: 0, svg: 0, raster: 0,
-  altMissing: 0, altEmpty: 0, altText: 0,
-  width: 0, height: 0, bothDims: 0,
+  pages: 0,
+  inMain: 0,
+  outsideMain: 0,
+  allImgs: 0,
+  sources: 0,
+  noMain: 0,
+  noBody: 0,
+  shapes: {},
+  exts: {},
+  hasSrc: 0,
+  onlyDataSrc: 0,
+  neither: 0,
+  srcset: 0,
+  lazy: 0,
+  eager: 0,
+  inPicture: 0,
+  dataUri: 0,
+  svg: 0,
+  raster: 0,
+  altMissing: 0,
+  altEmpty: 0,
+  altText: 0,
+  width: 0,
+  height: 0,
+  bothDims: 0,
   hosts: {},
 });
 const stats = { prod: blank(), new: blank() };
-const bump = (map, key) => { map[key] = (map[key] ?? 0) + 1; };
+const bump = (map, key) => {
+  map[key] = (map[key] ?? 0) + 1;
+};
 
 for (const p of usable) {
   for (const side of ['prod', 'new']) {
@@ -275,14 +313,27 @@ for (const p of usable) {
         }
       }
     }
-    if (side === 'prod') { ambiguousBasenamesProd += amb; if (amb) ambiguousPagesProd++; }
-    else { ambiguousBasenamesNew += amb; if (amb) ambiguousPagesNew++; }
+    if (side === 'prod') {
+      ambiguousBasenamesProd += amb;
+      if (amb) ambiguousPagesProd++;
+    } else {
+      ambiguousBasenamesNew += amb;
+      if (amb) ambiguousPagesNew++;
+    }
   }
   perPageMatches.push(row);
 }
 
 // ---- alt comparison among basename-matched pairs
-const alt = { pairs: 0, identical: 0, differing: 0, prodHasNewLost: 0, newHasProdLost: 0, bothEmpty: 0, bothMissing: 0 };
+const alt = {
+  pairs: 0,
+  identical: 0,
+  differing: 0,
+  prodHasNewLost: 0,
+  newHasProdLost: 0,
+  bothEmpty: 0,
+  bothMissing: 0,
+};
 const altExamples = [];
 for (const p of usable) {
   const byBaseNew = new Map();
@@ -299,7 +350,7 @@ for (const p of usable) {
     used.set(pi.base, at + 1);
     const ni = list[at];
     alt.pairs++;
-    const pa = pi.alt;   // null = attribute missing
+    const pa = pi.alt; // null = attribute missing
     const na = ni.alt;
     const pHas = pa != null && pa !== '';
     const nHas = na != null && na !== '';
@@ -309,12 +360,16 @@ for (const p of usable) {
       else alt.identical++;
     } else if (pHas && !nHas) {
       alt.prodHasNewLost++;
-      if (altExamples.length < 25) altExamples.push(`LOST  ${p.page} | ${pi.base} | prod="${pa}" new=${na === null ? '(no attr)' : '""'}`);
+      if (altExamples.length < 25)
+        altExamples.push(
+          `LOST  ${p.page} | ${pi.base} | prod="${pa}" new=${na === null ? '(no attr)' : '""'}`,
+        );
     } else if (!pHas && nHas) {
       alt.newHasProdLost++;
     } else if (pHas && nHas) {
       alt.differing++;
-      if (altExamples.length < 25) altExamples.push(`DIFF  ${p.page} | ${pi.base} | prod="${pa}" new="${na}"`);
+      if (altExamples.length < 25)
+        altExamples.push(`DIFF  ${p.page} | ${pi.base} | prod="${pa}" new="${na}"`);
     } else {
       // one is null, the other "" — both effectively empty
       alt.bothEmpty++;
@@ -341,14 +396,18 @@ worst.sort((a, b) => b.count - a.count);
 // ------------------------------------------------------------------- reporting
 const pct = (n, d) => (d ? `${((n / d) * 100).toFixed(1)}%` : '—');
 const top = (obj, n = 12) =>
-  Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n)
-    .map(([k, v]) => `    ${String(v).padStart(6)}  ${k}`).join('\n');
+  Object.entries(obj)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([k, v]) => `    ${String(v).padStart(6)}  ${k}`)
+    .join('\n');
 
 const L = [];
 L.push(`pages fetched      ${pages.length}`);
 L.push(`usable pairs       ${usable.length}`);
 L.push(`skipped            ${skipped.length}`);
-if (skipped.length) L.push(skipped.map((p) => `  ${p.page} prod=${p.prod?.status} new=${p.new?.status}`).join('\n'));
+if (skipped.length)
+  L.push(skipped.map((p) => `  ${p.page} prod=${p.prod?.status} new=${p.new?.status}`).join('\n'));
 L.push(`prod maintenance   ${maintenanceHits.length}`);
 
 for (const side of ['prod', 'new']) {
@@ -359,12 +418,16 @@ for (const side of ['prod', 'new']) {
   L.push(`  img outside <main>     ${s.outsideMain}  (${pct(s.outsideMain, s.allImgs)})`);
   L.push(`  <source> in main       ${s.sources}`);
   L.push(`  pages with no <main>   ${s.noMain}   no <body> ${s.noBody}`);
-  L.push(`  src present            ${s.hasSrc}  only data-src ${s.onlyDataSrc}  neither ${s.neither}`);
+  L.push(
+    `  src present            ${s.hasSrc}  only data-src ${s.onlyDataSrc}  neither ${s.neither}`,
+  );
   L.push(`  srcset                 ${s.srcset}`);
   L.push(`  loading=lazy           ${s.lazy}   eager ${s.eager}`);
   L.push(`  inside <picture>       ${s.inPicture}`);
   L.push(`  data: URI              ${s.dataUri}   svg ${s.svg}   raster ${s.raster}`);
-  L.push(`  alt missing            ${s.altMissing}   alt="" ${s.altEmpty}   alt non-empty ${s.altText}`);
+  L.push(
+    `  alt missing            ${s.altMissing}   alt="" ${s.altEmpty}   alt non-empty ${s.altText}`,
+  );
   L.push(`  width attr             ${s.width}   height attr ${s.height}   both ${s.bothDims}`);
   L.push(`  url shapes:\n${top(s.shapes)}`);
   L.push(`  extensions:\n${top(s.exts, 10)}`);
@@ -374,7 +437,9 @@ for (const side of ['prod', 'new']) {
 L.push(`\n=== MATCH STRATEGIES (site-wide matched image count) ===`);
 L.push(`  prod images ${stats.prod.inMain}   new images ${stats.new.inMain}`);
 for (const k of Object.keys(STRATEGIES)) {
-  L.push(`  ${k.padEnd(8)} ${String(matchTotals[k]).padStart(6)}   ${pct(matchTotals[k], stats.prod.inMain)} of prod   ${pct(matchTotals[k], stats.new.inMain)} of new`);
+  L.push(
+    `  ${k.padEnd(8)} ${String(matchTotals[k]).padStart(6)}   ${pct(matchTotals[k], stats.prod.inMain)} of prod   ${pct(matchTotals[k], stats.new.inMain)} of new`,
+  );
 }
 L.push(`\n=== AMBIGUOUS BASENAMES (same basename, >1 distinct path on a page) ===`);
 L.push(`  prod: ${ambiguousBasenamesProd} basenames on ${ambiguousPagesProd} pages`);
@@ -393,39 +458,60 @@ L.push(altExamples.slice(0, 15).join('\n'));
 
 L.push(`\n=== REPEAT DISTRIBUTION (occurrences of one src on one page) ===`);
 for (const side of ['prod', 'new']) {
-  L.push(`  ${side}: ` + Object.entries(repeatDist[side]).sort((a, b) => Number(a[0].replace('+','')) - Number(b[0].replace('+',''))).map(([k, v]) => `${k}x:${v}`).join('  '));
+  L.push(
+    `  ${side}: ` +
+      Object.entries(repeatDist[side])
+        .sort((a, b) => Number(a[0].replace('+', '')) - Number(b[0].replace('+', '')))
+        .map(([k, v]) => `${k}x:${v}`)
+        .join('  '),
+  );
 }
 L.push(`  worst offenders:`);
-L.push(worst.slice(0, 20).map((w) => `    ${String(w.count).padStart(3)}x  ${w.side}  ${w.page}  ${w.path}`).join('\n'));
+L.push(
+  worst
+    .slice(0, 20)
+    .map((w) => `    ${String(w.count).padStart(3)}x  ${w.side}  ${w.page}  ${w.path}`)
+    .join('\n'),
+);
 
 const report = L.join('\n');
 console.log(report);
 
 writeFileSync(
   new URL('../../data/probe-images.json', import.meta.url),
-  JSON.stringify({
-    generated: new Date().toISOString(),
-    store: 'nl',
-    totals: { fetched: pages.length, usable: usable.length, skipped: skipped.length },
-    maintenanceHits,
-    skipped: skipped.map((p) => ({ page: p.page, prod: p.prod?.status, new: p.new?.status })),
-    stats,
-    matchTotals,
-    perPageMatches,
-    ambiguity: {
-      prodBasenames: ambiguousBasenamesProd, prodPages: ambiguousPagesProd,
-      newBasenames: ambiguousBasenamesNew, newPages: ambiguousPagesNew,
-      examples: ambiguousExamples,
+  JSON.stringify(
+    {
+      generated: new Date().toISOString(),
+      store: 'nl',
+      totals: { fetched: pages.length, usable: usable.length, skipped: skipped.length },
+      maintenanceHits,
+      skipped: skipped.map((p) => ({ page: p.page, prod: p.prod?.status, new: p.new?.status })),
+      stats,
+      matchTotals,
+      perPageMatches,
+      ambiguity: {
+        prodBasenames: ambiguousBasenamesProd,
+        prodPages: ambiguousPagesProd,
+        newBasenames: ambiguousBasenamesNew,
+        newPages: ambiguousPagesNew,
+        examples: ambiguousExamples,
+      },
+      alt,
+      altExamples,
+      repeatDist,
+      worstRepeats: worst.slice(0, 60),
+      pages: pages.map((p) => ({
+        page: p.page,
+        prod: p.prod?.imgs
+          ? { status: p.prod.status, hasMain: p.prod.hasMain, imgs: p.prod.imgs }
+          : { status: p.prod?.status },
+        new: p.new?.imgs
+          ? { status: p.new.status, hasMain: p.new.hasMain, imgs: p.new.imgs }
+          : { status: p.new?.status },
+      })),
     },
-    alt,
-    altExamples,
-    repeatDist,
-    worstRepeats: worst.slice(0, 60),
-    pages: pages.map((p) => ({
-      page: p.page,
-      prod: p.prod?.imgs ? { status: p.prod.status, hasMain: p.prod.hasMain, imgs: p.prod.imgs } : { status: p.prod?.status },
-      new: p.new?.imgs ? { status: p.new.status, hasMain: p.new.hasMain, imgs: p.new.imgs } : { status: p.new?.status },
-    })),
-  }, null, 2)
+    null,
+    2,
+  ),
 );
 console.log('\nwrote data/probe-images.json');

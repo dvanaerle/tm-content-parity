@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  SEARCH_FIELDS, addPage, emptyIndex, indexStore, matchedFields, searchNotes, searchStore,
+  SEARCH_FIELDS,
+  addPage,
+  emptyIndex,
+  indexStore,
+  matchedFields,
+  searchNotes,
+  searchStore,
 } from './search.mjs';
 
 /**
@@ -11,9 +17,18 @@ import {
 
 /** @param {Partial<import('../../../compare/contract.mjs').Finding>} part */
 const finding = (part) => ({
-  id: 'a', store: 'nl', page: 'afhalen', check: 'text', class: 'text-missing',
-  prod: 'Bekijk deals >', new: null, detail: null, anchorHeading: 'Montage', occurrences: 1,
-  score: null, ...part,
+  id: 'a',
+  store: 'nl',
+  page: 'afhalen',
+  check: 'text',
+  class: 'text-missing',
+  prod: 'Bekijk deals >',
+  new: null,
+  detail: null,
+  anchorHeading: 'Montage',
+  occurrences: 1,
+  score: null,
+  ...part,
 });
 
 /**
@@ -22,7 +37,11 @@ const finding = (part) => ({
  * that it holds none of them.
  */
 const report = ({
-  page = 'afhalen', store = 'nl', findings = [finding({})], links = {}, comparable = true,
+  page = 'afhalen',
+  store = 'nl',
+  findings = [finding({})],
+  links = {},
+  comparable = true,
 } = {}) => ({
   store,
   page,
@@ -30,7 +49,14 @@ const report = ({
   skipReason: null,
   findings,
   rows: [{ prod: 0, new: null, class: 'text-missing', score: null, finding: 'a' }],
-  summary: { work: findings.length, information: 0, diagnostic: 0, total: findings.length, byClass: {}, byCheck: {} },
+  summary: {
+    work: findings.length,
+    information: 0,
+    diagnostic: 0,
+    total: findings.length,
+    byClass: {},
+    byCheck: {},
+  },
   observationId: '2026-08-11T00:00:00Z-1',
   findingSetHash: 'hash',
   builtAt: '2026-08-11T00:00:00Z',
@@ -38,7 +64,16 @@ const report = ({
     production: {
       url: 'https://www.tuinmaximaal.nl/afhalen',
       status: 200,
-      elements: [{ index: 0, tag: 'p', kind: 'text', level: null, raw: 'Bekijk deals >', norm: 'Bekijk deals >' }],
+      elements: [
+        {
+          index: 0,
+          tag: 'p',
+          kind: 'text',
+          level: null,
+          raw: 'Bekijk deals >',
+          norm: 'Bekijk deals >',
+        },
+      ],
       links: links.production ?? [],
       images: [],
       markdown: '',
@@ -68,9 +103,17 @@ describe('indexStore', () => {
     expect(Object.keys(index).sort()).toEqual(['builtAt', 'findings', 'pages', 'store']);
     expect(index.store).toBe('nl');
     expect(index.pages).toBe(1);
-    expect(Object.keys(index.findings[0]).sort()).toEqual(
-      ['anchorHeading', 'class', 'detail', 'id', 'linkText', 'new', 'occurrences', 'page', 'prod'],
-    );
+    expect(Object.keys(index.findings[0]).sort()).toEqual([
+      'anchorHeading',
+      'class',
+      'detail',
+      'id',
+      'linkText',
+      'new',
+      'occurrences',
+      'page',
+      'prod',
+    ]);
   });
 
   it('carries the page of every finding, because the result says which pages', () => {
@@ -83,9 +126,14 @@ describe('indexStore', () => {
     // and ticket 75 named it `information`. A search that returned it would offer work
     // the log does not count. Widening the index to `information` is a payload decision
     // and belongs to whichever ticket wants to pay for it.
-    const index = indexStore('nl', [report({
-      findings: [finding({ id: 'a' }), finding({ id: 'b', class: 'text-added', prod: null, new: 'Bekijk deals >' })],
-    })]);
+    const index = indexStore('nl', [
+      report({
+        findings: [
+          finding({ id: 'a' }),
+          finding({ id: 'b', class: 'text-added', prod: null, new: 'Bekijk deals >' }),
+        ],
+      }),
+    ]);
 
     expect(index.findings.map((entry) => entry.id)).toEqual(['a']);
   });
@@ -96,15 +144,40 @@ describe('indexStore', () => {
     // the words on the page, so the build reads them off the extract's link records.
     // This is the one field the dashboard's own finding index cannot derive, and it is
     // why the index is emitted rather than assembled in the browser.
-    const index = indexStore('nl', [report({
-      findings: [finding({
-        check: 'links', class: 'link-target', prod: 'self/terrasoverkapping', new: 'other/terrasoverkapping',
-      })],
-      links: {
-        production: [{ index: 3, href: '/terrasoverkapping', url: '', key: 'self/terrasoverkapping', text: 'Bekijk deals >', internal: true }],
-        new: [{ index: 3, href: '/terrasoverkapping', url: '', key: 'other/terrasoverkapping', text: 'Bekijk aanbiedingen', internal: true }],
-      },
-    })]);
+    const index = indexStore('nl', [
+      report({
+        findings: [
+          finding({
+            check: 'links',
+            class: 'link-target',
+            prod: 'self/terrasoverkapping',
+            new: 'other/terrasoverkapping',
+          }),
+        ],
+        links: {
+          production: [
+            {
+              index: 3,
+              href: '/terrasoverkapping',
+              url: '',
+              key: 'self/terrasoverkapping',
+              text: 'Bekijk deals >',
+              internal: true,
+            },
+          ],
+          new: [
+            {
+              index: 3,
+              href: '/terrasoverkapping',
+              url: '',
+              key: 'other/terrasoverkapping',
+              text: 'Bekijk aanbiedingen',
+              internal: true,
+            },
+          ],
+        },
+      }),
+    ]);
 
     expect(index.findings[0].linkText).toEqual(['Bekijk deals >', 'Bekijk aanbiedingen']);
   });
@@ -147,26 +220,42 @@ describe('indexStore', () => {
 
 /** One index entry, as `indexStore` emits it. */
 const entry = (part) => ({
-  id: 'a', page: 'afhalen', class: 'text-missing', prod: 'Bekijk deals >', new: null,
-  detail: null, anchorHeading: 'Montage', occurrences: 1, linkText: [], ...part,
+  id: 'a',
+  page: 'afhalen',
+  class: 'text-missing',
+  prod: 'Bekijk deals >',
+  new: null,
+  detail: null,
+  anchorHeading: 'Montage',
+  occurrences: 1,
+  linkText: [],
+  ...part,
 });
 
 describe('matchedFields', () => {
   it('names six fields and no more', () => {
     // The ticket asks for six, and the answer says which of the six matched. A
     // seventh name would be a field an editor was never told they could search.
-    expect(SEARCH_FIELDS).toEqual(
-      ['page', 'prodText', 'newText', 'linkTarget', 'linkText', 'anchorHeading'],
-    );
+    expect(SEARCH_FIELDS).toEqual([
+      'page',
+      'prodText',
+      'newText',
+      'linkTarget',
+      'linkText',
+      'anchorHeading',
+    ]);
   });
 
   it('finds a finding by its production text', () => {
-    expect(matchedFields(entry({ prod: 'Bekijk deals >' }), 'bekijk deals >')).toEqual(['prodText']);
+    expect(matchedFields(entry({ prod: 'Bekijk deals >' }), 'bekijk deals >')).toEqual([
+      'prodText',
+    ]);
   });
 
   it('finds a finding by its new-site text', () => {
-    expect(matchedFields(entry({ prod: null, new: 'Bekijk aanbiedingen' }), 'aanbiedingen'))
-      .toEqual(['newText']);
+    expect(
+      matchedFields(entry({ prod: null, new: 'Bekijk aanbiedingen' }), 'aanbiedingen'),
+    ).toEqual(['newText']);
   });
 
   it('finds a finding by the link target, and does not call that production text', () => {
@@ -180,14 +269,18 @@ describe('matchedFields', () => {
   it('finds a finding by the words on the link', () => {
     // The field only the build can fill, and the reason the index is emitted at all.
     const links = entry({
-      class: 'link-target', prod: 'self/deals', new: null, linkText: ['Bekijk deals >'],
+      class: 'link-target',
+      prod: 'self/deals',
+      new: null,
+      linkText: ['Bekijk deals >'],
     });
     expect(matchedFields(links, 'bekijk')).toEqual(['linkText']);
   });
 
   it('finds a finding by the heading it sits under', () => {
-    expect(matchedFields(entry({ prod: null, anchorHeading: 'Montage' }), 'montage'))
-      .toEqual(['anchorHeading']);
+    expect(matchedFields(entry({ prod: null, anchorHeading: 'Montage' }), 'montage')).toEqual([
+      'anchorHeading',
+    ]);
   });
 
   it('finds a finding by its page key', () => {
@@ -228,7 +321,12 @@ describe('matchedFields', () => {
 
 describe('searchStore', () => {
   /** An index over the entries given, as the store page would have loaded it. */
-  const index = (findings) => ({ store: 'nl', pages: 3, builtAt: '2026-08-11T00:00:00Z', findings });
+  const index = (findings) => ({
+    store: 'nl',
+    pages: 3,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings,
+  });
 
   it('groups the hits by repeat, so one difference on many pages is one row', () => {
     // The ticket's second trap: a term matching one repeat of many findings must not
@@ -312,8 +410,7 @@ describe('searchStore', () => {
       stateOf: (id) => states[id] ?? 'open',
     });
 
-    expect(result.repeats[0].on.map((one) => one.page))
-      .toEqual(['afhalen', 'montage']);
+    expect(result.repeats[0].on.map((one) => one.page)).toEqual(['afhalen', 'montage']);
   });
 
   it('includes what is closed when asked to, without moving a count', () => {
@@ -327,14 +424,20 @@ describe('searchStore', () => {
     };
 
     expect(searchStore({ ...both, includeClosed: true }).total).toBe(2);
-    expect(searchStore({ ...both, includeClosed: true }).repeats[0].on.map((one) => one.page))
-      .toEqual(['afhalen', 'garantie']);
+    expect(
+      searchStore({ ...both, includeClosed: true }).repeats[0].on.map((one) => one.page),
+    ).toEqual(['afhalen', 'garantie']);
     expect(searchStore(both).total).toBe(1);
   });
 });
 
 describe('searchStore, narrowed by the class pills (ticket 102)', () => {
-  const index = (findings) => ({ store: 'nl', pages: 4, builtAt: '2026-08-11T00:00:00Z', findings });
+  const index = (findings) => ({
+    store: 'nl',
+    pages: 4,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings,
+  });
 
   /** A term over three classes, which the pills then cut down. */
   const three = index([
@@ -394,8 +497,14 @@ describe('searchStore, narrowed by the class pills (ticket 102)', () => {
 
 /** An override event, as the log appends them. */
 const event = (part) => ({
-  createdAt: '2026-08-10T09:00:00Z', editor: 'Dennis', scope: 'finding', action: 'dismissed',
-  store: 'nl', page: 'afhalen', findingId: 'a', note: 'Bekijk deals staat er bewust nog',
+  createdAt: '2026-08-10T09:00:00Z',
+  editor: 'Dennis',
+  scope: 'finding',
+  action: 'dismissed',
+  store: 'nl',
+  page: 'afhalen',
+  findingId: 'a',
+  note: 'Bekijk deals staat er bewust nog',
   ...part,
 });
 
@@ -406,7 +515,10 @@ describe('searchNotes', () => {
     // loaded, so it is as new as the last read and not as old as the last build. The
     // flag is on the result because a caller drawing one list has to be able to say
     // which half it is drawing.
-    const result = searchNotes({ events: [event({}), event({ findingId: 'b', note: 'Wacht op copy' })], term: 'deals' });
+    const result = searchNotes({
+      events: [event({}), event({ findingId: 'b', note: 'Wacht op copy' })],
+      term: 'deals',
+    });
 
     expect(result.live).toBe(true);
     expect(result.notes.map((one) => one.findingId)).toEqual(['a']);
@@ -437,9 +549,14 @@ describe('searchNotes', () => {
    */
   it('finds a page note, which is the second thing living in the note column', () => {
     const result = searchNotes({
-      events: [event({
-        scope: 'page', action: 'noted', findingId: null, note: 'Campagne-update volgt',
-      })],
+      events: [
+        event({
+          scope: 'page',
+          action: 'noted',
+          findingId: null,
+          note: 'Campagne-update volgt',
+        }),
+      ],
       term: 'campagne',
     });
 
@@ -454,7 +571,10 @@ describe('searchNotes', () => {
       events: [
         event({ note: 'zelfde woord hier' }),
         event({
-          scope: 'page', action: 'noted', findingId: null, note: 'zelfde woord daar',
+          scope: 'page',
+          action: 'noted',
+          findingId: null,
+          note: 'zelfde woord daar',
           // Newer, so the order below is the sort doing its job and not two events
           // arriving in the same millisecond and landing however they were listed.
           createdAt: '2026-08-11T09:00:00Z',
@@ -474,7 +594,10 @@ describe('searchNotes', () => {
       events: [
         event({ scope: 'page', action: 'noted', findingId: null, note: 'Campagne-update volgt' }),
         event({
-          scope: 'page', action: 'noted', findingId: null, note: '',
+          scope: 'page',
+          action: 'noted',
+          findingId: null,
+          note: '',
           createdAt: '2026-08-11T09:00:00Z',
         }),
       ],
@@ -491,7 +614,10 @@ describe('searchNotes', () => {
       events: [
         event({ scope: 'page', action: 'reviewed', findingId: null, note: 'deals gezien' }),
         event({
-          scope: 'page', action: 'noted', findingId: null, note: 'deals nog niet',
+          scope: 'page',
+          action: 'noted',
+          findingId: null,
+          note: 'deals nog niet',
           createdAt: '2026-08-11T09:00:00Z',
         }),
       ],

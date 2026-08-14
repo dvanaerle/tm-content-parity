@@ -66,9 +66,10 @@ export function textFragmentUrl(url, text) {
   const words = text.trim().split(/\s+/).filter(Boolean);
   if (!words.length) return null;
 
-  const fragment = words.length > FRAGMENT_WORDS * 2
-    ? `${term(words.slice(0, FRAGMENT_WORDS))},${term(words.slice(-FRAGMENT_WORDS))}`
-    : term(words);
+  const fragment =
+    words.length > FRAGMENT_WORDS * 2
+      ? `${term(words.slice(0, FRAGMENT_WORDS))},${term(words.slice(-FRAGMENT_WORDS))}`
+      : term(words);
 
   return `${url}#:~:text=${fragment}`;
 }

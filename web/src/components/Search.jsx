@@ -35,21 +35,33 @@ import { pagesWithClasses } from '../lib/view.mjs';
  * itself, which becomes a filter deliberately in ticket 106 and not by accident here.
  */
 export default function Search({
-  store, pages, term, classes = [], onClearClasses, byFinding, events,
-  includeClosed, onIncludeClosed, bulk, link,
+  store,
+  pages,
+  term,
+  classes = [],
+  onClearClasses,
+  byFinding,
+  events,
+  includeClosed,
+  onIncludeClosed,
+  bulk,
+  link,
 }) {
   const { index, error } = useSearchIndex(store);
 
   const result = useMemo(
-    () => (index ? searchStore({
-      index,
-      term,
-      classes,
-      includeClosed,
-      // The log's own answer about a finding. `open` for one the log has not decided,
-      // which is also what an unconnected log says about everything.
-      stateOf: (id) => byFinding.get(id)?.state ?? 'open',
-    }) : null),
+    () =>
+      index
+        ? searchStore({
+            index,
+            term,
+            classes,
+            includeClosed,
+            // The log's own answer about a finding. `open` for one the log has not decided,
+            // which is also what an unconnected log says about everything.
+            stateOf: (id) => byFinding.get(id)?.state ?? 'open',
+          })
+        : null,
     // The pills are in here, so moving one re-answers the same term against the new
     // selection. An editor who narrows mid-search does not retype.
     [index, term, classes, includeClosed, byFinding],
@@ -80,13 +92,13 @@ export default function Search({
   if (error) {
     return (
       <p className="px-4 py-6 text-sm text-muted-foreground">
-        The search index of this store was not read ({error}). Search works again after a
-        new build.
+        The search index of this store was not read ({error}). Search works again after a new build.
       </p>
     );
   }
 
-  if (!result) return <p className="px-4 py-6 text-sm text-muted-foreground">The search index is loading…</p>;
+  if (!result)
+    return <p className="px-4 py-6 text-sm text-muted-foreground">The search index is loading…</p>;
 
   return (
     <>
@@ -118,9 +130,9 @@ export default function Search({
               : `${result.total} findings on ${result.pages} pages`}
           </strong>
           <span className="text-muted-foreground">
-            {result.repeats.length > 1 && ` in ${result.repeats.length} differences`}
-            . From the snapshot of {new Date(index.builtAt).toLocaleDateString('en-GB')} —
-            the counts at the top do not move with it.
+            {result.repeats.length > 1 && ` in ${result.repeats.length} differences`}. From the
+            snapshot of {new Date(index.builtAt).toLocaleDateString('en-GB')} — the counts at the
+            top do not move with it.
           </span>
         </p>
 
@@ -133,22 +145,22 @@ export default function Search({
         </Label>
       </div>
 
-      {result.repeats.length === 0
-        ? <p className="px-4 py-6 text-sm text-muted-foreground">No difference with these words.</p>
-        : (
-          <Repeats
-            // The classes are in the key for the reason the term is: `OneSelection`
-            // holds ticks against rows, and a pill can take the ticked row out of the
-            // list. A selection that outlived the result it was made in would arm a
-            // press over rows the editor can no longer see.
-            key={`${term}|${includeClosed}|${classes.join(',')}`}
-            repeats={result.repeats}
-            byFinding={byFinding}
-            bulk={bulk}
-            link={link}
-            searched
-          />
-        )}
+      {result.repeats.length === 0 ? (
+        <p className="px-4 py-6 text-sm text-muted-foreground">No difference with these words.</p>
+      ) : (
+        <Repeats
+          // The classes are in the key for the reason the term is: `OneSelection`
+          // holds ticks against rows, and a pill can take the ticked row out of the
+          // list. A selection that outlived the result it was made in would arm a
+          // press over rows the editor can no longer see.
+          key={`${term}|${includeClosed}|${classes.join(',')}`}
+          repeats={result.repeats}
+          byFinding={byFinding}
+          bulk={bulk}
+          link={link}
+          searched
+        />
+      )}
 
       <Named store={store} pages={named} link={link} />
       <Notes notes={notes.notes} link={link} />
@@ -222,12 +234,15 @@ function Notes({ notes, link }) {
           {notes.length} {notes.length === 1 ? 'note' : 'notes'} with these words
         </h3>
         <p className={cn('mb-2 text-xs', INK.info)}>
-          Read from the log now, not from the snapshot. This half is current, and the
-          findings above are as old as the last build.
+          Read from the log now, not from the snapshot. This half is current, and the findings above
+          are as old as the last build.
         </p>
         <ul className="text-sm">
           {notes.map((note) => (
-            <li key={`${note.createdAt}|${note.page}|${note.findingId ?? note.class ?? ''}`} className="py-0.5">
+            <li
+              key={`${note.createdAt}|${note.page}|${note.findingId ?? note.class ?? ''}`}
+              className="py-0.5"
+            >
               {/* The event's own store and page, and not the component's: an event
                   carries where it was written, and reading it is what keeps the link
                   honest if the two ever disagree. */}
@@ -238,9 +253,11 @@ function Notes({ notes, link }) {
               {/* A page note is quoted and italic, the way it is drawn on the page and in
                   the store list. A dismissal note is the plain sentence it has always
                   been, and it sits inside the decision it explains. */}
-              {note.action === 'noted'
-                ? <PageNote note={note.note} className="ml-2" />
-                : <span className="ml-2 text-muted-foreground">{note.note}</span>}
+              {note.action === 'noted' ? (
+                <PageNote note={note.note} className="ml-2" />
+              ) : (
+                <span className="ml-2 text-muted-foreground">{note.note}</span>
+              )}
               <span className="ml-2 text-xs text-muted-foreground">
                 {note.editor}, {new Date(note.createdAt).toLocaleDateString('en-GB')}
               </span>
@@ -260,7 +277,7 @@ function Notes({ notes, link }) {
  * vocabulary's own — a note **on this page**, or the reason for a **dismissal**.
  */
 const NoteKind = ({ note }) => (
-  <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
+  <span className="ml-2 text-xs tracking-wide text-muted-foreground uppercase">
     {note.action === 'noted' ? 'page note' : `${note.action} · reason`}
   </span>
 );
@@ -282,10 +299,18 @@ function useSearchIndex(store) {
     let live = true;
     setState({ index: null, error: null });
     fetch(`/search-index/${store}.json`)
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`))))
-      .then((index) => { if (live) setState({ index, error: null }); })
-      .catch((failure) => { if (live) setState({ index: null, error: failure.message }); });
-    return () => { live = false; };
+      .then((response) =>
+        response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)),
+      )
+      .then((index) => {
+        if (live) setState({ index, error: null });
+      })
+      .catch((failure) => {
+        if (live) setState({ index: null, error: failure.message });
+      });
+    return () => {
+      live = false;
+    };
   }, [store]);
 
   return state;

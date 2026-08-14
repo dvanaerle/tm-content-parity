@@ -77,8 +77,8 @@ export async function recheck(store, page) {
   const { prodUrl, newUrl } = await urlsFor(store, page);
   const sides = await extractStorePage({ store, page, prodUrl, newUrl });
 
-  const targets = ['production', 'new'].flatMap(
-    (side) => sides[side].links.filter((link) => link.internal).map((link) => link.url),
+  const targets = ['production', 'new'].flatMap((side) =>
+    sides[side].links.filter((link) => link.internal).map((link) => link.url),
   );
   const statuses = new Map(Object.entries(await checkAll(targets)));
 
@@ -136,49 +136,50 @@ export function createApi({ recheck: run, savedRecheck: read = async () => null 
    * @param {import('node:http').ServerResponse} response
    */
   return async function handle(request, response) {
-  const { pathname } = new URL(request.url ?? '/', 'http://localhost');
+    const { pathname } = new URL(request.url ?? '/', 'http://localhost');
 
-  // Its only job is to exist.
-  if (pathname === '/api/health') return send(response, 200, { ok: true });
+    // Its only job is to exist.
+    if (pathname === '/api/health') return send(response, 200, { ok: true });
 
-  if (pathname.startsWith('/api/recheck/')) {
-    // A page key can hold a slash (`faq/productinformatie`), so the store is the
-    // first segment and the page is everything after it. One parser serves both
-    // methods, so the read and the press can never split a key differently.
-    const [store, ...rest] = pathname.slice('/api/recheck/'.length).split('/');
-    const page = decodeURIComponent(rest.join('/'));
-    if (!store || !page) return send(response, 400, { reason: 'Give a store and a page.' });
+    if (pathname.startsWith('/api/recheck/')) {
+      // A page key can hold a slash (`faq/productinformatie`), so the store is the
+      // first segment and the page is everything after it. One parser serves both
+      // methods, so the read and the press can never split a key differently.
+      const [store, ...rest] = pathname.slice('/api/recheck/'.length).split('/');
+      const page = decodeURIComponent(rest.join('/'));
+      if (!store || !page) return send(response, 400, { reason: 'Give a store and a page.' });
 
-    // Ticket 71: the saved re-check, never the crawl report. The built page
-    // already carries the crawl report, and it holds both extracts.
-    if (request.method === 'GET') {
-      const saved = await read(store, page);
-      return saved
-        ? send(response, 200, saved)
-        : send(response, 404, { reason: 'No saved re-check.' });
-    }
-
-    if (request.method !== 'POST') return send(response, 405, { reason: 'Use POST or GET.' });
-
-    try {
-      return send(response, 200, await run(store, page));
-    } catch (error) {
-      // Ticket 04: production goes into maintenance mode without warning, and a
-      // run that records the maintenance page records phantom defects. This is a
-      // plain refusal with the reason, never a result.
-      if (error instanceof MaintenanceError) {
-        return send(response, 503, {
-          reason: `The site is in maintenance mode (${error.message}). Nothing was compared,`
-            + ' because a maintenance page gives hundreds of invented differences.',
-        });
+      // Ticket 71: the saved re-check, never the crawl report. The built page
+      // already carries the crawl report, and it holds both extracts.
+      if (request.method === 'GET') {
+        const saved = await read(store, page);
+        return saved
+          ? send(response, 200, saved)
+          : send(response, 404, { reason: 'No saved re-check.' });
       }
-      return send(response, 500, { reason: /** @type {Error} */ (error).message });
+
+      if (request.method !== 'POST') return send(response, 405, { reason: 'Use POST or GET.' });
+
+      try {
+        return send(response, 200, await run(store, page));
+      } catch (error) {
+        // Ticket 04: production goes into maintenance mode without warning, and a
+        // run that records the maintenance page records phantom defects. This is a
+        // plain refusal with the reason, never a result.
+        if (error instanceof MaintenanceError) {
+          return send(response, 503, {
+            reason:
+              `The site is in maintenance mode (${error.message}). Nothing was compared,` +
+              ' because a maintenance page gives hundreds of invented differences.',
+          });
+        }
+        return send(response, 500, { reason: /** @type {Error} */ (error).message });
+      }
     }
-  }
 
-  if (pathname.startsWith('/api/')) return send(response, 404, { reason: 'Unknown endpoint.' });
+    if (pathname.startsWith('/api/')) return send(response, 404, { reason: 'Unknown endpoint.' });
 
-  return serveStatic(pathname, response);
+    return serveStatic(pathname, response);
   };
 }
 
@@ -194,7 +195,9 @@ async function serveStatic(pathname, response) {
     if (!file.startsWith(DIST)) break;
     try {
       const body = await readFile(file);
-      response.writeHead(200, { 'content-type': MIME[extname(file)] ?? 'application/octet-stream' });
+      response.writeHead(200, {
+        'content-type': MIME[extname(file)] ?? 'application/octet-stream',
+      });
       return response.end(body);
     } catch {
       // Try the next shape, then fall through to the 404 below.

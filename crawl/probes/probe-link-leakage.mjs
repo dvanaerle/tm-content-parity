@@ -8,7 +8,15 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { parse } from 'node-html-parser';
 
 const CONCURRENCY = 8;
-const CHROME = ['header', 'footer', 'nav', 'script', 'style', '[class*="menu"]', '[class*="cookie"]'];
+const CHROME = [
+  'header',
+  'footer',
+  'nav',
+  'script',
+  'style',
+  '[class*="menu"]',
+  '[class*="cookie"]',
+];
 const NEW_HOSTS = new Set([
   'm2stagingnl.intern.systems',
   'm2stagingbe.intern.systems',
@@ -19,7 +27,7 @@ const NEW_HOSTS = new Set([
 const LIVE = /(^|\.)tuinmaximaal\.[a-z.]+$/i;
 
 const seeds = JSON.parse(
-  readFileSync(new URL('../../data/10-store-seeds.json', import.meta.url), 'utf8')
+  readFileSync(new URL('../../data/10-store-seeds.json', import.meta.url), 'utf8'),
 );
 
 const jobs = [];
@@ -76,7 +84,7 @@ await Promise.all(
       results.push({ ...job, status, anchors });
       if (++done % 50 === 0) console.log(`  ${done}/${jobs.length}`);
     }
-  })
+  }),
 );
 
 const ok = results.filter((r) => r.status === 200);
@@ -88,7 +96,14 @@ let totalAnchors = 0;
 const live = { pages: new Set(), targets: new Set(), examples: [] };
 const cross = { pages: new Set(), targets: new Set(), examples: [] };
 const externalHosts = new Map(); // host -> Set of "store|page"
-const shapes = { mailto: 0, tel: 0, hashOnly: 0, protocolRelative: 0, javascript: 0, unparseable: 0 };
+const shapes = {
+  mailto: 0,
+  tel: 0,
+  hashOnly: 0,
+  protocolRelative: 0,
+  javascript: 0,
+  unparseable: 0,
+};
 
 for (const page of ok) {
   const ownHost = new URL(page.url).host;
@@ -118,7 +133,8 @@ for (const page of ok) {
     } else if (NEW_HOSTS.has(a.host) && a.host !== ownHost) {
       cross.pages.add(key);
       cross.targets.add(a.abs);
-      if (cross.examples.length < 200) cross.examples.push(`${page.store} | ${page.page} | ${href}`);
+      if (cross.examples.length < 200)
+        cross.examples.push(`${page.store} | ${page.page} | ${href}`);
     } else if (a.host !== ownHost && !NEW_HOSTS.has(a.host)) {
       if (!externalHosts.has(a.host)) externalHosts.set(a.host, new Set());
       externalHosts.get(a.host).add(key);
@@ -139,30 +155,30 @@ lines.push(
       `  non-200              ${bad.length}`,
       `in-content anchors     ${totalAnchors}`,
       `unique http(s) targets ${uniqueTargets.size}`,
-    ].join('\n')
-  )
+    ].join('\n'),
+  ),
 );
 if (bad.length) {
   lines.push(
     section(
       'NON-200 PAGES',
-      bad.map((r) => `${r.status}  ${r.store} | ${r.page} | ${r.url}`).join('\n')
-    )
+      bad.map((r) => `${r.status}  ${r.store} | ${r.page} | ${r.url}`).join('\n'),
+    ),
   );
 }
 lines.push(
   section(
     'LIVE-DOMAIN LEAKAGE (tuinmaximaal.*)',
     `pages affected ${live.pages.size} / ${ok.length}   unique targets ${live.targets.size}\n` +
-      dedupe(live.examples).slice(0, 20).join('\n')
-  )
+      dedupe(live.examples).slice(0, 20).join('\n'),
+  ),
 );
 lines.push(
   section(
     'CROSS-STORE LEAKAGE (other m2staging* host)',
     `pages affected ${cross.pages.size} / ${ok.length}   unique targets ${cross.targets.size}\n` +
-      dedupe(cross.examples).slice(0, 20).join('\n')
-  )
+      dedupe(cross.examples).slice(0, 20).join('\n'),
+  ),
 );
 lines.push(
   section(
@@ -171,16 +187,16 @@ lines.push(
       .sort((a, b) => b[1].size - a[1].size)
       .slice(0, 25)
       .map(([host, pages]) => `${String(pages.size).padStart(4)}  ${host}`)
-      .join('\n') + `\n(total distinct external hosts: ${externalHosts.size})`
-  )
+      .join('\n') + `\n(total distinct external hosts: ${externalHosts.size})`,
+  ),
 );
 lines.push(
   section(
     'SCHEME / SHAPE STATS',
     Object.entries(shapes)
       .map(([k, v]) => `${k.padEnd(18)} ${v}`)
-      .join('\n')
-  )
+      .join('\n'),
+  ),
 );
 
 const report = lines.join('\n');
@@ -199,14 +215,20 @@ writeFileSync(
         uniqueTargets: uniqueTargets.size,
       },
       live: { pages: live.pages.size, targets: [...live.targets], examples: dedupe(live.examples) },
-      cross: { pages: cross.pages.size, targets: [...cross.targets], examples: dedupe(cross.examples) },
+      cross: {
+        pages: cross.pages.size,
+        targets: [...cross.targets],
+        examples: dedupe(cross.examples),
+      },
       externalHosts: Object.fromEntries(
-        [...externalHosts.entries()].sort((a, b) => b[1].size - a[1].size).map(([h, p]) => [h, p.size])
+        [...externalHosts.entries()]
+          .sort((a, b) => b[1].size - a[1].size)
+          .map(([h, p]) => [h, p.size]),
       ),
       shapes,
       nonOkPages: bad.map((r) => ({ store: r.store, page: r.page, url: r.url, status: r.status })),
     },
     null,
-    2
-  )
+    2,
+  ),
 );

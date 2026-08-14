@@ -77,25 +77,26 @@ describe('the two clauses of the content page rule', () => {
         candidate({
           loc: 'https://www.tuinmaximaal.fr/heavy-duty-veranda',
           alternates: { 'fr-BE': 'https://www.tuinmaximaal.be/fr/heavy-duty-veranda' },
-        })
-      )
+        }),
+      ),
     ).toBe(true);
   });
 
   it('keeps a page that carries all six alternates and is daily somewhere', () => {
     // A category page carries all six alternates. `/terrasoverkapping` is the
     // most important page on the site, and the alternate clause alone drops it.
-    expect(isContentPage(candidate({ loc: url('terrasoverkapping'), alternates: SIX, daily: ['nl'] })))
-      .toBe(true);
+    expect(
+      isContentPage(candidate({ loc: url('terrasoverkapping'), alternates: SIX, daily: ['nl'] })),
+    ).toBe(true);
   });
 
-  it('reads `daily` from any of the six files, not from the store\'s own', () => {
+  it("reads `daily` from any of the six files, not from the store's own", () => {
     // For four stores the NL file marks more of that store's pages `daily` than
     // the store's own file does. "Read the store's own sitemap" loses 72 pages.
     expect(
       isContentPage(
-        candidate({ loc: 'https://www.tuinmaximaal.be/veranda', alternates: SIX, daily: ['nl'] })
-      )
+        candidate({ loc: 'https://www.tuinmaximaal.be/veranda', alternates: SIX, daily: ['nl'] }),
+      ),
     ).toBe(true);
   });
 
@@ -124,7 +125,7 @@ describe('the product signature', () => {
     expect(isProductPage('glazen-dakplaat-ongehard-2500mm-x-700mm')).toBe(true);
     expect(isProductPage('melkglas-dakplaat-ongehard-2500-mm-x-700-mm')).toBe(true);
     expect(isProductPage('fr/couper-une-plaque-de-toit-de-verre-2500mm-x-700mm-sur-mesure')).toBe(
-      true
+      true,
     );
     expect(isProductPage('sun-shading-screen-housing-set-of-2-5m-matt-white')).toBe(true);
     expect(isProductPage('50-metre-roll-of-black-rubber-for-beams')).toBe(true);
@@ -152,7 +153,7 @@ describe('the product signature', () => {
     const source = readFileSync(new URL('./seed-list.mjs', import.meta.url), 'utf8');
     const signature = source.slice(
       source.indexOf('const MEASUREMENT'),
-      source.indexOf('export function isProductPage') + 200
+      source.indexOf('export function isProductPage') + 200,
     );
     // The slice must hold the rule, or this test cannot fail.
     expect(signature).toContain('MEASUREMENT.test(segment)');
@@ -163,15 +164,18 @@ describe('the product signature', () => {
 
   it('beats both clauses of the rule', () => {
     expect(
-      isContentPage(candidate({ loc: url('glazen-dakplaat-ongehard-2500mm-x-700mm'), daily: ['nl'] }))
+      isContentPage(
+        candidate({ loc: url('glazen-dakplaat-ongehard-2500mm-x-700mm'), daily: ['nl'] }),
+      ),
     ).toBe(false);
   });
 });
 
 describe('the page key', () => {
   it('is the NL url key when production declares an nl-NL alternate', () => {
-    expect(pageKey({ store: 'de', path: 'garantie-de', alternates: { 'nl-NL': url('garantie') } }))
-      .toBe('garantie');
+    expect(
+      pageKey({ store: 'de', path: 'garantie-de', alternates: { 'nl-NL': url('garantie') } }),
+    ).toBe('garantie');
   });
 
   it('is the store and the path when there is no nl-NL alternate', () => {
@@ -218,7 +222,7 @@ describe('the language groups', () => {
   // prose beside it.
   const shapesOfContentPages = () => {
     const extract = JSON.parse(
-      readFileSync(new URL('../data/sitemap-extract.json', import.meta.url), 'utf8')
+      readFileSync(new URL('../data/sitemap-extract.json', import.meta.url), 'utf8'),
     );
     const shapes = new Map();
     for (const entry of extract.entries.filter(isContentPage)) {
@@ -248,7 +252,7 @@ describe('the language groups', () => {
     // hreflang can never find these pages, which is why the `changefreq` clause
     // is not enough on its own and the alternate clause is not enough either.
     const extract = JSON.parse(
-      readFileSync(new URL('../data/sitemap-extract.json', import.meta.url), 'utf8')
+      readFileSync(new URL('../data/sitemap-extract.json', import.meta.url), 'utf8'),
     );
     const none = {};
     for (const entry of extract.entries.filter(isContentPage)) {
@@ -299,15 +303,17 @@ describe('the seed list', () => {
   it('swaps the host for the new-site url and changes nothing else', () => {
     const { rows } = buildSeedList({ entries, carriedRows: [] });
     expect(rows.find((r) => r.page === 'terrasoverkapping').stores.de.newUrl).toBe(
-      'https://m2stagingde.intern.systems/terrassenueberdachung'
+      'https://m2stagingde.intern.systems/terrassenueberdachung',
     );
   });
 
   it('says of each cell which clause admitted it', () => {
     const { rows } = buildSeedList({ entries, carriedRows: [] });
-    expect(rows.find((r) => r.page === 'terrasoverkapping').stores.nl.provenance).toBe('sitemap-daily');
+    expect(rows.find((r) => r.page === 'terrasoverkapping').stores.nl.provenance).toBe(
+      'sitemap-daily',
+    );
     expect(rows.find((r) => r.page === '(fr)heavy-duty-veranda').stores.fr.provenance).toBe(
-      'sitemap-low-alternates'
+      'sitemap-low-alternates',
     );
   });
 
@@ -386,7 +392,9 @@ describe('the seed list', () => {
     const { rows, dropped } = buildSeedList({ entries, carriedRows });
 
     expect(dropped.map((entry) => entry.loc)).toContain(url('spuitbus-mat-wit'));
-    expect(rows.find((r) => r.page === 'spuitbus-mat-wit').stores.nl.provenance).toBe('carried-over');
+    expect(rows.find((r) => r.page === 'spuitbus-mat-wit').stores.nl.provenance).toBe(
+      'carried-over',
+    );
   });
 
   it('carries a page that no sitemap declares, and marks it as carried', () => {
@@ -434,7 +442,9 @@ describe('the seed list', () => {
     ];
     const { rows, carried } = buildSeedList({ entries, carriedRows });
     expect(carried).toBe(0);
-    expect(rows.find((r) => r.page === 'terrasoverkapping').stores.nl.provenance).toBe('sitemap-daily');
+    expect(rows.find((r) => r.page === 'terrasoverkapping').stores.nl.provenance).toBe(
+      'sitemap-daily',
+    );
   });
 
   it('sorts by codepoint, so the bytes do not depend on the locale', () => {
@@ -446,14 +456,14 @@ describe('the seed list', () => {
 describe('the count guard', () => {
   it('says nothing when each store holds the number that was measured', () => {
     const counts = Object.fromEntries(
-      STORES.map((store) => [store, { pages: EXPECTED_PAGES[store] }])
+      STORES.map((store) => [store, { pages: EXPECTED_PAGES[store] }]),
     );
     expect(countDisagreements(counts)).toEqual([]);
   });
 
   it('stops a store that yields no page at all', () => {
     const counts = Object.fromEntries(
-      STORES.map((store) => [store, { pages: EXPECTED_PAGES[store] }])
+      STORES.map((store) => [store, { pages: EXPECTED_PAGES[store] }]),
     );
     counts.fr = { pages: 0 };
     expect(countDisagreements(counts)).toEqual(['fr: no page at all, and 123 were measured']);
@@ -461,7 +471,7 @@ describe('the count guard', () => {
 
   it('stops the short list this ticket exists to fix', () => {
     const counts = Object.fromEntries(
-      STORES.map((store) => [store, { pages: EXPECTED_PAGES[store] }])
+      STORES.map((store) => [store, { pages: EXPECTED_PAGES[store] }]),
     );
     counts.fr = { pages: 28 };
     expect(countDisagreements(counts)).toEqual(['fr: 28 pages, and 123 were measured']);
@@ -513,7 +523,7 @@ describe('the seed schema', () => {
     const seeds = good();
     delete seeds.rows[0].stores.uk;
     expect(schemaDisagreements(seeds)).toContain(
-      'garantie: the row does not hold exactly the six stores'
+      'garantie: the row does not hold exactly the six stores',
     );
   });
 
@@ -521,7 +531,7 @@ describe('the seed schema', () => {
     const seeds = good();
     seeds.rows[0].stores.nl.newUrl = 'https://m2stagingnl.intern.systems/iets-anders';
     expect(schemaDisagreements(seeds)).toContain(
-      'garantie/nl: the new url is not the host swap of the path'
+      'garantie/nl: the new url is not the host swap of the path',
     );
   });
 
@@ -529,7 +539,7 @@ describe('the seed schema', () => {
     const seeds = good();
     seeds.rows[0].stores.nl.prodUrl = 'https://www.tuinmaximaal.de/garantie';
     expect(schemaDisagreements(seeds)).toContain(
-      'garantie/nl: the production url is not of this store'
+      'garantie/nl: the production url is not of this store',
     );
   });
 
@@ -537,7 +547,7 @@ describe('the seed schema', () => {
     const seeds = good();
     seeds.rows[0].page = 'fr:heavy-duty-veranda';
     expect(schemaDisagreements(seeds)).toContain(
-      'fr:heavy-duty-veranda: a colon is not a safe page key'
+      'fr:heavy-duty-veranda: a colon is not a safe page key',
     );
   });
 
@@ -545,7 +555,7 @@ describe('the seed schema', () => {
     const seeds = good();
     seeds.rows[0].page = 'fr__heavy-duty-veranda';
     expect(schemaDisagreements(seeds)).toContain(
-      'fr__heavy-duty-veranda: a double underscore is not a safe page key'
+      'fr__heavy-duty-veranda: a double underscore is not a safe page key',
     );
   });
 
@@ -561,7 +571,7 @@ describe('the seed schema', () => {
     const seeds = good();
     seeds.dropped = 105;
     expect(schemaDisagreements(seeds)).toContain(
-      '`dropped` is not an array. It is the list of URLs that left the list.'
+      '`dropped` is not an array. It is the list of URLs that left the list.',
     );
   });
 
@@ -569,7 +579,7 @@ describe('the seed schema', () => {
     const seeds = good();
     seeds.dropped[0].rule = 'looked-wrong';
     expect(schemaDisagreements(seeds)).toContain(
-      `${url('spuitbus-mat-wit')}: no reason for rule \`looked-wrong\``
+      `${url('spuitbus-mat-wit')}: no reason for rule \`looked-wrong\``,
     );
   });
 
@@ -583,7 +593,7 @@ describe('the seed schema', () => {
     const seeds = good();
     seeds.dropped[0].store = 'nl-NL';
     expect(schemaDisagreements(seeds)).toContain(
-      `${url('spuitbus-mat-wit')}: \`store\` is not one of the six, and not null`
+      `${url('spuitbus-mat-wit')}: \`store\` is not one of the six, and not null`,
     );
   });
 
@@ -601,7 +611,7 @@ describe('the seed schema', () => {
 
 describe('the committed seed list', () => {
   const seeds = JSON.parse(
-    readFileSync(new URL('../data/10-store-seeds.json', import.meta.url), 'utf8')
+    readFileSync(new URL('../data/10-store-seeds.json', import.meta.url), 'utf8'),
   );
 
   it('keeps the schema', () => {
@@ -611,7 +621,7 @@ describe('the committed seed list', () => {
   it('holds the page count that was measured, for each of the six stores', () => {
     const counts = countByStore(seeds.rows);
     expect(Object.fromEntries(STORES.map((store) => [store, counts[store].pages]))).toEqual(
-      EXPECTED_PAGES
+      EXPECTED_PAGES,
     );
   });
 
@@ -620,13 +630,15 @@ describe('the committed seed list', () => {
     // the rule is wrong.
     const counts = countByStore(seeds.rows);
     expect(counts.nl.pages).toBe(181);
-    expect((counts.nl['sitemap-daily'] ?? 0) + (counts.nl['sitemap-low-alternates'] ?? 0)).toBe(133);
+    expect((counts.nl['sitemap-daily'] ?? 0) + (counts.nl['sitemap-low-alternates'] ?? 0)).toBe(
+      133,
+    );
     expect(counts.nl['carried-over']).toBe(48);
   });
 
   it('carries the 49 pages that no sitemap declares, and no more', () => {
     const carried = seeds.rows.flatMap((row) =>
-      STORES.filter((store) => row.stores[store]?.provenance === 'carried-over')
+      STORES.filter((store) => row.stores[store]?.provenance === 'carried-over'),
     );
     expect(carried.length).toBe(49);
   });

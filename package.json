@@ -2,11 +2,8 @@
   "name": "tm-content-parity",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "description": "Content parity log for the Tuinmaximaal storefront: crawl, compare, and report the differences between production and the new Hyva site.",
-  "engines": {
-    "node": ">=22.12.0"
-  },
+  "type": "module",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
@@ -15,16 +12,26 @@
     "build:ci": "npm --prefix web ci && npm --prefix web run build",
     "deploy": "npm run build && wrangler deploy",
     "serve": "node api/server.mjs",
-    "start": "npm run build && npm run serve"
+    "start": "npm run build && npm run serve",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "format": "oxfmt --check",
+    "format:fix": "oxfmt ."
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.1",
     "node-html-parser": "^9.0.1"
   },
   "devDependencies": {
+    "@oxlint/plugins": "^1.78.0",
     "@vitest/browser": "^3.2.7",
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.78.0",
     "playwright": "^1.62.1",
     "vitest": "^3.2.4",
     "wrangler": "^4.121.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

@@ -209,8 +209,9 @@
    * are almost the same align only in a monospaced family. Geist Mono is self-hosted
    * under `public/fonts/`; the device stack behind it covers a missing file.
    */
-  --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'SF Mono',
-    Menlo, Consolas, monospace;
+  --font-mono:
+    'Geist Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'SF Mono', Menlo, Consolas,
+    monospace;
 }
 
 /*
@@ -302,12 +303,12 @@
    * the same hex as the sand the header's muted ink uses, and that is not a collision
    * to fix — the styleguide spends one value on both jobs.
    */
-   --secondary: #809700;
-   --secondary-foreground: #fff;
-   --muted: var(--color-neutral-100);
-   --muted-foreground: var(--color-neutral-500);
-   --accent: #ff8000;
-   --accent-foreground: #fff;
+  --secondary: #809700;
+  --secondary-foreground: #fff;
+  --muted: var(--color-neutral-100);
+  --muted-foreground: var(--color-neutral-500);
+  --accent: #ff8000;
+  --accent-foreground: #fff;
 
   /* The border every table, card and panel in this interface wears. */
   --border: #e3e3e3; /* Border/border */

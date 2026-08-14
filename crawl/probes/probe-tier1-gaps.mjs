@@ -60,9 +60,13 @@ const carries = (side) => {
     ...side.elements.map((unit) => unit.raw),
     ...side.links.map((link) => link.text),
     ...side.images.map((image) => image.alt),
-    side.meta.title, side.meta.description, side.meta.h1,
+    side.meta.title,
+    side.meta.description,
+    side.meta.h1,
   ].filter(Boolean);
-  return GAPS.filter(([, pattern]) => texts.some((text) => pattern.test(text))).map(([name]) => name);
+  return GAPS.filter(([, pattern]) => texts.some((text) => pattern.test(text))).map(
+    ([name]) => name,
+  );
 };
 
 /** One fixed id, so the two reports of a page differ only where the fold does. */
@@ -80,7 +84,7 @@ let pages = 0;
 async function jsonFiles(dir) {
   const out = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.isDirectory()) out.push(...await jsonFiles(new URL(`${entry.name}/`, dir)));
+    if (entry.isDirectory()) out.push(...(await jsonFiles(new URL(`${entry.name}/`, dir))));
     else if (entry.name.endsWith('.json')) out.push(new URL(entry.name, dir));
   }
   return out;
@@ -137,24 +141,27 @@ for (const key of [...new Set([...counts.before.keys(), ...counts.after.keys()])
 }
 const total = (map) => [...map.values()].reduce((sum, n) => sum + n, 0);
 console.log(
-  `| **all** | ${total(counts.before)} | ${total(counts.after)} |`
-  + ` ${total(counts.after) - total(counts.before)} |`,
+  `| **all** | ${total(counts.before)} | ${total(counts.after)} |` +
+    ` ${total(counts.after) - total(counts.before)} |`,
 );
 
 // A finding that goes without the page carrying one of the characters is the
 // thing the ticket forbids. It is counted apart, and named.
 const unexplained = [...gone, ...arrived].filter((row) => row.carried.length === 0);
 console.log(
-  `\n${gone.length} findings gone, ${arrived.length} arrived,`
-  + ` ${unexplained.length} on a page that carries none of the characters.`,
+  `\n${gone.length} findings gone, ${arrived.length} arrived,` +
+    ` ${unexplained.length} on a page that carries none of the characters.`,
 );
 
-for (const [label, rows] of [['GONE', gone], ['ARRIVED', arrived]]) {
+for (const [label, rows] of [
+  ['GONE', gone],
+  ['ARRIVED', arrived],
+]) {
   for (const row of rows) {
     console.log(
-      `  ${label} ${row.where} ${row.finding.class} ${row.finding.check}`
-      + ` — ${JSON.stringify(row.finding.prod ?? '')} vs ${JSON.stringify(row.finding.new ?? '')}`
-      + `${row.carried.length ? ` [${row.carried.join(', ')}]` : ' [NOTHING EXPLAINS THIS]'}`,
+      `  ${label} ${row.where} ${row.finding.class} ${row.finding.check}` +
+        ` — ${JSON.stringify(row.finding.prod ?? '')} vs ${JSON.stringify(row.finding.new ?? '')}` +
+        `${row.carried.length ? ` [${row.carried.join(', ')}]` : ' [NOTHING EXPLAINS THIS]'}`,
     );
   }
 }

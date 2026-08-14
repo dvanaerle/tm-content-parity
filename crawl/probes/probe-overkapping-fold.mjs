@@ -72,8 +72,8 @@ for (const side of ['production', 'new']) {
   console.log(`${side}: ${sides[side].elements.length} units, ${units.length} name an alloy`);
   for (const unit of units) {
     console.log(
-      `  <${unit.tag}> ${unit.kind} ${words(unit.norm)} words `
-      + `[${unit.norm.match(EVERY_ALLOY)?.join(' ')}]: ${unit.norm.slice(0, 80)}…`,
+      `  <${unit.tag}> ${unit.kind} ${words(unit.norm)} words ` +
+        `[${unit.norm.match(EVERY_ALLOY)?.join(' ')}]: ${unit.norm.slice(0, 80)}…`,
     );
   }
   const target = sides[side].elements.filter((unit) => PARAGRAPH.test(unit.norm));
@@ -82,8 +82,8 @@ for (const side of ['production', 'new']) {
   }
   paragraph[side] = target[0].norm;
   console.log(
-    `  → the ticket's paragraph: one <${target[0].tag}>, ${words(target[0].norm)} words, `
-    + `${target[0].norm.length} characters, alloy ${target[0].norm.match(ALLOY)?.[0]}`,
+    `  → the ticket's paragraph: one <${target[0].tag}>, ${words(target[0].norm)} words, ` +
+      `${target[0].norm.length} characters, alloy ${target[0].norm.match(ALLOY)?.[0]}`,
   );
 }
 
@@ -95,11 +95,13 @@ const collector = new FindingCollector({ store: STORE, page: PAGE });
 textFindings(diffRows(sides.production, sides.new), collector);
 
 // The paragraph itself, never another paragraph that happens to name an alloy.
-const onAlloy = collector.all().filter(
-  (finding) => finding.prod === paragraph.production || finding.new === paragraph.new,
-);
+const onAlloy = collector
+  .all()
+  .filter((finding) => finding.prod === paragraph.production || finding.new === paragraph.new);
 
-console.log(`\n${collector.all().length} text findings, ${onAlloy.length} on the ticket's paragraph.`);
+console.log(
+  `\n${collector.all().length} text findings, ${onAlloy.length} on the ticket's paragraph.`,
+);
 for (const finding of onAlloy) {
   console.log(`  ${finding.class} ${visibilityOf(finding.class)} ${finding.id}`);
   console.log(`    production: ${finding.prod?.slice(0, 140)}…`);
@@ -108,6 +110,8 @@ for (const finding of onAlloy) {
 
 const work = onAlloy.filter((finding) => isWork(finding.class));
 if (work.length === 0) {
-  throw new Error('The alloy difference reaches no finding that counts as work. The ticket is not met.');
+  throw new Error(
+    'The alloy difference reaches no finding that counts as work. The ticket is not met.',
+  );
 }
 console.log(`\nThe 6036-T6 difference is reported, as ${work.map((f) => f.class).join(', ')}.`);

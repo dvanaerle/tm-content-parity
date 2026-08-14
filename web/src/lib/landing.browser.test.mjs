@@ -65,7 +65,9 @@ function mountControls(asked) {
     seen.tab = tab;
     seen.noise = noise;
 
-    return createElement('div', null,
+    return createElement(
+      'div',
+      null,
       createElement('button', { id: 'take-tab', onClick: () => chooseTab('Text') }, 'Text'),
       createElement('button', { id: 'take-noise', onClick: () => chooseNoise(false) }, 'ruis uit'),
     );
@@ -122,7 +124,10 @@ describe('useLanding', () => {
   // gets the first tab and a toggle that is off, and both answer to them alone.
   it('is the reader´s own two controls when no link named a finding', () => {
     const { seen, press, unmount } = mountControls({
-      tab: null, needsNoise: false, missing: false, unplaced: false,
+      tab: null,
+      needsNoise: false,
+      missing: false,
+      unplaced: false,
     });
     expect(seen).toEqual({ tab: 'Text', noise: false });
 

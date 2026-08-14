@@ -98,10 +98,21 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     const path = new URL(link.url).pathname.toLowerCase().replace(/\/+$/, '');
     const anchorHeading = newHeading(link.index);
 
-    if (LIVE_HOST.test(host) && !LEAKAGE_ALLOWED_HOSTS.has(host) && path && newSitePaths?.has(path)) {
+    if (
+      LIVE_HOST.test(host) &&
+      !LEAKAGE_ALLOWED_HOSTS.has(host) &&
+      path &&
+      newSitePaths?.has(path)
+    ) {
       // A bare-home target has no path and falls out here, which is what spares
       // the `disclaimer` boilerplate on all six stores.
-      collector.add({ class: 'leakage', prod: null, new: link.key, anchorHeading, anchorHeadings: onNewOnly(anchorHeading) });
+      collector.add({
+        class: 'leakage',
+        prod: null,
+        new: link.key,
+        anchorHeading,
+        anchorHeadings: onNewOnly(anchorHeading),
+      });
       explained.add(link.key);
     }
 
@@ -109,7 +120,11 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
       // Host-based, not store-based: `be` and `be_fr` share one host, and a
       // store-based test would report every be_fr page against itself.
       collector.add({
-        class: 'cross-store-link', prod: null, new: link.key, anchorHeading, anchorHeadings: onNewOnly(anchorHeading),
+        class: 'cross-store-link',
+        prod: null,
+        new: link.key,
+        anchorHeading,
+        anchorHeadings: onNewOnly(anchorHeading),
       });
       explained.add(link.key);
     }
@@ -122,7 +137,13 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     if (state.status >= 400 || state.status === 0) {
       // Absolute, not comparative: it fires even when production is broken too,
       // because a dead link is actionable with near-zero false positives.
-      collector.add({ class: 'broken-link', prod: null, new: link.key, anchorHeading, anchorHeadings: onNewOnly(anchorHeading) });
+      collector.add({
+        class: 'broken-link',
+        prod: null,
+        new: link.key,
+        anchorHeading,
+        anchorHeadings: onNewOnly(anchorHeading),
+      });
       continue;
     }
 
@@ -173,8 +194,11 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     const state = link.internal ? statuses?.get(link.url) : undefined;
     if (state && (state.status >= 400 || state.status === 0)) continue;
     collector.add({
-      class: 'missing-link', prod: key, new: null,
-      anchorHeading: prodHeading(link.index), anchorHeadings: onProdOnly(prodHeading(link.index)),
+      class: 'missing-link',
+      prod: key,
+      new: null,
+      anchorHeading: prodHeading(link.index),
+      anchorHeadings: onProdOnly(prodHeading(link.index)),
     });
   }
 
@@ -183,8 +207,11 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     // Hidden by default: the new site legitimately gained content, and flagging
     // an added link invites editors to delete good work.
     collector.add({
-      class: 'extra-link', prod: null, new: key,
-      anchorHeading: newHeading(link.index), anchorHeadings: onNewOnly(newHeading(link.index)),
+      class: 'extra-link',
+      prod: null,
+      new: key,
+      anchorHeading: newHeading(link.index),
+      anchorHeadings: onNewOnly(newHeading(link.index)),
     });
   }
 }

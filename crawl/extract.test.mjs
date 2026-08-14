@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  ABSOLUTE_MAX_UNITS, DEFAULT_MAX_UNITS, EXCLUDED_REGIONS, REGION_KINDS, capFor, validateRegions,
+  ABSOLUTE_MAX_UNITS,
+  DEFAULT_MAX_UNITS,
+  EXCLUDED_REGIONS,
+  REGION_KINDS,
+  capFor,
+  validateRegions,
 } from '../shared/excluded-regions.mjs';
 import { exclusionReason, isExcludedPage } from '../shared/excluded-pages.mjs';
 import { extractPage, pageType, toMarkdown } from './extract.mjs';
@@ -72,8 +77,8 @@ describe('tier1', () => {
 
   it('folds the remaining Unicode space characters to one space', () => {
     const codes = [
-      0x1680, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007,
-      0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000, 0xfeff,
+      0x1680, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009,
+      0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000, 0xfeff,
     ];
     for (const code of codes) {
       expect(tier1(`Prijs${String.fromCodePoint(code)}nu`)).toBe('Prijs nu');
@@ -110,12 +115,15 @@ describe('the content boundary', () => {
     // having measured that it removes no *element* inside `<main>` — which is true,
     // and misses this. After the fold the block that folds the anchor takes the CSS
     // as well, so the guard covers more than it did.
-    const extract = extractPage(page(
-      '<a href="/carport">'
-      + '<style>.product-image-container-9656 { width: 480px; }</style>'
-      + '<script>var x = document.querySelectorAll(".a");</script>'
-      + 'Bekijk carports</a>',
-    ), CONTEXT);
+    const extract = extractPage(
+      page(
+        '<a href="/carport">' +
+          '<style>.product-image-container-9656 { width: 480px; }</style>' +
+          '<script>var x = document.querySelectorAll(".a");</script>' +
+          'Bekijk carports</a>',
+      ),
+      CONTEXT,
+    );
     expect(extract.elements.map((unit) => unit.raw)).toEqual(['Bekijk carports']);
   });
 
@@ -125,15 +133,15 @@ describe('the content boundary', () => {
   });
 
   it('throws when the document has no <body>, because a silent fallback hid a broken parse', () => {
-    expect(() => extractPage('<p>orphan</p>', { ...CONTEXT }))
-      .toThrow(/No <body>/);
+    expect(() => extractPage('<p>orphan</p>', { ...CONTEXT })).toThrow(/No <body>/);
   });
 
   it('throws on a 200 page that holds nothing, because that is an app page or a broken parse', () => {
     // The whole of <main> on the new site's veranda-configurator.
     const mount = '<div id="configurator-root" data-url-key="veranda"></div>';
-    expect(() => extractPage(page(mount), CONTEXT))
-      .toThrow(/application page that\s+belongs in shared\/excluded-pages\.mjs/);
+    expect(() => extractPage(page(mount), CONTEXT)).toThrow(
+      /application page that\s+belongs in shared\/excluded-pages\.mjs/,
+    );
   });
 
   it('leaves a page with images and no text alone, because a photo page is a real page', () => {
@@ -163,7 +171,10 @@ describe('the content boundary', () => {
 
 describe('content units', () => {
   it('takes the leaves in document order and skips the containers', () => {
-    const extract = extractPage(page('<div><h2>Kleuren</h2><ul><li>Antraciet</li><li>Wit</li></ul></div>'), CONTEXT);
+    const extract = extractPage(
+      page('<div><h2>Kleuren</h2><ul><li>Antraciet</li><li>Wit</li></ul></div>'),
+      CONTEXT,
+    );
     expect(extract.elements).toMatchObject([
       { index: 0, tag: 'h2', kind: 'heading', level: 2, raw: 'Kleuren' },
       { index: 1, tag: 'li', kind: 'text', level: null, raw: 'Antraciet' },
@@ -174,9 +185,10 @@ describe('content units', () => {
   it('folds an inline link into the paragraph that holds it', () => {
     // The loss ticket 67 measured: 62 blocks and about 3,400 words of body copy
     // on 10 of 10 pages, because one inline link discarded its whole block.
-    const extract = extractPage(page(
-      '<p>Onze <a href="/carport">carports</a> zijn van 6063-T6 aluminium.</p>',
-    ), CONTEXT);
+    const extract = extractPage(
+      page('<p>Onze <a href="/carport">carports</a> zijn van 6063-T6 aluminium.</p>'),
+      CONTEXT,
+    );
     expect(extract.elements.map((unit) => [unit.tag, unit.kind, unit.raw])).toEqual([
       ['p', 'text', 'Onze carports zijn van 6063-T6 aluminium.'],
     ]);
@@ -185,10 +197,13 @@ describe('content units', () => {
   it('folds a button as well as an anchor, and two links make the block text', () => {
     // A block is a call to action only when the **whole** block is one link. Two
     // links make it a sentence with links in it, and no one target is the unit's.
-    const extract = extractPage(page(
-      '<p><button>Vraag een offerte aan</button></p>'
-      + '<li>Kies <a href="/wit">wit</a> of <a href="/grijs">grijs</a></li>',
-    ), CONTEXT);
+    const extract = extractPage(
+      page(
+        '<p><button>Vraag een offerte aan</button></p>' +
+          '<li>Kies <a href="/wit">wit</a> of <a href="/grijs">grijs</a></li>',
+      ),
+      CONTEXT,
+    );
     expect(extract.elements.map((unit) => [unit.tag, unit.kind, unit.raw])).toEqual([
       ['p', 'cta', 'Vraag een offerte aan'],
       ['li', 'text', 'Kies wit of grijs'],
@@ -201,7 +216,12 @@ describe('content units', () => {
     // units read `cta` from their tag. Now the block speaks. `kind` reads the
     // content instead of the tag, so the two shapes of one call to action still
     // pair, and one `copy` row does not become two one-sided rows.
-    const extract = extractPage(page('<p><a href="/carport">Lees over carports</a></p><a class="btn" href="/offerte">Offerte</a>'), CONTEXT);
+    const extract = extractPage(
+      page(
+        '<p><a href="/carport">Lees over carports</a></p><a class="btn" href="/offerte">Offerte</a>',
+      ),
+      CONTEXT,
+    );
     expect(extract.elements.map((unit) => [unit.tag, unit.kind, unit.raw])).toEqual([
       ['p', 'cta', 'Lees over carports'],
       ['a', 'cta', 'Offerte'],
@@ -233,11 +253,14 @@ describe('content units', () => {
     // reported as 330 `a` → `h3` heading-level findings that name the wrong
     // production unit. Ticket 67 gave every block the rule the heading had, so this
     // is no longer the exception it was.
-    const extract = extractPage(page(
-      '<div class="panel-heading"><h4 class="panel-title">'
-      + '<a data-toggle="collapse" href="#question3890">Is mijn product op voorraad?</a>'
-      + '</h4></div>',
-    ), CONTEXT);
+    const extract = extractPage(
+      page(
+        '<div class="panel-heading"><h4 class="panel-title">' +
+          '<a data-toggle="collapse" href="#question3890">Is mijn product op voorraad?</a>' +
+          '</h4></div>',
+      ),
+      CONTEXT,
+    );
     expect(extract.elements).toMatchObject([
       { tag: 'h4', kind: 'heading', level: 4, raw: 'Is mijn product op voorraad?' },
     ]);
@@ -247,7 +270,10 @@ describe('content units', () => {
     // The same rule, and the reason it is "a heading is never a container"
     // rather than a rule about accordions: the leaf rule reported the anchor
     // alone and silently dropped the words around it.
-    const extract = extractPage(page('<h2>Bekijk onze <a href="/carport">carports</a> nu</h2>'), CONTEXT);
+    const extract = extractPage(
+      page('<h2>Bekijk onze <a href="/carport">carports</a> nu</h2>'),
+      CONTEXT,
+    );
     expect(extract.elements.map((unit) => [unit.tag, unit.raw])).toEqual([
       ['h2', 'Bekijk onze carports nu'],
     ]);
@@ -255,9 +281,7 @@ describe('content units', () => {
 
   it('still takes the leaves inside a container that is not a heading', () => {
     const extract = extractPage(page('<li><p>Antraciet</p></li>'), CONTEXT);
-    expect(extract.elements.map((unit) => [unit.tag, unit.raw])).toEqual([
-      ['p', 'Antraciet'],
-    ]);
+    expect(extract.elements.map((unit) => [unit.tag, unit.raw])).toEqual([['p', 'Antraciet']]);
   });
 
   it('still loses loose text beside a heading in a container, and that is recorded', () => {
@@ -266,10 +290,11 @@ describe('content units', () => {
     // emitting the direct text nodes of a container as a unit, which changes
     // what a unit is and moves the count on all 179 pages. Pinned here so the
     // limit is read rather than discovered.
-    const extract = extractPage(page('<table><tr><td>Levertijd <h4>Vraag</h4></td></tr></table>'), CONTEXT);
-    expect(extract.elements.map((unit) => [unit.tag, unit.raw])).toEqual([
-      ['h4', 'Vraag'],
-    ]);
+    const extract = extractPage(
+      page('<table><tr><td>Levertijd <h4>Vraag</h4></td></tr></table>'),
+      CONTEXT,
+    );
+    expect(extract.elements.map((unit) => [unit.tag, unit.raw])).toEqual([['h4', 'Vraag']]);
   });
 
   it('leaves the anchor in the link list when the heading swallows its text', () => {
@@ -285,12 +310,16 @@ describe('linkKey', () => {
   const hosts = { prodHost: 'www.tuinmaximaal.nl', newHost: 'm2stagingnl.intern.systems' };
   const key = (href) => linkKey(new URL(href), hosts);
 
-  it('folds the page\'s own two hosts to one token', () => {
-    expect(key('https://www.tuinmaximaal.nl/carport')).toBe(key('https://m2stagingnl.intern.systems/carport'));
+  it("folds the page's own two hosts to one token", () => {
+    expect(key('https://www.tuinmaximaal.nl/carport')).toBe(
+      key('https://m2stagingnl.intern.systems/carport'),
+    );
   });
 
   it('keeps another host apart', () => {
-    expect(key('https://www.tuinmaximaal.de/carport')).not.toBe(key('https://www.tuinmaximaal.nl/carport'));
+    expect(key('https://www.tuinmaximaal.de/carport')).not.toBe(
+      key('https://www.tuinmaximaal.nl/carport'),
+    );
   });
 
   it('lowercases the path and removes the trailing slash', () => {
@@ -298,34 +327,47 @@ describe('linkKey', () => {
   });
 
   it('keeps the query and drops the fragment', () => {
-    expect(key('https://www.tuinmaximaal.nl/carport?kleur=wit#specs')).toBe('self/carport?kleur=wit');
+    expect(key('https://www.tuinmaximaal.nl/carport?kleur=wit#specs')).toBe(
+      'self/carport?kleur=wit',
+    );
   });
 
   it('folds the percent encoding of the query, which one page sends both ways', () => {
-    expect(key('https://www.tuinmaximaal.nl/terrasoverkapping?model=6039,6040'))
-      .toBe(key('https://www.tuinmaximaal.nl/terrasoverkapping?model=6039%2C6040'));
+    expect(key('https://www.tuinmaximaal.nl/terrasoverkapping?model=6039,6040')).toBe(
+      key('https://www.tuinmaximaal.nl/terrasoverkapping?model=6039%2C6040'),
+    );
   });
 
   it('keeps two different queries apart', () => {
-    expect(key('https://www.tuinmaximaal.nl/terrasoverkapping?model=6039'))
-      .not.toBe(key('https://www.tuinmaximaal.nl/terrasoverkapping?model=6040'));
+    expect(key('https://www.tuinmaximaal.nl/terrasoverkapping?model=6039')).not.toBe(
+      key('https://www.tuinmaximaal.nl/terrasoverkapping?model=6040'),
+    );
   });
 });
 
 describe('links', () => {
   it('skips the three non-navigational shapes and keeps the rest', () => {
-    const extract = extractPage(page(`
+    const extract = extractPage(
+      page(`
       <a href="#top">Naar boven</a>
       <a href="mailto:info@tuinmaximaal.nl">Mail ons</a>
       <a href="tel:+31123">Bel ons</a>
       <a href="/carport">Carport</a>
-      <a href="https://www.youtube.com/watch?v=1">Video</a>`), CONTEXT);
+      <a href="https://www.youtube.com/watch?v=1">Video</a>`),
+      CONTEXT,
+    );
 
-    expect(extract.links.map((link) => link.href)).toEqual(['/carport', 'https://www.youtube.com/watch?v=1']);
+    expect(extract.links.map((link) => link.href)).toEqual([
+      '/carport',
+      'https://www.youtube.com/watch?v=1',
+    ]);
   });
 
   it('resolves the url and marks the internal targets', () => {
-    const extract = extractPage(page('<a href="/carport">Carport</a><a href="https://www.youtube.com/x">Video</a>'), CONTEXT);
+    const extract = extractPage(
+      page('<a href="/carport">Carport</a><a href="https://www.youtube.com/x">Video</a>'),
+      CONTEXT,
+    );
     expect(extract.links[0]).toMatchObject({
       url: 'https://www.tuinmaximaal.nl/carport',
       key: 'self/carport',
@@ -336,20 +378,26 @@ describe('links', () => {
   });
 
   it('marks a live-domain and a m2staging host as internal', () => {
-    const extract = extractPage(page(`
+    const extract = extractPage(
+      page(`
       <a href="https://www.tuinmaximaal.de/carport">DE</a>
-      <a href="https://m2stagingbe.intern.systems/carport">BE</a>`), CONTEXT);
+      <a href="https://m2stagingbe.intern.systems/carport">BE</a>`),
+      CONTEXT,
+    );
     expect(extract.links.map((link) => link.internal)).toEqual([true, true]);
   });
 });
 
 describe('one document-order walk', () => {
   it('puts text, images and links on one shared counter', () => {
-    const extract = extractPage(page(`
+    const extract = extractPage(
+      page(`
       <h2>Kleuren</h2>
       <img src="/media/Veranda.jpg" alt="Veranda">
       <p>Antraciet en creme</p>
-      <a href="/carport">Carport</a>`), CONTEXT);
+      <a href="/carport">Carport</a>`),
+      CONTEXT,
+    );
 
     expect(extract.elements.map((unit) => unit.index)).toEqual([0, 2, 3]);
     expect(extract.images.map((image) => image.index)).toEqual([1]);
@@ -362,11 +410,14 @@ describe('one document-order walk', () => {
   });
 
   it('gives a deduplicated image the position of its first occurrence', () => {
-    const extract = extractPage(page(`
+    const extract = extractPage(
+      page(`
       <p>Intro tekst</p>
       <img src="/media/Veranda.jpg" alt="Veranda">
       <p>Tussen tekst</p>
-      <img src="/media/Veranda.jpg" alt="Veranda">`), CONTEXT);
+      <img src="/media/Veranda.jpg" alt="Veranda">`),
+      CONTEXT,
+    );
 
     expect(extract.images).toHaveLength(1);
     expect(extract.images[0].index).toBe(1);
@@ -374,10 +425,14 @@ describe('one document-order walk', () => {
   });
 
   it('still counts an anchor a heading spoke for as a link, at its own position', () => {
-    const extract = extractPage(page('<h2>Bekijk onze <a href="/carports">carports</a> nu</h2>'), CONTEXT);
+    const extract = extractPage(
+      page('<h2>Bekijk onze <a href="/carports">carports</a> nu</h2>'),
+      CONTEXT,
+    );
 
-    expect(extract.elements.map((unit) => [unit.index, unit.raw]))
-      .toEqual([[0, 'Bekijk onze carports nu']]);
+    expect(extract.elements.map((unit) => [unit.index, unit.raw])).toEqual([
+      [0, 'Bekijk onze carports nu'],
+    ]);
     expect(extract.links.map((link) => [link.index, link.key])).toEqual([[1, 'self/carports']]);
   });
 
@@ -385,28 +440,37 @@ describe('one document-order walk', () => {
     // Ticket 67. The paragraph speaks for the words, and the anchor takes the
     // next position for its target alone. The links check compares targets and
     // the fold does not touch it.
-    const extract = extractPage(page('<p>Onze <a href="/carport">carports</a> zijn sterk</p>'), CONTEXT);
+    const extract = extractPage(
+      page('<p>Onze <a href="/carport">carports</a> zijn sterk</p>'),
+      CONTEXT,
+    );
 
     expect(extract.elements.map((unit) => [unit.index, unit.tag])).toEqual([[0, 'p']]);
-    expect(extract.links.map((link) => [link.index, link.key, link.text]))
-      .toEqual([[1, 'self/carport', 'carports']]);
+    expect(extract.links.map((link) => [link.index, link.key, link.text])).toEqual([
+      [1, 'self/carport', 'carports'],
+    ]);
   });
 
   it('takes no position for an image with no identity', () => {
-    const extract = extractPage(page('<img alt="icon" width="24"><p>Antraciet en creme</p>'), CONTEXT);
+    const extract = extractPage(
+      page('<img alt="icon" width="24"><p>Antraciet en creme</p>'),
+      CONTEXT,
+    );
     expect(extract.elements[0].index).toBe(0);
   });
 });
 
 describe('imageKey', () => {
   it('is the basename, lowercased, extension kept', () => {
-    expect(imageKey('/cdn-cgi/image/quality=75/media/wysiwyg/tm/nl-nl/Terras_Antraciet.jpg?x=1'))
-      .toBe('terras_antraciet.jpg');
+    expect(
+      imageKey('/cdn-cgi/image/quality=75/media/wysiwyg/tm/nl-nl/Terras_Antraciet.jpg?x=1'),
+    ).toBe('terras_antraciet.jpg');
   });
 
   it('matches across the two environment paths', () => {
-    expect(imageKey('https://www.tuinmaximaal.nl/media/wysiwyg/tm/nl-nl/afbeeldingen/Veranda.jpg'))
-      .toBe(imageKey('https://m2stagingnl.intern.systems/media/wysiwyg/Veranda.jpg'));
+    expect(
+      imageKey('https://www.tuinmaximaal.nl/media/wysiwyg/tm/nl-nl/afbeeldingen/Veranda.jpg'),
+    ).toBe(imageKey('https://m2stagingnl.intern.systems/media/wysiwyg/Veranda.jpg'));
   });
 
   it('removes a true size suffix', () => {
@@ -415,8 +479,9 @@ describe('imageKey', () => {
   });
 
   it('never removes a bare _N, which is the only thing separating two gallery photos', () => {
-    expect(imageKey('/media/terrasoverkapping_antraciet_2.jpg'))
-      .not.toBe(imageKey('/media/terrasoverkapping_antraciet_3.jpg'));
+    expect(imageKey('/media/terrasoverkapping_antraciet_2.jpg')).not.toBe(
+      imageKey('/media/terrasoverkapping_antraciet_3.jpg'),
+    );
   });
 
   it('decodes an escaped basename', () => {
@@ -426,22 +491,32 @@ describe('imageKey', () => {
 
 describe('images', () => {
   it('holds each identity once, because the new site emits a mobile and a desktop copy', () => {
-    const extract = extractPage(page(`
+    const extract = extractPage(
+      page(`
       <img src="/media/Veranda.jpg" alt="Veranda">
-      <img src="/media/Veranda.jpg" alt="Veranda">`), CONTEXT);
-    expect(extract.images)
-      .toEqual([{ index: 0, key: 'veranda.jpg', src: '/media/Veranda.jpg', alt: 'Veranda' }]);
+      <img src="/media/Veranda.jpg" alt="Veranda">`),
+      CONTEXT,
+    );
+    expect(extract.images).toEqual([
+      { index: 0, key: 'veranda.jpg', src: '/media/Veranda.jpg', alt: 'Veranda' },
+    ]);
   });
 
   it('takes the real alt when the two copies disagree', () => {
-    const extract = extractPage(page(`
+    const extract = extractPage(
+      page(`
       <img src="/media/Veranda.jpg" alt="">
-      <img src="/media/Veranda.jpg" alt="Veranda in antraciet">`), CONTEXT);
+      <img src="/media/Veranda.jpg" alt="Veranda in antraciet">`),
+      CONTEXT,
+    );
     expect(extract.images[0].alt).toBe('Veranda in antraciet');
   });
 
   it('keeps an absent alt and an empty alt apart', () => {
-    const extract = extractPage(page('<img src="/media/A.jpg"><img src="/media/B.jpg" alt="">'), CONTEXT);
+    const extract = extractPage(
+      page('<img src="/media/A.jpg"><img src="/media/B.jpg" alt="">'),
+      CONTEXT,
+    );
     expect(extract.images.map((image) => image.alt)).toEqual([null, '']);
   });
 
@@ -451,7 +526,10 @@ describe('images', () => {
   });
 
   it('counts an image with no identity as a diagnostic, never as an image', () => {
-    const extract = extractPage(page('<img alt="icon" width="24"><img src="/media/A.jpg">'), CONTEXT);
+    const extract = extractPage(
+      page('<img alt="icon" width="24"><img src="/media/A.jpg">'),
+      CONTEXT,
+    );
     expect(extract.images).toHaveLength(1);
     expect(extract.diagnostics.imagesWithoutSrc).toBe(1);
   });
@@ -475,14 +553,21 @@ describe('meta', () => {
   });
 
   it('reads noindex', () => {
-    const extract = extractPage(page('<h1>Kop</h1>', { head: '<meta name="robots" content="NOINDEX,nofollow">' }), CONTEXT);
+    const extract = extractPage(
+      page('<h1>Kop</h1>', { head: '<meta name="robots" content="NOINDEX,nofollow">' }),
+      CONTEXT,
+    );
     expect(extract.meta.noindex).toBe(true);
   });
 
   it('gives null where the page says nothing', () => {
     const extract = extractPage(page('<p>Geen kop</p>'), CONTEXT);
     expect(extract.meta).toEqual({
-      title: null, description: null, canonical: null, noindex: false, h1: null,
+      title: null,
+      description: null,
+      canonical: null,
+      noindex: false,
+      h1: null,
     });
   });
 });
@@ -496,16 +581,22 @@ describe('pageType', () => {
   });
 
   it('is read from the raw html, because the parser can drop the tag', () => {
-    const extract = extractPage(page('<h1>Kop</h1>', { bodyClass: 'catalog-product-view' }), CONTEXT);
+    const extract = extractPage(
+      page('<h1>Kop</h1>', { bodyClass: 'catalog-product-view' }),
+      CONTEXT,
+    );
     expect(extract.pageType).toBe('product');
   });
 });
 
 describe('toMarkdown', () => {
   it('renders the same units the content view shows', () => {
-    const extract = extractPage(page(`
+    const extract = extractPage(
+      page(`
       <h1>Overkappingen</h1><p>Kies uw model.</p>
-      <ul><li>Antraciet</li></ul><a href="/offerte">Offerte</a>`), CONTEXT);
+      <ul><li>Antraciet</li></ul><a href="/offerte">Offerte</a>`),
+      CONTEXT,
+    );
 
     expect(extract.markdown).toBe('# Overkappingen\n\nKies uw model.\n\n- Antraciet\n\n[Offerte]');
     expect(toMarkdown(extract.elements)).toBe(extract.markdown);
@@ -519,8 +610,12 @@ describe('maintenanceReason', () => {
   });
 
   it('catches the bootstrap exception page', () => {
-    expect(maintenanceReason(200, '<html><body>There has been an error processing your request</body></html>'))
-      .toMatch(/body matches/);
+    expect(
+      maintenanceReason(
+        200,
+        '<html><body>There has been an error processing your request</body></html>',
+      ),
+    ).toMatch(/body matches/);
   });
 
   it('leaves a real page that talks about maintenance alone', () => {
@@ -542,12 +637,14 @@ describe('excluded pages', () => {
 });
 
 describe('excluded regions', () => {
-  const GRID = [{
-    selector: '#grid',
-    kind: 'non-editorial',
-    reason: 'The catalogue writes it.',
-    measured: { pages: ['a', 'b', 'c'], production: 4, new: 4 },
-  }];
+  const GRID = [
+    {
+      selector: '#grid',
+      kind: 'non-editorial',
+      reason: 'The catalogue writes it.',
+      measured: { pages: ['a', 'b', 'c'], production: 4, new: 4 },
+    },
+  ];
 
   const withGrid = (main) => extractPage(page(main), { ...CONTEXT, excludedRegions: GRID });
 
@@ -570,13 +667,15 @@ describe('excluded regions', () => {
       <h1>Overkappingen</h1>
       <div id="grid"><h3>Tegel</h3><p>1702 resultaten</p></div>`);
 
-    expect(extract.diagnostics.regionsExcluded).toEqual([{
-      selector: '#grid',
-      kind: 'non-editorial',
-      reason: 'The catalogue writes it.',
-      matches: 1,
-      units: 2,
-    }]);
+    expect(extract.diagnostics.regionsExcluded).toEqual([
+      {
+        selector: '#grid',
+        kind: 'non-editorial',
+        reason: 'The catalogue writes it.',
+        matches: 1,
+        units: 2,
+      },
+    ]);
     expect(extract.diagnostics.unitsExcluded).toBe(2);
   });
 
@@ -600,9 +699,12 @@ describe('excluded regions', () => {
   it('throws above the entry cap, because a wider match is a wrong selector', () => {
     const tiles = '<p>Een tegel met tekst.</p>'.repeat(21);
 
-    expect(() => extractPage(page(`<h1>Kop</h1><div id="grid">${tiles}</div>`), {
-      ...CONTEXT, excludedRegions: GRID,
-    })).toThrow(/#grid holds 21 content units.*cap is 20/s);
+    expect(() =>
+      extractPage(page(`<h1>Kop</h1><div id="grid">${tiles}</div>`), {
+        ...CONTEXT,
+        excludedRegions: GRID,
+      }),
+    ).toThrow(/#grid holds 21 content units.*cap is 20/s);
   });
 
   it('counts a match inside another match once, so the recorded count is right', () => {
@@ -625,10 +727,13 @@ describe('excluded regions', () => {
 
   it('honours a cap the entry declares, so a measured wide region can ship', () => {
     const tiles = '<p>Een tegel met tekst.</p>'.repeat(21);
-    const wide = [{ ...GRID[0], measured: { pages: ['a', 'b', 'c'], production: 21, new: 21 }, maxUnits: 90 }];
+    const wide = [
+      { ...GRID[0], measured: { pages: ['a', 'b', 'c'], production: 21, new: 21 }, maxUnits: 90 },
+    ];
 
     const extract = extractPage(page(`<h1>Kop</h1><div id="grid">${tiles}</div>`), {
-      ...CONTEXT, excludedRegions: wide,
+      ...CONTEXT,
+      excludedRegions: wide,
     });
     expect(extract.elements).toHaveLength(1);
     expect(extract.diagnostics.unitsExcluded).toBe(21);
@@ -637,22 +742,26 @@ describe('excluded regions', () => {
   it('caps the whole entry and not one match, so two half-size matches still throw', () => {
     const half = '<p>Een tegel met tekst.</p>'.repeat(11);
 
-    expect(() => extractPage(
-      page(`<h1>Kop</h1><div id="grid">${half}</div><div id="grid">${half}</div>`),
-      { ...CONTEXT, excludedRegions: GRID },
-    )).toThrow(/matched 2 times/);
+    expect(() =>
+      extractPage(page(`<h1>Kop</h1><div id="grid">${half}</div><div id="grid">${half}</div>`), {
+        ...CONTEXT,
+        excludedRegions: GRID,
+      }),
+    ).toThrow(/matched 2 times/);
   });
 
   it('holds a list a caller gives to the same bar as the committed one', () => {
     const unmeasured = [{ ...GRID[0], measured: { pages: ['a'], production: 1, new: 1 } }];
-    expect(() => extractPage(page('<h1>Kop</h1>'), { ...CONTEXT, excludedRegions: unmeasured }))
-      .toThrow(/measured on 1 page/);
+    expect(() =>
+      extractPage(page('<h1>Kop</h1>'), { ...CONTEXT, excludedRegions: unmeasured }),
+    ).toThrow(/measured on 1 page/);
   });
 
   it('names the page and the side, because a crawl fails on one page of 448', () => {
     const tiles = '<p>Een tegel met tekst.</p>'.repeat(21);
-    expect(() => extractPage(page(`<div id="grid">${tiles}</div>`), { ...CONTEXT, excludedRegions: GRID }))
-      .toThrow(/nl\/overkappingen production/);
+    expect(() =>
+      extractPage(page(`<div id="grid">${tiles}</div>`), { ...CONTEXT, excludedRegions: GRID }),
+    ).toThrow(/nl\/overkappingen production/);
   });
 
   it('leaves a page with no <main> to the chrome list, and still cuts the region', () => {
@@ -682,7 +791,9 @@ describe('the committed region list', () => {
 
   it('never caps an entry below its own measurement', () => {
     for (const entry of EXCLUDED_REGIONS) {
-      expect(capFor(entry)).toBeGreaterThanOrEqual(Math.max(entry.measured.production, entry.measured.new));
+      expect(capFor(entry)).toBeGreaterThanOrEqual(
+        Math.max(entry.measured.production, entry.measured.new),
+      );
     }
   });
 
@@ -705,10 +816,11 @@ describe('the committed region list', () => {
  */
 describe('the filter block entry', () => {
   const FILTER = EXCLUDED_REGIONS.filter((entry) => entry.selector === '.filter-content');
-  const only = (main) => extractPage(page(main, { bodyClass: 'catalog-category-view' }), {
-    ...CONTEXT,
-    excludedRegions: FILTER,
-  });
+  const only = (main) =>
+    extractPage(page(main, { bodyClass: 'catalog-category-view' }), {
+      ...CONTEXT,
+      excludedRegions: FILTER,
+    });
 
   /** The labels the catalogue writes, and Akeneo writes on the new site. */
   const LABELS = '<p>Productlijn</p><a href="/overkapping?product_line=7873">Poly line (12)</a>';
@@ -780,8 +892,14 @@ describe('the promo banner entry', () => {
       </div>
     </div>`;
 
-  const DESKTOP = section('/terrasoverkapping?terrasoverkapping_model=6039,6040#productbuilder', 'Nu 10% korting.');
-  const MOBILE = section('/terrasoverkapping?terrasoverkapping_model=6039%2C6040#productbuilder', 'Nu 10% korting.');
+  const DESKTOP = section(
+    '/terrasoverkapping?terrasoverkapping_model=6039,6040#productbuilder',
+    'Nu 10% korting.',
+  );
+  const MOBILE = section(
+    '/terrasoverkapping?terrasoverkapping_model=6039%2C6040#productbuilder',
+    'Nu 10% korting.',
+  );
 
   it('is one entry, legacy-only, anchored on the hook production puts on the block', () => {
     expect(BANNER).toHaveLength(1);
@@ -862,7 +980,8 @@ describe('the promo banner entry', () => {
     // The mirror of the above, and the cost of the change: the entry now cuts a
     // region and not a link. A campaign target in editorial prose stays in the
     // log, which is the over-reporting direction.
-    const inline = '<p>Lees de <a href="/actievoorwaarden?terrasoverkapping_model=6039,6040">voorwaarden</a>.</p>';
+    const inline =
+      '<p>Lees de <a href="/actievoorwaarden?terrasoverkapping_model=6039,6040">voorwaarden</a>.</p>';
     const extract = only(`<h1>Kop</h1>${inline}`);
 
     expect(extract.diagnostics.regionsExcluded).toEqual([]);
@@ -917,27 +1036,33 @@ describe('validateRegions', () => {
   });
 
   it('refuses a measurement on fewer than three pages', () => {
-    expect(check({ measured: { pages: ['a', 'b'], production: 4, new: 4 } })).toThrow(/The bar is 3/);
+    expect(check({ measured: { pages: ['a', 'b'], production: 4, new: 4 } })).toThrow(
+      /The bar is 3/,
+    );
   });
 
-  it('refuses a cap below the entry\'s own measurement', () => {
-    expect(check({ measured: { pages: ['a', 'b', 'c'], production: 30, new: 4 }, maxUnits: 25 }))
-      .toThrow(/throw on its own evidence/);
+  it("refuses a cap below the entry's own measurement", () => {
+    expect(
+      check({ measured: { pages: ['a', 'b', 'c'], production: 30, new: 4 }, maxUnits: 25 }),
+    ).toThrow(/throw on its own evidence/);
   });
 
   it('refuses a cap above the ceiling, so an author cannot declare their way out', () => {
     // The per-entry cap and the measurement beside it are both written by hand.
     // Without a ceiling the guard is only "type the number twice".
-    expect(check({
-      measured: { pages: ['a', 'b', 'c'], production: 400, new: 400 },
-      maxUnits: 400,
-    })).toThrow(/ceiling is 100/);
+    expect(
+      check({
+        measured: { pages: ['a', 'b', 'c'], production: 400, new: 400 },
+        maxUnits: 400,
+      }),
+    ).toThrow(/ceiling is 100/);
     expect(ABSOLUTE_MAX_UNITS).toBe(100);
   });
 
-  it('names where the list came from, so a caller\'s list is told apart from the committed one', () => {
-    expect(() => validateRegions([{ ...good, kind: 'noisy' }], 'context.excludedRegions'))
-      .toThrow(/context\.excludedRegions: #grid/);
+  it("names where the list came from, so a caller's list is told apart from the committed one", () => {
+    expect(() => validateRegions([{ ...good, kind: 'noisy' }], 'context.excludedRegions')).toThrow(
+      /context\.excludedRegions: #grid/,
+    );
   });
 });
 

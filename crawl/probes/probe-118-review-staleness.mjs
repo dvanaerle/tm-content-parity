@@ -143,7 +143,9 @@ for (const review of reviews) {
 
 // --- the report ------------------------------------------------------------
 
-console.log(`\n${events.length} events, ${live.length} live, ${reviews.length} live page reviews.\n`);
+console.log(
+  `\n${events.length} events, ${live.length} live, ${reviews.length} live page reviews.\n`,
+);
 
 console.log('| outcome | reviews |');
 console.log('| --- | --- |');
@@ -157,4 +159,9 @@ for (const line of stale) console.log(`- ${line}`);
 
 const byStore = new Map();
 for (const review of reviews) byStore.set(review.store, (byStore.get(review.store) ?? 0) + 1);
-console.log(`\nLive reviews per store: ${[...byStore].sort().map(([s, n]) => `${s} ${n}`).join(', ')}`);
+console.log(
+  `\nLive reviews per store: ${[...byStore]
+    .sort()
+    .map(([s, n]) => `${s} ${n}`)
+    .join(', ')}`,
+);

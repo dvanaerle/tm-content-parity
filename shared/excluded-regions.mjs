@@ -67,11 +67,11 @@ export const EXCLUDED_REGIONS = [
     selector: '#amasty-shopby-product-list',
     kind: 'non-editorial',
     reason:
-      'The product grid on a category page. The catalogue makes the tile titles, the '
-      + 'filter labels, the count of results and the sort control. Nobody writes them, so '
-      + 'a difference in them is not editor work. Production puts the tile title in a tag '
-      + 'that the extraction never read. That made production look as if it lost nine '
-      + 'tiles that it never had.',
+      'The product grid on a category page. The catalogue makes the tile titles, the ' +
+      'filter labels, the count of results and the sort control. Nobody writes them, so ' +
+      'a difference in them is not editor work. Production puts the tile title in a tag ' +
+      'that the extraction never read. That made production look as if it lost nine ' +
+      'tiles that it never had.',
     // Measured 2026-08-07 by `crawl/probes/probe-excluded-regions.mjs`. One match
     // on each host, on all three pages, with the same count on all three.
     // Re-measured 2026-08-10 after ticket 67 folded inline links: both counts are
@@ -108,15 +108,15 @@ export const EXCLUDED_REGIONS = [
     selector: '#campaign-banner',
     kind: 'legacy-only',
     reason:
-      'The campaign banner. One shared Magento block, in all six stores, on nearly every '
-      + 'page. An editor does write the banner, so it is not non-editorial. But the new '
-      + 'site does not get it, so the same block on each page makes the same findings that '
-      + 'nobody can solve. Production marks the block itself, so the anchor is not specific '
-      + 'to a campaign: the next campaign has different text, different links and a '
-      + 'different period, but it keeps the same hook, and this rule continues to match '
-      + 'with no commit. The hook is in the CMS block. A new block built without the hook '
-      + 'lets the banner come back as findings, and the coverage check reports that in one '
-      + 'line.',
+      'The campaign banner. One shared Magento block, in all six stores, on nearly every ' +
+      'page. An editor does write the banner, so it is not non-editorial. But the new ' +
+      'site does not get it, so the same block on each page makes the same findings that ' +
+      'nobody can solve. Production marks the block itself, so the anchor is not specific ' +
+      'to a campaign: the next campaign has different text, different links and a ' +
+      'different period, but it keeps the same hook, and this rule continues to match ' +
+      'with no commit. The hook is in the CMS block. A new block built without the hook ' +
+      'lets the banner come back as findings, and the coverage check reports that in one ' +
+      'line.',
     // Measured 2026-08-11 against live production by
     // `crawl/probes/probe-promo-banner.mjs`: six stores, the three pages below
     // plus `overkapping` and four controls, so **48 page-store pairs and not the
@@ -163,13 +163,13 @@ export const EXCLUDED_REGIONS = [
     selector: '.filter-content',
     kind: 'non-editorial',
     reason:
-      'The filter block on a category page. The filter names, the labels in them and the '
-      + 'counts behind them come from the catalogue, and on the new site Akeneo holds them. '
-      + 'Nobody writes them, so a difference in them is not editor work. The hook is the '
-      + 'inner block class, because both sites give it the same name: production also puts '
-      + 'an id on it, but the new site puts that id in a template expression, and then an '
-      + 'id rule matches one side only. To cut one side is worse than to cut neither: the '
-      + 'labels of the other side are then left over as findings that nobody can solve.',
+      'The filter block on a category page. The filter names, the labels in them and the ' +
+      'counts behind them come from the catalogue, and on the new site Akeneo holds them. ' +
+      'Nobody writes them, so a difference in them is not editor work. The hook is the ' +
+      'inner block class, because both sites give it the same name: production also puts ' +
+      'an id on it, but the new site puts that id in a template expression, and then an ' +
+      'id rule matches one side only. To cut one side is worse than to cut neither: the ' +
+      'labels of the other side are then left over as findings that nobody can solve.',
     // Measured 2026-08-11 against live production and the new site by
     // `crawl/probes/probe-layered-filter.mjs`: the three pages below in every store
     // the seeds hold them for, plus four controls, so **32 page-store pairs and not
@@ -212,11 +212,11 @@ export function capFor(entry) {
  */
 export function capBreachMessage(entry, { units, matches, where }) {
   return (
-    `${where}: the excluded region ${entry.selector} holds ${units} content units. `
-    + `Its cap is ${capFor(entry)}. The selector matched ${matches} `
-    + `time${matches === 1 ? '' : 's'}. `
-    + 'A region that large is a wrong selector. The crawl stops here. '
-    + 'See docs/adr/0003-regions-are-excluded-at-extraction.md.'
+    `${where}: the excluded region ${entry.selector} holds ${units} content units. ` +
+    `Its cap is ${capFor(entry)}. The selector matched ${matches} ` +
+    `time${matches === 1 ? '' : 's'}. ` +
+    'A region that large is a wrong selector. The crawl stops here. ' +
+    'See docs/adr/0003-regions-are-excluded-at-extraction.md.'
   );
 }
 
@@ -236,29 +236,31 @@ export function validateRegions(entries, source = 'shared/excluded-regions.mjs')
     const at = `${source}: ${entry.selector}`;
 
     if (!REGION_KINDS.includes(entry.kind)) {
-      throw new Error(`${at} has kind "${entry.kind}". The vocabulary is ${REGION_KINDS.join(' or ')}.`);
+      throw new Error(
+        `${at} has kind "${entry.kind}". The vocabulary is ${REGION_KINDS.join(' or ')}.`,
+      );
     }
     if (!entry.reason) {
       throw new Error(`${at} has no reason. An excluded region says why.`);
     }
     if ((entry.measured?.pages?.length ?? 0) < MEASURED_PAGES) {
       throw new Error(
-        `${at} was measured on ${entry.measured?.pages?.length ?? 0} page(s). `
-        + `The bar is ${MEASURED_PAGES}.`
+        `${at} was measured on ${entry.measured?.pages?.length ?? 0} page(s). ` +
+          `The bar is ${MEASURED_PAGES}.`,
       );
     }
 
     const widest = Math.max(entry.measured.production, entry.measured.new);
     if (capFor(entry) < widest) {
       throw new Error(
-        `${at} has a cap of ${capFor(entry)} and a measurement of ${widest}. `
-        + 'The cap would throw on its own evidence.'
+        `${at} has a cap of ${capFor(entry)} and a measurement of ${widest}. ` +
+          'The cap would throw on its own evidence.',
       );
     }
     if (capFor(entry) > ABSOLUTE_MAX_UNITS) {
       throw new Error(
-        `${at} declares a cap of ${capFor(entry)}. The ceiling is ${ABSOLUTE_MAX_UNITS}. `
-        + 'A region wider than the ceiling needs a decision in the ADR, not a larger number here.'
+        `${at} declares a cap of ${capFor(entry)}. The ceiling is ${ABSOLUTE_MAX_UNITS}. ` +
+          'A region wider than the ceiling needs a decision in the ADR, not a larger number here.',
       );
     }
   }

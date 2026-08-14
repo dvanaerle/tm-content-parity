@@ -124,13 +124,13 @@ console.log(`\n${extract.entries.length} entries, ${kb} KB`);
 console.log(
   extract.alternateConflicts === 0
     ? 'The six files agree about every alternate block.'
-    : `${extract.alternateConflicts} files disagree about an alternate block. The extract keeps the first.`
+    : `${extract.alternateConflicts} files disagree about an alternate block. The extract keeps the first.`,
 );
 console.table(
   Object.fromEntries(
     SITEMAP_FILES.map((file) => [
       file,
       { locs: extract.locs[file], kept: manifest.sources.find((s) => s.file === file).kept },
-    ])
-  )
+    ]),
+  ),
 );

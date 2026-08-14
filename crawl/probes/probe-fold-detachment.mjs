@@ -48,8 +48,13 @@ const TEXT_TAGS = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,dt,dd,button,a,figcaption,t
 const FOLDABLE = new Set(['a', 'button']);
 const NEVER_CONTENT = ['script', 'style', 'noscript'];
 const CHROME = [
-  'header', 'footer', 'nav', 'form',
-  '[class*="breadcrumb"]', '[class*="menu"]', '[role="dialog"]',
+  'header',
+  'footer',
+  'nav',
+  'form',
+  '[class*="breadcrumb"]',
+  '[class*="menu"]',
+  '[role="dialog"]',
 ];
 
 const textOf = (node) => collapse((node.structuredText ?? node.text ?? '').replaceAll('\n', ' '));
@@ -168,7 +173,12 @@ function foldEffect(html, { onWarn }) {
   }
 
   return {
-    lost, retagged, created, tagsNow, tagsAfter, occurrences,
+    lost,
+    retagged,
+    created,
+    tagsNow,
+    tagsAfter,
+    occurrences,
     boundary: main ? 'main' : 'body',
   };
 }
@@ -231,7 +241,10 @@ for (const key of pages) {
     await readFile(new URL(`data/extract/${store}/${page}.json`, ROOT), 'utf8'),
   );
   const sides = {};
-  for (const [side, name] of [['production', 'production'], ['new', 'new']]) {
+  for (const [side, name] of [
+    ['production', 'production'],
+    ['new', 'new'],
+  ]) {
     const { url } = extract[side];
     const { status, html } = await fetchPage(url);
     if (status !== 200) throw new Error(`${key} ${name}: HTTP ${status} on ${url}`);
@@ -261,7 +274,8 @@ function foldChangesId(finding, effect) {
   // Ticket 67: "A link still makes its link record. The links check compares
   // targets and is not touched by this." The same holds for images and meta:
   // their two sides are a target, an alt text or a head field, never a unit.
-  if (finding.check !== 'text') return { detached: false, reason: `the ${finding.check} check reads no content unit` };
+  if (finding.check !== 'text')
+    return { detached: false, reason: `the ${finding.check} check reads no content unit` };
 
   /** The one tag a text is written in: `absent`, `many`, or the tag. */
   const only = (map, text) => {
@@ -270,21 +284,33 @@ function foldChangesId(finding, effect) {
     return tags.size === 1 ? [...tags][0] : 'many';
   };
 
-  for (const [name, text] of [['production', finding.prod], ['new', finding.new]]) {
+  for (const [name, text] of [
+    ['production', finding.prod],
+    ['new', finding.new],
+  ]) {
     if (!text) continue;
     const swallowed = effect[name].lost.get(text) ?? 0;
     if (swallowed === 0) continue;
     if (swallowed === effect[name].occurrences.get(text)) {
       return { detached: true, reason: `the ${name} text goes into its block` };
     }
-    return { detached: null, reason: `the ${name} text is on ${effect[name].occurrences.get(text)} units and the fold takes ${swallowed}` };
+    return {
+      detached: null,
+      reason: `the ${name} text is on ${effect[name].occurrences.get(text)} units and the fold takes ${swallowed}`,
+    };
   }
 
   // The tag is not in the id, but two things derived from it are: `detail`,
   // which is `a → p`, and the class, because `restructured` fires when the two
   // sides differ in tag. So the pair of tags matters and neither tag does.
-  const before = [only(effect.production.tagsNow, finding.prod), only(effect.new.tagsNow, finding.new)];
-  const after = [only(effect.production.tagsAfter, finding.prod), only(effect.new.tagsAfter, finding.new)];
+  const before = [
+    only(effect.production.tagsNow, finding.prod),
+    only(effect.new.tagsNow, finding.new),
+  ];
+  const after = [
+    only(effect.production.tagsAfter, finding.prod),
+    only(effect.new.tagsAfter, finding.new),
+  ];
   for (const [i, text] of [finding.prod, finding.new].entries()) {
     if (!text) continue;
     // The corpus was crawled on another day. A text the live page no longer
@@ -306,8 +332,10 @@ function foldChangesId(finding, effect) {
   // `campaign` **before** it asks whether the tags differ, so a finding in one
   // of those keeps its class however the tags move.
   const agreed = (pair) => pair[0] === pair[1];
-  if (!TAG_SENSITIVE.has(finding.class)) return { detached: false, reason: `${finding.class} does not read the tag: ${move}` };
-  if (agreed(before) !== agreed(after)) return { detached: true, reason: `the class moves: ${move}` };
+  if (!TAG_SENSITIVE.has(finding.class))
+    return { detached: false, reason: `${finding.class} does not read the tag: ${move}` };
+  if (agreed(before) !== agreed(after))
+    return { detached: true, reason: `the class moves: ${move}` };
   return { detached: false, reason: `both sides move together: ${move}` };
 }
 
@@ -327,7 +355,12 @@ function detaches(event) {
 
 const rows = [];
 for (const event of live) {
-  const base = { store: event.store, page: event.page, kind: event.action, key: event.findingId ?? event.class ?? '' };
+  const base = {
+    store: event.store,
+    page: event.page,
+    kind: event.action,
+    key: event.findingId ?? event.class ?? '',
+  };
   if (event.scope === 'finding') {
     const { detached, reason, finding } = detaches(event);
     rows.push({ ...base, detached, reason, class: finding?.class ?? null });
@@ -357,11 +390,19 @@ for (const event of live) {
       (side) => effect[side].lost.size > 0 || effect[side].created.size > 0,
     );
     if (verdicts.includes(true)) {
-      rows.push({ ...base, detached: true, reason: `${verdicts.filter(Boolean).length} work findings change id` });
+      rows.push({
+        ...base,
+        detached: true,
+        reason: `${verdicts.filter(Boolean).length} work findings change id`,
+      });
     } else if (touched || verdicts.includes(null)) {
       // The fold adds units, and a new unit can make a work finding this
       // probe cannot predict. Only the rebuild answers that.
-      rows.push({ ...base, detached: null, reason: 'the fold changes units on this page, so the work set may move' });
+      rows.push({
+        ...base,
+        detached: null,
+        reason: 'the fold changes units on this page, so the work set may move',
+      });
     } else {
       rows.push({ ...base, detached: false, reason: 'the fold touches nothing on this page' });
     }
@@ -376,27 +417,38 @@ console.log(`\nOverride log: ${events.length} events, ${live.length} live.\n`);
 console.log(`| store | ${kinds.map((kind) => `${kind} live | detached`).join(' | ')} |`);
 console.log(`|---${'|---'.repeat(kinds.length * 2)}|`);
 // Every store, with its zeros. A store an editor has not touched is an answer.
-const line = (label, here) => console.log(
-  `| ${label} | ${kinds.map((kind) => {
-    const of = here.filter((row) => row.kind === kind);
-    const undecided = of.filter((row) => row.detached === null).length;
-    return `${of.length} | ${of.filter((row) => row.detached === true).length}`
-      + (undecided ? ` (+${undecided} undecided)` : '');
-  }).join(' | ')} |`,
-);
-for (const store of STORES) line(store, rows.filter((row) => row.store === store));
+const line = (label, here) =>
+  console.log(
+    `| ${label} | ${kinds
+      .map((kind) => {
+        const of = here.filter((row) => row.kind === kind);
+        const undecided = of.filter((row) => row.detached === null).length;
+        return (
+          `${of.length} | ${of.filter((row) => row.detached === true).length}` +
+          (undecided ? ` (+${undecided} undecided)` : '')
+        );
+      })
+      .join(' | ')} |`,
+  );
+for (const store of STORES)
+  line(
+    store,
+    rows.filter((row) => row.store === store),
+  );
 line('**all six**', rows);
 
 // Ticket 62's rebuild removed 391 finding ids the day before. This says how
 // many live overrides that rebuild orphaned, without the fold being involved.
-const orphans = rows.filter((row) => row.reason === 'the finding is not in the current report').length;
+const orphans = rows.filter(
+  (row) => row.reason === 'the finding is not in the current report',
+).length;
 console.log(`\nLive overrides whose finding is not in the current report: ${orphans}.`);
 
 console.log('\nEvery live override:');
 for (const row of rows) {
   const verdict = row.detached === null ? 'UNDECIDED' : row.detached ? 'DETACHES ' : 'holds    ';
   console.log(
-    `  ${verdict} ${row.kind} ${row.store}/${row.page} `
-    + `${row.key}${row.class ? ` (${row.class})` : ''}${row.reason ? ` — ${row.reason}` : ''}`,
+    `  ${verdict} ${row.kind} ${row.store}/${row.page} ` +
+      `${row.key}${row.class ? ` (${row.class})` : ''}${row.reason ? ` — ${row.reason}` : ''}`,
   );
 }

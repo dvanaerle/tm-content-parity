@@ -60,7 +60,7 @@ import { isPriority, PRIORITIES } from '../shared/priorities.mjs';
  * @returns {string}
  */
 export function eventKey(event) {
-  const key = event.scope === 'finding' ? event.findingId : pageScopeKey(event) ?? event.class;
+  const key = event.scope === 'finding' ? event.findingId : (pageScopeKey(event) ?? event.class);
   return [event.scope, event.store, event.page, key ?? ''].join('|');
 }
 
@@ -80,7 +80,7 @@ export function eventKey(event) {
 const PAGE_KEY = { prioritised: 'priority', noted: 'note' };
 
 /** @param {OverrideEvent} event */
-const pageScopeKey = (event) => (event.scope === 'page' ? PAGE_KEY[event.action] ?? '' : null);
+const pageScopeKey = (event) => (event.scope === 'page' ? (PAGE_KEY[event.action] ?? '') : null);
 
 /**
  * Latest event per key. Events may arrive in any order — Supabase is asked for
@@ -101,9 +101,8 @@ export function latestByKey(events) {
 }
 
 /** Two events in the same millisecond are separated by the table's own id. */
-const isLater = (/** @type {OverrideEvent} */ a, /** @type {OverrideEvent} */ b) => (
-  a.createdAt === b.createdAt ? String(a.id ?? '') > String(b.id ?? '') : a.createdAt > b.createdAt
-);
+const isLater = (/** @type {OverrideEvent} */ a, /** @type {OverrideEvent} */ b) =>
+  a.createdAt === b.createdAt ? String(a.id ?? '') > String(b.id ?? '') : a.createdAt > b.createdAt;
 
 /**
  * Whether a `fixed` claim has been contradicted.
@@ -200,11 +199,11 @@ const decided = (finding, state, override) => ({
   visibility: visibilityOf(finding.class),
   override: override
     ? {
-      action: override.action,
-      editor: override.editor,
-      at: override.createdAt,
-      note: override.note ?? null,
-    }
+        action: override.action,
+        editor: override.editor,
+        at: override.createdAt,
+        note: override.note ?? null,
+      }
     : null,
 });
 
@@ -251,8 +250,10 @@ export function clearedEventFor(finding) {
  */
 export function priorityEventFor(priority) {
   if (priority !== null && !isPriority(priority)) {
-    throw new Error(`Not a priority: ${JSON.stringify(priority)}. `
-      + `The list is ${PRIORITIES.join(', ')}, and it is closed.`);
+    throw new Error(
+      `Not a priority: ${JSON.stringify(priority)}. ` +
+        `The list is ${PRIORITIES.join(', ')}, and it is closed.`,
+    );
   }
   return { scope: 'page', action: 'prioritised', priority };
 }

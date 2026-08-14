@@ -50,7 +50,9 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
   /** The last press's report. Held so a partial failure stays on screen to be read. */
-  const [report, setReport] = useState(/** @type {null | { written: number, total: number, failedOn: string | null }} */ (null));
+  const [report, setReport] = useState(
+    /** @type {null | { written: number, total: number, failedOn: string | null }} */ (null),
+  );
 
   const dismissal = useMemo(
     () => bulkDismissal({ repeat, byFinding, note, selected }),
@@ -67,7 +69,10 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
     [repeat, byFinding, selected],
   );
 
-  const close = () => { setAsking(null); setNote(''); };
+  const close = () => {
+    setAsking(null);
+    setNote('');
+  };
 
   /**
    * Both presses report the same way, and the form closes only when **every** row was
@@ -144,7 +149,6 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
           )}
 
           {!bulk?.canWrite && <NotWriting reason={bulk?.notWritingReason} />}
-
         </div>
 
         {/* Unticking ten rows one at a time is the work this control exists to remove, so
@@ -175,7 +179,10 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
       {bulk?.canWrite && dismissal.covers > 0 && asking === 'dismiss' && (
         <form
           className="flex flex-col gap-2"
-          onSubmit={(submit) => { submit.preventDefault(); press(dismissal.events); }}
+          onSubmit={(submit) => {
+            submit.preventDefault();
+            press(dismissal.events);
+          }}
         >
           <Covers dismissal={dismissal} />
           <div className="flex flex-wrap items-center gap-1">
@@ -203,7 +210,9 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
                 without this the cancel *presses* the decision it is there to abandon:
                 `close()` runs, the submit fires behind it, and N rows land in an
                 append-only table that has nothing to undo them with. */}
-            <Button type="button" variant="outline" size="xs" onClick={close}>Cancel</Button>
+            <Button type="button" variant="outline" size="xs" onClick={close}>
+              Cancel
+            </Button>
           </div>
         </form>
       )}
@@ -225,19 +234,20 @@ const Selection = ({ repeat, count }) => (
         over the page now, and what it is *about* has to be readable before the sentence
         is. The sentence still carries the denominator — one page ticked of forty is a
         different press from forty of forty. */}
-    <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium tabular-nums text-primary-foreground">
+    <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground tabular-nums">
       {count}
     </span>
     {/* An explicit space, so the count and the sentence are one string when read aloud —
         *2of 3 pages* is what adjacent boxes concatenate to. A whitespace-only run is
-        not rendered as a flex item, so it costs nothing beside the gap. */}
-    {' '}
+        not rendered as a flex item, so it costs nothing beside the gap. */}{' '}
     <span>
-      <strong className="font-medium tabular-nums text-foreground">
+      <strong className="font-medium text-foreground tabular-nums">
         of {repeat.on.length} {repeat.on.length === 1 ? 'page' : 'pages'}
       </strong>{' '}
       selected on <ClassWord class={repeat.class} />{' '}
-      <span className="text-foreground">{repeat.prod ?? '—'} → {repeat.new ?? '—'}</span>
+      <span className="text-foreground">
+        {repeat.prod ?? '—'} → {repeat.new ?? '—'}
+      </span>
     </span>
   </p>
 );
@@ -293,7 +303,7 @@ function Covers({ dismissal }) {
 
   return (
     <p className="text-xs text-muted-foreground">
-      <strong className="font-medium tabular-nums text-foreground">
+      <strong className="font-medium text-foreground tabular-nums">
         {dismissal.covers} {dismissal.covers === 1 ? 'page' : 'pages'}
       </strong>
       {dismissal.decided > 0
@@ -326,10 +336,16 @@ function Report({ written, total, failedOn, error }) {
 
   return (
     <p className={cn('mb-2 text-xs', INK.attention)}>
-      <strong className="font-medium">{written} of {total} saved.</strong>{' '}
-      {failedOn
-        ? <>It stopped on <code>{failedOn}</code>, and the rest is not written. </>
-        : 'Nothing is written. '}
+      <strong className="font-medium">
+        {written} of {total} saved.
+      </strong>{' '}
+      {failedOn ? (
+        <>
+          It stopped on <code>{failedOn}</code>, and the rest is not written.{' '}
+        </>
+      ) : (
+        'Nothing is written. '
+      )}
       {written > 0 && 'What was saved is in the log and it is visible above. '}
       {error}
     </p>
@@ -344,13 +360,12 @@ function Report({ written, total, failedOn, error }) {
  * `title`, which is where round two put everything that explains a number already on
  * screen rather than changing what an editor presses.
  */
-const clearTitle = ({ covers, skipped }) => (
-  'Removes the decision and puts the difference back to open.'
-  + (skipped > 0
-    ? ` ${skipped} of the ${covers + skipped} selected pages stays as it is: nothing is`
-      + ' decided there, or it is a claim that the Fixed tick takes back.'
-    : '')
-);
+const clearTitle = ({ covers, skipped }) =>
+  'Removes the decision and puts the difference back to open.' +
+  (skipped > 0
+    ? ` ${skipped} of the ${covers + skipped} selected pages stays as it is: nothing is` +
+      ' decided there, or it is a claim that the Fixed tick takes back.'
+    : '');
 
 /**
  * The class named inside a sentence, in words rather than as a pill. The pill is a

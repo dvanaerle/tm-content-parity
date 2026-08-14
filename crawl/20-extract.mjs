@@ -30,16 +30,23 @@ export async function extractStorePage({ store, page, prodUrl, newUrl }) {
   }
 
   const hosts = { prodHost: new URL(prodUrl).host, newHost: new URL(newUrl).host };
-  const [production, next] = await Promise.all([
-    fetchPage(prodUrl),
-    fetchPage(newUrl),
-  ]);
+  const [production, next] = await Promise.all([fetchPage(prodUrl), fetchPage(newUrl)]);
   return {
     production: extractPage(production.html, {
-      store, page, side: 'production', url: prodUrl, status: production.status, ...hosts,
+      store,
+      page,
+      side: 'production',
+      url: prodUrl,
+      status: production.status,
+      ...hosts,
     }),
     new: extractPage(next.html, {
-      store, page, side: 'new', url: newUrl, status: next.status, ...hosts,
+      store,
+      page,
+      side: 'new',
+      url: newUrl,
+      status: next.status,
+      ...hosts,
     }),
   };
 }
@@ -56,15 +63,17 @@ async function urlsFromSeeds(store, page) {
   return { prodUrl: cell.prodUrl, newUrl: cell.newUrl };
 }
 
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('20-extract.mjs')) {
+if (
+  import.meta.url === `file://${process.argv[1]}` ||
+  process.argv[1]?.endsWith('20-extract.mjs')
+) {
   const [store, page, prodArg, newArg] = process.argv.slice(2);
   if (!store || !page) {
     console.error('usage: node crawl/20-extract.mjs <store> <page> [prodUrl newUrl]');
     process.exit(2);
   }
-  const urls = prodArg && newArg
-    ? { prodUrl: prodArg, newUrl: newArg }
-    : await urlsFromSeeds(store, page);
+  const urls =
+    prodArg && newArg ? { prodUrl: prodArg, newUrl: newArg } : await urlsFromSeeds(store, page);
 
   const sides = await extractStorePage({ store, page, ...urls });
   const out = new URL(`../data/extract/${store}/${page}.json`, import.meta.url);
@@ -74,12 +83,14 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
   for (const side of ['production', 'new']) {
     const extract = sides[side];
     console.log(
-      `${side.padEnd(10)} ${extract.status} boundary=${extract.boundary} `
-      + `elements=${extract.elements.length} links=${extract.links.length} `
-      + `images=${extract.images.length} (${extract.diagnostics.imagesWithoutSrc} without src)`
+      `${side.padEnd(10)} ${extract.status} boundary=${extract.boundary} ` +
+        `elements=${extract.elements.length} links=${extract.links.length} ` +
+        `images=${extract.images.length} (${extract.diagnostics.imagesWithoutSrc} without src)`,
     );
     for (const region of extract.diagnostics.regionsExcluded) {
-      console.log(`${' '.repeat(11)}region ${region.selector} ×${region.matches}, -${region.units} units (${region.kind})`);
+      console.log(
+        `${' '.repeat(11)}region ${region.selector} ×${region.matches}, -${region.units} units (${region.kind})`,
+      );
     }
   }
   console.log(`wrote ${fileURLToPath(out)}`);

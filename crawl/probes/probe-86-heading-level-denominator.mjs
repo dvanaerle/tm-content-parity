@@ -75,7 +75,12 @@ async function main() {
     const before = report.summary;
     const after = summarise(report.findings);
 
-    const store = perStore.get(report.store) ?? { work: [0, 0], info: [0, 0], subject: 0, pages: 0 };
+    const store = perStore.get(report.store) ?? {
+      work: [0, 0],
+      info: [0, 0],
+      subject: 0,
+      pages: 0,
+    };
     store.work[0] += before.work;
     store.work[1] += after.work;
     store.info[0] += before.information;
@@ -127,8 +132,8 @@ async function main() {
   for (const [store, one] of [...perStore].sort((a, b) => b[1].subject - a[1].subject)) {
     const factor = (one.work[0] / one.work[1]).toFixed(3);
     console.log(
-      `${store.padEnd(8)}${String(one.work[0]).padEnd(14)}${String(one.work[1]).padEnd(13)}`
-      + `${String(one.subject).padEnd(16)}${String(one.pages).padEnd(8)}× ${factor}`,
+      `${store.padEnd(8)}${String(one.work[0]).padEnd(14)}${String(one.work[1]).padEnd(13)}` +
+        `${String(one.subject).padEnd(16)}${String(one.pages).padEnd(8)}× ${factor}`,
     );
     work = [work[0] + one.work[0], work[1] + one.work[1]];
     info = [info[0] + one.info[0], info[1] + one.info[1]];
@@ -136,25 +141,35 @@ async function main() {
     pages += one.pages;
   }
   console.log(
-    `${'all'.padEnd(8)}${String(work[0]).padEnd(14)}${String(work[1]).padEnd(13)}`
-    + `${String(subject).padEnd(16)}${String(pages).padEnd(8)}× ${(work[0] / work[1]).toFixed(3)}`,
+    `${'all'.padEnd(8)}${String(work[0]).padEnd(14)}${String(work[1]).padEnd(13)}` +
+      `${String(subject).padEnd(16)}${String(pages).padEnd(8)}× ${(work[0] / work[1]).toFixed(3)}`,
   );
-  console.log(`\ninformation ${info[0]} → ${info[1]}, which is the same ${subject} findings arriving.`);
-  console.log(`${SUBJECT} is ${(subject / work[0] * 100).toFixed(2)}% of the work findings it left.`);
+  console.log(
+    `\ninformation ${info[0]} → ${info[1]}, which is the same ${subject} findings arriving.`,
+  );
+  console.log(
+    `${SUBJECT} is ${((subject / work[0]) * 100).toFixed(2)}% of the work findings it left.`,
+  );
 
   // The criterion. Only the three tallies named after the visibilities may move.
   const movedClasses = [...corpusByClass]
     .filter(([, [b, a]]) => b !== a)
     .map(([cls, [b, a]]) => `${cls} ${b} → ${a}`);
 
-  console.log(`\nclasses whose corpus tally moved: ${movedClasses.length === 0 ? 'none' : movedClasses.join(', ')}`);
-  console.log(`pages whose class tallies moved: ${driftedPages.length === 0 ? 'none' : driftedPages.length}`);
+  console.log(
+    `\nclasses whose corpus tally moved: ${movedClasses.length === 0 ? 'none' : movedClasses.join(', ')}`,
+  );
+  console.log(
+    `pages whose class tallies moved: ${driftedPages.length === 0 ? 'none' : driftedPages.length}`,
+  );
   for (const line of driftedPages.slice(0, 20)) console.log(`  ${line}`);
 
   // Reported, never asserted. See the note at the write site above: this is ticket 118's
   // landing waiting for the next crawl, and it is printed here only so that a reader of
   // this probe does not go looking for it as though 86 had hidden it.
-  console.log(`\n${staleHashes} pages carry a stored hash from before ADR 0013 — that is 118's, not this ticket's.`);
+  console.log(
+    `\n${staleHashes} pages carry a stored hash from before ADR 0013 — that is 118's, not this ticket's.`,
+  );
 
   if (movedClasses.length > 0 || driftedPages.length > 0) {
     throw new Error('Something other than the visibility tallies moved. The diff is defective.');

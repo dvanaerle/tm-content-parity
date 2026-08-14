@@ -33,9 +33,10 @@ const STORES = ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'];
 const CONCURRENCY = 6;
 
 /** The committed banner entry, at the ceiling, so a wide match measures instead of throwing. */
-const BANNER = EXCLUDED_REGIONS
-  .filter((entry) => entry.kind === 'legacy-only')
-  .map((entry) => ({ ...entry, maxUnits: ABSOLUTE_MAX_UNITS }));
+const BANNER = EXCLUDED_REGIONS.filter((entry) => entry.kind === 'legacy-only').map((entry) => ({
+  ...entry,
+  maxUnits: ABSOLUTE_MAX_UNITS,
+}));
 
 if (BANNER.length !== 1) throw new Error(`Expected one legacy-only entry, found ${BANNER.length}.`);
 
@@ -70,7 +71,13 @@ async function run(job) {
   const measure = async (side, url) => {
     const response = await fetchPage(url);
     const context = {
-      store: job.store, page: job.page, side, url, status: response.status, onWarn: () => {}, ...hosts,
+      store: job.store,
+      page: job.page,
+      side,
+      url,
+      status: response.status,
+      onWarn: () => {},
+      ...hosts,
     };
     return {
       kept: extractPage(response.html, { ...context, excludedRegions: [] }),
@@ -83,11 +90,12 @@ async function run(job) {
     measure('new', job.newUrl),
   ]);
 
-  const compare = (a, b) => comparePage({
-    sides: { production: a, new: b },
-    newSitePaths: pathsByStore.get(job.store),
-    statuses,
-  });
+  const compare = (a, b) =>
+    comparePage({
+      sides: { production: a, new: b },
+      newSitePaths: pathsByStore.get(job.store),
+      statuses,
+    });
   const before = compare(production.kept, next.kept);
   const after = compare(production.cut, next.cut);
 
@@ -125,18 +133,20 @@ function countBy(findings) {
 const rows = [];
 let done = 0;
 const queue = [...jobs];
-await Promise.all(Array.from({ length: CONCURRENCY }, async () => {
-  while (queue.length) {
-    const job = queue.shift();
-    try {
-      rows.push(await run(job));
-    } catch (error) {
-      rows.push({ store: job.store, page: job.page, error: `${error.name}: ${error.message}` });
+await Promise.all(
+  Array.from({ length: CONCURRENCY }, async () => {
+    while (queue.length) {
+      const job = queue.shift();
+      try {
+        rows.push(await run(job));
+      } catch (error) {
+        rows.push({ store: job.store, page: job.page, error: `${error.name}: ${error.message}` });
+      }
+      done += 1;
+      if (done % 25 === 0) console.log(`  ${done}/${jobs.length}`);
     }
-    done += 1;
-    if (done % 25 === 0) console.log(`  ${done}/${jobs.length}`);
-  }
-}));
+  }),
+);
 
 // --- The tables the ticket asks for ---------------------------------------
 const ok = rows.filter((row) => !row.error);
@@ -152,31 +162,41 @@ const total = (list) => ({
   workBefore: sum(list, 'workBefore'),
   workAfter: sum(list, 'workAfter'),
   gone: sum(list, 'findingsBefore') - sum(list, 'findingsAfter'),
-  appeared: list.reduce((n, row) => n + Object.values(row.appearedByClass ?? {}).reduce((a, b) => a + b, 0), 0),
+  appeared: list.reduce(
+    (n, row) => n + Object.values(row.appearedByClass ?? {}).reduce((a, b) => a + b, 0),
+    0,
+  ),
 });
 
 const corpus = total(ok);
-const byStore = Object.fromEntries(STORES.map((store) => [store, total(ok.filter((row) => row.store === store))]));
+const byStore = Object.fromEntries(
+  STORES.map((store) => [store, total(ok.filter((row) => row.store === store))]),
+);
 
 const goneByClass = {};
 for (const row of ok) {
-  for (const [cls, n] of Object.entries(row.goneByClass ?? {})) goneByClass[cls] = (goneByClass[cls] ?? 0) + n;
+  for (const [cls, n] of Object.entries(row.goneByClass ?? {}))
+    goneByClass[cls] = (goneByClass[cls] ?? 0) + n;
 }
 
-console.log(`\ncorpus: ${corpus.pages} pages, ${corpus.comparable} comparable, `
-  + `banner on ${corpus.pagesWithBanner}.`);
-console.log(`findings ${corpus.findingsBefore} → ${corpus.findingsAfter} `
-  + `(${corpus.gone} gone, ${(100 * corpus.gone / corpus.findingsBefore).toFixed(1)}%), `
-  + `work ${corpus.workBefore} → ${corpus.workAfter}.`);
+console.log(
+  `\ncorpus: ${corpus.pages} pages, ${corpus.comparable} comparable, ` +
+    `banner on ${corpus.pagesWithBanner}.`,
+);
+console.log(
+  `findings ${corpus.findingsBefore} → ${corpus.findingsAfter} ` +
+    `(${corpus.gone} gone, ${((100 * corpus.gone) / corpus.findingsBefore).toFixed(1)}%), ` +
+    `work ${corpus.workBefore} → ${corpus.workAfter}.`,
+);
 console.log(`appeared: ${corpus.appeared}`);
 
 console.log('\nby store:');
 for (const store of STORES) {
   const t = byStore[store];
   console.log(
-    `  ${store.padEnd(6)} pages=${String(t.pages).padStart(3)} banner=${String(t.pagesWithBanner).padStart(3)} `
-    + `findings ${String(t.findingsBefore).padStart(6)} → ${String(t.findingsAfter).padStart(6)} `
-    + `(${String(t.gone).padStart(5)} gone) appeared=${t.appeared}`
+    `  ${store.padEnd(6)} pages=${String(t.pages).padStart(3)} banner=${String(t.pagesWithBanner).padStart(3)} ` +
+      `findings ${String(t.findingsBefore).padStart(6)} → ${String(t.findingsAfter).padStart(6)} ` +
+      `(${String(t.gone).padStart(5)} gone) appeared=${t.appeared}`,
   );
 }
 
@@ -187,18 +207,34 @@ for (const [cls, n] of Object.entries(goneByClass).sort((a, b) => b[1] - a[1])) 
 
 const wideMatch = ok.filter((row) => row.matches > 0 && row.matches !== 2);
 console.log(`\npages where the banner did not match exactly twice: ${wideMatch.length}`);
-for (const row of wideMatch.slice(0, 20)) console.log(`  ${row.store} ${row.page} matches=${row.matches}`);
+for (const row of wideMatch.slice(0, 20))
+  console.log(`  ${row.store} ${row.page} matches=${row.matches}`);
 
-const withAppeared = ok.filter((row) => row.appeared > 0 || Object.keys(row.appearedByClass ?? {}).length);
+const withAppeared = ok.filter(
+  (row) => row.appeared > 0 || Object.keys(row.appearedByClass ?? {}).length,
+);
 console.log(`pages where a finding appeared: ${withAppeared.length}`);
 for (const row of withAppeared.slice(0, 20)) {
   console.log(`  ${row.store} ${row.page}`, JSON.stringify(row.appearedRows));
 }
 
 console.log(`\nfetch failures: ${failed.length}`);
-for (const row of failed.slice(0, 20)) console.log(`  ${row.store} ${row.page} — ${row.error.slice(0, 100)}`);
+for (const row of failed.slice(0, 20))
+  console.log(`  ${row.store} ${row.page} — ${row.error.slice(0, 100)}`);
 
-await writeFile(OUT, JSON.stringify({
-  selector: BANNER[0].selector, at: new Date().toISOString(), corpus, byStore, goneByClass, rows,
-}, null, 2));
+await writeFile(
+  OUT,
+  JSON.stringify(
+    {
+      selector: BANNER[0].selector,
+      at: new Date().toISOString(),
+      corpus,
+      byStore,
+      goneByClass,
+      rows,
+    },
+    null,
+    2,
+  ),
+);
 console.log(`\nwrote ${OUT.pathname}`);

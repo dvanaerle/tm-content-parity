@@ -69,7 +69,7 @@ function fold(value, hosts) {
 function display(meta, field) {
   const value = meta[field];
   if (field === 'noindex') return value ? 'noindex' : 'index';
-  return value === '' ? null : value ?? null;
+  return value === '' ? null : (value ?? null);
 }
 
 /**
@@ -104,9 +104,8 @@ export function metaRows(production, next) {
     const prod = display(production.meta, field);
     const value = display(next.meta, field);
 
-    const state = field === 'canonical'
-      ? stateOf(fold(prod, hosts), fold(value, hosts))
-      : stateOf(prod, value);
+    const state =
+      field === 'canonical' ? stateOf(fold(prod, hosts), fold(value, hosts)) : stateOf(prod, value);
 
     // The canonical suppression, and it is **directional**. Production has no
     // canonical on 147 of 179 nl pages and the new site sets one on all of them.

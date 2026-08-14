@@ -50,22 +50,28 @@ const seeds = JSON.parse(await readFile(SEEDS, 'utf8'));
 const cellsFor = (page) => {
   const row = seeds.rows.find((r) => r.page === page);
   if (!row) throw new Error(`No seed row for ${page}.`);
-  return STORES
-    .map((store) => ({ store, page, cell: row.stores?.[store] }))
+  return STORES.map((store) => ({ store, page, cell: row.stores?.[store] }))
     .filter(({ cell }) => cell?.prodUrl && cell?.newUrl)
-    .map(({ store, page: p, cell }) => ({ store, page: p, prodUrl: cell.prodUrl, newUrl: cell.newUrl }));
+    .map(({ store, page: p, cell }) => ({
+      store,
+      page: p,
+      prodUrl: cell.prodUrl,
+      newUrl: cell.newUrl,
+    }));
 };
 
 const jobs = [...CATEGORY, ...CONTROL].flatMap(cellsFor);
 
 /** Capped at the ceiling so the probe measures a candidate instead of throwing on it. */
-const ENTRY = [{
-  selector: SELECTOR,
-  kind: 'non-editorial',
-  reason: 'The entry under test. The committed reason is in shared/excluded-regions.mjs.',
-  measured: { pages: CATEGORY, production: 0, new: 0 },
-  maxUnits: ABSOLUTE_MAX_UNITS,
-}];
+const ENTRY = [
+  {
+    selector: SELECTOR,
+    kind: 'non-editorial',
+    reason: 'The entry under test. The committed reason is in shared/excluded-regions.mjs.',
+    measured: { pages: CATEGORY, production: 0, new: 0 },
+    maxUnits: ABSOLUTE_MAX_UNITS,
+  },
+];
 
 /** @param {string} store @param {string} page @param {string} side @param {string} url */
 async function measure(store, page, side, url) {
@@ -94,11 +100,12 @@ async function measure(store, page, side, url) {
 
 /** Question 4: a row that leaves is the point, a row that appears would be harm. */
 function findingsBeforeAndAfter(production, next) {
-  const run = (a, b) => comparePage({
-    sides: { production: a, new: b },
-    newSitePaths: new Set(),
-    statuses: new Map(),
-  });
+  const run = (a, b) =>
+    comparePage({
+      sides: { production: a, new: b },
+      newSitePaths: new Set(),
+      statuses: new Map(),
+    });
 
   const before = run(production.kept, next.kept);
   const after = run(production.cut, next.cut);
@@ -136,23 +143,32 @@ for (const job of jobs) {
 
   const isCategory = CATEGORY.includes(job.page);
   const findings = isCategory ? findingsBeforeAndAfter(production, next) : null;
-  rows.push({ page: job.page, store: job.store, production: production.numbers, new: next.numbers, findings });
+  rows.push({
+    page: job.page,
+    store: job.store,
+    production: production.numbers,
+    new: next.numbers,
+    findings,
+  });
 
   const line = (side, m) =>
-    `${side.padEnd(10)} ${String(m.status).padEnd(4)} ${(m.pageType ?? '-').padEnd(9)} `
-    + `matches=${m.matches} units ${m.unitsBefore}→${m.unitsAfter} `
-    + `(-${m.unitsRemoved}) links -${m.linksRemoved} images -${m.imagesRemoved}`;
+    `${side.padEnd(10)} ${String(m.status).padEnd(4)} ${(m.pageType ?? '-').padEnd(9)} ` +
+    `matches=${m.matches} units ${m.unitsBefore}→${m.unitsAfter} ` +
+    `(-${m.unitsRemoved}) links -${m.linksRemoved} images -${m.imagesRemoved}`;
   console.log(`${job.page} [${job.store}]`);
   console.log(`  ${line('production', production.numbers)}`);
   console.log(`  ${line('new', next.numbers)}`);
   if (findings) {
     console.log(
-      `  findings ${findings.findingsBefore}→${findings.findingsAfter}, `
-      + `work ${findings.workBefore}→${findings.workAfter}, `
-      + `${findings.appeared.length} appeared`
+      `  findings ${findings.findingsBefore}→${findings.findingsAfter}, ` +
+        `work ${findings.workBefore}→${findings.workAfter}, ` +
+        `${findings.appeared.length} appeared`,
     );
   }
 }
 
-await writeFile(OUT, JSON.stringify({ selector: SELECTOR, at: new Date().toISOString(), rows }, null, 2));
+await writeFile(
+  OUT,
+  JSON.stringify({ selector: SELECTOR, at: new Date().toISOString(), rows }, null, 2),
+);
 console.log(`\nwrote ${OUT.pathname}`);

@@ -16,7 +16,12 @@ import { STORES } from './vocabulary.mjs';
  * made in `compare/`, never in the browser.
  */
 export {
-  CHECKS, FINDING_CLASSES, isWork, STORES, VISIBILITIES, visibilityOf,
+  CHECKS,
+  FINDING_CLASSES,
+  isWork,
+  STORES,
+  VISIBILITIES,
+  visibilityOf,
 } from './vocabulary.mjs';
 
 /** @typedef {import('./vocabulary.mjs').Store} Store */

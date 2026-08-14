@@ -109,8 +109,7 @@ const pathOf = (loc) => {
 /** The store root, which is that store's home page. */
 export const homePath = (/** @type {Store} */ store) => (store === 'be_fr' ? BE_FR_PREFIX : '');
 
-const lastSegment = (/** @type {string} */ path) =>
-  path.replace(/\/+$/, '').split('/').pop() ?? '';
+const lastSegment = (/** @type {string} */ path) => path.replace(/\/+$/, '').split('/').pop() ?? '';
 
 /**
  * A measurement in the last path segment: a number joined to a unit of length.
@@ -133,7 +132,7 @@ const COLOUR =
  * A page that names a colour **and** a finish is naming a variant of an article.
  */
 const COLOUR_FINISH = new RegExp(
-  `(^|-)(mat|matt)-(${COLOUR})(-|$)|(^|-)(${COLOUR})-(mat|matt)(-|$)`
+  `(^|-)(mat|matt)-(${COLOUR})(-|$)|(^|-)(${COLOUR})-(mat|matt)(-|$)`,
 );
 
 /**
@@ -470,7 +469,9 @@ export function schemaDisagreements(seeds) {
         said.push(`${entry?.loc}: \`store\` is not one of the six, and not null`);
       }
     }
-    said.push(...unknownDropRules(seeds.dropped.filter((entry) => typeof entry?.rule === 'string')));
+    said.push(
+      ...unknownDropRules(seeds.dropped.filter((entry) => typeof entry?.rule === 'string')),
+    );
   }
 
   if (!Array.isArray(seeds.rows)) return [...said, '`rows` is not an array'];

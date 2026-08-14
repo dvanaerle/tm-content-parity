@@ -42,13 +42,17 @@ export default function ContentView({ report, findings, showNoise, control, land
   const [filter, setFilter] = useState(NO_FILTER);
   const { production, new: next } = report.sides;
 
-  const { rows, total, classes } = useMemo(() => prepareRows({
-    rows: report.rows,
-    findings,
-    elements: { production: production.elements, new: next.elements },
-    filter,
-    showNoise,
-  }), [report.rows, findings, production, next, filter, showNoise]);
+  const { rows, total, classes } = useMemo(
+    () =>
+      prepareRows({
+        rows: report.rows,
+        findings,
+        elements: { production: production.elements, new: next.elements },
+        filter,
+        showNoise,
+      }),
+    [report.rows, findings, production, next, filter, showNoise],
+  );
 
   const outline = useMemo(() => outlineFrom(rows), [rows]);
 
@@ -80,21 +84,30 @@ export default function ContentView({ report, findings, showNoise, control, land
         />
 
         {narrowed && (
-          <FilterBanner onClear={() => setFilter(NO_FILTER)} className="mb-3 rounded border px-3 py-2">
+          <FilterBanner
+            onClear={() => setFilter(NO_FILTER)}
+            className="mb-3 rounded border px-3 py-2"
+          >
             <strong>Filtered.</strong>
             You see {rows.length} of {total} rows. This is not the whole page.
           </FilterBanner>
         )}
 
-        {rows.length === 0
-          ? (
-            <Empty className="py-6">
-              <EmptyHeader>
-                <EmptyDescription>No rows in this filter.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          )
-          : <Rows rows={rows} control={control} sides={report.sides} landed={landed} settled={landing?.settled} />}
+        {rows.length === 0 ? (
+          <Empty className="py-6">
+            <EmptyHeader>
+              <EmptyDescription>No rows in this filter.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <Rows
+            rows={rows}
+            control={control}
+            sides={report.sides}
+            landed={landed}
+            settled={landing?.settled}
+          />
+        )}
       </div>
     </div>
   );
@@ -126,10 +139,11 @@ function Controls({ classes, filter, setFilter, production, next, page, store })
           control is what lets `Label` dim itself when the box is disabled, so the
           conditional ink here only has to say what "enabled" looks like. */}
       <Label
-        className={cn('font-normal', differences.disabled ? 'text-muted-foreground/60' : 'text-muted-foreground')}
-        title={differences.disabled
-          ? 'A class filter always shows differences only.'
-          : undefined}
+        className={cn(
+          'font-normal',
+          differences.disabled ? 'text-muted-foreground/60' : 'text-muted-foreground',
+        )}
+        title={differences.disabled ? 'A class filter always shows differences only.' : undefined}
       >
         <Checkbox
           checked={differences.checked}
@@ -141,8 +155,12 @@ function Controls({ classes, filter, setFilter, production, next, page, store })
 
       <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
         Markdown:
-        <Export markdown={production.markdown} name={`${store}-${slug(page)}-production.md`}>production</Export>
-        <Export markdown={next.markdown} name={`${store}-${slug(page)}-new.md`}>new site</Export>
+        <Export markdown={production.markdown} name={`${store}-${slug(page)}-production.md`}>
+          production
+        </Export>
+        <Export markdown={next.markdown} name={`${store}-${slug(page)}-new.md`}>
+          new site
+        </Export>
       </span>
     </div>
   );
@@ -166,7 +184,9 @@ function Export({ markdown, name, children }) {
   useEffect(() => () => URL.revokeObjectURL(href), [href]);
 
   return (
-    <a href={href} download={name} className={`hover:underline ${CHROME.link}`}>{children}</a>
+    <a href={href} download={name} className={`hover:underline ${CHROME.link}`}>
+      {children}
+    </a>
   );
 }
 
@@ -193,11 +213,15 @@ function Outline({ entries }) {
       aria-label="Headings on this page"
       className="max-h-64 w-full overflow-auto lg:sticky lg:top-4 lg:max-h-[80vh] lg:w-56 lg:shrink-0 lg:self-start"
     >
-      <h3 className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Headings</h3>
+      <h3 className="mb-1 text-xs tracking-wide text-muted-foreground uppercase">Headings</h3>
       <ol className="space-y-0.5 text-sm">
         {entries.map((entry) => (
           <li key={entry.key} style={{ paddingLeft: `${(entry.level - 1) * 10}px` }}>
-            <a href={`#${entry.key}`} className={`block truncate hover:underline ${CHROME.link}`} title={entry.text}>
+            <a
+              href={`#${entry.key}`}
+              className={`block truncate hover:underline ${CHROME.link}`}
+              title={entry.text}
+            >
               {entry.text}
             </a>
           </li>
@@ -250,11 +274,12 @@ function Rows({ rows, control, sides, landed, settled }) {
     return () => window.removeEventListener('hashchange', openTheTarget);
   }, []);
 
-  const toggle = (key) => setOpen((held) => {
-    const next = new Set(held);
-    if (!next.delete(key)) next.add(key);
-    return next;
-  });
+  const toggle = (key) =>
+    setOpen((held) => {
+      const next = new Set(held);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
 
   return (
     /* `table-fixed`, for the reason `Ledger.jsx` gives: an auto layout would let the
@@ -268,8 +293,8 @@ function Rows({ rows, control, sides, landed, settled }) {
        two prose columns. Three words per line is not a narrower diff, it is no diff
        at all. Below the threshold the reader now scrolls the table sideways and the
        columns keep the proportions they have on a desktop. */
-    <Table className="table-fixed min-w-3xl">
-      <TableHeader className="[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground">
+    <Table className="min-w-3xl table-fixed">
+      <TableHeader className="[&_th]:text-xs [&_th]:tracking-wide [&_th]:text-muted-foreground [&_th]:uppercase">
         <TableRow>
           <TableHead className="w-56">Status</TableHead>
           <TableHead>
@@ -291,28 +316,35 @@ function Rows({ rows, control, sides, landed, settled }) {
               key={row.key}
               id={row.key}
               {...mark}
-              className={cn('align-top scroll-mt-4', className)}
+              className={cn('scroll-mt-4 align-top', className)}
             >
               <TableCell className="px-2 py-3 align-top whitespace-normal">
-                {row.class
-                  ? <ClassPill class={row.class} />
-                  : <span className="text-xs text-muted-foreground">equal</span>}
-                {row.score !== null && <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>}
+                {row.class ? (
+                  <ClassPill class={row.class} />
+                ) : (
+                  <span className="text-xs text-muted-foreground">equal</span>
+                )}
+                {row.score !== null && (
+                  <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>
+                )}
                 <ClampControl open={open.has(row.key)} onToggle={() => toggle(row.key)} />
-                <Occurrences count={row.finding?.occurrences} title={onePageTitle(row.finding?.occurrences)} />
+                <Occurrences
+                  count={row.finding?.occurrences}
+                  title={onePageTitle(row.finding?.occurrences)}
+                />
                 {/*
-                  * `decidable` and not `row.finding`: an `information` row keeps its
-                  * finding — it has an id and a link can name it — and offers no
-                  * decision, because nothing is being asked (ticket 86).
-                  *
-                  * This gates the **wrapper**, and `Ledger.jsx`'s closure gates the
-                  * control itself, because Links and Images share that closure and
-                  * have no rows to read. The two are one rule, `canDecide()`, and not a
-                  * rule stated twice: without this the row would draw an empty `mt-1`
-                  * div. It reads the row rather than calling the rule again so that
-                  * ticket 79's marker and this cell can never disagree about which rows
-                  * hold a decision.
-                  */}
+                 * `decidable` and not `row.finding`: an `information` row keeps its
+                 * finding — it has an id and a link can name it — and offers no
+                 * decision, because nothing is being asked (ticket 86).
+                 *
+                 * This gates the **wrapper**, and `Ledger.jsx`'s closure gates the
+                 * control itself, because Links and Images share that closure and
+                 * have no rows to read. The two are one rule, `canDecide()`, and not a
+                 * rule stated twice: without this the row would draw an empty `mt-1`
+                 * div. It reads the row rather than calling the rule again so that
+                 * ticket 79's marker and this cell can never disagree about which rows
+                 * hold a decision.
+                 */}
                 {row.decidable && <div className="mt-1">{control(row.finding)}</div>}
               </TableCell>
               <DiffCells
@@ -320,8 +352,18 @@ function Rows({ rows, control, sides, landed, settled }) {
                 new={row.new?.norm ?? null}
                 prodRaw={row.prod?.raw ?? null}
                 newRaw={row.new?.raw ?? null}
-                prodPrefix={<><Tag unit={row.prod} /><Locate url={sides.production.url} text={row.prod?.raw} side="production" /></>}
-                newPrefix={<><Tag unit={row.new} /><Locate url={sides.new.url} text={row.new?.raw} side="the new site" /></>}
+                prodPrefix={
+                  <>
+                    <Tag unit={row.prod} />
+                    <Locate url={sides.production.url} text={row.prod?.raw} side="production" />
+                  </>
+                }
+                newPrefix={
+                  <>
+                    <Tag unit={row.new} />
+                    <Locate url={sides.new.url} text={row.new?.raw} side="the new site" />
+                  </>
+                }
                 strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
                 equal={row.equal}
                 clamped={!open.has(row.key)}
@@ -362,4 +404,3 @@ function ClampControl({ open, onToggle }) {
     </Button>
   );
 }
-

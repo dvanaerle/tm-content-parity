@@ -3,9 +3,7 @@
 import { parse } from 'node-html-parser';
 
 // PageBuilder types that only carry layout. They never name a section.
-const LAYOUT_TYPES = new Set([
-  'row', 'column', 'column-group', 'column-line', 'text', 'html',
-]);
+const LAYOUT_TYPES = new Set(['row', 'column', 'column-group', 'column-line', 'text', 'html']);
 
 const BODY_CLASS_TYPE = [
   ['catalog-product-view', 'product'],
@@ -50,10 +48,12 @@ export function pageType(bodyClass) {
 // The header, footer and off-canvas menus repeat on every page, so the section
 // scan is limited to the main content area.
 function contentRoot(root) {
-  return root.querySelector('main')
-    ?? root.querySelector('#maincontent')
-    ?? root.querySelector('body')
-    ?? root;
+  return (
+    root.querySelector('main') ??
+    root.querySelector('#maincontent') ??
+    root.querySelector('body') ??
+    root
+  );
 }
 
 // A section is a content unit, not a row. Rows carry no visual meaning on their
@@ -61,7 +61,12 @@ function contentRoot(root) {
 // side by side, and a designer needs each of those as its own wireframe box.
 // So these types are transparent - the scan looks straight through them.
 const TRANSPARENT = new Set([
-  'row', 'column', 'column-group', 'column-line', 'block', 'valantic_group',
+  'row',
+  'column',
+  'column-group',
+  'column-line',
+  'block',
+  'valantic_group',
 ]);
 
 // Repeated children of a unit. They are counted, never emitted as sections.
@@ -118,7 +123,8 @@ function columnWidths(node, widths) {
       continue;
     }
     const utility = (column.getAttribute('class') ?? '')
-      .split(/\s+/).find((token) => /^(sm:|md:|lg:|xl:)?w-/.test(token));
+      .split(/\s+/)
+      .find((token) => /^(sm:|md:|lg:|xl:)?w-/.test(token));
     if (utility) found.push(utility);
   }
   return found.slice(0, 8);
@@ -135,14 +141,17 @@ function describe(node) {
 }
 
 function headingsIn(node) {
-  return node.querySelectorAll('h1, h2, h3, h4')
+  return node
+    .querySelectorAll('h1, h2, h3, h4')
     .map((h) => ({ level: Number(h.rawTagName.slice(1)), text: textOf(h) }))
     .filter((h) => h.text);
 }
 
 function ctaLabels(node) {
   const labels = new Set();
-  for (const el of node.querySelectorAll('a[data-element="link"], [data-content-type="button-item"] a, button')) {
+  for (const el of node.querySelectorAll(
+    'a[data-element="link"], [data-content-type="button-item"] a, button',
+  )) {
     const text = textOf(el);
     if (text && text.length <= 60) labels.add(text);
   }
@@ -208,7 +217,8 @@ export function extract(html) {
       index: index + 1,
       type,
       label: label(headings, counts, type, ctas),
-      appearance: unit.getAttribute('data-appearance') || row?.getAttribute('data-appearance') || '',
+      appearance:
+        unit.getAttribute('data-appearance') || row?.getAttribute('data-appearance') || '',
       row_appearance: row?.getAttribute('data-appearance') ?? '',
       columns: row?.querySelectorAll('[data-content-type="column"]').length ?? 0,
       width_tokens: row ? columnWidths(row, widths) : [],
@@ -233,8 +243,11 @@ export function extract(html) {
     word_count: clean(scope.text).split(' ').filter(Boolean).length,
     images_total: images.length,
     images_without_alt: images.filter((img) => !clean(img.getAttribute('alt') ?? '')).length,
-    breadcrumb: (root.querySelectorAll('.breadcrumbs a, nav[aria-label="Breadcrumb"] a, [class*="breadcrumb"] a')
-      .map((a) => clean(a.text)).filter(Boolean)).join(' > '),
+    breadcrumb: root
+      .querySelectorAll('.breadcrumbs a, nav[aria-label="Breadcrumb"] a, [class*="breadcrumb"] a')
+      .map((a) => clean(a.text))
+      .filter(Boolean)
+      .join(' > '),
     sections,
     section_count: sections.length,
     template_sections: templateSections(scope),
@@ -252,7 +265,8 @@ export function linksFrom(html, origin) {
   const found = new Set();
   for (const a of parse(html).querySelectorAll('a[href]')) {
     const href = a.getAttribute('href');
-    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) continue;
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:'))
+      continue;
 
     let url;
     try {

@@ -37,8 +37,12 @@ export function useRecheckAvailable() {
   const [available, setAvailable] = useState(false);
   useEffect(() => {
     let live = true;
-    probeHealth().then((ok) => { if (live) setAvailable(ok); });
-    return () => { live = false; };
+    probeHealth().then((ok) => {
+      if (live) setAvailable(ok);
+    });
+    return () => {
+      live = false;
+    };
   }, []);
   return available;
 }
@@ -114,7 +118,9 @@ export function usePageReport(built, available) {
       // a page the editor has already re-checked.
       setChosen((current) => (current.source === 'recheck' ? current : pick));
     });
-    return () => { live = false; };
+    return () => {
+      live = false;
+    };
   }, [available, built]);
 
   // A press is by definition the newest look at the page, so it needs no rule.
@@ -133,17 +139,20 @@ export function useRecheck(onReport) {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState(/** @type {string | null} */ (null));
 
-  const run = useCallback(async (store, page) => {
-    setRunning(true);
-    setError(null);
-    try {
-      onReport(await recheckPage(store, page));
-    } catch (failure) {
-      setError(/** @type {Error} */ (failure).message);
-    } finally {
-      setRunning(false);
-    }
-  }, [onReport]);
+  const run = useCallback(
+    async (store, page) => {
+      setRunning(true);
+      setError(null);
+      try {
+        onReport(await recheckPage(store, page));
+      } catch (failure) {
+        setError(/** @type {Error} */ (failure).message);
+      } finally {
+        setRunning(false);
+      }
+    },
+    [onReport],
+  );
 
   return { run, running, error };
 }

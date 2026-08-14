@@ -26,7 +26,12 @@ describe('findingAnchor', () => {
 describe('landingFor', () => {
   /** A derived finding, as `derivePageState()` hands them over. */
   const finding = (part) => ({
-    id: 'a1', check: 'text', class: 'text-missing', visibility: 'work', state: 'open', ...part,
+    id: 'a1',
+    check: 'text',
+    class: 'text-missing',
+    visibility: 'work',
+    state: 'open',
+    ...part,
   });
 
   // The link can name a finding on any of the three checks, and two of them are not in
@@ -73,10 +78,20 @@ describe('landingFor', () => {
   // page with noise rows on the way to a row that is not there. Asking for the toggle only
   // makes sense when switching it on would draw the thing.
   it('asks for nothing and says so when no tab draws the finding', () => {
-    const findings = [finding({ id: 'm1', check: 'meta', class: 'no-declared-alternate', visibility: 'diagnostic' })];
+    const findings = [
+      finding({
+        id: 'm1',
+        check: 'meta',
+        class: 'no-declared-alternate',
+        visibility: 'diagnostic',
+      }),
+    ];
 
     expect(landingFor({ findings, focus: 'm1' })).toEqual({
-      tab: null, needsNoise: false, missing: false, unplaced: true,
+      tab: null,
+      needsNoise: false,
+      missing: false,
+      unplaced: true,
     });
   });
 
@@ -89,7 +104,10 @@ describe('landingFor', () => {
     const findings = [finding({ id: 'a1' })];
 
     expect(landingFor({ findings, focus: 'gone' })).toEqual({
-      tab: null, needsNoise: false, missing: true, unplaced: false,
+      tab: null,
+      needsNoise: false,
+      missing: true,
+      unplaced: false,
     });
   });
 
@@ -97,7 +115,10 @@ describe('landingFor', () => {
   // the page list chose their own tab and their own toggle.
   it('asks for nothing when no link named a finding', () => {
     expect(landingFor({ findings: [finding({ id: 'a1' })], focus: null })).toEqual({
-      tab: null, needsNoise: false, missing: false, unplaced: false,
+      tab: null,
+      needsNoise: false,
+      missing: false,
+      unplaced: false,
     });
   });
 });

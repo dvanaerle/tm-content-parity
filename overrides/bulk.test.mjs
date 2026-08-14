@@ -14,8 +14,13 @@ function fakePort({ failOn = null, message = 'de kolom weigert' } = {}) {
     calls,
     async appendEvent(event) {
       calls.push(event);
-      if (calls.length === failOn) throw new Error(`Could not save to the override log: ${message}`);
-      return { ...event, id: `row-${calls.length}`, createdAt: `2026-08-12T10:00:0${calls.length}.000Z` };
+      if (calls.length === failOn)
+        throw new Error(`Could not save to the override log: ${message}`);
+      return {
+        ...event,
+        id: `row-${calls.length}`,
+        createdAt: `2026-08-12T10:00:0${calls.length}.000Z`,
+      };
     },
   };
 }

@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { ACCENT, BANNER, FILL, INK, PILL, SOLID, SURFACE, TOKEN, severityTone } from './palette.mjs';
+import {
+  ACCENT,
+  BANNER,
+  FILL,
+  INK,
+  PILL,
+  SOLID,
+  SURFACE,
+  TOKEN,
+  severityTone,
+} from './palette.mjs';
 
 /**
  * `palette.mjs` holds two rules with judgement in them, and the repo says a rule

@@ -83,8 +83,7 @@ export default function PageView({ report: built }) {
               tone. The structure is worth keeping over dropping the description entirely:
               it is what puts the message in the alert's accessible name. */}
           <AlertDescription className="text-current">
-            <strong>The re-check did not run.</strong> {recheck.error} The page is
-            unchanged.
+            <strong>The re-check did not run.</strong> {recheck.error} The page is unchanged.
           </AlertDescription>
         </Alert>
       )}
@@ -92,8 +91,8 @@ export default function PageView({ report: built }) {
       {log.connected && !editor && (
         <Alert className="bg-muted">
           <AlertDescription>
-            Give your name to decide. Each action carries a name, so nobody overturns the
-            judgement of a colleague without knowing whose it was.
+            Give your name to decide. Each action carries a name, so nobody overturns the judgement
+            of a colleague without knowing whose it was.
           </AlertDescription>
         </Alert>
       )}

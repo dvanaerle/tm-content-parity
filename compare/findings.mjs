@@ -43,8 +43,13 @@ export class FindingCollector {
    * recompute the id, because `findingId()` needs `node:crypto`.
    */
   add({
-    class: cls, prod, new: next, detail = null,
-    anchorHeading = null, anchorHeadings = { production: null, new: null }, score = null,
+    class: cls,
+    prod,
+    new: next,
+    detail = null,
+    anchorHeading = null,
+    anchorHeadings = { production: null, new: null },
+    score = null,
   }) {
     const record = FINDING_CLASSES[cls];
     if (!record) throw new Error(`Unknown finding class: ${cls}. The vocabulary is closed.`);

@@ -105,23 +105,24 @@ console.log(`\nEmitted indexes under dist/search-index/, gzip at zlib's default 
 console.log('\n  store     pages   findings      raw bytes     gzip bytes    gzip share');
 for (const one of stores) {
   console.log(
-    `  ${one.index.store.padEnd(8)}`
-    + `${String(one.index.pages).padStart(5)}`
-    + `${thousands(one.index.findings.length).padStart(11)}`
-    + `${thousands(one.raw).padStart(15)}`
-    + `${thousands(one.gzip).padStart(15)}`
-    + `${`${(100 * one.gzip / one.raw).toFixed(1)}%`.padStart(14)}`,
+    `  ${one.index.store.padEnd(8)}` +
+      `${String(one.index.pages).padStart(5)}` +
+      `${thousands(one.index.findings.length).padStart(11)}` +
+      `${thousands(one.raw).padStart(15)}` +
+      `${thousands(one.gzip).padStart(15)}` +
+      `${`${((100 * one.gzip) / one.raw).toFixed(1)}%`.padStart(14)}`,
   );
 }
 
-const sum = (/** @type {(one: typeof stores[0]) => number} */ of) => stores.reduce((total, one) => total + of(one), 0);
+const sum = (/** @type {(one: typeof stores[0]) => number} */ of) =>
+  stores.reduce((total, one) => total + of(one), 0);
 console.log(
-  `  ${'total'.padEnd(8)}`
-  + `${String(sum((one) => one.index.pages)).padStart(5)}`
-  + `${thousands(sum((one) => one.index.findings.length)).padStart(11)}`
-  + `${thousands(sum((one) => one.raw)).padStart(15)}`
-  + `${thousands(sum((one) => one.gzip)).padStart(15)}`
-  + `${`${(100 * sum((one) => one.gzip) / sum((one) => one.raw)).toFixed(1)}%`.padStart(14)}`,
+  `  ${'total'.padEnd(8)}` +
+    `${String(sum((one) => one.index.pages)).padStart(5)}` +
+    `${thousands(sum((one) => one.index.findings.length)).padStart(11)}` +
+    `${thousands(sum((one) => one.raw)).padStart(15)}` +
+    `${thousands(sum((one) => one.gzip)).padStart(15)}` +
+    `${`${((100 * sum((one) => one.gzip)) / sum((one) => one.raw)).toFixed(1)}%`.padStart(14)}`,
 );
 
 /**
@@ -135,8 +136,12 @@ function queryTable(measured) {
   console.log(`\nAgainst the dashboard's existing payload, on ${index.store}`);
   console.log(`  index without linkText, gzipped   ${kb(measured.withoutLinkText)}`);
   console.log(`  index as emitted, gzipped         ${kb(measured.gzip)}`);
-  console.log(`  linkText costs                    ${kb(measured.gzip - measured.withoutLinkText)}`);
-  console.log(`  loadSummaries()'s finding index    228 kB gzipped on nl, as reports.mjs records it`);
+  console.log(
+    `  linkText costs                    ${kb(measured.gzip - measured.withoutLinkText)}`,
+  );
+  console.log(
+    `  loadSummaries()'s finding index    228 kB gzipped on nl, as reports.mjs records it`,
+  );
 
   // The largest repeat's text is a query an editor really runs: they open the worst row
   // on the repeats page and search for its words. It is also the longest needle measured,
@@ -163,25 +168,29 @@ function queryTable(measured) {
   const queries = [
     ['e — matches nearly every entry', 'e'],
     ['zzzqx — matches nothing', 'zzzqx'],
-    ['Bekijk deals > — the ticket\'s term, no hits here', 'Bekijk deals >'],
+    ["Bekijk deals > — the ticket's term, no hits here", 'Bekijk deals >'],
     [`a phrase that hits, on ${phraseRepeat?.on.length} pages`, phrase],
     [`the largest repeat, on ${worstRepeat.on.length} pages`, repeatText],
   ];
 
-  console.log(`\nsearchStore() on ${index.store}: ${thousands(index.findings.length)} findings over ${index.pages} pages,`);
+  console.log(
+    `\nsearchStore() on ${index.store}: ${thousands(index.findings.length)} findings over ${index.pages} pages,`,
+  );
   console.log(`built at ${index.builtAt}. ${RUNS} runs per query after one discarded warm-up,`);
   console.log(`matching and grouping both inside the measurement, on ${process.version}.`);
-  console.log('\n  query                                          best     median      worst      hits     pages   repeats');
+  console.log(
+    '\n  query                                          best     median      worst      hits     pages   repeats',
+  );
   for (const [name, term] of queries) {
     const { runs, answer } = time(index, term);
     console.log(
-      `  ${name.slice(0, 42).padEnd(44)}`
-      + `${`${Math.min(...runs).toFixed(2)} ms`.padStart(10)}`
-      + `${`${median(runs).toFixed(2)} ms`.padStart(11)}`
-      + `${`${Math.max(...runs).toFixed(2)} ms`.padStart(11)}`
-      + `${thousands(answer.total).padStart(10)}`
-      + `${thousands(answer.pages).padStart(10)}`
-      + `${thousands(answer.repeats.length).padStart(10)}`,
+      `  ${name.slice(0, 42).padEnd(44)}` +
+        `${`${Math.min(...runs).toFixed(2)} ms`.padStart(10)}` +
+        `${`${median(runs).toFixed(2)} ms`.padStart(11)}` +
+        `${`${Math.max(...runs).toFixed(2)} ms`.padStart(11)}` +
+        `${thousands(answer.total).padStart(10)}` +
+        `${thousands(answer.pages).padStart(10)}` +
+        `${thousands(answer.repeats.length).padStart(10)}`,
     );
   }
 
@@ -197,9 +206,10 @@ function queryTable(measured) {
 // comment in `reports.mjs` measured its own payload on.
 const asked = process.argv.slice(2);
 const byFindings = [...stores].sort((a, b) => b.index.findings.length - a.index.findings.length);
-const targets = asked.length > 0
-  ? asked.map((store) => stores.find((one) => one.index.store === store)).filter(Boolean)
-  : [...new Set([byFindings[0], stores.find((one) => one.index.store === 'nl')])].filter(Boolean);
+const targets =
+  asked.length > 0
+    ? asked.map((store) => stores.find((one) => one.index.store === store)).filter(Boolean)
+    : [...new Set([byFindings[0], stores.find((one) => one.index.store === 'nl')])].filter(Boolean);
 
 for (const measured of targets) queryTable(measured);
 

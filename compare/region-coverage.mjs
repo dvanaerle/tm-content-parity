@@ -41,14 +41,19 @@ export class CoverageTally {
   /** @param {ReadonlyArray<{ selector: string, kind: string }>} [entries] */
   constructor(entries = EXCLUDED_REGIONS) {
     /** @type {Map<string, RegionCoverage>} */
-    this.bySelector = new Map(entries.map((entry) => [entry.selector, {
-      selector: entry.selector,
-      kind: entry.kind,
-      removedOn: {
-        production: { pages: 0, units: 0 },
-        new: { pages: 0, units: 0 },
-      },
-    }]));
+    this.bySelector = new Map(
+      entries.map((entry) => [
+        entry.selector,
+        {
+          selector: entry.selector,
+          kind: entry.kind,
+          removedOn: {
+            production: { pages: 0, units: 0 },
+            new: { pages: 0, units: 0 },
+          },
+        },
+      ]),
+    );
   }
 
   /**
@@ -107,16 +112,16 @@ export function whyNotComparable(previous, current) {
   }
   if (!previous.regions) {
     return (
-      'The previous snapshot holds no excluded-region coverage, so it is older than '
-      + 'ticket 64. Coverage is compared from the next run.'
+      'The previous snapshot holds no excluded-region coverage, so it is older than ' +
+      'ticket 64. Coverage is compared from the next run.'
     );
   }
   if ((previous.store ?? null) !== (current.store ?? null)) {
     return (
-      `The previous snapshot covers ${scopeOf(previous.store)} and this run covers `
-      + `${scopeOf(current.store)}. Excluded-region coverage is not compared across `
-      + 'two scopes: the stores this run left out would read as stores that stopped '
-      + 'matching.'
+      `The previous snapshot covers ${scopeOf(previous.store)} and this run covers ` +
+      `${scopeOf(current.store)}. Excluded-region coverage is not compared across ` +
+      'two scopes: the stores this run left out would read as stores that stopped ' +
+      'matching.'
     );
   }
   return null;
@@ -157,14 +162,24 @@ export function coverageChanges(previous, current) {
   const changes = current.map((region) => {
     const was = before.get(region.selector);
     return was
-      ? { selector: region.selector, verdict: verdictFor(total(was), total(region)), was: total(was), now: total(region) }
+      ? {
+          selector: region.selector,
+          verdict: verdictFor(total(was), total(region)),
+          was: total(was),
+          now: total(region),
+        }
       : { selector: region.selector, verdict: 'new-entry', was: null, now: total(region) };
   });
 
   const now = new Set(current.map((region) => region.selector));
   for (const region of previous) {
     if (now.has(region.selector)) continue;
-    changes.push({ selector: region.selector, verdict: 'left-the-list', was: total(region), now: null });
+    changes.push({
+      selector: region.selector,
+      verdict: 'left-the-list',
+      was: total(region),
+      now: null,
+    });
   }
 
   return changes;
@@ -178,30 +193,24 @@ export function coverageChanges(previous, current) {
  */
 const LINES = {
   unchanged: () => null,
-  'stopped-matching': (change) => (
-    `removed on ${change.was.pages} pages in the previous snapshot, and on ${change.now.pages} now. `
-    + 'The entry has stopped matching, and its region is back in the log. '
-    + 'An anchor on a campaign stops matching when the campaign changes.'
-  ),
-  'started-matching': (change) => (
-    `removed on ${change.was.pages} pages in the previous snapshot, and on ${change.now.pages} now. `
-    + 'The entry has started matching.'
-  ),
-  narrowed: (change) => (
-    `removed on ${change.was.pages} pages in the previous snapshot, and on ${change.now.pages} now. `
-    + 'The entry matches less than it did.'
-  ),
-  widened: (change) => (
-    `removed on ${change.was.pages} pages in the previous snapshot, and on ${change.now.pages} now. `
-    + 'The entry matches more than it did.'
-  ),
-  'new-entry': (change) => (
-    `is new in the list, and it was removed on ${change.now.pages} pages. `
-    + 'The previous snapshot holds no number to compare.'
-  ),
-  'left-the-list': (change) => (
-    `is no longer in the list. It was removed on ${change.was.pages} pages in the previous snapshot.`
-  ),
+  'stopped-matching': (change) =>
+    `removed on ${change.was.pages} pages in the previous snapshot, and on ${change.now.pages} now. ` +
+    'The entry has stopped matching, and its region is back in the log. ' +
+    'An anchor on a campaign stops matching when the campaign changes.',
+  'started-matching': (change) =>
+    `removed on ${change.was.pages} pages in the previous snapshot, and on ${change.now.pages} now. ` +
+    'The entry has started matching.',
+  narrowed: (change) =>
+    `removed on ${change.was.pages} pages in the previous snapshot, and on ${change.now.pages} now. ` +
+    'The entry matches less than it did.',
+  widened: (change) =>
+    `removed on ${change.was.pages} pages in the previous snapshot, and on ${change.now.pages} now. ` +
+    'The entry matches more than it did.',
+  'new-entry': (change) =>
+    `is new in the list, and it was removed on ${change.now.pages} pages. ` +
+    'The previous snapshot holds no number to compare.',
+  'left-the-list': (change) =>
+    `is no longer in the list. It was removed on ${change.was.pages} pages in the previous snapshot.`,
 };
 
 /**

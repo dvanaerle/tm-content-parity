@@ -115,7 +115,7 @@ export async function checkAll(urls, { onProgress } = {}) {
 async function jsonFiles(dir) {
   const out = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.isDirectory()) out.push(...await jsonFiles(new URL(`${entry.name}/`, dir)));
+    if (entry.isDirectory()) out.push(...(await jsonFiles(new URL(`${entry.name}/`, dir))));
     else if (entry.name.endsWith('.json')) out.push(fileURLToPath(new URL(entry.name, dir)));
   }
   return out;
@@ -169,6 +169,8 @@ if (process.argv[1]?.endsWith('link-status.mjs')) {
 
   const broken = Object.values(statuses).filter((s) => s.status >= 400 || s.status === 0).length;
   const redirected = Object.values(statuses).filter((s) => s.hops > 0 && s.status < 400).length;
-  console.log(`broken ${broken}, redirected ${redirected}, ok ${unique.size - broken - redirected}`);
+  console.log(
+    `broken ${broken}, redirected ${redirected}, ok ${unique.size - broken - redirected}`,
+  );
   console.log(`wrote ${fileURLToPath(OUT)}`);
 }

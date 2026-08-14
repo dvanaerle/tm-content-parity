@@ -144,14 +144,14 @@ for (const store of stores) {
     // recorded and nobody could check them.
     candidatePaths: candidates,
     found,
-    coverage: Number((found / candidates.length * 100).toFixed(1)),
+    coverage: Number(((found / candidates.length) * 100).toFixed(1)),
     seedPages: inSeeds.size,
     missing,
   };
 
   console.log(
-    `${store}: ${found} of ${candidates.length} content-page candidates in the seed list — `
-    + `${report[store].coverage}%`,
+    `${store}: ${found} of ${candidates.length} content-page candidates in the seed list — ` +
+      `${report[store].coverage}%`,
   );
   console.log(
     `  ${all.length} chrome paths, of which ${notPages.length} are a file or an application route`,

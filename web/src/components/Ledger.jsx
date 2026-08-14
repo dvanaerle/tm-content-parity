@@ -14,7 +14,13 @@ import { Label } from './ui/label.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs.jsx';
 import { CHECK_LABEL, canDecide } from '../lib/classes.mjs';
-import { findingAnchor, landedRowProps, landingFor, useLanding, useLandOn } from '../lib/landing.mjs';
+import {
+  findingAnchor,
+  landedRowProps,
+  landingFor,
+  useLanding,
+  useLandOn,
+} from '../lib/landing.mjs';
 import { findingInSearch } from '../lib/page-url.mjs';
 import { BANNER, CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
@@ -28,7 +34,8 @@ import { cn } from '../lib/utils.js';
  * in this case the muted neutral the whole interface already uses, has to be declared
  * somewhere that outranks shadcn rather than somewhere that ties with it.
  */
-const HEAD_TONE = '[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground';
+const HEAD_TONE =
+  '[&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground';
 
 /**
  * A tabbed ledger, production and the new site side by side.
@@ -60,7 +67,14 @@ const TABS = ['Text', 'Links', 'Images', 'Meta'];
  * records with a `state` and an `override` attached. The Ledger never re-derives
  * anything; it renders what the pure function decided.
  */
-export default function Ledger({ report, findings: derived, append, canWrite, observationId, settled }) {
+export default function Ledger({
+  report,
+  findings: derived,
+  append,
+  canWrite,
+  observationId,
+  settled,
+}) {
   /*
    * The difference a link named, and what this ledger has to do about it (ticket 109).
    *
@@ -103,14 +117,15 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
   // is drawn with no control at all — the same shape `MetaTable` has had since ticket 54,
   // for the same reason: the shared colours must not show something an editor can
   // complete. Ticket 86, and `canDecide()` in `view.mjs` is the rule.
-  const control = (finding) => (canDecide(finding) ? (
-    <OverrideControl
-      finding={finding}
-      observationId={observationId}
-      append={append}
-      canWrite={canWrite}
-    />
-  ) : null);
+  const control = (finding) =>
+    canDecide(finding) ? (
+      <OverrideControl
+        finding={finding}
+        observationId={observationId}
+        append={append}
+        canWrite={canWrite}
+      />
+    ) : null;
 
   // What the toggle would reveal, which is the `diagnostic` findings and nothing else.
   // The label must count what it uncovers: an `information` finding is on screen already.
@@ -136,9 +151,9 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
         <AlertDescription className="text-current">
           <p className="text-sm">{report.skipReason}</p>
           <p className="mt-2 text-sm">
-            Ticket 07 lets the comparison continue only at status 200 on both sides: a 404
-            page also has a <code>&lt;main&gt;</code>, and it gives hundreds of differences
-            that nobody can use.
+            Ticket 07 lets the comparison continue only at status 200 on both sides: a 404 page also
+            has a <code>&lt;main&gt;</code>, and it gives hundreds of differences that nobody can
+            use.
           </p>
         </AlertDescription>
       </Alert>
@@ -167,15 +182,14 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
           <AlertDescription className="text-current">
             {asked.missing ? (
               <p className="text-sm">
-                The link named a finding that is no longer there: the difference is fixed, or
-                the page was measured again and the text changed. The whole page is still
-                here.
+                The link named a finding that is no longer there: the difference is fixed, or the
+                page was measured again and the text changed. The whole page is still here.
               </p>
             ) : (
               <p className="text-sm">
                 The link named a finding about the <code>&lt;head&gt;</code>. Ticket 21 has not
-                decided what a parity defect is there, so that finding has no row to jump to.
-                Meta shows the fields themselves.
+                decided what a parity defect is there, so that finding has no row to jump to. Meta
+                shows the fields themselves.
               </p>
             )}
           </AlertDescription>
@@ -240,7 +254,10 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
               Matching the prefix lets the two collapse to one class, and the list is
               finally as tall as what it contains.
             */}
-            <TabsList variant="line" className="group-data-horizontal/tabs:h-auto flex-wrap gap-1 p-0">
+            <TabsList
+              variant="line"
+              className="flex-wrap gap-1 p-0 group-data-horizontal/tabs:h-auto"
+            >
               {TABS.map((name) => (
                 <TabsTrigger
                   key={name}
@@ -284,10 +301,22 @@ export default function Ledger({ report, findings: derived, append, canWrite, ob
               />
             </TabsContent>
             <TabsContent value="Links">
-              <FindingTable findings={findings} check="links" control={control} sides={report.sides} landing={landing} />
+              <FindingTable
+                findings={findings}
+                check="links"
+                control={control}
+                sides={report.sides}
+                landing={landing}
+              />
             </TabsContent>
             <TabsContent value="Images">
-              <FindingTable findings={findings} check="images" control={control} sides={report.sides} landing={landing} />
+              <FindingTable
+                findings={findings}
+                check="images"
+                control={control}
+                sides={report.sides}
+                landing={landing}
+              />
             </TabsContent>
             <TabsContent value="Meta">
               <MetaTable production={production} next={next} />
@@ -308,7 +337,8 @@ function FindingTable({ findings, check, control, sides, landing }) {
   // The **mark** is drawn at once and the **landing** waits for the log, which is the
   // hook's own rule.
   const focus = landing?.focus ?? null;
-  const landed = focus && rows.some((finding) => finding.id === focus) ? findingAnchor(focus) : null;
+  const landed =
+    focus && rows.some((finding) => finding.id === focus) ? findingAnchor(focus) : null;
   useLandOn(landed, landing?.settled);
 
   if (!rows.length) return <Empty>No findings for {CHECK_LABEL[check]}.</Empty>;
@@ -326,7 +356,7 @@ function FindingTable({ findings, check, control, sides, landing }) {
        `w-56` status column ate a 319 pixel card, leaving the two comparison columns
        48 pixels each. A diff whose columns hold three words is not a narrow diff. The
        floor lets the container do the job it was already wrapped in. */
-    <Table className="table-fixed min-w-3xl">
+    <Table className="min-w-3xl table-fixed">
       <TableHeader className={HEAD_TONE}>
         <TableRow>
           <TableHead className="w-56">Class</TableHead>
@@ -345,12 +375,15 @@ function FindingTable({ findings, check, control, sides, landing }) {
               key={finding.id}
               id={findingAnchor(finding.id)}
               {...mark}
-              className={cn('align-top scroll-mt-4', className)}
+              className={cn('scroll-mt-4 align-top', className)}
             >
               <TableCell className="px-2 py-2 align-top whitespace-normal">
                 <ClassPill class={finding.class} />
                 <Detail detail={finding.detail} />
-                <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
+                <Occurrences
+                  count={finding.occurrences}
+                  title={onePageTitle(finding.occurrences)}
+                />
                 {/* A target key and an alt text are not words on the page, so the
                     heading above them is the only thing a browser can scroll to. */}
                 <Section
@@ -390,14 +423,14 @@ function MetaTable({ production, next }) {
     <>
       <Alert className="mb-3">
         <AlertDescription>
-          Display only, with no decision. Ticket 21 has not decided what a parity defect in
-          the <code>&lt;head&gt;</code> is, so no finding comes out of here and these rows are
-          not in the count.
+          Display only, with no decision. Ticket 21 has not decided what a parity defect in the{' '}
+          <code>&lt;head&gt;</code> is, so no finding comes out of here and these rows are not in
+          the count.
         </AlertDescription>
       </Alert>
       {/* A lower floor than the finding table's: a meta row holds a title or a
           description, not a block of body copy, and `w-40` leaves more behind. */}
-      <Table className="table-fixed min-w-2xl">
+      <Table className="min-w-2xl table-fixed">
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.field} className="align-top">

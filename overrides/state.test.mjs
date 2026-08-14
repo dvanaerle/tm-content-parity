@@ -3,8 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { findingSetHash } from '../compare/contract.mjs';
 import { PRIORITIES } from '../shared/priorities.mjs';
 import {
-  clearedEventFor, derivePageState, deriveStoreState, eventKey, latestByKey,
-  noteEventFor, priorityEventFor,
+  clearedEventFor,
+  derivePageState,
+  deriveStoreState,
+  eventKey,
+  latestByKey,
+  noteEventFor,
+  priorityEventFor,
 } from './state.mjs';
 
 /**
@@ -48,7 +53,14 @@ const report = (findings, overrides = {}) => ({
   skipReason: null,
   findings,
   rows: [],
-  summary: /** @type {any} */ ({ work: 0, information: 0, diagnostic: 0, total: 0, byClass: {}, byCheck: {} }),
+  summary: /** @type {any} */ ({
+    work: 0,
+    information: 0,
+    diagnostic: 0,
+    total: 0,
+    byClass: {},
+    byCheck: {},
+  }),
   observationId: CURRENT,
   findingSetHash: findingSetHash(findings),
   builtAt: '2026-08-06T10:00:00.000Z',
@@ -67,12 +79,20 @@ const event = (parts) => ({
   ...parts,
 });
 
-const fix = (id, observationId = CURRENT) => event({
-  scope: 'finding', action: 'fixed', findingId: id, observationId,
-});
-const dismiss = (id) => event({
-  scope: 'finding', action: 'dismissed', findingId: id, note: 'Prijs verschilt per omgeving.',
-});
+const fix = (id, observationId = CURRENT) =>
+  event({
+    scope: 'finding',
+    action: 'fixed',
+    findingId: id,
+    observationId,
+  });
+const dismiss = (id) =>
+  event({
+    scope: 'finding',
+    action: 'dismissed',
+    findingId: id,
+    note: 'Prijs verschilt per omgeving.',
+  });
 const clearFinding = (id) => event({ scope: 'finding', action: 'cleared', findingId: id });
 
 /**
@@ -115,7 +135,11 @@ describe('the precedence matrix', () => {
     // Ticket 09: a judgement beats the snapshot, a claim of fact does not.
     ['dismissed beats the snapshot', [dismiss('A')], 'dismissed'],
     ['a fix claimed against this same observation is closed', [fix('A', CURRENT)], 'fixed'],
-    ['a fix claimed against an earlier observation is contradicted', [fix('A', EARLIER)], 'contradicted'],
+    [
+      'a fix claimed against an earlier observation is contradicted',
+      [fix('A', EARLIER)],
+      'contradicted',
+    ],
     ['no events leaves the finding open', [], 'open'],
     ['cleared revokes, so the finding is open again', [dismiss('A'), clearFinding('A')], 'open'],
   ])('%s', (_name, events, expected) => {
@@ -194,7 +218,10 @@ describe('latest wins per key', () => {
 
   it('clears only its own key', () => {
     const events = [dismiss('A'), dismiss('B'), clearFinding('A')];
-    expect(stateOf(report([finding('A'), finding('B')]), events)).toEqual({ A: 'open', B: 'dismissed' });
+    expect(stateOf(report([finding('A'), finding('B')]), events)).toEqual({
+      A: 'open',
+      B: 'dismissed',
+    });
   });
 
   it('keeps one entry per key', () => {
@@ -235,8 +262,11 @@ describe('the anchor heading survives as a locator', () => {
  */
 describe('the event that clears one decision', () => {
   it('clears a dismissal on the finding it was made on', () => {
-    expect(clearedEventFor({ id: 'f1', state: 'dismissed', class: 'copy', override: {} }))
-      .toEqual({ scope: 'finding', action: 'cleared', findingId: 'f1' });
+    expect(clearedEventFor({ id: 'f1', state: 'dismissed', class: 'copy', override: {} })).toEqual({
+      scope: 'finding',
+      action: 'cleared',
+      findingId: 'f1',
+    });
   });
 
   it('names the finding and nothing wider, whatever else the finding carries', () => {
@@ -244,7 +274,11 @@ describe('the event that clears one decision', () => {
     // override is keyed on either any more, so a clearing that mentioned them would be
     // aiming at a key nothing writes.
     const event_ = clearedEventFor({
-      id: 'f1', state: 'dismissed', class: 'copy', anchorHeading: 'Afmetingen', override: {},
+      id: 'f1',
+      state: 'dismissed',
+      class: 'copy',
+      anchorHeading: 'Afmetingen',
+      override: {},
     });
     expect(event_).toEqual({ scope: 'finding', action: 'cleared', findingId: 'f1' });
   });
@@ -255,13 +289,18 @@ describe('bar arithmetic', () => {
 
   it('counts every work finding in the denominator when nothing is overridden', () => {
     expect(derivePageState({ report: four, events: [] }).bar).toMatchObject({
-      closed: 0, denominator: 4, open: 4,
+      closed: 0,
+      denominator: 4,
+      open: 4,
     });
   });
 
   it('a dismissal enters the numerator', () => {
     expect(derivePageState({ report: four, events: [dismiss('A')] }).bar).toMatchObject({
-      closed: 1, denominator: 4, open: 3, dismissed: 1,
+      closed: 1,
+      denominator: 4,
+      open: 3,
+      dismissed: 1,
     });
   });
 
@@ -272,8 +311,14 @@ describe('bar arithmetic', () => {
     const bar = derivePageState({ report: four, events: [withdrawnRow()] }).bar;
 
     expect(bar).toMatchObject({ closed: 0, denominator: 4, open: 4 });
-    expect(Object.keys(bar).sort())
-      .toEqual(['closed', 'contradicted', 'denominator', 'dismissed', 'fixed', 'open']);
+    expect(Object.keys(bar).sort()).toEqual([
+      'closed',
+      'contradicted',
+      'denominator',
+      'dismissed',
+      'fixed',
+      'open',
+    ]);
   });
 
   it('a class that is not work is in neither the numerator nor the denominator', () => {
@@ -295,13 +340,18 @@ describe('bar arithmetic', () => {
 
   it('a contradicted claim reads as open and closes nothing', () => {
     expect(derivePageState({ report: four, events: [fix('A', EARLIER)] }).bar).toMatchObject({
-      closed: 0, denominator: 4, open: 4, contradicted: 1,
+      closed: 0,
+      denominator: 4,
+      open: 4,
+      contradicted: 1,
     });
   });
 
   it('an uncontradicted fix claim closes', () => {
     expect(derivePageState({ report: four, events: [fix('A', CURRENT)] }).bar).toMatchObject({
-      closed: 1, open: 3, fixed: 1,
+      closed: 1,
+      open: 3,
+      fixed: 1,
     });
   });
 
@@ -314,10 +364,11 @@ describe('bar arithmetic', () => {
 
 describe('page review', () => {
   const one = report([finding('A')]);
-  const reviewOf = (r, hash) => derivePageState({
-    report: r,
-    events: [event({ scope: 'page', action: 'reviewed', findingSetHash: hash })],
-  }).review;
+  const reviewOf = (r, hash) =>
+    derivePageState({
+      report: r,
+      events: [event({ scope: 'page', action: 'reviewed', findingSetHash: hash })],
+    }).review;
 
   it('is null when nobody has reviewed the page', () => {
     expect(derivePageState({ report: one, events: [] }).review).toBeNull();
@@ -391,8 +442,9 @@ describe('the two page annotations', () => {
     // Handed over in both orders: the events are reduced by their own timestamps, and a
     // caller that concatenates two reads does not hand them over sorted.
     expect(derivePageState({ report: one, events }).annotations.priority).toBe('high');
-    expect(derivePageState({ report: one, events: [...events].reverse() }).annotations.priority)
-      .toBe('high');
+    expect(
+      derivePageState({ report: one, events: [...events].reverse() }).annotations.priority,
+    ).toBe('high');
   });
 
   /**
@@ -497,33 +549,48 @@ describe('the events an annotation is written as', () => {
 
   it('builds the event for each word the list does hold', () => {
     expect(priorityEventFor('high')).toEqual({
-      scope: 'page', action: 'prioritised', priority: 'high',
+      scope: 'page',
+      action: 'prioritised',
+      priority: 'high',
     });
     expect(PRIORITIES.map((one) => priorityEventFor(one).priority)).toEqual(PRIORITIES);
   });
 
   it('builds the clearing of a priority, which is the one absent value it accepts', () => {
     expect(priorityEventFor(null)).toEqual({
-      scope: 'page', action: 'prioritised', priority: null,
+      scope: 'page',
+      action: 'prioritised',
+      priority: null,
     });
   });
 
   it('builds a note, trimmed, and an empty note is the clearing of one', () => {
     expect(noteEventFor('  Campagne-update  ')).toEqual({
-      scope: 'page', action: 'noted', note: 'Campagne-update',
+      scope: 'page',
+      action: 'noted',
+      note: 'Campagne-update',
     });
     expect(noteEventFor('   ')).toEqual({ scope: 'page', action: 'noted', note: '' });
   });
 });
 
 describe('deriveStoreState', () => {
-  const heavy = report(Array.from({ length: 40 }, (_, i) => finding(`H${i}`)), { page: 'fotogalerij' });
+  const heavy = report(
+    Array.from({ length: 40 }, (_, i) => finding(`H${i}`)),
+    { page: 'fotogalerij' },
+  );
   const light = report([finding('L0')], { page: 'meettool' });
 
   const events = [
-    ...Array.from({ length: 40 }, (_, i) => event({
-      scope: 'finding', action: 'dismissed', page: 'fotogalerij', findingId: `H${i}`, note: 'ok',
-    })),
+    ...Array.from({ length: 40 }, (_, i) =>
+      event({
+        scope: 'finding',
+        action: 'dismissed',
+        page: 'fotogalerij',
+        findingId: `H${i}`,
+        note: 'ok',
+      }),
+    ),
   ];
 
   it('sums over findings and never over pages', () => {
@@ -540,7 +607,12 @@ describe('deriveStoreState', () => {
 
   it('counts reviewed pages and how many of those reviews are fresh', () => {
     const reviews = [
-      event({ scope: 'page', action: 'reviewed', page: 'fotogalerij', findingSetHash: heavy.findingSetHash }),
+      event({
+        scope: 'page',
+        action: 'reviewed',
+        page: 'fotogalerij',
+        findingSetHash: heavy.findingSetHash,
+      }),
       event({ scope: 'page', action: 'reviewed', page: 'meettool', findingSetHash: 'stale-hash' }),
     ];
     const store = deriveStoreState({ reports: [heavy, light], events: reviews });

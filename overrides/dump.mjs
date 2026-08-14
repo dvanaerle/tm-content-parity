@@ -25,7 +25,9 @@ const url = process.env.PUBLIC_SUPABASE_URL;
 const anonKey = process.env.PUBLIC_SUPABASE_ANON_KEY;
 
 if (!url || !anonKey) {
-  console.error('Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY. Both are in web/.env.local.');
+  console.error(
+    'Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY. Both are in web/.env.local.',
+  );
   process.exit(1);
 }
 
@@ -80,7 +82,8 @@ async function readAll() {
 
     // Loud, for the reason the port is loud: an empty list means "the log is empty", and a
     // failed read must never be able to say that — least of all to a backup.
-    if (error) throw new Error(`Could not read the override log: ${error.message}`, { cause: error });
+    if (error)
+      throw new Error(`Could not read the override log: ${error.message}`, { cause: error });
     if (count !== null) total = count;
 
     const page = data ?? [];
@@ -91,8 +94,8 @@ async function readAll() {
   // The one assertion that makes this a backup rather than a sample.
   if (total !== null && rows.length !== total) {
     throw new Error(
-      `Read ${rows.length} rows but the table holds ${total}. Nothing was written. `
-      + 'The read stopped early — do not treat a partial dump as a backup.',
+      `Read ${rows.length} rows but the table holds ${total}. Nothing was written. ` +
+        'The read stopped early — do not treat a partial dump as a backup.',
     );
   }
 

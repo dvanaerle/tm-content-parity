@@ -9,7 +9,13 @@ import { Button } from './ui/button.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible.jsx';
 import {
-  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from './ui/table.jsx';
 import { CHROME, INK, PILL } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
@@ -72,20 +78,26 @@ export default function Repeats({ repeats, byFinding, bulk, link, searched = fal
  * own.
  */
 function OneSelection({ children }) {
-  const [held, setHeld] = useState(/** @type {null | { key: string, ids: Set<string> }} */(null));
+  const [held, setHeld] = useState(/** @type {null | { key: string, ids: Set<string> }} */ (null));
 
-  const selection = useMemo(() => ({
-    of: (key) => (held?.key === key ? held.ids : NOTHING),
-    put: (key, ids) => setHeld((last) => {
-      if (ids.size > 0) return { key, ids };
-      return last?.key === key ? null : last;
+  const selection = useMemo(
+    () => ({
+      of: (key) => (held?.key === key ? held.ids : NOTHING),
+      put: (key, ids) =>
+        setHeld((last) => {
+          if (ids.size > 0) return { key, ids };
+          return last?.key === key ? null : last;
+        }),
     }),
-  }), [held]);
+    [held],
+  );
 
   return <SelectionContext.Provider value={selection}>{children}</SelectionContext.Provider>;
 }
 
-const SelectionContext = createContext(/** @type {null | { of: Function, put: Function }} */(null));
+const SelectionContext = createContext(
+  /** @type {null | { of: Function, put: Function }} */ (null),
+);
 
 /**
  * One frozen empty set for every difference that is not holding the selection. A fresh
@@ -124,8 +136,8 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
 
   // Which groups are open. The initial state is the derivation's `opensOnLoad`: closed,
   // unless a group is the only one holding anything or the pills already chose it.
-  const [open, setOpen] = useState(
-    () => groups.filter((group) => group.opensOnLoad).map((group) => group.class),
+  const [open, setOpen] = useState(() =>
+    groups.filter((group) => group.opensOnLoad).map((group) => group.class),
   );
 
   // One at a time, on a click: two open groups is the wall again in halves. The pills may
@@ -193,12 +205,14 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, 
     <li className="border-b border-border last:border-0">
       <Collapsible open={open} onOpenChange={onToggle}>
         <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-muted">
-          <span aria-hidden className="w-3 text-muted-foreground">{open ? '▾' : '▸'}</span>
+          <span aria-hidden className="w-3 text-muted-foreground">
+            {open ? '▾' : '▸'}
+          </span>
           <ClassPill class={group.class} />
           {/* The count is this group's own rows and nothing summed from elsewhere.
               Opening it moves no count, no bar and no denominator: the repeat total
               across the groups is the total the footer states. */}
-          <span className="tabular-nums text-muted-foreground">
+          <span className="text-muted-foreground tabular-nums">
             {count} {count === 1 ? 'difference' : 'differences'}
           </span>
         </CollapsibleTrigger>
@@ -275,9 +289,9 @@ function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw, searche
 function Total({ repeats }) {
   return (
     <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-      {repeats.length} differences over {findingsIn(repeats)} findings. The grouping saves
-      reading and no work: one decision on one row stays one decision for each finding, so
-      this list does not become empty. What goes forward is how much is decided.
+      {repeats.length} differences over {findingsIn(repeats)} findings. The grouping saves reading
+      and no work: one decision on one row stays one decision for each finding, so this list does
+      not become empty. What goes forward is how much is decided.
     </p>
   );
 }
@@ -295,8 +309,9 @@ const PAGE_SIZE = 100;
  * counts over the pages, and the row already says how many pages there are. Confusing
  * the two is this ticket's named trap, so the two sentences are written apart.
  */
-const acrossPagesTitle = (repeat) => `${repeat.occurrences} times in total, on ${repeat.on.length} `
-  + 'pages. On some of those pages the difference is there more than once.';
+const acrossPagesTitle = (repeat) =>
+  `${repeat.occurrences} times in total, on ${repeat.on.length} ` +
+  'pages. On some of those pages the difference is there more than once.';
 
 function Row({ repeat, byFinding, bulk, link, searched }) {
   const [open, setOpen] = useState(false);
@@ -318,7 +333,8 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
 
   const tick = (id, on) => {
     const next = new Set(selected);
-    if (on) next.add(id); else next.delete(id);
+    if (on) next.add(id);
+    else next.delete(id);
     put(next);
   };
 
@@ -379,13 +395,15 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
                 carries one finding of this difference and the two numbers are one
                 number. `occurrences` is the number that genuinely differs — the same
                 difference several times on a single page — and it is named apart. */}
-            <span className="tabular-nums font-medium">on {repeat.on.length} pages</span>
+            <span className="font-medium tabular-nums">on {repeat.on.length} pages</span>
             {/* Drawn only when it exceeds the page count, so the mark appears exactly
                 when it says something the page count does not. */}
             {repeat.occurrences > repeat.on.length && (
               <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
             )}
-            <span className={cn('ml-2 tabular-nums', bar.closed ? INK.added : 'text-muted-foreground')}>
+            <span
+              className={cn('ml-2 tabular-nums', bar.closed ? INK.added : 'text-muted-foreground')}
+            >
               {bar.closed} of {bar.denominator} closed
             </span>
           </span>
@@ -498,8 +516,8 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
             press on the matches, which is right — and unsayable if this line is missing. */}
         {searched && (
           <TableCaption className="mt-2 text-left text-xs">
-            These are the pages where the search term was found. This difference can be on
-            more pages; those are not here and they are not decided with these.
+            These are the pages where the search term was found. This difference can be on more
+            pages; those are not here and they are not decided with these.
           </TableCaption>
         )}
         <TableHeader>
@@ -526,7 +544,10 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
                 />
               </TableCell>
               <TableCell className="whitespace-normal">
-                <a className={cn('hover:underline', CHROME.link)} href={link(repeat.store, entry.page, entry.id)}>
+                <a
+                  className={cn('hover:underline', CHROME.link)}
+                  href={link(repeat.store, entry.page, entry.id)}
+                >
                   {entry.page}
                 </a>
                 <Occurrences count={entry.occurrences} title={onePageTitle(entry.occurrences)} />
@@ -553,15 +574,12 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
  * Nothing here when there are no fields, which is the *Repeats* view: it lists every
  * difference and no term was typed, so there is nowhere a match could have been.
  */
-const MatchedFields = ({ fields }) => (
-  fields?.length
-    ? (
-      <span className="ml-2 text-xs text-muted-foreground">
-        in {fields.map((field) => FIELD_LABEL[field]).join(', ')}
-      </span>
-    )
-    : null
-);
+const MatchedFields = ({ fields }) =>
+  fields?.length ? (
+    <span className="ml-2 text-xs text-muted-foreground">
+      in {fields.map((field) => FIELD_LABEL[field]).join(', ')}
+    </span>
+  ) : null;
 
 /** The six searchable fields, as the dashboard says them. */
 const FIELD_LABEL = {
@@ -579,12 +597,7 @@ const FIELD_LABEL = {
  * nothing: it is the default, and a badge on every row would make the decided ones
  * harder to find rather than easier.
  */
-const FindingState = ({ finding }) => (
-  finding && finding.state !== 'open'
-    ? (
-      <Badge className={PILL[STATE[finding.state].tone]}>
-        {STATE[finding.state].label}
-      </Badge>
-    )
-    : null
-);
+const FindingState = ({ finding }) =>
+  finding && finding.state !== 'open' ? (
+    <Badge className={PILL[STATE[finding.state].tone]}>{STATE[finding.state].label}</Badge>
+  ) : null;

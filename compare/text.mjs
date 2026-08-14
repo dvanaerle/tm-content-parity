@@ -22,7 +22,8 @@ import { lcsPairs, maskNumbers, pairLeftovers, tier2 } from './match.mjs';
  *
  * `actie(?!f)` keeps `actief` out.
  */
-export const PROMO = /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\s+vanaf|op\s+voorraad/i;
+export const PROMO =
+  /korting|deal|actie(?!f)|aanbieding|black\s*friday|sale|nu\s+vanaf|op\s+voorraad/i;
 
 /**
  * A row with the units attached. The contract's `DiffRow` is the same row with
@@ -262,7 +263,10 @@ function inProductionOrder(rows) {
   // One past the last production unit, which is what "the additions follow the
   // whole of production" means as a position. It has to be a real number: two rows
   // that both claimed `Infinity` would subtract to `NaN` in the comparator below.
-  const afterProduction = rows.reduce((last, row) => Math.max(last, row.prod ? row.prod.index + 1 : 0), 0);
+  const afterProduction = rows.reduce(
+    (last, row) => Math.max(last, row.prod ? row.prod.index + 1 : 0),
+    0,
+  );
 
   const keyed = rows.map((row) => ({ row, key: sortKey(row, matched, afterProduction) }));
   keyed.sort((a, b) => a.key[0] - b.key[0] || a.key[1] - b.key[1] || a.key[2] - b.key[2]);

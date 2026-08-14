@@ -178,9 +178,7 @@ export function serialiseExtract(extract) {
     });
 
   const locs = JSON.stringify(Object.fromEntries(SITEMAP_FILES.map((f) => [f, extract.locs[f]])));
-  const list = extract.entries.length
-    ? `[\n${extract.entries.map(line).join(',\n')}\n  ]`
-    : '[]';
+  const list = extract.entries.length ? `[\n${extract.entries.map(line).join(',\n')}\n  ]` : '[]';
 
   return [
     '{',
@@ -237,13 +235,13 @@ export function manifestDisagreements(manifest, extract) {
   const said = [];
   if (manifest.entries !== extract.entries.length) {
     said.push(
-      `entries: the manifest says ${manifest.entries}, the extract holds ${extract.entries.length}`
+      `entries: the manifest says ${manifest.entries}, the extract holds ${extract.entries.length}`,
     );
   }
   for (const source of manifest.sources) {
     if (source.locs !== extract.locs[source.file]) {
       said.push(
-        `${source.file}: the manifest says ${source.locs} locs, the extract holds ${extract.locs[source.file]}`
+        `${source.file}: the manifest says ${source.locs} locs, the extract holds ${extract.locs[source.file]}`,
       );
     }
     const kept = keptIn(extract, source.file);
