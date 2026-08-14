@@ -258,6 +258,19 @@ repeated in each:
 - **`WORKLIST.md` was deleted, 2026-08-13, commit `926d46f`.** Every `WORKLIST.md step NN`
   pointer below is dead. The file is recoverable with
   `git show 926d46f^:.scratch/content-parity-log/WORKLIST.md`.
+- **A page carries two annotations, and the page scope now has three keys.** Ticket
+  [83](issues/83-a-page-carries-a-priority-and-a-note.md) built `prioritised` and `noted` on
+  the existing `page` scope — a priority from `shared/priorities.mjs` (`high | medium | low`,
+  closed in git, never in the database, no `normal`) and an optional free-text note. The
+  schema editor the proposal asked for is **refused**: rename and reorder are mutations, and
+  the table has insert and select policies only. There is no **owner** field. Neither
+  annotation moves any count, and a test pins it. Two things below are now wrong wherever
+  they appear: *the page scope has one key* — it has three, keyed by `PAGE_KEY`, and the
+  review keeps the empty term so no row on disk changed key — and *`cleared` revokes the last
+  override on any key*, which on the page scope still means the review alone. An annotation
+  clears by carrying no value, and the answer on the ticket says why `cleared` could not be
+  reused. `supabase/page-annotations.sql` is written and **not yet applied**; until it is,
+  nothing can write an annotation.
 
 - [01 — Finding identity: stable ids across re-crawls](issues/01-finding-identity.md)
   — Ids are content-addressed and deliberately expire. "Resolved" needs no stable

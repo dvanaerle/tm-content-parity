@@ -412,6 +412,12 @@ who wins against re-check.
   the rule's first real test: *Undo* is the exact word it refuses, and it is what a
   translation of the Dutch would have written, so the label is a **correction** and not a
   translation.
+  It does **not** clear an annotation, and ticket 83 says why: on the `page` scope
+  `cleared` already means *withdraw the review*, and reusing it for three annotation
+  families on one scope would make one action mean three things and need a fourth column
+  to say which. A cleared annotation is still a new event — never an edit and never a
+  delete — but it is the value-carrying action carrying nothing: `prioritised` with a null
+  priority, `noted` with an empty note.
 - **Contradicted** — a fix claim that the current snapshot disagrees with. The
   finding is open again, and the interface says *claimed fixed, still differs*
   (~~*nog niet opgelost*~~, 2026-08-13), with the name of the person who claimed it. The
@@ -438,6 +444,16 @@ who wins against re-check.
   list of words; a note is free text. Both describe a page and neither describes a
   finding, because a finding carries its own decision. There is no **owner**: with a
   name in `localStorage` and no login, an owner field cannot mean what it says.
+  Built by ticket 83 as two actions on the existing `page` scope, `prioritised` and
+  `noted`, keyed apart from the review so that annotating a page cannot withdraw the
+  review of it. The list is `high | medium | low` in `shared/priorities.mjs` — closed in
+  git, never in the database, and there is no `normal` because absence is not a value.
+  **Two and no more.** The proposal asked for user-defined columns, which is a schema
+  editor: rename and reorder are mutations, and the table has insert and select policies
+  only. A third annotation is that refusal reopened, not a free one.
+  A **page note is not a dismissal note**, though they share the `note` column. A
+  dismissal note is mandatory and explains one judgement about two strings; a page note is
+  optional and explains nothing in particular. They are never rendered the same way.
 - **History note** — a line beside a new finding, saying that a finding of the same
   class closed on the same page in the same run, and what was decided about it. It
   is a display-only difference. It asserts no identity, it is never counted, and it

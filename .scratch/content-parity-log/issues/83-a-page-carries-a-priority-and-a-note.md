@@ -1,7 +1,7 @@
 # 83 — A page carries a priority and a note
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
@@ -39,20 +39,20 @@ authentication ticket.
 
 ## Acceptance criteria
 
-- [ ] Two actions exist on `scope: 'page'`, one carrying a priority value and one
+- [x] Two actions exist on `scope: 'page'`, one carrying a priority value and one
       carrying free text. The table gains no new scope.
-- [ ] A cleared annotation is a new event, never an edit or a delete. The existing
+- [x] A cleared annotation is a new event, never an edit or a delete. The existing
       `cleared` action is reused if it fits; if it does not, say why in the answer.
-- [ ] `PRIORITIES` is a closed list in `shared/`, and a value outside it is refused
+- [x] `PRIORITIES` is a closed list in `shared/`, and a value outside it is refused
       before it reaches the database.
-- [ ] Setting a value on N selected pages writes N events, one per page, and a partial
+- [x] Setting a value on N selected pages writes N events, one per page, and a partial
       failure reports how many were written.
-- [ ] The store page can be filtered by priority, and the priority filter combines with
+- [x] The store page can be filtered by priority, and the priority filter combines with
       the class filter.
-- [ ] Neither annotation moves any count. The bar, the denominator and the buckets are
+- [x] Neither annotation moves any count. The bar, the denominator and the buckets are
       unchanged, and a test pins it.
-- [ ] No **owner** field appears, in the schema or the interface.
-- [ ] The derivation is pure and tested: two events on one page give the later value.
+- [x] No **owner** field appears, in the schema or the interface.
+- [x] The derivation is pure and tested: two events on one page give the later value.
 
 ## Traps
 
@@ -67,3 +67,80 @@ authentication ticket.
   rows at the rate an editor types, which is nothing. A schema table would not have been.
 - Bulk selection of pages already exists for [31](31-bulk-dismissal.md)'s seam work.
   Reuse it rather than adding a second selection mechanism.
+
+## Answer
+
+Two actions on the existing `page` scope, `prioritised` and `noted`. The table gains one
+column (`priority`) and one generated slot (`annotation_slot`); it gains no scope, no second
+selection mechanism and no owner field.
+
+### `cleared` does not fit, and this is why
+
+The criterion asked for the existing `cleared` action to be reused if it fits. It does not.
+
+On `scope: 'page'`, `cleared` already means **withdraw the review** — it is the only thing it
+has ever revoked there. With three annotation families now sharing that scope, a `cleared`
+event could not say which of the three it aimed at without a fourth column added purely to
+disambiguate it, and one action would mean three things.
+
+So a cleared annotation is still **a new event, never an edit or a delete**, but it is the
+value-carrying action carrying nothing: `prioritised` with a null priority, `noted` with an
+empty note. `cleared` keeps its one meaning, and the clearing came out free — the derivation
+reads the latest event on the key whatever its value is, so no branch was needed for it.
+
+### The trap that was load-bearing
+
+The page scope had **exactly one key** (`page|store|page|`) in both `eventKey()` and the
+`overrides_current` view. A third page-scope action would therefore have been the newest
+event on the *review's* key, and `review()` returns null the moment that event is not a
+`reviewed` — so annotating a page would have silently withdrawn the review of it. That was a
+genuine red in the second slice, not a hypothetical.
+
+`PAGE_KEY` in `overrides/state.mjs` gives each annotation its own key term and leaves the
+review's as the empty string it has always been, so **no row already on disk changes key**
+and `cleared` goes on keying to the review. `annotation_slot` mirrors it in SQL. Unlike
+`anchor_heading_slot`, this divergence is *not* accepted as harmless: that slot keys eleven
+retired rows nothing looks up, and this one keys rows the app writes whenever an editor
+annotates.
+
+### Where the decisions landed
+
+- `PRIORITIES` is `high | medium | low` in `shared/priorities.mjs`. **No `normal`** — absence
+  is not a value, so a word for the state every page is already in would be a fourth thing
+  to filter by that means "no filter".
+- No check constraint lists those words. The list is closed in git; a list in two places is a
+  list that can drift, and the copy that wins is the one nobody reads in a diff.
+  `priorityEventFor()` is the only guard, and it is the only thing between a typo and a
+  permanent row.
+- The **priority filter belongs to the page list**, the way the sort does. A repeat is a
+  difference across pages rather than a page, so on *Repeats* the filter would narrow nothing
+  while the link promised it did.
+- The **selection is session state, not in the URL** — the one control here that ADR 0010
+  does not reach. A selection is not a screen: a link carrying twenty ticked pages would be a
+  press somebody else half-made. It is cleared when the filter or the view changes, so a
+  press cannot reach pages that left the screen.
+- The interface is English throughout (ADR 0014), so the values are English. The ticket's
+  *Hoog* and *Campagne-update* are what a Dutch editor types, and `Hoog` is pinned as a
+  refused value in three tests.
+
+### Seams tested, and one not
+
+Agreed with the user before any test was written: the derivation and its event builders, the
+URL and view filters, the bulk press, and `searchNotes`. 717 tests pass; 823 pages build.
+
+Two things are worth naming as deliberately untested. The **DOM** seam was not among the
+agreed four, so the *page note is not drawn like a dismissal note* rule is enforced by
+`PageNote` / `NoteKind` being the single renderer and is not pinned by a browser test. And
+there is **no test Supabase project** in this repo, so the SQL is unexercised — see below.
+
+### One hand step, and one hazard in it
+
+`supabase/page-annotations.sql` is written and **not applied**. Running `schema.sql` whole
+drops the log, so the live change is the separate file, per the `mute-anchor-heading.sql`
+convention.
+
+The hazard is named in the file: the action check is written inline on the column, so
+Postgres named it, and `drop constraint if exists` against a wrong name silently does
+nothing — leaving the old check to refuse every `prioritised` row while the migration reports
+success. The file opens with the `pg_constraint` query to confirm the name first. Nothing in
+the interface can write an annotation until this is applied.
