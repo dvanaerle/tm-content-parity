@@ -448,7 +448,11 @@ export default function Dashboard({
               classes={classes}
               onClearClasses={() => patch({ classes: [] })}
               byFinding={byFinding}
-              events={log.events}
+              // The whole read and not the events alone (ticket 123). The readiness
+              // flag has sat beside them here since the hook was written, and the
+              // notes half never asked for it, so a log in flight drew as a log
+              // holding nothing.
+              log={log}
               includeClosed={includeClosed}
               onIncludeClosed={(next) => patch({ includeClosed: next })}
               bulk={bulk}

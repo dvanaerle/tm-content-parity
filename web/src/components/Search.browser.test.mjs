@@ -86,7 +86,10 @@ async function mount(props = {}) {
           classes: [],
           onClearClasses: () => cleared.push(true),
           byFinding,
-          events: [],
+          // A log that has been read and holds nothing, which is what every case about
+          // the findings half wants: the notes half then draws exactly what it drew
+          // before ticket 123, which is nothing.
+          log: { events: [], ready: true, error: null, connected: true },
           includeClosed: false,
           onIncludeClosed: () => {},
           bulk: {
@@ -161,6 +164,83 @@ describe('a search under the class pills', () => {
 
     expect(document.body.textContent).toContain('deals-afhalen');
     expect(document.body.textContent).not.toContain('deals-garantie');
+    unmount();
+  });
+});
+
+/**
+ * Ticket 123. The two halves arrive from two places, and the notes half used to draw its
+ * absence as an answer. These are browser cases because the question is what is *on
+ * screen* in a state nobody can reach by hand — `search.mjs` names the three states and
+ * this is where the block that reads them lives.
+ */
+describe('the notes half, before the log has answered', () => {
+  it('says it is still reading, rather than drawing no notes at all', async () => {
+    const { unmount } = await mount({ log: { events: null, ready: false, connected: true } });
+
+    expect(document.body.textContent).toContain('Notes in the log');
+    expect(document.body.textContent).toContain('Still reading the log…');
+    unmount();
+  });
+
+  it('says a log that could not be read was not read, and why', async () => {
+    const { unmount } = await mount({
+      log: { events: null, ready: false, error: 'TypeError: Failed to fetch', connected: true },
+    });
+
+    expect(document.body.textContent).toContain('The override log could not be read');
+    expect(document.body.textContent).toContain('TypeError: Failed to fetch');
+    unmount();
+  });
+
+  it('recovers when the log arrives, with no reload', async () => {
+    // Green when it was written, and kept as the pin for it: the state is derived from
+    // the read on every call and never latched, so nothing here remembers having
+    // failed. A retry, a second request or a reload would all be a heavier answer to a
+    // question the shape already answers.
+    const note = {
+      createdAt: '2026-08-12T09:00:00Z',
+      editor: 'Dennis',
+      scope: 'finding',
+      action: 'dismissed',
+      store: 'nl',
+      page: 'afhalen',
+      findingId: 'a',
+      note: 'deals blijft zo staan',
+    };
+    const { rerender, unmount } = await mount({
+      log: { events: null, ready: false, error: 'TypeError: Failed to fetch', connected: true },
+    });
+    expect(document.body.textContent).toContain('The override log could not be read');
+
+    await rerender({ log: { events: [note], ready: true, error: null, connected: true } });
+
+    expect(document.body.textContent).toContain('1 note with these words');
+    expect(document.body.textContent).toContain('deals blijft zo staan');
+    expect(document.body.textContent).not.toContain('The override log could not be read');
+    unmount();
+  });
+
+  it('keeps answering about the findings while the log is still reading', async () => {
+    // Also green when it was written. It is here because the findings half's two
+    // branches are early returns over the *whole* component, and the obvious way to
+    // give the notes half the same two would have been two more of those — which would
+    // make a slow log hold up the half that is already in memory.
+    const { unmount } = await mount({ log: { events: null, ready: false, connected: true } });
+
+    expect(document.body.textContent).toContain('Bekijk deals >');
+    expect(document.body.textContent).toContain('3 findings on 3 pages');
+    unmount();
+  });
+
+  it('draws no notes block at all for a log that was read and holds none', async () => {
+    // The one silence that is true, and the ticket's own limit: this changes what is
+    // said when none match, not which ones match. A read log with no matching note says
+    // nothing, exactly as it did before.
+    const { unmount } = await mount();
+
+    expect(document.body.textContent).not.toContain('Notes in the log');
+    expect(document.body.textContent).not.toContain('with these words');
     unmount();
   });
 });

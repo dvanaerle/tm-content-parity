@@ -1979,6 +1979,20 @@ product signature` — a product page carries all six hreflang alternates, and
     — _renumbered from 101 on 2026-08-13._ A search in the first moment after a
     store loads must not answer "none" about a log it has not read.
 
+    **Resolved 2026-08-14.** `searchNotes()` returns `reading`, `failed` with its
+    reason, or `answered` with its matches, and `notes` exists on the third alone —
+    the state is in the value and not inferred from a length, so a caller that
+    forgets it breaks rather than drawing an empty block. The bug was two places one
+    layer apart: `useStoreOverrides()` handed out `events ?? []`, breaking its own
+    module's first rule on the one field whose reader wants the words; and `Notes`
+    then drew `length === 0 → null`. No connection collapses into `failed`, and an
+    error over a log that *was* read still answers — both following `LogBanner`, so
+    the two cannot tell an editor different stories about one log. Recovery needed
+    no mechanism: nothing latches, so the moment `ready` flips the same term is
+    answered, with no retry and no second request. Three seams tested; 742 tests
+    pass and no count moves. **105 is unblocked**, and its "never says none about an
+    unread log" criterion is now a property of the value it narrows.
+
 - ~~**Two tickets are `ready-for-human`, and the map did not say so.** Neither is
   blocked and neither is delegable as written.~~ — **both are built and were resolved
   2026-08-13.** A triage sweep of all 44 open tickets found the code in the tree and the

@@ -508,6 +508,14 @@ const event = (part) => ({
   ...part,
 });
 
+/**
+ * The log, read. Ticket 123: `searchNotes()` takes the whole read and not the events
+ * alone, because the events on their own cannot say whether they are all of them. Every
+ * case below that is about *finding* a note passes this, and the three cases about the
+ * log's own state pass something else on purpose.
+ */
+const read = (events) => ({ events, ready: true, error: null, connected: true });
+
 describe('searchNotes', () => {
   it('finds a note by its words, and says it is live', () => {
     // The other half of the answer, and the other freshness. A note lives in the log
@@ -516,11 +524,12 @@ describe('searchNotes', () => {
     // flag is on the result because a caller drawing one list has to be able to say
     // which half it is drawing.
     const result = searchNotes({
-      events: [event({}), event({ findingId: 'b', note: 'Wacht op copy' })],
+      log: read([event({}), event({ findingId: 'b', note: 'Wacht op copy' })]),
       term: 'deals',
     });
 
     expect(result.live).toBe(true);
+    expect(result.state).toBe('answered');
     expect(result.notes.map((one) => one.findingId)).toEqual(['a']);
   });
 
@@ -530,12 +539,12 @@ describe('searchNotes', () => {
     // been taken back. The filter is `latestByKey()` — the log's own answer to *which
     // event counts* — so a cleared finding has no note to find either.
     const result = searchNotes({
-      events: [
+      log: read([
         event({ note: 'Bekijk deals staat er bewust nog' }),
         event({ createdAt: '2026-08-11T09:00:00Z', action: 'cleared', note: null }),
         event({ findingId: 'b', createdAt: '2026-08-09T09:00:00Z', note: 'deals: oude reden' }),
         event({ findingId: 'b', createdAt: '2026-08-11T10:00:00Z', note: 'deals: nieuwe reden' }),
-      ],
+      ]),
       term: 'deals',
     });
 
@@ -549,14 +558,14 @@ describe('searchNotes', () => {
    */
   it('finds a page note, which is the second thing living in the note column', () => {
     const result = searchNotes({
-      events: [
+      log: read([
         event({
           scope: 'page',
           action: 'noted',
           findingId: null,
           note: 'Campagne-update volgt',
         }),
-      ],
+      ]),
       term: 'campagne',
     });
 
@@ -568,7 +577,7 @@ describe('searchNotes', () => {
     // page note explains nothing in particular. A result that could not tell them apart
     // would leave the interface to guess, and the interface must not have to.
     const result = searchNotes({
-      events: [
+      log: read([
         event({ note: 'zelfde woord hier' }),
         event({
           scope: 'page',
@@ -579,7 +588,7 @@ describe('searchNotes', () => {
           // arriving in the same millisecond and landing however they were listed.
           createdAt: '2026-08-11T09:00:00Z',
         }),
-      ],
+      ]),
       term: 'zelfde woord',
     });
 
@@ -591,7 +600,7 @@ describe('searchNotes', () => {
     // Cleared with an empty note, which is how ticket 83 clears one. The words are still
     // in the append-only table and they are no longer what the page says.
     const result = searchNotes({
-      events: [
+      log: read([
         event({ scope: 'page', action: 'noted', findingId: null, note: 'Campagne-update volgt' }),
         event({
           scope: 'page',
@@ -600,7 +609,7 @@ describe('searchNotes', () => {
           note: '',
           createdAt: '2026-08-11T09:00:00Z',
         }),
-      ],
+      ]),
       term: 'campagne',
     });
 
@@ -611,7 +620,7 @@ describe('searchNotes', () => {
     // The two are different keys on one scope. A note that displaced the review here
     // would be the collision `eventKey()` exists to prevent, showing up in search.
     const result = searchNotes({
-      events: [
+      log: read([
         event({ scope: 'page', action: 'reviewed', findingId: null, note: 'deals gezien' }),
         event({
           scope: 'page',
@@ -620,10 +629,95 @@ describe('searchNotes', () => {
           note: 'deals nog niet',
           createdAt: '2026-08-11T09:00:00Z',
         }),
-      ],
+      ]),
       term: 'deals',
     });
 
     expect(result.notes.map((one) => one.action)).toEqual(['noted', 'reviewed']);
+  });
+});
+
+/**
+ * Ticket 123. The three cases nobody can reach by hand: the moment before the log
+ * arrives, the log that did not arrive, and the log there is no connection to. Each one
+ * used to be an empty array, which reads on screen as *there are no notes about this* —
+ * a false statement wearing the same clothes as a true one.
+ */
+describe('searchNotes, before the log has answered', () => {
+  it('says it is still reading, and offers no notes to draw', () => {
+    const result = searchNotes({
+      log: { events: null, ready: false, error: null, connected: true },
+      term: 'deals',
+    });
+
+    expect(result.state).toBe('reading');
+    expect(result.live).toBe(true);
+    // Not an empty array. A caller that ignored the state would draw *no notes* from
+    // one, which is the bug; there is nothing here to draw it from.
+    expect(result.notes).toBeUndefined();
+  });
+
+  it('says the log was not read, and why', () => {
+    const result = searchNotes({
+      log: { events: null, ready: false, error: 'TypeError: Failed to fetch', connected: true },
+      term: 'deals',
+    });
+
+    expect(result.state).toBe('failed');
+    expect(result.reason).toBe('TypeError: Failed to fetch');
+    expect(result.notes).toBeUndefined();
+  });
+
+  it('reads an unconnected log as one that could not be read, and gives its reason', () => {
+    // No project configured is not an error the editor caused, and `LogBanner` draws it
+    // in its own words above. Here it collapses into *the log could not be read*,
+    // because that is what is true of the notes half: there is no log to read.
+    const result = searchNotes({
+      log: {
+        events: null,
+        ready: false,
+        error: null,
+        connected: false,
+        notConnectedReason: 'PUBLIC_SUPABASE_URL is not set.',
+      },
+      term: 'deals',
+    });
+
+    expect(result.state).toBe('failed');
+    expect(result.reason).toBe('PUBLIC_SUPABASE_URL is not set.');
+  });
+
+  it('answers the moment the log arrives, with no second call and no reload', () => {
+    // The state is derived from the read and never latched, so the same term against a
+    // log that has since answered is an answer. This is the recovery the ticket asks
+    // for: nothing here remembers having failed.
+    const events = [event({})];
+
+    expect(searchNotes({ log: { events: null, ready: false }, term: 'deals' }).state).toBe(
+      'reading',
+    );
+    expect(searchNotes({ log: read(events), term: 'deals' }).notes).toHaveLength(1);
+  });
+
+  it('answers from the last good read when a later write failed', () => {
+    // `LogBanner`'s own distinction: an error over a log that *was* read leaves the
+    // events standing, and it says so rather than throwing away what is on screen. The
+    // notes half follows it — the read is what this half depends on, and it succeeded.
+    const result = searchNotes({
+      log: { events: [event({})], ready: true, error: 'insert failed', connected: true },
+      term: 'deals',
+    });
+
+    expect(result.state).toBe('answered');
+    expect(result.notes).toHaveLength(1);
+  });
+
+  it('answers with nothing for a log that was read and holds no match', () => {
+    // The true statement this ticket exists to keep sayable, and the one case that may
+    // draw an empty block.
+    const result = searchNotes({ log: read([event({})]), term: 'niets hiervan' });
+
+    expect(result.state).toBe('answered');
+    expect(result.notes).toEqual([]);
   });
 });

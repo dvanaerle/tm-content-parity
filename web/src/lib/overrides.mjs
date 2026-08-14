@@ -275,7 +275,14 @@ export function useStoreOverrides({ pages, editor = '' }) {
     // The events themselves, for the one reader that needs the log and not the state
     // derived from it: searching the **notes** (ticket 82). A note is a sentence an
     // editor wrote, and the derivation keeps the decision and drops the words.
-    events: events ?? [],
+    //
+    // **`null` until a read succeeds**, which is this module's first rule and which this
+    // one field used to break for its one reader: it handed down `events ?? []` while a
+    // read was in flight, and the notes half of a search drew "no notes" from it (ticket
+    // 123). The derivation below still coerces, because a state derived from no events
+    // is the same state as one derived from none — but a *list of what an editor wrote*
+    // is not, and that is the reader this field has.
+    events,
     appendMany,
     busy,
     ready: events !== null,

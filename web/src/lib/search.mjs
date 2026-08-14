@@ -374,24 +374,64 @@ export function searchStore({
  * rather than being a rule here: the clearing is a later `noted` event carrying an empty
  * note, so the words that were withdrawn are no longer the current event on their key.
  *
+ * **The answer names its own state** (ticket 123). Live means read *at some moment*, and
+ * before that moment there is nothing to be live about. The half this function answers
+ * for used to return a bare array whatever the log was doing, so the first instant of a
+ * store page — and every visit to one whose log does not answer — drew an empty block,
+ * which an editor reads as *there are no notes about this*. That is a false statement
+ * wearing the same clothes as a true one, and it is the one the findings half has had a
+ * loading branch and an error branch against since 82.
+ *
+ * So this takes the **whole read** and not the events alone, and it returns one of three
+ * things: it is `reading`, it `failed` and says why, or it is `answered` and carries the
+ * matches. `notes` exists on the third alone. That is deliberate, and it is what keeps
+ * the fix from moving one layer down: a caller that forgets the state gets `undefined`
+ * and breaks where it stands, rather than quietly drawing nothing.
+ *
+ * Two of the branches follow `LogBanner`, because the two must not tell an editor
+ * different stories about one log:
+ *
+ * - **No connection is a log that could not be read.** It is not the editor's fault and
+ *   the banner says so in its own words; down here the truth about the notes half is
+ *   simply that there is no log to read, and `notConnectedReason` is the why.
+ * - **An error over a log that *was* read still answers.** A failed write leaves the last
+ *   good read standing, and the banner already says it can be out of date. Throwing away
+ *   notes that are on screen would be the second lie in the other direction.
+ *
+ * Nothing latches. The state is derived from the read on every call, so the moment the
+ * log arrives the same term is answered — no retry here, no second request, no reload.
+ *
  * @param {object} args
- * @param {import('../../../overrides/state.mjs').OverrideEvent[]} args.events
+ * @param {object} args.log The store page's read of the override log.
+ * @param {import('../../../overrides/state.mjs').OverrideEvent[] | null} args.log.events
+ * @param {boolean} args.log.ready Whether a read has succeeded. The signal that already
+ *   sits beside the events, and the one this function is here to consult.
+ * @param {string | null} [args.log.error]
+ * @param {boolean} [args.log.connected]
+ * @param {string | null} [args.log.notConnectedReason]
  * @param {string} args.term
- * @returns {{ live: true, notes: import('../../../overrides/state.mjs').OverrideEvent[] }}
+ * @returns {{ live: true, state: 'reading' }
+ *   | { live: true, state: 'failed', reason: string }
+ *   | { live: true, state: 'answered', notes: import('../../../overrides/state.mjs').OverrideEvent[] }}
  */
-export function searchNotes({ events, term }) {
+export function searchNotes({ log, term }) {
+  if (!log.ready) {
+    const reason = log.error ?? (log.connected === false ? log.notConnectedReason : null);
+    return reason ? { live: true, state: 'failed', reason } : { live: true, state: 'reading' };
+  }
+
   const needle = fold(term);
-  if (!needle) return { live: true, notes: [] };
+  if (!needle) return { live: true, state: 'answered', notes: [] };
 
   // Only the events that still stand. The table is append-only, so the words an editor
   // withdrew are still in it, and returning them would offer a reason for a decision
   // that has since been taken back. `latestByKey()` is the log's own answer to which
   // event counts, so search asks it rather than deciding for itself.
-  const notes = [...latestByKey(events).values()]
+  const notes = [...latestByKey(log.events ?? []).values()]
     .filter((one) => one.note?.toLowerCase().includes(needle))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  return { live: true, notes };
+  return { live: true, state: 'answered', notes };
 }
 
 /**

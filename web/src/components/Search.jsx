@@ -20,6 +20,11 @@ import { pagesWithClasses } from '../lib/view.mjs';
  * blocks under two sentences, never as one list — a single list would present two moments
  * as one, and an editor would read the note half as being as stale as the other.
  *
+ * The two halves also **arrive** at different moments, and each one says where it is
+ * (ticket 123). The findings wait on a file this component fetches; the notes wait on the
+ * log the store page opened. Neither holds up the other, and neither draws an empty answer
+ * about a source it has not read yet.
+ *
  * The rows are **repeats**, drawn by the component the *Repeats* view draws, so a
  * search row and a repeats row are the same row with the same marks and the same bar. It
  * is one derivation on screen twice and not a second surface.
@@ -41,7 +46,7 @@ export default function Search({
   classes = [],
   onClearClasses,
   byFinding,
-  events,
+  log,
   includeClosed,
   onIncludeClosed,
   bulk,
@@ -67,7 +72,17 @@ export default function Search({
     [index, term, classes, includeClosed, byFinding],
   );
 
-  const notes = useMemo(() => searchNotes({ events, term }), [events, term]);
+  // The whole read goes in, and what comes back says which of three things it is
+  // (ticket 123). This component does not decide that — an empty list and an unread log
+  // look identical from here, which is exactly how the block came to say "no notes"
+  // about a log nobody had read yet.
+  const notes = useMemo(
+    () => searchNotes({ log, term }),
+    // The five fields and not the object: the hook builds a fresh one every render, so
+    // a dependency on it would re-scan the whole log on every keystroke elsewhere on
+    // the screen. These are the five `searchNotes` actually reads.
+    [log.events, log.ready, log.error, log.connected, log.notConnectedReason, term],
+  );
 
   // The pages whose **name** holds the term, which the removed box used to narrow the
   // page list down to. A page with no open finding is in no result above — it is clean,
@@ -163,20 +178,11 @@ export default function Search({
       )}
 
       <Named store={store} pages={named} link={link} />
-      <Notes notes={notes.notes} link={link} />
+      <Notes result={notes} link={link} />
     </>
   );
 }
 
-/**
- * The notes in the log that hold the same words, under their own heading and their own
- * sentence about how fresh they are.
- *
- * Apart from the findings above because they are a different moment, and the ticket forbids
- * presenting the two as one. There is no page-note feature in the log yet: these are the
- * sentences an editor gave when dismissing or muting something, which are the notes there
- * are to search.
- */
 /**
  * The pages of this store whose name holds the term, as links to open.
  *
@@ -222,8 +228,27 @@ function Named({ store, pages, link }) {
  * editor reading *“Campagne-update volgt”* under a page name would read it as somebody's
  * reason for accepting a difference. So each line is tagged, and the page note is drawn as
  * `PageNote` draws it everywhere else — quoted, and never labelled as a reason.
+ *
+ * **Drawing nothing is a claim, so it is only made about a log that was read** (ticket
+ * 123). This block used to be the array's length and nothing else, so the first moment of
+ * a store page and a log that never answered both drew as *there is nothing here* — which
+ * an editor reads as *there are no notes about this*, and acts on. The three branches
+ * below are the result's own three states, and none of them is inferred from a count. The
+ * findings half above is untouched by all of it: a slow log holds up nothing that is
+ * already in memory.
  */
-function Notes({ notes, link }) {
+function Notes({ result, link }) {
+  if (result.state === 'reading') return <NotesAside>Still reading the log…</NotesAside>;
+
+  if (result.state === 'failed')
+    return (
+      <NotesAside>
+        The override log could not be read ({result.reason}), so this half of the answer is missing.
+        It fills in by itself once the log answers.
+      </NotesAside>
+    );
+
+  const notes = result.notes ?? [];
   if (notes.length === 0) return null;
 
   return (
@@ -268,6 +293,24 @@ function Notes({ notes, link }) {
     </>
   );
 }
+
+/**
+ * What the notes half says when it has no matches to say it with, in the shape of the
+ * block it stands in place of.
+ *
+ * It carries a heading of its own, because a reader who does not know a second half exists
+ * cannot tell a half that is missing from a half that found nothing — and telling those two
+ * apart is the whole of ticket 123.
+ */
+const NotesAside = ({ children }) => (
+  <>
+    <Separator />
+    <section className="bg-muted px-4 py-3">
+      <h3 className="text-sm font-medium">Notes in the log</h3>
+      <p className="text-sm text-muted-foreground">{children}</p>
+    </section>
+  </>
+);
 
 /**
  * Which kind of note this is, said in one word beside it.
