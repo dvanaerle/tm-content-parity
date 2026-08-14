@@ -29,9 +29,7 @@ import { cellWithBothSides } from '../../../shared/seed-rows.mjs';
 
 /** No committed rule owns this one. A failed fetch is not a decision. */
 const NOT_CRAWLED_REASON =
-  'No report. The seed list has this page on both sides of the comparison and the ' +
-  'crawl wrote no report for it, so the fetch failed. This is not an exclusion. ' +
-  'The next crawl can still bring it in.';
+  'No report was created because the fetch failed. Try the next crawl.';
 
 /**
  * The excluded pages **this** store has. `veranda-configurator` is nl only, so a

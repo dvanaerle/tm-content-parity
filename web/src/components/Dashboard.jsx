@@ -336,7 +336,7 @@ export default function Dashboard({
         <Chip
           value={oneSided.length}
           label="one-sided"
-          title="One of the two sides does not answer 200. Ticket 20 decides what happens with these."
+          title="Only one site has this page."
         />
         <Chip
           value={notChecked.length}
@@ -593,7 +593,7 @@ export default function Dashboard({
 
       <Aside
         title={`One-sided pages (${oneSided.length})`}
-        note="One side does not answer 200, so there is nothing to compare. Ticket 20 decides whether this becomes a migration task."
+        note="Only one site has these pages."
       >
         {oneSided.map((page) => (
           <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
@@ -607,7 +607,7 @@ export default function Dashboard({
 
       <Aside
         title={`Not checked (${notChecked.length})`}
-        note="Found, counted and visible, but there is nothing to compare (ticket 56). Each group states its reason. Excluded in view, not left out silently."
+        note="Pages found but not compared."
       >
         {groupNotChecked(notChecked).map((group) => (
           <li key={group.key} className="border-t py-2 first:border-0">
@@ -627,7 +627,7 @@ export default function Dashboard({
 
       <Aside
         title={`Excluded regions (${regions.length})`}
-        note="Parts inside the content boundary that are not editor work (ticket 63). They leave at extraction. Excluded in view, not left out silently."
+        note="Page areas outside editor work."
       >
         {regions.map((region) => (
           <li key={region.selector} className="py-1">
@@ -635,13 +635,6 @@ export default function Dashboard({
             <span className="text-muted-foreground">
               {' '}
               — {REGION_KIND[region.kind] ?? region.kind}. {region.reason}
-            </span>
-            <span className="block text-muted-foreground">
-              {region.removedOn.production.pages === 0 && region.removedOn.new.pages === 0
-                ? 'Removed nowhere in this snapshot. Three possible causes: this store does not have the region, the selector no longer matches, or the snapshot is older than this rule.'
-                : `Removed on ${region.removedOn.production.pages} pages on production ` +
-                  `(${region.removedOn.production.units} blocks) and on ${region.removedOn.new.pages} ` +
-                  `on the new site (${region.removedOn.new.units} blocks).`}
             </span>
           </li>
         ))}
@@ -861,8 +854,8 @@ const NOT_CHECKED_KIND = {
 
 /** The two words of the vocabulary, as the dashboard says them. */
 const REGION_KIND = {
-  'non-editorial': 'Non-editorial: the catalogue or an extension makes the text',
-  'legacy-only': 'Legacy only: written, but the new site does not get it',
+  'non-editorial': 'Catalogue content',
+  'legacy-only': 'Production only',
 };
 
 function Aside({ title, note, children }) {

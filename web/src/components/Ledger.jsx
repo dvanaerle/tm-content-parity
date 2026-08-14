@@ -167,11 +167,6 @@ export default function Ledger({
         <AlertTitle className="font-semibold">Cannot be compared</AlertTitle>
         <AlertDescription className="text-current">
           <p className="text-sm">{report.skipReason}</p>
-          <p className="mt-2 text-sm">
-            Ticket 07 lets the comparison continue only at status 200 on both sides: a 404 page also
-            has a <code>&lt;main&gt;</code>, and it gives hundreds of differences that nobody can
-            use.
-          </p>
         </AlertDescription>
       </Alert>
     );
@@ -215,9 +210,7 @@ export default function Ledger({
               </p>
             ) : (
               <p className="text-sm">
-                The link named a finding about the <code>&lt;head&gt;</code>. Ticket 21 has not
-                decided what a parity defect is there, so that finding has no row to jump to. Meta
-                shows the fields themselves.
+                This item is available on the Meta tab but is not counted as a finding.
               </p>
             )}
           </AlertDescription>
@@ -550,42 +543,31 @@ function MetaTable({ production, next }) {
   const rows = useMemo(() => metaRows(production, next), [production, next]);
 
   return (
-    <>
-      <Alert className="mb-3">
-        <AlertDescription>
-          Display only, with no decision. Ticket 21 has not decided what a parity defect in the{' '}
-          <code>&lt;head&gt;</code> is, so no finding comes out of here and these rows are not in
-          the count.
-        </AlertDescription>
-      </Alert>
-      {/* A lower floor than the finding table's: a meta row holds a title or a
-          description, not a block of body copy, and `w-40` leaves more behind. */}
-      <Table className="min-w-2xl table-fixed">
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.field} className="align-top">
-              {/* A `<th>` in the body, not a `<td>`: this row's first cell names what
-                  the two cells beside it hold, which is what a row header is. */}
-              <TableHead className="w-40 py-3 align-top font-medium whitespace-normal text-muted-foreground">
-                {row.field}
-                {/* The one loud case. Production has no canonical on 147 of 179 nl
-                    pages and those rows are gone, so the 2 pages where the new
-                    site **lost** one must not read like the rest. */}
-                {row.field === 'canonical' && row.state === 'lost' && (
-                  <span className={`mt-1 block text-xs font-normal ${INK.lost}`}>
-                    the new site has none
-                  </span>
-                )}
-              </TableHead>
-              {/* `state` is the tool's answer, and the cells must not contradict it:
-                  a canonical that differs by hostname alone is `same`, and the
-                  hostname on screen is not a difference an editor can act on. */}
-              <DiffCells prod={row.prod} new={row.new} mono equal={row.state === 'same'} />
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </>
+    <Table className="min-w-2xl table-fixed">
+      <TableBody>
+        {rows.map((row) => (
+          <TableRow key={row.field} className="align-top">
+            {/* A `<th>` in the body, not a `<td>`: this row's first cell names what
+                the two cells beside it hold, which is what a row header is. */}
+            <TableHead className="w-40 py-3 align-top font-medium whitespace-normal text-muted-foreground">
+              {row.field}
+              {/* The one loud case. Production has no canonical on 147 of 179 nl
+                  pages and those rows are gone, so the 2 pages where the new
+                  site **lost** one must not read like the rest. */}
+              {row.field === 'canonical' && row.state === 'lost' && (
+                <span className={`mt-1 block text-xs font-normal ${INK.lost}`}>
+                  the new site has none
+                </span>
+              )}
+            </TableHead>
+            {/* `state` is the tool's answer, and the cells must not contradict it:
+                a canonical that differs by hostname alone is `same`, and the
+                hostname on screen is not a difference an editor can act on. */}
+            <DiffCells prod={row.prod} new={row.new} mono equal={row.state === 'same'} />
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 

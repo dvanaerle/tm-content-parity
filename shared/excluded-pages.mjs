@@ -17,11 +17,7 @@
 export const EXCLUDED_PAGES = [
   {
     page: 'veranda-configurator',
-    reason:
-      'Application page. `<main>` holds one PageBuilder html block that mounts ' +
-      'Dinoxi_ConfiguratorBff on `#configurator-root`; it has no content. ' +
-      'Production answers 404 on this key and on every other configurator key, ' +
-      'so there is no counterpart to compare it with.',
+    reason: 'Application page with no comparable editorial content.',
   },
 ];
 
