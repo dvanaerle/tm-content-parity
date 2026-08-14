@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from './ui/alert.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
+import { Progress } from './ui/progress.jsx';
 import { cn } from '../lib/utils.js';
 
 export function PageBar({ bar, ready }) {
@@ -37,18 +38,13 @@ export function PageBar({ bar, ready }) {
           </span>
         )}
       </div>
-      {/* The bar stays hand-rolled. shadcn's `Progress` builds its own track and
-          indicator inside itself and exposes a `className` for the root only, so
-          `FILL.info` has nowhere to land — and the fill colour is the whole reason
-          this bar is here rather than a plain number. */}
-      <div className="h-2 w-full overflow-hidden rounded bg-muted">
-        {/* Blue, not green. Work done is status, and ticket 35 keeps green for
-            "the new site added this" and nothing else. */}
-        <div
-          className={cn('h-full transition-[width]', FILL.secondary)}
-          style={{ width: ready ? `${percent}%` : '0%' }}
-        />
-      </div>
+      {/* Blue, not green. Work done is status, and ticket 35 keeps green for
+          "the new site added this" and nothing else. */}
+      <Progress
+        value={ready ? percent : 0}
+        trackClassName="h-2 rounded"
+        indicatorClassName={FILL.secondary}
+      />
     </div>
   );
 }
