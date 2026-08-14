@@ -1,3 +1,4 @@
+import { PageAnnotations } from './Annotate.jsx';
 import Ledger from './Ledger.jsx';
 import { EditorPrompt, LogBanner, PageBar, ReviewControl } from './Progress.jsx';
 import { Alert, AlertDescription } from './ui/alert.jsx';
@@ -40,6 +41,15 @@ export default function PageView({ report: built }) {
           findingSetHash={report.findingSetHash}
           append={append}
           canWrite={canWrite}
+        />
+
+        {/* Ticket 83. Beside the review because both are about **this page** rather than
+            about a finding on it — and unlike the review, neither of them moves a count. */}
+        <PageAnnotations
+          annotations={derived.annotations}
+          append={append}
+          canWrite={canWrite}
+          busy={log.busy}
         />
 
         {/* Feature detection: absent on the webhost, never broken. */}

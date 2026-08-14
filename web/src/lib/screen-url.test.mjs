@@ -36,6 +36,48 @@ describe('the class pills', () => {
   });
 });
 
+/**
+ * Ticket 83. The priority filter is a control on this screen, so it is in the URL for the
+ * same reason the pills are: an editor working down the high-priority pages opens one of
+ * them and presses Back.
+ *
+ * It **belongs to the page list**, exactly as the sort does. A priority annotates a page,
+ * and a repeat is a difference across pages rather than a page — so on *Repeats* the filter
+ * would narrow nothing while a link promised it did.
+ */
+describe('the priority filter', () => {
+  const pages = { ...SCREEN, view: 'pages' };
+
+  it('survives the trip out to a link and back', () => {
+    const filtered = { ...pages, priorities: ['high'] };
+
+    expect(searchFromScreen(filtered)).toBe('view=pages&priority=high');
+    expect(screenFromSearch(searchFromScreen(filtered))).toEqual(filtered);
+  });
+
+  it('carries more than one, because the filter is a list like the pills are', () => {
+    const filtered = { ...pages, priorities: ['high', 'low'] };
+    expect(screenFromSearch(searchFromScreen(filtered))).toEqual(filtered);
+  });
+
+  // The sort's own rule, for the same reason: a link that promised a narrowing it does
+  // not do is worse than a link that carries one control less.
+  it('is not written while the differences list is the view', () => {
+    expect(searchFromScreen({ ...SCREEN, view: 'repeats', priorities: ['high'] })).toBe('');
+  });
+
+  // The closed list is closed here too. A link outlives the words it was written
+  // against, and the class pills already answer this the same way.
+  it('drops a priority the closed list does not name', () => {
+    expect(screenFromSearch('priority=high,Hoog,urgent,low').priorities).toEqual(['high', 'low']);
+  });
+
+  it('combines with the class pills in one link', () => {
+    const both = { ...pages, classes: ['copy'], priorities: ['high'] };
+    expect(screenFromSearch(searchFromScreen(both))).toEqual(both);
+  });
+});
+
 describe('the view and the search term', () => {
   it('survive the trip out to a link and back', () => {
     const screen = { ...SCREEN, view: 'pages', query: 'bekijk alle deals' };

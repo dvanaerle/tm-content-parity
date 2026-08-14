@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Repeats from './Repeats.jsx';
+import { PageNote } from './Annotate.jsx';
 import { ClassFilterBanner } from './Chips.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Label } from './ui/label.jsx';
@@ -197,12 +198,18 @@ function Named({ store, pages, link }) {
 }
 
 /**
- * The notes are drawn whatever *include closed* says, and that is deliberate: a note
- * is the sentence required when **dismissing** or muting something, so nearly every note
- * there is hangs off work that is already closed. Hiding them by default would leave the
- * option switching on a half of the answer that is empty until it is pressed, which is not
- * what *active work by default* is protecting — that rule is about which findings are
- * offered as work.
+ * The notes are drawn whatever *include closed* says, and that is deliberate: a dismissal
+ * note is the sentence required when **dismissing** something, so most notes there are hang
+ * off work that is already closed. Hiding them by default would leave the option switching
+ * on a half of the answer that is empty until it is pressed, which is not what *active work
+ * by default* is protecting — that rule is about which findings are offered as work.
+ *
+ * **Two kinds of note are in this list** since ticket 83, and each says which it is. That is
+ * the ticket's first trap: a dismissal note explains one judgement about two strings, and a
+ * page note explains nothing in particular about a whole page. Drawn identically, an
+ * editor reading *“Campagne-update volgt”* under a page name would read it as somebody's
+ * reason for accepting a difference. So each line is tagged, and the page note is drawn as
+ * `PageNote` draws it everywhere else — quoted, and never labelled as a reason.
  */
 function Notes({ notes, link }) {
   if (notes.length === 0) return null;
@@ -227,7 +234,13 @@ function Notes({ notes, link }) {
               <a className={cn('hover:underline', CHROME.link)} href={link(note.store, note.page)}>
                 {note.page}
               </a>
-              <span className="ml-2 text-muted-foreground">{note.note}</span>
+              <NoteKind note={note} />
+              {/* A page note is quoted and italic, the way it is drawn on the page and in
+                  the store list. A dismissal note is the plain sentence it has always
+                  been, and it sits inside the decision it explains. */}
+              {note.action === 'noted'
+                ? <PageNote note={note.note} className="ml-2" />
+                : <span className="ml-2 text-muted-foreground">{note.note}</span>}
               <span className="ml-2 text-xs text-muted-foreground">
                 {note.editor}, {new Date(note.createdAt).toLocaleDateString('en-GB')}
               </span>
@@ -238,6 +251,19 @@ function Notes({ notes, link }) {
     </>
   );
 }
+
+/**
+ * Which kind of note this is, said in one word beside it.
+ *
+ * It is a word and not a colour: both kinds are somebody's writing and neither is a status,
+ * so a tone here would be the palette claiming a meaning it does not have. The words are the
+ * vocabulary's own — a note **on this page**, or the reason for a **dismissal**.
+ */
+const NoteKind = ({ note }) => (
+  <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
+    {note.action === 'noted' ? 'page note' : `${note.action} · reason`}
+  </span>
+);
 
 /**
  * The store's index, fetched the first time someone searches.

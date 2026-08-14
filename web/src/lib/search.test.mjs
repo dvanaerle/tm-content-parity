@@ -429,4 +429,75 @@ describe('searchNotes', () => {
 
     expect(result.notes.map((one) => one.note)).toEqual(['deals: nieuwe reden']);
   });
+
+  /**
+   * Ticket 83. A page note reaches search through this function and not through the build
+   * index: it is written in the log after the build, so indexing it would be indexing a
+   * moment that has already passed.
+   */
+  it('finds a page note, which is the second thing living in the note column', () => {
+    const result = searchNotes({
+      events: [event({
+        scope: 'page', action: 'noted', findingId: null, note: 'Campagne-update volgt',
+      })],
+      term: 'campagne',
+    });
+
+    expect(result.notes.map((one) => one.note)).toEqual(['Campagne-update volgt']);
+  });
+
+  it('says which of the two kinds of note it found, so the two can be drawn apart', () => {
+    // The ticket's trap: a dismissal note explains one judgement about two strings, and a
+    // page note explains nothing in particular. A result that could not tell them apart
+    // would leave the interface to guess, and the interface must not have to.
+    const result = searchNotes({
+      events: [
+        event({ note: 'zelfde woord hier' }),
+        event({
+          scope: 'page', action: 'noted', findingId: null, note: 'zelfde woord daar',
+          // Newer, so the order below is the sort doing its job and not two events
+          // arriving in the same millisecond and landing however they were listed.
+          createdAt: '2026-08-11T09:00:00Z',
+        }),
+      ],
+      term: 'zelfde woord',
+    });
+
+    expect(result.notes.map((one) => one.scope)).toEqual(['page', 'finding']);
+    expect(result.notes.map((one) => one.action)).toEqual(['noted', 'dismissed']);
+  });
+
+  it('does not find a page note an editor took back', () => {
+    // Cleared with an empty note, which is how ticket 83 clears one. The words are still
+    // in the append-only table and they are no longer what the page says.
+    const result = searchNotes({
+      events: [
+        event({ scope: 'page', action: 'noted', findingId: null, note: 'Campagne-update volgt' }),
+        event({
+          scope: 'page', action: 'noted', findingId: null, note: '',
+          createdAt: '2026-08-11T09:00:00Z',
+        }),
+      ],
+      term: 'campagne',
+    });
+
+    expect(result.notes).toEqual([]);
+  });
+
+  it('does not let a page note hide the review of the same page', () => {
+    // The two are different keys on one scope. A note that displaced the review here
+    // would be the collision `eventKey()` exists to prevent, showing up in search.
+    const result = searchNotes({
+      events: [
+        event({ scope: 'page', action: 'reviewed', findingId: null, note: 'deals gezien' }),
+        event({
+          scope: 'page', action: 'noted', findingId: null, note: 'deals nog niet',
+          createdAt: '2026-08-11T09:00:00Z',
+        }),
+      ],
+      term: 'deals',
+    });
+
+    expect(result.notes.map((one) => one.action)).toEqual(['noted', 'reviewed']);
+  });
 });

@@ -21,6 +21,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // The closed vocabulary, to refuse a class name that is not in it. The import site is
 // `vocabulary.mjs` for the reason `classes.mjs` states.
 import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
+// The other closed list, for the same reason: ticket 83's priority filter is a control on
+// this screen, and a link can name a word the list does not hold.
+import { isPriority } from '../../../shared/priorities.mjs';
 
 /**
  * The screen an untouched dashboard draws. *Repeats* lands first, worst-first,
@@ -31,6 +34,7 @@ import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
  * @property {'worst' | 'name'} sort
  * @property {string} query
  * @property {string[]} classes
+ * @property {string[]} priorities
  * @property {boolean} includeClosed
  */
 
@@ -40,6 +44,7 @@ export const SCREEN = Object.freeze({
   sort: 'worst',
   query: '',
   classes: Object.freeze([]),
+  priorities: Object.freeze([]),
   includeClosed: false,
 });
 
@@ -57,6 +62,11 @@ const PARAM = Object.freeze({
   sort: 'sort',
   query: 'query',
   classes: 'classes',
+  // Singular, and the odd one out on purpose. `classes` is plural because that parameter
+  // has always carried a list of a 22-word vocabulary; this one carries at most three
+  // words, and *the high-priority pages* is how an editor says what it does. The value is
+  // still a list, in the same comma-separated shape.
+  priorities: 'priority',
   includeClosed: 'closed',
 });
 
@@ -91,6 +101,12 @@ export function searchFromScreen(screen) {
   if (screen.view === 'pages' && screen.sort !== SCREEN.sort) written.set(PARAM.sort, screen.sort);
   if (screen.query.trim()) written.set(PARAM.query, screen.query);
   if (screen.classes.length > 0) written.set(PARAM.classes, screen.classes.join(','));
+  // Ticket 83's filter belongs to the page list, so it goes the way the sort does: a
+  // priority annotates a page, and a repeat is a difference across pages rather than a
+  // page, so on *Repeats* this would narrow nothing while the link promised it did.
+  if (screen.view === 'pages' && screen.priorities.length > 0) {
+    written.set(PARAM.priorities, screen.priorities.join(','));
+  }
   // *Include closed* belongs to the search, and there is no search without a
   // term, so it goes the same way the sort does.
   if (screen.query.trim() && screen.includeClosed) written.set(PARAM.includeClosed, '1');
@@ -121,6 +137,10 @@ export function screenFromSearch(search) {
     classes: (asked.get(PARAM.classes) ?? '')
       .split(',')
       .filter((cls) => Boolean(FINDING_CLASSES[cls])),
+    // The same laundering against the other closed list. `Hoog` is the word the ticket
+    // writes and the value the list does not hold, and a link carrying it is a stale link
+    // rather than a broken screen.
+    priorities: (asked.get(PARAM.priorities) ?? '').split(',').filter(isPriority),
   };
 }
 

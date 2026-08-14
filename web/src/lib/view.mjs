@@ -258,6 +258,31 @@ export function pagesWithClasses(pages, classes) {
 }
 
 /**
+ * The same narrowing for ticket 83's priority, and it **combines** with the class filter
+ * rather than replacing it: two calls over one list, so an editor asking for the
+ * high-priority `copy` pages gets the pages that satisfy both.
+ *
+ * The priority arrives as an **accessor** and not off the page, which is the one way this
+ * differs from the filter above. A class count is a property of the snapshot and sits on
+ * `summary`; a priority is an annotation an editor wrote afterwards, so it is derived from
+ * the log and only the caller holding that derivation can answer for a page.
+ *
+ * An **unannotated page is never kept**. There is no `normal` in the list, so absence is
+ * not a value that can be filtered for — selecting every priority still narrows the list
+ * to the pages somebody has annotated, which is the honest reading of the question.
+ *
+ * @template P
+ * @param {P[]} pages
+ * @param {string[]} priorities
+ * @param {(page: P) => string | null} priorityOf
+ * @returns {P[]}
+ */
+export function pagesWithPriorities(pages, priorities, priorityOf) {
+  if (priorities.length === 0) return pages;
+  return pages.filter((page) => priorities.includes(/** @type {string} */ (priorityOf(page))));
+}
+
+/**
  * A store's work listed as differences rather than as pages (ticket 81).
  *
  * A **repeat** is every finding in **one store** with the same class, the same two

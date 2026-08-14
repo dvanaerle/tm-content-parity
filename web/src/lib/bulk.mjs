@@ -54,6 +54,36 @@ export function bulkDismissal({ repeat, byFinding, note, selected }) {
 }
 
 /**
+ * The N annotations of the ticked pages (ticket 83).
+ *
+ * It **reuses the selection seam** the two presses above sit on rather than adding a second
+ * one, and takes the difference the ticket forced: a priority and a note annotate the
+ * **page**, so the selection is a set of `store/page` keys and not of finding ids. There is
+ * no finding to key on here, and no eligibility to ask about either — a page an editor
+ * ticked takes the value, whatever anybody decided about the findings on it.
+ *
+ * The event is built by the caller through `priorityEventFor()` / `noteEventFor()`, so the
+ * value is validated once, in one place, and this function stays the thing that spreads one
+ * decision over N pages. It carries **one number** and not two: the presses above skip a
+ * colleague's decision and have to report what they left alone, and this one skips nothing.
+ *
+ * @param {object} input
+ * @param {{ store: string, page: string }[]} input.pages  The list under the selection.
+ * @param {Set<string>} input.selected  The ticked pages, as `store/page`.
+ * @param {{ scope: string, action: string }} input.event  One built annotation event.
+ */
+export function bulkAnnotation({ pages, selected, event }) {
+  const chosen = pages.filter((page) => selected.has(`${page.store}/${page.page}`));
+
+  // Each event carries its own store and page: `appendEach()` reports `failedOn` as the
+  // event's page, and the hook adds the editor per event, so attribution and the failure
+  // report are both per row rather than per press.
+  const events = chosen.map((page) => ({ store: page.store, page: page.page, ...event }));
+
+  return { covers: chosen.length, events };
+}
+
+/**
  * The pages a press is aimed at: the ticked ones (ticket 110).
  *
  * The selection is a set of **finding ids** and not of page names. A page name is unique

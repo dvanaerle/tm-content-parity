@@ -6,6 +6,7 @@ import {
   onlyDifferencesState,
   outlineFrom,
   pagesWithClasses,
+  pagesWithPriorities,
   groupRepeatsByClass,
   prepareRows,
   repeatsInStore,
@@ -414,6 +415,53 @@ describe('pagesWithClasses', () => {
   it('drops a page whose count for the class is zero rather than absent', () => {
     const zero = [{ page: 'd', summary: { byClass: { copy: 0 } } }];
     expect(pagesWithClasses(zero, ['copy'])).toEqual([]);
+  });
+});
+
+/**
+ * Ticket 83. The priority is an annotation an editor wrote, not a property of the
+ * snapshot, so it does not come off `summary` the way a class count does — it is derived
+ * from the log and reaches this filter as an accessor.
+ *
+ * It is a second filter over the same list, and the rule above outranks it too: it narrows
+ * what is drawn and moves no count.
+ */
+describe('pagesWithPriorities', () => {
+  const pages = [
+    { page: 'a', summary: { byClass: { copy: 3 } } },
+    { page: 'b', summary: { byClass: { casing: 2 } } },
+    { page: 'c', summary: { byClass: { copy: 1 } } },
+  ];
+  const priorityOf = (page) => ({ a: 'high', b: 'high' })[page.page] ?? null;
+
+  it('is every page when nothing is selected', () => {
+    expect(pagesWithPriorities(pages, [], priorityOf)).toHaveLength(3);
+  });
+
+  it('keeps the pages carrying any of the selected priorities', () => {
+    expect(pagesWithPriorities(pages, ['high'], priorityOf).map((p) => p.page)).toEqual(['a', 'b']);
+  });
+
+  it('drops every page when the selected priority is on none of them', () => {
+    expect(pagesWithPriorities(pages, ['low'], priorityOf)).toEqual([]);
+  });
+
+  it('never keeps an unannotated page, because absence is not a priority', () => {
+    expect(pagesWithPriorities(pages, ['high', 'medium', 'low'], priorityOf).map((p) => p.page))
+      .toEqual(['a', 'b']);
+  });
+
+  /**
+   * The acceptance criterion in one test: the two filters are **and**, not or. An editor
+   * asking for the high-priority `copy` pages is asking one question, and a list that
+   * answered it with the union would be answering a different one.
+   */
+  it('combines with the class filter, narrowing to the pages that satisfy both', () => {
+    const both = pagesWithPriorities(pagesWithClasses(pages, ['copy']), ['high'], priorityOf);
+    expect(both.map((p) => p.page)).toEqual(['a']);
+    // And in the other order, because two pure filters over one list have to commute.
+    expect(pagesWithClasses(pagesWithPriorities(pages, ['high'], priorityOf), ['copy']))
+      .toEqual(both);
   });
 });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { bulkClear, bulkDismissal } from './bulk.mjs';
+import { bulkAnnotation, bulkClear, bulkDismissal } from './bulk.mjs';
+import { noteEventFor, priorityEventFor } from '../../../overrides/state.mjs';
 
 /** A repeat as `repeatsInStore()` returns it, narrowed to what this file reads. */
 const repeat = (on) => ({
@@ -329,5 +330,55 @@ describe('the vocabulary a bulk press writes in', () => {
     // The editor is added by the hook, per event, which is what makes attribution
     // per row rather than per press. The note is trimmed once and copied.
     expect(events.every((event) => event.note === 'een reden')).toBe(true);
+  });
+});
+
+/**
+ * Ticket 83: one press, N annotated pages.
+ *
+ * The selection here is a set of **pages** and not of finding ids, which is the one way
+ * this differs from the two presses above. A priority annotates the page, so there is no
+ * finding to key on and no eligibility to ask about: every ticked page takes the value.
+ */
+describe('bulkAnnotation', () => {
+  const pages = [
+    { store: 'nl', page: 'overkapping' },
+    { store: 'nl', page: 'veranda' },
+    { store: 'nl', page: 'schuur' },
+  ];
+  const selected = new Set(['nl/overkapping', 'nl/veranda']);
+
+  it('writes one event per selected page, and none for a page nobody ticked', () => {
+    const { events, covers } = bulkAnnotation({
+      pages, selected, event: priorityEventFor('high'),
+    });
+
+    expect(covers).toBe(2);
+    expect(events).toEqual([
+      { store: 'nl', page: 'overkapping', scope: 'page', action: 'prioritised', priority: 'high' },
+      { store: 'nl', page: 'veranda', scope: 'page', action: 'prioritised', priority: 'high' },
+    ]);
+  });
+
+  it('aims each event at its own page, so the editor lands on every row', () => {
+    // `appendEach()` reports `failedOn` as the event's page, and the hook adds the editor
+    // per event. Both need the page on the event rather than on the press.
+    const { events } = bulkAnnotation({ pages, selected, event: noteEventFor('Campagne-update') });
+    expect(events.map((one) => one.page)).toEqual(['overkapping', 'veranda']);
+    expect(events.every((one) => one.action === 'noted')).toBe(true);
+  });
+
+  it('writes nothing when nothing is ticked', () => {
+    const { events, covers } = bulkAnnotation({
+      pages, selected: new Set(), event: priorityEventFor('high'),
+    });
+    expect(events).toEqual([]);
+    expect(covers).toBe(0);
+  });
+
+  it('clears the annotation on N pages, because a clearing is a press like any other', () => {
+    const { events } = bulkAnnotation({ pages, selected, event: priorityEventFor(null) });
+    expect(events.every((one) => one.priority === null)).toBe(true);
+    expect(events).toHaveLength(2);
   });
 });

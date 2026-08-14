@@ -1,5 +1,9 @@
-import { useCallback, useMemo } from 'react';
-import { Bar, Chip, ClassFilterBanner, ClassFilterPills } from './Chips.jsx';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AnnotateBar, PageNote } from './Annotate.jsx';
+import { Checkbox } from './ui/checkbox.jsx';
+import {
+  Bar, Chip, ClassFilterBanner, ClassFilterPills, PriorityFilterPills, PriorityPill,
+} from './Chips.jsx';
 import { EditorPrompt, LogBanner } from './Progress.jsx';
 import { ClassGroups } from './Repeats.jsx';
 import Search from './Search.jsx';
@@ -17,7 +21,9 @@ import { useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { useScreen } from '../lib/screen-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
-import { pagesWithClasses, repeatsInStore, repeatsWithClasses, toggleIn } from '../lib/view.mjs';
+import {
+  pagesWithClasses, pagesWithPriorities, repeatsInStore, repeatsWithClasses, toggleIn,
+} from '../lib/view.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
 
@@ -64,7 +70,7 @@ export default function Dashboard({
    * lands first. `screen-url.mjs` only says where the state is kept.
    */
   const { screen, patch, search } = useScreen();
-  const { query, sort, includeClosed, view, classes } = screen;
+  const { query, sort, includeClosed, view, classes, priorities } = screen;
 
   /**
    * Every link off this dashboard into a page, built in one place.
@@ -101,12 +107,22 @@ export default function Dashboard({
   // of the two lists as well would be two answers to one question.
   const searching = query.trim().length > 0;
 
+  /**
+   * What an editor annotated this page with, or nothing. It comes off the same derivation
+   * the bar does, so the annotation an editor set and the annotation the filter reads are
+   * one value — ticket 83.
+   */
+  const annotationsOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.annotations;
+  const priorityOf = (page) => annotationsOf(page)?.priority ?? null;
+
   const rows = useMemo(() => {
-    const found = pagesWithClasses(comparable, classes);
+    // The two filters are **and**, not or: the high-priority `copy` pages is one question.
+    // Both narrow what is drawn and neither moves a count — the rule `view.mjs` states.
+    const found = pagesWithPriorities(pagesWithClasses(comparable, classes), priorities, priorityOf);
     return [...found].sort((a, b) => (
       sort === 'worst' ? openOf(b) - openOf(a) : a.page.localeCompare(b.page)
     ));
-  }, [comparable, classes, sort, log.byPage]);
+  }, [comparable, classes, priorities, sort, log.byPage]);
 
   // The store's differences, grouped. It is derived from the **summaries the page
   // list already holds**, so the two views are two readings of one array and no text
@@ -126,6 +142,52 @@ export default function Dashboard({
   const narrowed = view === 'repeats'
     ? { shown: shownRepeats.length, total: repeats.length, noun: 'differences' }
     : { shown: rows.length, total: comparable.length, noun: 'pages' };
+
+  /**
+   * How many pages carry each priority, for the number beside each pill. It counts the
+   * **store** and not the list under the filter, exactly as a class pill's count does: a
+   * pill says how much of this kind there is, which is not a question about what is drawn.
+   */
+  /**
+   * The ticked pages, as `store/page` (ticket 83).
+   *
+   * It is **session state and not in the URL**, which is the one place this control parts
+   * company with the five that ADR 0010 put in the address bar. A selection is not a screen:
+   * it is what an editor is about to act on, and a link that arrived carrying twenty ticked
+   * pages would be a press somebody else half-made.
+   *
+   * Keyed on `store/page` and not on a finding id, because `Repeats.jsx`'s selection is over
+   * the pages of one difference and this one is over the pages of a store. Same seam, same
+   * bar, different key — a priority annotates the page, so the page is what is ticked.
+   */
+  const [selected, setSelected] = useState(/** @type {Set<string>} */ (new Set()));
+  const keyOf = (page) => `${page.store}/${page.page}`;
+
+  const tick = useCallback((key, on) => setSelected((held) => {
+    const next = new Set(held);
+    if (on) next.add(key); else next.delete(key);
+    return next;
+  }), []);
+
+  const tickAll = useCallback(
+    (on) => setSelected(on ? new Set(rows.map(keyOf)) : new Set()),
+    [rows],
+  );
+
+  // A tick means *this page*, so a selection cannot outlive the list it was made in: an
+  // editor who narrows the filter and then presses would otherwise annotate pages that are
+  // no longer on screen. Switching to *Repeats* puts it down for the same reason.
+  useEffect(() => setSelected(new Set()), [classes, priorities, view, query]);
+
+  const priorityCounts = useMemo(() => {
+    /** @type {Record<string, number>} */
+    const counts = {};
+    for (const page of comparable) {
+      const priority = priorityOf(page);
+      if (priority) counts[priority] = (counts[priority] ?? 0) + 1;
+    }
+    return counts;
+  }, [comparable, log.byPage]);
 
   /** Every derived finding of the store by id, so a repeat row can say what is decided. */
   const byFinding = useMemo(() => {
@@ -263,6 +325,15 @@ export default function Dashboard({
             {/* The switch belongs to the two views, and a search answers past both of
                 them, so it steps aside while one is on screen. */}
             {!searching && <ViewSwitch view={view} onChange={(next) => patch({ view: next })} />}
+            {/* Ticket 83. It narrows pages, so it is drawn with the list of pages — the
+                same reason the sort is here and not over *Repeats*. */}
+            {!searching && view === 'pages' && (
+              <PriorityFilterPills
+                selected={priorities}
+                counts={priorityCounts}
+                onToggle={(one) => patch({ priorities: toggleIn(priorities, one) })}
+              />
+            )}
             {!searching && view === 'pages' && (
               // A native select works without JavaScript and this one does not. Nothing is
               // lost: the control and its state already live inside a `client:load` island,
@@ -325,8 +396,12 @@ export default function Dashboard({
           {!searching && (
             <ClassFilterBanner
               classes={classes}
+              // Only while the page list is under it, for the reason `searchFromScreen`
+              // gives: on *Repeats* this filter narrows nothing, so a strip claiming it
+              // does would be the mismatched pair the banner exists to prevent.
+              priorities={view === 'pages' ? priorities : []}
               {...narrowed}
-              onClear={() => patch({ classes: [] })}
+              onClear={() => patch({ classes: [], priorities: [] })}
               className="border-b px-4 py-2"
             />
           )}
@@ -355,6 +430,13 @@ export default function Dashboard({
           <Table>
             <TableHeader>
               <TableRow className="text-xs uppercase tracking-wide">
+                {/* The header word is drawn for a screen reader and not for an eye, the
+                    way `Repeats.jsx` draws its own: a header cell holding nothing but a
+                    checkbox announces nothing. */}
+                <TableHead className="w-8 px-4">
+                  <SelectAllPages rows={rows} selected={selected} onTickAll={tickAll} />
+                  <span className="sr-only">Select</span>
+                </TableHead>
                 <TableHead className="px-4 text-muted-foreground">Page</TableHead>
                 <TableHead className="w-40 px-4 text-muted-foreground">Open</TableHead>
                 {CHECKS.map((check) => (
@@ -365,12 +447,28 @@ export default function Dashboard({
             </TableHeader>
             <TableBody>
               {rows.map((page) => (
-                <TableRow key={`${page.store}/${page.page}`}>
+                <TableRow
+                  key={`${page.store}/${page.page}`}
+                  data-state={selected.has(keyOf(page)) ? 'selected' : undefined}
+                >
+                  <TableCell className="px-4">
+                    <Checkbox
+                      checked={selected.has(keyOf(page))}
+                      onCheckedChange={(ticked) => tick(keyOf(page), ticked)}
+                      aria-label={`Select ${page.page}`}
+                    />
+                  </TableCell>
                   <TableCell className="px-4">
                     <a className={cn('font-medium hover:underline', CHROME.link)} href={link(page.store, page.page)}>
                       {page.page}
                     </a>
                     <span className="ml-2 text-xs text-muted-foreground">{page.sides.production.units} blocks</span>
+                    {/* The two annotations, beside the page they are about. The note is
+                        quoted and never labelled as a reason — a dismissal's note is the
+                        other thing in this log that lives in the `note` column, and the
+                        two must not read as one. */}
+                    <PriorityPill priority={priorityOf(page)} className="ml-2" />
+                    <PageNote note={annotationsOf(page)?.note} className="ml-2 text-xs" />
                   </TableCell>
                   <TableCell className="px-4">
                     <Bar shown={openOf(page)} units={page.sides.production.units} />
@@ -394,6 +492,18 @@ export default function Dashboard({
           )}
           {!searching && view === 'pages' && rows.length === 0 && (
             <p className="px-4 py-6 text-sm text-muted-foreground">No page found.</p>
+          )}
+
+          {/* Drawn only when something is ticked, the way ticket 31's bar is: a toolbar
+              that is always on screen and always means *all of them* is the press ticket
+              110 replaced. */}
+          {!searching && view === 'pages' && selected.size > 0 && (
+            <AnnotateBar
+              pages={rows}
+              selected={selected}
+              bulk={bulk}
+              onClear={() => setSelected(new Set())}
+            />
           )}
         </CardContent>
       </Card>
@@ -482,6 +592,33 @@ export default function Dashboard({
  * checked box.
  */
 const PRESSED_TONE = 'aria-pressed:bg-brand aria-pressed:hover:bg-brand-dark';
+
+/**
+ * The tick that selects every page on screen, and clears from the mixed state.
+ *
+ * It ticks the **narrowed** list and not the store: the rows under it are what the press
+ * acts on, and a select-all that reached past the filter would annotate pages the editor
+ * cannot see. `Repeats.jsx` states the same rule over the pages of one difference.
+ *
+ * Its label says *select*, because the ledger already spends a checkbox on the tri-state
+ * *Fixed* control, which genuinely is a decision. A selection decides nothing.
+ */
+function SelectAllPages({ rows, selected, onTickAll }) {
+  const all = rows.length > 0 && rows.every((page) => selected.has(`${page.store}/${page.page}`));
+  const some = selected.size > 0 && !all;
+
+  return (
+    <Checkbox
+      checked={all}
+      indeterminate={some}
+      // From the mixed state a press **clears**. Base UI would answer `true` there, which
+      // would re-tick the same rows and leave the control stuck at mixed.
+      onCheckedChange={(ticked) => onTickAll(some ? false : ticked)}
+      aria-label={`Select all ${rows.length} pages on screen`}
+      title="Selects each page on screen. A selection decides nothing."
+    />
+  );
+}
 
 function ViewSwitch({ view, onChange }) {
   return (

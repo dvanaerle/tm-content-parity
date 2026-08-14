@@ -1,4 +1,5 @@
 import { classInfo } from '../lib/classes.mjs';
+import { PRIORITIES } from '../../../shared/priorities.mjs';
 import { cn } from '../lib/utils.js';
 import { Alert } from './ui/alert.jsx';
 import { Badge } from './ui/badge.jsx';
@@ -100,6 +101,79 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
 }
 
 /**
+ * The tone of each of ticket 83's three priorities.
+ *
+ * **Not a diff hue.** `lost` and `added` claim that content exists on one side only, and a
+ * priority is a human's judgement about a page — so the three take the status weights, the
+ * way a stale review does. Amber is the loudest thing here on purpose: `danger` red is the
+ * ink of a real absence, and an editor's *look at this first* is not that.
+ */
+const PRIORITY_TONE = { high: 'attention', medium: 'info', low: 'neutral' };
+
+/** One page priority, worn wherever the page is named. */
+export function PriorityPill({ priority, className = '' }) {
+  if (!priority) return null;
+  return (
+    <Badge
+      className={cn(
+        'h-auto px-1.5 py-0.5 text-xs uppercase tracking-wide',
+        PILL[PRIORITY_TONE[priority]],
+        className,
+      )}
+      title={`An editor set the priority of this page to ${priority}.`}
+    >
+      {priority}
+    </Badge>
+  );
+}
+
+/**
+ * The priority filter, beside the class pills and narrowing the same list.
+ *
+ * It is a second component rather than a second call to `ClassFilterPills`, because that
+ * one draws a `ClassPill` and takes a count per pill off the snapshot. A priority has no
+ * count off the snapshot — it is an annotation in the log — and the two lists must not
+ * look like one 25-pill vocabulary.
+ *
+ * Every one of the three is always drawn, including the ones no page carries. The list is
+ * closed and three words long, so a pill that appeared only once a page held it would make
+ * the control itself flicker as the log changed underneath it.
+ */
+export function PriorityFilterPills({ selected, onToggle, counts = {} }) {
+  return (
+    <ToggleGroup
+      toggleMultiple
+      value={selected}
+      onValueChange={(next) => {
+        const moved = next.find((one) => !selected.includes(one))
+          ?? selected.find((one) => !next.includes(one));
+        if (moved !== undefined) onToggle(moved);
+      }}
+      className="flex-wrap"
+      spacing={1}
+    >
+      {PRIORITIES.map((priority) => (
+        <ToggleGroupItem
+          key={priority}
+          value={priority}
+          title={`Show the pages an editor gave priority ${priority}. `
+            + 'The counts above do not change.'}
+          className={cn(
+            'h-auto gap-1 px-0.5 py-0',
+            selected.includes(priority) && 'ring-2 ring-primary',
+          )}
+        >
+          <PriorityPill priority={priority} />
+          <span className="pr-1 text-xs tabular-nums text-muted-foreground">
+            {counts[priority] ?? 0}
+          </span>
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  );
+}
+
+/**
  * A filter says so for as long as it is on. A narrowed view that looks like the whole
  * thing is read as the whole thing, and the editor stops early — so the strip is amber
  * and it carries the one action that clears it.
@@ -136,17 +210,32 @@ export function FilterBanner({ onClear, className = '', children }) {
  * must never be able to say, and a guard repeated by every caller is a guard one of them
  * will eventually forget.
  *
+ * Ticket 83 adds a second filter over the same list, so the strip names **both** of them
+ * in one sentence and one *Clear filter* clears both. Two strips would be two denominators
+ * over one list, and an editor who cleared the one they could see would still be looking at
+ * a narrowed list.
+ *
  * @param {object} props
- * @param {string[]} props.classes  The pills that are on. None means no filter, and the
- *                                 component draws nothing.
+ * @param {string[]} props.classes  The pills that are on. None of either means no filter,
+ *                                 and the component draws nothing.
+ * @param {string[]} [props.priorities]
  * @param {number} props.shown
  * @param {number} props.total
  * @param {string} props.noun      What is counted: `differences`, `pages`.
  * @param {() => void} props.onClear
  * @param {string} [props.className]
  */
-export function ClassFilterBanner({ classes, shown, total, noun, onClear, className = '' }) {
-  if (classes.length === 0) return null;
+export function ClassFilterBanner({
+  classes, priorities = [], shown, total, noun, onClear, className = '',
+}) {
+  if (classes.length === 0 && priorities.length === 0) return null;
+
+  // Named in the order the controls sit in, and each half only when it is on: *Filtered on
+  // priority high.* is the whole sentence when no pill is pressed.
+  const on = [
+    classes.length > 0 && classes.join(', '),
+    priorities.length > 0 && `priority ${priorities.join(', ')}`,
+  ].filter(Boolean).join(' and ');
 
   return (
     <FilterBanner onClear={onClear} className={className}>
@@ -154,7 +243,7 @@ export function ClassFilterBanner({ classes, shown, total, noun, onClear, classN
           flex row with a gap, so the element boundary is already a gap — but the text
           children after it collapse into one anonymous item, and there the space has to
           be written. */}
-      <strong>Filtered on {classes.join(', ')}.</strong>
+      <strong>Filtered on {on}.</strong>
       {`${shown} of ${total} ${noun}.`}
       {' '}The counts above count everything.
     </FilterBanner>

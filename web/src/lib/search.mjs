@@ -345,9 +345,16 @@ export function searchStore({
  * what this ticket forbids, and a shape that cannot describe itself is how it would happen
  * by accident.
  *
- * There is no page-note feature in the log yet: `note` is the sentence an editor gives
- * when dismissing or muting, and a page review can carry one too. Those are the notes
- * there are, so those are the notes searched.
+ * **Two kinds of note live in that column** since ticket 83, and this function returns both:
+ * the sentence an editor gives when dismissing a finding, and the free-text note on a page.
+ * They are searched the same way and must not be *drawn* the same way — a dismissal note is
+ * mandatory and explains one judgement about two strings, and a page note is optional and
+ * explains nothing in particular. The event carries its own `scope` and `action`, which is
+ * what lets the caller tell them apart; this function does not decide for it.
+ *
+ * A page note an editor took back is not found, and that falls out of `latestByKey()`
+ * rather than being a rule here: the clearing is a later `noted` event carrying an empty
+ * note, so the words that were withdrawn are no longer the current event on their key.
  *
  * @param {object} args
  * @param {import('../../../overrides/state.mjs').OverrideEvent[]} args.events
