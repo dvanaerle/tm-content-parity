@@ -169,6 +169,58 @@ describe('a search under the class pills', () => {
 });
 
 /**
+ * Ticket 103. A scope may hold several pages, and a result over several has to say which
+ * ones — otherwise an editor reads a merged list as one page's work. This is a browser
+ * case because the header is what says it: `searchStore()` answers the scope, and only
+ * the screen can be asked what it told anybody.
+ */
+describe('a search narrowed to a page scope', () => {
+  /** The store's pages, one of which is clean and in no result above. */
+  const scoped = [
+    { store: 'nl', page: 'afhalen', summary: { byClass: { copy: 1 } } },
+    { store: 'nl', page: 'afhalen-pdf', summary: { byClass: {} } },
+    { store: 'nl', page: 'garantie', summary: { byClass: { casing: 1 } } },
+  ];
+
+  it('names the pages the scope matched, over the one list', async () => {
+    const { unmount } = await mount({ term: '/afhalen', pages: scoped });
+
+    expect(document.body.textContent).toContain('2 pages in /afhalen');
+    expect(document.body.textContent).toContain('afhalen-pdf');
+    unmount();
+  });
+
+  it('keeps a page with no open work reachable by its name', async () => {
+    // The capability the by-name block carries under an ordinary term: a clean page is
+    // in no finding result, and it is still the page somebody is looking for.
+    const { unmount } = await mount({ term: '/afhalen', pages: scoped });
+
+    const link = [...document.querySelectorAll('a')].find(
+      (one) => one.textContent.trim() === 'afhalen-pdf',
+    );
+    expect(link.getAttribute('href')).toBe('/nl/afhalen-pdf/');
+    unmount();
+  });
+
+  it('draws the pages once, and not twice under two headings', async () => {
+    // The by-name block is what the header replaces. Both would list the same pages
+    // under two sentences that disagree about which question was asked.
+    const { unmount } = await mount({ term: '/afhalen', pages: scoped });
+
+    expect(document.body.textContent).not.toContain('have this name');
+    unmount();
+  });
+
+  it('says nothing about a scope when there is none', async () => {
+    const { unmount } = await mount({ term: 'deals' });
+
+    expect(document.body.textContent).not.toContain('pages in /');
+    expect(document.body.textContent).toContain('have this name');
+    unmount();
+  });
+});
+
+/**
  * Ticket 123. The two halves arrive from two places, and the notes half used to draw its
  * absence as an answer. These are browser cases because the question is what is *on
  * screen* in a state nobody can reach by hand — `search.mjs` names the three states and

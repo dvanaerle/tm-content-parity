@@ -20,6 +20,14 @@
  * sorts them all, and the field union runs per repeat. So the letter `e` is the ceiling
  * and a term that hits nothing is the floor, and both are measured to show the gap.
  *
+ * **A page scope is the one term that leaves early** (ticket 103). It is the single case
+ * where matching is *not* a constant: an entry whose page is out of scope is skipped before
+ * any of the six fields is folded, so a scoped query is cheaper than the unscoped one it
+ * narrows. It is measured here for that reason — the scan changed, so the measurement that
+ * says no library is needed is taken again, and a scope is now the shape a later reader
+ * should expect to be fast. `/` plus a letter that reaches many pages is the expensive end
+ * of it, and one whole key is the cheap end.
+ *
  * Run it after `npm run build`:
  *
  *   node web/probes/probe-search-index.mjs
@@ -165,12 +173,21 @@ function queryTable(measured) {
   const phraseRepeat = repeats.find((one) => (one.prod ?? '').trim().includes(' '));
   const phrase = (phraseRepeat?.prod ?? '').trim();
 
+  // The page scope, at both ends (ticket 103). A whole key is the narrowest scope there
+  // is, and a single letter is the widest one an editor would type — the term the scan
+  // can leave early on least often.
+  const worstPage = worstRepeat.on[0].page;
+  const wideScope = 'e';
+
   const queries = [
     ['e — matches nearly every entry', 'e'],
     ['zzzqx — matches nothing', 'zzzqx'],
     ["Bekijk deals > — the ticket's term, no hits here", 'Bekijk deals >'],
     [`a phrase that hits, on ${phraseRepeat?.on.length} pages`, phrase],
     [`the largest repeat, on ${worstRepeat.on.length} pages`, repeatText],
+    [`/${worstPage} — one page, bare scope`, `/${worstPage}`],
+    [`/${wideScope} — a scope over many pages`, `/${wideScope}`],
+    [`/${worstPage} plus the largest repeat`, `/${worstPage} ${repeatText}`],
   ];
 
   console.log(

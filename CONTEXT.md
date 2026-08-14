@@ -273,6 +273,23 @@ element any more: it folds the links inside it. Both the word and the rule are g
   (ticket 109), so Back restores it and a copied link carries it. On a page it stays
   session-only: a page filter is a pass an editor is making, not a place to return to.
   Neither of them has ever moved a number and this does not change that.
+- **Page scope** — a search narrowed to the pages whose key holds a word: `/downloads` is
+  the repeats on that page, and `/downloads knop` is the repeats on that page whose words
+  hold *knop*. The slash is a scope marker **in first position only**; anywhere else it is
+  an ordinary character, because a page key can hold one — `faq/productinformatie` is a key
+  and `/faq/productinformatie` is that key scoped. The key is matched by **substring**, as
+  every other field in this search is, which is what lets `/faq` reach the family, `/home`
+  reach `(home)` and `/pergola` reach `(be)pergola` with no special case. A scope therefore
+  often matches several pages, and a result says which ones, as a header over the one
+  merged list.
+  It **narrows the corpus a search runs over**, and it opens nothing: a page name in a
+  result still opens the whole content view, never a fragment of it, and a bare scope lists
+  that page's **repeats** and is not a second reading of the page. It moves no count, no bar
+  and no denominator, in the same manner as a **filter** and as the term itself. A scope
+  narrows within one store, because there is no all-stores surface to scope across.
+  See `docs/adr/0016-a-leading-slash-is-a-page-scope.md`, which records why the reasoning it
+  overturns — a key is opaque and nothing splits on a slash — holds for everywhere but first
+  position, and why this is not the first step toward a query language.
 - **Screen** — everything a dashboard is *drawing*: which of the two views is on, the
   sort, the search term, the class pills and *include closed*. It lives in the
   query string, so Back returns to it and it can be sent to a colleague; only what

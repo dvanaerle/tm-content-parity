@@ -24,6 +24,11 @@
  * pills and applies them through `repeatsWithClasses()`, the same derivation the two views
  * narrow by. There is no second answer here to what a class filter means.
  *
+ * **A leading slash is a page scope** (ticket 103). `/downloads` is the repeats on that
+ * page, and `/downloads knop` is the repeats on that page whose words hold *knop*. The
+ * slash is structure in first position and an ordinary letter everywhere else, because a
+ * page key can hold one. See `docs/adr/0016-a-leading-slash-is-a-page-scope.md`.
+ *
  * **Search narrows; it moves no count.** The rule ticket 36 pinned holds here as it
  * holds in `view.mjs`: this module returns what is on screen and never what it adds up
  * to. It says how many findings on how many pages — a count *of the result*, in the
@@ -208,6 +213,14 @@ function linkTextByKey(report) {
  * The order is the order a result lists them in: the page first, because it is where
  * the words are, then the words themselves.
  */
+/**
+ * What a **bare scope** matched on: the page, and nothing else.
+ *
+ * A frozen list rather than a fresh array per entry, because it is the same answer for
+ * every row of such a result — the editor typed a page and the page is what was found.
+ */
+const SCOPE_FIELDS = Object.freeze(['page']);
+
 export const SEARCH_FIELDS = [
   'page',
   'prodText',
@@ -261,6 +274,56 @@ export function matchedFields(entry, term) {
 }
 
 /**
+ * A term, divided into the page scope it opens with and the words after it.
+ *
+ * Pure, and tested apart from matching, because it is the whole of what the slash rule
+ * says: `/downloads knop` is *that page* and *those words*, and nothing about which
+ * findings either half then reaches.
+ *
+ * **First position only.** A page key can hold a slash — `faq/productinformatie` is one —
+ * so anywhere else the character is an ordinary letter and the term keeps it. That is the
+ * reasoning ticket 82 pinned, and it is overturned for exactly one position: at the front,
+ * before any word, there is nothing a slash could be part of.
+ *
+ * A slash with no word after it is **not** a scope. An empty scope would hold every page
+ * key by substring, so the first keystroke of a scope would answer with the whole store.
+ * It is left as an ordinary term, which is what it was before this ticket and what still
+ * finds the keys that hold one.
+ *
+ * @param {string} raw What is in the box.
+ * @returns {{ scope: string | null, text: string }} `scope` is the page scope without its
+ *   slash, or `null` when there is none. `text` is what is left to search for, and it is
+ *   empty on a bare scope — which is a search for the page and not for nothing.
+ */
+export function parseTerm(raw) {
+  const term = raw.trim();
+  if (!term.startsWith('/')) return { scope: null, text: term };
+
+  const rest = term.slice(1);
+  const space = rest.search(/\s/);
+  const scope = space === -1 ? rest : rest.slice(0, space);
+  if (!scope) return { scope: null, text: term };
+
+  return { scope, text: space === -1 ? '' : rest.slice(space).trim() };
+}
+
+/**
+ * Whether this page key is in the scope.
+ *
+ * **Substring, and not an exact key.** It is how every other field in this search is
+ * matched, and it is what lets `/faq` reach the family, `/home` reach `(home)` and
+ * `/pergola` reach `(be)pergola` with no special case for any of them. A scope may
+ * therefore hold several pages, and often does — which is why a result says which ones.
+ *
+ * It never splits on a slash, for the reason `matchedFields()` never does: the key is one
+ * opaque string. Position 0 of the *term* is the only place a slash is read as structure.
+ *
+ * @param {string} page
+ * @param {string} scope
+ */
+export const inScope = (page, scope) => page.toLowerCase().includes(fold(scope));
+
+/**
  * What one store's index answers about a term.
  *
  * The rows are **repeats** and not findings, which is this ticket's second trap: a term
@@ -271,6 +334,12 @@ export function matchedFields(entry, term) {
  * The two numbers are a count of the result and nothing more: how many findings, on how
  * many pages. Search narrows and moves no count, so there is no bar here, no denominator
  * and no closed count.
+ *
+ * A term that opens with a slash carries a **page scope** (ticket 103), which narrows the
+ * corpus this runs over before any of the above. It is a narrowing and not a second kind of
+ * result: the rows are the same repeats, the counts are the same counts of them, and a bare
+ * scope answers with that page's repeats rather than with a reading of the page — the
+ * ledger has one home and it is not here.
  *
  * @param {object} args
  * @param {SearchIndex} args.index
@@ -302,8 +371,15 @@ export function searchStore({
   /** @type {Map<string, string[]>} */
   const fieldsById = new Map();
 
+  // The scope is taken off the term before anything is matched, so the words that are
+  // left are matched exactly as they were before this ticket. A bare scope is a hit on
+  // the **page name**, which is the one field the editor typed — and it is why the term
+  // being empty here is not the empty box `matchedFields()` refuses.
+  const { scope, text } = parseTerm(term);
+
   for (const entry of index.findings) {
-    const fields = matchedFields(entry, term);
+    if (scope && !inScope(entry.page, scope)) continue;
+    const fields = text ? matchedFields(entry, text) : scope ? SCOPE_FIELDS : [];
     if (fields.length === 0) continue;
     if (!includeClosed && !isActive(stateOf(entry.id))) continue;
     fieldsById.set(entry.id, fields);
@@ -342,11 +418,15 @@ export function searchStore({
   // before the pills cut it, so the strip describes the filter and not the term. Its
   // unit is in its name on purpose: `total` beside it counts **findings**, and two
   // numbers of two units under one vague word is the doubled figure CONTEXT.md forbids.
+  // The scope rides on the **result** and not on a repeat, for the reason `fields` rides
+  // on the repeat and not on its pages: which pages a scope reached is a fact about the
+  // answer, and `view.test.mjs` pins what a repeat carries.
   return {
     repeats,
     total: findingsIn(repeats),
     pages: new Set(repeats.flatMap((repeat) => repeat.on.map((one) => one.page))).size,
     matchedRepeats: matchedRepeats.length,
+    scope,
   };
 }
 

@@ -4,7 +4,9 @@ import {
   addPage,
   emptyIndex,
   indexStore,
+  inScope,
   matchedFields,
+  parseTerm,
   searchNotes,
   searchStore,
 } from './search.mjs';
@@ -319,6 +321,81 @@ describe('matchedFields', () => {
   });
 });
 
+/**
+ * Ticket 103. A leading slash stops being an ordinary character and becomes a page scope.
+ * Parsing is tested here, apart from matching: what the slash rule says is which half of
+ * the typing is the page and which half is the words, and nothing about what either half
+ * then finds.
+ */
+describe('parseTerm', () => {
+  it('reads a leading slash as the page scope', () => {
+    expect(parseTerm('/downloads')).toEqual({ scope: 'downloads', text: '' });
+  });
+
+  it('divides a scope from the words after it', () => {
+    expect(parseTerm('/downloads knop')).toEqual({ scope: 'downloads', text: 'knop' });
+  });
+
+  it('keeps the whole of the words, spaces and all', () => {
+    // The scope ends at the first space and the text is everything after it. A term
+    // that stopped at the second space would refuse `Bekijk deals >`, which is the
+    // phrase ticket 82 is written around.
+    expect(parseTerm('/afhalen bekijk deals >')).toEqual({
+      scope: 'afhalen',
+      text: 'bekijk deals >',
+    });
+  });
+
+  it('leaves a slash that is not in first position alone', () => {
+    // A page key can hold one — `faq/productinformatie` is a key — so anywhere but the
+    // front the character is an ordinary letter and the term keeps it whole.
+    expect(parseTerm('faq/productinformatie')).toEqual({
+      scope: null,
+      text: 'faq/productinformatie',
+    });
+  });
+
+  it('scopes on a key that holds a slash, without splitting on the second one', () => {
+    // Position 0 is the only place a slash is structure. The rest of the key is opaque,
+    // so `/faq/productinformatie` is one scope and never two.
+    expect(parseTerm('/faq/productinformatie')).toEqual({
+      scope: 'faq/productinformatie',
+      text: '',
+    });
+  });
+
+  it('is not a scope when nothing follows the slash', () => {
+    // An empty scope holds every page key by substring, so the first keystroke would
+    // answer with the whole store. It stays the ordinary term it was before this ticket.
+    expect(parseTerm('/')).toEqual({ scope: null, text: '/' });
+    expect(parseTerm('/ knop')).toEqual({ scope: null, text: '/ knop' });
+  });
+
+  it('reads the term as typed, so a scope survives the space before it', () => {
+    expect(parseTerm('  /downloads  knop  ')).toEqual({ scope: 'downloads', text: 'knop' });
+  });
+
+  it('has nothing to say about an empty box', () => {
+    expect(parseTerm('   ')).toEqual({ scope: null, text: '' });
+  });
+});
+
+describe('inScope', () => {
+  it('matches the key by substring, so one scope can reach a family of pages', () => {
+    // Substring and not an exact key: it is how every other field in this search is
+    // matched, and it is what lets one rule reach `faq`, `(home)` and `(be)pergola`
+    // with no special case for any of them.
+    expect(inScope('faq/productinformatie', 'faq')).toBe(true);
+    expect(inScope('(home)', 'home')).toBe(true);
+    expect(inScope('(be)pergola', 'pergola')).toBe(true);
+    expect(inScope('garantie', 'downloads')).toBe(false);
+  });
+
+  it('ignores letter case, as the rest of the search does', () => {
+    expect(inScope('Downloads', 'downloads')).toBe(true);
+  });
+});
+
 describe('searchStore', () => {
   /** An index over the entries given, as the store page would have loaded it. */
   const index = (findings) => ({
@@ -375,6 +452,83 @@ describe('searchStore', () => {
 
     expect(result.repeats[0].fields).toEqual(['prodText', 'anchorHeading']);
     expect(Object.keys(result.repeats[0].on[0]).sort()).toEqual(['id', 'occurrences', 'page']);
+  });
+
+  it('narrows to one page on a scope, and leaves the word alone', () => {
+    // Ticket 103. `downloads` on its own returns the page's findings mixed with every
+    // text hit for the same word; `/downloads` is the page and nothing else.
+    const findings = index([
+      entry({ id: 'a', page: 'downloads', prod: 'Bekijk deals >' }),
+      entry({ id: 'b', page: 'garantie', prod: 'Onze downloads staan hier' }),
+    ]);
+
+    expect(searchStore({ index: findings, term: 'downloads' }).total).toBe(2);
+
+    const scoped = searchStore({ index: findings, term: '/downloads' });
+    expect(scoped.repeats.map((one) => one.on[0].page)).toEqual(['downloads']);
+    expect(scoped.total).toBe(1);
+  });
+
+  it('searches within the scope on the words after it', () => {
+    const scoped = searchStore({
+      index: index([
+        entry({ id: 'a', page: 'downloads', prod: 'Bekijk de knop' }),
+        entry({ id: 'b', page: 'downloads', prod: 'Bekijk deals >' }),
+        entry({ id: 'c', page: 'garantie', prod: 'Bekijk de knop' }),
+      ]),
+      term: '/downloads knop',
+    });
+
+    expect(scoped.total).toBe(1);
+    expect(scoped.repeats[0].on.map((one) => one.id)).toEqual(['a']);
+  });
+
+  it('merges the pages of a scope that holds several into one list', () => {
+    // A substring scope reaches a family, and the result is one list of repeats over
+    // all of it — the grouping is the one `repeatsInStore()` makes, as everywhere else.
+    const scoped = searchStore({
+      index: index([
+        entry({ id: 'a', page: 'faq' }),
+        entry({ id: 'b', page: 'faq/productinformatie' }),
+        entry({ id: 'c', page: 'garantie' }),
+      ]),
+      term: '/faq',
+    });
+
+    expect(scoped.repeats).toHaveLength(1);
+    expect(scoped.repeats[0].on.map((one) => one.page)).toEqual(['faq', 'faq/productinformatie']);
+    expect(scoped.pages).toBe(2);
+  });
+
+  it('says which scope it answered, so the result can name the pages it matched', () => {
+    // The scope rides on the result and not on a repeat: `view.test.mjs` pins what a
+    // repeat's pages hold, and which pages a scope matched is a fact about the answer.
+    expect(searchStore({ index: index([entry({})]), term: '/afhalen' }).scope).toBe('afhalen');
+    expect(searchStore({ index: index([entry({})]), term: 'afhalen' }).scope).toBe(null);
+  });
+
+  it('reports a bare scope as a hit on the page name', () => {
+    // The fields say why a row is in the result. Under a bare scope the answer is the
+    // page, which is the one field the editor typed.
+    expect(searchStore({ index: index([entry({})]), term: '/afhalen' }).repeats[0].fields).toEqual([
+      'page',
+    ]);
+  });
+
+  it('finds a key that holds a slash the way it always did', () => {
+    // The trap ticket 82 recorded, kept shut. Anywhere but position 0 the slash is an
+    // ordinary letter, so the term is matched against the whole opaque key.
+    const findings = index([entry({ id: 'a', page: 'faq/productinformatie', prod: null })]);
+
+    expect(searchStore({ index: findings, term: 'faq/product' }).total).toBe(1);
+    expect(searchStore({ index: findings, term: '/faq/product' }).total).toBe(1);
+  });
+
+  it('answers nothing for an empty box, scope or no scope', () => {
+    // An untouched box is not a search, and a slash with nothing after it is not a
+    // scope — so neither of them is a term that matches everything.
+    expect(searchStore({ index: index([entry({})]), term: '' }).repeats).toEqual([]);
+    expect(searchStore({ index: index([entry({})]), term: '/' }).repeats).toEqual([]);
   });
 
   it('leaves out what the log has closed, because the default is active work', () => {

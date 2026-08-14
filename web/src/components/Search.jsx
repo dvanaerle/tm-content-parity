@@ -9,7 +9,7 @@ import { Separator } from './ui/separator.jsx';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { logState } from '../lib/log-read.mjs';
-import { searchNotes, searchStore } from '../lib/search.mjs';
+import { inScope, parseTerm, searchNotes, searchStore } from '../lib/search.mjs';
 import { pagesWithClasses } from '../lib/view.mjs';
 
 /**
@@ -40,6 +40,12 @@ import { pagesWithClasses } from '../lib/view.mjs';
  * *Include closed* is not part of that. It is search-only, it says what counts as a
  * result rather than what is on screen, and it stays out of the strip — as does the term
  * itself, which becomes a filter deliberately in ticket 106 and not by accident here.
+ *
+ * **A leading slash narrows to a page** (ticket 103). The rows are the same repeats and the
+ * counts are the same counts of them; what a scope adds on screen is the header saying
+ * which pages it matched, because a substring scope often holds several and a merged list
+ * with no header reads as one page's work. It is a narrowing of the corpus and not a way
+ * into a page: a page name still opens the whole content view (ADR 0006).
  */
 export default function Search({
   store,
@@ -96,8 +102,22 @@ export default function Search({
   // and clean is the point — so without this list a page could be reached by name before
   // this ticket and not after it. That is a capability the search had to keep, not a
   // second answer: it is the by-page reading of the same term.
+  // The scope, read off the same term the result was answered from, and applied to the
+  // store's **whole** page list rather than to the index: the header says which pages the
+  // scope reached, and a page with no open finding is in no index and is still in scope.
+  // It is not narrowed by the pills — it says what the scope matched, and the strip above
+  // it says what the classes then cut.
+  const { scope, text } = parseTerm(term);
+  const inside = useMemo(
+    () => (scope ? pages.filter((page) => inScope(page.page, scope)) : []),
+    [pages, scope],
+  );
+
   const named = useMemo(() => {
-    const needle = term.trim().toLowerCase();
+    // The words and never the scope. Under a scope this block is not drawn at all — the
+    // header above the list is the by-page reading, and two lists of the same pages under
+    // two sentences would disagree about which question was asked.
+    const needle = text.trim().toLowerCase();
     const found = pages.filter((page) => page.page.toLowerCase().includes(needle));
     // The pills narrow this half through the derivation the page list itself narrows
     // by, rather than through a second reading of what a class filter means.
@@ -109,7 +129,7 @@ export default function Search({
     // is the whole reason the block exists, and a version of it that read the log would
     // hide the pages it is here to keep reachable.
     return pagesWithClasses(found, classes);
-  }, [pages, term, classes]);
+  }, [pages, text, classes]);
 
   if (error) {
     return (
@@ -167,6 +187,8 @@ export default function Search({
         </Label>
       </div>
 
+      <Scope store={store} scope={scope} pages={inside} link={link} />
+
       {result.repeats.length === 0 ? (
         <p className="px-4 py-6 text-sm text-muted-foreground">No difference with these words.</p>
       ) : (
@@ -184,9 +206,52 @@ export default function Search({
         />
       )}
 
-      <Named store={store} pages={named} link={link} />
+      {/* Under a scope the header above is the by-page reading of the same typing, so
+          this block would list the same pages a second time. */}
+      {scope ? null : <Named store={store} pages={named} link={link} />}
       <Notes result={notes} link={link} />
     </>
+  );
+}
+
+/**
+ * Which pages the scope matched, as a header over the one list (ticket 103).
+ *
+ * A scope is a **substring** of the page key, so it often holds several pages — `/faq`
+ * reaches the family — and the repeats of all of them are merged into one list. Without
+ * this line an editor reads that list as one page's work, which is the one way a scope
+ * can lie.
+ *
+ * The pages come from the store's whole page list and not from the search index, so a page
+ * with no open finding is named here too: it is in scope, it is often the page somebody is
+ * looking for, and it is in no result. That is the capability the by-name block below
+ * carries under an ordinary term, and this is where it lives under a scope.
+ *
+ * A page name opens the **whole content view** and never a fragment of it — ADR 0006, and
+ * this ticket's first trap. A scope narrows the corpus a search runs over; it does not
+ * open a page, and this header is not a second reading of one.
+ */
+function Scope({ store, scope, pages, link }) {
+  if (!scope || pages.length === 0) return null;
+
+  return (
+    <section className="border-b border-border px-4 py-3">
+      <h3 className="text-sm font-medium">
+        {pages.length} {pages.length === 1 ? 'page' : 'pages'} in /{scope}
+      </h3>
+      <ul className="mt-1 flex flex-wrap gap-x-3 text-sm">
+        {pages.map((page) => (
+          <li key={page.page}>
+            <a className={cn('hover:underline', CHROME.link)} href={link(store, page.page)}>
+              {page.page}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1 text-xs text-muted-foreground">
+        The differences below are the ones on these pages, in one list.
+      </p>
+    </section>
   );
 }
 
