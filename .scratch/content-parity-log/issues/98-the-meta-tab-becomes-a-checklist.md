@@ -38,9 +38,31 @@ the editor goes to in order to fix it. They are the only English labels in a Dut
 interface, which is why ticket [100](100-the-glossary-names-the-display-only-rows.md)
 writes the rule down.
 
-If ticket 92 found keywords empty on both sides everywhere, **the Meta Keywords row
+~~If ticket 92 found keywords empty on both sides everywhere, **the Meta Keywords row
 does not ship** and this ticket records the number that dropped it. The rule and the
-note then stand above Canonical alone.
+note then stand above Canonical alone.~~
+
+**Measured 2026-08-14 by ticket
+[92](92-measure-meta-title-and-keywords-presence.md)`## Answer`: the Meta Keywords row
+ships.** Keywords is not empty everywhere. It is on **356 of 777** status-200 production
+page-sides (45.8%) and **291 of 764** new ones (38.1%), carrying **224** and **176**
+distinct strings — a per-page field, not one string pasted site-wide. Present-but-empty is
+**4** page-sides per side, and it is one page (`install a veranda`) in `be_fr`, `de`, `fr`
+and `uk`, so the empty-everywhere case does not hold. The row also has something to say:
+on the 722 comparable pairs, **54 pages lose the field, 12 change it, 4 gain it**, 270
+agree and 382 have it on neither side. The loss is 8 to 11 pages in every one of the six
+stores, so it is a migration behaviour and not one editor.
+
+Two consequences for the rows below. **`uk` is where this row will look emptiest** — 91 of
+its 121 pairs have keywords on neither side, against `nl`'s 59 of 124 — so an editor of the
+British store will meet a `—` on both sides more often than not, and slice 1's shape has to
+survive that. And the row stays **display only** as designed: 92 named no class and slice 2
+gives it no override control, so those 54 losses are shown and not counted.
+
+Ticket 92's other verdict does not change this ticket's five rows, and is recorded here so
+a reader does not go looking: **`metaTitle` was refused**, because `meta[name="title"]` is
+byte-identical to `<title>` on 1,539 of 1,539 page-sides. The Meta Title row therefore
+shows `<title>`, which on this corpus *is* Magento's Meta Title field, byte for byte.
 
 ## Reading list
 

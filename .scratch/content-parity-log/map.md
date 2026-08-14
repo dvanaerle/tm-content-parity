@@ -1230,6 +1230,21 @@ volgende kleuren:` scores **0.33**, below the 0.6 threshold and below the
   what let the feature be measured, and the measurement withdrew it. _Zero mutes were live
   when the key changed_ held on the day, and an editor wrote one at 11:07 the same day.
 
+- **`<meta name="title">` is a copy of `<title>`, and keywords is a real field.** Both
+  guesses behind ticket 58's two new `PageMeta` fields were wrong, and in opposite
+  directions. `meta[name="title"]` is on 1,539 of 1,541 status-200 page-sides, so it is
+  not absent — it is **byte-identical to that page's own `<title>` on 1,539 of 1,539 and
+  differs on 0**, including 0 that differ only invisibly. So it is **not added**: a field
+  that can never disagree with a field the contract already has is not a second field, and
+  the Meta Title row shows `<title>`, which on this corpus *is* Magento's Meta Title field.
+  Keywords was expected to be empty everywhere and is not: 356 of 777 production
+  page-sides and 291 of 764 new ones carry it, across 224 and 176 distinct strings, and on
+  the 722 comparable pairs **54 pages lose it, 12 change it and 4 gain it**. It is
+  **kept**, and the Meta Keywords row ships. Present-but-empty — the distinction the
+  ticket insisted on — is 4 page-sides per side, and it is one page in four stores.
+  Ticket [92](issues/92-measure-meta-title-and-keywords-presence.md), measured with
+  `crawl/probes/probe-92-meta-title-and-keywords.mjs`.
+
 ## Working order
 
 Settled on 2026-08-10. 46 of the 90 tickets are closed. About 44 are open, and
