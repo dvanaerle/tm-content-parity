@@ -9,7 +9,7 @@ import { Separator } from './ui/separator.jsx';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { logState } from '../lib/log-read.mjs';
-import { inScope, parseTerm, searchNotes, searchStore } from '../lib/search.mjs';
+import { inScope, searchNotes, searchStore } from '../lib/search.mjs';
 import { pagesWithClasses } from '../lib/view.mjs';
 
 /**
@@ -97,28 +97,33 @@ export default function Search({
     [log.events, read.state, read.ready, read.reason, term],
   );
 
+  // The scope is read off the **result**, which is where `searchStore()` puts it, rather
+  // than parsed again here: one string, one parse, and no second reading of the slash rule
+  // free to drift from the one the answer was built with. It is `null` until the index
+  // arrives, and nothing below is drawn before then.
+  const scope = result?.scope ?? null;
+
+  // Which pages the scope reached, over the store's **whole** page list rather than the
+  // index: a page with no open finding is in no index and is still in scope. It is not
+  // narrowed by the pills — it says what the scope matched, and the strip above it says
+  // what the classes then cut.
+  const scopePages = useMemo(
+    () => (scope ? pages.filter((page) => inScope(page.page, scope)) : []),
+    [pages, scope],
+  );
+
   // The pages whose **name** holds the term, which the removed box used to narrow the
   // page list down to. A page with no open finding is in no result above — it is clean,
   // and clean is the point — so without this list a page could be reached by name before
   // this ticket and not after it. That is a capability the search had to keep, not a
   // second answer: it is the by-page reading of the same term.
-  // The scope, read off the same term the result was answered from, and applied to the
-  // store's **whole** page list rather than to the index: the header says which pages the
-  // scope reached, and a page with no open finding is in no index and is still in scope.
-  // It is not narrowed by the pills — it says what the scope matched, and the strip above
-  // it says what the classes then cut.
-  const { scope, text } = parseTerm(term);
-  const inside = useMemo(
-    () => (scope ? pages.filter((page) => inScope(page.page, scope)) : []),
-    [pages, scope],
-  );
-
   const named = useMemo(() => {
-    // The words and never the scope. Under a scope this block is not drawn at all — the
-    // header above the list is the by-page reading, and two lists of the same pages under
-    // two sentences would disagree about which question was asked.
-    const needle = text.trim().toLowerCase();
-    const found = pages.filter((page) => page.page.toLowerCase().includes(needle));
+    // `inScope()` and not a second `includes` written out here: it is the same substring
+    // rule over the same page key, and two copies of it would drift the day one of them
+    // learns to fold diacritics. The block is not drawn under a scope at all — the header
+    // above the list is the by-page reading there — so the raw term is what it matches,
+    // and with no scope the raw term is exactly what the parse would have returned.
+    const found = pages.filter((page) => inScope(page.page, term));
     // The pills narrow this half through the derivation the page list itself narrows
     // by, rather than through a second reading of what a class filter means.
     //
@@ -129,7 +134,7 @@ export default function Search({
     // is the whole reason the block exists, and a version of it that read the log would
     // hide the pages it is here to keep reachable.
     return pagesWithClasses(found, classes);
-  }, [pages, text, classes]);
+  }, [pages, term, classes]);
 
   if (error) {
     return (
@@ -187,7 +192,13 @@ export default function Search({
         </Label>
       </div>
 
-      <Scope store={store} scope={scope} pages={inside} link={link} />
+      <Scope
+        store={store}
+        scope={scope}
+        pages={scopePages}
+        found={result.repeats.length}
+        link={link}
+      />
 
       {result.repeats.length === 0 ? (
         <p className="px-4 py-6 text-sm text-muted-foreground">No difference with these words.</p>
@@ -230,8 +241,15 @@ export default function Search({
  * A page name opens the **whole content view** and never a fragment of it — ADR 0006, and
  * this ticket's first trap. A scope narrows the corpus a search runs over; it does not
  * open a page, and this header is not a second reading of one.
+ *
+ * **The closing line is drawn only when there is a list to close over** (the review of this
+ * ticket). A scope can reach pages and still find no open difference on them — a clean
+ * family is the ordinary case — and *the differences below are the ones on these pages*
+ * printed directly above *no difference with these words* contradicts the sentence under
+ * it. The pages are still named, because they are still what the scope matched and they are
+ * still worth opening; it is only the promise of a list that goes.
  */
-function Scope({ store, scope, pages, link }) {
+function Scope({ store, scope, pages, found, link }) {
   if (!scope || pages.length === 0) return null;
 
   return (
@@ -248,9 +266,11 @@ function Scope({ store, scope, pages, link }) {
           </li>
         ))}
       </ul>
-      <p className="mt-1 text-xs text-muted-foreground">
-        The differences below are the ones on these pages, in one list.
-      </p>
+      {found > 0 && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          The differences below are the ones on these pages, in one list.
+        </p>
+      )}
     </section>
   );
 }

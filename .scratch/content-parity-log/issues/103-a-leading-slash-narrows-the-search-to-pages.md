@@ -21,9 +21,10 @@ consistent with every other field in this search, which is what lets `/faq` reac
 family and `/home` reach `(home)` and `/pergola` reach `(be)pergola` without a single
 special case. A scope may therefore match several pages, and often does.
 
-This ticket carries ADR `0010`, which records the position-0 rule, substring rather than
-exact matching, and why this is not the first step toward a query language. It also adds
-the **Page scope** entry to `CONTEXT.md`.
+This ticket carries an ADR — asked for as `0010`, recorded as `0016`, because `0010` was
+taken before this ticket was written — which records the position-0 rule, substring rather
+than exact matching, and why this is not the first step toward a query language. It also
+adds the **Page scope** entry to `CONTEXT.md`.
 
 - [x] `/downloads` on its own returns the repeats on that page — repeat-shaped, like
       every other search result. It reports its hit under the **page** field, which is the
@@ -102,6 +103,33 @@ ticket **105**. And nothing here says which *kind* of nothing was found: a scope
 matches no page draws the sentence a term with no hits has always drawn, which is **104**.
 
 Tests: sixteen new node cases in `web/src/lib/search.test.mjs` — eight over `parseTerm`, two
-over `inScope`, six over a scoped `searchStore()` — and four browser cases in
+over `inScope`, six over a scoped `searchStore()` — and five browser cases in
 `Search.browser.test.mjs` over the header, because whether a merged list says which pages it
 merged is a question only a screen can be asked.
+
+## Review
+
+**The scope now rides on the result in fact and not only in the ADR.** `Search.jsx` was
+calling `parseTerm()` a second time over the same string while `result.scope` went unread,
+so the decision recorded above described something the code did not do and left a second copy
+of the slash rule free to drift. The component reads the answer; the by-name block matches
+the raw term through `inScope()` rather than open-coding the same `includes` beside the
+import of it, and it is only ever drawn when there is no scope, where the raw term and the
+parsed text are the same string.
+
+**The header promised a list that was not there.** A scope that reaches pages with no open
+difference drew *the differences below are the ones on these pages* directly above *no
+difference with these words* — the trap about nothing found saying nothing found, broken by
+the line above the line that keeps it. The pages are still named and the promise is drawn
+only when there is a list. A fifth browser case pins it.
+
+**Smaller.** `SCOPE_FIELDS` had been inserted between the `SEARCH_FIELDS` doc comment and
+`SEARCH_FIELDS`, so a comment about six fields sat over a list of one; `inside` is
+`scopePages`; the probe names its `e` once for the two queries that use it and labels the
+scoped rows as the ADR table quotes them. The ADR gained the two screen rules above, and this
+file no longer says it carries `0010` in the body while striking it out in the checklist.
+
+**Left alone.** The review also found that `Status: resolved` is outside the five labels
+`docs/agents/triage-labels.md` documents — eighty-odd issue files carry it, so the doc is what
+is stale, not this ticket. `AGENTS.md` and `docs/agents/` are out of bounds for this change,
+so the gap is recorded here and not closed.

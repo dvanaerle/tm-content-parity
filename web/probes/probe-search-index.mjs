@@ -173,21 +173,22 @@ function queryTable(measured) {
   const phraseRepeat = repeats.find((one) => (one.prod ?? '').trim().includes(' '));
   const phrase = (phraseRepeat?.prod ?? '').trim();
 
-  // The page scope, at both ends (ticket 103). A whole key is the narrowest scope there
-  // is, and a single letter is the widest one an editor would type — the term the scan
-  // can leave early on least often.
+  // The letter that reaches nearly every entry, named once because it is timed twice: bare
+  // it is the ceiling of the unscoped scan, and behind a slash it is the widest scope an
+  // editor would type — the term the scan can leave early on least often (ticket 103). The
+  // other end of a scope is a whole page key, which is the narrowest there is.
+  const ceiling = 'e';
   const worstPage = worstRepeat.on[0].page;
-  const wideScope = 'e';
 
   const queries = [
-    ['e — matches nearly every entry', 'e'],
+    [`${ceiling} — matches nearly every entry`, ceiling],
     ['zzzqx — matches nothing', 'zzzqx'],
     ["Bekijk deals > — the ticket's term, no hits here", 'Bekijk deals >'],
     [`a phrase that hits, on ${phraseRepeat?.on.length} pages`, phrase],
     [`the largest repeat, on ${worstRepeat.on.length} pages`, repeatText],
     [`/${worstPage} — one page, bare scope`, `/${worstPage}`],
-    [`/${wideScope} — a scope over many pages`, `/${wideScope}`],
-    [`/${worstPage} plus the largest repeat`, `/${worstPage} ${repeatText}`],
+    [`/${ceiling} — the widest scope an editor would type`, `/${ceiling}`],
+    [`/${worstPage} + the largest repeat — scope and words`, `/${worstPage} ${repeatText}`],
   ];
 
   console.log(

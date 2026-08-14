@@ -213,14 +213,6 @@ function linkTextByKey(report) {
  * The order is the order a result lists them in: the page first, because it is where
  * the words are, then the words themselves.
  */
-/**
- * What a **bare scope** matched on: the page, and nothing else.
- *
- * A frozen list rather than a fresh array per entry, because it is the same answer for
- * every row of such a result — the editor typed a page and the page is what was found.
- */
-const SCOPE_FIELDS = Object.freeze(['page']);
-
 export const SEARCH_FIELDS = [
   'page',
   'prodText',
@@ -229,6 +221,14 @@ export const SEARCH_FIELDS = [
   'linkText',
   'anchorHeading',
 ];
+
+/**
+ * What a **bare scope** matched on: the page, and nothing else.
+ *
+ * A frozen list rather than a fresh array per entry, because it is the same answer for
+ * every row of such a result — the editor typed a page and the page is what was found.
+ */
+const SCOPE_FIELDS = Object.freeze(['page']);
 
 /**
  * Which of the six fields on this entry hold the term.
@@ -357,7 +357,10 @@ export const inScope = (page, scope) => page.toLowerCase().includes(fold(scope))
  *   total: number,
  *   pages: number,
  *   matchedRepeats: number,
- * }}
+ *   scope: string | null,
+ * }} `scope` is the page scope this term carried, or `null` for an ordinary one. It rides
+ *   back here so a caller reads the parse off the answer rather than running it a second
+ *   time over the same string.
  */
 export function searchStore({
   index,

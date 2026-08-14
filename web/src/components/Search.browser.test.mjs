@@ -211,6 +211,18 @@ describe('a search narrowed to a page scope', () => {
     unmount();
   });
 
+  it('names the pages but promises no list when the scope found nothing', async () => {
+    // A scope can reach pages and find no open difference on them — a clean family is the
+    // ordinary case. The pages are still worth naming; the sentence about *the differences
+    // below* is not, because there are none and the line under it says so.
+    const { unmount } = await mount({ term: '/afhalen-pdf', pages: scoped });
+
+    expect(document.body.textContent).toContain('1 page in /afhalen-pdf');
+    expect(document.body.textContent).toContain('No difference with these words.');
+    expect(document.body.textContent).not.toContain('The differences below');
+    unmount();
+  });
+
   it('says nothing about a scope when there is none', async () => {
     const { unmount } = await mount({ term: 'deals' });
 

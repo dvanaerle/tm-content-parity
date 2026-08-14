@@ -79,16 +79,30 @@ answers one that could not.
   is needed. `web/probes/probe-search-index.mjs` was re-run because the scan changed, on the
   `nl` store — 3,832 findings over 124 pages, medians of 20 runs:
 
+  The rows are quoted under the labels the probe itself prints, so its output and this table
+  read alike:
+
   | query | median | hits | pages | repeats |
   | --- | --- | --- | --- | --- |
-  | `e` — the ceiling, matches nearly everything | 18.12 ms | 3,825 | 120 | 2,641 |
-  | `zzzqx` — the floor, matches nothing | 2.38 ms | 0 | 0 | 0 |
-  | `/e` — the widest scope an editor would type | 9.29 ms | 3,556 | 111 | 2,458 |
+  | `e` — matches nearly every entry | 18.12 ms | 3,825 | 120 | 2,641 |
+  | `zzzqx` — matches nothing | 2.38 ms | 0 | 0 | 0 |
   | `/carport` — one page, bare scope | 0.65 ms | 133 | 4 | 131 |
-  | `/carport self/veelgestelde-vragen` — scope and words | 0.47 ms | 1 | 1 | 1 |
+  | `/e` — the widest scope an editor would type | 9.29 ms | 3,556 | 111 | 2,458 |
+  | `/carport` + the largest repeat — scope and words | 0.47 ms | 1 | 1 | 1 |
 - `searchStore()` returns `scope` beside its counts. It rides on the result and not on a
   repeat, for the reason `fields` rides on the repeat and not on its pages: `view.test.mjs`
-  pins what a repeat's pages hold.
+  pins what a repeat's pages hold. `Search.jsx` reads it off the answer and never parses the
+  term a second time — one string, one parse, and no second copy of this rule to drift.
+- **The header is drawn on one matched page as well as on several.** The ticket asks for it
+  on a multi-match, which is the case that can lie; but *1 page in /afhalen* is the same
+  true sentence and the alternative is a header that appears and disappears as an editor
+  types. It is the by-page reading of the term under a scope, which is why the by-name block
+  is not drawn there — that block asks the same question under a different sentence, and two
+  lists of the same pages would disagree about which was asked.
+- **The header promises a list only when there is one.** A scope can reach pages and find no
+  open difference on them, and *the differences below are the ones on these pages* printed
+  above *no difference with these words* contradicts the sentence under it. The matched pages
+  are still named — they are still what the scope reached, and still worth opening.
 - No count, bar or denominator moves. A scope narrows what is on screen, in the same manner
   as the class filter and the term itself.
 - **Cross-store search stays impossible.** A scope narrows within a store, and ticket 38
