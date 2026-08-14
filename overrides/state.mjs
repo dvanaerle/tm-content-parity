@@ -74,11 +74,43 @@ const BUCKET = {
 };
 
 /**
+ * The three buckets, in the order they are read in — worst first and Closed last, which is
+ * the reading order on the dashboard and the ledger alike.
+ *
+ * It lives here rather than beside the interface words because it is **the derivation's own
+ * enumeration**: every counter below is built from it, so a fourth bucket cannot be added
+ * to `BUCKET` and then missed by a zero literal written out by hand somewhere else.
+ * `web/src/lib/buckets.mjs` re-exports it and adds the words.
+ *
+ * @type {Bucket[]}
+ */
+export const BUCKETS = ['open', 'needs-attention', 'closed'];
+
+/**
+ * A fresh tally with every bucket at zero, which is what "total over the states" needs on
+ * the counting side: a bucket nobody counted still has to be a number.
+ *
+ * @returns {Record<Bucket, number>}
+ */
+export function emptyBuckets() {
+  return Object.fromEntries(BUCKETS.map((bucket) => [bucket, 0]));
+}
+
+/**
+ * The grouping is **total over the states, and says so out loud**. ADR 0012 asks a
+ * regrouping to cover everything it regroups, and `CONTEXT.md` promises that a fifth state
+ * cannot fall silently into Closed. A bare lookup kept neither promise: an unmapped state
+ * returned `undefined`, and the caller then added one to a bucket named `undefined` and
+ * left the three real counts reading `NaN` — a number that says how much work is left,
+ * silently saying nothing. So an unmapped state is a throw and not a gap.
+ *
  * @param {FindingState} state
  * @returns {Bucket}
  */
 export function bucketOf(state) {
-  return BUCKET[state];
+  const bucket = BUCKET[state];
+  if (!bucket) throw new Error(`No bucket for state '${state}' — the grouping must be total.`);
+  return bucket;
 }
 
 /**
@@ -372,7 +404,7 @@ export function barOf(findings) {
  * @returns {Record<Bucket, number>}
  */
 export function bucketsOf(findings) {
-  const counts = { open: 0, 'needs-attention': 0, closed: 0 };
+  const counts = emptyBuckets();
   for (const finding of findings) {
     if (finding.visibility === 'work') counts[bucketOf(finding.state)] += 1;
   }
@@ -421,7 +453,7 @@ export function deriveStoreState({ reports, events, observationId }) {
   const totals = { closed: 0, denominator: 0, open: 0, dismissed: 0, fixed: 0, contradicted: 0 };
   // Summed over **findings, never over pages** — the same rule the bar beside it obeys, so
   // a page with one casing nit does not weigh as much as a page with forty.
-  const buckets = { open: 0, 'needs-attention': 0, closed: 0 };
+  const buckets = emptyBuckets();
   let reviewed = 0;
   let reviewedFresh = 0;
 

@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { findingSetHash } from '../compare/contract.mjs';
 import { PRIORITIES } from '../shared/priorities.mjs';
 import {
+  BUCKETS,
   bucketOf,
   clearedEventFor,
   derivePageState,
   deriveStoreState,
+  emptyBuckets,
   eventKey,
   latestByKey,
   noteEventFor,
@@ -377,6 +379,24 @@ describe('the three buckets', () => {
     ['an uncontradicted fix claim is closed', 'fixed', 'closed'],
   ])('%s', (_name, state, bucket) => {
     expect(bucketOf(state)).toBe(bucket);
+  });
+
+  /**
+   * `CONTEXT.md` claims the grouping is *"total over them, so a fifth state cannot fall
+   * silently into Closed"*, and ADR 0012 says a regrouping requires total coverage. A bare
+   * map lookup would have returned `undefined` and then counted a `NaN` into a strip that
+   * says how much work is left — a fifth state falling silently into nothing at all. So
+   * the coverage is enforced rather than asserted: an unmapped state throws here.
+   */
+  it('refuses a state it has no bucket for, rather than counting it nowhere', () => {
+    expect(() => bucketOf('regrouped')).toThrow(/regrouped/);
+  });
+
+  it('names every bucket in the enumeration the counters are built from', () => {
+    // One list, so a fourth bucket cannot be added to the derivation and missed by the
+    // three hand-written zero literals that used to stand in for it.
+    expect(BUCKETS).toEqual(['open', 'needs-attention', 'closed']);
+    expect(emptyBuckets()).toEqual({ open: 0, 'needs-attention': 0, closed: 0 });
   });
 
   it('counts a page into three, over the work findings the bar already counts', () => {

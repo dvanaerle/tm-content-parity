@@ -134,4 +134,25 @@ describe('the three buckets on the ledger', () => {
 
     unmount();
   });
+
+  /**
+   * A link that names a closed finding opens the section on the way in, or the landing
+   * would scroll to a row that is not on screen. The press has to keep working afterwards:
+   * an editor who arrives on one closed finding and then wants the closed work out of the
+   * way again is pressing a control that says it is expanded, and a control that says so
+   * and does nothing is the silent nothing-happens ticket 109 wrote its banners to stop.
+   */
+  it('collapses the section a landing opened, on the first press', async () => {
+    history.replaceState(null, '', `?finding=d`);
+    const unmount = mount();
+    await userEvent.click(button('Links'));
+
+    // Open on the way in, because the landing named a closed finding.
+    expect(rows()).toEqual(['a', 'b', 'c', 'd']);
+
+    await userEvent.click(button('Closed'));
+    expect(rows()).toEqual(['a', 'b', 'c']);
+
+    unmount();
+  });
 });

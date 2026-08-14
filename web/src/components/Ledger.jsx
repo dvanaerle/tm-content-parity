@@ -68,6 +68,13 @@ const TABS = ['Text', 'Links', 'Images', 'Meta'];
  * `findings` are the **derived** findings from `derivePageState()` — the same
  * records with a `state` and an `override` attached. The Ledger never re-derives
  * anything; it renders what the pure function decided.
+ *
+ * *Never re-derives* means **it reimplements no rule**, and not that it calls nothing. It
+ * asks `bucketOf()` and `bucketsOf()` which bucket a finding is in and how many are in each
+ * — the same functions `derivePageState()` itself groups with, so there is one rule and no
+ * second reading of it, whichever of the two calls it. What is forbidden here is a `switch`
+ * on `state` grown locally because a component needed one, which is how a screen comes to
+ * disagree with the derivation it is drawing.
  */
 export default function Ledger({
   report,
@@ -392,7 +399,10 @@ function FindingTable({ findings, check, control, sides, landing }) {
    */
   const active = all.filter((finding) => bucketOf(finding.state) !== 'closed');
   const closed = all.filter((finding) => bucketOf(finding.state) === 'closed');
-  const [opened, setOpened] = useState(false);
+  // `null` is **nobody has said yet**, and it is not the same as shut. The landing below
+  // opens the section only while the reader has expressed no preference, so the first press
+  // always decides — a boolean here would leave the button arguing with the URL and losing.
+  const [opened, setOpened] = useState(null);
 
   // A link can name a finding on either of these two tabs, and neither has a document
   // position to anchor on the way the content view does — their rows *are* findings. So
@@ -404,7 +414,7 @@ function FindingTable({ findings, check, control, sides, landing }) {
   // A link that names a **closed** finding opens the section on the way in. Without this
   // the landing would scroll to a row that is not on screen, which is the same silent
   // nothing-happens ticket 109 wrote the two banners above to stop.
-  const showClosed = opened || closed.some((finding) => finding.id === focus);
+  const showClosed = opened ?? closed.some((finding) => finding.id === focus);
   const rows = showClosed ? [...active, ...closed] : active;
 
   const landed =
@@ -435,7 +445,15 @@ function FindingTable({ findings, check, control, sides, landing }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {active.map((finding) => findingRow(finding, { focus, control, sides }))}
+        {active.map((finding) => (
+          <FindingRow
+            key={finding.id}
+            finding={finding}
+            focus={focus}
+            control={control}
+            sides={sides}
+          />
+        ))}
 
         {/* The section header, drawn only when there is closed work to reach. It is a row
             in the same table rather than a control beside it, so the closed findings open
@@ -461,7 +479,16 @@ function FindingTable({ findings, check, control, sides, landing }) {
           </TableRow>
         )}
 
-        {showClosed && closed.map((finding) => findingRow(finding, { focus, control, sides }))}
+        {showClosed &&
+          closed.map((finding) => (
+            <FindingRow
+              key={finding.id}
+              finding={finding}
+              focus={focus}
+              control={control}
+              sides={sides}
+            />
+          ))}
       </TableBody>
     </Table>
   );
@@ -470,18 +497,17 @@ function FindingTable({ findings, check, control, sides, landing }) {
 /**
  * One finding's row, drawn the same whichever bucket section it is in.
  *
- * It is a function and not a second copy inside the closed branch for the plainest of
+ * It is one component and not a second copy inside the closed branch for the plainest of
  * reasons: a bucket is a grouping, so a Closed row is the *same row* in a different place.
  * Two copies would be two chances for it to stop being the same row.
  */
-const findingRow = (finding, { focus, control, sides }) => {
+const FindingRow = ({ finding, focus, control, sides }) => {
   // The mark of a landed row is `landing.mjs`'s rule, and the class it carries is
   // merged with this table's own rather than replacing them.
   const { className, ...mark } = landedRowProps(finding.id === focus);
 
   return (
     <TableRow
-      key={finding.id}
       id={findingAnchor(finding.id)}
       {...mark}
       className={cn('scroll-mt-4 align-top', className)}

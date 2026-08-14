@@ -103,10 +103,34 @@ Two things follow from it and are worth writing down:
 - **One thing stays hand-rolled inside a component that otherwise did not.** The
   parity bar in `Chips.jsx` is not a shadcn `Progress`, because `Progress` composes
   its own indicator and paints it `bg-primary`, and the fill here is chosen per row
-  from `FILL[severityTone(share)]`. There is no prop that reaches the indicator, and
+  from `FILL[severityTone(share)]`. ~~There is no prop that reaches the indicator, and
   wrapping the palette class in a descendant selector would assemble a class name at
-  runtime, which Tailwind cannot see. It is also a 24-pixel sparkline in a table cell
+  runtime, which Tailwind cannot see.~~ It is also a 24-pixel sparkline in a table cell
   rather than a progress bar.
+  — **Struck 2026-08-14, ticket 80.** There is a prop now: the registry file takes
+  `indicatorClassName` (see the amendment below), so a palette class reaches the fill
+  without any runtime assembly. The sparkline stays hand-rolled on the **surviving**
+  reason alone — it is a 24-pixel bar in a table cell and not a progress bar — and that
+  is a weaker warrant than this consequence used to carry. A later ticket that wants it
+  to be a `Progress` is not arguing with this decision.
+
+- **A second registry file is edited in place** (ticket 80). `ui/progress.jsx` builds its
+  own track and indicator and exposes a `className` for the root only, so the page bar in
+  `Progress.jsx` had nowhere to put `FILL.secondary` — and the fill colour is the whole
+  reason that bar is drawn rather than a number printed. The wrapper now takes
+  `trackClassName` and `indicatorClassName` and forwards them to the two parts.
+
+  It is the same shape of edit as the checkbox above and it is recorded for the same
+  reason: **a `shadcn add progress` will overwrite it**, and this list is the only place a
+  re-add would be caught. It differs from the checkbox in one way worth naming — this one
+  *is* tone-shaped, since what it carries through is a palette token. That does not breach
+  the rule the amendment above states. The palette still decides the colour and the
+  primitive still decides the shape; the edit only opens a door the primitive had shut on
+  `className` carrying colour, which is the normal form here.
+
+  Two edits are not a pattern yet, but they are the start of one. A third should be read as
+  evidence that this repo wants `ui/` files it maintains rather than vendors, and that is a
+  decision of its own.
 
 - **A registry file is edited in place, once** (ticket 110). `ui/checkbox.jsx` draws
   the same tick for a checked box and for an indeterminate one, because its indicator

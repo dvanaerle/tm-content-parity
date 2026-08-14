@@ -17,9 +17,11 @@
  * Worst first, and Closed last. The order is the reading order on both the dashboard and
  * the ledger, and it is what keeps Closed out of the active workload without hiding it.
  *
- * @type {import('../../../overrides/state.mjs').Bucket[]}
+ * It is **re-exported and not restated**: the derivation builds its own tallies from this
+ * list, so a second copy here is how a fourth bucket comes to be counted in one place and
+ * drawn in another.
  */
-export const BUCKETS = ['open', 'needs-attention', 'closed'];
+export { BUCKETS } from '../../../overrides/state.mjs';
 
 /** @type {Record<import('../../../overrides/state.mjs').Bucket, string>} */
 export const BUCKET_LABEL = {
@@ -33,13 +35,18 @@ export const BUCKET_LABEL = {
  * own definitions and not a second set: a bucket that reads one way in the glossary and
  * another way in a tooltip is exactly the drift this file exists to stop.
  *
+ * So these are the glossary's three sentences with *"a finding that is"* trimmed off the
+ * front, and nothing else. The tempting edit is to shorten Closed to *"no action for now"*
+ * and drop the absent findings — but absent is the commonest way a difference closes, and a
+ * tooltip that omits it teaches the bucket wrong.
+ *
  * @type {Record<import('../../../overrides/state.mjs').Bucket, string>}
  */
 export const BUCKET_MEANING = {
   open: 'Waits for a decision.',
   'needs-attention':
-    'Claimed fixed, but a later observation still sees the difference. Nothing else is in here — a page review that went stale is a badge on the page.',
-  closed: 'Dismissed, or claimed fixed and not contradicted. No action for now.',
+    'Contradicted, and nothing else. A page review that went stale is a fact about a page, so it is a badge on the page and never a finding in this bucket.',
+  closed: 'Absent from the snapshot, or dismissed, or claimed fixed and not contradicted.',
 };
 
 /**

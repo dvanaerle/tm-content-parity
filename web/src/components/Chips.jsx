@@ -23,9 +23,9 @@ import { BANNER, FILL, PILL, SOLID, severityTone } from '../lib/palette.mjs';
  * Ticket 09 requires absolute counts everywhere, because the denominator moves: a
  * corrected difference leaves the snapshot, and a class switched off leaves the count.
  */
-export function Chip({ value, label, tone = 'neutral', title }) {
+export function Chip({ value, label, tone = 'neutral', title, ...props }) {
   return (
-    <Badge className={cn('h-auto gap-1.5 px-2 py-1', PILL[tone])} title={title}>
+    <Badge className={cn('h-auto gap-1.5 px-2 py-1', PILL[tone])} title={title} {...props}>
       <strong className="font-semibold">{value}</strong>
       <span>{label}</span>
     </Badge>

@@ -32,6 +32,7 @@ import { useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { useScreen } from '../lib/screen-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
+import { emptyBuckets } from '../../../overrides/state.mjs';
 import {
   pagesWithClasses,
   pagesWithPriorities,
@@ -128,9 +129,8 @@ export default function Dashboard({
    */
   const bucketsOfPage = (page) =>
     log.byPage.get(`${page.store}/${page.page}`)?.buckets ?? {
+      ...emptyBuckets(),
       open: page.summary.work,
-      'needs-attention': 0,
-      closed: 0,
     };
 
   // A typed term puts the search on screen in place of either view. It answers past both
@@ -314,8 +314,13 @@ export default function Dashboard({
         {BUCKETS.map((bucket) => (
           <Chip
             key={bucket}
+            data-bucket={bucket}
             value={log.derived.buckets[bucket]}
-            label={BUCKET_LABEL[bucket].toLowerCase()}
+            /* The glossary's own capitals, and not lowercased to match the sentence-shaped
+               chips beside it. A bucket is a defined term: *Needs attention* reading as
+               "needs attention" here and "Needs attention" in the ledger is one thing
+               called two, which is the whole failure this ticket set out to end. */
+            label={BUCKET_LABEL[bucket]}
             tone={BUCKET_TONE[bucket]}
             title={BUCKET_MEANING[bucket]}
           />
@@ -507,9 +512,11 @@ export default function Dashboard({
                   </TableHead>
                   <TableHead className="px-4 text-muted-foreground">Page</TableHead>
                   {/* The three buckets name themselves in the head, so the three numbers
-                      under it need no legend of their own. */}
+                      under it need no legend of their own. Joined from the same list the
+                      cells below are drawn from, so the head cannot come to name two of
+                      them, or name them in another order than they are drawn in. */}
                   <TableHead className="w-56 px-4 text-muted-foreground">
-                    Open · needs attention · closed
+                    {BUCKETS.map((bucket) => BUCKET_LABEL[bucket]).join(' · ')}
                   </TableHead>
                   {CHECKS.map((check) => (
                     <TableHead key={check} className="w-24 text-muted-foreground">

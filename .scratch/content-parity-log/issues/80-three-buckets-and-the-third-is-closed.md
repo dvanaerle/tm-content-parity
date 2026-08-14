@@ -48,6 +48,12 @@ exist, and the word stays retired.
       is still visible inside its bucket. A bucket summarises; it does not replace the
       state pill. — A three-count strip above the tabs, and the bucket order on Links and
       Images. `OverrideControl`'s pill is untouched and still on every row.
+      **Accepted gap, and a narrowing of what this line asked for:** it says *the ledger*
+      and the answer is *two of its four tabs*. Text is not grouped, because that tab is
+      the content view in document order and ADR 0006 calls that the spine; Meta has no
+      buckets to draw. The strip above the tabs counts all three on every tab, so no
+      number is hidden — but a reader of this line should not have to infer the narrowing
+      from the answer, so it is written here as one.
 - [x] `Needs attention` holds contradicted findings only. A stale page review is a page
       badge saying ~~**gewijzigd sinds controle**~~ **changed since review**, and it is not
       in any finding bucket. — ADR 0014, and `Progress.jsx` already drew it in English.
@@ -62,6 +68,10 @@ exist, and the word stays retired.
       **Deliberately not a filter**: hiding Closed by default would delete a row from the
       screen the instant an editor ticked it fixed, with the tick still under the cursor.
       The Text tab keeps document order, which ADR 0006 calls the spine.
+      **Accepted gap:** on Text a closed finding therefore *is* in the default view, sitting
+      inline where the page puts it. This line is met on the two finding tables and not on
+      the content view, and the trade was deliberate — grouping the spine by bucket would
+      cost the one thing that tab is for. Reviewed 2026-08-14 and left standing.
 - [x] The three buckets are derived in `overrides/state.mjs` as a pure function over the
       ~~five~~ four states, with a test covering each state's bucket, including a
       contradicted claim ~~and a muted finding~~. — **2026-08-13, ADR 0011.**
@@ -109,3 +119,37 @@ exist, and the word stays retired.
   `web/src/lib/buckets.mjs`.
 - Status: **done 2026-08-14.** The prototype route named above is gone; it was throwaway and
   the real dashboard and ledger now carry the grouping.
+- **Review, 2026-08-14.** Six things came back and five were fixed in place:
+  - `bucketOf()` was a bare map lookup returning `undefined` for an unlisted state, and
+    `bucketsOf()` then counted into a bucket named `undefined` and left the three real
+    numbers reading `NaN`. Both this file and `CONTEXT.md` claimed the grouping was *total
+    over the states*, and nothing held the claim. It throws now, and the enumeration and
+    the zero-tally come off one list instead of three literals written out by hand.
+  - The Closed disclosure could not be collapsed once a landing had opened it: `opened`
+    went false while the URL kept `showClosed` true, so the button said *expanded* and did
+    nothing. The state is tri-valued now — `null` is *nobody has said yet* — and the
+    browser test presses it on the landing path, which is the press the first tests missed.
+  - The three chips lowercased the glossary word and the column head hard-coded
+    `Open · needs attention · closed`, so one defined term read three ways across the two
+    screens this ticket set out to make agree. Both read `BUCKET_LABEL` now, and a new
+    `Dashboard.browser.test.mjs` asserts the words as literals off the rendered page.
+  - `BUCKET_MEANING` claimed to be *`CONTEXT.md`'s own definitions and not a second set*
+    and had drifted into paraphrase — Closed had lost *absent from the snapshot*, which is
+    the commonest way a difference closes. The three sentences are the glossary's again.
+  - `findingRow` was a JSX-returning helper in camelCase among PascalCase siblings; it is a
+    `FindingRow` component.
+  - **Not fixed, and argued rather than skipped:** the reviewer read
+    `bucketsOf(derived)` inside the Ledger as a breach of that file's *never re-derives*
+    contract. It is a redundant call, not a second rule — `derivePageState()` groups with
+    the same function, so the two cannot disagree — and threading the count in as a prop
+    would move the proof into `PageView.jsx`, which has no test, and leave the ledger's own
+    browser test asserting a number the test itself passed in. The contract was the
+    inaccurate half, so the docblock now says what it actually forbids: a `switch` on
+    `state` grown locally. The call stays.
+- **On the acceptance criteria in this file.** Two of them were edited during the work
+  rather than annotated beside the original ask — the Dutch word and the Dutch badge, both
+  superseded by ADR 0014, which was recorded the day before this ticket started. The
+  supersession is legitimate and the strikethroughs name it. The habit is not: an AC is the
+  record of what was asked, and editing its text to match what was built loses the
+  difference between a requirement that was met and one that was withdrawn. The two
+  narrowings found in review are written as **accepted gaps** above for that reason.
