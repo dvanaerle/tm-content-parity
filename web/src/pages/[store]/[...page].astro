@@ -51,7 +51,7 @@ const { production, new: next } = report.sides;
       </Badge>
       {
         (production.boundary !== 'main' || next.boundary !== 'main') && (
-          <Badge className={`h-auto px-2 py-1 ${PILL.attention}`}>
+          <Badge className={`h-auto px-2 py-1 ${PILL.caution}`}>
             boundary: production {production.boundary}, new {next.boundary}
           </Badge>
         )

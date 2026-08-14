@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { canDecide } from './classes.mjs';
+import { FINDING_CLASSES, canDecide, classInfo } from './classes.mjs';
+import { TONES } from './palette.mjs';
 
 /**
  * The rules the interface derives from a class's **visibility**, and nothing about how a
- * class looks: `PILL` is `palette.mjs`'s and it has its own file.
+ * class looks: `PILL` is `palette.mjs`'s and it has its own file. The one exception is the
+ * last block, which asserts that the **join** holds and never which pixels it lands on —
+ * the shape `buckets.test.mjs` already uses for the bucket tones.
  *
  * `canDecide()` is the rule of ticket 86, and it is tested here rather than beside a
  * component because all three of its callers apply it and none of them decides it: the
@@ -38,5 +41,19 @@ describe('canDecide', () => {
     // nothing to ask about it either.
     expect(canDecide(null)).toBe(false);
     expect(canDecide(undefined)).toBe(false);
+  });
+});
+
+describe('the tone of a class', () => {
+  it('gives every class a tone the palette knows', () => {
+    // `TONE` in `classes.mjs` names tones as strings, so a name the palette no longer
+    // holds is a `pill` of `undefined` and a pill that draws with no colour at all —
+    // silent, and on the class pill, which is the one thing every finding wears. Ticket
+    // 131 renamed five of the eight, which is exactly when that goes wrong.
+    for (const cls of Object.keys(FINDING_CLASSES)) {
+      const { tone, pill } = classInfo(cls);
+      expect(TONES, cls).toContain(tone);
+      expect(pill, cls).toBeTruthy();
+    }
   });
 });

@@ -23,22 +23,27 @@ import { PILL } from './palette.mjs';
  * let the colour come apart from the meaning.
  *
  * Ticket 35 moved `broken-link` off red. Red now means a lost unit and only
- * that, so the loudest a defect on the new site's own terms can be is `severe`.
+ * that, so the loudest a defect on the new site's own terms can be is `warning`.
+ *
+ * `casing` takes `info` and not `closed`. A letter-case difference is not done — it is
+ * work, and `toneOf()`
+ * below only reaches this table when it is — so `info` here is the third rung of a
+ * weight ramp under `warning` and `caution`, and never a claim that the row is finished.
  *
  * @type {Record<string, import('./palette.mjs').Tone>}
  */
 const TONE = {
-  'broken-link': 'severe',
-  leakage: 'severe',
-  'cross-store-link': 'severe',
+  'broken-link': 'warning',
+  leakage: 'warning',
+  'cross-store-link': 'warning',
   // `heading-level` sat here until ticket 86 moved it to `information`, and `toneOf()`
   // answers `neutral` for that before it ever reads this table. The entry was removed
   // rather than left: a tone that cannot be reached is a tone the next reader would
   // trust.
-  copy: 'attention',
-  'link-target': 'attention',
-  'alt-lost': 'attention',
-  'alt-changed': 'attention',
+  copy: 'caution',
+  'link-target': 'caution',
+  'alt-lost': 'caution',
+  'alt-changed': 'caution',
   casing: 'info',
 };
 
@@ -59,9 +64,14 @@ export const CHECK_LABEL = {
  * @returns {import('./palette.mjs').Tone}
  */
 function toneOf(cls) {
+  // A class whose visibility is `information` goes `neutral` and **not** the `info` tone,
+  // near-miss though the two words are. `info` is a weight — the quietest rung that is
+  // still inside the work — while `neutral` is the palette carrying no judgement about the
+  // class at all, which is the one meaning ticket 131 left that tone. The table above is
+  // never reached from here.
   if (!isWork(cls)) return 'neutral';
   if (FINDING_CLASSES[cls].direction === 'lost') return 'lost';
-  return TONE[cls] ?? 'attention';
+  return TONE[cls] ?? 'caution';
 }
 
 /**

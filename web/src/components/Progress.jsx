@@ -34,7 +34,7 @@ export function PageBar({ bar, ready }) {
         </span>
         {ready && <span className="text-muted-foreground tabular-nums">{bar.open} open</span>}
         {ready && bar.contradicted > 0 && (
-          <span className={cn('tabular-nums', INK.attention)}>
+          <span className={cn('tabular-nums', INK.caution)}>
             {bar.contradicted} claimed fixed, still differs
           </span>
         )}
@@ -60,7 +60,9 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
   if (review) {
     return (
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <Badge className={review.fresh ? PILL.info : PILL.attention}>
+        {/* `closed` and not `info`: a fresh review is a human saying they looked at
+            everything here, which is done. */}
+        <Badge className={review.fresh ? PILL.closed : PILL.caution}>
           {review.fresh ? 'reviewed' : 'changed since review'} · {review.editor}
         </Badge>
         {canWrite && (
@@ -142,7 +144,7 @@ export function LogBanner(log) {
     // Amber, not red. An unreachable log is a status, however bad it is, and
     // ticket 35 keeps red for "production had this and the new site lost it".
     return (
-      <Banner tone="severe">
+      <Banner tone="warning">
         <strong>The override log does not answer.</strong> The page is read-only, so you cannot lose
         a change that you think is saved.{' '}
         {/*
@@ -159,7 +161,7 @@ export function LogBanner(log) {
   }
   if (state === 'disconnected') {
     return (
-      <Banner tone="attention">
+      <Banner tone="caution">
         <strong>No connection to the override log.</strong> {reason} The Fixed tick and Dismiss are
         off; the rest of the log works.
       </Banner>

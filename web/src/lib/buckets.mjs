@@ -50,23 +50,31 @@ export const BUCKET_MEANING = {
 };
 
 /**
- * **Needs attention shares `attention` with nothing else here, and leans on position.**
+ * **Needs attention shares `caution` with nothing else here, and leans on position.**
  *
  * The palette has no tone that fits it, and this was decided rather than defaulted:
- * `severe` means *the new site is wrong on its own terms*, which a contradicted claim is
+ * `warning` means *the new site is wrong on its own terms*, which a contradicted claim is
  * not — it is an editor's claim that a later observation disagreed with. Amber has only
  * two weights and the second one would have been a lie. So Open goes `neutral` here
- * rather than spending the amber twice, and `attention` is left to mean the one thing on
+ * rather than spending the amber twice, and `caution` is left to mean the one thing on
  * this strip that a person got wrong. It is the same tone `contradicted` already wears in
  * `STATE`, which is the state this bucket holds.
  *
- * Adding an eighth meaning to the palette was the alternative and was refused: ADR 0007
- * keeps that map small on purpose.
+ * Adding a further meaning to the palette was the alternative and was refused: ADR 0007
+ * keeps that map small on purpose. Ticket 131 renamed the tones and split one of them, and
+ * it added no meaning this strip could have used.
+ *
+ * **The Closed bucket does not wear the `closed` tone, and that is deliberate.** Ticket 32
+ * spent the green here on preference, recorded above; ticket 131 then gave the palette a
+ * tone named for this very bucket, and moving Closed onto it would be a pixel change —
+ * green to blue — which that ticket explicitly does not make. The two agree about the
+ * meaning and differ about the hue, and a later ticket that wants the blue back has the
+ * one-word change ready.
  *
  * @type {Record<import('../../../overrides/state.mjs').Bucket, import('./palette.mjs').Tone>}
  */
 export const BUCKET_TONE = {
   open: 'neutral',
-  'needs-attention': 'attention',
+  'needs-attention': 'caution',
   closed: 'added',
 };

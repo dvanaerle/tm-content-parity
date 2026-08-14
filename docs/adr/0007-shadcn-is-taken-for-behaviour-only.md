@@ -66,7 +66,9 @@ Two things follow from it and are worth writing down:
   both ship a `destructive` variant. Nothing here uses it. A parity tool has red and
   green already spent on *production has this* and *the new site added this*, and
   palette rule 2 keeps them off status. Amber says look at this, and it comes from
-  `BANNER.attention`.
+  `BANNER.caution` — `BANNER.attention` until **ticket 131 renamed it, 2026-08-14**,
+  because the old word had a second meaning as `CONTEXT.md`'s **Needs attention**. The
+  decision is untouched; only the name is.
 
 ## Considered options
 

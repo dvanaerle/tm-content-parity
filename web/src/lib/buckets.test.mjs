@@ -49,7 +49,7 @@ describe('the three buckets have words to be drawn with', () => {
    */
   it('spends the amber once, on Needs attention', () => {
     expect(BUCKET_TONE.open).toBe('neutral');
-    expect(BUCKET_TONE['needs-attention']).toBe('attention');
-    expect(INK.attention).toBeTruthy();
+    expect(BUCKET_TONE['needs-attention']).toBe('caution');
+    expect(INK.caution).toBeTruthy();
   });
 });

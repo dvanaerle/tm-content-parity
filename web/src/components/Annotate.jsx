@@ -269,7 +269,7 @@ function Report({ written, total, failedOn, error }) {
   if (written === total && !error) return null;
 
   return (
-    <p className={cn('mb-2 text-xs', INK.attention)}>
+    <p className={cn('mb-2 text-xs', INK.caution)}>
       <strong className="font-medium">
         {written} of {total} saved.
       </strong>{' '}
