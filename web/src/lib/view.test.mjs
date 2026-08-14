@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   NO_FILTER,
   collapseRuns,
+  collapseState,
+  collapsedKeys,
   collapses,
   findingsIn,
   isNarrowed,
@@ -13,6 +15,7 @@ import {
   repeatsInStore,
   repeatsWithClasses,
   rowKeyFromHash,
+  runKeyHolding,
   toggleClass,
   toggleIn,
 } from './view.mjs';
@@ -302,6 +305,21 @@ describe('prepareRows', () => {
     ]);
   });
 
+  it('hands back the whole page beside the narrowed one', () => {
+    // What the collapse set is taken from (ticket 48). A filter decides what is drawn
+    // and never what holds open work, so a set taken from the narrowed rows would
+    // leave every other row on the page unable to collapse for as long as the view
+    // stands — and clearing the filter would show a page of finished work as open.
+    const narrowed = prepareRows({
+      ...fixture(),
+      filter: { ...NO_FILTER, classes: ['copy'] },
+      showNoise: false,
+    });
+
+    expect(narrowed.rows).toHaveLength(1);
+    expect(narrowed.all.map((row) => row.key)).toEqual(['p3', 'p5', 'p8', 'p11']);
+  });
+
   it('never returns a count a bar could be built from', () => {
     // Decision 25 of spec 32. Two people quoting "the number" must mean the same
     // number, so nothing here may look like a denominator.
@@ -311,7 +329,10 @@ describe('prepareRows', () => {
       showNoise: false,
     });
 
-    expect(Object.keys(narrowed).sort()).toEqual(['classes', 'rows', 'total']);
+    // `all` is a row **list** and not a number. It is here so the collapse set can be
+    // taken from the whole page, and a caller wanting a denominator would still have to
+    // count it — which is the same refusal `total` already carries.
+    expect(Object.keys(narrowed).sort()).toEqual(['all', 'classes', 'rows', 'total']);
     // `total` is rows on the page, and the page has 4 rows against 2 findings. A
     // reader cannot mistake it for the bar's denominator.
     expect(narrowed.total).not.toBe(fixture().findings.length);
@@ -352,25 +373,94 @@ describe('the filter itself', () => {
  * are what the rule actually stands on. A whole `prepareRows` row would say that this
  * function needs one, and it does not.
  */
-const differs = (key, cls = 'copy') => ({ key, equal: false, class: cls });
-const agrees = (key) => ({ key, equal: true, class: null });
+const differs = (key, cls = 'copy') => ({
+  key,
+  equal: false,
+  class: cls,
+  finding: { state: 'open', visibility: 'work' },
+  decidable: true,
+});
+const agrees = (key) => ({ key, equal: true, class: null, finding: null, decidable: false });
+
+/** A row an editor decided: `fixed` and `dismissed` are Closed, `contradicted` is not. */
+const decided = (key, state) => ({ ...differs(key), finding: { state, visibility: 'work' } });
 
 describe('collapses', () => {
   it('collapses a row whose two sides agree and which carries no class', () => {
     expect(collapses(agrees('p1'))).toBe(true);
   });
 
-  it('keeps a row that carries a class, even when every word agrees', () => {
-    // The narrowing this ticket carries. Ticket 68 set `equal` as `prod.norm ===
-    // next.norm` and said a row "can carry `heading-level` or `tag-changed` and agree
-    // about every word" — right for a clamp, which compacts a row with nothing to
-    // read, and wrong for a marker, which removes it. Ticket 48 widens this again to
-    // *no open work*, and narrowing here is what makes that one deliberate step.
-    expect(collapses({ key: 'p2', equal: true, class: 'tag-changed' })).toBe(false);
+  it('keeps a row with an open finding, even when every word agrees', () => {
+    // The 68/79 disagreement, and the rule that settled it. Ticket 68 set `equal` as
+    // `prod.norm === next.norm` and said a row "can carry `heading-level` or
+    // `tag-changed` and agree about every word" — right for a clamp, which compacts a
+    // row with nothing to read, and wrong for a marker, which **removes** it. *No open
+    // work* answers both from one rule: the words are not the question, the decision
+    // is. `tag-changed` is the example left standing — ticket 86 moved `heading-level`
+    // to `information`, where it collapses under the third rule instead — and it is
+    // `diagnostic`, which is still something an editor decides.
+    expect(collapses({ ...differs('p2', 'tag-changed'), equal: true })).toBe(false);
   });
 
   it('keeps a row whose two sides differ', () => {
     expect(collapses(differs('p3'))).toBe(false);
+  });
+
+  it('collapses a row whose finding is Closed', () => {
+    // Ticket 48. *Afgerond* is the Closed bucket as ticket 80 defines it and nothing
+    // narrower: claims-only was refused, because it would leave a dismissed row in the
+    // open list forever, which is the same defect the widening exists to fix.
+    expect(collapses(decided('p4', 'fixed'))).toBe(true);
+    expect(collapses(decided('p5', 'dismissed'))).toBe(true);
+  });
+
+  it('keeps a contradicted row: it is Needs attention and not Closed', () => {
+    // Open work wearing a tick. The claim is ticked and the snapshot disagrees with
+    // it, so this is the one row on the page an editor most needs left where it is.
+    expect(collapses(decided('p6', 'contradicted'))).toBe(false);
+  });
+
+  it('collapses a row that holds nothing to decide, whatever its words do', () => {
+    // Ticket 48 has to say in words whether an `information` finding is *open*, and
+    // the answer is **no**: `CONTEXT.md` defines it as a finding you can link to and
+    // cannot decide, so there is no work on this row to be left with. Its two sides
+    // differ here on purpose — that is what makes this the third rule and not the
+    // first one said twice.
+    const row = {
+      ...differs('p7', 'text-added'),
+      finding: { state: 'open', visibility: 'information' },
+      decidable: false,
+    };
+
+    expect(collapses(row)).toBe(true);
+  });
+
+  it('keeps a row whose class the derivation did not reach', () => {
+    // Noise an editor asked to see, with no derived finding behind it — the case
+    // `prepareRows` describes as a class the vocabulary does not hold. Nobody decided
+    // it and nothing says it is closed, so it is drawn exactly as ticket 79 drew it.
+    // `decidable` is false here for want of a finding and must not be read as *this
+    // holds no work*.
+    const row = { ...differs('p8', 'invented'), finding: null, decidable: false };
+
+    expect(collapses(row)).toBe(false);
+  });
+});
+
+/**
+ * The collapse set, taken **once** (ticket 48).
+ *
+ * The content view asks for it when the page opens and hands the same keys back on
+ * every render after that. A tick that moved a row under the reader on a 168-row page
+ * would be worse than the noise it removed: the fold answers *what did I arrive with*
+ * and never *what am I doing now*, so the row an editor just ticked stays where they
+ * can check it.
+ */
+describe('collapsedKeys', () => {
+  it('names the rows that hold no open work, in document order', () => {
+    const rows = [agrees('p1'), differs('p2'), decided('p3', 'fixed')];
+
+    expect(collapsedKeys(rows)).toEqual(['p1', 'p3']);
   });
 });
 
@@ -423,28 +513,158 @@ describe('collapseRuns', () => {
     expect(marker.rows).toEqual(rows);
   });
 
-  it('opens the run that holds the row a jump names', () => {
-    // Handed over by ticket 68, which built the other half: a jump already lands on
-    // the row it names. A run holding that row must open with it, or a hash link and
-    // an outline entry land on a marker.
-    const items = collapseRuns([differs('p1'), agrees('p2'), agrees('p3')], { reveal: 'p3' });
+  it('reads one answer about a run, and never two', () => {
+    // A marker is open because it is in `open` and for no other reason. A jump used to
+    // be a second answer here — `open: opened.has(key) || run.some(...)` — and a second
+    // answer is a state a press cannot reach: the reader pressed the chevron, `open`
+    // lost the key, and the run stayed open because the hash still named a row inside
+    // it. `runKeyHolding()` is the same jump said as a seed instead.
+    const rows = [differs('p1'), agrees('p2'), agrees('p3')];
 
-    expect(items[1]).toMatchObject({ kind: 'marker', open: true });
+    expect(collapseRuns(rows, { open: [] })[1].open).toBe(false);
+    expect(collapseRuns(rows, { open: ['run-p2'] })[1].open).toBe(true);
   });
 
-  it('opens no run for a jump that lands on a row already on screen', () => {
-    const items = collapseRuns([differs('p1'), agrees('p2')], { reveal: 'p1' });
+  it('collapses every position of one finding together', () => {
+    // Occurrence count is not part of a finding id, so one finding can be drawn at
+    // several rows. One decision closes every place it is drawn — the rule reads the
+    // finding, so the positions cannot come apart, and there is nothing left to read at
+    // any of them.
+    const finding = { state: 'dismissed', visibility: 'work' };
+    const items = collapseRuns([
+      { ...differs('p1'), finding },
+      { ...differs('p2'), finding },
+      differs('p3'),
+    ]);
 
-    expect(items[1].open).toBe(false);
+    expect(items.map((item) => item.kind)).toEqual(['marker', 'row']);
+    expect(items[0].blocks).toBe(2);
+  });
+
+  it('says which kind of run it holds, so the marker can say it in words', () => {
+    // Ticket 79 proposed no copy and left the strings to 48. There are two: a run
+    // nobody found anything in **agrees** with production, and a run holding a decision
+    // somebody made holds no open work. A **mixed** run does not split into two
+    // markers — a run is a unit of skipping and not of reading — so it says the second,
+    // which is the true thing about all of its rows.
+    const [plain] = collapseRuns([agrees('p1'), agrees('p2')]);
+    const [done] = collapseRuns([decided('p1', 'fixed'), decided('p2', 'dismissed')]);
+    const [mixed] = collapseRuns([agrees('p1'), decided('p2', 'fixed')]);
+
+    expect([plain.agrees, done.agrees, mixed.agrees]).toEqual([true, false, false]);
+  });
+
+  it('takes the collapse set it is given rather than asking the rule again', () => {
+    // What keeps a tick from moving a row under the reader. The set was taken when the
+    // page opened, and the row ticked since is still drawn — where the editor left it,
+    // and where they can check what they claimed.
+    const rows = [agrees('p1'), differs('p2'), decided('p3', 'fixed')];
+
+    const items = collapseRuns(rows, { collapsed: ['p1'] });
+
+    expect(items.map((item) => item.kind)).toEqual(['marker', 'row', 'row']);
   });
 
   it('moves no count: it returns the rows it was given and nothing else', () => {
     // The rule that outranks every other in this module. A marker states the size of
     // the run it holds, which is a distance between two findings — never a
-    // denominator, and `blocks` counts rows and not findings.
+    // denominator, and `blocks` counts rows and not findings. `agrees` is the one
+    // thing ticket 48 added and it is deliberately a **kind and not a count**: it
+    // chooses which sentence the marker says, and nothing can be divided by it.
     const items = collapseRuns([differs('p1'), agrees('p2')]);
 
-    expect(Object.keys(items[1]).sort()).toEqual(['blocks', 'key', 'kind', 'open', 'rows']);
+    expect(Object.keys(items[1]).sort()).toEqual([
+      'agrees',
+      'blocks',
+      'key',
+      'kind',
+      'open',
+      'rows',
+    ]);
+  });
+});
+
+describe('runKeyHolding', () => {
+  // Handed over by ticket 68, which built the other half: a jump already lands on the
+  // row it names. The run holding that row must open with it, or a hash link and an
+  // outline entry land on a marker.
+  it('names the run that holds the row a jump names', () => {
+    const rows = [differs('p1'), agrees('p2'), agrees('p3')];
+
+    expect(runKeyHolding(rows, 'p3')).toBe('run-p2');
+  });
+
+  it('names no run for a row that is on screen already', () => {
+    expect(runKeyHolding([differs('p1'), agrees('p2')], 'p1')).toBeNull();
+  });
+
+  it('reads the collapse set the markers were drawn from', () => {
+    // The two must agree about which rows are behind a marker. A jump seeded from the
+    // live rule after a tick would name a run that is not in the document, and a key
+    // nothing carries opens nothing and says nothing.
+    const rows = [differs('p1'), decided('p2', 'fixed'), decided('p3', 'fixed')];
+
+    expect(runKeyHolding(rows, 'p3', ['p2', 'p3'])).toBe('run-p2');
+    expect(runKeyHolding(rows, 'p3', [])).toBeNull();
+  });
+
+  it('names no run for a key no row carries, and for no key at all', () => {
+    const rows = [differs('p1'), agrees('p2')];
+
+    expect(runKeyHolding(rows, 'p9')).toBeNull();
+    expect(runKeyHolding(rows, null)).toBeNull();
+  });
+});
+
+/**
+ * What the drawn items say about themselves (ticket 79).
+ *
+ * The three questions the content view asks of `collapseRuns()`'s answer: which items
+ * are markers, whether every one of them is open, and whether the page is markers and
+ * nothing else. They are here rather than in the component for the reason the module
+ * header gives — what is on screen is this module's decision — and because the third
+ * one has an edge the component cannot state: a page with **no items at all** is not a
+ * page where nothing differs.
+ */
+describe('collapseState', () => {
+  const items = (...rows) => collapseRuns(rows);
+
+  it('picks out the markers and leaves the rows', () => {
+    const state = collapseState(items(differs('p1'), agrees('p2'), differs('p3')));
+
+    expect(state.markers.map((marker) => marker.key)).toEqual(['run-p2']);
+  });
+
+  it('says every run is open only when every one of them is', () => {
+    const rows = [agrees('p1'), differs('p2'), agrees('p3')];
+
+    expect(collapseState(collapseRuns(rows)).allOpen).toBe(false);
+    expect(collapseState(collapseRuns(rows, { open: ['run-p1'] })).allOpen).toBe(false);
+    expect(collapseState(collapseRuns(rows, { open: ['run-p1', 'run-p3'] })).allOpen).toBe(true);
+  });
+
+  it('says no run is open on a page that has none, so no control is drawn over nothing', () => {
+    expect(collapseState(items(differs('p1')))).toMatchObject({ markers: [], allOpen: false });
+  });
+
+  it('says nothing differs on a page that is markers and nothing else', () => {
+    expect(collapseState(items(agrees('p1'), agrees('p2'))).everythingCollapsed).toBe(true);
+    expect(collapseState(items(agrees('p1'), differs('p2'))).everythingCollapsed).toBe(false);
+  });
+
+  it('says whether the markers are agreement or closed work', () => {
+    // Which sentence a finished page gets (ticket 48). *Nothing differs* is true of a
+    // page nobody found anything on and false of a page an editor worked through, and
+    // the second is what finishing looks like — so the two must not share a sentence.
+    expect(collapseState(items(agrees('p1'), agrees('p2'))).everythingAgrees).toBe(true);
+    expect(collapseState(items(agrees('p1'), decided('p2', 'fixed'))).everythingAgrees).toBe(false);
+  });
+
+  it('does not say nothing differs about a page with nothing on it', () => {
+    // An empty item list is a filter that matched no row, and the component says so in
+    // its own words. `markers.length === items.length` is true of it, which is how a
+    // page with nothing on it would have claimed every block agrees with production.
+    expect(collapseState([]).everythingCollapsed).toBe(false);
   });
 });
 

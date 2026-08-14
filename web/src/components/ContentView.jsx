@@ -13,10 +13,13 @@ import { landedRowProps, landingRow, useLandOn } from '../lib/landing.mjs';
 import {
   NO_FILTER,
   collapseRuns,
+  collapseState,
+  collapsedKeys,
   isNarrowed,
   outlineFrom,
   prepareRows,
   rowKeyFromHash,
+  runKeyHolding,
   toggleClass,
   toggleIn,
 } from '../lib/view.mjs';
@@ -36,11 +39,12 @@ import {
  * an editor pasting a whole page into Magento wants it, and the two download links
  * are where it lives now.
  *
- * **It opens on the differences** (ticket 79, ADR 0006). Each run of agreeing blocks is
- * one **context marker** naming how many it holds, and the marker expands. Nobody
- * scrolls past 47 identical paragraphs to reach the next difference, and nobody loses
- * the ability to see where a missing line belonged. This is **not a view mode**: it is
- * one order with a fold in it. Nothing is reordered, nothing is filtered away, and the
+ * **It opens on the open work** (tickets 79 and 48, ADR 0006). Each run of blocks with
+ * nothing left on them is one **context marker** naming how many it holds, and the
+ * marker expands. Nobody scrolls past 47 identical paragraphs to reach the next
+ * difference, nobody re-reads the work they finished an hour ago, and nobody loses the
+ * ability to see where a missing line belonged. This is **not a view mode**: it is one
+ * order with a collapse in it. Nothing is reordered, nothing is filtered away, and the
  * heading outline still names the same places.
  *
  * What is on screen is `view.mjs`'s decision, not this component's. The filter is
@@ -51,7 +55,7 @@ export default function ContentView({ report, findings, showNoise, control, land
   const [openRuns, setOpenRuns] = useState([]);
   const { production, new: next } = report.sides;
 
-  const { rows, total, classes } = useMemo(
+  const { rows, all, total, classes } = useMemo(
     () =>
       prepareRows({
         rows: report.rows,
@@ -78,27 +82,87 @@ export default function ContentView({ report, findings, showNoise, control, land
   const narrowed = isNarrowed(filter);
 
   /*
-   * The row a hash link names (ticket 79, handed over by 68).
+   * The collapse set, taken **when the page opens** (ticket 48).
+   *
+   * A row collapses when it holds no open work, and a tick is the thing that changes
+   * that answer. Asking again on every render would move the page under the reader at
+   * the moment they act on it: on a 168-row page an editor working top-down loses their
+   * place at every tick, and cannot look at what they have just claimed. So the set is
+   * taken once and held, and the ticked row stays where they left it and joins its run
+   * the next time the page is opened. There is no recompute control — *Show agreeing
+   * blocks* already gives every run back, and a second one was refused for want of any
+   * evidence it is wanted.
+   *
+   * It is taken from `all` and never from `rows`: a filter decides what is drawn and
+   * never what holds open work, and a set taken through one would leave every row
+   * outside it unable to collapse for as long as the view stood.
+   *
+   * It is keyed on the **page** and not on the report object, which a parent may build
+   * fresh on any render. A different page is a different document whose anchors are
+   * counted from zero again, so a set carried into it would collapse rows by
+   * coincidence. The noise toggle is in the key for the other half of that: it changes
+   * which rows the page **has**, and a row that was not there when the set was taken
+   * could never collapse. Neither is a tick, which is the one thing this must not
+   * follow — and opening the view again, by a tab or by a link, is opening the page.
+   */
+  const page = `${report.store}/${report.page}/${showNoise}`;
+  const [taken, setTaken] = useState(() => ({ page, collapsed: collapsedKeys(all) }));
+  const collapsed = taken.page === page ? taken.collapsed : collapsedKeys(all);
+  if (taken.page !== page) setTaken({ page, collapsed });
+
+  /*
+   * The row a jump named (ticket 79, handed over by 68).
    *
    * A jump is a request to read one row, so the run holding it opens with it — a saved
-   * link and an outline entry must not land on a marker. It is read in an effect rather
-   * than at first render because this component is server-rendered as well, and there
-   * is no `location` there.
+   * link and an outline entry must not land on a marker. The hash is read in an effect
+   * rather than at first render because this component is server-rendered as well, and
+   * there is no `location` there. It is given the same collapse set the markers were
+   * drawn from, or it would name a run the document does not hold.
    */
   const hashRow = useHashRow();
-  const reveal = landed ?? hashRow;
+  const jumped = landed ?? hashRow;
+  const jumpedRun = runKeyHolding(rows, jumped, collapsed);
+
+  /*
+   * The jump **seeds** the open runs, and it does not hold them open.
+   *
+   * Holding them was a second answer about one marker, and a second answer is a state
+   * the chevron cannot leave: a press took the key out of `openRuns` and the jump put it
+   * straight back, so a run a reader arrived in could never be shut again while the
+   * address stood — and *Show agreeing blocks* could not close it either. Seeding says
+   * the same thing once: the run opens, and from then on the reader's controls are the
+   * only thing that answers for it.
+   *
+   * It is set **during the render** and not in an effect, which is React's own way to
+   * adjust state when an input changes. The run has to be open in the commit the browser
+   * lands in — an effect would run after it, and `useLandOn()` would go looking for a row
+   * that is not in the document yet.
+   */
+  const [seeded, setSeeded] = useState(null);
+  if (jumpedRun !== seeded) {
+    setSeeded(jumpedRun);
+    if (jumpedRun) setOpenRuns((held) => (held.includes(jumpedRun) ? held : [...held, jumpedRun]));
+  }
 
   const items = useMemo(
-    () => collapseRuns(rows, { open: openRuns, reveal }),
-    [rows, openRuns, reveal],
+    () => collapseRuns(rows, { open: openRuns, collapsed }),
+    [rows, openRuns, collapsed],
   );
+  const { markers, allOpen, everythingCollapsed, everythingAgrees } = collapseState(items);
 
-  // The run opened in the render above, so the row is in the document by the time this
-  // runs. Only when the landing has not already claimed the jump: two scrolls to two
-  // places is worse than either.
-  useLandOn(landed ? null : hashRow, landing?.settled ?? true);
-
-  const markers = items.filter((item) => item.kind === 'marker');
+  /*
+   * One scroll, to the one row a jump named.
+   *
+   * `landed ?? hashRow` is what makes it one: a finding link and a bare `#p12` are two
+   * ways of asking for a row, the link wins where both are there, and the answer is one
+   * anchor. It was two calls — one here for the hash and one in `Rows` for the landing —
+   * which left *do not scroll twice* stated as a ternary in the first and implied by the
+   * argument of the second.
+   *
+   * The run holding the row opened in the render above, so the row is in the document by
+   * the time this runs.
+   */
+  useLandOn(jumped, landing?.settled ?? true);
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
@@ -110,6 +174,7 @@ export default function ContentView({ report, findings, showNoise, control, land
           filter={filter}
           setFilter={setFilter}
           markers={markers}
+          allOpen={allOpen}
           setOpenRuns={setOpenRuns}
           production={production}
           next={next}
@@ -135,13 +200,21 @@ export default function ContentView({ report, findings, showNoise, control, land
           </Empty>
         ) : (
           <>
-            {/* A run of agreeing rows can be the whole page, and then the table is one
-                marker and nothing else. Without this it reads as a view that failed to
-                load rather than as a page with nothing wrong on it. The marker stays
-                below, because the blocks are still there and still worth opening. */}
-            {markers.length === items.length && (
+            {/* A collapsed run can be the whole page, and then the table is one marker
+                and nothing else. Without this it reads as a view that failed to load
+                rather than as a page with nothing left on it. The marker stays below,
+                because the blocks are still there and still worth opening.
+
+                **Two pages end this way and they are not the same page** (ticket 48).
+                One was clean when it was crawled. The other is a page an editor worked
+                through, where every difference is still there and every one of them is
+                closed — which is what finishing looks like, and it must not be told it
+                agrees with production. */}
+            {everythingCollapsed && (
               <p className="mb-3 text-sm text-muted-foreground">
-                Nothing differs on this page. Every block agrees with production.
+                {everythingAgrees
+                  ? 'Nothing differs on this page. Every block agrees with production.'
+                  : 'Nothing left to do on this page. Every finding on it is closed.'}
               </p>
             )}
             <Rows
@@ -149,7 +222,6 @@ export default function ContentView({ report, findings, showNoise, control, land
               control={control}
               sides={report.sides}
               landed={landed}
-              settled={landing?.settled}
               onToggleRun={(key) => setOpenRuns((held) => toggleIn(held, key))}
             />
           </>
@@ -173,21 +245,20 @@ export default function ContentView({ report, findings, showNoise, control, land
  * removed them would take away the only answer a one-sided finding has to *where does
  * this text belong*, and it sat next to a class filter counting rows, which is exactly
  * the pair a reader could mistake for one that moves a count. What replaces it opens
- * every marker at once, which is the same want said as a fold instead of a filter.
+ * every marker at once, which is the same want said as a collapse instead of a filter.
  */
 function Controls({
   classes,
   filter,
   setFilter,
   markers,
+  allOpen,
   setOpenRuns,
   production,
   next,
   page,
   store,
 }) {
-  const allOpen = markers.length > 0 && markers.every((marker) => marker.open);
-
   return (
     <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
       <ClassFilterPills
@@ -211,7 +282,7 @@ function Controls({
               setOpenRuns(checked ? markers.map((marker) => marker.key) : [])
             }
           />
-          Show unchanged blocks
+          Show agreeing blocks
         </Label>
       )}
 
@@ -304,11 +375,10 @@ function Outline({ entries }) {
  * window onto its first change. A jump still lands on a row and marks it; there is no
  * longer anything to open.
  */
-function Rows({ items, control, sides, landed, settled, onToggleRun }) {
-  // The **mark** is drawn at once; the landing itself waits for the log, which is the
-  // hook's own rule.
-  useLandOn(landed, settled);
-
+function Rows({ items, control, sides, landed, onToggleRun }) {
+  // The **mark** is drawn at once, and it is all this table does about a landing: the
+  // scroll is one call in the parent, over the one anchor a finding link and a hash link
+  // agree on.
   return (
     /* `table-fixed`, for the reason `Ledger.jsx` gives: an auto layout would let the
        two comparison columns change width from row to row, and a diff whose columns
@@ -354,13 +424,21 @@ function Rows({ items, control, sides, landed, settled, onToggleRun }) {
 }
 
 /**
- * A run of agreeing blocks, standing in one row (ticket 79, ADR 0006).
+ * A run of blocks holding no open work, standing in one row (ticket 79, ADR 0006).
  *
  * It says **how many blocks it holds**, which is the distance between the finding above
  * it and the finding below it, and it gives them back on one click. That is the whole
  * difference from the *Diff* tab ticket 12 retired: the tab deleted the position, and
  * this keeps it. `CONTEXT.md` reserves *fold* to two other meanings, so a run
  * **collapses** and this is a **context marker**.
+ *
+ * **Two sentences, chosen by `marker.agrees`** (ticket 48, which 79 left the copy to). A
+ * run nobody found anything in agrees with production; a run holding a finding somebody
+ * closed says it holds no open work, which is the thing that is true of every row in it.
+ * A **mixed** run says the second rather than splitting into two markers: the run is a
+ * unit of skipping and not of reading, and two markers where one will do is furniture
+ * asking to be counted. *Agreeing* and never *unchanged* — `CONTEXT.md` spends that word
+ * on a finding id that survives a re-measure.
  *
  * **No tint.** Once every visible row is a difference the row tint says nothing — which
  * is the specific failure that retired the tab — so the class pill on each row carries
@@ -369,6 +447,7 @@ function Rows({ items, control, sides, landed, settled, onToggleRun }) {
  */
 function Marker({ marker, onToggle }) {
   const Chevron = marker.open ? ChevronDown : ChevronRight;
+  const noun = marker.blocks === 1 ? 'block' : 'blocks';
 
   return (
     <TableRow id={marker.key} className="scroll-mt-4 border-dashed hover:bg-transparent">
@@ -380,7 +459,9 @@ function Marker({ marker, onToggle }) {
           className={`flex items-center gap-1 text-xs hover:underline ${CHROME.link}`}
         >
           <Chevron className="size-3.5" aria-hidden="true" />
-          {marker.blocks} unchanged {marker.blocks === 1 ? 'block' : 'blocks'}
+          {marker.agrees
+            ? `${marker.blocks} agreeing ${noun}`
+            : `${marker.blocks} ${noun} with no open work`}
         </button>
       </TableCell>
     </TableRow>
@@ -398,10 +479,18 @@ function Row({ row, control, sides, landed }) {
   return (
     <TableRow id={row.key} {...mark} className={cn('scroll-mt-4 align-top', className)}>
       <TableCell className="px-2 py-3 align-top whitespace-normal">
+        {/*
+         * The pill on a row that carries a class, and the word on a row whose two sides
+         * agree. They are two questions and not one: this used to say *equal* whenever
+         * there was no pill to draw, which reads the absence of a class as an answer
+         * about the text. `row.equal` is that answer, and the row carries it — the same
+         * field `collapses()` reads, so the cell and the marker cannot disagree about
+         * which rows agree.
+         */}
         {row.class ? (
           <ClassPill class={row.class} />
         ) : (
-          <span className="text-xs text-muted-foreground">equal</span>
+          row.equal && <span className="text-xs text-muted-foreground">agrees</span>
         )}
         {row.score !== null && (
           <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>

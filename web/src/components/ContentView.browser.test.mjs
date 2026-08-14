@@ -97,26 +97,35 @@ function agreeingReport() {
   };
 }
 
-function mount(props = {}) {
+/**
+ * A mounted view and a way to render it again — which is what a tick is from this
+ * component's side: the log re-derives the findings and hands down new ones.
+ */
+function mounting(props = {}) {
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
 
-  act(() =>
-    root.render(
-      createElement(ContentView, {
-        report: report(),
-        findings,
-        showNoise: false,
-        control: () => null,
-        landing: null,
-        ...props,
-      }),
-    ),
-  );
+  const render = (again = {}) =>
+    act(() =>
+      root.render(
+        createElement(ContentView, {
+          report: report(),
+          findings,
+          showNoise: false,
+          control: () => null,
+          landing: null,
+          ...props,
+          ...again,
+        }),
+      ),
+    );
 
-  return host;
+  render();
+  return { host, render };
 }
+
+const mount = (props = {}) => mounting(props).host;
 
 /**
  * A press, in the idiom the other browser tests here use: the element's own `click()`
@@ -142,13 +151,17 @@ afterEach(() => {
 });
 
 describe('the content view opens on the differences', () => {
-  it('draws the differing rows and folds each run of agreeing blocks into one marker', () => {
+  it('draws the differing rows and collapses each run of agreeing blocks into one marker', () => {
     const host = mount();
 
     expect(rowIds(host)).toEqual(['p0', 'p4']);
+    // **Agree** is the interface's one word for this, and `CONTEXT.md` records it.
+    // The marker said *unchanged*, the status cell said *equal* and the sentence on an
+    // all-agreeing page said *agrees* — three words on one screen for one thing, and
+    // *unchanged* is spent elsewhere on a finding id that survives a re-measure.
     expect(markers(host).map((marker) => marker.textContent)).toEqual([
-      '3 unchanged blocks',
-      '1 unchanged block',
+      '3 agreeing blocks',
+      '1 agreeing block',
     ]);
   });
 
@@ -174,6 +187,25 @@ describe('the content view opens on the differences', () => {
     expect(rows[0].className).not.toMatch(/subtle/);
   });
 
+  it('says a row agrees because its two sides do, and not because it carries no class', () => {
+    // The status cell used to print the word whenever `row.class` was falsy, which reads
+    // the wrong field: a row agrees because `prod.norm === next.norm`, and the row
+    // carries that answer in `equal`. The comparer cannot hand this shape over today — a
+    // null class is an exact tier-1 pair and nothing else — so this is the guard on the
+    // cell's rule rather than a difference a reader has met. Ticket 48 widens
+    // `collapses()` to rows that do not agree, and a cell inferring the word from the
+    // same absence would start saying they do on the day it lands.
+    const differing = report();
+    differing.rows = [{ class: null, prod: 0, new: 0, score: null, finding: null }];
+
+    const host = mount({ report: differing, findings: [] });
+
+    // The row is drawn, and its status cell says nothing rather than saying the wrong
+    // thing: there is no class to put in a pill and the two sides do not agree.
+    expect(rowIds(host)).toEqual(['p0']);
+    expect(host.querySelector('tbody tr[id="p0"] td').textContent.trim()).toBe('');
+  });
+
   it('expands a marker on a press, and collapses it again', async () => {
     const host = mount();
     const control = markers(host)[0].querySelector('button');
@@ -189,12 +221,12 @@ describe('the content view opens on the differences', () => {
 
   it('opens every run at once from the one control the filter left behind', async () => {
     // *Differences only* narrowed the view; this widens it. The same want, said as a
-    // fold instead of a filter, so no control is left that could be mistaken for one
+    // collapse instead of a filter, so no control is left that could be mistaken for one
     // that moves a count.
     const host = mount();
     // The visible control, not the hidden input Base UI keeps beside it for the form.
     const box = [...host.querySelectorAll('label')]
-      .find((label) => label.textContent.includes('Show unchanged blocks'))
+      .find((label) => label.textContent.includes('Show agreeing blocks'))
       .querySelector('[data-slot="checkbox"]');
 
     await press(box);
@@ -212,6 +244,21 @@ describe('the content view opens on the differences', () => {
     expect(markers(host)[0].querySelector('button').getAttribute('aria-expanded')).toBe('true');
   });
 
+  it('lets a press close the run a hash link opened', async () => {
+    // A jump **seeds** the open runs; it does not hold them open. Holding them was a
+    // second answer about one marker, and a second answer is a state the chevron cannot
+    // leave: the press took the key out of the open set and the hash put it straight
+    // back, so the run could never be shut again for as long as the address stood.
+    history.replaceState(null, '', '#p2');
+    const host = mount();
+
+    await act(async () => {});
+    expect(rowIds(host)).toContain('p2');
+
+    await press(markers(host)[0].querySelector('button'));
+    expect(rowIds(host)).toEqual(['p0', 'p4']);
+  });
+
   it('opens the run a jump reaches after the first, which is what an outline click is', async () => {
     const host = mount();
     expect(rowIds(host)).not.toContain('p5');
@@ -223,10 +270,70 @@ describe('the content view opens on the differences', () => {
     expect(rowIds(host)).toContain('p5');
   });
 
+  it('says a run holds no open work when somebody closed the finding in it', () => {
+    // Ticket 48. Ticket 79 proposed no copy and left the strings here, and there are
+    // two: blocks nobody found anything in **agree** with production, and a run holding
+    // work an editor closed says what is true of every row in it. The ticked row joins
+    // the run above it, so this is one marker of four and not two markers — a run is a
+    // unit of skipping, not of reading.
+    const host = mount({ findings: [{ ...findings[0], state: 'fixed' }, findings[1]] });
+
+    expect(markers(host).map((marker) => marker.textContent)).toEqual([
+      '4 blocks with no open work',
+      '1 agreeing block',
+    ]);
+  });
+
+  it('leaves a row where the editor left it when they tick it', async () => {
+    // The collapse set is taken **when the page opens**. On a 168-row page an editor
+    // working top-down would otherwise lose their place at every tick, which is worse
+    // than the noise being removed — and they could not check what they had just
+    // claimed. The fold answers *what did I arrive with*, so the ticked row stays and
+    // joins the run the next time the page is opened.
+    const { host, render } = mounting();
+    expect(rowIds(host)).toEqual(['p0', 'p4']);
+
+    await render({ findings: [{ ...findings[0], state: 'fixed' }, findings[1]] });
+
+    expect(rowIds(host)).toEqual(['p0', 'p4']);
+  });
+
   it('says so on a page where nothing differs, rather than drawing one marker alone', () => {
     const host = mount({ report: agreeingReport(), findings: [] });
 
     expect(host.textContent).toContain('Nothing differs on this page');
     expect(markers(host)).toHaveLength(1);
+  });
+
+  it('leaves a contradicted row on screen while the rows around it collapse', () => {
+    // The three states the ticket asks to see on one page: `copy1` is dismissed and
+    // goes behind a marker, `lost1` is a claim the snapshot disagrees with and stays.
+    // It is Needs attention and not Closed — open work wearing a tick, and the one row
+    // an editor most needs left where it is.
+    const host = mount({
+      findings: [
+        { ...findings[0], state: 'dismissed' },
+        { ...findings[1], state: 'contradicted' },
+      ],
+    });
+
+    expect(rowIds(host)).toEqual(['p4']);
+    expect(markers(host).map((marker) => marker.textContent)).toEqual([
+      '4 blocks with no open work',
+      '1 agreeing block',
+    ]);
+  });
+
+  it('says a page is finished, rather than saying its blocks agree', () => {
+    // Ticket 48 makes this state common and desirable: it is what finishing a page
+    // looks like. *Nothing differs* would be a lie about it — the differences are all
+    // still there, an editor closed them — and an empty table would be worse.
+    const host = mount({
+      findings: findings.map((finding) => ({ ...finding, state: 'dismissed' })),
+    });
+
+    expect(rowIds(host)).toEqual([]);
+    expect(host.textContent).toContain('Nothing left to do on this page');
+    expect(host.textContent).not.toContain('Nothing differs');
   });
 });

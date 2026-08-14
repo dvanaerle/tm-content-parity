@@ -123,7 +123,7 @@ functions, one narrow and one wide, and neither has to lie for the other.
 of the terms it adds are already on the row — `ContentRow.decidable` is 86's, and 80 has
 defined Closed — so what it changes is one expression in one place.
 
-### `Differences only` is gone, and *Show unchanged blocks* is what replaced it
+### `Differences only` is gone, and *Show agreeing blocks* is what replaced it
 
 It went rather than being reworded. It **narrowed**: it dropped the agreeing rows
 outright, which is the one thing ADR 0006 says this view must not do, and it sat beside a
@@ -182,6 +182,52 @@ side has nothing*, which still carries signal when every row is a difference.
   *this text moved* answers without either. [75](75-class-visibility-replaces-shown.md)
   still owns it; this is the evidence, not the decision.
 - **Markdown is untouched**, still two download links.
+
+### What else moved
+
+### The review pass, 2026-08-14
+
+Six findings from the two-axis review, all fixed. **779 tests green.**
+
+- **A run a jump opened could not be closed.** `collapseRuns()` answered `open` twice —
+  `opened.has(key) || run.some(row => row.key === reveal)` — and the second answer is a
+  state a press cannot leave: the chevron took the key out of `openRuns` and the hash put
+  it straight back, so the run was stuck open for as long as the address stood, and *Show
+  agreeing blocks* could not close it either. `reveal` is gone from `collapseRuns()`. The
+  jump is a **seed** now: `runKeyHolding(rows, key)` names the run, and the component adds
+  it to `openRuns` **during the render**, which is React's own way to adjust state on a
+  changed input and keeps the run open in the commit the browser lands in. It also
+  retires the stale-hash bug behind it — a copied `#p12` no longer pins its run for the
+  session. This is the criterion 68 handed over, and it now expands *and collapses*.
+- **The status cell called a differing row equal.** It printed the word whenever
+  `row.class` was falsy, which reads the absence of a class as an answer about the text.
+  It reads `row.equal` now — the same field `collapses()` reads, so the cell and the
+  marker cannot disagree. The comparer cannot emit that shape today (a null class is an
+  exact tier-1 pair and nothing else), so this is a guard rather than a bug a reader met —
+  and it is the guard **48 needs**, because 48 widens `collapses()` to rows that do not
+  agree.
+- **The reserved word.** `CONTEXT.md` reserves *fold* to two meanings and says a run of
+  equal rows **collapses**. Three places wrote it for a collapsing run anyway, `CONTEXT.md`
+  itself among them, while `Marker`'s own docstring stated the rule correctly. All gone.
+- **Three words for one thing.** The marker said *unchanged*, the status cell said
+  *equal*, the empty-page sentence said *agrees*. The interface word is **agree**, the
+  glossary now records it, and `equal` stays the word in the data — `ContentRow.equal`,
+  and nothing wider. *Unchanged* was the worst of the three: it is spent elsewhere on a
+  finding id that survives a re-measure.
+- **The component decided what was on screen**, against its own header rule. The marker
+  list, `allOpen` and the all-agreeing page are `collapseState()` in `view.mjs` now, and
+  it carries an edge the component could not state: `markers.length === items.length` is
+  true of a page with **nothing** on it, which would have had a filter that matched no row
+  claim every block agrees with production.
+- **Two `useLandOn` calls for one scroll**, one here and one in `Rows`, so *do not scroll
+  twice* was a ternary in the first and implied by the second. One call over
+  `landed ?? hashRow`. The landing **mark** stays `landed`'s alone — a hash jump scrolls
+  and takes the focus as it always did, and does not claim to be a landing.
+
+Two findings were left. `ContentFilter` is a one-field wrapper and the review suggested
+inlining it; 48 puts a second field back, so it stays. The dashboard carries some
+formatter reflow beyond the chip removal, which is committed and not worth the churn to
+unpick.
 
 ### What else moved
 

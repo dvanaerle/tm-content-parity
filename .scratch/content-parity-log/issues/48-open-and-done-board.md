@@ -10,7 +10,9 @@ A row of the content view collapses into a context marker when it holds **no ope
 work** — not when its two texts happen to match. Nothing is reordered, nothing is
 grouped, nothing is counted, and no mode is added.
 
-Status: ready-for-agent
+Status: resolved 2026-08-14 — a row collapses when it holds no open work. The predicate is
+`collapses()` in `web/src/lib/view.mjs`, the set is taken when the page opens, and the
+marker says which kind of run it holds. See the answer at the bottom.
 Blocked by: ~~[79](79-the-content-view-opens-on-the-differences.md),
 [80](80-three-buckets-and-the-third-is-closed.md)~~ — **both landed, and the edge is
 cleared 2026-08-14.** 79 built the marker and narrowed the predicate as this ticket asked:
@@ -229,12 +231,12 @@ the predicate deliberately, once 80 has defined Closed.
 
 ### Acceptance criteria
 
-- [ ] A row collapses into a context marker when it holds **no open work**, and not when
+- [x] A row collapses into a context marker when it holds **no open work**, and not when
       its two texts match. The predicate is one tested rule in `web/src/lib/view.mjs`,
       beside the `equal` field 68 put on `ContentRow`, and not a condition in a
       component.
-- [ ] A **contradicted** row does not collapse. It is Needs attention, not Closed.
-- [ ] A row carrying ~~`heading-level` or~~ `tag-changed` with an open finding does not
+- [x] A **contradicted** row does not collapse. It is Needs attention, not Closed.
+- [x] A row carrying ~~`heading-level` or~~ `tag-changed` with an open finding does not
       collapse, even though its words agree. This is the 68/79 disagreement above, and
       the answer states which rule won and why.
       **`heading-level` is struck 2026-08-13, ticket 86**, which moved it to
@@ -247,33 +249,33 @@ the predicate deliberately, once 80 has defined Closed.
       as `ContentRow.decidable` in `view.mjs` beside 68's `equal` field, tested. So the
       rule here is `collapse = equal || closed || !decidable`, and what is left to build
       is the marker and the third term's place in it.
-- [ ] **Say in words whether an `information` finding is *open*.** This ticket's predicate
+- [x] **Say in words whether an `information` finding is *open*.** This ticket's predicate
       is *"no open work"* and it never defined the case, because when it was written every
       shown class was work. Ticket 86 answered it in code — not work, therefore not open
       work — and asked that this ticket answer it in its own words rather than inherit it
       silently. Added 2026-08-13 by 86.
-- [ ] All positions of one finding collapse together. Occurrence count is not part of
+- [x] All positions of one finding collapse together. Occurrence count is not part of
       the finding id, so one decision closes every place it is drawn.
-- [ ] **The collapse set is computed when the page opens**, and a tick does not move
+- [x] **The collapse set is computed when the page opens**, and a tick does not move
       anything under the reader. On a 168-row page an editor working top-down would
       otherwise lose their place at every tick, which is worse than the defect being
       fixed. The fold answers *what did I arrive with*, not *what am I doing now*, and
       the row an editor just ticked stays where they can check it.
-- [ ] **No new control.** 79's own criterion turns `Alleen verschillen` into the
+- [x] **No new control.** 79's own criterion turns `Alleen verschillen` into the
       expand-all control; an editor who wants their closed rows back presses that. A
       recompute button was considered and refused for want of any evidence it is needed.
-- [ ] **No count moves and nothing is reordered.** The test that pins "a filter never
+- [x] **No count moves and nothing is reordered.** The test that pins "a filter never
       moves a count" still passes unchanged, and the heading outline still jumps to the
       same places.
-- [ ] The marker's label says which kind of run it holds: a run with no findings says
+- [x] The marker's label says which kind of run it holds: a run with no findings says
       its blocks agree, a run of closed findings says they are done. One marker, one
       count, `blokken` as the noun — the run is a unit of skipping, not of reading, so
       a mixed run does not split into two markers. **79 proposes no copy at all**, so
       this ticket decides the strings.
-- [ ] **A page whose findings are all closed gets a sentence, not an empty table.** 79
+- [x] **A page whose findings are all closed gets a sentence, not an empty table.** 79
       carries this as a trap for the equal-page case; this ticket makes the state common
       and desirable, because it is what finishing a page looks like.
-- [ ] Checked on `terrasoverkapping`, the page this ticket was written about, with rows
+- [x] Checked on `terrasoverkapping`, the page this ticket was written about, with rows
       ticked and dismissed and one contradicted.
 
 ### What did not change
@@ -286,3 +288,91 @@ one tested field is not hard to reverse.
 
 The filename keeps `open-and-done-board`. The number is the identity and six files link
 it; renaming for a title is churn.
+
+---
+
+## Resolved 2026-08-14
+
+> *This was built by AI, test-first, at two seams agreed before any test was written:
+> `web/src/lib/view.mjs` for the rule and `ContentView.jsx` for what a browser can
+> answer that a pure function cannot.*
+
+**The rule.** `collapses()` in `web/src/lib/view.mjs`:
+
+```js
+export const collapses = (row) =>
+  (row.equal && row.class === null) ||
+  (Boolean(row.finding) && (!row.decidable || bucketOf(row.finding.state) === 'closed'));
+```
+
+Three terms, and the ticket's `equal || closed || !decidable` is written this way for two
+reasons the tests pin. The first term keeps 79's narrowing — **`equal` alone would
+collapse an open `copy` or `tag-changed` finding whose words agree**, which is the defect
+this ticket was written to stop, so agreement only collapses a row nothing was found on.
+The third term is read off the **finding** and not off the row, because `decidable` is
+also false for a row carrying a class the derivation never reached: that is noise an
+editor asked to see, nobody decided it, and it stays on screen.
+
+**Closed is `bucketOf()` and never a second list.** Ticket 80's grouping is the only place
+that says which of the four states are closed, and the content view reads it. A
+contradicted claim is Needs attention and does not collapse.
+
+**An `information` finding is not open work**, said in words as 86 asked: `CONTEXT.md`
+defines it as a finding you can link to and cannot decide, so nobody is waiting on it and
+its two sides may differ as much as they like.
+
+**The set is taken when the page opens.** `collapsedKeys(all)` answers once and
+`collapseRuns()` takes the keys instead of asking the rule again; `runKeyHolding()` takes
+the same keys, so the jump cannot seed a run the document does not hold. It is taken from
+the **whole page** and not from the filtered rows — a filter decides what is drawn and
+never what holds open work — and it is keyed on `store/page/showNoise` and not on the
+report object, which a parent may rebuild on any render. A different document counts its
+anchors from zero and a set carried into it would collapse rows by coincidence; the noise
+toggle is in the key for the other half of that, because it changes which rows the page
+has. A tick therefore leaves every row where the editor left it, which the browser test
+asserts by re-rendering with the finding `fixed`.
+
+**What re-takes the set is opening the view**, and a tab is opening the view: only one tab
+panel is mounted, so leaving the content view for Links and coming back takes the set
+again. That is the intended reading of *when the page opens* — the criterion is about a
+tick moving rows on its own — but it is worth knowing that the noise you left behind comes
+back folded rather than as you left it.
+
+**The copy, which 79 left here.** Two sentences, chosen by `marker.agrees`: *3 agreeing
+blocks* for a run nobody found anything in, *4 blocks with no open work* for a run holding
+work somebody closed. A mixed run says the second and does not split into two markers. The
+ticket proposed *N unchanged blocks*; **that word is refused** — 79's own review spent
+*unchanged* on a finding id that survives a re-measure, and the interface word is *agree*.
+`blokken` is likewise refused: ADR 0014 says the interface speaks English. *They are done*
+is refused too, in favour of *no open work*: a run can hold an `information` finding that
+nobody decided and calling that done would be a claim about work nobody did.
+
+**A finished page gets its own sentence.** *Nothing left to do on this page. Every
+difference on it is closed*, against *Nothing differs on this page* for a page nobody found
+anything on. `collapseState().everythingAgrees` is the difference, in `view.mjs` with the
+rest of what-is-on-screen.
+
+### The criteria, one by one
+
+Every box is ticked. Three are worth saying how:
+
+- **All positions of one finding collapse together** — the rule reads the finding, so six
+  rows drawn from one id cannot come apart. Tested.
+- **No new control and no count moves** — nothing was added. *Show agreeing blocks* is
+  still the expand-all, the marker's new `agrees` is a **kind and not a number** (the shape
+  test that pins the marker's keys was updated to say so), and the filter tests are
+  untouched.
+- **Checked on `terrasoverkapping`** — **not against the real page.** Nobody opened it.
+  What stands in for it is a browser fixture of that page's shape — a run of agreeing
+  blocks with a differing row above it and below it — mounted four times: with the finding
+  ticked, with it dismissed, with one dismissed beside one **contradicted**, and with a
+  tick arriving mid-session. The contradicted case is the one that was missing until the
+  review of this ticket asked for it; the rule had been tested, but nothing had watched a
+  contradicted row stay drawn while its neighbours collapsed. Anyone who wants the box
+  ticked as written should open the page.
+
+### What did not move
+
+`ContentFilter` stays a **one-field wrapper**. 79's review left it in place expecting this
+ticket to put a second field back; it did not, because this ticket adds no filter and no
+control. Whoever revisits that suggestion should know the reprieve has expired.

@@ -24,6 +24,10 @@ import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
 // beside `toneOf()` rather than here: two of its three callers are the Links and
 // Images tabs, which have no rows at all (ticket 86).
 import { canDecide } from './classes.mjs';
+// The Closed bucket, from the one function that groups the four derived states (ticket
+// 80). Read and never restated: a second list of which states are closed is how the
+// content view would come to disagree with the counts above it.
+import { bucketOf } from '../../../overrides/state.mjs';
 
 /**
  * @typedef {object} ContentFilter
@@ -140,6 +144,13 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
     // A class filter implies the differences: an editor narrowing to `copy` asked
     // for the copy edits, not for the copy edits inside the whole document.
     rows: isNarrowed(filter) ? onThePage.filter((row) => matches(row, filter)) : onThePage,
+    // The page whole, which is what `collapsedKeys()` is taken from (ticket 48). A
+    // filter decides what is **drawn** and never what holds open work, so a collapse
+    // set taken from the narrowed rows would leave every other row on the page unable
+    // to collapse for as long as the view stood, and clearing the filter would show a
+    // page of finished work as if it were open. It is the same array as `rows` when
+    // nothing is narrowed, and it is not a count: `total` is still the only number.
+    all: onThePage,
     total: onThePage.length,
     classes: classCounts(onThePage),
   };
@@ -188,28 +199,87 @@ function classCounts(rows) {
 }
 
 /**
- * Whether a row belongs behind a **context marker** rather than on screen (ticket 79,
- * ADR 0006).
+ * Whether a row belongs behind a **context marker** rather than on screen: it holds
+ * **no open work** (ticket 48, ticket 79, ADR 0006).
  *
- * It is **not** `row.equal`, and the difference is the decision this ticket carries.
- * Ticket 68 set `equal` as `prod.norm === next.norm` and said plainly that a row "can
- * carry `heading-level` or `tag-changed` and agree about every word" and still be
- * equal. That is right for a clamp, which compacts a row with nothing to read, and
- * wrong for a marker, which **removes** it: a `heading-level` finding is a difference,
- * and the view is supposed to open with the differing rows visible. So `equal` stays
- * exactly as 68 left it — the word diff still skips those rows and that saving is
- * untouched — and the marker reads a narrower rule of its own.
+ * It is **not** `row.equal`, and that is the whole decision. Ticket 68 set `equal` as
+ * `prod.norm === next.norm` and said plainly that a row "can carry `heading-level` or
+ * `tag-changed` and agree about every word" and still be equal. That is right for a
+ * clamp, which compacts a row with nothing to read, and wrong for a marker, which
+ * **removes** it: an open finding is work, and the view opens on the work. So `equal`
+ * stays exactly as 68 left it — the word diff still skips those rows and that saving is
+ * untouched — and the marker reads this rule instead. Ticket 79 shipped its first term
+ * only, deliberately, because narrowing collapses less and is the safe direction to be
+ * wrong in.
  *
- * **Narrowing is the safe direction**: it collapses less. Ticket 48 widens this again,
- * to *no open work* — a row is also behind the marker once its finding is Closed, or
- * once it is not `decidable` — and it can widen it in one deliberate step because this
- * rule is here rather than spread through a component. `ContentRow.decidable` is
- * already on the row for that.
+ * Three things hold no open work, and the second and third are 48's widening:
  *
- * @param {{ equal: boolean, class: string | null }} row
+ * 1. **Nothing was found here.** The two sides agree and the row carries no class, so
+ *    there is nothing to read and nothing to decide.
+ * 2. **The finding is Closed** — absent, dismissed, or claimed fixed and not
+ *    contradicted, which is ticket 80's bucket read through `bucketOf()` and never
+ *    restated. A **contradicted** claim is Needs attention and stays on screen: it is
+ *    open work wearing a tick, and it is the row an editor most needs to see.
+ * 3. **Nothing is being asked.** An `information` finding is *not open*, and this is
+ *    where 48 says so in its own words: `CONTEXT.md` defines it as a finding you can
+ *    link to and cannot decide, so no editor is waiting on it and its two sides may
+ *    differ as much as they like. `canDecide()` is the rule and `row.decidable` is it
+ *    applied to the row (ticket 86).
+ *
+ * A row carrying a class the derivation never reached has **no finding at all**, and it
+ * stays on screen. `decidable` is false for it too, for want of anything to read, and
+ * reading that as *no work* would quietly collapse noise an editor asked to see.
+ *
+ * One decision closes **every position** of one finding, because occurrence count is
+ * not part of a finding id: the rule reads the finding, so six rows drawn from it
+ * cannot come apart.
+ *
+ * @param {{ equal: boolean, class: string | null, finding: { state: string } | null,
+ *   decidable: boolean }} row
  * @returns {boolean}
  */
-export const collapses = (row) => row.equal && row.class === null;
+export const collapses = (row) =>
+  (row.equal && row.class === null) ||
+  (Boolean(row.finding) && (!row.decidable || bucketOf(row.finding.state) === 'closed'));
+
+/**
+ * The rows that hold no open work, by anchor — the collapse set, taken **once**.
+ *
+ * The content view asks when the page opens and holds the answer; nothing here re-reads
+ * it. A tick that collapsed its own row would move the page under the reader, and on a
+ * 168-row page an editor working top-down would lose their place at every tick, which
+ * is worse than the noise this ticket removes. The fold answers *what did I arrive
+ * with* and never *what am I doing now*, so a row an editor just ticked stays where
+ * they can check it, and the run it would have joined is one page-open away.
+ *
+ * Keys and not rows, because the rows are rebuilt on every tick: an anchor survives
+ * that, a row object does not.
+ *
+ * @param {ContentRow[]} rows
+ * @returns {string[]}
+ */
+export const collapsedKeys = (rows) => rows.filter(collapses).map((row) => row.key);
+
+/**
+ * Which rows are behind a marker in **this** render: the set the page opened with, or
+ * the rule itself when no set was taken.
+ *
+ * One function so that the two readers of the answer — the markers and the jump that
+ * seeds them open — cannot ask it differently. A jump into a run that was never drawn
+ * is a key nothing in the document carries, and it fails silently.
+ *
+ * The live branch is not a second mode for the interface: the content view always takes
+ * a set. It is the rule stated where the rule is tested, so a test can say what
+ * collapses and what the fold does with it in one assertion.
+ *
+ * @param {string[] | null} collapsed
+ * @returns {(row: ContentRow) => boolean}
+ */
+function markerRule(collapsed) {
+  if (!collapsed) return collapses;
+  const keys = new Set(collapsed);
+  return (row) => keys.has(row.key);
+}
 
 /**
  * One thing the content view draws: a row, or a marker standing for a run of them.
@@ -222,6 +292,12 @@ export const collapses = (row) => row.equal && row.class === null;
  * @property {number} blocks   How many blocks the run holds. A **distance between two
  *                             findings** and never a denominator: it counts rows, the
  *                             bar counts findings, and no bar is reachable from here.
+ * @property {boolean} agrees  Whether the run is blocks nobody found anything in, as
+ *                             against a run holding work somebody closed. It is what
+ *                             the marker's sentence is chosen by (ticket 48), and it is
+ *                             a **kind and not a second count** — a mixed run says it
+ *                             holds no open work, which is true of every row in it,
+ *                             rather than splitting into two markers.
  * @property {boolean} open    Whether the run is expanded.
  * @property {ContentRow[]} rows
  *
@@ -230,10 +306,10 @@ export const collapses = (row) => row.equal && row.class === null;
 
 /**
  * The content view as it is drawn: the whole page in document order, with each run of
- * collapsible rows folded into one context marker (ticket 79, ADR 0006).
+ * collapsible rows standing in one context marker (ticket 79, ADR 0006).
  *
- * **This is not a view mode.** It is one order with a fold in it. No row moves, no row
- * is filtered away, and the heading outline still names the same places — a marker
+ * **This is not a view mode.** It is one order with a collapse in it. No row moves, no
+ * row is filtered away, and the heading outline still names the same places — a marker
  * states the distance between two findings and gives the blocks back on one click,
  * where the retired *Diff* tab deleted the position outright. Ticket 37 held the mode
  * question and was parked, so nothing defines what a mode may do to document order;
@@ -246,15 +322,28 @@ export const collapses = (row) => row.equal && row.class === null;
  * changed but whether the text is gone or moved — which only the neighbouring blocks
  * answer.
  *
+ * A marker is open because `open` holds its key, and for **no other reason**. A jump
+ * used to be a second answer here, and a second answer is a state a press cannot reach:
+ * the reader pressed the chevron, `open` lost the key, and the run stayed open because
+ * the hash still named a row inside it. A jump seeds `open` through `runKeyHolding()`
+ * instead, so opening a run and keeping it open are one fact in one place.
+ *
  * @param {ContentRow[]} rows          From `prepareRows()`, already filtered.
  * @param {object} [reader]
  * @param {string[]} [reader.open]     The markers the reader opened, by marker key.
- * @param {string | null} [reader.reveal]  A row key a jump named. The run holding it
- *                                     opens with it, or the link lands on a marker.
+ * @param {string[] | null} [reader.collapsed]  The collapse set, by **row** anchor, from
+ *                                     `collapsedKeys()` when the page opened. It is then
+ *                                     the whole answer and `collapses()` is not asked
+ *                                     again, which is what stops a tick moving a row
+ *                                     under the reader. The content view always passes
+ *                                     it; left out, the rule answers live, which is how
+ *                                     the tests state the rule and the fold in one
+ *                                     assertion.
  * @returns {ContentItem[]}
  */
-export function collapseRuns(rows, { open = [], reveal = null } = {}) {
+export function collapseRuns(rows, { open = [], collapsed = null } = {}) {
   const opened = new Set(open);
+  const behind = markerRule(collapsed);
 
   /** @type {ContentItem[]} */
   const drawn = [];
@@ -263,19 +352,20 @@ export function collapseRuns(rows, { open = [], reveal = null } = {}) {
 
   const closeRun = () => {
     if (run.length === 0) return;
-    const key = `run-${run[0].key}`;
+    const key = runKey(run[0]);
     drawn.push({
       kind: 'marker',
       key,
       blocks: run.length,
-      open: opened.has(key) || run.some((row) => row.key === reveal),
+      agrees: run.every((row) => row.finding === null),
+      open: opened.has(key),
       rows: run,
     });
     run = [];
   };
 
   for (const row of rows) {
-    if (collapses(row)) {
+    if (behind(row)) {
       run.push(row);
       continue;
     }
@@ -285,6 +375,97 @@ export function collapseRuns(rows, { open = [], reveal = null } = {}) {
   closeRun();
 
   return drawn;
+}
+
+/**
+ * A marker's own name, from the first row of the run it stands for.
+ *
+ * A marker and a row are in one document, so the two anchor schemes must not be able to
+ * collide: a hash link landing on the wrong one is silent and looks like the link was
+ * wrong. `collapseRuns()` names markers and `runKeyHolding()` finds one by the rows it
+ * holds, and the two agreeing about the name is the whole reason this is a function.
+ *
+ * @param {ContentRow} first
+ * @returns {string}
+ */
+const runKey = (first) => `run-${first.key}`;
+
+/**
+ * The marker standing over a row, or null when the row is on screen already.
+ *
+ * This is the jump, said as a **seed** rather than as an override. A run holding a
+ * jumped-to row has to be open in the same render, or the browser lands on a marker and
+ * the outline stops reaching its headings — but "open because a hash names a row inside
+ * it" is not a state a press can leave. So the caller adds this key to the runs the
+ * reader has opened, once, and from then on the chevron is the only thing that answers.
+ *
+ * A row that is not behind a marker answers null rather than answering with the run
+ * nearest it: the ordinary jump lands on a differing row, which is already drawn, and
+ * opening some neighbouring run for it would be furniture the reader did not ask for.
+ *
+ * @param {ContentRow[]} rows            From `prepareRows()`, in the order `collapseRuns()`
+ *                                       will read them.
+ * @param {string | null | undefined} rowKey  A row anchor, from `rowKeyFromHash()` or
+ *                                       `landingRow()`.
+ * @param {string[] | null} [collapsed]  The collapse set `collapseRuns()` was given.
+ *                                       The same answer reaches both, or this names a
+ *                                       run the document does not hold.
+ * @returns {string | null}
+ */
+export function runKeyHolding(rows, rowKey, collapsed = null) {
+  if (!rowKey) return null;
+  const behind = markerRule(collapsed);
+
+  /** @type {ContentRow | null} */
+  let first = null;
+  for (const row of rows) {
+    if (!behind(row)) {
+      first = null;
+      continue;
+    }
+    first ??= row;
+    if (row.key === rowKey) return runKey(first);
+  }
+
+  return null;
+}
+
+/**
+ * What the drawn items say about themselves: the markers, whether every one of them is
+ * open, and whether the page is markers and nothing else.
+ *
+ * The three questions the content view asks of `collapseRuns()`'s answer, here rather
+ * than in the component for the reason this module's header gives — what is on screen is
+ * this module's decision. `allOpen` is what the expand-all control reads, and it is
+ * false on a page with no marker, because that is the page where the control is not
+ * drawn at all: a control over nothing teaches a reader that it does nothing.
+ *
+ * `everythingCollapsed` is **not** `markers.length === items.length`, and the difference
+ * is a page with nothing on it. A filter that matched no row leaves no items, which
+ * satisfies that comparison and would have the view claim every block agrees with
+ * production. An empty view is a sentence the component already has, and it is a
+ * different sentence. It is named for the **items** and not for the page — *nothing
+ * differs* was the name until ticket 48 and the word turned false under it: on a page an
+ * editor worked through every difference is still there, and what changed is that none
+ * of them is open.
+ *
+ * `everythingAgrees` is what such a finished page is told apart by, and it decides which
+ * of the two sentences is said. It is vacuously true of a page with no marker at all,
+ * which no caller can see: only a page that is markers and nothing else is asked.
+ *
+ * @param {ContentItem[]} items
+ * @returns {{ markers: ContextMarker[], allOpen: boolean, everythingCollapsed: boolean,
+ *   everythingAgrees: boolean }}
+ */
+export function collapseState(items) {
+  const markers = /** @type {ContextMarker[]} */ (items.filter((item) => item.kind === 'marker'));
+
+  return {
+    markers,
+    allOpen: markers.length > 0 && markers.every((marker) => marker.open),
+    everythingCollapsed: items.length > 0 && markers.length === items.length,
+    everythingAgrees: markers.every((marker) => marker.agrees),
+  };
 }
 
 /**
@@ -316,9 +497,9 @@ export function rowKeyFromHash(hash) {
  * filtered away.
  *
  * It is given the rows and never `collapseRuns()`'s items, which is the difference
- * between a filter and a fold: a filtered row is not on the page, and a collapsed row
- * is one click away. So a heading inside a run keeps its entry, and `rowKeyFromHash()`
- * is what opens the run the jump lands in.
+ * between filtering a row away and collapsing it: a filtered row is not on the page,
+ * and a collapsed row is one click away. So a heading inside a run keeps its entry, and
+ * `runKeyHolding()` is what opens the run the jump lands in.
  *
  * @param {ContentRow[]} rows
  * @returns {{ key: string, level: number, text: string }[]}
