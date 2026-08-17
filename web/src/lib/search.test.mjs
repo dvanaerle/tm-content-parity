@@ -8,8 +8,10 @@ import {
   inScope,
   matchedFields,
   parseTerm,
+  scopeSuggestions,
   searchNotes,
   searchStore,
+  withScope,
 } from './search.mjs';
 
 /**
@@ -394,6 +396,121 @@ describe('inScope', () => {
 
   it('ignores letter case, as the rest of the search does', () => {
     expect(inScope('Downloads', 'downloads')).toBe(true);
+  });
+});
+
+/**
+ * Ticket 104 part D. The keys are not guessable — they carry store prefixes and
+ * parentheses — so a scope nobody can be offered is a feature only a reader of the source
+ * can use. The offer is a value here for the reason part A's four kinds are: the rule is the
+ * scope's own rule, and a component re-deriving it would offer keys the scope then misses.
+ */
+const KEYS = [
+  { page: 'overkappingen', comparable: true },
+  { page: '(home)', comparable: true },
+  { page: 'faq/productinformatie', comparable: true },
+  { page: '(be)pergola', comparable: true },
+  { page: 'kerstactie', comparable: false },
+];
+
+describe('scopeSuggestions', () => {
+  const offered = (term) => scopeSuggestions({ pages: KEYS, term })?.pages.map((one) => one.page);
+
+  it('offers every key of the store on the slash alone', () => {
+    // Alphabetical, and not the order the store happens to load in: the list is long
+    // enough to scroll on a real store, and a scroll through an order nobody can predict
+    // is a list an editor has to read rather than aim at.
+    expect(offered('/')).toEqual([
+      '(be)pergola',
+      '(home)',
+      'faq/productinformatie',
+      'kerstactie',
+      'overkappingen',
+    ]);
+  });
+
+  it('narrows by the scope’s own substring rule, so what is offered is what would match', () => {
+    expect(offered('/pergola')).toEqual(['(be)pergola']);
+    expect(offered('/faq')).toEqual(['faq/productinformatie']);
+    expect(offered('/HOME')).toEqual(['(home)']);
+  });
+
+  it('offers nothing for a slash that is not in first position', () => {
+    // 103's rule, and the reason for it: a key can hold a slash, so anywhere but the front
+    // the character is an ordinary letter and there is no scope being typed.
+    expect(scopeSuggestions({ pages: KEYS, term: 'faq/productinformatie' })).toBe(null);
+    expect(scopeSuggestions({ pages: KEYS, term: 'knop' })).toBe(null);
+    expect(scopeSuggestions({ pages: KEYS, term: '' })).toBe(null);
+  });
+
+  it('has nothing left to offer once the fragment is the one key it reaches', () => {
+    // The scope is settled, so the list closes on its own and stays closed while the words
+    // after it are typed. It is the one honest way to keep a suggestion list from hanging
+    // over the result an editor is reading, without a second piece of state saying so.
+    expect(scopeSuggestions({ pages: KEYS, term: '/(home)' })).toBe(null);
+    expect(scopeSuggestions({ pages: KEYS, term: '/overkappingen deals' })).toBe(null);
+  });
+
+  it('keeps offering when the key is the prefix of a sibling', () => {
+    // The exact match is not settlement on its own. A store holding both `veranda` and
+    // `veranda-hout` is the ordinary case, and there `/veranda` has a page left to offer —
+    // going quiet would break the rule the list lives under, that what is offered is what
+    // would match. Worse where the sibling is the one-sided one: no index entry can offer it.
+    const siblings = [
+      { page: 'veranda', comparable: true },
+      { page: 'veranda-hout', comparable: false },
+    ];
+
+    expect(scopeSuggestions({ pages: siblings, term: '/veranda' })).toEqual({
+      scope: 'veranda',
+      pages: [
+        { page: 'veranda', comparable: true },
+        { page: 'veranda-hout', comparable: false },
+      ],
+    });
+    // And it is settled again as soon as the fragment reaches one of them alone.
+    expect(scopeSuggestions({ pages: siblings, term: '/veranda-hout' })).toBe(null);
+  });
+
+  it('keeps offering while the scope is half typed, second term and all', () => {
+    // Which is what makes a scope correctable: `/overkap deals` is a page not yet named and
+    // a search already typed, and choosing here must not cost the words.
+    expect(offered('/overkap deals')).toEqual(['overkappingen']);
+  });
+
+  it('offers the one-sided pages, and says which they are', () => {
+    // They are exactly the pages an editor cannot otherwise reach through search — there is
+    // no index entry to find them by — and part A explains what a scope onto one gets.
+    expect(scopeSuggestions({ pages: KEYS, term: '/kerst' })).toEqual({
+      scope: 'kerst',
+      pages: [{ page: 'kerstactie', comparable: false }],
+    });
+  });
+
+  it('offers an empty list rather than nothing when the fragment matches no key', () => {
+    // Not `null`. A fragment is being typed, so the box is a scope box; that no key holds it
+    // is part A's *no such page*, which the result says and this list does not repeat.
+    expect(scopeSuggestions({ pages: KEYS, term: '/zzz' })).toEqual({ scope: 'zzz', pages: [] });
+  });
+});
+
+describe('withScope', () => {
+  it('puts the chosen key in the box, whole', () => {
+    expect(withScope('/faq', 'faq/productinformatie')).toBe('/faq/productinformatie');
+    expect(withScope('/home', '(home)')).toBe('/(home)');
+  });
+
+  it('leaves the second term intact', () => {
+    expect(withScope('/overkap deals', 'overkappingen')).toBe('/overkappingen deals');
+    expect(withScope('/overkap bekijk deals >', 'overkappingen')).toBe(
+      '/overkappingen bekijk deals >',
+    );
+  });
+
+  it('scopes a term that had no scope, rather than replacing it', () => {
+    // Reachable from `/ deals`, where nothing follows the slash: the words are a search
+    // already typed and the scope is what is being added to them.
+    expect(withScope('/ deals', 'overkappingen')).toBe('/overkappingen deals');
   });
 });
 

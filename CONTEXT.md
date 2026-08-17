@@ -309,6 +309,17 @@ element any more: it folds the links inside it. Both the word and the rule are g
   it sits on, and it is therefore the only thing search can truthfully say about a
   **one-sided** page, which has no findings and can never have any. A bare scope answers the
   notes half with every note on the page; an empty box is still nothing asked.
+  It is **offered** and not only accepted (ticket 104): a leading slash puts the store's page
+  keys under the box, narrowed as the key is typed by the same substring rule the scope
+  matches by, walked with the arrow keys and put down with Escape. The keys are not
+  guessable — `(home)`, `(be)pergola`, `faq/productinformatie` — so an unofferable scope is a
+  feature only a reader of the source can use. The offer is the **whole** page list and never
+  the indexed half, because a clean page has no index entry and a one-sided page can never
+  have one, and those are most of what a spot-check is for; a one-sided key is offered wearing
+  the aside's own words. It comes from the list the store page loaded, so it answers the first
+  keystroke, before the index is fetched. Choosing is never required and changes nothing: it
+  writes the same box a hand-typed scope writes, and a key that is already whole has nothing
+  left to offer, which is what closes the list while the words after it are typed.
   See `docs/adr/0016-a-leading-slash-is-a-page-scope.md`, which records why the reasoning it
   overturns — a key is opaque and nothing splits on a slash — holds for everywhere but first
   position, and why this is not the first step toward a query language.

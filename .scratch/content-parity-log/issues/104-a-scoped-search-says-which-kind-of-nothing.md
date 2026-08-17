@@ -1,7 +1,7 @@
 # 104 — The search takes a page scope
 
 Type: task
-Status: ready-for-agent — parts A, B and C landed, D and E open.
+Status: ready-for-agent — parts A, B, C and D landed, E open.
 Blocked by: None — 103, 102 and 123 are all resolved.
 Parent: ../map.md
 
@@ -21,7 +21,7 @@ your part and nothing else. If you need more, the ticket is wrong — say so and
 | **A** | The four kinds of nothing, returned as a value | **landed**, `bc59495` |
 | **B** | The scope reaches the notes | **landed** |
 | **C** | The scope is a filter and says so | **landed** |
-| **D** | Typing a slash offers the page keys | open |
+| **D** | Typing a slash offers the page keys | **landed** |
 | **E** | A page row hands its key to the search | open |
 
 **A is the seam the rest consume.** B, D and E build on the value it returns; C is
@@ -320,7 +320,48 @@ narrowing by class is the only kind there is.
 
 ---
 
-## D — Typing a slash offers the page keys
+## D — Typing a slash offers the page keys — **landed**
+
+Built 2026-08-17: `web/src/lib/search.mjs` (`splitScope()` holds the slash rule and
+`parseTerm()` is now one of its three readers; `scopeSuggestions()` and `withScope()` are the
+other two), `web/src/lib/search.test.mjs`, `web/src/components/SearchBox.jsx` (**new** — the
+box and its listbox), `web/src/components/Dashboard.jsx` (it hands down the whole page list
+and keeps `patch({ query })` as the one write), `web/src/components/Dashboard.browser.test.mjs`,
+`CONTEXT.md`, `docs/adr/0016` and `docs/adr/0007`.
+
+The list closes on a **settled** scope — a fragment that names a key *and is the only key it
+reaches*. Both halves are needed, and the first version had only the first: a key can be the
+prefix of a sibling, so `/veranda` over a store holding `veranda` and `veranda-hout` went
+silent with a page left to offer, which breaks the one rule the list lives under. It would have
+gone silent on a one-sided sibling in particular — the page nothing else can reach. Choosing a
+suggestion therefore closes the list itself rather than relying on the offer to stop.
+
+Two ADRs said something this part makes false, and both are amended in place rather than left
+standing:
+
+- **0016** said `parseTerm()` *is the whole of this rule*. It is `splitScope()` now, with three
+  readers, because the suggestions need the fragment being typed — which `parseTerm()`
+  deliberately refuses to call a scope — and the write-back needs the words after it. The
+  division moved down; each reader keeps its own judgement.
+- **0007** says every panel is a shadcn primitive and names the failure mode: *a dozen panels
+  that each redefined a border and a corner*. The listbox is hand-rolled, because a `Popover`
+  takes the focus and this list must never — the caret stays in the box and the active row is
+  named by `aria-activedescendant`. Recorded as a consequence with two conditions, the second
+  being that a **second** hand-rolled panel means this repo wants a focus-free primitive of its
+  own.
+
+Three things the `/code-review` asked about that were kept as built, named here rather than
+left implicit:
+
+- **The `CONTEXT.md` edit is not asked for by any part-D criterion.** Parts A and B updated the
+  glossary the same way without one; the **Page scope** entry would otherwise describe a scope
+  an editor cannot be offered.
+- **Alphabetical order and the mouse affordances** — hover to highlight, mousedown to choose —
+  are decisions no criterion names. A listbox that answered only the keyboard would be the
+  odder control.
+- **Escape means two things**: it puts the list down when the list is up, and otherwise the
+  browser's own default empties the box. That default is what the box did before this part, so
+  it is left alone rather than changed outside part D's remit.
 
 ### Reading list — D
 
@@ -352,16 +393,24 @@ It costs nothing to source. The full page list arrives in the browser when the s
 loads, well before the search index is fetched, so the suggestions are available from the
 first keystroke — including for pages the index does not contain.
 
-- [ ] Typing `/` as the first character offers the store's page keys.
-- [ ] Continuing to type narrows the suggestions by the same substring rule the scope itself
-      uses, so what is offered is what would match.
-- [ ] Choosing a suggestion puts that scope in the box, leaving any second term intact.
-- [ ] The list is keyboard-navigable and dismissable without leaving the box.
-- [ ] Suggestions are available before the search index has been fetched.
-- [ ] One-sided pages are offered, and are marked as such — they are exactly the pages an
-      editor cannot otherwise reach through search, and **A** explains what they get.
-- [ ] A slash typed anywhere but first position offers nothing, matching 103's rule.
-- [ ] Choosing a suggestion is not required — a scope typed out by hand behaves identically.
+- [x] Typing `/` as the first character offers the store's page keys.
+- [x] Continuing to type narrows the suggestions by the same substring rule the scope itself
+      uses, so what is offered is what would match. — it is `inScope()` itself, and the offer
+      survives a key that is the prefix of a sibling, which is where an exact match read as
+      settlement had it going quiet with a page still to offer.
+- [x] Choosing a suggestion puts that scope in the box, leaving any second term intact.
+- [x] The list is keyboard-navigable and dismissable without leaving the box. — Escape
+      remembers the **fragment** it was dismissed at, so the list returns when that fragment
+      changes rather than staying down for the session or reopening on the next keystroke.
+- [x] Suggestions are available before the search index has been fetched. — pinned against a
+      `fetch` that never resolves, so a test cannot pass by letting the index land.
+- [x] One-sided pages are offered, and are marked as such — they are exactly the pages an
+      editor cannot otherwise reach through search, and **A** explains what they get. — in the
+      aside's own words, *Only one site has this page.*
+- [x] A slash typed anywhere but first position offers nothing, matching 103's rule. — pinned
+      with `faq/overk`, where the words after the slash **do** name a page: the obvious
+      `overkappingen/deals` is silent under a wrong rule as well and proves nothing.
+- [x] Choosing a suggestion is not required — a scope typed out by hand behaves identically.
 
 ### Traps — D
 

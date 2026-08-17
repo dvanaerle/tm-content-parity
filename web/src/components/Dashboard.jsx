@@ -13,8 +13,8 @@ import {
 import { EditorPrompt, LogBanner } from './Progress.jsx';
 import { ClassGroups } from './Repeats.jsx';
 import Search from './Search.jsx';
+import SearchBox from './SearchBox.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
-import { Input } from './ui/input.jsx';
 import {
   Select,
   SelectContent,
@@ -404,17 +404,20 @@ export default function Dashboard({
               reason: `w-56` is 224 pixels of a 319 pixel card, which leaves the switch
               and the select nowhere to go. */}
           <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-            {/* One box, and it searches the content (ticket 82). It used to match a page
-                name and nothing else, and it lived with the page list because that was
-                the only list it could narrow. The page key is one of the six fields it
-                now searches, so the old question is still asked — and there is one box
-                on the screen rather than the two ticket 12 already cleaned up once. */}
-            <Input
-              type="search"
+            {/* The box, which offers the store's page keys while a scope is being typed
+                (ticket 104 part D). It is `SearchBox` and not an `Input` because that offer
+                is a small machine of its own — what is open, which row the arrow keys are
+                on — and none of it is screen state.
+
+                The **whole** page list goes down, one-sided pages and all: they are exactly
+                the pages no index entry can offer, and it is in memory here well before the
+                index is fetched, so the first keystroke is answered. The write is still
+                `patch({ query })`, so a scope chosen from the list and one typed by hand are
+                one write. */}
+            <SearchBox
               value={query}
-              onChange={(event) => patch({ query: event.target.value })}
-              placeholder="Search the content"
-              title="Searches the text, the links, the headings and the page names of this store."
+              onChange={(next) => patch({ query: next })}
+              pages={pages}
             />
             {/* The switch belongs to the two views, and a search answers past both of
                 them, so it steps aside while one is on screen. */}

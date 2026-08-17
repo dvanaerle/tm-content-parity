@@ -13,8 +13,17 @@ repeats on that page whose words hold *knop*.
 **Position 0 of the term, and nowhere else.** A term is trimmed, and if it then begins with
 a slash, everything up to the first space is the **page scope** and everything after it is
 the text to search for. Anywhere else the slash is an ordinary character, exactly as it was
-before. `parseTerm()` in `web/src/lib/search.mjs` is the whole of this rule, and it is a
-pure function tested apart from matching.
+before. ~~`parseTerm()` in `web/src/lib/search.mjs` is the whole of this rule, and it is a
+pure function tested apart from matching.~~
+*Amended 2026-08-17 by ticket 104 part D.* The rule is still one pure function in
+`web/src/lib/search.mjs`, tested apart from matching — but it is `splitScope()`, and
+`parseTerm()` is now one of its three readers. The other two arrived with the suggestion
+list: `scopeSuggestions()` needs the fragment *being typed*, which `parseTerm()` refuses to
+call a scope at all (a bare `/` is deliberately not one), and `withScope()` needs the words
+after it, to put a chosen key in the box without costing them. The division is what all three
+share and the judgement is what they differ on, so the division moved down and each reader
+keeps its own answer. The consequence below — one string, one parse, and no second copy of
+this rule to drift — is the reason it moved rather than being written out three times.
 
 **The scope is matched by substring against the page key.** It is how every other field in
 this search is matched, and it is what lets `/faq` reach the family, `/home` reach `(home)`

@@ -116,6 +116,22 @@ Two things follow from it and are worth writing down:
   is a weaker warrant than this consequence used to carry. A later ticket that wants it
   to be a `Progress` is not arguing with this decision.
 
+- **A second thing stays hand-rolled: the suggestion list** (ticket 104 part D). The page-key
+  list under the dashboard's search box is a `<ul role="listbox">` in `SearchBox.jsx` with its
+  own border, corner and shadow, and not the installed `ui/popover.jsx`. The reason is the one
+  thing this ADR takes shadcn *for*: **focus**. A popover takes it, and this list must never —
+  the editor is typing, the caret stays in the box the whole time, the rows are read with the
+  arrow keys from inside it, and the active row is named by `aria-activedescendant` rather
+  than focused. A primitive whose whole job is to move the focus somewhere cannot be handed a
+  case that forbids moving it.
+  It is recorded here and not left in a component comment because this is the failure mode
+  the amendment names by name — *a dozen panels that each redefined a border and a corner* —
+  and one panel is how a dozen starts. Two conditions on it, then: the tokens are the
+  popover's own (`bg-popover`, `text-popover-foreground`, `rounded-lg border shadow-md`), so
+  the surface is still the theme's and only the focus behaviour is local; and a **second**
+  hand-rolled panel should be read as evidence that this repo wants a focus-free panel
+  primitive of its own rather than as licence for a third.
+
 - **A second registry file is edited in place** (ticket 80). `ui/progress.jsx` builds its
   own track and indicator and exposes a `className` for the root only, so the page bar in
   `Progress.jsx` had nowhere to put `FILL.secondary` — and the fill colour is the whole

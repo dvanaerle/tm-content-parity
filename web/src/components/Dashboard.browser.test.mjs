@@ -298,3 +298,193 @@ describe('a page scope worn as a chip', () => {
     unmount();
   });
 });
+
+/**
+ * Ticket 104 part D. The keys are not guessable — `(home)`, `(be)pergola`,
+ * `faq/productinformatie` — so a scope nobody is offered is a feature only a reader of the
+ * source can use. What is offered is decided in `search.mjs` and pinned there; these cases
+ * ask the questions only a browser can answer: whether the box offers it, whether the arrow
+ * keys walk it, and whether it is there before the index is.
+ */
+describe('the page keys offered while a scope is typed', () => {
+  const ONE_SIDED = {
+    ...page('kerstactie', []),
+    comparable: false,
+    skipReason: 'new site answered 404',
+  };
+
+  let fetched;
+
+  const mountFresh = () => {
+    fetched = globalThis.fetch;
+    // **Never resolves.** The suggestions have to be there before the index is, so a test
+    // that let the index land could not tell the two apart.
+    globalThis.fetch = () => new Promise(() => {});
+    // `overkappingen-hout` is here because a key that is the prefix of a sibling is the
+    // ordinary shape of a real store, not the odd one — and it is the case an exact match
+    // read as settlement gets wrong.
+    return mount({ pages: [...PAGES, ONE_SIDED, page('overkappingen-hout', [finding('d')])] });
+  };
+
+  afterEach(() => {
+    globalThis.fetch = fetched;
+  });
+
+  const box = () => document.querySelector('input[type="search"]');
+  const list = () => document.querySelector('[data-scope-suggestions]');
+  const offered = () =>
+    [...document.querySelectorAll('[data-suggestion]')].map((one) => one.dataset.suggestion);
+  const activeRow = () => document.querySelector('[data-suggestion][aria-selected="true"]');
+
+  /** What an editor typing does, which is what the box answers: a value and an `input`. */
+  const type = async (text) => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    await act(async () => box().focus());
+    setter.call(box(), text);
+    await act(async () => box().dispatchEvent(new Event('input', { bubbles: true })));
+  };
+
+  const press = (name) => {
+    const event = new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true });
+    return act(async () => box().dispatchEvent(event));
+  };
+
+  it('offers every key of the store on the slash alone, before the index has arrived', async () => {
+    const unmount = mountFresh();
+    await type('/');
+
+    expect(offered()).toEqual([
+      'kerstactie',
+      'overkappingen',
+      'overkappingen-hout',
+      'schuttingen',
+    ]);
+    // The index is still in flight, which is the point: the page list answered this and it
+    // was in memory from the moment the store page loaded.
+    expect(document.body.textContent).toContain('loading');
+    unmount();
+  });
+
+  it('narrows what is offered as the key is typed', async () => {
+    const unmount = mountFresh();
+    await type('/overk');
+
+    expect(offered()).toEqual(['overkappingen', 'overkappingen-hout']);
+    unmount();
+  });
+
+  it('offers nothing for a slash that is not in first position', async () => {
+    // 103's rule: a key can hold a slash, so anywhere but the front it is an ordinary
+    // character and no scope is being typed.
+    //
+    // The term is `faq/overk` and not `overkappingen/deals` on purpose. The second one is
+    // silent under a **wrong** rule as well — a rule scanning for any slash would read a
+    // fragment no key holds, and an empty offer draws nothing either — so it would pass
+    // while proving nothing. Here the words after the slash *do* name a page, so a rule
+    // reading structure anywhere but position 0 opens the list and is caught.
+    const unmount = mountFresh();
+    await type('faq/overk');
+
+    expect(list()).toBe(null);
+    unmount();
+  });
+
+  it('walks the list with the arrow keys and chooses with Enter, keeping the second term', async () => {
+    const unmount = mountFresh();
+    await type('/ deals');
+
+    await press('ArrowDown');
+    await press('ArrowDown');
+    expect(activeRow().dataset.suggestion).toBe('overkappingen');
+
+    await press('Enter');
+
+    expect(box().value).toBe('/overkappingen deals');
+    // Choosing is settling, so the list goes down on the press — and it has to be said here
+    // rather than left to the offer, because `overkappingen` is the prefix of a sibling and
+    // the offer is right to keep standing for one.
+    expect(list()).toBe(null);
+    expect(document.querySelector('[data-scope-chip]').textContent).toContain('/overkappingen');
+    unmount();
+  });
+
+  it('goes on offering a sibling when the key typed is the prefix of one', async () => {
+    // What is offered is what would match: `/overkappingen` reaches two pages, so a list
+    // that closed on the exact match would go quiet with a page still to offer — and would
+    // do it silently on a one-sided sibling, the page nothing else can reach.
+    const unmount = mountFresh();
+    await type('/overkappingen');
+
+    expect(offered()).toEqual(['overkappingen', 'overkappingen-hout']);
+    unmount();
+  });
+
+  it('wires the box to the list the way a combobox is read', async () => {
+    // The browser is what these tests are for, and a `data-` hook says nothing to a screen
+    // reader. The list is read from inside the box, so the box keeps the focus and the
+    // active row is named by `aria-activedescendant` rather than focused.
+    const unmount = mountFresh();
+    await type('/overk');
+
+    expect(box().getAttribute('role')).toBe('combobox');
+    expect(box().getAttribute('aria-expanded')).toBe('true');
+    expect(box().getAttribute('aria-controls')).toBe(list().id);
+    expect(box().getAttribute('aria-activedescendant')).toBe(null);
+
+    await press('ArrowDown');
+
+    expect(document.activeElement).toBe(box());
+    expect(box().getAttribute('aria-activedescendant')).toBe(activeRow().id);
+    unmount();
+  });
+
+  it('puts the list down on Escape without emptying the box', async () => {
+    // Dismissable without leaving the box, and the browser's own Escape — which empties a
+    // `type="search"` input — is refused: an editor putting a list down has not asked for
+    // their term back.
+    const unmount = mountFresh();
+    await type('/overk');
+    expect(list()).not.toBe(null);
+
+    await press('Escape');
+
+    expect(list()).toBe(null);
+    expect(box().value).toBe('/overk');
+    unmount();
+  });
+
+  it('brings the list back when the fragment changes after an Escape', async () => {
+    const unmount = mountFresh();
+    await type('/overk');
+    await press('Escape');
+
+    await type('/schut');
+
+    expect(offered()).toEqual(['schuttingen']);
+    unmount();
+  });
+
+  it('marks the one-sided pages, which no index entry could offer', async () => {
+    const unmount = mountFresh();
+    await type('/kerst');
+
+    expect(document.querySelector('[data-suggestion="kerstactie"]').textContent).toContain(
+      'one-sided',
+    );
+    unmount();
+  });
+
+  it('behaves the same for a scope typed out by hand', async () => {
+    // Choosing is never required. A key typed in full is a settled scope, so the list has
+    // nothing left to offer and the screen is the one the list would have produced.
+    // `schuttingen` and not `overkappingen`: the second reaches a sibling as well, and the
+    // case being pinned here is the hand-typed key that is finished.
+    const unmount = mountFresh();
+    await type('/schuttingen deals');
+
+    expect(list()).toBe(null);
+    expect(box().value).toBe('/schuttingen deals');
+    expect(document.querySelector('[data-scope-chip]').textContent).toContain('/schuttingen');
+    unmount();
+  });
+});

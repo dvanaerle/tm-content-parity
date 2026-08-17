@@ -296,15 +296,111 @@ export function matchedFields(entry, term) {
  *   empty on a bare scope — which is a search for the page and not for nothing.
  */
 export function parseTerm(raw) {
+  const split = splitScope(raw);
+  // An empty fragment holds every page key by substring, so the first keystroke would answer
+  // with the whole store. The slash stays the ordinary character it was before ticket 103.
+  if (!split || !split.fragment) return { scope: null, text: raw.trim() };
+
+  return { scope: split.fragment, text: split.rest };
+}
+
+/**
+ * The slash rule itself, in the one place it is written.
+ *
+ * Position 0 of the term is the only structural slash, the fragment ends at the first
+ * space, and the words after it are a search. Three readers need exactly that division —
+ * `parseTerm()` for the answer, `scopeSuggestions()` for what to offer, `withScope()` for
+ * what to write back — and three copies of it would be three chances for the offer to name
+ * a page the scope then misses.
+ *
+ * It divides without judging: a bare `/` is a fragment of nothing rather than no scope,
+ * which is the distinction its callers part company over. `parseTerm()` refuses it and the
+ * suggestions are built on it.
+ *
+ * @param {string} raw What is in the box.
+ * @returns {{ fragment: string, rest: string } | null} `null` when the term opens with no
+ *   slash, so there is no scope in it and none being typed.
+ */
+function splitScope(raw) {
   const term = raw.trim();
-  if (!term.startsWith('/')) return { scope: null, text: term };
+  if (!term.startsWith('/')) return null;
 
-  const rest = term.slice(1);
-  const space = rest.search(/\s/);
-  const scope = space === -1 ? rest : rest.slice(0, space);
-  if (!scope) return { scope: null, text: term };
+  const after = term.slice(1);
+  const space = after.search(/\s/);
+  return space === -1
+    ? { fragment: after, rest: '' }
+    : { fragment: after.slice(0, space), rest: after.slice(space).trim() };
+}
 
-  return { scope, text: space === -1 ? '' : rest.slice(space).trim() };
+/**
+ * The store's page keys, offered while a scope is being typed (ticket 104 part D).
+ *
+ * **The keys are not guessable.** They carry store prefixes and parentheses — `(home)`,
+ * `(be)pergola`, `faq/productinformatie` — and no editor produces one from memory, so
+ * without an offer the scope is a feature only someone who has read the source can use.
+ *
+ * It is a value here and not a list assembled in the box for the same reason part A's four
+ * kinds are: the narrowing is `inScope()`, the scope's own rule, so what is offered is
+ * exactly what would match. A component filtering the keys itself would eventually offer a
+ * page the scope then misses, and an offer that lies is worse than none.
+ *
+ * **The whole page list and never the indexed half.** A clean page contributes no index
+ * entry and a one-sided page can never contribute one, and those are most of what a
+ * spot-check is for. The list arrives with the store page, before the index is fetched, so
+ * the offer is there from the first keystroke.
+ *
+ * @param {object} args
+ * @param {{ page: string, comparable: boolean }[]} args.pages The store's whole page list.
+ * @param {string} args.term What is in the box.
+ * @returns {{ scope: string, pages: { page: string, comparable: boolean }[] } | null} `null`
+ *   when nothing is being offered: no leading slash, or a **settled** scope — a fragment that
+ *   is a key of the store and the only key it reaches. That second case is what keeps the
+ *   list from hanging over the result while the words after a settled scope are typed. An
+ *   **empty** `pages` is a different answer: a fragment no key holds, which is part A's *no
+ *   such page* and is the result's sentence to say, not this list's.
+ */
+export function scopeSuggestions({ pages, term }) {
+  const split = splitScope(term);
+  if (!split) return null;
+
+  const { fragment } = split;
+  const offered = pages
+    .filter((one) => inScope(one.page, fragment))
+    // Alphabetical, and not the order the store loaded in. On a real store this list is
+    // long enough to scroll, and a scroll through an order nobody can predict is a list an
+    // editor has to read rather than aim at.
+    .map((one) => ({ page: one.page, comparable: one.comparable }))
+    .sort((a, b) => a.page.localeCompare(b.page));
+
+  // Settled: the fragment names a key, **and it is the only key it reaches**. Both halves
+  // are needed. A key can be the prefix of a sibling — a store holding `veranda` and
+  // `veranda-hout` is the ordinary case, not the odd one — and there `/veranda` has a page
+  // left to offer, so closing on the exact match alone would break the one rule this list
+  // lives under: what is offered is what would match. It would go silent on the sibling
+  // exactly when the sibling is one-sided, which is the page no index entry can offer.
+  //
+  // The test is read off `offered` rather than asked of `pages` a second time, so the
+  // exact-match twin of `inScope()` is not written out here beside it.
+  if (offered.length === 1 && fold(offered[0].page) === fold(fragment)) return null;
+
+  return { scope: fragment, pages: offered };
+}
+
+/**
+ * The box, with this page as its scope and the search already typed left alone.
+ *
+ * Choosing a suggestion replaces the **fragment** and nothing else: `/overkap deals` with
+ * `overkappingen` chosen is `/overkappingen deals`, because a half-named page and a term
+ * are two things an editor typed and only one of them is being answered.
+ *
+ * @param {string} term What is in the box.
+ * @param {string} page The key that was chosen.
+ * @returns {string} What the box should hold.
+ */
+export function withScope(term, page) {
+  const split = splitScope(term);
+  const rest = split ? split.rest : term.trim();
+  return rest ? `/${page} ${rest}` : `/${page}`;
 }
 
 /**
