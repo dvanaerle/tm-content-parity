@@ -6,6 +6,8 @@
  * writes nothing, so a test can read it.
  */
 
+import { STORE_HREFLANG } from '../shared/stores.mjs';
+
 /** The six sitemaps. `be` and `be_fr` share a host and differ by the path. */
 export const SITEMAP_SOURCES = {
   nl: 'https://www.tuinmaximaal.nl/sitemap.xml',
@@ -57,9 +59,6 @@ export function parseSitemap(xml) {
   }
   return urls;
 }
-
-/** The six hreflang codes production declares. Their count is the rule below. */
-const STORE_HREFLANG = ['nl-NL', 'nl-BE', 'fr-BE', 'de-DE', 'fr-FR', 'en-GB'];
 
 /**
  * The candidate rule of ticket 50, without the product signature.

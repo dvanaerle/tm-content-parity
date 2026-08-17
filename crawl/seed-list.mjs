@@ -14,7 +14,7 @@
 
 import { HOME, unanchoredKey, unsafeReason } from '../shared/page-key.mjs';
 import { unknownDropRules } from '../shared/drop-rules.mjs';
-import { STORES } from '../shared/stores.mjs';
+import { STORE_HREFLANG, STORES } from '../shared/stores.mjs';
 
 /** @typedef {import('../shared/stores.mjs').Store} Store */
 
@@ -37,27 +37,6 @@ export const NEW_HOST = {
   fr: 'm2stagingfr.intern.systems',
   uk: 'm2staginguk.intern.systems',
 };
-
-/**
- * The hreflang code of each store.
- *
- * The language groups follow from it and are written down nowhere else. Two
- * blocks carry the store-local content: `{be_fr, fr}` on 178 pages and
- * `{be, nl}` on 152. They are not the only two — sixteen shapes exist, and
- * `{de, nl, uk}` and `{de, uk}` are two of them. 87 German and 85 British
- * content pages declare no alternate at all, so hreflang can never reach them.
- */
-export const HREFLANG_STORE = {
-  'nl-NL': 'nl',
-  'nl-BE': 'be',
-  'fr-BE': 'be_fr',
-  'de-DE': 'de',
-  'fr-FR': 'fr',
-  'en-GB': 'uk',
-};
-
-/** The six codes. Their count is the first clause of the rule. */
-export const STORE_HREFLANG = Object.keys(HREFLANG_STORE);
 
 const NL_PREFIX = 'https://www.tuinmaximaal.nl/';
 

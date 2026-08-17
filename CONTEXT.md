@@ -654,10 +654,10 @@ The two axes have separate tabs and separate tasks. Do not mix them.
 
 - **Language block** — two stores whose hreflang codes share a language: `{nl, be}`
   from `nl-NL` and `nl-BE`, `{be_fr, fr}` from `fr-BE` and `fr-FR`. It follows from
-  `HREFLANG_STORE` and it is not a hand-written list, so the question "may `de` and
-  `uk` be a block" has an answer and it is no: each of them is alone in its language.
-  The name is the word `crawl/seed-list.mjs` already uses for the set. Decided
-  2026-08-17.
+  `HREFLANG_STORE` in `shared/stores.mjs` and it is not a hand-written list, so the
+  question "may `de` and `uk` be a block" has an answer and it is no: each of them is
+  alone in its language. The name is the word `crawl/seed-list.mjs` already used for
+  the set when the map lived there. Decided 2026-08-17.
   A block is **not a pair**. A **store-page pair** is production against the new
   site, for one store page; a block is two stores on **one** side. Two meanings for
   one word is what this list exists to stop.

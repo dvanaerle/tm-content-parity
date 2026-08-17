@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import { dropReason, unknownDropRules } from '../shared/drop-rules.mjs';
+import { HREFLANG_STORE } from '../shared/stores.mjs';
 import {
   EXPECTED_PAGES,
-  HREFLANG_STORE,
   STORES,
   buildSeedList,
   countByStore,
@@ -204,18 +204,10 @@ describe('the page key', () => {
   });
 });
 
+// The map itself is `shared/stores.mjs` and its shape is asserted there. What
+// this block claims is crawl evidence: which stores production actually puts in
+// one alternate block, read out of the committed extract.
 describe('the language groups', () => {
-  it('names one store for each of the six hreflang codes', () => {
-    expect(HREFLANG_STORE).toEqual({
-      'nl-NL': 'nl',
-      'nl-BE': 'be',
-      'fr-BE': 'be_fr',
-      'de-DE': 'de',
-      'fr-FR': 'fr',
-      'en-GB': 'uk',
-    });
-  });
-
   // The groups are not written down anywhere: they follow from which stores
   // production puts in one alternate block. These read them back out of the
   // committed extract, so a change in production breaks the claim and not the

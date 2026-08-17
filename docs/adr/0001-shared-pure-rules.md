@@ -80,6 +80,38 @@ Spec 50 rewrites `crawl/`, and it opens both files, so that is the change that
 moves them. Ticket 47 scoped itself to `keys.mjs`, thus this record names the debt
 rather than hiding it.
 
+### A resident that arrived before its second reader, 2026-08-17
+
+`HREFLANG_STORE` and `STORE_HREFLANG` are in `shared/stores.mjs`, beside `STORES`.
+They were in `crawl/seed-list.mjs`.
+
+This one is worth reading carefully, because on the day it moved it **failed
+question 3**. Only `crawl/` read the map: `crawl/seed-list.mjs` counts the codes
+and `crawl/sitemap-extract.mjs` filters by them. No stage imported backwards, so
+the *at once* exception above did not apply either. It moved anyway, as the first
+ticket of the language blocks feature, because the surface that gives it its
+second reader derives the blocks in `web/` and `web/` cannot import `crawl/` — so
+the move had to happen in some ticket, and doing it alone kept it a move with no
+behaviour in it.
+
+That is a deliberate stretch of this record and not a new rule. It holds only
+where the second reader is specified and next: the ticket after it is what makes
+the answer to question 3 true, and if that ticket were abandoned the map would
+belong back in `crawl/`. Do not read this section as licence to move pure code to
+`shared/` on the strength of a reader somebody might write. Line 61 above still
+governs: `shared/` is not a place for pure code, it is a place for pure code that
+two stages read.
+
+The language fact moved alone. The hosts, the sitemap urls and the `fr/` prefix
+are crawl concerns and they stayed, and no store record type was born to gather
+the four together — a prefactor that needs one module should not open four.
+
+The sitemap extractor kept a second flat copy of the same six codes, and that copy
+is gone. That copy set the key order of an entry's `alternates` in
+`data/sitemap-extract.json`, so the shared list keeps that order and
+`shared/stores.test.mjs` states it, noting that object equality would not have
+caught it. No count moved and the seed list regenerates with identical content.
+
 ### The two rows are closed, 2026-08-10
 
 Ticket 54 opened `web/src/lib/reports.mjs`, which is the condition this record
