@@ -648,9 +648,12 @@ repeated in each:
   eight phases are in the code: 33 the class vocabulary, 34 position, 35 the diff
   rendering and the design system and the meta panel, 36 the merged content view
   and the filters, 38 the six stores. **Leesweergave is the one phase that is not
-  built** — decisions 21–24, parked `wontfix` as ticket 37. Two user stories are
+  built** — decisions 21–24, parked `wontfix` as ticket 37. ~~Two user stories are
   open and both have owners: story 29's deep link is ticket 34's reopened
-  criterion, and story 24's dropped `h1` is ticket 44.
+  criterion, and story 24's dropped `h1` is ticket 44.~~ **One story is open.**
+  Story 29's deep link was met on 2026-08-17 by ticket 34's ninth criterion — *in
+  situ on both* now holds for every finding that has a position on the page. Story
+  24's dropped `h1` is ticket 44 and is still open.
 
   **Five of its decisions are superseded, and the spec text does not say so.**
   The tabs are four and not five (ticket 81 removed Taken); shown-and-hidden is
@@ -713,8 +716,20 @@ repeated in each:
   criterion to drop `axis`, and 39 owns the word.
 
 - [34 — Where is it? Position for every finding](issues/34-position-and-ordering.md)
-  — **Reopened 2026-08-07; eight of nine criteria hold.** The deep link is the
-  ninth and is not built. See the phase entry above.
+  — **All nine criteria built. Closed 2026-08-17**, `ready-for-human` for an
+  editor's eyes on a real page. Reopened 2026-08-07 for the ninth, the deep link,
+  which is now built: see "Where is it, for every row" in the ticket.
+
+  **The ninth was one value meaning two things.** `anchorHeadings.production ===
+  null` said *not on production* in the contract and *above the first heading* in
+  `anchorHeadingFor()`, and the second was served the first's answer — so a finding
+  above its page's first heading was treated as one that does not exist there and
+  lost both links. `locations` replaces it, a pair of `{ heading, text } | null`:
+  **absence is the side entry, precision is its fields.** `locationUrl()` aims at
+  the finding's own words, then its section, then the bare page. Rows with no link
+  fall **1,522 → 368**, and the 368 are all `meta/no-declared-alternate`, which is
+  about the `<head>` and has no position in the body. The grilling this wanted was
+  one question to the user, and the answer is in `CONTEXT.md` under **Location**.
   **Phase 2 of spec 32 is otherwise built, and the numbers did not move.** 179 crawled,
   124 comparable, 10,796 findings, 7,456 shown, median 37 — ticket 33's baseline to
   the finding. Position adds no rule, so movement would have been a defect.
@@ -1325,9 +1340,11 @@ them. 45 left the stream on 2026-08-13, `wontfix`. The grilling of 2026-08-10 pu
 and this line makes that a decision instead of a silence. Nothing about the
 tickets changes, and the edges in the axis B section below still hold.
 
-Three items want a human and not an agent: [30](issues/30-wire-the-supabase-project.md)
-is one click, ticket 34's deep link wants a grilling before it wants code, and
-[48](issues/48-open-and-done-board.md) re-triages after 37.
+Two items want a human and not an agent: [30](issues/30-wire-the-supabase-project.md)
+is one click and [48](issues/48-open-and-done-board.md) re-triages after 37.
+~~Ticket 34's deep link wants a grilling before it wants code~~ — taken 2026-08-17.
+The grilling was one question, and what it wanted was a decision and not a debate:
+what a finding with no anchor heading offers instead. It offers the page.
 
 ## Ready to build
 
@@ -1822,22 +1839,22 @@ product signature` — a product page carries all six hreflang alternates, and
   Tailwind 4 `@theme`. Resolves ticket 28 and closes ticket 12's remaining
   questions.
 
-  Broken into six build tickets. **33, 35, 36 and 38 are resolved. 34 is measured
-  and eight-ninths built** — the review of 2026-08-07 reopened it on the one
-  criterion it ticked in error. **37 is parked `wontfix`**, so no ticket of this
-  spec is waiting to be built.
+  Broken into six build tickets. **33, 34, 35, 36 and 38 are resolved** — 34's
+  ninth criterion, reopened by the review of 2026-08-07, closed 2026-08-17.
+  **37 is parked `wontfix`**, so no ticket of this spec is waiting to be built.
 
   ```
-  33 ✓ ──> 34 ~ ─┐
+  33 ✓ ──> 34 ✓ ─┐
      └──> 35 ✓ ──┴──> 36 ✓ ──> 37 ✗ parked ──> 48 (needs-triage)
   38 ✓ (independent) ──> 49 ✗ wontfix
                      └──> 59 ✓, 60 ✓
   ```
 
-  **34's open criterion blocks nothing.** 36 needed the row-ordering fix and 37
-  needed the document-order index; both landed and are measured. The deep link is
-  orthogonal to each, and neither ticket mentions it. So the reopening is a debt to
-  pay, not a gate to wait on — 36 did not wait, and 37 need not.
+  **34's open criterion blocked nothing, and it is now closed.** 36 needed the
+  row-ordering fix and 37 needed the document-order index; both landed and are
+  measured. The deep link was orthogonal to each, and neither ticket mentions it. So
+  the reopening was a debt to pay rather than a gate to wait on — 36 did not wait,
+  37 need not have, and the debt is paid.
 
   **Ticket 36 is resolved: the log is one view of the page, and it can be
   narrowed.** Seven tabs are five — Inhoud, Links, Afbeeldingen, Meta, Taken —
@@ -1869,14 +1886,14 @@ product signature` — a product page carries all six hreflang alternates, and
   mandatory on a dismissal and a checkbox cannot carry one. — **2026-08-13, ADR 0011: one
   menu, not two.** The reason is unchanged and it only ever applied to the dismissal.
 
-  **Ticket 34 is reopened.** Position, ordering, the shared counter and the
-  occurrence badge all landed and hold the baseline exactly. What did not land is
-  the deep link: 1,622 of the 10,796 findings have no anchor heading and so carry
-  no link at all, and where a link does render both sides are built from the
-  **production** heading, which cannot resolve on the new site wherever that
-  heading changed. Spec 32's story 29 asked for both sides. Closing it needs a
-  decision nobody has taken — what a finding with no heading offers instead — so
-  it wants a grilling before it wants code.
+  ~~**Ticket 34 is reopened.**~~ **Closed 2026-08-17.** Position, ordering, the
+  shared counter and the occurrence badge landed in 2026-08 and hold the baseline
+  exactly. The deep link was the one gap, in two halves: findings with no anchor
+  heading carried no link at all, and where a link did render both sides were built
+  from the **production** heading — that second half was fixed 2026-08-13, the first
+  on 2026-08-17. Spec 32's **story 29 is met**. The decision nobody had taken is
+  taken: a finding with no heading opens the page itself, and a link aims at the
+  finding rather than its section wherever the finding has words on the page.
 
   **The logo belongs to no ticket.** `fe921ce` added the Tuinmaximaal mark to the
   shell inside ticket 34's branch. It is not phase 7 (six stores, ticket 38) and it
