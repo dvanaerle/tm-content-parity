@@ -9,7 +9,7 @@ import { Separator } from './ui/separator.jsx';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { logState } from '../lib/log-read.mjs';
-import { inScope, searchNotes, searchStore } from '../lib/search.mjs';
+import { explainScope, inScope, searchNotes, searchStore } from '../lib/search.mjs';
 import { pagesWithClasses } from '../lib/view.mjs';
 
 /**
@@ -103,14 +103,16 @@ export default function Search({
   // arrives, and nothing below is drawn before then.
   const scope = result?.scope ?? null;
 
-  // Which pages the scope reached, over the store's **whole** page list rather than the
-  // index: a page with no open finding is in no index and is still in scope. It is not
-  // narrowed by the pills — it says what the scope matched, and the strip above it says
-  // what the classes then cut.
-  const scopePages = useMemo(
-    () => (scope ? pages.filter((page) => inScope(page.page, scope)) : []),
-    [pages, scope],
-  );
+  // Which pages the scope reached and which kind of nothing each of them is (ticket 104).
+  // Over the store's **whole** page list rather than the index: a page with no open
+  // finding is in no index and is still in scope, and a one-sided page is in neither and
+  // is one of the answers. It is not narrowed by the pills — it says what the scope
+  // matched, and the strip above it says what the classes then cut.
+  //
+  // The classification is `search.mjs`' and nothing below decides any of it. That is the
+  // ticket's own rule and it is the rule the scope itself follows: one string, one parse,
+  // one place the answer is made.
+  const answer = useMemo(() => (result ? explainScope({ pages, result }) : null), [pages, result]);
 
   // The pages whose **name** holds the term, which the removed box used to narrow the
   // page list down to. A page with no open finding is in no result above — it is clean,
@@ -123,7 +125,11 @@ export default function Search({
     // learns to fold diacritics. The block is not drawn under a scope at all — the header
     // above the list is the by-page reading there — so the raw term is what it matches,
     // and with no scope the raw term is exactly what the parse would have returned.
-    const found = pages.filter((page) => inScope(page.page, term));
+    // The comparable half only. `pages` is the store's whole list since ticket 104, so
+    // that a scope can reach a one-sided page and say so; this block is the **page list's**
+    // answer and the page list has never held one. A one-sided page reached by name
+    // belongs to the aside, which says why it is there — this block says nothing at all.
+    const found = pages.filter((page) => page.comparable && inScope(page.page, term));
     // The pills narrow this half through the derivation the page list itself narrows
     // by, rather than through a second reading of what a class filter means.
     //
@@ -192,13 +198,7 @@ export default function Search({
         </Label>
       </div>
 
-      <Scope
-        store={store}
-        scope={scope}
-        pages={scopePages}
-        found={result.repeats.length}
-        link={link}
-      />
+      <Scope store={store} answer={answer} found={result.repeats.length} link={link} />
 
       {result.repeats.length === 0 ? (
         <p className="px-4 py-6 text-sm text-muted-foreground">No difference with these words.</p>
@@ -249,20 +249,31 @@ export default function Search({
  * it. The pages are still named, because they are still what the scope matched and they are
  * still worth opening; it is only the promise of a list that goes.
  */
-function Scope({ store, scope, pages, found, link }) {
-  if (!scope || pages.length === 0) return null;
+function Scope({ store, answer, found, link }) {
+  if (!answer) return null;
+
+  if (answer.state === 'no-such-page')
+    return (
+      <section className="border-b border-border px-4 py-3">
+        <p className="text-sm">
+          No page of this store has {answer.scope} in its key, so there is nothing to search inside.
+          Check the spelling — a page key is not always the name you read on the page.
+        </p>
+      </section>
+    );
 
   return (
     <section className="border-b border-border px-4 py-3">
       <h3 className="text-sm font-medium">
-        {pages.length} {pages.length === 1 ? 'page' : 'pages'} in /{scope}
+        {answer.pages.length} {answer.pages.length === 1 ? 'page' : 'pages'} in /{answer.scope}
       </h3>
-      <ul className="mt-1 flex flex-wrap gap-x-3 text-sm">
-        {pages.map((page) => (
-          <li key={page.page}>
+      <ul className="mt-1 text-sm">
+        {answer.pages.map((page) => (
+          <li key={page.page} className="py-0.5">
             <a className={cn('hover:underline', CHROME.link)} href={link(store, page.page)}>
               {page.page}
             </a>
+            <WhyNothing page={page} />
           </li>
         ))}
       </ul>
@@ -274,6 +285,49 @@ function Scope({ store, scope, pages, found, link }) {
     </section>
   );
 }
+
+/**
+ * Why this page contributed nothing to the list below (ticket 104 part A).
+ *
+ * One sentence per kind, and the kind is `search.mjs`' decision — this is a lookup over a
+ * value and not a second classification. A page that *did* answer says nothing here,
+ * because the rows below are what it has to say.
+ *
+ * The one-sided line does not invent copy. `skipReason` is the aside's own words for why
+ * the comparison did not run, and the link points at the aside rather than restating it:
+ * two names for one situation is how a vocabulary rots, and the aside had this one first.
+ * It also says no more than the aside does — *not compared* is refused for the three **not
+ * checked** kinds and **uncompared** is a row and not a page, so a fourth phrasing here
+ * would be the rot the previous sentence is guarding against.
+ */
+function WhyNothing({ page }) {
+  if (page.kind === 'matched') return null;
+
+  if (page.kind === 'one-sided')
+    return (
+      <span className="ml-2 text-muted-foreground">
+        Only one site has this page ({page.skipReason}).{' '}
+        <a className={cn('hover:underline', CHROME.link)} href="#one-sided-pages">
+          One-sided pages
+        </a>{' '}
+        lists it.
+      </span>
+    );
+
+  return <span className="ml-2 text-muted-foreground">{NOTHING[page.kind]}</span>;
+}
+
+/**
+ * What each kind of nothing reads as. The words are the vocabulary's: a **clean** page
+ * agrees with production, and a page whose every difference is closed has *nothing left to
+ * do* — which is the sentence CONTEXT.md's context marker already uses to keep those two
+ * apart.
+ */
+const NOTHING = {
+  clean: 'Compared, and no difference on it.',
+  'no-open-work': 'Compared, and every difference on it is closed. Nothing left to do.',
+  'no-match': 'Has differences, and none of them holds these words.',
+};
 
 /**
  * The pages of this store whose name holds the term, as links to open.

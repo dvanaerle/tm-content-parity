@@ -3,6 +3,7 @@ import {
   SEARCH_FIELDS,
   addPage,
   emptyIndex,
+  explainScope,
   indexStore,
   inScope,
   matchedFields,
@@ -646,6 +647,161 @@ describe('searchStore, narrowed by the class pills (ticket 102)', () => {
     expect(withArg.repeats).toEqual(without.repeats);
     expect(withArg.total).toBe(without.total);
     expect(withArg.pages).toBe(without.pages);
+  });
+});
+
+/**
+ * Ticket 104 part A. An editor scopes to a page, gets nothing back, and the screen says
+ * **which** nothing it is. The kinds are decided here, as a value, and the component
+ * renders one — it classifies nothing itself.
+ */
+describe('explainScope', () => {
+  /** An index over the entries given, as the store page would have loaded it. */
+  const index = (findings) => ({
+    store: 'nl',
+    pages: 3,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings,
+  });
+
+  /** One page of the store's load-time list, as `loadSummaries()` writes it. */
+  const page = (part) => ({
+    store: 'nl',
+    page: 'afhalen',
+    comparable: true,
+    skipReason: null,
+    findings: [],
+    ...part,
+  });
+
+  it('says a scope reached no page at all, which is what a typo looks like', () => {
+    // The first of the four. `/dwonloads` matches no key, and the answer is to type it
+    // again — which is a different answer from every other empty result on this screen.
+    const result = searchStore({ index: index([entry({ page: 'downloads' })]), term: '/dwonloads' });
+
+    expect(explainScope({ pages: [page({ page: 'downloads' })], result })).toEqual({
+      scope: 'dwonloads',
+      state: 'no-such-page',
+      pages: [],
+    });
+  });
+
+  it('names a one-sided page as one, and carries the reason the comparison did not run', () => {
+    // The second. The page exists, it is in the store and it is in the one-sided pages
+    // aside — but one side did not answer, so it is compared nowhere and indexed nowhere.
+    // Silence here is the search contradicting the aside on the same screen.
+    const result = searchStore({ index: index([]), term: '/kerst' });
+
+    expect(
+      explainScope({
+        pages: [page({ page: 'kerstactie', comparable: false, skipReason: 'new site: 404' })],
+        result,
+      }),
+    ).toEqual({
+      scope: 'kerst',
+      state: 'found',
+      pages: [{ page: 'kerstactie', kind: 'one-sided', skipReason: 'new site: 404' }],
+    });
+  });
+
+  it('says a page the result holds rows on matched, which is the not-nothing case', () => {
+    // The kinds are told apart from each other and not only from silence: a page that
+    // answered has to read differently from all four, or the answer says nothing.
+    const result = searchStore({ index: index([entry({ page: 'downloads' })]), term: '/downloads' });
+
+    expect(explainScope({ pages: [page({ page: 'downloads' })], result }).pages).toEqual([
+      { page: 'downloads', kind: 'matched', skipReason: null },
+    ]);
+  });
+
+  it('does not call a page clean when its differences are all closed', () => {
+    // The fifth kind, which the ticket's four do not name. *Clean* is "nothing is wrong
+    // with it"; a page whose every difference somebody accepted had something wrong and
+    // is finished. CONTEXT.md already tells *3 agreeing blocks* from *nothing left to do*,
+    // so this is the vocabulary's own split and not a new one.
+    const result = searchStore({
+      index: index([entry({ id: 'a', page: 'downloads' })]),
+      term: '/downloads',
+      stateOf: () => 'dismissed',
+    });
+
+    expect(
+      explainScope({
+        pages: [page({ page: 'downloads', findings: [{ id: 'a', class: 'text-missing' }] })],
+        result,
+      }).pages,
+    ).toEqual([{ page: 'downloads', kind: 'no-open-work', skipReason: null }]);
+  });
+
+  it('says a compared page with no difference on it is clean', () => {
+    // The third of the four, and the answer an editor most wants — compared, and nothing
+    // wrong with it. It is the one that is today indistinguishable from the typo above,
+    // which is a parity tool arguing against its own purpose.
+    const result = searchStore({ index: index([entry({ page: 'garantie' })]), term: '/downloads' });
+
+    expect(
+      explainScope({ pages: [page({ page: 'downloads', findings: [] })], result }).pages,
+    ).toEqual([{ page: 'downloads', kind: 'clean', skipReason: null }]);
+  });
+
+  it('says the second term found nothing on a page that does hold differences', () => {
+    // The fourth. The page is fine, the scope is fine, the word is not on it — a different
+    // sentence from *this page is clean*, and the one that keeps a scope usable as a
+    // spot-check. Which of the two it is turns on whether a second term was typed at all,
+    // so the parse rides back on the result and is never run a second time.
+    const result = searchStore({
+      index: index([entry({ id: 'a', page: 'downloads', prod: 'Bekijk deals >' })]),
+      term: '/downloads knop',
+    });
+
+    expect(
+      explainScope({
+        pages: [page({ page: 'downloads', findings: [{ id: 'a', class: 'text-missing' }] })],
+        result,
+      }).pages,
+    ).toEqual([{ page: 'downloads', kind: 'no-match', skipReason: null }]);
+  });
+
+  it('answers per page, so a scope over mixed kinds does not collapse to one verdict', () => {
+    // A scope is a substring and often reaches a family, and the members can be of
+    // different kinds. One sentence over all of them would be false about most of them.
+    const result = searchStore({ index: index([]), term: '/kerst' });
+
+    expect(
+      explainScope({
+        pages: [
+          page({ page: 'kerstactie', comparable: false, skipReason: 'new site: 404' }),
+          page({ page: 'kerstboom' }),
+        ],
+        result,
+      }).pages,
+    ).toEqual([
+      { page: 'kerstactie', kind: 'one-sided', skipReason: 'new site: 404' },
+      { page: 'kerstboom', kind: 'clean', skipReason: null },
+    ]);
+  });
+
+  it('does not let a class pill decide which kind of nothing a page is', () => {
+    // A filter moves no bar, no denominator and no count (CONTEXT.md), and a verdict is
+    // none of those three only because it is worse: a `casing` pill over a page whose open
+    // work is all `copy` would have the screen say *every difference on it is closed*,
+    // which is false and which the editor's own filter made true-looking. The strip above
+    // says what the classes cut; this says what the term found, and the two are not one job.
+    const findings = index([entry({ id: 'a', page: 'downloads', class: 'copy' })]);
+
+    expect(
+      explainScope({
+        pages: [page({ page: 'downloads', findings: [{ id: 'a', class: 'copy' }] })],
+        result: searchStore({ index: findings, term: '/downloads', classes: ['casing'] }),
+      }).pages,
+    ).toEqual([{ page: 'downloads', kind: 'matched', skipReason: null }]);
+  });
+
+  it('has nothing to explain about a term that carries no scope', () => {
+    // The four kinds are a scope's kinds. An ordinary term answers over the whole store,
+    // where *nothing found* is the whole of what can truthfully be said.
+    const result = searchStore({ index: index([entry({})]), term: 'downloads' });
+    expect(explainScope({ pages: [page({ page: 'downloads' })], result })).toBe(null);
   });
 });
 

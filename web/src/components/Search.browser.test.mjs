@@ -41,10 +41,30 @@ const index = {
   ],
 };
 
-/** The page summaries the dashboard hands down, which the by-name half reads. */
+/**
+ * The page summaries the dashboard hands down, which the by-name half reads.
+ *
+ * The **whole** store list since ticket 104 — the comparable half and the one-sided half —
+ * so every entry says which it is. A fixture of bare names would make each of these pages
+ * one-sided, which is a store no build can produce.
+ */
 const pages = [
-  { store: 'nl', page: 'deals-afhalen', summary: { byClass: { copy: 2 } } },
-  { store: 'nl', page: 'deals-garantie', summary: { byClass: { casing: 1 } } },
+  {
+    store: 'nl',
+    page: 'deals-afhalen',
+    comparable: true,
+    skipReason: null,
+    findings: [],
+    summary: { byClass: { copy: 2 } },
+  },
+  {
+    store: 'nl',
+    page: 'deals-garantie',
+    comparable: true,
+    skipReason: null,
+    findings: [],
+    summary: { byClass: { casing: 1 } },
+  },
 ];
 
 const byFinding = new Map(
@@ -176,10 +196,19 @@ describe('a search under the class pills', () => {
  */
 describe('a search narrowed to a page scope', () => {
   /** The store's pages, one of which is clean and in no result above. */
+  const compared = (name, byClass) => ({
+    store: 'nl',
+    page: name,
+    comparable: true,
+    skipReason: null,
+    findings: [],
+    summary: { byClass },
+  });
+
   const scoped = [
-    { store: 'nl', page: 'afhalen', summary: { byClass: { copy: 1 } } },
-    { store: 'nl', page: 'afhalen-pdf', summary: { byClass: {} } },
-    { store: 'nl', page: 'garantie', summary: { byClass: { casing: 1 } } },
+    compared('afhalen', { copy: 1 }),
+    compared('afhalen-pdf', {}),
+    compared('garantie', { casing: 1 }),
   ];
 
   it('names the pages the scope matched, over the one list', async () => {
@@ -228,6 +257,92 @@ describe('a search narrowed to a page scope', () => {
 
     expect(document.body.textContent).not.toContain('pages in /');
     expect(document.body.textContent).toContain('have this name');
+    unmount();
+  });
+});
+
+/**
+ * Ticket 104 part A. Four different nothings used to be one blank. `search.mjs` decides
+ * which of them a scope found; these are the sentences it is drawn as, and they are
+ * browser cases for the reason the ones above are — what an editor is *told* is a
+ * composition, and a node test over the classifier cannot see a word of it.
+ */
+describe('what a scoped search says when it finds nothing', () => {
+  /** The store's whole page list — the comparable half and the one-sided half. */
+  const store = [
+    {
+      store: 'nl',
+      page: 'afhalen',
+      comparable: true,
+      skipReason: null,
+      findings: [{ id: 'a', class: 'copy' }],
+      summary: { byClass: { copy: 1 } },
+    },
+    {
+      store: 'nl',
+      page: 'afhalen-pdf',
+      comparable: true,
+      skipReason: null,
+      findings: [],
+      summary: { byClass: {} },
+    },
+    {
+      store: 'nl',
+      page: 'kerstactie',
+      comparable: false,
+      skipReason: 'new site answered 404',
+      findings: [],
+      summary: { byClass: {} },
+    },
+  ];
+
+  it('says a scope that reaches no page at all is a typo, not an empty page', async () => {
+    const { unmount } = await mount({ term: '/dwonloads', pages: store });
+
+    expect(document.body.textContent).toContain('No page of this store has dwonloads in its key');
+    unmount();
+  });
+
+  it('says a one-sided page exists, why it was not compared, and where it is listed', async () => {
+    // Search staying silent here contradicts the one-sided pages aside on the same screen.
+    // The reason is the aside's own `skipReason`, carried through and not restated.
+    const { unmount } = await mount({ term: '/kerst', pages: store });
+
+    expect(document.body.textContent).toContain('Only one site has this page');
+    expect(document.body.textContent).toContain('new site answered 404');
+
+    const aside = [...document.querySelectorAll('a')].find(
+      (one) => one.getAttribute('href') === '#one-sided-pages',
+    );
+    expect(aside.textContent).toContain('One-sided pages');
+    unmount();
+  });
+
+  it('says a compared page with no difference on it is clean', async () => {
+    // The answer an editor most wants, and the one that was indistinguishable from the
+    // typo above until this ticket.
+    const { unmount } = await mount({ term: '/afhalen-pdf', pages: store });
+
+    expect(document.body.textContent).toContain('Compared, and no difference on it.');
+    unmount();
+  });
+
+  it('says a second term found nothing on a page that does hold differences', async () => {
+    const { unmount } = await mount({ term: '/afhalen zzzqx', pages: store });
+
+    expect(document.body.textContent).toContain('none of them holds these words');
+    unmount();
+  });
+
+  it('gives one answer per page, so mixed kinds do not collapse to one verdict', async () => {
+    // `/afhalen` reaches two pages; one of them answers and one is clean, and the screen
+    // has to say both. A single sentence over the family is false about most of it.
+    const { unmount } = await mount({ term: '/afhalen', pages: store });
+
+    expect(document.body.textContent).toContain('2 pages in /afhalen');
+    expect(document.body.textContent).toContain('Compared, and no difference on it.');
+    // The page the rows below are about says nothing here: the rows are what it has to say.
+    expect(document.body.textContent).not.toContain('none of them holds these words');
     unmount();
   });
 });

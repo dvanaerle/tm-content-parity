@@ -446,7 +446,12 @@ export default function Dashboard({
           {searching && (
             <Search
               store={store}
-              pages={comparable}
+              // The **whole** list and not the comparable half (ticket 104). A scope onto
+              // a one-sided page used to be silence, which is the search contradicting the
+              // aside below on the same screen — and a one-sided page is exactly one of
+              // the four answers a scoped search has to be able to give. The by-name half
+              // inside `Search` narrows to the comparable ones itself.
+              pages={pages}
               term={query}
               classes={classes}
               onClearClasses={() => patch({ classes: [] })}
@@ -589,7 +594,14 @@ export default function Dashboard({
         </CardContent>
       </Card>
 
-      <Aside title={`One-sided pages (${oneSided.length})`} note="Only one site has these pages.">
+      {/* The id is what a scoped search points at when it explains that a page it matched
+          is one-sided (ticket 104). The aside had those words first, so the search links
+          here rather than restating them. */}
+      <Aside
+        id="one-sided-pages"
+        title={`One-sided pages (${oneSided.length})`}
+        note="Only one site has these pages."
+      >
         {oneSided.map((page) => (
           <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
             <a className={`hover:underline ${CHROME.link}`} href={link(page.store, page.page)}>
@@ -847,9 +859,9 @@ const REGION_KIND = {
   'legacy-only': 'Production only',
 };
 
-function Aside({ title, note, children }) {
+function Aside({ id, title, note, children }) {
   return (
-    <Card>
+    <Card id={id}>
       <CardHeader className="gap-2">
         {/* `CardTitle` renders a div, and the heading is what puts these three panels
             in the page's outline, so the h2 stays inside it. */}

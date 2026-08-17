@@ -357,10 +357,22 @@ export const inScope = (page, scope) => page.toLowerCase().includes(fold(scope))
  *   total: number,
  *   pages: number,
  *   matchedRepeats: number,
+ *   matchedPages: string[],
  *   scope: string | null,
- * }} `scope` is the page scope this term carried, or `null` for an ordinary one. It rides
- *   back here so a caller reads the parse off the answer rather than running it a second
- *   time over the same string.
+ *   text: string,
+ * }} The two `matched*` fields are the answer **before the pills cut it**, which is the
+ *   reading the amber strip is built on: `matchedRepeats` is its denominator, and
+ *   `matchedPages` is that same moment read by page, added for ticket 104. Which kind of
+ *   nothing a page is has to be decided there and never on `repeats` — a `casing` pill over
+ *   a page whose open work is all `copy` would otherwise have the screen say *every
+ *   difference on it is closed*, and CONTEXT.md gives a filter no power to make that
+ *   sentence true.
+ *   `scope` is the page scope this term carried, or `null` for an ordinary one, and
+ *   `text` is the words after it. The whole parse rides back here so a caller reads it off
+ *   the answer rather than running it a second time over the same string. `text` joined
+ *   `scope` for ticket 104: which kind of nothing a scope found turns on whether a second
+ *   term was typed, and a caller deciding that from the raw term would be the second
+ *   reading of the slash rule this return exists to prevent.
  */
 export function searchStore({
   index,
@@ -391,6 +403,7 @@ export function searchStore({
     else byPage.set(entry.page, [entry]);
   }
 
+  const matchedPages = [...byPage.keys()];
   const pages = [...byPage].map(([page, findings]) => ({ store: index.store, page, findings }));
 
   // The matched fields ride **on the repeat** — decision 3. The union over its
@@ -429,8 +442,132 @@ export function searchStore({
     total: findingsIn(repeats),
     pages: new Set(repeats.flatMap((repeat) => repeat.on.map((one) => one.page))).size,
     matchedRepeats: matchedRepeats.length,
+    matchedPages,
     scope,
+    text,
   };
+}
+
+/**
+ * Which kind of nothing a scoped search found (ticket 104 part A).
+ *
+ * An editor scopes to a page and gets a blank, and the blank is four different answers
+ * wearing one face. A parity tool that cannot tell **clean** from **I don't know** is
+ * arguing against its own purpose, and it is what makes a scope useless as the spot-check
+ * it is most likely to be used as.
+ *
+ * The classification is decided **here, as a value**, and the component renders one. It is
+ * the rule ticket 103 already follows for the scope itself: one string, one parse, one
+ * place the answer is decided, and no second copy of it free to drift.
+ *
+ * **Every kind is answerable from data the browser already holds.** The store page loads
+ * the full page list, each entry carrying whether it is comparable and why not, and the
+ * result says what the term reached. Nothing is fetched and the index gains no field.
+ *
+ * The two named traps, both from the ticket:
+ *
+ * - **Clean and unindexed are not the same.** A compared page with no shown finding
+ *   contributes no index entry at all, so absence from the index proves nothing on its
+ *   own. The page list is what tells the two apart, and it is why this takes one.
+ * - **The count of indexed pages is a number and not a list of keys**, and it counts
+ *   compared pages only. It can answer none of this.
+ *
+ * **It answers per page and never over all of them.** A scope is a substring and often
+ * reaches a family, whose members can be of different kinds — one clean, one one-sided —
+ * and a single verdict over that is false about most of it.
+ *
+ * @param {object} args
+ * @param {{ page: string, comparable: boolean, skipReason: string | null,
+ *   findings: { class: string }[] }[]} args.pages The store's **whole** page list, as the
+ *   store page loaded it. The whole of it and not the comparable half: a one-sided page is
+ *   exactly one of the answers, and a list that left it out could not give that answer.
+ * @param {ReturnType<typeof searchStore>} args.result What the term answered. The scope
+ *   and the words after it are read off it rather than parsed again, for the reason
+ *   `Search.jsx` reads the scope off it: one string, one parse.
+ * @returns {null | ScopeAnswer} `null` when the term carries no scope, because the four
+ *   kinds are a scope's kinds — an ordinary term answers over the whole store, where
+ *   *nothing found* is the whole of what can truthfully be said.
+ *
+ * @typedef {object} ScopeAnswer
+ * @property {string} scope
+ * @property {'no-such-page' | 'found'} state `no-such-page` is the typo: the scope matches
+ *   no key in the store. It is a state of the **answer** and not of a page, because there
+ *   is no page it is about.
+ * @property {ScopedPage[]} pages Every page the scope reached, classified. Empty on
+ *   `no-such-page`.
+ *
+ * @typedef {object} ScopedPage
+ * @property {string} page
+ * @property {'matched' | 'one-sided' | 'clean' | 'no-open-work' | 'no-match'} kind
+ * @property {string | null} skipReason The aside's own words for why the comparison did
+ *   not run, carried through rather than restated. Two names for one situation is how a
+ *   vocabulary rots, and the aside had this one first.
+ */
+export function explainScope({ pages, result }) {
+  const { scope, text } = result;
+  if (!scope) return null;
+
+  // The pages the **term** reached, before the class pills cut them. `result.repeats` is
+  // the narrowed list, and reading the kinds off it would let a filter decide a verdict: a
+  // `casing` pill over a page whose open work is all `copy` would have this say *every
+  // difference on it is closed*, which is false and which the editor's own filter made
+  // true-looking. CONTEXT.md gives a filter no power over a bar, a denominator or a count,
+  // and a sentence about the page is not the exception. The strip above says what the
+  // classes cut; this says what the term found, and they are two jobs.
+  const answered = new Set(result.matchedPages);
+
+  const found = pages
+    .filter((one) => inScope(one.page, scope))
+    .map((one) => ({
+      page: one.page,
+      kind: kindOf(one, answered, text),
+      skipReason: one.skipReason ?? null,
+    }));
+
+  if (found.length === 0) return { scope, state: 'no-such-page', pages: [] };
+
+  return { scope, state: 'found', pages: found };
+}
+
+/**
+ * Which kind of nothing this one page is.
+ *
+ * The order is the order the answers exclude each other, and each line is one of the
+ * ticket's sentences:
+ *
+ * - **One-sided** — it exists, it is in the store, and one side did not answer, so it is
+ *   compared nowhere and indexed nowhere. Search staying silent here is search
+ *   contradicting the one-sided pages aside on the same screen.
+ * - **Matched** — the result holds rows on it. Not a kind of nothing; it is here so the
+ *   four are told apart from the case that answered as well as from each other.
+ * - **Clean** — compared, and the snapshot holds no `work` finding on it at all. The
+ *   answer an editor most wants, and the one that is today indistinguishable from a typo.
+ * - **No open work** — it holds differences and every one of them is closed. This is the
+ *   fifth, which the ticket's four do not name: *clean* is "nothing is wrong with it", and
+ *   a page whose every difference somebody accepted had something wrong and is finished.
+ *   CONTEXT.md's context marker already tells *3 agreeing blocks* from *nothing left to
+ *   do*, so the split is the vocabulary's own and not a new one.
+ * - **No match** — it holds differences and the second term is on none of them. Which of
+ *   the last two applies turns on whether a second term was typed, which is why the parse
+ *   rides back on the result.
+ *
+ * `findings` is the snapshot's `work` findings and knows nothing of the log, in the same
+ * manner as the by-name block: a page is clean because nothing was ever wrong with it, and
+ * a reading that consulted the log would call a finished page clean and lose the
+ * distinction above.
+ *
+ * @param {{ page: string, comparable: boolean, findings: object[] }} page
+ * @param {Set<string>} answered The pages the result holds rows on.
+ * @param {string} text The words after the scope, empty on a bare one.
+ */
+function kindOf(page, answered, text) {
+  if (!page.comparable) return 'one-sided';
+  if (answered.has(page.page)) return 'matched';
+  // `page.findings` and not `page.findings ?? []`. `loadSummaries()` always writes the
+  // list, and a fallback here would answer *clean* on behalf of a caller that handed over
+  // a page shape this cannot read — the quietest possible way to say *nothing is wrong*.
+  if (page.findings.length === 0) return 'clean';
+  return text ? 'no-match' : 'no-open-work';
 }
 
 /**

@@ -290,6 +290,24 @@ element any more: it folds the links inside it. Both the word and the rule are g
   See `docs/adr/0016-a-leading-slash-is-a-page-scope.md`, which records why the reasoning it
   overturns — a key is opaque and nothing splits on a slash — holds for everywhere but first
   position, and why this is not the first step toward a query language.
+- **Which kind of nothing** — a scope that returns no row says **which** empty answer it is,
+  per page and never over all of them (ticket 104). A scope is a substring and often reaches
+  a family whose members differ, and one verdict over that is false about most of it. There
+  are five, decided as a value by `explainScope()` in `web/src/lib/search.mjs` and only
+  rendered by the component:
+  **no such page** (the scope is in no key — a typo, and it is a state of the answer and not
+  of a page), **one-sided** (it exists and one side did not answer, said in the aside's own
+  `skipReason` and linked to it, because that aside had the words first), **clean**
+  (compared, and no `work` finding on it), **no open work** (it holds differences and every
+  one of them is closed) and **no match** (it holds differences and the second term is on
+  none of them). A sixth value, **matched**, is the page that answered; it is not a kind of
+  nothing and it draws no sentence, because the rows below are what it has to say.
+  *Clean* and *no open work* are two and not one, for the reason the **context marker**
+  draws *3 agreeing blocks* apart from *nothing left to do*: a page nothing was ever wrong
+  with and a page somebody finished are different answers.
+  The kinds are read off what the **term** matched, before the class pills narrow it. A
+  filter moves no bar, no denominator and no count, and it moves no verdict either — the
+  amber strip says what the classes cut, and this says what the term found.
 - **Screen** — everything a dashboard is *drawing*: which of the two views is on, the
   sort, the search term, the class pills and *include closed*. It lives in the
   query string, so Back returns to it and it can be sent to a colleague; only what

@@ -127,3 +127,61 @@ describe('the three buckets on the store dashboard', () => {
     unmount();
   });
 });
+
+/**
+ * Ticket 104 part A. A scope has to be able to *reach* a one-sided page before it can say
+ * anything about one, and the sentence it says points at the aside that lists them. Both
+ * halves live here and not in `Search.browser.test.mjs`: what `Search` is handed is the
+ * dashboard's decision, and the anchor it points at is the dashboard's markup.
+ */
+describe('a scope over a one-sided page', () => {
+  const ONE_SIDED = {
+    ...page('kerstactie', []),
+    comparable: false,
+    skipReason: 'new site answered 404',
+  };
+
+  let fetched;
+
+  const mountSearching = (term) => {
+    fetched = globalThis.fetch;
+    // The index holds compared pages only, which is the whole reason this case is blank
+    // without the page list: the answer cannot come from here.
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => ({
+        store: 'nl',
+        pages: 2,
+        builtAt: '2026-08-14T10:00:00.000Z',
+        findings: [],
+      }),
+    });
+    history.replaceState(null, '', `?query=${encodeURIComponent(term)}`);
+    return mount({ pages: [...PAGES, ONE_SIDED] });
+  };
+
+  afterEach(() => {
+    globalThis.fetch = fetched;
+  });
+
+  it('reaches a one-sided page, which the compared half of the list cannot answer for', async () => {
+    // The dashboard used to hand `Search` the comparable pages only, so a scope onto a
+    // one-sided page was silence — the search contradicting the aside on the same screen.
+    const unmount = mountSearching('/kerst');
+    await act(async () => {});
+
+    expect(document.body.textContent).toContain('Only one site has this page');
+    expect(document.body.textContent).toContain('new site answered 404');
+
+    unmount();
+  });
+
+  it('points at the aside that lists them, which the page can be scrolled to', async () => {
+    const unmount = mountSearching('/kerst');
+    await act(async () => {});
+
+    expect(document.querySelector('#one-sided-pages')).not.toBe(null);
+
+    unmount();
+  });
+});
