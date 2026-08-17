@@ -112,12 +112,17 @@ export function siblingPages({ rows, store }) {
  */
 
 /**
- * How much of this store's page appears in its sibling.
+ * The **agreement share**: how much of this store's page appears in its sibling.
  *
  * Measured over **production**'s content units on **normalised text**, as the share
  * of this store's unit texts that appear exactly in the sibling's. Set membership on
  * the sibling's side: the question is whether the words exist over there, not how
  * many times.
+ *
+ * It is called **agreement** and never *identity*, because `CONTEXT.md` gives
+ * *identity* to the finding id — what makes two differences the same difference. This
+ * is how much two pages say the same thing, which is a different question, and two
+ * meanings for one word is what that glossary exists to stop.
  *
  * A page with no units is fully found rather than divided by zero, which is the
  * reading that does not claim a difference nobody can point at.
@@ -125,7 +130,7 @@ export function siblingPages({ rows, store }) {
  * @param {string[]} mine
  * @param {string[]} theirs
  */
-function identityOf(mine, theirs) {
+function agreementOf(mine, theirs) {
   const over = new Set(theirs);
   const found = mine.filter((text) => over.has(text)).length;
   return { units: mine.length, found, share: mine.length === 0 ? 1 : found / mine.length };
@@ -172,12 +177,12 @@ export function blockReading({ rows, store, unitsOf = () => null }) {
       };
     }
 
-    const identity = identityOf(here, there);
+    const agreement = agreementOf(here, there);
     return {
       page: one.page,
-      kind: identity.share === 1 ? 'identical' : 'diverged',
+      kind: agreement.share === 1 ? 'identical' : 'diverged',
       sibling: one.sibling,
-      ...identity,
+      ...agreement,
     };
   });
 
