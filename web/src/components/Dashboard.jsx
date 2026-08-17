@@ -8,6 +8,7 @@ import {
   ClassFilterPills,
   PriorityFilterPills,
   PriorityPill,
+  ScopeChip,
 } from './Chips.jsx';
 import { EditorPrompt, LogBanner } from './Progress.jsx';
 import { ClassGroups } from './Repeats.jsx';
@@ -30,6 +31,7 @@ import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
+import { parseTerm } from '../lib/search.mjs';
 import { useScreen } from '../lib/screen-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
 import { emptyBuckets } from '../../../overrides/state.mjs';
@@ -137,6 +139,20 @@ export default function Dashboard({
   // of them — a finding anywhere in the store, with the pages it is on — so narrowing one
   // of the two lists as well would be two answers to one question.
   const searching = query.trim().length > 0;
+
+  // The page scope, read off the box (ticket 104 part C). The box is the source of truth
+  // and this is a **reading** of it, through the same `parseTerm()` the answer is built
+  // with — a second slash rule written out here is the one way the chip and the box could
+  // come to disagree, and they must never.
+  //
+  // It is parsed here rather than taken off the search result for the reason the chip has
+  // to be drawn at all: the result is `null` until the index has been fetched, and a chip
+  // that appeared a beat after the scope did would flicker on every keystroke.
+  //
+  // `withoutScope` is what both clears write back: the words after the scope, which is what
+  // an editor keeps when they drop the page they were looking inside. It is `parseTerm()`'s
+  // own `text` and not a slice taken here.
+  const { scope, text: withoutScope } = parseTerm(query);
 
   /**
    * What an editor annotated this page with, or nothing. It comes off the same derivation
@@ -345,22 +361,41 @@ export default function Dashboard({
 
       <Card className="gap-0 py-0">
         <CardHeader className="flex flex-wrap items-center justify-between gap-3 border-b py-3">
-          <ClassFilterPills
-            counts={Object.entries(totals.byClass)
-              .sort((a, b) => b[1] - a[1])
-              .map(([cls, count]) => ({ class: cls, count }))}
-            selected={classes}
-            onToggle={(cls) => patch({ classes: toggleIn(classes, cls) })}
-            // The counts stay the store's own — a pill says how much of this kind there
-            // is, which is not a question about what is on screen. What a press *does*
-            // depends on which of the three lists is under it, so the tooltip does too.
-            title={(cls) => {
-              if (searching) return `Search inside ${cls} only. The counts above do not change.`;
-              return view === 'repeats'
-                ? `Show the differences of class ${cls} only. The counts above do not change.`
-                : `Show the pages with ${cls} only. The counts above do not change.`;
-            }}
-          />
+          {/* The pills and the scope chip are **one group**, because they are one kind of
+              thing: the narrowings that are on, each wearing its own control, all of them
+              named together in the amber strip below. The chip drawn over by the search
+              box instead would put the two halves of one sentence a header's width apart
+              on a wide viewport, which is where it sat until the review of this part.
+
+              A wrapper and not a third child of the header: this row is
+              `justify-between`, and a third child would redistribute the two that are
+              already here. */}
+          <div className="flex flex-wrap items-center gap-2">
+            <ClassFilterPills
+              counts={Object.entries(totals.byClass)
+                .sort((a, b) => b[1] - a[1])
+                .map(([cls, count]) => ({ class: cls, count }))}
+              selected={classes}
+              onToggle={(cls) => patch({ classes: toggleIn(classes, cls) })}
+              // The counts stay the store's own — a pill says how much of this kind there
+              // is, which is not a question about what is on screen. What a press *does*
+              // depends on which of the three lists is under it, so the tooltip does too.
+              title={(cls) => {
+                if (searching) return `Search inside ${cls} only. The counts above do not change.`;
+                return view === 'repeats'
+                  ? `Show the differences of class ${cls} only. The counts above do not change.`
+                  : `Show the pages with ${cls} only. The counts above do not change.`;
+              }}
+            />
+            {/* The scope, beside the pills because it is the same kind of thing (ticket 104
+                part C): a narrowing of what is on screen that moves no count. Dismissing it
+                clears the scope **alone** — the classes are not this control's, and neither
+                are the words after it.
+
+                No `searching &&` guard, and none is possible: `parseTerm()` trims before it
+                reads, so a scope that is not `null` is a box with something in it. */}
+            {scope && <ScopeChip scope={scope} onClear={() => patch({ query: withoutScope })} />}
+          </div>
           {/* `flex-wrap` here and not only on the `CardHeader`: the header wrapped, but
               this inner group did not, so its three controls were measured as one
               indivisible 386 pixel run and hung 27 pixels past a 399 pixel viewport —
@@ -454,7 +489,12 @@ export default function Dashboard({
               pages={pages}
               term={query}
               classes={classes}
-              onClearClasses={() => patch({ classes: [] })}
+              // Both filters, in one write (ticket 104 part C). The price is that clearing
+              // rewrites the box, because the scope is a fragment of an input: an editor
+              // who clears the filters is asking for the whole store back, and a scope
+              // silently surviving that is the more surprising outcome. The words after
+              // the scope are a search and not a filter, so they stay.
+              onClearFilters={() => patch({ classes: [], query: withoutScope })}
               byFinding={byFinding}
               // The whole read and not the events alone (ticket 123). The readiness
               // flag has sat beside them here since the hook was written, and the

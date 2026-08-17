@@ -1,7 +1,7 @@
 # 104 — The search takes a page scope
 
 Type: task
-Status: ready-for-agent — parts A and B landed, C to E open.
+Status: ready-for-agent — parts A, B and C landed, D and E open.
 Blocked by: None — 103, 102 and 123 are all resolved.
 Parent: ../map.md
 
@@ -20,7 +20,7 @@ your part and nothing else. If you need more, the ticket is wrong — say so and
 |---|---|---|
 | **A** | The four kinds of nothing, returned as a value | **landed**, `bc59495` |
 | **B** | The scope reaches the notes | **landed** |
-| **C** | The scope is a filter and says so | open |
+| **C** | The scope is a filter and says so | **landed** |
 | **D** | Typing a slash offers the page keys | open |
 | **E** | A page row hands its key to the search | open |
 
@@ -209,7 +209,45 @@ each other. Today every note renders identically. That stops here.
 
 ---
 
-## C — The scope is a filter and says so
+## C — The scope is a filter and says so — **landed**
+
+Built 2026-08-17: `web/src/components/Chips.jsx` (`ScopeChip`, and `ClassFilterBanner` takes
+a `scope` and names it in the one sentence), `web/src/components/Search.jsx` (the strip is
+handed `result.scope`; `onClearClasses` is now `onClearFilters`, because it clears two
+things), `web/src/components/Dashboard.jsx` (the box is parsed through `parseTerm()` and the
+chip is a reading of it; both clears write back to the box),
+`web/src/components/Search.browser.test.mjs`,
+`web/src/components/Dashboard.browser.test.mjs`, `CONTEXT.md`.
+
+The strip's guard moved with it: a scope raises the amber strip **on its own**, with no pill
+pressed, which is the case the component could not draw before. Its denominator is unchanged
+— `matchedRepeats`, what the term found before the pills cut it — and under a scope that
+already was *of what the scope reached*, because the scope narrows the corpus before the term
+runs. The last line still says the counts above count everything, so no count moved.
+
+The chip is parsed from the box in `Dashboard` rather than read off `result.scope` the way
+`Search` reads it. That is not a second source of truth and not a second rule: it is the same
+`parseTerm()` over the same string. It is parsed there because the result is `null` until the
+index has been fetched, and a chip arriving a beat after the scope did would flicker on every
+keystroke of a scope being typed.
+
+Three things the `/code-review` of this part turned up, recorded rather than left implicit:
+
+- **The chip was not beside the pills.** It was drawn in the control row with the search box,
+  which on a wide viewport is a header's width from the pills — the two halves of one
+  sentence, apart. The pills and the chip are now one wrapped group, and a browser case pins
+  the shared parent rather than a pixel distance.
+- **The `CONTEXT.md` edit is wider than the one entry the criterion names.** The **Filter**
+  entry also gained the three-kinds taxonomy (it cannot admit a third kind without naming
+  that there are kinds) and a clause putting the **noise toggle** outside the strip, which is
+  this part's first trap written down where the next reader will meet it. The **Page scope**
+  entry gained the same fact from its own side. All three are consistent with the part; none
+  was asked for by name.
+- **While the index is in flight there is a chip and no strip.** `Search` returns *the search
+  index is loading…* before the strip, so the sentence naming the scope arrives with the
+  result. That is the behaviour the classes already had and it is not made worse here: the
+  strip's numbers are counts **of the result**, and a strip drawn before there is one would
+  have to invent them. The chip is the control and is honest on its own.
 
 ### Reading list — C
 
@@ -247,20 +285,29 @@ whole store back, and a scope silently surviving that is the more surprising out
 This part also amends the **Filter** entry in `CONTEXT.md`, which today reads as though
 narrowing by class is the only kind there is.
 
-- [ ] An active page scope appears as a chip beside the class pills.
-- [ ] The amber strip names the scope while it is on, alongside any classes.
-- [ ] The clear-filter control clears the scope and the classes together, and the search box
+- [x] An active page scope appears as a chip beside the class pills.
+- [x] The amber strip names the scope while it is on, alongside any classes. — *Filtered on
+      page /overkap and copy.* The word **page** carries it: alone, `/overkap` reads as a
+      path, and beside a class it would read as a second class with odd punctuation.
+- [x] The clear-filter control clears the scope and the classes together, and the search box
       loses the scope while keeping any remaining term.
-- [ ] Dismissing the scope chip alone clears the scope and leaves the classes and the term
+- [x] Dismissing the scope chip alone clears the scope and leaves the classes and the term
       alone.
-- [ ] Editing the scope in the box updates the chip, and the two never disagree. The box is
+- [x] Editing the scope in the box updates the chip, and the two never disagree. The box is
       the source of truth; the chip is a reading of it.
-- [ ] A scope and a class filter compose — the result is what both agree on — building on
-      what 102 established for the term.
-- [ ] The scope moves no count, no bar and no denominator, and the existing test for that
+- [x] A scope and a class filter compose — the result is what both agree on — building on
+      what 102 established for the term. — pinned in both directions: a class the scoped
+      page has, and one it has none of, where the intersection is empty and the scope is
+      still named rather than dropped.
+- [x] The scope moves no count, no bar and no denominator, and the existing test for that
       rule passes unchanged.
-- [ ] `CONTEXT.md`'s **Filter** entry admits page scope as a kind of filter, with the same
-      session-only life and the same amber strip.
+- [x] `CONTEXT.md`'s **Filter** entry admits page scope as a kind of filter, with the same
+      session-only life and the same amber strip. — the strip, yes; **the life is not
+      session-only and the entry says so instead.** The scope rides inside `query`, which is
+      part of the **screen** and therefore lives in the URL (ticket 109), exactly as this
+      screen's classes and priorities do. The criterion is left as written rather than
+      normalised, because the entry it asked for now contradicts one of its clauses and a
+      quietly reworded criterion is a criterion nobody can check.
 
 ### Traps — C
 

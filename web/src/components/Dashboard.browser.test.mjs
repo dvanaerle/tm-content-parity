@@ -185,3 +185,116 @@ describe('a scope over a one-sided page', () => {
     unmount();
   });
 });
+
+/**
+ * Ticket 104 part C. A page scope stops being invisible punctuation inside a text box and
+ * becomes a chip beside the class pills, named in the amber strip like every other
+ * narrowing and cleared by the clear-filter control.
+ *
+ * These live here and not in `Search.browser.test.mjs` because the **box** is the
+ * dashboard's: the chip is a reading of it, and every clear is a write back to it. What
+ * the strip says about a scope is asked for over `Search`, which owns the strip.
+ */
+describe('a page scope worn as a chip', () => {
+  let fetched;
+
+  const mountSearching = (search) => {
+    fetched = globalThis.fetch;
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => ({
+        store: 'nl',
+        pages: 2,
+        builtAt: '2026-08-14T10:00:00.000Z',
+        findings: [],
+      }),
+    });
+    history.replaceState(null, '', `?${search}`);
+    return mount();
+  };
+
+  afterEach(() => {
+    globalThis.fetch = fetched;
+  });
+
+  const box = () => document.querySelector('input[type="search"]');
+  const chip = () => document.querySelector('[data-scope-chip]');
+  const strip = () =>
+    [...document.querySelectorAll('[data-slot="alert"]')].find((element) =>
+      element.textContent.includes('Clear filter'),
+    );
+  const press = (root, label) =>
+    act(async () =>
+      [...root.querySelectorAll('button')]
+        .find((one) => one.textContent.trim() === label || one.getAttribute('title') === label)
+        .click(),
+    );
+
+  it('draws the scope beside the pills, in the shape it was typed', async () => {
+    const unmount = mountSearching('query=%2Foverkap%20deals&classes=copy');
+    await act(async () => {});
+
+    expect(chip().textContent).toContain('/overkap');
+    // **Beside the pills** is the criterion and not a paraphrase of *somewhere in the
+    // header*: the chip sat over by the search box until the review of this part, which on
+    // a wide viewport is a header's width from the pills it belongs with. Asserted as one
+    // shared parent, which is what adjacency is in a flex row — a test measuring pixels
+    // would pin the layout instead of the grouping.
+    const pills = document.querySelector('[data-slot="toggle-group"]');
+    expect(chip().parentElement).toBe(pills.parentElement);
+    unmount();
+  });
+
+  it('draws no chip when the box holds no scope', async () => {
+    const unmount = mountSearching('query=deals');
+    await act(async () => {});
+
+    expect(chip()).toBe(null);
+    unmount();
+  });
+
+  it('dismisses the scope alone, leaving the term and the classes where they were', async () => {
+    const unmount = mountSearching('query=%2Foverkap%20deals&classes=copy');
+    await act(async () => {});
+
+    await press(chip(), 'Clear the page scope');
+
+    expect(box().value).toBe('deals');
+    expect(chip()).toBe(null);
+    // The classes are not the chip's to touch, and the strip is still up for them.
+    expect(strip().textContent).toContain('Filtered on copy.');
+    unmount();
+  });
+
+  it('clears the scope and the classes together, keeping the rest of the term', async () => {
+    // The price the ticket accepts: clearing the filters rewrites the box, because the
+    // chip owns a fragment of an input. An editor clearing the filters is asking for the
+    // whole store back, and a scope surviving that is the more surprising outcome.
+    const unmount = mountSearching('query=%2Foverkap%20deals&classes=copy');
+    await act(async () => {});
+
+    await press(strip(), 'Clear filter');
+
+    expect(box().value).toBe('deals');
+    expect(chip()).toBe(null);
+    expect(strip()).toBe(undefined);
+    unmount();
+  });
+
+  it('follows the box when the scope is edited, so the two never disagree', async () => {
+    // Two sources of truth for the scope is this part's failure mode. The box is the
+    // source and the chip is a reading of it, so editing one moves the other by
+    // construction rather than by a second write.
+    const unmount = mountSearching('query=%2Foverkap');
+    await act(async () => {});
+    expect(chip().textContent).toContain('/overkap');
+
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    setter.call(box(), '/schutting');
+    await act(async () => box().dispatchEvent(new Event('input', { bubbles: true })));
+
+    expect(chip().textContent).toContain('/schutting');
+    expect(chip().textContent).not.toContain('/overkap');
+    unmount();
+  });
+});

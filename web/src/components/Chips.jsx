@@ -1,3 +1,4 @@
+import { XIcon } from 'lucide-react';
 import { classInfo } from '../lib/classes.mjs';
 import { PRIORITIES } from '../../../shared/priorities.mjs';
 import { cn } from '../lib/utils.js';
@@ -183,6 +184,52 @@ export function PriorityFilterPills({ selected, onToggle, counts = {} }) {
 }
 
 /**
+ * The page scope, worn beside the class pills (ticket 104 part C).
+ *
+ * A scope narrows what is on screen and moves no bar, no denominator and no count, which is
+ * `CONTEXT.md`'s **filter** word for word — so it is drawn as a filter is drawn, rather than
+ * left as punctuation inside a text box where nothing on screen says it is on.
+ *
+ * **It holds no state of its own.** The search box is the source of truth and this is a
+ * reading of it: the caller parses the box with `parseTerm()` and hands the scope down, so
+ * the two cannot disagree. A copy kept here would be the second source of truth this part
+ * exists to avoid.
+ *
+ * The slash is drawn back on. It is how the scope was typed, it is what an editor would type
+ * to get it again, and a chip reading `overkap` over a box reading `/overkap` is one thing
+ * spelled two ways.
+ *
+ * `caution` is the palette tone of the amber strip that names it, and the pairing is the
+ * point: the chip is the control and the strip is the sentence about it.
+ */
+export function ScopeChip({ scope, onClear }) {
+  return (
+    <Badge
+      data-scope-chip={scope}
+      className={cn('h-auto gap-1 py-0.5 pr-0.5 pl-1.5 text-xs', PILL.caution)}
+      // The slash is on here too. The chip draws `/overkap` and a tooltip explaining
+      // `overkap` is the one thing spelled two ways this component exists to avoid.
+      title={`The search is narrowed to /${scope} — the pages whose key holds ${scope}. The counts above do not change.`}
+    >
+      <span className="font-mono">/{scope}</span>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        onClick={onClear}
+        // The title is the accessible name as well: the control is an icon, and *×* is
+        // not a word. It names the scope and not merely *clear*, because the strip below
+        // carries a *Clear filter* that clears more than this one does.
+        title="Clear the page scope"
+        aria-label="Clear the page scope"
+        className="size-4 rounded-sm hover:bg-transparent hover:opacity-70"
+      >
+        <XIcon />
+      </Button>
+    </Badge>
+  );
+}
+
+/**
  * A filter says so for as long as it is on. A narrowed view that looks like the whole
  * thing is read as the whole thing, and the editor stops early — so the strip is amber
  * and it carries the one action that clears it.
@@ -229,10 +276,19 @@ export function FilterBanner({ onClear, className = '', children }) {
  * over one list, and an editor who cleared the one they could see would still be looking at
  * a narrowed list.
  *
+ * Ticket 104 part C brings the **page scope** into the same sentence, for the same reason
+ * and against the stronger case: a scope narrows the screen further than any pill does, so a
+ * strip that enumerated the pills and omitted the scope would be wrong about what is
+ * filtering the list under it — worse than no strip. A scope therefore raises the strip on
+ * its own, with no pill pressed.
+ *
+ * **None of the three means no filter**, and the component draws nothing. That is the guard
+ * this component keeps rather than each caller, for the reason above.
+ *
  * @param {object} props
- * @param {string[]} props.classes  The pills that are on. None of either means no filter,
- *                                 and the component draws nothing.
+ * @param {string[]} props.classes  The pills that are on.
  * @param {string[]} [props.priorities]
+ * @param {string | null} [props.scope] The page scope, without its slash, or `null`.
  * @param {number} props.shown
  * @param {number} props.total
  * @param {string} props.noun      What is counted: `differences`, `pages`.
@@ -242,17 +298,23 @@ export function FilterBanner({ onClear, className = '', children }) {
 export function ClassFilterBanner({
   classes,
   priorities = [],
+  scope = null,
   shown,
   total,
   noun,
   onClear,
   className = '',
 }) {
-  if (classes.length === 0 && priorities.length === 0) return null;
+  if (classes.length === 0 && priorities.length === 0 && !scope) return null;
 
-  // Named in the order the controls sit in, and each half only when it is on: *Filtered on
+  // Named in the order the controls sit in, and each part only when it is on: *Filtered on
   // priority high.* is the whole sentence when no pill is pressed.
+  //
+  // The scope carries the word *page* and its slash. Alone, `Filtered on /overkap.` reads
+  // as a path and not as a narrowing; beside a class it would read as a second class with
+  // odd punctuation. The word is what tells the two kinds apart in one sentence.
   const on = [
+    scope && `page /${scope}`,
     classes.length > 0 && classes.join(', '),
     priorities.length > 0 && `priority ${priorities.join(', ')}`,
   ]

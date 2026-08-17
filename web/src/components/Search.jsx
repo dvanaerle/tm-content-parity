@@ -39,7 +39,12 @@ import { pagesWithClasses } from '../lib/view.mjs';
  *
  * *Include closed* is not part of that. It is search-only, it says what counts as a
  * result rather than what is on screen, and it stays out of the strip — as does the term
- * itself, which becomes a filter deliberately in ticket 106 and not by accident here.
+ * itself.
+ *
+ * **The page scope is in the strip** (ticket 104 part C), and it is the one part of the term
+ * that is: it narrows what is on screen and moves no count, which is the definition of a
+ * filter, while the words after it decide what matched at all. So the strip names it and
+ * *Clear filter* takes it out of the box, and the words survive that clear.
  *
  * **A leading slash narrows to a page** (ticket 103). The rows are the same repeats and the
  * counts are the same counts of them; what a scope adds on screen is the header saying
@@ -52,7 +57,7 @@ export default function Search({
   pages,
   term,
   classes = [],
-  onClearClasses,
+  onClearFilters,
   byFinding,
   log,
   includeClosed,
@@ -98,9 +103,14 @@ export default function Search({
   );
 
   // The scope is read off the **result**, which is where `searchStore()` puts it, rather
-  // than parsed again here: one string, one parse, and no second reading of the slash rule
-  // free to drift from the one the answer was built with. It is `null` until the index
-  // arrives, and nothing below is drawn before then.
+  // than parsed again here: no second reading of the slash rule free to drift from the one
+  // the answer was built with. It is `null` until the index arrives, and nothing below is
+  // drawn before then.
+  //
+  // The dashboard does call `parseTerm()` on the same string, for the chip beside the pills
+  // (ticket 104 part C) — it has to, because that chip is drawn before this result exists.
+  // That is one rule read twice and not two rules: the guarantee is that `parseTerm()` is
+  // the only thing anywhere that knows what a leading slash means.
   const scope = result?.scope ?? null;
 
   // Which pages the scope reached and which kind of nothing each of them is (ticket 104).
@@ -157,13 +167,22 @@ export default function Search({
     <>
       {/* Above the count, where the two views draw it. The denominator is what the term
           found before the pills cut it, so the strip is about the filter and not about
-          the term — and *clear filter* clears the classes and leaves the term alone. */}
+          the term.
+
+          The scope is named in it since ticket 104 part C, which makes the strip's
+          denominator read as *of what the scope reached* rather than *of the store* — and
+          that is what it has always been, since a scope narrows the corpus before the term
+          runs. The last line still says the counts above count everything.
+
+          *Clear filter* now clears the classes **and** the scope, and nothing else of the
+          term: the callback is the caller's, because the search box is. */}
       <ClassFilterBanner
         classes={classes}
+        scope={scope}
         shown={result.repeats.length}
         total={result.matchedRepeats}
         noun="differences"
-        onClear={onClearClasses}
+        onClear={onClearFilters}
         className="border-b px-4 py-2"
       />
 

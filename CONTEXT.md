@@ -260,15 +260,24 @@ element any more: it folds the links inside it. Both the word and the rule are g
   rewrote the text, because size is not similarity. The class stays `copy` and the
   score stays with it. "Uncompared" is not a class: the class vocabulary stays closed.
   See `docs/adr/0009-the-word-diff-runs-in-the-browser.md`.
-- **Filter** — a narrowing of what is on screen, by class. It moves no bar, no
+- **Filter** — a narrowing of what is on screen. It moves no bar, no
   denominator and no count. The content view narrows a page to a class and the
   dashboard narrows the page list to the same class; both say so with an amber strip
   for as long as the filter is on.
+  There are three kinds and the strip names **all of them in one sentence**, under one
+  *Clear filter*: the **classes**, the **priorities** (ticket 83) and the **page scope**
+  (ticket 104). Class was the only kind until the other two arrived, and a strip that
+  enumerates some of what is narrowing the list is worse than no strip. Each kind also
+  wears its own control beside the class pills — a pressed pill, a scope chip — and the
+  control is a **reading** of the state and never a second copy of it.
   A **search is narrowed by it too** (ticket 102): the classes are the filter and the
   term is a search, so a term composes with a filter rather than replacing one, and the
   strip stays up over the result. *Include closed* (~~*Inclusief afgesloten*~~,
   2026-08-13) is not a filter — it says what
-  counts as a result and not what is on screen — and it is absent from the strip.
+  counts as a result and not what is on screen — and it is absent from the strip. Neither
+  is the **noise toggle**, for the stronger version of the same reason: it changes what
+  counts as a finding at all, which is why it survives a *Clear filter* and a scope does
+  not.
   On the dashboard the filter is part of the **screen** and therefore lives in the URL
   (ticket 109), so Back restores it and a copied link carries it. On a page it stays
   session-only: a page filter is a pass an editor is making, not a place to return to.
@@ -287,6 +296,13 @@ element any more: it folds the links inside it. Both the word and the rule are g
   that page's **repeats** and is not a second reading of the page. It moves no count, no bar
   and no denominator, in the same manner as a **filter** and as the term itself. A scope
   narrows within one store, because there is no all-stores surface to scope across.
+  It **is** a filter and it says so like one (ticket 104): a chip beside the class pills,
+  named in the amber strip in one sentence with them, and cleared by the same *Clear
+  filter*. The search box stays the source of truth and the chip is a reading of it, so the
+  two cannot disagree. Clearing rewrites the box — the scope is a fragment of an input, and
+  an editor clearing the filters is asking for the whole store back — but only the scope:
+  the words after it are a search and survive. It lives in the URL because it lives inside
+  the query, which is where the dashboard's other filters live too.
   It narrows **both halves** of the answer (ticket 104): the findings from the snapshot and
   the notes from the log, each still its own block with its own freshness. A note is narrowed
   by the page it was **written on** — the event carries it — and not by the page a finding of

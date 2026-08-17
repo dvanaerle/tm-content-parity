@@ -104,7 +104,7 @@ async function mount(props = {}) {
           pages,
           term: 'deals',
           classes: [],
-          onClearClasses: () => cleared.push(true),
+          onClearFilters: () => cleared.push(true),
           byFinding,
           // A log that has been read and holds nothing, which is what every case about
           // the findings half wants: the notes half then draws exactly what it drew
@@ -148,9 +148,11 @@ describe('a search under the class pills', () => {
     unmount();
   });
 
-  it('clears the classes on Clear filter and asks nothing about the term', async () => {
-    // The press hands back one thing: the classes. The term is not the strip's to touch
-    // — that is ticket 106's business, and only for a scope.
+  it('clears the filters on Clear filter, in one call the caller owns', async () => {
+    // The press hands back one thing and decides nothing: which narrowings *are* filters
+    // is settled above this component, and since part C of ticket 104 the answer is the
+    // classes **and** the page scope. What that does to the box is the dashboard's, which
+    // owns the box; from here it is one call.
     const { cleared, unmount } = await mount({ classes: ['copy'] });
 
     const button = [...strip().querySelectorAll('button')].find(
@@ -574,6 +576,77 @@ describe('the notes half, under a page scope', () => {
 
     expect(document.body.textContent).toContain('Notes in the log');
     expect(document.body.textContent).toContain('The override log is loading…');
+    unmount();
+  });
+});
+
+/**
+ * Ticket 104 part C. A page scope is a narrowing of what is on screen that moves no bar, no
+ * denominator and no count, which is `CONTEXT.md`'s definition of a **filter** word for
+ * word — so it says so in the amber strip, beside the classes and in one sentence with
+ * them. A strip that enumerates the small narrowings and omits the largest one is worse
+ * than no strip.
+ *
+ * The strip is this component's, so the sentence is asked for here. The chip and what
+ * clearing does to the search box belong to the dashboard, which owns the box, and are
+ * asked for there.
+ */
+describe('the amber strip over a scoped search', () => {
+  it('names the scope while it is on, with no pill pressed at all', async () => {
+    // The strip used to need a pill to exist. A scope alone narrows the screen more than
+    // any pill does, so it raises the strip on its own.
+    const { unmount } = await mount({ term: '/afhalen', classes: [] });
+
+    expect(strip().textContent).toContain('Filtered on page /afhalen.');
+    expect(strip().textContent).toContain('The counts above count everything.');
+    unmount();
+  });
+
+  it('names the scope and the classes in one sentence, under one clear', async () => {
+    // Two strips would be two denominators over one list, which is the pair
+    // `ClassFilterBanner` exists to prevent — the same reason ticket 83's priorities
+    // joined the sentence rather than starting a second one.
+    const { unmount } = await mount({ term: '/garantie deals', classes: ['casing'] });
+
+    expect(strip().textContent).toContain('Filtered on page /garantie and casing.');
+    expect([...strip().parentElement.querySelectorAll('[data-slot="alert"]')]).toHaveLength(1);
+    unmount();
+  });
+
+  it('draws no strip at all when neither is on', async () => {
+    const { unmount } = await mount({ term: 'deals', classes: [] });
+
+    expect(strip()).toBe(undefined);
+    unmount();
+  });
+
+  it('composes a scope with a class filter — the result is what both agree on', async () => {
+    // Ticket 102 established this for the term. A scope is the same kind of thing one
+    // narrowing wider, so the two compose rather than one replacing the other.
+    const { rerender, unmount } = await mount({ term: '/garantie deals', classes: ['casing'] });
+
+    expect(document.body.textContent).toContain('bekijk DEALS >');
+    expect(strip().textContent).toContain('1 of 1 differences.');
+
+    // The one class the scoped page has nothing of. The scope still holds — the strip
+    // still names it — and the intersection is empty rather than the scope being dropped.
+    await rerender({ classes: ['copy'] });
+
+    expect(document.body.textContent).not.toContain('bekijk DEALS >');
+    expect(document.body.textContent).toContain('No difference with these words.');
+    expect(strip().textContent).toContain('Filtered on page /garantie and copy.');
+    expect(strip().textContent).toContain('0 of 1 differences.');
+    unmount();
+  });
+
+  it('moves no count with the scope: the denominator is the scope, not the store', async () => {
+    // The strip's denominator has always been *what the term found before the pills cut
+    // it*, and a scope is part of what the term found. The counts at the top of the
+    // dashboard are the ones that must not move, and the strip says so in its last line.
+    const { unmount } = await mount({ term: '/garantie', classes: ['casing'] });
+
+    expect(strip().textContent).toContain('1 of 1 differences.');
+    expect(strip().textContent).toContain('The counts above count everything.');
     unmount();
   });
 });
