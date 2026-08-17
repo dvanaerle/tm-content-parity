@@ -129,13 +129,6 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Class** — why the two sides are different. The class vocabulary is closed. See
   `compare/contract.mjs`. It was also the mute key until the mute was withdrawn
   (ADR 0011); the class is now the only axis and keys nothing.
-  A class has a **label**, and the label is not the key. An editor reads *Copy changed*
-  and *Image missing*; `copy` and `image-missing` are what the id is made of and what a
-  rule is written against. The interface drew the key in capitals until 2026-08-17, which
-  put a contract name in front of the one reader who cannot act on it. The label lives
-  beside `meaning` in `compare/vocabulary.mjs`, because what a class **is** is a domain
-  fact and not a presentation choice, and a class with no label fails the test — so the
-  thirty-second class cannot arrive unnamed.
 - **Visibility** — what a class is for. One of three words, and each class has
   exactly one. **Work** is migration work: it counts. **Information** is a
   difference an editor may want to read: it is rendered and it does not count. Said
@@ -291,16 +284,8 @@ element any more: it folds the links inside it. Both the word and the rule are g
   See `docs/adr/0009-the-word-diff-runs-in-the-browser.md`.
 - **Filter** — a narrowing of what is on screen. It moves no bar, no
   denominator and no count. The content view narrows a page to a class and the
-  dashboard narrows the page list to the same class; both say so with a strip
+  dashboard narrows the page list to the same class; both say so with an amber strip
   for as long as the filter is on.
-  The strip is **neutral** (~~amber~~, 2026-08-17), and the only colour in it is the
-  **primary** its *Clear filter* shares with the pressed pill. A filter is a narrowing an
-  editor chose, and amber is the colour of something being wrong: it was already carrying
-  destructive as well, so a normal state was wearing the loudest word the palette has.
-  Amber is left to **Needs attention**, a failed **re-check** and **read-only**, because a
-  warning means something only while it is uncommon. The strip itself, its one sentence
-  and its single *Clear filter* do not change: what an editor must never misread is an
-  empty list, and that is the sentence's job and it was never the colour's.
   There are three kinds and the strip names **all of them in one sentence**, under one
   *Clear filter*: the **classes**, the **priorities** (ticket 83) and the **page scope**
   (ticket 104). Class was the only kind until the other two arrived, and a strip that
@@ -438,21 +423,13 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Store switcher** — the six store ids in the shell header, each a link to that
   store's dashboard. It never goes to the same page in another store: the stores
   translate the category url keys, so that page often does not exist.
-- **Diagnostics toggle** — *Show diagnostics* (~~*Show noise*~~, ~~*Ruis tonen*~~,
-  2026-08-17 and 2026-08-13), the control that shows
+- **Noise toggle** — *Show noise* (~~*Ruis tonen*~~, 2026-08-13), the control that shows
   the classes whose visibility is `diagnostic`. It is **not** a filter: it belongs to the
   whole log, and *clear filter* (~~*filter wissen*~~, 2026-08-13)
   does not clear it. An editor who asked to see what a rule saw did not ask a question
   about classes. It had a second job until ADR 0011 — it also showed muted findings, and
   it was called *Ruis en gedempt tonen* — and a diagnostic class is not a judgement, so
   the job that is left is the one it was named for.
-  **The name is now that job.** *Noise* was the label and `diagnostic` was the
-  **visibility** it reveals, which is two words for one thing — the failure this list
-  exists to stop, and one it had committed itself. The control, the visibility and the
-  dashboard counter are all *diagnostics* from 2026-08-17. *Noise* is retired everywhere,
-  including in `Hidden noise`, which is now **`Diagnostics`**. Read the word narrowly: it
-  means *what a rule saw*, and it is never the health of the log, the crawl or the build.
-  A rule author is who it is for.
 
 Four tab names are retired, and the content view is what replaced the first three.
 **"Diff"** showed the differing rows only, so once every row was tinted the tint said
@@ -720,11 +697,16 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   two differences the same difference, and that is a different question.
 - A page of one store is one of five things, and they are told apart from each other
   and not only from silence. **Identical** — the sibling agrees word for word, which
-  is 66 of the Dutch block's 125 measured pages and 48 of the French block's 120, so
-  it is the common case and it says so rather than drawing an empty row.
-  **Diverged** — some of the words are not over there. **Unmeasured** — production did
-  not answer 200 on both sides, so nothing was compared; it never reads as agreement
-  and it is never a share of zero. **Sibling-absent** — this store has the page and
+  is 66 of the Dutch block's 125 measured pages and 47 of the French block's 120, so
+  it is the common case and it says so rather than drawing an empty row. It is asked
+  **both ways round**: the agreement share is one-directional, so a short page wholly
+  contained in a much longer sibling scores 1 and is **diverged** and not identical.
+  Read from either store of a block the answer is the same number, which is the test
+  the one-directional reading failed — `be` said 67 where `nl` said 66.
+  **Diverged** — some of the words are not over there. **Unmeasured** — nothing was
+  compared: production did not answer 200 on both sides, or one side has no content
+  units. It never reads as agreement and it is never a share of zero, and a page with
+  no units has **no share** rather than a share of one. **Sibling-absent** — this store has the page and
   the sibling has no counterpart. **Only-in-sibling** — the sibling has it and this
   store has not. The last two are two facts and not one, because one is a page
   somebody over there builds and the other is a page somebody here builds. Neither
@@ -733,7 +715,12 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   48 of `nl`'s 181 cells are carried over for exactly that reason. A short list is a
   short list and never agreement.
 - The reading is **decided as values** by `blockReading()` in `web/src/lib/blocks.mjs`
-  and only rendered by `BlockList.jsx`, in the manner of `explainScope()`. It compares
+  and only rendered by `BlockList.jsx`, in the manner of `explainScope()` — the three
+  groupings and the count of agreements included, so that *a page both stores have* has
+  one definition and not a second one in JSX. The block **vocabulary** is beside it in
+  `web/src/lib/language-blocks.mjs` and not in `shared/`: ADR 0001 asks three questions
+  and only the web layer reads it. `HREFLANG_STORE`, which it derives the blocks from,
+  is the half two stages read. It compares
   **production** on both sides — the reference side — and the panel says so, so that a
   divergence between two stores is never read as a defect on the new site.
 - **Block difference** — where two sibling pages do not agree. Words are compared,

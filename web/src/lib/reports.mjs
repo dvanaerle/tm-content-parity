@@ -294,21 +294,34 @@ export async function loadProductionUnits(store) {
 }
 
 /**
+ * The seed list as it is on disk.
+ *
+ * The one place that reads the file, so the two callers below cannot disagree about
+ * what a missing one means. A missing seed file reads as an empty list rather than
+ * failing the build, for the reason an empty `data/reports/` builds an empty log: a
+ * fresh clone has neither, and it must still build.
+ *
+ * @returns {Promise<{ rows?: unknown[], dropped?: unknown[] }>}
+ */
+async function loadSeeds() {
+  try {
+    return JSON.parse(await readFile(SEEDS, 'utf8'));
+  } catch (error) {
+    if (/** @type {any} */ (error).code === 'ENOENT') return {};
+    throw error;
+  }
+}
+
+/**
  * The rows of the seed list.
  *
  * The block reading needs them whole, because a sibling is matched across two rows
- * and not inside one. A missing seed file reports nothing rather than failing the
- * build, for the reason an empty `data/reports/` builds an empty log.
+ * and not inside one.
  *
  * @returns {Promise<import('../../../shared/seed-rows.mjs').SeedRow[]>}
  */
 export async function loadSeedRows() {
-  try {
-    return JSON.parse(await readFile(SEEDS, 'utf8')).rows ?? [];
-  } catch (error) {
-    if (/** @type {any} */ (error).code === 'ENOENT') return [];
-    throw error;
-  }
+  return /** @type {any} */ ((await loadSeeds()).rows ?? []);
 }
 
 /**
@@ -316,9 +329,8 @@ export async function loadSeedRows() {
  * (ticket 56). Three things leave a page out and `not-checked.mjs` gives the
  * three words; this function only reads the two files they need.
  *
- * A missing seed file reports nothing rather than failing the build, for the same
- * reason an empty `data/reports/` builds an empty log: a fresh clone has neither,
- * and it must still build.
+ * A missing seed file reports nothing rather than failing the build — `loadSeeds()`
+ * above is where that is decided, for both readers of the file.
  *
  * @param {string} store
  * @param {{ page: string }[]} crawled The pages that have a report, which is what
@@ -326,15 +338,9 @@ export async function loadSeedRows() {
  * @returns {Promise<import('./not-checked.mjs').NotChecked[]>}
  */
 export async function notCheckedFor(store, crawled = []) {
-  let seeds;
-  try {
-    seeds = JSON.parse(await readFile(SEEDS, 'utf8'));
-  } catch (error) {
-    if (/** @type {any} */ (error).code === 'ENOENT') return [];
-    throw error;
-  }
+  const seeds = await loadSeeds();
   return notCheckedInStore({
-    rows: seeds.rows ?? [],
+    rows: /** @type {any} */ (seeds.rows ?? []),
     // A seed list written before this ticket holds a count here and not a list.
     // It then reports the exclusions it can name and none it cannot, which is
     // what an older file honestly knows.

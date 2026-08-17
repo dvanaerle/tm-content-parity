@@ -42,8 +42,11 @@ of ticket 124 in `content-parity-log`:
       over production's content units on **normalised text** as the share of one store's unit texts
       that appear exactly in the sibling's.
 - [x] A page whose sibling is byte-identical says so in its own words, and does not read as though
-      the comparison failed to run. This is 66 of 125 pages in the Dutch block and 48 of 120 in the
-      French one, so it is the common case and not an edge.
+      the comparison failed to run. This is 66 of 125 pages in the Dutch block and 47 of 120 in the
+      French one, so it is the common case and not an edge. Identity is asked **both ways round**:
+      the first draft read the one-directional `share === 1` as identity, and the two stores of a
+      block then disagreed about their own block — `be` said 67 where `nl` said 66, `be_fr` 48
+      where `fr` said 47. A page with no content units is `unmeasured` and has no share.
 - [x] The list says which side it compares, and the answer is production.
 - [x] The list says it is **not a census**: a page no sitemap declares is absent from it, and 48 of
       `nl`'s 181 cells are carried over for exactly that reason.
@@ -83,7 +86,7 @@ of ticket 124 in `content-parity-log`:
 
 **2026-08-17 — built, in the four commits the ticket asked for.**
 
-**A — the vocabulary.** `shared/language-blocks.mjs`: `LANGUAGE_BLOCKS`, `languageOf()`,
+**A — the vocabulary.** `web/src/lib/language-blocks.mjs`: `LANGUAGE_BLOCKS`, `languageOf()`,
 `blockOf()`, `siblingOf()`, all derived from `HREFLANG_STORE` by grouping the codes on the
 part before the region. Two of the five tests are guards rather than slices — they passed
 the moment they were written — and they read the derivation against `HREFLANG_STORE` and

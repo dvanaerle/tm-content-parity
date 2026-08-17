@@ -3,15 +3,16 @@
  * store of its language block (`CONTEXT.md` → *Language blocks*).
  *
  * It stays in `web/` and not in `shared/`. ADR 0001 asks three questions and this
- * fails the third: only the web layer reads it. The block **vocabulary** is the part
- * two stages could want, and that is in `shared/language-blocks.mjs`.
+ * fails the third: only the web layer reads it. The block **vocabulary** fails it for
+ * the same reason and sits beside this file, in `./language-blocks.mjs`;
+ * `HREFLANG_STORE`, which both `crawl/` and this read, is the half in `shared/`.
  *
  * Everything here is **decided as a value** and rendered by nothing — the precedent
  * is `explainScope()`, which `CONTEXT.md` cites as decided as a value and only
  * rendered by the component.
  */
 
-import { languageOf, siblingOf } from '../../../shared/language-blocks.mjs';
+import { languageOf, siblingOf } from './language-blocks.mjs';
 
 /** @typedef {import('../../../shared/seed-rows.mjs').SeedRow} SeedRow */
 
@@ -107,9 +108,36 @@ export function siblingPages({ rows, store }) {
  * @property {number | null} share Of this store's unit texts, the share that appear
  *   exactly in the sibling's. `null` where nothing was measured. It orders a list and
  *   it is **not a score on a finding**.
- * @property {number} units This store's production content units on the page.
- * @property {number} found How many of them appear exactly in the sibling's.
+ * @property {number | null} units This store's production content units on the page.
+ *   `null` where nothing was measured, and never `0` — a count of zero is a page that
+ *   was read and found empty, which is a different fact from a page nobody read, and
+ *   the two must not share a number.
+ * @property {number | null} found How many of them appear exactly in the sibling's,
+ *   `null` on the same terms as `units`.
  */
+
+/** The three kinds that are a page both stores have, which is what the list ranks. */
+export const SHARED_KINDS = new Set(['identical', 'diverged', 'unmeasured']);
+
+/**
+ * A row with nothing measured on it, which is three of the five kinds.
+ *
+ * One function, because the three were written out three times and the shape of *no
+ * measurement* is the thing that must not drift between them.
+ *
+ * @param {string} page
+ * @param {BlockRow['kind']} kind
+ * @param {Sibling | null} sibling
+ * @returns {BlockRow}
+ */
+const unmeasuredRow = (page, kind, sibling) => ({
+  page,
+  kind,
+  sibling,
+  share: null,
+  units: null,
+  found: null,
+});
 
 /**
  * The **agreement share**: how much of this store's page appears in its sibling.
@@ -124,8 +152,18 @@ export function siblingPages({ rows, store }) {
  * is how much two pages say the same thing, which is a different question, and two
  * meanings for one word is what that glossary exists to stop.
  *
- * A page with no units is fully found rather than divided by zero, which is the
- * reading that does not claim a difference nobody can point at.
+ * A page with no units has **no share**, rather than a share of one. Dividing zero by
+ * zero and calling the answer *agreement* would let a page that answered 200 and
+ * carries no content unit claim it agrees word for word with a sibling it has never
+ * been compared to — the exact reading `unmeasured` exists to refuse. Nothing was
+ * measured, so nothing is claimed.
+ *
+ * `mutual` is the stricter question the word *identical* needs. `share` is
+ * **one-directional**: it asks how much of this store's text is over there, so a page
+ * of five units inside a sibling of two hundred scores 1. That is not two pages that
+ * agree, it is a short page contained in a long one, and only `mutual` tells them
+ * apart — it asks the question both ways, over the sets the share is already measured
+ * on.
  *
  * @param {string[]} mine
  * @param {string[]} theirs
@@ -133,56 +171,83 @@ export function siblingPages({ rows, store }) {
 function agreementOf(mine, theirs) {
   const over = new Set(theirs);
   const found = mine.filter((text) => over.has(text)).length;
-  return { units: mine.length, found, share: mine.length === 0 ? 1 : found / mine.length };
+  if (mine.length === 0) return { units: 0, found: 0, share: null, mutual: false };
+
+  const here = new Set(mine);
+  return {
+    units: mine.length,
+    found,
+    share: found / mine.length,
+    mutual: found === mine.length && [...over].every((text) => here.has(text)),
+  };
 }
+
+/**
+ * @typedef {object} BlockReading
+ * @property {string} store The store whose dashboard this reading is drawn on.
+ * @property {string} sibling The other store of its block.
+ * @property {string | null} language The language the two share.
+ * @property {'production'} side The side compared on both stores, stated rather than
+ *   implied.
+ * @property {{ carriedOver: number }} census The evidence for *this list is not a
+ *   census*.
+ * @property {BlockRow[]} rows Every row, shared pages first and ranked.
+ * @property {BlockRow[]} shared The pages both stores have, worst-first.
+ * @property {BlockRow[]} absentThere The pages this store has and the sibling has not.
+ * @property {BlockRow[]} absentHere The pages the sibling has and this store has not.
+ * @property {number} identical How many of `shared` agree word for word.
+ */
 
 /**
  * The whole reading one store's dashboard draws, as values.
  *
+ * The groupings and the count are decided **here** and not in the component: the panel
+ * chooses markup and tone and nothing else, in the manner `explainScope()` set. A
+ * grouping re-derived in JSX is a second definition of *a page both stores have*.
+ *
  * @param {object} input
- * @param {SeedRow[]} input.rows
- * @param {string} input.store
- * @returns {{ rows: BlockRow[] } | null}
+ * @param {SeedRow[]} input.rows The rows of `data/10-store-seeds.json`.
+ * @param {string} input.store The store whose dashboard is being drawn.
+ * @param {(store: string, page: string) => string[] | null} input.unitsOf The
+ *   normalised texts of one page's production content units, and `null` for a page no
+ *   report covers. **Required**, and deliberately not defaulted: a default would answer
+ *   `null` for every page, and the reading would then call the whole block unmeasured
+ *   without anybody having asked it to.
+ * @returns {BlockReading | null} `null` for a store in no block, which is `de` and
+ *   `uk` — an empty reading is a panel that draws itself and says nothing.
  */
-export function blockReading({ rows, store, unitsOf = () => null }) {
+export function blockReading({ rows, store, unitsOf }) {
   const other = siblingOf(store);
   if (!other) return null;
 
   /** @type {BlockRow[]} */
   const mine = siblingPages({ rows, store }).map((one) => {
-    if (!one.sibling) {
-      return {
-        page: one.page,
-        kind: 'sibling-absent',
-        sibling: null,
-        share: null,
-        units: 0,
-        found: 0,
-      };
-    }
+    if (!one.sibling) return unmeasuredRow(one.page, 'sibling-absent', null);
 
     const here = unitsOf(store, one.page);
     const there = unitsOf(other, one.sibling.page);
     // One side has no compared page, so there is nothing to measure. It says so
     // rather than reporting a share of zero, which would accuse a page of diverging
     // when what happened is that nobody looked.
-    if (!here || !there) {
-      return {
-        page: one.page,
-        kind: 'unmeasured',
-        sibling: one.sibling,
-        share: null,
-        units: 0,
-        found: 0,
-      };
-    }
+    if (!here || !there) return unmeasuredRow(one.page, 'unmeasured', one.sibling);
 
-    const agreement = agreementOf(here, there);
+    const { units, found, share, mutual } = agreementOf(here, there);
+    // A page with no content units on this side was read and found empty, so there is
+    // no share to rank it by and nothing to call agreement. It is unmeasured for the
+    // same reason a page with no report is: nothing was compared.
+    if (share === null) return unmeasuredRow(one.page, 'unmeasured', one.sibling);
+
     return {
       page: one.page,
-      kind: agreement.share === 1 ? 'identical' : 'diverged',
+      // **Mutual** and not `share === 1`. The share only asks whether this store's
+      // words are over there, so a short page wholly contained in a long sibling
+      // scores 1 while the sibling says a great deal more — and *agrees word for
+      // word* would be a false sentence about it.
+      kind: mutual ? 'identical' : 'diverged',
       sibling: one.sibling,
-      ...agreement,
+      units,
+      found,
+      share,
     };
   });
 
@@ -205,14 +270,9 @@ export function blockReading({ rows, store, unitsOf = () => null }) {
   /** @type {BlockRow[]} */
   const theirs = siblingPages({ rows, store: other })
     .filter((one) => !one.sibling)
-    .map((one) => ({
-      page: one.page,
-      kind: 'only-in-sibling',
-      sibling: null,
-      share: null,
-      units: 0,
-      found: 0,
-    }));
+    .map((one) => unmeasuredRow(one.page, 'only-in-sibling', null));
+
+  const shared = mine.filter((one) => SHARED_KINDS.has(one.kind));
 
   return {
     store,
@@ -230,5 +290,11 @@ export function blockReading({ rows, store, unitsOf = () => null }) {
       carriedOver: rows.filter((row) => row.stores?.[store]?.provenance === 'carried-over').length,
     },
     rows: [...mine, ...theirs],
+    // The three groupings the panel draws, decided here so that *a page both stores
+    // have* has one definition and not two.
+    shared,
+    absentThere: mine.filter((one) => one.kind === 'sibling-absent'),
+    absentHere: theirs,
+    identical: shared.filter((one) => one.kind === 'identical').length,
   };
 }

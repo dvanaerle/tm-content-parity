@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { blockOf, LANGUAGE_BLOCKS, languageOf, siblingOf } from './language-blocks.mjs';
-import { STORES } from './stores.mjs';
+import { STORES } from '../../../shared/stores.mjs';
 
 describe('the language blocks', () => {
   // The two blocks the spec names: `nl-NL`/`nl-BE` give `{nl, be}` and

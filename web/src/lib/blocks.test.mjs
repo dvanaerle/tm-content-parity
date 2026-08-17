@@ -148,7 +148,7 @@ describe('the committed seed list', () => {
    * nobody decided.
    */
   const ofKind = (store, kind) =>
-    blockReading({ rows: seeds.rows, store })
+    blockReading({ rows: seeds.rows, store, unitsOf: () => null })
       .rows.filter((one) => one.kind === kind)
       .map((one) => one.page)
       .sort();
@@ -194,7 +194,7 @@ describe('the committed seed list', () => {
   // The census sentence, against the store it was measured on: 48 of `nl`'s 181 cells
   // are carried over, because no sitemap declares them.
   it('counts the 48 pages of `nl` that no sitemap declares', () => {
-    expect(blockReading({ rows: seeds.rows, store: 'nl' }).census).toEqual({ carriedOver: 48 });
+    expect(blockReading({ rows: seeds.rows, store: 'nl', unitsOf: () => null }).census).toEqual({ carriedOver: 48 });
   });
 
   // A sibling is one page and the relation is symmetric, so no two pages of one store
@@ -230,12 +230,19 @@ describe('the block reading', () => {
         units: 1,
         found: 1,
       },
-      { page: 'pergola', kind: 'sibling-absent', sibling: null, share: null, units: 0, found: 0 },
+      {
+        page: 'pergola',
+        kind: 'sibling-absent',
+        sibling: null,
+        share: null,
+        units: null,
+        found: null,
+      },
     ]);
   });
 
   // Agreement is an **answer**, so it has a word of its own. This is the common case
-  // and not an edge — 66 of the Dutch block's 125 shared pages and 48 of the French
+  // and not an edge — 66 of the Dutch block's 125 measured pages and 47 of the French
   // block's 120 — and a page that agrees must never read as a comparison that failed
   // to run.
   it('says a page whose sibling is byte-identical is identical', () => {
@@ -255,6 +262,69 @@ describe('the block reading', () => {
         found: 2,
       },
     ]);
+  });
+
+  // The share is one-directional, so a page wholly contained in a much longer sibling
+  // scores 1 — and it is **not** two pages that agree. `be` says two things and `nl`
+  // says those two and eight more, so *agrees word for word* would be a false sentence
+  // about it. Identity is asked both ways round.
+  it('does not call a page identical when its sibling says a great deal more', () => {
+    const rows = [row('carport', { nl: 'carport', be: 'carport' })];
+    const unitsOf = units({
+      be: { carport: ['A carport', 'Two of them'] },
+      nl: { carport: ['A carport', 'Two of them', 'And a long paragraph nobody translated'] },
+    });
+
+    const [one] = blockReading({ rows, store: 'be', unitsOf }).rows;
+    expect(one.kind).toBe('diverged');
+    // The share is still 1: every word of `be` is over there. That is the number, and
+    // `diverged` is the reading of it — the two are different questions.
+    expect(one.share).toBe(1);
+    // And from `nl`'s own side it is a plain divergence, which is the mirror it should
+    // always have been.
+    expect(blockReading({ rows, store: 'nl', unitsOf }).rows[0].kind).toBe('diverged');
+  });
+
+  // The failure `unmeasured` exists to refuse, arriving by the other door: a page that
+  // answered 200 and carries no content unit. Zero of zero is not agreement, and a
+  // share of one here would have it claim it agrees word for word with a sibling it was
+  // never compared to.
+  it('never calls a page with no content units identical', () => {
+    const rows = [row('carport', { nl: 'carport', be: 'carport' })];
+    const unitsOf = units({ be: { carport: [] }, nl: { carport: ['A carport'] } });
+
+    expect(blockReading({ rows, store: 'be', unitsOf }).rows).toEqual([
+      {
+        page: 'carport',
+        kind: 'unmeasured',
+        sibling: { page: 'carport', rule: 'alternate' },
+        share: null,
+        units: null,
+        found: null,
+      },
+    ]);
+  });
+
+  // The groupings are values, so the panel re-derives none of them. `identical` counts
+  // the shared rows that agree and nothing else — an absent page is not a page that
+  // agrees, and that is the arithmetic a component must never be trusted with.
+  it('groups the rows and counts the agreements itself', () => {
+    const rows = [
+      row('agrees', { nl: 'agrees', be: 'agrees' }),
+      row('differs', { nl: 'differs', be: 'differs' }),
+      row('pergola', { be: 'pergola' }),
+      row('blog', { nl: 'blog' }),
+    ];
+    const unitsOf = units({
+      be: { agrees: ['One'], differs: ['One', 'Two'] },
+      nl: { agrees: ['One'], differs: ['One', 'Other'] },
+    });
+
+    const reading = blockReading({ rows, store: 'be', unitsOf });
+    expect(reading.shared.map((one) => one.page)).toEqual(['differs', 'agrees']);
+    expect(reading.absentThere.map((one) => one.page)).toEqual(['pergola']);
+    expect(reading.absentHere.map((one) => one.page)).toEqual(['blog']);
+    expect(reading.identical).toBe(1);
   });
 
   // Worst-first, so a page somebody rewrote in one store sorts above a page whose
@@ -334,14 +404,21 @@ describe('the block reading', () => {
   it('lists the pages the sibling has and this store has not', () => {
     const rows = [row('pergola', { be: 'pergola' }), row('blog', { nl: 'blog' })];
 
-    const absent = (page, kind) => ({ page, kind, sibling: null, share: null, units: 0, found: 0 });
+    const absent = (page, kind) => ({
+      page,
+      kind,
+      sibling: null,
+      share: null,
+      units: null,
+      found: null,
+    });
 
-    expect(blockReading({ rows, store: 'be' }).rows).toEqual([
+    expect(blockReading({ rows, store: 'be', unitsOf: () => null }).rows).toEqual([
       absent('pergola', 'sibling-absent'),
       absent('blog', 'only-in-sibling'),
     ]);
     // And the mirror of it from `nl`, because the reading belongs to no one store.
-    expect(blockReading({ rows, store: 'nl' }).rows).toEqual([
+    expect(blockReading({ rows, store: 'nl', unitsOf: () => null }).rows).toEqual([
       absent('blog', 'sibling-absent'),
       absent('pergola', 'only-in-sibling'),
     ]);
@@ -352,7 +429,11 @@ describe('the block reading', () => {
   // is a value here rather than a sentence in a component, because a sentence can
   // drift from the comparison it describes.
   it('says which side it compares, and the answer is production', () => {
-    const reading = blockReading({ rows: [row('carport', { be: 'carport' })], store: 'be' });
+    const reading = blockReading({
+      rows: [row('carport', { be: 'carport' })],
+      store: 'be',
+      unitsOf: () => null,
+    });
 
     expect(reading.side).toBe('production');
     expect(reading.store).toBe('be');
@@ -372,10 +453,14 @@ describe('the block reading', () => {
       row('vloeren', { nl: 'vloeren' }, 'carried-over'),
     ];
 
-    expect(blockReading({ rows, store: 'nl' }).census).toEqual({ carriedOver: 2 });
+    expect(blockReading({ rows, store: 'nl', unitsOf: () => null }).census).toEqual({
+      carriedOver: 2,
+    });
     // Counted in **this** store and not across the block: a carried-over cell of the
     // sibling is not a gap in the reader's own page list.
-    expect(blockReading({ rows, store: 'be' }).census).toEqual({ carriedOver: 0 });
+    expect(blockReading({ rows, store: 'be', unitsOf: () => null }).census).toEqual({
+      carriedOver: 0,
+    });
   });
 
   // A store in no block gets no reading at all, rather than an empty one. An empty
@@ -384,7 +469,7 @@ describe('the block reading', () => {
   it('gives a store in no block no reading at all', () => {
     const rows = [row('carport', { de: 'carport', uk: 'carport' })];
 
-    expect(blockReading({ rows, store: 'de' })).toBe(null);
-    expect(blockReading({ rows, store: 'uk' })).toBe(null);
+    expect(blockReading({ rows, store: 'de', unitsOf: () => null })).toBe(null);
+    expect(blockReading({ rows, store: 'uk', unitsOf: () => null })).toBe(null);
   });
 });

@@ -28,11 +28,9 @@ export default function BlockList({ reading }) {
   // language, and a feature that cannot apply to them must not appear half-working.
   if (!reading) return null;
 
-  const { store, sibling, rows, census, side } = reading;
-  const absentThere = rows.filter((row) => row.kind === 'sibling-absent');
-  const absentHere = rows.filter((row) => row.kind === 'only-in-sibling');
-  const shared = rows.filter((row) => SHARED.has(row.kind));
-  const identical = shared.filter((row) => row.kind === 'identical').length;
+  // Every grouping and the count arrive as values. This file re-derives none of them:
+  // a second definition of *a page both stores have* is a second thing to keep true.
+  const { store, sibling, census, side, shared, absentThere, absentHere, identical } = reading;
 
   return (
     <Card id="language-block">
@@ -98,17 +96,16 @@ export default function BlockList({ reading }) {
   );
 }
 
-/** The three kinds of row that are a page both stores have. */
-const SHARED = new Set(['identical', 'diverged', 'unmeasured']);
-
 /**
  * One page both stores have.
  *
- * Each kind gets its **own words**. A page whose sibling is byte-identical is the
+ * Each kind gets its **own words**. A page whose sibling says the same words is the
  * common case — 66 of the Dutch block's 125 — so it says that it agrees, and it never
- * reads as a comparison that failed to run. A page the log could not measure says
- * that instead of showing a share of zero, which would accuse it of diverging when
- * what happened is that nobody looked.
+ * reads as a comparison that failed to run. *Agrees word for word* is said only where
+ * the agreement is **mutual**: a short page wholly inside a long sibling is not two
+ * pages that agree. A page the log could not measure says that instead of showing a
+ * share of zero, which would accuse it of diverging when what happened is that nobody
+ * looked.
  *
  * The share is a **ranking key** and it carries no tone: it is not a score on a
  * finding, and colouring it would make a display-only difference look like work.
@@ -118,21 +115,32 @@ function SharedRow({ row }) {
     <li className="flex flex-wrap items-baseline gap-x-2 py-0.5">
       <code>{row.page}</code>
       {row.kind === 'identical' && (
-        <span className="text-muted-foreground">agrees with {row.sibling.page} word for word</span>
+        <span className="text-muted-foreground">
+          agrees with {row.sibling?.page} word for word
+        </span>
       )}
       {row.kind === 'diverged' && (
         <span className="text-muted-foreground">
-          {row.found} of {row.units} blocks appear in the sibling — {Math.round(row.share * 100)}%
+          {/* **Content units** and not *blocks*. This panel is titled *Language
+              block*, and one word for the two things is what the glossary exists to
+              stop. */}
+          {row.found} of {row.units} content units appear in the sibling —{' '}
+          {Math.round(row.share * 100)}%
         </span>
       )}
       {row.kind === 'unmeasured' && (
         <span className="text-muted-foreground">
-          not compared: production did not answer 200 on both sides
+          not compared: production did not answer 200 on both sides, or one side has no content
+          units
         </span>
       )}
       {/* The rule that matched, carried through rather than restated. It is data, so a
-          wrong pairing can be diagnosed on the screen that drew it. */}
-      <span className="text-xs text-muted-foreground">matched by {row.sibling.rule}</span>
+          wrong pairing can be diagnosed on the screen that drew it. It is guarded
+          because the type says `Sibling | null`, and a render site is not the place to
+          know which kinds happen to exclude the null. */}
+      {row.sibling && (
+        <span className="text-xs text-muted-foreground">matched by {row.sibling.rule}</span>
+      )}
     </li>
   );
 }

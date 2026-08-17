@@ -8,19 +8,38 @@
  * store whose words could be compared with theirs.
  *
  * A block is a **view and not an axis**. See ADR 0017.
+ *
+ * It stays in `web/` and not in `shared/`, for the reason `blocks.mjs` beside it
+ * does: ADR 0001 asks three questions and this fails the third — only the web layer
+ * reads it. `HREFLANG_STORE` is the half two stages read, and that is what is in
+ * `shared/stores.mjs`. `shared/` is not a place for pure code; it is a place for pure
+ * code that two stages read.
  */
 
-import { HREFLANG_STORE } from './stores.mjs';
+import { HREFLANG_STORE } from '../../../shared/stores.mjs';
 
-/** @typedef {import('./stores.mjs').Store} Store */
+/** @typedef {import('../../../shared/stores.mjs').Store} Store */
 
 /** @typedef {{ language: string, stores: Store[] }} LanguageBlock */
 
+/**
+ * The language half of an hreflang code, which is the part before the region.
+ *
+ * One place, because the derivation below and `languageOf()` must never disagree
+ * about where a code is cut.
+ *
+ * @param {string} code
+ */
+const languageIn = (code) => code.slice(0, code.indexOf('-'));
+
 /** @type {Map<string, Store[]>} */
 const BY_LANGUAGE = new Map();
+/** @type {Map<Store, string>} */
+const LANGUAGE_BY_STORE = new Map();
 for (const [code, store] of Object.entries(HREFLANG_STORE)) {
-  const language = code.slice(0, code.indexOf('-'));
+  const language = languageIn(code);
   BY_LANGUAGE.set(language, [...(BY_LANGUAGE.get(language) ?? []), store]);
+  LANGUAGE_BY_STORE.set(store, language);
 }
 
 /**
@@ -37,14 +56,15 @@ export const LANGUAGE_BLOCKS = [...BY_LANGUAGE]
  * The language a store speaks, which is the part of its hreflang code before the
  * region. `null` for a store the map does not know.
  *
+ * It reads the same walk of `HREFLANG_STORE` the blocks are built from, rather than
+ * scanning the map a second time: two walks are two chances to cut a code
+ * differently.
+ *
  * @param {string} store
  * @returns {string | null}
  */
 export function languageOf(store) {
-  const code = Object.keys(HREFLANG_STORE).find(
-    (one) => HREFLANG_STORE[/** @type {never} */ (one)] === store,
-  );
-  return code ? code.slice(0, code.indexOf('-')) : null;
+  return LANGUAGE_BY_STORE.get(/** @type {Store} */ (store)) ?? null;
 }
 
 /**
@@ -54,9 +74,7 @@ export function languageOf(store) {
  * @returns {LanguageBlock | null}
  */
 export function blockOf(store) {
-  return (
-    LANGUAGE_BLOCKS.find((block) => block.stores.includes(/** @type {never} */ (store))) ?? null
-  );
+  return LANGUAGE_BLOCKS.find((block) => block.stores.some((one) => one === store)) ?? null;
 }
 
 /**

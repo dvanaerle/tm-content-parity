@@ -95,13 +95,25 @@ if a block difference were ever decidable, this trade would have to be re-argued
 
 - **`HREFLANG_STORE` in `shared/` now passes ADR 0001's third question.** On the day ticket
   01 moved it, only `crawl/` read it, and that ADR's dated section says so plainly rather
-  than claiming a reader that did not exist. `web/src/lib/blocks.mjs` is the second reader,
-  and the stretch is closed.
-- **The block reading stays in `web/`.** It fails ADR 0001's third question itself: only the
-  web layer reads it. The vocabulary is the half that belongs in `shared/`.
+  than claiming a reader that did not exist. `web/src/lib/language-blocks.mjs` is the second
+  reader, and the stretch is closed.
+- **The block reading stays in `web/`, and so does the vocabulary.** Both fail ADR 0001's
+  third question: only the web layer reads either of them. The first draft put the
+  vocabulary in `shared/language-blocks.mjs`, and ADR 0001 line 61 is what sent it back —
+  `shared/` is not a place for pure code, it is a place for pure code that two stages read,
+  and `HREFLANG_STORE` is the only half of this that two stages read. It is
+  `web/src/lib/language-blocks.mjs`, beside `blocks.mjs`.
 - **Agreement is an answer with a word of its own.** 66 of the Dutch block's 125 measured
-  pages and 48 of the French block's 120 are byte-identical, so a page that agrees is the
+  pages and 47 of the French block's 120 are identical, so a page that agrees is the
   common case. It says it agrees; it does not read as a comparison that failed to run.
+- **Identity is asked both ways round, and the share is not.** The agreement share asks how
+  much of *this* store's text is over there, so a short page wholly contained in a much
+  longer sibling scores 1 — and calling that *agrees word for word* is false. The first
+  draft read `share === 1` as identity and the two stores of one block then disagreed about
+  their own block: `be` counted 67 identical pages where `nl` counted 66, and `be_fr` 48
+  where `fr` counted 47. A mirrored reading that contradicts its own mirror is the bug, and
+  set equality both ways is the fix. A page with no content units has **no share** for the
+  same reason: zero of zero is not agreement, it is `unmeasured`.
 - **The list is not a census and says so.** A page no sitemap declares is absent from it,
   and 48 of `nl`'s 181 cells are carried over for exactly that reason.
 - **The original premise was wrong in a useful way.** The request predicted the divergence
