@@ -76,6 +76,16 @@ answers one that could not.
 - **A separate control beside the box.** Rejected. A dropdown of page keys is a second
   place to say where you are looking, it costs the whole page list on the dashboard, and it
   cannot be sent to a colleague in the query string the way a term can.
+
+  *Read against ticket 104 parts D and E, 2026-08-17.* Both put a control on the screen that
+  sets a scope, and **neither is the option this rejected**, which is worth stating rather
+  than leaving a reader to reconcile. All three of its reasons turn on a control that is a
+  second place the scope can *live*: the suggestion list and the row button each write the
+  box and hold nothing, so the term is still the one source and still the thing that goes in
+  the query string. The middle reason is the one that turned out to be wrong on its own
+  terms: the whole page list is **already in the browser**, handed to the dashboard when the
+  store page loads, so offering the keys costs no fetch and no index field. The rejection
+  stands for what it named: a control that owns a scope of its own.
 - **Narrow the index before grouping.** Not rejected but not needed: the narrowing is a
   `continue` in the scan `searchStore()` already runs, before the grouping, and the grouping
   is still ticket 81's `repeatsInStore()`. There is no second answer here to what a repeat

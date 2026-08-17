@@ -488,3 +488,233 @@ describe('the page keys offered while a scope is typed', () => {
     unmount();
   });
 });
+
+/**
+ * Ticket 104 part E. The page-first path: an editor looking at the pages table finds the page
+ * they care about and gets from there into a scoped search, without producing an opaque key
+ * from memory.
+ *
+ * Every case here is asked of the **dashboard** rather than of a row component, because what
+ * is under test is a row writing the one term the screen holds — the row has no state of its
+ * own to observe, and the answer is the search that comes up.
+ */
+describe('scoping the search from a page row', () => {
+  const ONE_SIDED = {
+    ...page('kerstactie', []),
+    comparable: false,
+    skipReason: 'new site answered 404',
+  };
+
+  let fetched;
+
+  /**
+   * The index **never resolves** by default, the way part D's mount does not. A row hands over
+   * a key that is on the row already, so nothing here waits for the index — and a test that
+   * let the index land could not tell a scope that arrived from a scope that was fetched.
+   *
+   * `findings` is passed only where the case is about the *result* the scope produced, which
+   * is the one question the index has to have answered.
+   */
+  const mountPages = (pages = [...PAGES, ONE_SIDED], { search = 'view=pages', findings } = {}) => {
+    fetched = globalThis.fetch;
+    globalThis.fetch = findings
+      ? async () => ({
+          ok: true,
+          json: async () => ({
+            store: 'nl',
+            pages: pages.length,
+            builtAt: '2026-08-14T10:00:00.000Z',
+            findings,
+          }),
+        })
+      : () => new Promise(() => {});
+    history.replaceState(null, '', `?${search}`);
+    return mount({ pages });
+  };
+
+  /**
+   * One entry of the store's search index, as `indexStore()` emits it.
+   *
+   * The text is a **word of its own** and never derived from the key, because the question
+   * these cases ask is which pages a scope reached — and a page named in its own finding's
+   * text would let a substring assertion pass on the key it was narrowing away from.
+   */
+  const entry = (key, prod) => ({
+    id: `f-${key}`,
+    page: key,
+    class: 'copy',
+    prod,
+    new: `${prod}!`,
+    detail: null,
+    anchorHeading: null,
+    occurrences: 1,
+    linkText: [],
+  });
+
+  afterEach(() => {
+    globalThis.fetch = fetched;
+  });
+
+  const box = () => document.querySelector('input[type="search"]');
+  const rowFor = (key) =>
+    [...document.querySelectorAll('tbody tr')].find(
+      (one) => one.querySelector('a')?.textContent === key,
+    );
+  const scopeFrom = (root, key) =>
+    act(async () => root.querySelector(`[data-scope-row="${key}"]`).click());
+
+  it('offers a control on the row that is not the link that opens the page', () => {
+    const unmount = mountPages();
+    const row = rowFor('overkappingen');
+
+    // Two affordances and not one. ADR 0006 keeps the row's own job — the link opens the
+    // whole content view, never a fragment — so the scope is a second, clearly separate
+    // control rather than a new meaning for the row.
+    const opens = row.querySelector('a');
+    expect(opens.getAttribute('href')).toBe('/nl/overkappingen/?back=view%3Dpages');
+
+    const scopes = row.querySelector('[data-scope-row]');
+    expect(scopes.tagName).toBe('BUTTON');
+    expect(scopes.getAttribute('aria-label')).toBe('Search inside overkappingen');
+
+    unmount();
+  });
+
+  it('puts that page in the box and shows the scoped result', async () => {
+    const unmount = mountPages();
+
+    await scopeFrom(rowFor('overkappingen'), 'overkappingen');
+
+    expect(box().value).toBe('/overkappingen');
+    // The screen is now the search, which is what `query` holding anything means — and the
+    // chip is the reading of the box that says which page it was narrowed to.
+    expect(document.querySelector('[data-scope-chip]').textContent).toContain('/overkappingen');
+    expect(document.querySelector('table')).toBe(null);
+
+    unmount();
+  });
+
+  it('hands over a key holding a slash or parentheses whole, reaching only its own page', async () => {
+    // The two shapes that make the keys unguessable in the first place, and the reason this
+    // part exists: a slash inside a key is an ordinary character, because only position 0 is
+    // structural, and the parentheses are not punctuation the box does anything with.
+    // The ids are the index's own, because the dashboard derives *what is decided* from the
+    // page summaries and the search reads that derivation by finding id: a repeat row whose
+    // id is in the index and not in the summaries has no state to draw.
+    const KEYS = [
+      page('(home)', [finding('f-(home)')]),
+      page('faq', [finding('f-faq')]),
+      page('faq/productinformatie', [finding('f-faq/productinformatie')]),
+    ];
+    const unmount = mountPages(KEYS, {
+      findings: [
+        entry('(home)', 'Alpha'),
+        entry('faq', 'Bravo'),
+        entry('faq/productinformatie', 'Charlie'),
+      ],
+    });
+
+    await scopeFrom(rowFor('faq/productinformatie'), 'faq/productinformatie');
+    await act(async () => {});
+
+    expect(box().value).toBe('/faq/productinformatie');
+    expect(document.querySelector('[data-scope-chip]').dataset.scopeChip).toBe(
+      'faq/productinformatie',
+    );
+    // **Only its own page**, and `faq` is in the fixture to make that assertion mean
+    // something: it is the key a scope stopping at the slash would have landed on instead.
+    expect(document.body.textContent).toContain('Charlie');
+    expect(document.body.textContent).not.toContain('Bravo');
+    expect(document.body.textContent).not.toContain('Alpha');
+
+    unmount();
+  });
+
+  it('hands over a parenthesised key whole, sentinels and all', async () => {
+    // The other shape that makes the keys unguessable, and the reason the interface never
+    // shows the sentinel: `(home)` is a key an editor cannot be expected to type, so the row
+    // handing it over is the whole point. Its own case and not a second assertion on the
+    // slash one — a press is what is under test, and a row can only be pressed once.
+    const unmount = mountPages([page('(home)', [finding('f-(home)')])], {
+      findings: [entry('(home)', 'Alpha')],
+    });
+
+    await scopeFrom(rowFor('(home)'), '(home)');
+    await act(async () => {});
+
+    expect(box().value).toBe('/(home)');
+    expect(document.querySelector('[data-scope-chip]').dataset.scopeChip).toBe('(home)');
+    expect(document.body.textContent).toContain('Alpha');
+
+    unmount();
+  });
+
+  it('leaves a class filter that is already on where it was, and the result respects it', async () => {
+    // The row writes `query` and nothing else, so the classes are not its to touch. An
+    // editor working down a `copy` filter who scopes to a page is asking a narrower version
+    // of the same question, not starting again.
+    const classed = (key) => {
+      const one = page(key, [finding(`f-${key}`)]);
+      return { ...one, summary: { ...one.summary, byClass: { copy: 1 } } };
+    };
+    const unmount = mountPages([classed('overkappingen'), classed('schuttingen')], {
+      search: 'view=pages&classes=copy',
+      findings: [
+        entry('overkappingen', 'Alpha'),
+        entry('schuttingen', 'Bravo'),
+        { ...entry('schuttingen', 'Charlie'), id: 'f-casing', class: 'casing' },
+      ],
+    });
+
+    await scopeFrom(rowFor('schuttingen'), 'schuttingen');
+    await act(async () => {});
+
+    // Both narrowings are on, and the strip names both — a scope arriving is not a filter
+    // being replaced.
+    const strip = [...document.querySelectorAll('[data-slot="alert"]')].find((one) =>
+      one.textContent.includes('Clear filter'),
+    );
+    expect(strip.textContent).toContain('Filtered on page /schuttingen and copy.');
+    expect(document.body.textContent).toContain('Bravo');
+    expect(document.body.textContent).not.toContain('Alpha');
+    // On the scoped page and of the wrong class: the result is what both agree on.
+    expect(document.body.textContent).not.toContain('Charlie');
+
+    unmount();
+  });
+
+  it('does not move the view an editor was on, or the one they land on', async () => {
+    // The ask behind this part was to make the pages table the default view, and that was
+    // settled against — 81's queue is where an editor lands. So the row writes no `view`:
+    // dropping the scope puts back the table it was pressed from.
+    const unmount = mountPages();
+    await scopeFrom(rowFor('overkappingen'), 'overkappingen');
+
+    expect(new URLSearchParams(location.search).get('view')).toBe('pages');
+
+    await act(async () =>
+      document.querySelector('[data-scope-chip] button[title="Clear the page scope"]').click(),
+    );
+    expect(document.querySelector('table')).not.toBe(null);
+
+    unmount();
+  });
+
+  it('offers the same control on a one-sided page, which the table never lists', async () => {
+    // A one-sided page is out of the bar and out of the pages table, so the aside is the
+    // only row it has. It is also the page an editor most needs to reach this way: no index
+    // entry can offer it, and part A's sentence is what a scope onto it lands on rather than
+    // the silence it used to be.
+    const unmount = mountPages([...PAGES, ONE_SIDED], { findings: [] });
+
+    expect(rowFor('kerstactie')).toBe(undefined);
+    await scopeFrom(document.querySelector('#one-sided-pages'), 'kerstactie');
+    await act(async () => {});
+
+    expect(box().value).toBe('/kerstactie');
+    expect(document.body.textContent).toContain('Only one site has this page');
+    expect(document.body.textContent).toContain('new site answered 404');
+
+    unmount();
+  });
+});

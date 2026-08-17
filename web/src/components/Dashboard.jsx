@@ -9,6 +9,7 @@ import {
   PriorityFilterPills,
   PriorityPill,
   ScopeChip,
+  ScopeRowButton,
 } from './Chips.jsx';
 import { EditorPrompt, LogBanner } from './Progress.jsx';
 import { ClassGroups } from './Repeats.jsx';
@@ -31,7 +32,7 @@ import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
-import { parseTerm } from '../lib/search.mjs';
+import { parseTerm, withScope } from '../lib/search.mjs';
 import { useScreen } from '../lib/screen-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
 import { emptyBuckets } from '../../../overrides/state.mjs';
@@ -153,6 +154,21 @@ export default function Dashboard({
   // an editor keeps when they drop the page they were looking inside. It is `parseTerm()`'s
   // own `text` and not a slice taken here.
   const { scope, text: withoutScope } = parseTerm(query);
+
+  /**
+   * A page handing its own key to the search (ticket 104 part E).
+   *
+   * One function and not a handler written into each row, because two rows carry this — the
+   * pages table and the one-sided aside — and *the row writes `query` and nothing else* is
+   * the whole of the part. Said twice, it would be a claim; said here, it is a fact. The
+   * write is `withScope()`, which is what the suggestion list writes too, so a scope handed
+   * over by a row and one chosen from the list cannot come to behave differently.
+   *
+   * The ticked pages go, and that is the rule `setSelected` already keeps rather than a cost
+   * of this: a tick means *this page* and cannot outlive the list it was made in, and this
+   * press puts the search where that table was.
+   */
+  const scopeTo = (key) => patch({ query: withScope(query, key) });
 
   /**
    * What an editor annotated this page with, or nothing. It comes off the same derivation
@@ -592,6 +608,13 @@ export default function Dashboard({
                       >
                         {page.page}
                       </a>
+                      {/* The row hands its key to the search (ticket 104 part E), which is
+                          what keeps the classes on and the view where it was. */}
+                      <ScopeRowButton
+                        page={page.page}
+                        onScope={() => scopeTo(page.page)}
+                        className="ml-2"
+                      />
                       <span className="ml-2 text-xs text-muted-foreground">
                         {page.sides.production.units} blocks
                       </span>
@@ -646,10 +669,16 @@ export default function Dashboard({
         note="Only one site has these pages."
       >
         {oneSided.map((page) => (
-          <li key={`${page.store}/${page.page}`} className="flex flex-wrap gap-2 py-1">
+          <li key={`${page.store}/${page.page}`} className="flex flex-wrap items-center gap-2 py-1">
             <a className={`hover:underline ${CHROME.link}`} href={link(page.store, page.page)}>
               {page.page}
             </a>
+            {/* The same control the table's rows carry (ticket 104 part E), and this is the
+                page that most needs it: a one-sided page is out of the bar and out of the
+                pages table, and no index entry can offer it either — so this row is the only
+                way into a scope on it. What the scope lands on is part A's sentence about
+                why the comparison did not run, which is the aside's own words. */}
+            <ScopeRowButton page={page.page} onScope={() => scopeTo(page.page)} />
             <span className="text-muted-foreground">{page.skipReason}</span>
           </li>
         ))}

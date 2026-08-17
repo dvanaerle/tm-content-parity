@@ -1,7 +1,7 @@
 # 104 — The search takes a page scope
 
 Type: task
-Status: ready-for-agent — parts A, B, C and D landed, E open.
+Status: ready-for-human — all five parts landed.
 Blocked by: None — 103, 102 and 123 are all resolved.
 Parent: ../map.md
 
@@ -22,7 +22,7 @@ your part and nothing else. If you need more, the ticket is wrong — say so and
 | **B** | The scope reaches the notes | **landed** |
 | **C** | The scope is a filter and says so | **landed** |
 | **D** | Typing a slash offers the page keys | **landed** |
-| **E** | A page row hands its key to the search | open |
+| **E** | A page row hands its key to the search | **landed** |
 
 **A is the seam the rest consume.** B, D and E build on the value it returns; C is
 independent of all of them. B to E may be built in any order.
@@ -422,7 +422,47 @@ first keystroke — including for pages the index does not contain.
 
 ---
 
-## E — A page row hands its key to the search
+## E — A page row hands its key to the search — **landed**
+
+Built 2026-08-17: `web/src/components/Chips.jsx` (`ScopeRowButton`, beside `ScopeChip`
+because they are the scope's two controls), `web/src/components/Dashboard.jsx` (the pages
+table's page cell and the one-sided aside's row, both writing `patch({ query: withScope(…) })`),
+`web/src/components/Dashboard.browser.test.mjs`, `CONTEXT.md`.
+
+**Nothing was added to `search.mjs`.** `withScope()` is already the answer to *what should the
+box hold now*, written for part D's suggestion list, and a row is its second reader. So a
+scope handed over by a row and one chosen from the list are the same write and cannot come to
+behave differently.
+
+The **one-sided aside carries the control too**, which no criterion names and this part's own
+trap does: a one-sided page is out of the bar and out of the pages table, and no index entry
+can offer it either, so its row in the aside is the only way into a scope on it. It is also
+the page the affordance is worth most on — part A's sentence is what the scope lands on.
+
+*Matches only its own page* is pinned for the two key shapes the criterion names, a slash and
+parentheses, with a `faq` page in the fixture so the slash case can fail. It is **not** true of
+a key that is the prefix of a sibling — `/veranda` reaches `veranda-hout` — because the scope
+is `inScope()`'s substring rule, which part D deliberately built the suggestion list on. That
+is unchanged here and out of this part's remit; a row that scoped by exact match would need a
+syntax the box does not have.
+
+Four things the `/code-review` of this part turned up, recorded rather than left implicit:
+
+- **The parentheses half of criterion four was ticked before it was pinned.** The first
+  version pressed the `faq/productinformatie` row only and used `(home)` as the page a scope
+  must *not* reach, which proves nothing about inserting one. `(home)` now has its own press.
+- **`docs/adr/0016` rejected *a separate control beside the box*, and both D and E put one on
+  the screen.** Amended in place with the reading: all three of that option's reasons turn on
+  a control that is a second place the scope can *live*, and neither the list nor the row
+  button holds one — they write the box. Its middle reason, the cost of the page list, was
+  wrong on its own terms: the list is already in the browser.
+- **The press clears the ticked pages**, because writing `query` trips the effect that puts a
+  selection down. That is the rule already written at `Dashboard.jsx:237` — a tick means
+  *this page* and cannot outlive the list it was made in — and this press puts a search where
+  that table was. Kept, and said where the write is.
+- **The `CONTEXT.md` edit is not asked for by any part-E criterion**, the same way part D's
+  was not. The **Page scope** entry would otherwise describe a scope only a box can be told
+  about, on a screen where a row now hands it over.
 
 ### Reading list — E
 
@@ -453,15 +493,19 @@ and it is a click, not a default.
 It also stops the two views being two disconnected worlds. Today the page list and the search
 have nothing to say to each other.
 
-- [ ] A row in the pages table offers a way to search within that page, distinct from the
-      link that opens the page itself.
-- [ ] Taking it puts that page's scope in the search box and shows the scoped result.
-- [ ] The existing page link is unchanged and still opens the whole content view, never a
-      fragment — `docs/adr/0006-the-content-view-is-the-spine.md`.
-- [ ] A key holding a slash or parentheses is inserted correctly and matches only its own
-      page.
-- [ ] Any class filter already on stays on, and the scoped result respects it.
-- [ ] The default view does not change. The repeats view stays where an editor lands.
+- [x] A row in the pages table offers a way to search within that page, distinct from the
+      link that opens the page itself. — a button carrying the key as its accessible name,
+      *Search inside overkappingen*, beside the link and never instead of it.
+- [x] Taking it puts that page's scope in the search box and shows the scoped result.
+- [x] The existing page link is unchanged and still opens the whole content view, never a
+      fragment — `docs/adr/0006-the-content-view-is-the-spine.md`. — pinned on the href
+      itself, which carries the way back and no finding.
+- [x] A key holding a slash or parentheses is inserted correctly and matches only its own
+      page. — for those two shapes; see the note above on a key that is a sibling's prefix.
+- [x] Any class filter already on stays on, and the scoped result respects it. — the row
+      writes `query` alone, and the strip names both narrowings in one sentence.
+- [x] The default view does not change. The repeats view stays where an editor lands. — no
+      `view` is written, so dropping the scope puts back the table the press came from.
 
 ### Traps — E
 

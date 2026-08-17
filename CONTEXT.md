@@ -320,6 +320,14 @@ element any more: it folds the links inside it. Both the word and the rule are g
   keystroke, before the index is fetched. Choosing is never required and changes nothing: it
   writes the same box a hand-typed scope writes, and a key that is already whole has nothing
   left to offer, which is what closes the list while the words after it are typed.
+  It is also **handed over by the page it is about** (ticket 104): a row in the pages table
+  and a row of the one-sided aside each carry a control that puts that page's key in the box,
+  keeping any words already typed. That is the page-first path — from *this page* to *what is
+  on this page* — and it is a click and never the default view, because the queue is where an
+  editor lands. It is a **second control beside the page link and never the link's own
+  meaning**: the link opens the whole content view, which ADR 0006 is the reason for. It
+  writes the query and nothing else, so a class filter already on stays on and the result is
+  what both narrowings agree on.
   See `docs/adr/0016-a-leading-slash-is-a-page-scope.md`, which records why the reasoning it
   overturns — a key is opaque and nothing splits on a slash — holds for everywhere but first
   position, and why this is not the first step toward a query language.
@@ -632,6 +640,37 @@ a surviving page is renamed rather than missing.
   different text on purpose, so axis B does not compare words.
 
 The two axes have separate tabs and separate tasks. Do not mix them.
+
+## Language blocks
+
+- **Language block** — two stores whose hreflang codes share a language: `{nl, be}`
+  from `nl-NL` and `nl-BE`, `{be_fr, fr}` from `fr-BE` and `fr-FR`. It follows from
+  `HREFLANG_STORE` and it is not a hand-written list, so the question "may `de` and
+  `uk` be a block" has an answer and it is no: each of them is alone in its language.
+  The name is the word `crawl/seed-list.mjs` already uses for the set. Decided
+  2026-08-17.
+  A block is **not a pair**. A **store-page pair** is production against the new
+  site, for one store page; a block is two stores on **one** side. Two meanings for
+  one word is what this list exists to stop.
+- **Sibling page** — the other store's page, inside one block. Two sibling pages are
+  matched by the **hreflang alternate production declares** between them, which is
+  production's own claim that they are the same page, and by path equality only where
+  neither declares one. The path of `be_fr` carries a leading `fr/`, because `be` and
+  `be_fr` have the same host, and that prefix is a host artefact and no part of the
+  path that is compared.
+- **Block difference** — where two sibling pages do not agree. Words are compared,
+  which no cross-store comparison in this repo has done before: axis B is
+  presence-only **because** the language differs, and inside a block it does not.
+- A block difference is a **display-only difference**. It has no id, no override and
+  no place in a bar, and it moves no count, no denominator and no percentage. It is
+  **never** called a finding: a finding is actionable and carries a decision, and this
+  carries none. Nothing about it is `work`.
+- A block is **not an axis**, and there is no axis C. The axes are what an editor
+  works; a block is what an editor reads. The word is refused on purpose, because an
+  axis in this repo means a tab, a task and in the end a count — ticket 11 forbids
+  summing axis B's bar with axis A's, and that rule exists only because an axis has a
+  bar. If a block difference is ever promoted to a finding, that promotion is an ADR
+  and it is the day the word becomes available. Not before.
 
 ## Delivery
 

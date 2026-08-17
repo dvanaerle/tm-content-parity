@@ -1,4 +1,4 @@
-import { XIcon } from 'lucide-react';
+import { SearchIcon, XIcon } from 'lucide-react';
 import { classInfo } from '../lib/classes.mjs';
 import { PRIORITIES } from '../../../shared/priorities.mjs';
 import { cn } from '../lib/utils.js';
@@ -226,6 +226,44 @@ export function ScopeChip({ scope, onClear }) {
         <XIcon />
       </Button>
     </Badge>
+  );
+}
+
+/**
+ * The scope, handed over by the row that is about that page (ticket 104 part E).
+ *
+ * The page-first path: an editor reading the page list gets from *this page* to *what is on
+ * this page* with a press, instead of producing `faq/productinformatie` or `(be)pergola` from
+ * memory. It is the same journey the suggestion list serves from the other end, and it exists
+ * because until now the page list and the search had nothing to say to each other.
+ *
+ * **A second control and never the row's own meaning.** ADR 0006 keeps the page link opening
+ * the whole content view, because the one-sided classes are answered by document order and a
+ * row that scoped a search instead would take that away. So this sits beside the link as its
+ * own button, wearing a name of its own — a row cannot come to mean two things.
+ *
+ * The key is the accessible name and not a tooltip over an icon: the icon says *search* and
+ * the question an editor is answering is *inside which page*, which only the key answers.
+ *
+ * @param {object} props
+ * @param {string} props.page   The key, exactly as the row draws it.
+ * @param {() => void} props.onScope
+ * @param {string} [props.className] Spacing belongs to the row: the table cell is a text
+ *   flow and wants a margin, the aside is a flex row with a gap of its own.
+ */
+export function ScopeRowButton({ page, onScope, className = '' }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-xs"
+      data-scope-row={page}
+      onClick={onScope}
+      title={`Search inside ${page}`}
+      aria-label={`Search inside ${page}`}
+      className={cn('align-middle text-muted-foreground hover:text-foreground', className)}
+    >
+      <SearchIcon />
+    </Button>
   );
 }
 
