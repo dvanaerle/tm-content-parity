@@ -265,6 +265,35 @@ export async function regionsChangedInLog() {
 }
 
 /**
+ * The normalised texts of every page's **production** content units, in one store.
+ *
+ * What the block reading measures identity over, and the smallest thing that can
+ * answer it. It reads full reports because `loadSummaries()` throws both extracts
+ * away, and it keeps only the text column — so the sibling store costs the parse and
+ * not the 11 MB.
+ *
+ * Only pages whose **production** side answered 200. A page production did not serve
+ * has no units to compare, and the reading then calls it unmeasured rather than
+ * diverged. The new site's status is deliberately not consulted: the block compares
+ * production, so a one-sided page is still measurable here.
+ *
+ * @param {string} store
+ * @returns {Promise<Map<string, string[]>>} Page key to unit texts.
+ */
+export async function loadProductionUnits(store) {
+  /** @type {Map<string, string[]>} */
+  const out = new Map();
+  for (const name of await reportFiles(store)) {
+    /** @type {PageReport} */
+    const report = JSON.parse(await readFile(join(DIR, name), 'utf8'));
+    const production = report.sides?.production;
+    if (production?.status !== 200) continue;
+    out.set(report.page, production.elements.map((unit) => unit.norm));
+  }
+  return out;
+}
+
+/**
  * The rows of the seed list.
  *
  * The block reading needs them whole, because a sibling is matched across two rows

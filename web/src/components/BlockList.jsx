@@ -31,6 +31,8 @@ export default function BlockList({ reading }) {
   const { store, sibling, rows, census, side } = reading;
   const absentThere = rows.filter((row) => row.kind === 'sibling-absent');
   const absentHere = rows.filter((row) => row.kind === 'only-in-sibling');
+  const shared = rows.filter((row) => SHARED.has(row.kind));
+  const identical = shared.filter((row) => row.kind === 'identical').length;
 
   return (
     <Card id="language-block">
@@ -58,6 +60,26 @@ export default function BlockList({ reading }) {
             ` ${census.carriedOver} pages of this store had to be carried over for that reason.`}
         </p>
       </CardHeader>
+      <CardContent className="grid gap-4 text-sm">
+        <section>
+          <h3 className="font-medium">Pages both stores have ({shared.length})</h3>
+          <p className="text-muted-foreground">
+            Worst first, by how much of this store's text appears in {sibling}'s.{' '}
+            {identical > 0 && `${identical} of them agree word for word.`}
+          </p>
+          {shared.length === 0 ? (
+            <p className="mt-1 text-muted-foreground">
+              No page of this store has a counterpart in {sibling}.
+            </p>
+          ) : (
+            <ul className="mt-1">
+              {shared.map((row) => (
+                <SharedRow key={row.page} row={row} />
+              ))}
+            </ul>
+          )}
+        </section>
+      </CardContent>
       <CardContent className="grid gap-4 text-sm md:grid-cols-2">
         <Absent
           title={`Absent from ${sibling} (${absentThere.length})`}
@@ -73,6 +95,45 @@ export default function BlockList({ reading }) {
         />
       </CardContent>
     </Card>
+  );
+}
+
+/** The three kinds of row that are a page both stores have. */
+const SHARED = new Set(['identical', 'diverged', 'unmeasured']);
+
+/**
+ * One page both stores have.
+ *
+ * Each kind gets its **own words**. A page whose sibling is byte-identical is the
+ * common case — 66 of the Dutch block's 125 — so it says that it agrees, and it never
+ * reads as a comparison that failed to run. A page the log could not measure says
+ * that instead of showing a share of zero, which would accuse it of diverging when
+ * what happened is that nobody looked.
+ *
+ * The share is a **ranking key** and it carries no tone: it is not a score on a
+ * finding, and colouring it would make a display-only difference look like work.
+ */
+function SharedRow({ row }) {
+  return (
+    <li className="flex flex-wrap items-baseline gap-x-2 py-0.5">
+      <code>{row.page}</code>
+      {row.kind === 'identical' && (
+        <span className="text-muted-foreground">agrees with {row.sibling.page} word for word</span>
+      )}
+      {row.kind === 'diverged' && (
+        <span className="text-muted-foreground">
+          {row.found} of {row.units} blocks appear in the sibling — {Math.round(row.share * 100)}%
+        </span>
+      )}
+      {row.kind === 'unmeasured' && (
+        <span className="text-muted-foreground">
+          not compared: production did not answer 200 on both sides
+        </span>
+      )}
+      {/* The rule that matched, carried through rather than restated. It is data, so a
+          wrong pairing can be diagnosed on the screen that drew it. */}
+      <span className="text-xs text-muted-foreground">matched by {row.sibling.rule}</span>
+    </li>
   );
 }
 

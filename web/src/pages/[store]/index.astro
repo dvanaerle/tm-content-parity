@@ -5,9 +5,10 @@ import Shell from '../../layouts/Shell.astro';
 import { blockReading } from '../../lib/blocks.mjs';
 import { storeTotals } from '../../lib/not-checked.mjs';
 import {
-  loadSeedRows, loadSummaries, notCheckedFor, regionsChangedInLog, regionsRemovedInStore,
-  storesInLog,
+  loadProductionUnits, loadSeedRows, loadSummaries, notCheckedFor, regionsChangedInLog,
+  regionsRemovedInStore, storesInLog,
 } from '../../lib/reports.mjs';
+import { siblingOf } from '../../../../shared/language-blocks.mjs';
 import { STORE_NAME } from '../../lib/stores.mjs';
 
 // One dashboard per store. The page-level route already carried the store; this
@@ -45,8 +46,22 @@ const totals = storeTotals({ pages, notChecked });
 // panel then draws nothing at all rather than drawing itself empty.
 //
 // It is decided here, at build time, and handed over as a value: the panel below
-// ships no JavaScript and the browser downloads no second store's reports.
-const block = blockReading({ rows: await loadSeedRows(), store });
+// ships no JavaScript, and the browser downloads neither store's content units. The
+// sibling's reports are read only where there is a sibling, so `de` and `uk` pay
+// nothing for a feature they do not have.
+const sibling = siblingOf(store);
+const unitsByStore = new Map(
+  await Promise.all(
+    (sibling ? [store, sibling] : []).map(
+      async (one) => /** @type {const} */ ([one, await loadProductionUnits(one)]),
+    ),
+  ),
+);
+const block = blockReading({
+  rows: await loadSeedRows(),
+  store,
+  unitsOf: (one, page) => unitsByStore.get(one)?.get(page) ?? null,
+});
 ---
 
 <Shell title={`Dashboard — ${store}`} store={store}>

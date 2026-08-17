@@ -27,6 +27,15 @@ const row = (page, paths, provenance = 'sitemap-daily') => ({
   ),
 });
 
+/**
+ * A `unitsOf()` over the texts given: the normalised texts of one page's production
+ * content units, per store, as the build reads them out of the reports. `undefined`
+ * for a page no report covers, which is the honest answer and not an empty page.
+ *
+ * @param {Record<string, Record<string, string[]>>} byStore
+ */
+const units = (byStore) => (store, page) => byStore[store]?.[page] ?? null;
+
 describe('the sibling page', () => {
   // The first rule, and the one that goes first. Two stores on **one** seed row is
   // production's own claim that the two pages are the same page: the row exists
@@ -210,10 +219,111 @@ describe('the block reading', () => {
       row('carport', { nl: 'carport', be: 'carport' }),
       row('pergola', { be: 'pergola' }),
     ];
+    const unitsOf = units({ be: { carport: ['A carport'] }, nl: { carport: ['A carport'] } });
 
-    expect(blockReading({ rows, store: 'be' }).rows).toEqual([
-      { page: 'carport', kind: 'shared', sibling: { page: 'carport', rule: 'alternate' } },
-      { page: 'pergola', kind: 'sibling-absent', sibling: null },
+    expect(blockReading({ rows, store: 'be', unitsOf }).rows).toEqual([
+      {
+        page: 'carport',
+        kind: 'identical',
+        sibling: { page: 'carport', rule: 'alternate' },
+        share: 1,
+        units: 1,
+        found: 1,
+      },
+      { page: 'pergola', kind: 'sibling-absent', sibling: null, share: null, units: 0, found: 0 },
+    ]);
+  });
+
+  // Agreement is an **answer**, so it has a word of its own. This is the common case
+  // and not an edge — 66 of the Dutch block's 125 shared pages and 48 of the French
+  // block's 120 — and a page that agrees must never read as a comparison that failed
+  // to run.
+  it('says a page whose sibling is byte-identical is identical', () => {
+    const rows = [row('carport', { nl: 'carport', be: 'carport' })];
+    const unitsOf = units({
+      be: { carport: ['A carport', 'Two of them'] },
+      nl: { carport: ['A carport', 'Two of them'] },
+    });
+
+    expect(blockReading({ rows, store: 'be', unitsOf }).rows).toEqual([
+      {
+        page: 'carport',
+        kind: 'identical',
+        sibling: { page: 'carport', rule: 'alternate' },
+        share: 1,
+        units: 2,
+        found: 2,
+      },
+    ]);
+  });
+
+  // Worst-first, so a page somebody rewrote in one store sorts above a page whose
+  // phone number differs. The ranking orders a list and nothing else — it is not a
+  // score on a finding, because a block difference is not a finding.
+  it('ranks the pages both stores have worst-first', () => {
+    const rows = [
+      row('agrees', { nl: 'agrees', be: 'agrees' }),
+      row('rewritten', { nl: 'rewritten', be: 'rewritten' }),
+      row('a-phone-number', { nl: 'a-phone-number', be: 'a-phone-number' }),
+    ];
+    const unitsOf = units({
+      be: {
+        agrees: ['One', 'Two'],
+        rewritten: ['Wholly other words', 'And these too'],
+        'a-phone-number': ['One', 'Two', 'Three', '+32 11 127 262'],
+      },
+      nl: {
+        agrees: ['One', 'Two'],
+        rewritten: ['One', 'Two'],
+        'a-phone-number': ['One', 'Two', 'Three', '+31 41 239 960'],
+      },
+    });
+
+    const reading = blockReading({ rows, store: 'be', unitsOf });
+    expect(reading.rows.map((one) => [one.page, one.share])).toEqual([
+      ['rewritten', 0],
+      ['a-phone-number', 0.75],
+      ['agrees', 1],
+    ]);
+  });
+
+  // Two pages of equal share must not swap places between two builds, so the tie is
+  // broken on the page key. The repo's repeat list breaks its own tie the same way.
+  it('breaks a tie on the page key, so the order never wobbles', () => {
+    const rows = [
+      row('second', { nl: 'second', be: 'second' }),
+      row('first', { nl: 'first', be: 'first' }),
+    ];
+    const unitsOf = units({
+      be: { first: ['a', 'b'], second: ['a', 'b'] },
+      nl: { first: ['a', 'x'], second: ['a', 'y'] },
+    });
+
+    expect(blockReading({ rows, store: 'be', unitsOf }).rows.map((one) => one.page)).toEqual([
+      'first',
+      'second',
+    ]);
+  });
+
+  // A page the log has not compared on one side is **unmeasured**, and it sorts after
+  // every page that was measured. It has no share, because a share of zero would
+  // accuse it of diverging when what happened is that nobody looked.
+  it('says a page it could not measure is unmeasured, and never calls it diverged', () => {
+    const rows = [
+      row('measured', { nl: 'measured', be: 'measured' }),
+      row('no-report', { nl: 'no-report', be: 'no-report' }),
+    ];
+    const unitsOf = units({ be: { measured: ['a'], 'no-report': ['a'] }, nl: { measured: ['b'] } });
+
+    expect(
+      blockReading({ rows, store: 'be', unitsOf }).rows.map((one) => [
+        one.page,
+        one.kind,
+        one.share,
+      ]),
+    ).toEqual([
+      ['measured', 'diverged', 0],
+      ['no-report', 'unmeasured', null],
     ]);
   });
 
@@ -224,14 +334,16 @@ describe('the block reading', () => {
   it('lists the pages the sibling has and this store has not', () => {
     const rows = [row('pergola', { be: 'pergola' }), row('blog', { nl: 'blog' })];
 
+    const absent = (page, kind) => ({ page, kind, sibling: null, share: null, units: 0, found: 0 });
+
     expect(blockReading({ rows, store: 'be' }).rows).toEqual([
-      { page: 'pergola', kind: 'sibling-absent', sibling: null },
-      { page: 'blog', kind: 'only-in-sibling', sibling: null },
+      absent('pergola', 'sibling-absent'),
+      absent('blog', 'only-in-sibling'),
     ]);
     // And the mirror of it from `nl`, because the reading belongs to no one store.
     expect(blockReading({ rows, store: 'nl' }).rows).toEqual([
-      { page: 'blog', kind: 'sibling-absent', sibling: null },
-      { page: 'pergola', kind: 'only-in-sibling', sibling: null },
+      absent('blog', 'sibling-absent'),
+      absent('pergola', 'only-in-sibling'),
     ]);
   });
 

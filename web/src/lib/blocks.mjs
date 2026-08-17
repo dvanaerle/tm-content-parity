@@ -98,9 +98,38 @@ export function siblingPages({ rows, store }) {
  * @typedef {object} BlockRow
  * @property {string} page The page key this row is about. On `only-in-sibling` it is
  *   a key of the **sibling** store, which is the one that has the page.
- * @property {'shared' | 'sibling-absent' | 'only-in-sibling'} kind
- * @property {Sibling | null} sibling The matched sibling, on a `shared` row.
+ * @property {'identical' | 'diverged' | 'unmeasured' | 'sibling-absent' | 'only-in-sibling'} kind
+ *   One row is one of five things, and they are told apart from each other and not
+ *   only from silence. `identical` is an **answer** and the common case, so it has a
+ *   word rather than being an empty row; `unmeasured` is what a page with no report
+ *   on one side honestly is, and it must never read as agreement.
+ * @property {Sibling | null} sibling The matched sibling, where one was matched.
+ * @property {number | null} share Of this store's unit texts, the share that appear
+ *   exactly in the sibling's. `null` where nothing was measured. It orders a list and
+ *   it is **not a score on a finding**.
+ * @property {number} units This store's production content units on the page.
+ * @property {number} found How many of them appear exactly in the sibling's.
  */
+
+/**
+ * How much of this store's page appears in its sibling.
+ *
+ * Measured over **production**'s content units on **normalised text**, as the share
+ * of this store's unit texts that appear exactly in the sibling's. Set membership on
+ * the sibling's side: the question is whether the words exist over there, not how
+ * many times.
+ *
+ * A page with no units is fully found rather than divided by zero, which is the
+ * reading that does not claim a difference nobody can point at.
+ *
+ * @param {string[]} mine
+ * @param {string[]} theirs
+ */
+function identityOf(mine, theirs) {
+  const over = new Set(theirs);
+  const found = mine.filter((text) => over.has(text)).length;
+  return { units: mine.length, found, share: mine.length === 0 ? 1 : found / mine.length };
+}
 
 /**
  * The whole reading one store's dashboard draws, as values.
@@ -110,16 +139,57 @@ export function siblingPages({ rows, store }) {
  * @param {string} input.store
  * @returns {{ rows: BlockRow[] } | null}
  */
-export function blockReading({ rows, store }) {
+export function blockReading({ rows, store, unitsOf = () => null }) {
   const other = siblingOf(store);
   if (!other) return null;
 
   /** @type {BlockRow[]} */
-  const mine = siblingPages({ rows, store }).map((one) => ({
-    page: one.page,
-    kind: one.sibling ? 'shared' : 'sibling-absent',
-    sibling: one.sibling,
-  }));
+  const mine = siblingPages({ rows, store }).map((one) => {
+    if (!one.sibling) {
+      return {
+        page: one.page,
+        kind: 'sibling-absent',
+        sibling: null,
+        share: null,
+        units: 0,
+        found: 0,
+      };
+    }
+
+    const here = unitsOf(store, one.page);
+    const there = unitsOf(other, one.sibling.page);
+    // One side has no compared page, so there is nothing to measure. It says so
+    // rather than reporting a share of zero, which would accuse a page of diverging
+    // when what happened is that nobody looked.
+    if (!here || !there) {
+      return {
+        page: one.page,
+        kind: 'unmeasured',
+        sibling: one.sibling,
+        share: null,
+        units: 0,
+        found: 0,
+      };
+    }
+
+    const identity = identityOf(here, there);
+    return {
+      page: one.page,
+      kind: identity.share === 1 ? 'identical' : 'diverged',
+      sibling: one.sibling,
+      ...identity,
+    };
+  });
+
+  // Worst-first, so a page somebody rewrote sorts above a page whose phone number
+  // differs. An unmeasured row has no share and sorts after every measured one — it is
+  // not the worst page, it is the page nobody looked at.
+  //
+  // The tie-break is the page key, so two pages of equal share never swap places
+  // between two builds. The repeat list breaks its own tie the same way.
+  mine.sort(
+    (a, b) => (a.share ?? 2) - (b.share ?? 2) || (a.page < b.page ? -1 : a.page > b.page ? 1 : 0),
+  );
 
   // The other direction of absence, and it is a different fact: a page **this** store
   // has yet to build, against a page it wrote and the sibling did not. The two must
@@ -130,7 +200,14 @@ export function blockReading({ rows, store }) {
   /** @type {BlockRow[]} */
   const theirs = siblingPages({ rows, store: other })
     .filter((one) => !one.sibling)
-    .map((one) => ({ page: one.page, kind: 'only-in-sibling', sibling: null }));
+    .map((one) => ({
+      page: one.page,
+      kind: 'only-in-sibling',
+      sibling: null,
+      share: null,
+      units: 0,
+      found: 0,
+    }));
 
   return {
     store,
