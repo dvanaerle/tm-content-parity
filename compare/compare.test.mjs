@@ -1422,7 +1422,7 @@ describe('the heading a finding sits under', () => {
   });
 
   it('gives a finding above the first heading a location, and not no location', () => {
-    // The 1,622. A null heading used to mean two things at once — *above the first
+    // The 1,522. A null heading used to mean two things at once — *above the first
     // heading* and *not on this side* — and this one was served the other's answer, so
     // the row offered no link at all. The side is present; only its heading is absent,
     // and the words are still there to aim at.
@@ -1745,7 +1745,7 @@ describe('locationUrl', () => {
   });
 
   it('opens the page itself for a finding above the first heading', () => {
-    // The 1,622 findings that used to offer no link at all. They sit in the opening
+    // The 1,522 rows that used to offer no link at all. They sit in the opening
     // block by definition, so the top of the page is near enough — and a bare url
     // cannot be a dead one, which a fragment matching nothing silently is.
     expect(locationUrl(PROD, { heading: null, text: null })).toBe(PROD);
@@ -1768,6 +1768,12 @@ describe('locationUrl', () => {
       text: 'Antraciet en creme',
     });
     expect(unitLocation(null)).toBe(null);
+  });
+
+  it('offers a blank content cell no link, rather than falling back to the page', () => {
+    // The fallback is for a finding that has somewhere to be and no way to name it. An
+    // empty cell has nowhere to be, so it keeps the answer it had before this existed.
+    expect(locationUrl(PROD, unitLocation(unit('   ')))).toBe(null);
   });
 });
 

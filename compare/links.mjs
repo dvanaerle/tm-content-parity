@@ -90,9 +90,9 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
   // on the page as words at all, so neither could aim anything. Where a link has no
   // wording — an image wrapped in an anchor — `text` falls null and the section heading
   // takes over, which is what this check could offer before.
-  const at = (link, heading) => ({ heading, text: link.text || null });
-  const onNewOnly = (link, heading) => ({ production: null, new: at(link, heading) });
-  const onProdOnly = (link, heading) => ({ production: at(link, heading), new: null });
+  const locationOf = (link, heading) => ({ heading, text: link.text || null });
+  const onNewOnly = (link, heading) => ({ production: null, new: locationOf(link, heading) });
+  const onProdOnly = (link, heading) => ({ production: locationOf(link, heading), new: null });
 
   // --- Absolute checks on the new site -----------------------------------
   // These run first, because a leaked or cross-store link is already fully
@@ -168,8 +168,10 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
           // from the counterpart it looked up rather than from the link in hand. The
           // two carry the same target and their own wording of it.
           locations: {
-            production: counterpart ? at(counterpart, prodHeading(counterpart.index)) : null,
-            new: at(link, anchorHeading),
+            production: counterpart
+              ? locationOf(counterpart, prodHeading(counterpart.index))
+              : null,
+            new: locationOf(link, anchorHeading),
           },
         });
       }
@@ -192,8 +194,8 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
       anchorHeading: prodHeading(prodLink.index),
       // The one class here that is on both sides, so it is the one that gets two links.
       locations: {
-        production: at(prodLink, prodHeading(prodLink.index)),
-        new: at(newLink, newHeading(newLink.index)),
+        production: locationOf(prodLink, prodHeading(prodLink.index)),
+        new: locationOf(newLink, newHeading(newLink.index)),
       },
     });
     retargeted.add(prodLink.key);

@@ -176,8 +176,8 @@ export {
  *
  * That distinction is why this replaced a bare pair of headings. A null heading meant
  * two different things at once — *not on this side* and *above the first heading* —
- * and the second reading was served the first's answer, so 1,622 findings offered no
- * link at all. The side entry now carries absence and the fields carry precision.
+ * and the second reading was served the first's answer, so 1,522 rows offered no link
+ * at all. The side entry now carries absence and the fields carry precision.
  *
  * @typedef {object} FindingLocations
  * @property {FindingLocation | null} production
@@ -219,9 +219,9 @@ export {
  *                                  error, so a dead link and a live one looked the same
  *                                  until clicked. `anchorHeading` above is still the
  *                                  section's *name*, production-preferred, and is what the
- *                                  row displays and what a mute keys on. This is for
- *                                  aiming. **Not part of the id or the grouping key**, for
- *                                  the same reason `anchorHeading` is not.
+ *                                  row displays. This is for aiming. **Not part of the id
+ *                                  or the grouping key**, for the same reason
+ *                                  `anchorHeading` is not.
  * @property {number} occurrences   Not part of the id.
  * @property {number | null} score  The similarity score. On `copy` findings only.
  */

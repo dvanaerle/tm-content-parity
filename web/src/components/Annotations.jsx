@@ -36,11 +36,11 @@ export const Detail = ({ detail }) =>
  * per side that opens the live page there.
  *
  * **The section and the links are two separate things, and this used to treat them as
- * one.** The whole block was gated on there being a heading, so the 1,622 findings
- * that sit above their page's first heading lost their links along with their section
- * name — and a finding with no heading is precisely the one an editor cannot find by
- * eye. Now the words render when there is a section to name and each link renders when
- * that side has a position, independently.
+ * one.** The whole block was gated on there being a heading, so the 1,522 rows that sit
+ * above their page's first heading lost their links along with their section name —
+ * and a finding with no heading is precisely the one an editor cannot find by eye. Now
+ * the words render when there is a section to name and each link renders when that side
+ * has a location, independently.
  *
  * Each link is aimed with **its own side's** location, which is why `locations` is a
  * pair and not the one string displayed beside it. Both links were once built from the
@@ -49,16 +49,17 @@ export const Detail = ({ detail }) =>
  * dead link looked exactly like a live one. A side the finding is not on has no
  * location at all and offers no link — there is no position there to open.
  *
- * A content row passes no `sides`, because its own cells carry a link to the exact
- * words, which is closer than anything this could offer.
+ * A content row does not use this at all. Its own cells carry a link to the exact words
+ * beside them, which is closer than anything a section could offer.
  */
 export const Section = ({ anchorHeading, locations = null, sides = null }) => {
-  const production = sides && (
-    <Locate url={sides.production.url} location={locations?.production} side="production" />
-  );
-  const next = sides && (
-    <Locate url={sides.new.url} location={locations?.new} side="the new site" />
-  );
+  // The **urls** and not the two elements. A `<Locate>` element is truthy whether or not
+  // it goes on to render an anchor, so a guard written on the elements never fires — and
+  // a report predating `locations` would ship an empty strip with no section and no
+  // links in it. That is the shape this component exists to avoid: something on the row
+  // that looks like an answer and is not one.
+  const production = sides && locationUrl(sides.production.url, locations?.production);
+  const next = sides && locationUrl(sides.new.url, locations?.new);
   if (!anchorHeading && !production && !next) return null;
 
   return (
@@ -68,8 +69,8 @@ export const Section = ({ anchorHeading, locations = null, sides = null }) => {
           under “{anchorHeading}”
         </span>
       )}
-      {production}
-      {next}
+      <Locate href={production} side="production" />
+      <Locate href={next} side="the new site" />
     </div>
   );
 };
@@ -97,17 +98,22 @@ export const onePageTitle = (count) =>
   `This finding is ${count} times on the page. ` + `One tick closes all ${count}.`;
 
 /**
- * Opens the live page as close to the finding as this side can get: its own words
- * where it has them, the section heading where it does not, and the bare page where
- * it has neither. `locationUrl()` holds that order, so the compare stage and the
- * screen cannot disagree about it.
+ * The arrow that opens one side's live page at the finding.
  *
- * The fragment is matched by the browser against what it **rendered**, which is why
- * a location carries the literal text and never the normalised one: tier 1 folds
- * curly quotes, NBSP and dashes, and a folded string is not on the page to be found.
+ * It takes the **finished url** rather than the pieces to build one, because its two
+ * callers reach it differently: a finding row has a location per side, and a content
+ * cell has the unit standing next to it. Both build the url with `locationUrl()`, and
+ * both must be able to ask *is there a url at all* before they lay anything out — a
+ * caller that could only find out by rendering this would draw the frame around an
+ * answer that turns out not to exist.
+ *
+ * Where the url points is `locationUrl()`'s decision: the finding's own words where it
+ * has them, the section heading where it does not, the bare page where it has neither.
+ * The fragment is matched by the browser against what it **rendered**, which is why a
+ * location carries the literal text and never the normalised one: tier 1 folds curly
+ * quotes, NBSP and dashes, and a folded string is not on the page to be found.
  */
-export function Locate({ url, location, side }) {
-  const href = locationUrl(url, location);
+export function Locate({ href, side }) {
   if (!href) return null;
 
   return (

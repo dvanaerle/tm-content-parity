@@ -208,7 +208,7 @@ element any more: it folds the links inside it. Both the word and the rule are g
   pair of them as `locations`, and the side it is not on is `null` — which is the whole
   point of the shape. A bare pair of headings could not say the difference between *not
   on this side* and *above the first heading*, so it gave the second the first's answer
-  and 1,622 rows offered no link at all. **Absence is the side entry; precision is its
+  and 1,522 rows offered no link at all. **Absence is the side entry; precision is its
   fields.** It is not a *position*: that word is the document-order index a location is
   derived from.
 

@@ -35,12 +35,18 @@ const RENDERED = {
   [NEW_URL]: ['Onze overkappingen', 'Kleuren en kleurkeuze', 'Antraciet en cremewit'],
 };
 
+/** The element the component under test was rendered into, for asking what it drew. */
+let host = null;
+
 function mount(props) {
-  const host = document.createElement('div');
+  host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
   act(() => root.render(createElement(Section, { sides, ...props })));
-  return () => act(() => root.unmount());
+  return () => {
+    act(() => root.unmount());
+    host.remove();
+  };
 }
 
 /**
@@ -90,7 +96,7 @@ describe('the deep links on a finding row', () => {
   });
 
   it('still offers both links for a finding that sits above the first heading', () => {
-    // The 1,622 findings that used to render nothing at all: `Section` gated the whole
+    // The 1,522 rows that used to render nothing at all: `Section` gated the whole
     // block on the heading, so a finding above the page's first one lost its links
     // along with its section name. It has words of its own, and they are what the link
     // was always meant to aim at.
@@ -106,6 +112,17 @@ describe('the deep links on a finding row', () => {
     // No section to name, so the row says nothing about one rather than saying `under
     // “null”`.
     expect(document.body.textContent).not.toContain('under');
+  });
+
+  it('draws nothing at all when it has nothing to say', () => {
+    // A report written before `locations` existed, which is the shape the ticket's own
+    // note warns about: both links fall away and there is no section to name. The row
+    // must then render **nothing**, not an empty strip holding two absent links.
+    unmount = mount({ anchorHeading: null, locations: null });
+
+    // The host itself, not `document.body`: the row must draw **nothing**, and an empty
+    // strip is a `<div>` with no text in it, so text alone would not catch one.
+    expect(host.innerHTML).toBe('');
   });
 
   it('offers no link for a side the finding is not on', () => {

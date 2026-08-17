@@ -301,7 +301,7 @@ Images still does, and that is now recorded as the honest answer rather than a g
 match.
 
 `Section` no longer gates the links on the heading. The section **name** renders when
-there is a section to name, and each link renders when that side has a position. They
+there is a section to name, and each link renders when that side has a location. They
 were one thing and are two.
 
 ### Measured, on the regenerated reports
@@ -331,11 +331,32 @@ position on the page now offers a link.
   vanish silently. A fallback to `anchorHeading` is still refused, and now for a second
   reason: it could not tell "not on this side" from "above the first heading" either,
   which is the bug this replaced.
-- **`links.mjs`'s unreachable branch is gone** with the rewrite of that call site: the
-  `redirect` location reads `counterpart` under the same guard that already required it.
+- ~~**`links.mjs`'s unreachable branch is gone** with the rewrite of that call site.~~
+  **This was false, and the review of this change caught it.** `links.mjs:171` still
+  reads `production: counterpart ? … : null` and `:164` still reads
+  `prod: counterpart?.key ?? null`, both under an `if` that already requires
+  `counterpart`. The branch is untouched, and it stays where the 2026-08-13 note left
+  it: recorded for review rather than refactored. Nothing here depended on the claim —
+  what it cost was a true sentence in the record, which is the thing this file is for.
 - The suite is **902 green**, including the three browser tests on `Section`. The new
   one mounts a finding with no heading and asserts two links come back — it fails with
   zero links against the previous component, which is the defect it exists to catch.
+
+### One defect this change introduced, found by its own review
+
+**`Section`'s guard was written on the two elements and not on the two urls.** A
+`<Locate>` element is truthy whether or not it goes on to render an anchor, so
+`if (!anchorHeading && !production && !next) return null` could never fire on a finding
+row — `Ledger.jsx` always passes `sides`. Against a report predating `locations` the row
+therefore shipped an **empty strip**: a `<div>` with no section and no links in it. That
+is the same silent failure class as the bug this ticket is about, one layer up — something
+on the row that looks like an answer and is not one.
+
+`Section` now resolves both urls with `locationUrl()` and branches on those, and `Locate`
+takes a finished `href` rather than the pieces to build one. That is the honest shape
+anyway: a caller has to be able to ask *is there a url at all* before it lays anything
+out, and one that could only find out by rendering would draw the frame first. A browser
+test mounts the stale shape and asserts the row renders nothing.
 
 ### Still deferred, and now smaller
 

@@ -115,7 +115,13 @@ export function locationUrl(url, location) {
  * beside, so it has no use for the heading — the words are already the closest thing
  * there is.
  *
+ * A unit with no words is `null` and not a location with no text, so a blank cell keeps
+ * offering **no link** rather than falling through to the bare page. The fallback exists
+ * for a finding that has somewhere to be and no way to name it; an empty cell has
+ * nowhere to be, and a link beside it would point at a page for no reason.
+ *
  * @param {import('./contract.mjs').ContentUnit | null | undefined} unit
  * @returns {import('./contract.mjs').FindingLocation | null}
  */
-export const unitLocation = (unit) => (unit ? { heading: null, text: unit.raw } : null);
+export const unitLocation = (unit) =>
+  unit?.raw?.trim() ? { heading: null, text: unit.raw } : null;
