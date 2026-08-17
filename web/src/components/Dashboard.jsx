@@ -74,6 +74,17 @@ const CHECKS = ['text', 'links', 'images'];
 export default function Dashboard({
   store,
   pages,
+  /**
+   * The sibling store's summaries, where this store is in a language block, and an empty
+   * list on `de` and `uk` (ticket 03).
+   *
+   * They are here for **one** reader: the repeat grouping, which spans the two stores of a
+   * block where they carry the same words. Nothing else on this screen touches them — not
+   * the bar, not the chips, not the pages table, not the search. A store is still the unit
+   * an editor is responsible for, and the only thing that crosses the edge is a judgement
+   * about text the two stores share.
+   */
+  siblingPages = [],
   notChecked = [],
   regions = [],
   regionsChanged = { store: null, reason: null, changes: [] },
@@ -115,10 +126,23 @@ export default function Dashboard({
   const comparable = useMemo(() => pages.filter((page) => page.comparable), [pages]);
   const oneSided = pages.filter((page) => !page.comparable);
 
+  /**
+   * The sibling's comparable pages: what a press can **reach** and no number may read.
+   *
+   * One-sided pages are out of it for the same reason they are out of `comparable` — a page
+   * the new site does not answer 200 on has no decidable finding on either store.
+   */
+  const reachable = useMemo(
+    () => siblingPages.filter((page) => page.comparable),
+    [siblingPages],
+  );
+
   // The same name the page view writes under, out of the same `localStorage` key. A
   // repeat row can write since ticket 31, and every row it writes carries the editor.
   const { editor, save } = useEditor();
-  const log = useStoreOverrides({ pages: comparable, editor });
+  // `pages` is this store's numbers; `reached` is what a block-spanning press can touch and
+  // what no number here reads. The hook keeps that split — see its own comment.
+  const log = useStoreOverrides({ pages: comparable, reached: reachable, editor });
 
   /** The open count **after** overrides, so the worst page is the worst remaining page. */
   const openOf = (page) =>
@@ -191,10 +215,25 @@ export default function Dashboard({
     );
   }, [comparable, classes, priorities, sort, log.byPage]);
 
-  // The store's differences, grouped. It is derived from the **summaries the page
-  // list already holds**, so the two views are two readings of one array and no text
-  // crosses the wire twice.
-  const repeats = useMemo(() => repeatsInStore(comparable), [comparable]);
+  /**
+   * The store's differences, grouped. It is derived from the **summaries the page list
+   * already holds**, so the two views are two readings of one array and no text crosses the
+   * wire twice.
+   *
+   * Since ticket 03 the sibling's pages are in the input, and `repeatsInStore()` is what
+   * decides whether anything joins: it keys on the **block** where a store is in one, so a
+   * difference `nl` and `be` carry in the same words is one row on both dashboards, and a
+   * difference only one of them carries is a row of one store the way it always was. On
+   * `de` and `uk` the second array is empty and this is the call it always was.
+   *
+   * This is the *Repeats* view only. `rows`, `totals` and the bar above are built from
+   * `comparable`, so the sibling moves no number on this screen — a repeat is a grouping
+   * the interface makes, and it has never moved one.
+   */
+  const repeats = useMemo(
+    () => repeatsInStore([...comparable, ...reachable]),
+    [comparable, reachable],
+  );
   const shownRepeats = useMemo(() => repeatsWithClasses(repeats, classes), [repeats, classes]);
 
   /**
@@ -262,14 +301,14 @@ export default function Dashboard({
     return counts;
   }, [comparable, log.byPage]);
 
-  /** Every derived finding of the store by id, so a repeat row can say what is decided. */
-  const byFinding = useMemo(() => {
-    const index = new Map();
-    for (const page of log.derived.pages) {
-      for (const finding of page.findings) index.set(finding.id, finding);
-    }
-    return index;
-  }, [log.derived]);
+  /**
+   * Every derived finding a row can be about, by id, so a repeat row can say what is
+   * decided. It comes off the hook since ticket 03, because it has to cover the sibling's
+   * findings too and the hook is the one place that holds both lists — an index rebuilt
+   * here off this store's pages alone would read the sibling's decided findings as `open`
+   * and offer a press that overwrites a colleague.
+   */
+  const byFinding = log.byFinding;
 
   /**
    * What a repeat row needs to be able to decide, in one prop.

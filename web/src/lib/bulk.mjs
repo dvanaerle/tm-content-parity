@@ -36,11 +36,17 @@ export function bulkDismissal({ repeat, byFinding, note, selected }) {
 
   // Counted off the repeat and never off the events: the interface states the size
   // **before** the press, and until a reason is typed there are no events to count.
+  // The store comes off the **entry** and never off the repeat (ticket 03). A repeat may
+  // span the two stores of one language block, so there is no single store to take it
+  // from — and taking one would file the sibling's event under this store, where that
+  // finding id does not exist. Only the **judgement** travels: this is the dismissal, and
+  // a fix claim has no bulk press at all, because correcting one store's page does not
+  // correct the other's.
   const events = reason
     ? on.map((entry) => ({
         scope: 'finding',
         action: 'dismissed',
-        store: repeat.store,
+        store: entry.store,
         page: entry.page,
         findingId: entry.id,
         note: reason,
@@ -50,7 +56,7 @@ export function bulkDismissal({ repeat, byFinding, note, selected }) {
   // Both numbers over the **selection**: *4 pages of the 6* is a sentence about the
   // press that is about to be made, and taking its total off the repeat would report a
   // remainder the press was never aimed at.
-  return { covers: on.length, decided: chosen.length - on.length, events };
+  return { covers: on.length, decided: chosen.length - on.length, stores: storesOf(on), events };
 }
 
 /**
@@ -138,8 +144,11 @@ export function bulkClear({ repeat, byFinding, selected }) {
   const chosen = ticked(repeat, selected);
   const on = chosen.filter((entry) => offersClear(byFinding.get(entry.id)));
 
+  // Per entry, for the reason the dismissal states: the selection is one, and a block-
+  // spanning one has two stores in it. The clearing inherits the widening rather than
+  // opting into it — that is what "one selection, two eligibilities" means.
   const events = on.map((entry) => ({
-    store: repeat.store,
+    store: entry.store,
     page: entry.page,
     ...clearedEventFor(byFinding.get(entry.id)),
   }));
@@ -147,8 +156,22 @@ export function bulkClear({ repeat, byFinding, selected }) {
   // Both numbers over the **selection**, the way the dismissal states its two: a ticked
   // page this press leaves alone is a page the editor aimed at and did not hit, and the
   // gap between the count on the strip and the count on the button is not self-evident.
-  return { covers: on.length, skipped: chosen.length - on.length, events };
+  return { covers: on.length, skipped: chosen.length - on.length, stores: storesOf(on), events };
 }
+
+/**
+ * The stores a press will write in, said before it is made (ticket 03).
+ *
+ * It is off the entries this press **can act on** and never off the repeat's own `stores`,
+ * and that is the ticket's *80% is not 100%* trap answered in one line: a selection whose
+ * sibling page a colleague already dismissed writes in one store, and a sentence naming
+ * two would imply the block is being decided when a fifth of it is not.
+ *
+ * It is derived here and not in the bar, for this file's own reason: the sentence above the
+ * button and the events behind it come off one array. Like `covers`, it is over the
+ * eligible entries rather than the events, so it is true before a reason has been typed.
+ */
+const storesOf = (on) => [...new Set(on.map((entry) => entry.store))].sort();
 
 /**
  * The one state a clearing is offered on, which is `OverrideControl.jsx`'s one.

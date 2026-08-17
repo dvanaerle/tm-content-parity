@@ -496,6 +496,13 @@ function SelectAll({ repeat, selected, onTickAll }) {
  * which group was open — that is session state by the rule `groupRepeatsByClass()` states,
  * and a pill that is on re-opens its own group anyway.
  */
+/**
+ * What one tick announces. It names the store only where the difference is on more than
+ * one, which is the same rule the cell beside it draws under.
+ */
+const selectLabel = (repeat, entry) =>
+  repeat.stores.length > 1 ? `Select ${entry.page} on ${entry.store}` : `Select ${entry.page}`;
+
 function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searched }) {
   return (
     <div className="border-t border-border bg-muted px-4 py-2 text-sm">
@@ -527,19 +534,29 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
           {repeat.on.map((entry) => (
             <TableRow key={entry.id} data-state={selected.has(entry.id) ? 'selected' : undefined}>
               <TableCell>
+                {/* The label names the store on a row that spans a block, because two
+                    pages of one difference can then carry the same name — `afhalen` on
+                    `nl` and `afhalen` on `be` — and two ticks announced identically are
+                    two ticks a screen reader cannot tell apart (ticket 03). */}
                 <Checkbox
                   checked={selected.has(entry.id)}
                   onCheckedChange={(ticked) => onTick(entry.id, ticked)}
-                  aria-label={`Select ${entry.page}`}
+                  aria-label={selectLabel(repeat, entry)}
                 />
               </TableCell>
               <TableCell className="whitespace-normal">
                 <a
                   className={cn('hover:underline', CHROME.link)}
-                  href={link(repeat.store, entry.page, entry.id)}
+                  href={link(entry.store, entry.page, entry.id)}
                 >
                   {entry.page}
                 </a>
+                {/* Which store this page is on, and **only** where the difference is on
+                    more than one. On a row inside a single store it would be the store
+                    whose dashboard this is, printed once per page for no reader. */}
+                {repeat.stores.length > 1 && (
+                  <span className="ml-2 text-xs text-muted-foreground">on {entry.store}</span>
+                )}
                 <Occurrences count={entry.occurrences} title={onePageTitle(entry.occurrences)} />
               </TableCell>
               <TableCell>

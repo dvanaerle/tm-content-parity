@@ -559,17 +559,23 @@ describe('searchStore', () => {
   });
 
   it('says which fields matched on the repeat, and leaves its pages untouched', () => {
-    // Decision 3. `view.test.mjs` pins the keys of a `Repeat.on` entry to exactly
-    // `['id', 'occurrences', 'page']`, so a search that hung the matched field there
-    // would break ticket 81's derivation for the view that has nothing to do with
-    // search. The row is what matched; the pages are only where it is.
+    // Decision 3. `view.test.mjs` pins the keys of a `Repeat.on` entry to exactly the four
+    // the derivation writes, so a search that hung the matched field there would break
+    // ticket 81's derivation for the view that has nothing to do with search. The row is
+    // what matched; the pages are only where it is. `store` is the fourth since ticket 03,
+    // and it comes from `repeatsInStore()` — not from here.
     const result = searchStore({
       index: index([entry({ prod: 'Montage inbegrepen', anchorHeading: 'Montage' })]),
       term: 'montage',
     });
 
     expect(result.repeats[0].fields).toEqual(['prodText', 'anchorHeading']);
-    expect(Object.keys(result.repeats[0].on[0]).sort()).toEqual(['id', 'occurrences', 'page']);
+    expect(Object.keys(result.repeats[0].on[0]).sort()).toEqual([
+      'id',
+      'occurrences',
+      'page',
+      'store',
+    ]);
   });
 
   it('narrows to one page on a scope, and leaves the word alone', () => {

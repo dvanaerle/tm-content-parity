@@ -21,8 +21,14 @@ export async function getStaticPaths() {
 
 const { store } = Astro.params;
 
-// Only this store's summaries. The build reads no other store's reports, so the
-// visitor who opens `de` downloads 45 pages and not 451.
+// This store's summaries, and the sibling's where this store is in a language block.
+// The build still reads no *third* store's reports, so the visitor who opens `de`
+// downloads 45 pages and not 451 — `de` and `uk` are in no block and pay nothing.
+//
+// The second read is ticket 03's price, and it is the price of the press and not of the
+// panel: a block-spanning dismissal is decided in the browser, so the sibling's findings
+// have to be *there*, unlike the block reading below, which is worked out at build time
+// and ships no units at all. ADR 0018 records the number.
 const pages = await loadSummaries(store);
 const notChecked = await notCheckedFor(store, pages);
 const regions = regionsRemovedInStore(pages);
@@ -50,6 +56,12 @@ const totals = storeTotals({ pages, notChecked });
 // sibling's reports are read only where there is a sibling, so `de` and `uk` pay
 // nothing for a feature they do not have.
 const sibling = siblingOf(store);
+
+// The sibling's summaries, for the repeat grouping and for nothing else on this screen.
+// Empty where there is no sibling, which is what makes the widening cost `de` and `uk`
+// exactly nothing rather than costing them a branch.
+const siblingPages = sibling ? await loadSummaries(sibling) : [];
+
 const unitsByStore = new Map(
   await Promise.all(
     (sibling ? [store, sibling] : []).map(
@@ -84,6 +96,7 @@ const block = blockReading({
     client:load
     store={store}
     pages={pages}
+    siblingPages={siblingPages}
     notChecked={notChecked}
     regions={regions}
     regionsChanged={regionsChanged}

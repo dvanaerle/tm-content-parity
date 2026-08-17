@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { userEvent } from '@vitest/browser/context';
 import { afterEach, describe, expect, it } from 'vitest';
 import Repeats from './Repeats.jsx';
+import { repeatsInStore } from '../lib/view.mjs';
 
 /**
  * The selection and the presses it arms, mounted and clicked (ticket 110). Two of them
@@ -16,33 +17,43 @@ import Repeats from './Repeats.jsx';
  * to `appendMany()` is walked here by clicking it.
  */
 
-/** A repeat as `repeatsInStore()` returns it, on three pages. */
-const repeat = {
-  key: '["nl","copy","oud","nieuw",null]',
-  store: 'nl',
+/**
+ * A finding as `loadSummaries()` indexes one, and a page holding some.
+ *
+ * The repeats below are built by **`repeatsInStore()` itself** and are not written out as
+ * literals. They were literals until ticket 03, and the shape drifted the moment the
+ * derivation gained a field: three of these fixtures claimed a shape the real function had
+ * stopped producing, and seventeen browser tests went down on the one field they lacked.
+ * Built this way, a fixture cannot say something the derivation does not.
+ */
+const finding = (id, prod, next) => ({
+  id,
   class: 'copy',
-  prod: 'oud',
-  new: 'nieuw',
-  detail: null,
-  occurrences: 3,
-  on: [
-    { page: 'overkapping', id: 'f1', occurrences: 1 },
-    { page: 'veranda', id: 'f2', occurrences: 1 },
-    { page: 'carport', id: 'f3', occurrences: 1 },
-  ],
-};
-
-/** A second difference in the same list, for the questions that need two of them. */
-const other = {
-  key: '["nl","copy","links","rechts",null]',
-  store: 'nl',
-  class: 'copy',
-  prod: 'links',
-  new: 'rechts',
+  prod,
+  new: next,
   detail: null,
   occurrences: 1,
-  on: [{ page: 'tuinhuis', id: 'g1', occurrences: 1 }],
-};
+});
+const on = (store, page, ...findings) => ({ store, page, findings });
+
+/** A repeat on three pages of one store. */
+const [repeat] = repeatsInStore([
+  on('nl', 'overkapping', finding('f1', 'oud', 'nieuw')),
+  on('nl', 'veranda', finding('f2', 'oud', 'nieuw')),
+  on('nl', 'carport', finding('f3', 'oud', 'nieuw')),
+]);
+
+/** A second difference in the same list, for the questions that need two of them. */
+const [other] = repeatsInStore([on('nl', 'tuinhuis', finding('g1', 'links', 'rechts'))]);
+
+/**
+ * A repeat spanning one language block: the same words on `nl/afhalen` and on `be/afhalen`
+ * (ticket 03). `nl` and `be` share Dutch, so this is one row and one press.
+ */
+const acrossBlock = repeatsInStore([
+  on('nl', 'afhalen', finding('f1', 'oud', 'nieuw')),
+  on('be', 'afhalen', finding('f2', 'oud', 'nieuw')),
+])[0];
 
 const derived = (id, extra = {}) => ({
   id,
@@ -498,6 +509,85 @@ describe('the selection on a difference', () => {
       .getAttribute('class');
 
     expect(mixed).not.toBe(all);
+    unmount();
+  });
+});
+
+/**
+ * Ticket 03, clicked. The path from a tick on a block-spanning difference to the events
+ * `appendMany()` receives, walked in a browser for the reason this file exists at all: the
+ * two presses read a field the derivation gained, and a shape that is right in a unit test
+ * and wrong in a render is exactly the failure ticket 31 shipped.
+ */
+describe('a difference that spans a language block', () => {
+  const across = () => ({
+    repeats: [acrossBlock],
+    byFinding: new Map(acrossBlock.on.map((entry) => [entry.id, derived(entry.id)])),
+  });
+
+  it('says which store each page is on, because two of them share a name', () => {
+    const { unmount } = mount(across());
+
+    press(differenceRow());
+
+    // Both pages are called `afhalen`. Without the store they are two identical rows of
+    // one difference, and the editor cannot tell which tick is which.
+    const table = document.querySelector('table').textContent;
+    expect(table).toContain('on nl');
+    expect(table).toContain('on be');
+
+    // And the link goes to each page's **own** store, not to the store of the row.
+    const hrefs = [...document.querySelectorAll('tbody a')].map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(['/nl/afhalen/', '/be/afhalen/']);
+    unmount();
+  });
+
+  it('tells the editor how many events and in which stores, before the press', () => {
+    const { unmount } = mount(across());
+
+    press(differenceRow());
+    press(selectAll());
+    press(button('Dismiss on 2 pages'));
+
+    // The sentence above the note field, which is the last thing read before the press.
+    const bar = document.querySelector('[data-slot="bulk-bar"]').textContent;
+    expect(bar).toContain('2 pages');
+    expect(bar).toContain('Written in be and nl');
+    unmount();
+  });
+
+  it('writes one event per page, each under its own store', async () => {
+    const { bulk, unmount } = mount(across());
+
+    press(differenceRow());
+    press(selectAll());
+    press(button('Dismiss on 2 pages'));
+    await type('het telefoonnummer hoort te verschillen');
+    await pressAndWait(button('Dismiss on 2 pages'));
+
+    // One press, two ordinary events, one per page — and `be`'s event filed under `be`.
+    // Nothing new is stored: the scope is `finding` and the action is `dismissed`, which
+    // is what a press has written since ticket 31.
+    expect(bulk.calls).toHaveLength(1);
+    expect(bulk.calls[0].map((event) => [event.store, event.page, event.scope, event.action])).toEqual([
+      ['nl', 'afhalen', 'finding', 'dismissed'],
+      ['be', 'afhalen', 'finding', 'dismissed'],
+    ]);
+    unmount();
+  });
+
+  it('says one store where the press reaches one, however wide the difference is', () => {
+    const { unmount } = mount(across());
+
+    press(differenceRow());
+    // Only the `nl` page is ticked, so only `nl` is written in. 80% is not 100%, and a
+    // sentence naming the block here would claim a decision the press is not making.
+    press(pageTicks()[0]);
+    press(button('Dismiss on this page'));
+
+    const bar = document.querySelector('[data-slot="bulk-bar"]').textContent;
+    expect(bar).toContain('1 page');
+    expect(bar).not.toContain('Written in');
     unmount();
   });
 });

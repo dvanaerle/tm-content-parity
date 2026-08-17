@@ -847,17 +847,48 @@ describe('repeatsInStore', () => {
     expect(repeats[0].on.map((entry) => entry.page)).toEqual(['afhalen', 'garantie', 'montage']);
   });
 
-  it('never crosses a store, because the stores translate the text', () => {
-    // The measured reason: the promo banner is one Magento block and it reaches the
-    // log as language-specific tuples, so a key on the literal text multiplies by
-    // six — and an element carries no DOM path to key on instead (tickets 01, 34).
+  it('spans the two stores of one language block, where the text is the same', () => {
+    // Ticket 03. `nl` and `be` are one block, so they do **not** translate the text
+    // between them — they share a language. Where the two carry the same string, the
+    // repeat is one row and the decision on it is one press.
     const repeats = repeatsInStore([
       page('nl', 'afhalen', [finding('a', {})]),
       page('be', 'afhalen', [finding('b', {})]),
     ]);
 
-    expect(repeats).toHaveLength(2);
-    expect(repeats.map((repeat) => repeat.store).sort()).toEqual(['be', 'nl']);
+    expect(repeats).toHaveLength(1);
+    expect(repeats[0].stores).toEqual(['be', 'nl']);
+    // The store is on the **entry**, because the events a press writes are one per
+    // page and each carries the store of its own page.
+    expect(repeats[0].on.map((entry) => `${entry.store}/${entry.page}`)).toEqual([
+      'nl/afhalen',
+      'be/afhalen',
+    ]);
+  });
+
+  it('crosses one block and never a store outside one, and never all six', () => {
+    // The trap ticket 03 names: `de` and `uk` are in no block at all, and the mistake
+    // here would move counts on two stores this feature is not about. Each of the six
+    // pages below carries the same class, the same two texts and the same detail, so
+    // the **only** thing keeping them apart is the block.
+    const repeats = repeatsInStore([
+      page('nl', 'afhalen', [finding('a', {})]),
+      page('be', 'afhalen', [finding('b', {})]),
+      page('be_fr', 'afhalen', [finding('c', {})]),
+      page('fr', 'afhalen', [finding('d', {})]),
+      page('de', 'afhalen', [finding('e', {})]),
+      page('uk', 'afhalen', [finding('f', {})]),
+    ]);
+
+    // Four rows and not one: six identical strings over six stores are the two blocks
+    // and the two stores that are in none. `de` and `uk` are alone because each is the
+    // only store of its language, which is the whole answer to "may they be a block".
+    expect(repeats.map((repeat) => repeat.stores)).toEqual([
+      ['be_fr', 'fr'],
+      ['be', 'nl'],
+      ['de'],
+      ['uk'],
+    ]);
   });
 
   it('is worst-first by the number of pages', () => {
@@ -903,9 +934,12 @@ describe('repeatsInStore', () => {
       'occurrences',
       'on',
       'prod',
-      'store',
+      'stores',
     ]);
-    expect(Object.keys(repeat.on[0]).sort()).toEqual(['id', 'occurrences', 'page']);
+    expect(Object.keys(repeat.on[0]).sort()).toEqual(['id', 'occurrences', 'page', 'store']);
+    // `stores` is a list even on a row that spans nothing, so the reader that says *in
+    // which stores* has one shape to read and no single-store special case (ticket 03).
+    expect(repeat.stores).toEqual(['nl']);
   });
 });
 

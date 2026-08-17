@@ -2,10 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { bulkAnnotation, bulkClear, bulkDismissal } from './bulk.mjs';
 import { noteEventFor, priorityEventFor } from '../../../overrides/state.mjs';
 
-/** A repeat as `repeatsInStore()` returns it, narrowed to what this file reads. */
+/**
+ * A repeat as `repeatsInStore()` returns it, narrowed to what this file reads.
+ *
+ * `stores` is derived from the entries here exactly as the derivation derives it, because
+ * a fixture that could name a store its own entries are not on would let these tests pass
+ * a shape the real function never produces.
+ */
 const repeat = (on) => ({
   key: '["nl","copy","oud","nieuw",null]',
-  store: 'nl',
+  stores: [...new Set(on.map((entry) => entry.store))].sort(),
   class: 'copy',
   prod: 'oud',
   new: 'nieuw',
@@ -14,7 +20,8 @@ const repeat = (on) => ({
   on,
 });
 
-const on = (page, id) => ({ page, id, occurrences: 1 });
+/** One page of a repeat. The store defaults to `nl`, so the store-scoped tests read as they did. */
+const on = (page, id, store = 'nl') => ({ store, page, id, occurrences: 1 });
 
 /**
  * The derivation's answer about each finding, which is what `byFinding` holds.
@@ -59,6 +66,23 @@ describe('bulkDismissal', () => {
     ]);
   });
 
+  it('writes each event under the store of its own page, across a block', () => {
+    // Ticket 03's whole want: one press, and the events for both stores of the block.
+    // The store comes off the **entry** and never off the repeat, because a repeat that
+    // spans `nl` and `be` has no single store to take it from — and reading one would
+    // file `be`'s event under `nl`, where its finding id does not exist.
+    const { events } = bulkDismissal({
+      repeat: repeat([on('afhalen', 'f1'), on('afhalen', 'f2', 'be')]),
+      byFinding: byFinding({ f1: 'open', f2: 'open' }),
+      note: 'het telefoonnummer hoort te verschillen',
+    });
+
+    expect(events.map((event) => [event.store, event.page, event.findingId])).toEqual([
+      ['nl', 'afhalen', 'f1'],
+      ['be', 'afhalen', 'f2'],
+    ]);
+  });
+
   it('says what the press covers before there is a note to press with', () => {
     const decision = bulkDismissal({
       repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
@@ -70,6 +94,9 @@ describe('bulkDismissal', () => {
     // dismissal without a note is refused by the SQL constraint, so there are none.
     expect(decision.covers).toBe(2);
     expect(decision.events).toEqual([]);
+    // The stores are stated before the press for the same reason and off the same array,
+    // so *how many, and where* is one answer with no events behind it yet (ticket 03).
+    expect(decision.stores).toEqual(['nl']);
   });
 
   it('leaves a finding another editor already decided alone', () => {
@@ -321,6 +348,98 @@ describe('bulkClear', () => {
     });
 
     expect(events[0]).not.toHaveProperty('note');
+  });
+});
+
+/**
+ * Ticket 03: one selection spanning a language block, and the two presses keeping the
+ * different eligibilities they already had. Neither press learns anything about a block —
+ * they read the entries they are given — which is the point: the widening happened in the
+ * key, so there is one definition of *repeat* and both writers inherit it.
+ */
+describe('the two eligibilities on one block-spanning selection', () => {
+  // `nl/afhalen` and `be/afhalen` carry the same string; `be/pergola` carries it too, and
+  // a colleague has already dismissed it.
+  const across = repeat([
+    on('afhalen', 'f1'),
+    on('afhalen', 'f2', 'be'),
+    on('pergola', 'f3', 'be'),
+  ]);
+
+  const states = new Map([
+    ['f1', { id: 'f1', state: 'open', class: 'copy', visibility: 'work', override: null }],
+    ['f2', { id: 'f2', state: 'open', class: 'copy', visibility: 'work', override: null }],
+    [
+      'f3',
+      {
+        id: 'f3',
+        state: 'dismissed',
+        class: 'copy',
+        visibility: 'work',
+        override: { action: 'dismissed' },
+      },
+    ],
+  ]);
+
+  it('dismisses across the block and skips the page a colleague decided', () => {
+    const decision = bulkDismissal({ repeat: across, byFinding: states, note: 'bewust anders' });
+
+    expect(decision.events.map((event) => `${event.store}/${event.page}`)).toEqual([
+      'nl/afhalen',
+      'be/afhalen',
+    ]);
+    expect(decision.covers).toBe(2);
+    // `be/pergola` is the one it left alone, and it is counted as decided rather than
+    // silently dropped: the editor ticked it and the press did not hit it.
+    expect(decision.decided).toBe(1);
+  });
+
+  it('clears across the block and touches nothing but the dismissal', () => {
+    const decision = bulkClear({ repeat: across, byFinding: states });
+
+    // The mirror image of the press above on the very same selection: where the dismissal
+    // acted, this one skips, and where the dismissal skipped, this one acts. That is what
+    // "different eligibilities on one selection" has to mean, and the store still comes
+    // off the entry.
+    expect(decision.events.map((event) => `${event.store}/${event.page}`)).toEqual([
+      'be/pergola',
+    ]);
+    expect(decision.covers).toBe(1);
+    expect(decision.skipped).toBe(2);
+  });
+
+  it('names the stores it will write in, off the events and not off the block', () => {
+    // The trap: 80% is not 100%. A press states the stores **its own events** are in, so a
+    // selection whose sibling page is already decided says `nl` and does not imply the
+    // block is being decided. Each press answers for itself, on the one selection.
+    expect(bulkDismissal({ repeat: across, byFinding: states, note: 'x' }).stores).toEqual([
+      'be',
+      'nl',
+    ]);
+    expect(bulkClear({ repeat: across, byFinding: states }).stores).toEqual(['be']);
+
+    // And a selection narrowed to one store names one store, however wide the row is.
+    expect(
+      bulkDismissal({
+        repeat: across,
+        byFinding: states,
+        note: 'x',
+        selected: new Set(['f1']),
+      }).stores,
+    ).toEqual(['nl']);
+  });
+
+  it('is the judgement travelling and never a claim of fact', () => {
+    // A fix claim may not cross a block, because correcting one store's page does not
+    // correct the other's. There is no bulk fix claim to test — the module exports two
+    // presses — so what this pins is that neither of them can write one.
+    const all = [
+      bulkDismissal({ repeat: across, byFinding: states, note: 'bewust anders' }),
+      bulkClear({ repeat: across, byFinding: states }),
+    ].flatMap((decision) => decision.events);
+
+    expect(all.length).toBeGreaterThan(0);
+    for (const event of all) expect(event.action).not.toBe('fixed');
   });
 });
 

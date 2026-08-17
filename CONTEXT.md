@@ -154,11 +154,24 @@ element any more: it folds the links inside it. Both the word and the rule are g
   and it expands.
 - **Occurrence count** — how many times the same difference is on the page. It
   is not part of the finding id.
-- **Repeat** — every finding in **one store** with the same class, the same two
-  texts and the same detail. It is the unit of a bulk decision, and it is not a
-  thing the data holds: it is a grouping the interface makes. A repeat never
-  crosses a store, because the stores translate the text, so the same defect in
-  six stores is six repeats and not one.
+- **Repeat** — every finding in **one store, or in the two stores of one language
+  block**, with the same class, the same two texts and the same detail. It is the unit
+  of a bulk decision, and it is not a thing the data holds: it is a grouping the
+  interface makes. ~~A repeat never crosses a store, because the stores translate the
+  text, so the same defect in six stores is six repeats and not one.~~ **Amended
+  2026-08-17, ticket 03.** The claim was right and its stated reason was not: inside a
+  **language block** the two stores do not translate the text between them, because they
+  share a language. So a repeat crosses a store exactly there and nowhere else — `{nl, be}`
+  and `{be_fr, fr}` — and the same defect in six stores is **four** repeats and not six.
+  `de` and `uk` are each alone in their language and a repeat on them is what it was.
+  The block is **derived** from the hreflang codes, never a hand-written list, and it is
+  still not an axis: what crosses is a judgement about an ordinary axis-A finding, and a
+  block difference stays display-only and uncounted. Nothing is keyed on a block, and no
+  scope, column or finding id changed — the **selection** widened and the table still
+  gains N rows. A dismissal still expires **per store**, because the store is a term of
+  the finding id. Measured: 11,162 of 22,048 work findings sit in a block-spanning repeat,
+  and the distinct decisions over the six stores fall 16,881 → 12,722.
+  See `docs/adr/0018-a-judgement-may-cross-a-language-block.md`.
   A repeat is measured in **pages**, and there is no second number beside it. The
   page is a term of the finding id, so one page carries at most one finding of one
   repeat — measured over the corpus, 25,657 repeats and no exception. "How many
@@ -396,7 +409,12 @@ element any more: it folds the links inside it. Both the word and the rule are g
   **Repeats** (~~*Verschillen*~~, 2026-08-13) is the store's repeats in **class groups**,
   worst-first by pages inside each one, and it answers *what do I decide next*; opening a
   row lists its pages, and a page name opens the whole content view for that page and
-  never a fragment of it. The Dutch label named the wider word: a **difference** is wider
+  never a fragment of it. Since ticket 03 a row here may be a repeat **spanning this
+  store's language block**, so its pages say which store each is on and a press writes in
+  both. That is still not an all-stores view: a block is two stores, it is derived, and the
+  two dashboards of one block show the same rows mirrored — the same trade ADR 0017 made
+  for the block panel. The store's **numbers are untouched** by it: the bar, the chips, the
+  roll-up and *Pages* are built from this store's pages alone, as they always were. The Dutch label named the wider word: a **difference** is wider
   than a finding and the view lists **repeats**, so this is a correction and not a
   translation. **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first,
   and it answers
@@ -519,7 +537,11 @@ who wins against re-check.
   two bulk presses have **different eligibilities on one selection** — a bulk
   **dismissal** expires with the text and skips a finding a colleague decided; a bulk
   **clearing** revokes a dismissal and touches nothing else. The dismissal does not cover a
-  page that a later crawl finds. A partial failure is reported as *N of M saved*: the table
+  page that a later crawl finds. Since ticket 03 one selection may span a **language
+  block**, and each press then states **in which stores** it will write — off its own
+  events and never off the row, because a row spanning two stores whose sibling page a
+  colleague already decided writes in one. Only the **judgement** travels: there is no bulk
+  fix claim, because correcting one store's page does not correct the other's. A partial failure is reported as *N of M saved*: the table
   is append-only, so what was written stands and the interface says how far it got.
   There were three presses until ADR 0011 took the bulk mute; a difference whose every
   finding is already decided therefore offers only the clearing, which is correct — the

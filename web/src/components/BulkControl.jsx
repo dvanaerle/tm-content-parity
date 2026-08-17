@@ -309,9 +309,31 @@ function Covers({ dismissal }) {
       {dismissal.decided > 0
         ? ` of the ${pages}: the other ${dismissal.decided} ${dismissal.decided === 1 ? 'is' : 'are'} decided already.`
         : '.'}
+      <InWhichStores stores={dismissal.stores} />
     </p>
   );
 }
+
+/**
+ * **In which stores**, said before the press (ticket 03).
+ *
+ * Drawn only where the press reaches more than one, which is only ever the two stores of
+ * one language block. On a single store it would name the store whose dashboard this is,
+ * which an editor already knows — and the rule ADR 0018 has to keep is that this sentence
+ * appears exactly when a decision leaves the store an editor thinks they are working in.
+ *
+ * The stores come from the press's own `stores`, so what is named is where the **events**
+ * go and never how wide the row is. A row spanning `nl` and `be` whose `be` page a
+ * colleague already dismissed says `nl`, because that is where the one event lands.
+ */
+const InWhichStores = ({ stores }) =>
+  stores.length > 1 ? (
+    <>
+      {' '}
+      Written in <strong className="font-medium text-foreground">{stores.join(' and ')}</strong>:
+      these two stores share a language, so the same words are one decision.
+    </>
+  ) : null;
 
 /**
  * The honest report of a press that did not write everything.
@@ -360,12 +382,15 @@ function Report({ written, total, failedOn, error }) {
  * `title`, which is where round two put everything that explains a number already on
  * screen rather than changing what an editor presses.
  */
-const clearTitle = ({ covers, skipped }) =>
+const clearTitle = ({ covers, skipped, stores }) =>
   'Removes the decision and puts the difference back to open.' +
   (skipped > 0
     ? ` ${skipped} of the ${covers + skipped} selected pages stays as it is: nothing is` +
       ' decided there, or it is a claim that the Fixed tick takes back.'
-    : '');
+    : '') +
+  // Which stores, on the press that has no form to say it in (ticket 03). The clearing
+  // inherits the block-spanning selection and states it in the one place it has.
+  (stores.length > 1 ? ` Written in ${stores.join(' and ')}.` : '');
 
 /**
  * The class named inside a sentence, in words rather than as a pill. The pill is a

@@ -195,17 +195,37 @@ const NO_EDITOR = 'Give your name at the top to decide here. Each decision carri
  * write one event at a time would be the second override control this project has spent
  * two tickets reducing to one.
  *
- * @param {{ pages: import('./reports.mjs').PageSummary[], editor?: string }} input
+ * Since ticket 03 it takes **two** lists, and the split is the whole of how a
+ * block-spanning press stays out of a store's numbers:
+ *
+ * - `pages` is what this store's **numbers** are about — the bar, the roll-up, the review
+ *   counts. It is this store's pages and nothing else, which is what keeps the dashboard's
+ *   promise that it carries only that store's progress numbers.
+ * - `reached` is what a **press** can touch and no number may read: the sibling store's
+ *   pages, where this store is in a language block. Their events are fetched and their
+ *   findings are derived, so a repeat spanning the block can say what is decided over
+ *   there and a press can write there — and `derived.bar` never sees them.
+ *
+ * A single list would have been less code and would have put `be`'s findings into `nl`'s
+ * denominator, which is the one thing ADR 0018 promises this feature does not do.
+ *
+ * @param {object} input
+ * @param {import('./reports.mjs').PageSummary[]} input.pages
+ * @param {import('./reports.mjs').PageSummary[]} [input.reached]
+ * @param {string} [input.editor]
  */
-export function useStoreOverrides({ pages, editor = '' }) {
+export function useStoreOverrides({ pages, reached = [], editor = '' }) {
   const { port, reason } = usePort();
   const [events, setEvents] = useState(/** @type {any[] | null} */ (null));
   const [error, setError] = useState(/** @type {string | null} */ (null));
   const [busy, setBusy] = useState(false);
 
+  // Every store either list names, because a press writes in both and an event read for
+  // only one of them would leave the other's decisions invisible — the state a repeat row
+  // shows and the eligibility a press reads are the same lookup.
   const stores = useMemo(
-    () => [...new Set(pages.map((page) => page.store))].sort().join(','),
-    [pages],
+    () => [...new Set([...pages, ...reached].map((page) => page.store))].sort().join(','),
+    [pages, reached],
   );
 
   useEffect(() => {
@@ -241,10 +261,43 @@ export function useStoreOverrides({ pages, editor = '' }) {
     [pages, events],
   );
 
-  const byPage = useMemo(
-    () => new Map(derived.pages.map((page) => [`${page.store}/${page.page}`, page])),
-    [derived],
+  /**
+   * The reached pages, derived by the **same function** over the same events. Nothing here
+   * is summed: only `pages` is a store's work, and this list exists so a press can see and
+   * write past the store's edge. It is a second call and not a second implementation, so a
+   * sibling page's `dismissed` means what a page's `dismissed` means.
+   */
+  const reachedState = useMemo(
+    () => deriveStoreState({ reports: reached, events: events ?? [] }),
+    [reached, events],
   );
+
+  const byPage = useMemo(
+    () =>
+      new Map(
+        [...derived.pages, ...reachedState.pages].map((page) => [
+          `${page.store}/${page.page}`,
+          page,
+        ]),
+      ),
+    [derived, reachedState],
+  );
+
+  /**
+   * Every derived finding either list holds, by id — what a repeat row reads to say what is
+   * decided, and what both presses read for their eligibility.
+   *
+   * It lives here rather than in the dashboard because it is the one index over **both**
+   * lists, and a component rebuilding it off `derived.pages` alone would silently make a
+   * block-spanning press treat the sibling's decided findings as `open`.
+   */
+  const byFinding = useMemo(() => {
+    const index = new Map();
+    for (const page of [...derived.pages, ...reachedState.pages]) {
+      for (const finding of page.findings) index.set(finding.id, finding);
+    }
+    return index;
+  }, [derived, reachedState]);
 
   /**
    * One press, N events, each aimed at its own page (ticket 31).
@@ -290,6 +343,7 @@ export function useStoreOverrides({ pages, editor = '' }) {
   return {
     derived,
     byPage,
+    byFinding,
     // The events themselves, for the one reader that needs the log and not the state
     // derived from it: searching the **notes** (ticket 82). A note is a sentence an
     // editor wrote, and the derivation keeps the decision and drops the words.

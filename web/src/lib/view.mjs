@@ -24,6 +24,10 @@ import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
 // beside `toneOf()` rather than here: two of its three callers are the Links and
 // Images tabs, which have no rows at all (ticket 86).
 import { canDecide } from './classes.mjs';
+// The block a store is in, for the **first term of the repeat key** and nothing else
+// (ticket 03). It is derived from `HREFLANG_STORE` and never hand-written, which is what
+// keeps `{de, uk}` from ever becoming a block — see ADR 0018.
+import { blockOf } from './language-blocks.mjs';
 // The Closed bucket, from the one function that groups the four derived states (ticket
 // 80). Read and never restated: a second list of which states are closed is how the
 // content view would come to disagree with the counts above it.
@@ -564,10 +568,19 @@ export function pagesWithPriorities(pages, priorities, priorityOf) {
  * texts and the same detail. One footer line that is wrong on thirty pages is one row
  * here, and an editor meets it once instead of thirty times.
  *
- * A repeat never crosses a store, because the stores translate the text: the same
- * defect in six stores is six repeats. There is nothing better to key on — an element
- * carries no DOM path (tickets 01 and 34), so a key on the literal text is the only
- * key there is, and it multiplies by six.
+ * A repeat crosses a store **only inside a language block**, and only where the two
+ * stores carry the same string (ticket 03). Six stores, four languages: `{nl, be}` share
+ * Dutch and `{be_fr, fr}` share French, so those two pairs do not translate the text
+ * between them and the same defect on both is one repeat. The other four pairings do
+ * translate it, and `de` and `uk` are each alone in their language, so a repeat there is
+ * exactly what it was. There is nothing better to key on — an element carries no DOM path
+ * (tickets 01 and 34), so a key on the literal text is the only key there is; what a block
+ * buys is that it now multiplies by four rather than by six.
+ *
+ * The block is **derived** from the hreflang codes and never a hand-written list, which is
+ * what stops `{de, uk}` from becoming a block because both are "the other ones". ADR 0018
+ * records that boundary, and ADR 0017 records why a block is still not an axis: this widens
+ * a **selection** over ordinary axis-A findings and promotes nothing to a finding.
  *
  * **A repeat is not a finding.** It has no id, no override and no history, and every
  * decision on it is still N decisions on N findings. `key` is the grouping made
@@ -585,7 +598,9 @@ export function pagesWithPriorities(pages, priorities, priorityOf) {
  *
  * @typedef {object} Repeat
  * @property {string} key       The grouping, printable. Not an identity.
- * @property {string} store
+ * @property {string[]} stores  The stores its pages are on, sorted. One store on all but
+ *                             a block-spanning row, and **never** more than two: it is
+ *                             derived from `on`, and `on` is grouped under one block.
  * @property {string} class
  * @property {string | null} prod
  * @property {string | null} new
@@ -593,7 +608,10 @@ export function pagesWithPriorities(pages, priorities, priorityOf) {
  * @property {number} occurrences  Summed over the pages. **Not** the page count: a
  *                                 page can hold the same difference several times,
  *                                 and `on.length` is what counts pages.
- * @property {{ page: string, id: string, occurrences: number }[]} on
+ * @property {{ store: string, page: string, id: string, occurrences: number }[]} on
+ *                             One entry is a page, its store and its finding. The store is
+ *                             here and not only on the repeat because a press writes one
+ *                             event per entry, and each event carries its own store.
  *
  * @param {{ store: string, page: string, findings: { id: string, class: string, prod: string | null, new: string | null, detail: string | null, occurrences?: number }[] }[]} pages
  * @returns {Repeat[]}
@@ -605,7 +623,11 @@ export function repeatsInStore(pages) {
   for (const page of pages) {
     for (const finding of page.findings) {
       const key = JSON.stringify([
-        page.store,
+        // The block, where this store is in one, and the store where it is not. This is
+        // the **whole** of ticket 03's change to the grouping: `de` and `uk` are each
+        // alone in their language, so `blockOf()` gives them nothing and the term stays
+        // the store — their repeats are exactly the repeats they were.
+        blockOf(page.store)?.language ?? page.store,
         finding.class,
         finding.prod,
         finding.new,
@@ -614,7 +636,6 @@ export function repeatsInStore(pages) {
       if (!groups.has(key)) {
         groups.set(key, {
           key,
-          store: page.store,
           class: finding.class,
           prod: finding.prod,
           new: finding.new,
@@ -626,15 +647,21 @@ export function repeatsInStore(pages) {
       const repeat = groups.get(key);
       const occurrences = finding.occurrences ?? 1;
       repeat.occurrences += occurrences;
-      repeat.on.push({ page: page.page, id: finding.id, occurrences });
+      repeat.on.push({ store: page.store, page: page.page, id: finding.id, occurrences });
     }
   }
 
+  // `stores` is **derived from the entries** and never accumulated beside them, so the
+  // row's answer to *in which stores* and the events a press writes cannot disagree. It
+  // is one store on all but the block-spanning rows.
+  const repeats = [...groups.values()].map((repeat) => ({
+    ...repeat,
+    stores: [...new Set(repeat.on.map((entry) => entry.store))].sort(),
+  }));
+
   // Worst-first, which here is the repeat on the most pages. The tie-break is the
   // key, so two repeats of equal size never swap places between two renders.
-  return [...groups.values()].sort(
-    (a, b) => b.on.length - a.on.length || a.key.localeCompare(b.key),
-  );
+  return repeats.sort((a, b) => b.on.length - a.on.length || a.key.localeCompare(b.key));
 }
 
 /**
