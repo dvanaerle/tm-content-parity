@@ -1,7 +1,7 @@
 # 104 — The search takes a page scope
 
 Type: task
-Status: ready-for-agent — part A landed, B to E open.
+Status: ready-for-agent — parts A and B landed, C to E open.
 Blocked by: None — 103, 102 and 123 are all resolved.
 Parent: ../map.md
 
@@ -19,7 +19,7 @@ your part and nothing else. If you need more, the ticket is wrong — say so and
 | part | what | state |
 |---|---|---|
 | **A** | The four kinds of nothing, returned as a value | **landed**, `bc59495` |
-| **B** | The scope reaches the notes | open |
+| **B** | The scope reaches the notes | **landed** |
 | **C** | The scope is a filter and says so | open |
 | **D** | Typing a slash offers the page keys | open |
 | **E** | A page row hands its key to the search | open |
@@ -123,7 +123,26 @@ way anyone will actually use it.
 
 ---
 
-## B — A scope reaches the notes
+## B — A scope reaches the notes — **landed**
+
+Built 2026-08-17: `web/src/lib/search.mjs` (`searchNotes()` parses the term instead of
+matching the raw string, narrows on the event's own page through `inScope()`, and returns
+`scope` and `text` beside the notes), `web/src/lib/search.test.mjs`,
+`web/src/components/Search.jsx` (the heading is a reading of what was narrowed by),
+`web/src/components/Search.browser.test.mjs`, `CONTEXT.md`.
+
+The bug underneath it was worse than *not narrowed*: `/downloads knop` was matched against
+the notes **with its slash on**, so the notes half of a scoped search found nothing at all.
+
+Criterion four was already met when this part started — ticket 83 built `NoteKind` and the
+quoted `PageNote`, and this part is the first screen that puts the two side by side, which is
+what the criterion was guarding. Nothing was built for it; a browser case now renders the two
+kinds together under one scope, which is the situation that had never existed before, so the
+tick is a pin and not a claim about untested code.
+
+`docs/adr/0016`'s last consequence said the notes half was unscoped and that scoping it was
+ticket 105. 105 is one of the four this ticket absorbed, so that line is amended in place
+rather than left pointing at a number nothing lives under.
 
 ### Reading list — B
 
@@ -159,21 +178,23 @@ Scoping is what first puts a page note and a dismissal note side by side on one 
 which is exactly where 83's warning bites: they are different things and must not read as
 each other. Today every note renders identically. That stops here.
 
-- [ ] A scope narrows the notes block to notes written on the matching pages.
-- [ ] A scope plus a second term narrows the notes by that term as well.
-- [ ] An unscoped search returns exactly today's notes. This adds a narrowing and removes
+- [x] A scope narrows the notes block to notes written on the matching pages.
+- [x] A scope plus a second term narrows the notes by that term as well.
+- [x] An unscoped search returns exactly today's notes. This adds a narrowing and removes
       none.
-- [ ] A note's kind is legible on sight — a note attached to a page reads differently from
+- [x] A note's kind is legible on sight — a note attached to a page reads differently from
       the sentence given when dismissing ~~or muting~~ a finding. — **2026-08-13, ADR 0011:
       a dismissal is the only judgement that takes a note.** The two kinds of note are still
       two.
-- [ ] A one-sided page with a note shows that note, alongside **A**'s explanation of why
+- [x] A one-sided page with a note shows that note, alongside **A**'s explanation of why
       there are no findings.
-- [ ] The two halves keep their two freshnesses and stay two blocks. No merged list.
-- [ ] The notes half keeps 123's honest states: a scoped notes block never says "none"
+- [x] The two halves keep their two freshnesses and stay two blocks. No merged list.
+- [x] The notes half keeps 123's honest states: a scoped notes block never says "none"
       about a log it has not read.
-- [ ] Notes stay governed by the latest-per-key rule, so a withdrawn note is never offered
-      as a live one.
+- [x] Notes stay governed by the latest-per-key rule, so a withdrawn note is never offered
+      as a live one. — a bare scope has no words to match, so the `note` field is now
+      required to be non-empty rather than merely to hold the needle: `''.includes('')`
+      holds, and a cleared note would have drawn as a note with nothing in it.
 
 ### Traps — B
 

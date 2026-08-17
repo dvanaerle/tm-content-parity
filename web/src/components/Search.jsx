@@ -375,6 +375,12 @@ function Named({ store, pages, link }) {
  * reason for accepting a difference. So each line is tagged, and the page note is drawn as
  * `PageNote` draws it everywhere else — quoted, and never labelled as a reason.
  *
+ * **A page scope narrows this block with the one above it** (ticket 104 part B), so
+ * `/downloads` answers about the downloads page in both halves and not in one. The narrowing
+ * is `searchNotes()`' and the heading is a reading of what it narrowed by; nothing here
+ * filters. It is also what finally lets the screen say something true about a one-sided
+ * page, which has no findings and can never have any.
+ *
  * **Drawing nothing is a claim, so it is only made about a log that was read** (ticket
  * 123). This block used to be the array's length and nothing else, so the first moment of
  * a store page and a log that never answered both drew as *there is nothing here* — which
@@ -406,7 +412,7 @@ function Notes({ result, link }) {
       <Separator />
       <section className="bg-muted px-4 py-3">
         <h3 className="text-sm font-medium">
-          {notes.length} {notes.length === 1 ? 'note' : 'notes'} with these words
+          {notes.length} {notes.length === 1 ? 'note' : 'notes'} {narrowedBy(result)}
         </h3>
         <p className={cn('mb-2 text-xs', INK.info)}>
           Read from the log now, not from the snapshot. This half is current, and the findings above
@@ -443,6 +449,23 @@ function Notes({ result, link }) {
     </>
   );
 }
+
+/**
+ * What the count above the notes was narrowed by, in its own words (ticket 104 part B).
+ *
+ * Three phrasings and not one, because *with these words* over a bare scope is a heading
+ * naming a search nobody ran: `/downloads` is a search **for a page**, and the words it
+ * claims to have matched are not there to be seen. A scope with a term did both, and says
+ * both, in the order they were typed.
+ *
+ * The scope is read off the **result** rather than parsed here — it is `searchNotes()`'
+ * answer about its own narrowing, and a second reading of the slash rule up here is exactly
+ * what part A's contract exists to prevent.
+ */
+const narrowedBy = ({ scope, text }) => {
+  if (!scope) return 'with these words';
+  return text ? `with these words on /${scope}` : `on /${scope}`;
+};
 
 /**
  * What the notes half says when it has no matches to say it with.

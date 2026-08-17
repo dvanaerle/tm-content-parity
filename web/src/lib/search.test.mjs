@@ -926,6 +926,25 @@ describe('searchNotes', () => {
     expect(result.notes).toEqual([]);
   });
 
+  it('reaches every page under a term that carries no scope', () => {
+    // The narrowing ticket 104 adds and nothing else: an ordinary term is still answered
+    // over the whole log, which is what part B promises to leave alone.
+    const result = searchNotes({
+      log: read([
+        event({}),
+        event({
+          page: 'garantie',
+          findingId: 'b',
+          note: 'deals ook hier',
+          createdAt: '2026-08-11T09:00:00Z',
+        }),
+      ]),
+      term: 'deals',
+    });
+
+    expect(result.notes.map((one) => one.page)).toEqual(['garantie', 'afhalen']);
+  });
+
   it('does not let a page note hide the review of the same page', () => {
     // The two are different keys on one scope. A note that displaced the review here
     // would be the collision `eventKey()` exists to prevent, showing up in search.
@@ -944,6 +963,103 @@ describe('searchNotes', () => {
     });
 
     expect(result.notes.map((one) => one.action)).toEqual(['noted', 'reviewed']);
+  });
+});
+
+/**
+ * Ticket 104 part B. A scope narrows **both** halves of the answer or it narrows neither
+ * honestly: `/downloads` answering about the downloads page above and about the whole store
+ * below is one screen giving two answers to one question.
+ *
+ * The field narrowed on is the event's **own** page — where the note was written — and not
+ * the page a finding sits on. It is the same substring rule the findings half runs, through
+ * `inScope()` rather than through a second `includes` written out here.
+ */
+describe('searchNotes, under a page scope', () => {
+  it('narrows the notes to the pages the scope reached', () => {
+    const result = searchNotes({
+      log: read([
+        event({}),
+        event({ page: 'garantie', findingId: 'b', note: 'deals ook hier' }),
+      ]),
+      term: '/afhalen',
+    });
+
+    expect(result.notes.map((one) => one.page)).toEqual(['afhalen']);
+  });
+
+  it('answers a bare scope with the notes on that page and not with nothing', () => {
+    // The empty box and a bare scope are two different silences. `/afhalen` is a search
+    // *for the page*, so every note on it is the answer; an empty box has been asked
+    // nothing and answers with nothing, which is the case below.
+    const result = searchNotes({
+      log: read([event({ note: 'niets van dit woord' })]),
+      term: '/afhalen',
+    });
+
+    expect(result.notes.map((one) => one.note)).toEqual(['niets van dit woord']);
+  });
+
+  it('narrows by the second term as well, so both halves of the typing count', () => {
+    const result = searchNotes({
+      log: read([
+        event({ note: 'deals blijft staan' }),
+        event({ findingId: 'b', note: 'wacht op copy' }),
+        event({ page: 'garantie', findingId: 'c', note: 'deals ook hier' }),
+      ]),
+      term: '/afhalen deals',
+    });
+
+    expect(result.notes.map((one) => one.note)).toEqual(['deals blijft staan']);
+  });
+
+  it('reaches a scope by substring, exactly as the findings half does', () => {
+    // `/afhal` reaching `deals-afhalen` is `inScope()`'s rule and not a second one: one
+    // substring match over one page key, in both halves of the screen.
+    const result = searchNotes({
+      log: read([event({ page: 'deals-afhalen' })]),
+      term: '/afhal',
+    });
+
+    expect(result.notes).toHaveLength(1);
+  });
+
+  it('offers no note an editor took back, not even under a bare scope', () => {
+    // The bare scope has no words to match, so nothing about the note's text stands
+    // between a cleared note and the screen. `latestByKey()` still does: the clearing is
+    // the newest event on the key and it carries no words.
+    const result = searchNotes({
+      log: read([
+        event({ scope: 'page', action: 'noted', findingId: null, note: 'Campagne volgt' }),
+        event({
+          scope: 'page',
+          action: 'noted',
+          findingId: null,
+          note: '',
+          createdAt: '2026-08-11T09:00:00Z',
+        }),
+      ]),
+      term: '/afhalen',
+    });
+
+    expect(result.notes).toEqual([]);
+  });
+
+  it('carries the parse back, so the block above it is not a second reading of the slash', () => {
+    // What part A did for the findings half: one string, one parse. A caller naming the
+    // scope over the notes reads it off the answer it is drawing.
+    const result = searchNotes({ log: read([event({})]), term: '/afhalen deals' });
+
+    expect(result.scope).toBe('afhalen');
+    expect(result.text).toBe('deals');
+  });
+
+  it('answers an empty box with nothing, which is what it was asked', () => {
+    const result = searchNotes({ log: read([event({})]), term: '' });
+
+    expect(result.state).toBe('answered');
+    expect(result.notes).toEqual([]);
+    expect(result.scope).toBe(null);
   });
 });
 

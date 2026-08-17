@@ -439,3 +439,141 @@ describe('the notes half, before the log has answered', () => {
     unmount();
   });
 });
+
+/**
+ * Ticket 104 part B. A scope narrows both halves of the screen, and these are browser cases
+ * because the question is whether the *screen* narrows: `search.mjs` decides what the notes
+ * half holds, and this is the block that has to say which page it is holding them about.
+ */
+describe('the notes half, under a page scope', () => {
+  /** A dismissal note, in the shape the log appends them. */
+  const note = (part) => ({
+    createdAt: '2026-08-12T09:00:00Z',
+    editor: 'Dennis',
+    scope: 'finding',
+    action: 'dismissed',
+    store: 'nl',
+    page: 'deals-afhalen',
+    findingId: 'a',
+    note: 'deals blijft zo staan',
+    ...part,
+  });
+
+  /** A log that was read, holding these events. */
+  const held = (...events) => ({ events, ready: true, error: null, connected: true });
+
+  it('narrows to the notes on the pages the scope reached, and says which scope', async () => {
+    const { unmount } = await mount({
+      term: '/afhalen',
+      log: held(
+        note({}),
+        note({ page: 'deals-garantie', findingId: 'b', note: 'garantie blijft zo staan' }),
+      ),
+    });
+
+    expect(document.body.textContent).toContain('1 note on /afhalen');
+    expect(document.body.textContent).toContain('deals blijft zo staan');
+    expect(document.body.textContent).not.toContain('garantie blijft zo staan');
+    unmount();
+  });
+
+  it('keeps the two halves two blocks, each with its own freshness', async () => {
+    // The scope narrows both and merges neither. The line that says which moment this half
+    // is read from is the whole reason it is a second block.
+    const { unmount } = await mount({ term: '/afhalen', log: held(note({})) });
+
+    expect(document.body.textContent).toContain('Read from the log now, not from the snapshot.');
+    expect(document.body.textContent).toContain('From the snapshot of');
+    unmount();
+  });
+
+  it('says a note is the answer about a one-sided page, beside the reason there are none', async () => {
+    // The case part A can only explain and this part can answer. A one-sided page has no
+    // findings and can never have any, so a note is the only thing search can truthfully
+    // say about it — and before this the block was not narrowed to it.
+    const { unmount } = await mount({
+      term: '/brochure',
+      pages: [
+        {
+          store: 'nl',
+          page: 'deals-brochure',
+          comparable: false,
+          skipReason: 'only nl answered',
+          findings: [],
+          summary: { byClass: {} },
+        },
+      ],
+      log: held(
+        note({
+          scope: 'page',
+          action: 'noted',
+          findingId: null,
+          page: 'deals-brochure',
+          note: 'BE-versie volgt',
+        }),
+      ),
+    });
+
+    expect(document.body.textContent).toContain('Only one site has this page (only nl answered)');
+    expect(document.body.textContent).toContain('1 note on /brochure');
+    expect(document.body.textContent).toContain('BE-versie volgt');
+    // Ticket 83's distinction, and the one place the two kinds of note first sit together.
+    expect(document.body.textContent).toContain('page note');
+    unmount();
+  });
+
+  it('draws a page note and a dismissal note apart when the scope puts them together', async () => {
+    // Ticket 83's trap, in the situation that first creates it: a scope is what puts one
+    // page's page note and one page's dismissal note in one short list. Drawn identically,
+    // *BE-versie volgt* under a page name reads as somebody's reason for accepting a
+    // difference. `NoteKind` is 83's and untouched here; this is the case that pins it
+    // against the screen this part built.
+    const { unmount } = await mount({
+      term: '/afhalen',
+      log: held(
+        note({}),
+        note({
+          scope: 'page',
+          action: 'noted',
+          findingId: null,
+          note: 'BE-versie volgt',
+          createdAt: '2026-08-13T09:00:00Z',
+        }),
+      ),
+    });
+
+    expect(document.body.textContent).toContain('2 notes on /afhalen');
+    // The newer first, and each said in its own word — a note **on this page**, and the
+    // reason for a **dismissal**.
+    expect(document.body.textContent).toContain('page note');
+    expect(document.body.textContent).toContain('dismissed · reason');
+    // The page note is quoted the way it is drawn everywhere else, and never labelled as a
+    // reason for anything.
+    expect(document.body.textContent).toContain('“BE-versie volgt”');
+    unmount();
+  });
+
+  it('says the words as well when a second term was typed', async () => {
+    const { unmount } = await mount({
+      term: '/afhalen deals',
+      log: held(note({}), note({ findingId: 'b', note: 'wacht op copy' })),
+    });
+
+    expect(document.body.textContent).toContain('1 note with these words on /afhalen');
+    expect(document.body.textContent).not.toContain('wacht op copy');
+    unmount();
+  });
+
+  it('never says none about a log it has not read, scope or no scope', async () => {
+    // Ticket 123's rule survives the narrowing: a scoped block that drew nothing here
+    // would read as *no notes about this page*, which is the lie one narrowing deeper.
+    const { unmount } = await mount({
+      term: '/afhalen',
+      log: { events: null, ready: false, connected: true },
+    });
+
+    expect(document.body.textContent).toContain('Notes in the log');
+    expect(document.body.textContent).toContain('The override log is loading…');
+    unmount();
+  });
+});

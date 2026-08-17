@@ -109,5 +109,12 @@ answers one that could not.
   settled that there is no all-stores surface.
 - The four kinds of empty answer are ticket 104's, not this one's. Here, nothing found says
   nothing found.
-- The notes half is not scoped yet. `searchNotes()` still reads the term as typed, so
-  `/downloads` searches the notes for those literal characters. That is ticket 105.
+- ~~The notes half is not scoped yet. `searchNotes()` still reads the term as typed, so
+  `/downloads` searches the notes for those literal characters. That is ticket 105.~~
+  *Amended 2026-08-17 by ticket 104 part B* — ticket 105 was absorbed into 104 when nine
+  tickets over one search box became five, so the work is there and not under its own number.
+  The notes half **is** scoped: `searchNotes()` runs the same `parseTerm()` and the same
+  `inScope()` the findings half runs, over the page each event was **written on**. The
+  sentence above understated what it left behind — reading the term as typed did not merely
+  leave the notes unscoped, it matched them against the slash, so the notes half of a scoped
+  search answered with nothing at all.

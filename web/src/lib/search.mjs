@@ -591,6 +591,16 @@ function kindOf(page, answered, text) {
  * explains nothing in particular. The event carries its own `scope` and `action`, which is
  * what lets the caller tell them apart; this function does not decide for it.
  *
+ * **A page scope narrows this half too** (ticket 104 part B). One typing, one narrowing:
+ * `/downloads` answering about the downloads page above the fold and about the whole store
+ * below it is one screen giving two answers to one question, and the note is often the only
+ * thing there is to say — a one-sided page has no findings and can never have any, so
+ * without this the block that *could* speak about it is the one that stayed silent.
+ *
+ * The scope is matched against the event's own `page` through `inScope()`, the same
+ * substring rule the findings half runs. A bare scope is a search **for the page**, so it
+ * answers with every note on it; an empty box is still nothing asked and nothing answered.
+ *
  * A page note an editor took back is not found, and that falls out of `latestByKey()`
  * rather than being a rule here: the clearing is a later `noted` event carrying an empty
  * note, so the words that were withdrawn are no longer the current event on their key.
@@ -644,7 +654,13 @@ function kindOf(page, answered, text) {
  * @param {string} args.term
  * @returns {{ live: true, state: 'reading' }
  *   | { live: true, state: 'failed', reason: string }
- *   | { live: true, state: 'answered', notes: import('../../../overrides/state.mjs').OverrideEvent[] }}
+ *   | { live: true, state: 'answered', scope: string | null, text: string,
+ *       notes: import('../../../overrides/state.mjs').OverrideEvent[] }}
+ *   `scope` and `text` are the parse this answer was narrowed by, and they ride back for
+ *   the reason they ride back on `searchStore()`: a caller naming the scope over the block
+ *   reads it off the answer it is drawing rather than parsing the slash a third time. They
+ *   are on the answered branch alone, because a half that has not read its log has narrowed
+ *   nothing.
  */
 export function searchNotes({ log, term }) {
   const read = logState(log);
@@ -656,8 +672,16 @@ export function searchNotes({ log, term }) {
     return { live: true, state: 'failed', reason: read.reason };
   }
 
-  const needle = fold(term);
-  if (!needle) return { live: true, state: 'answered', notes: [] };
+  // The same parse the findings half ran, and not a reading of the raw string: without it
+  // `/downloads knop` is matched against the notes **with its slash on**, so the half that
+  // is supposed to narrow to a page instead finds nothing at all.
+  const { scope, text } = parseTerm(term);
+  const needle = fold(text);
+
+  // An empty box has been asked nothing. A **bare scope** has been asked about a page, so
+  // it is not this branch: its answer is every note on that page, which is the one thing
+  // search can truthfully say about a one-sided page.
+  if (!scope && !needle) return { live: true, state: 'answered', scope, text, notes: [] };
 
   // Only the events that still stand. The table is append-only, so the words an editor
   // withdrew are still in it, and returning them would offer a reason for a decision
@@ -667,10 +691,22 @@ export function searchNotes({ log, term }) {
   // caller that says otherwise is contradicting itself, and coercing here would answer
   // *no notes* on its behalf — the ticket's own bug, one layer down.
   const notes = [...latestByKey(log.events).values()]
-    .filter((one) => one.note?.toLowerCase().includes(needle))
+    // `one.note` first, and truthiness rather than a match. Under a bare scope the needle
+    // is empty and `''.includes('')` holds, so a cleared note — which is an empty note on
+    // the newest event of its key — would come back as a note with nothing in it.
+    .filter((one) => one.note)
+    // The event's **own** page: it records where it was written, and that is what a page
+    // scope is about. Narrowing on the page a finding sits on would be a different
+    // question, asked of a field this half does not have.
+    //
+    // `scope` here is the **page scope** the editor typed. An event carries a field of the
+    // same name meaning something else — which of `finding` or `page` it is about — and
+    // this filter does not read it: `one.page` is on both kinds.
+    .filter((one) => !scope || inScope(one.page, scope))
+    .filter((one) => one.note.toLowerCase().includes(needle))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  return { live: true, state: 'answered', notes };
+  return { live: true, state: 'answered', scope, text, notes };
 }
 
 /**

@@ -287,6 +287,12 @@ element any more: it folds the links inside it. Both the word and the rule are g
   that page's **repeats** and is not a second reading of the page. It moves no count, no bar
   and no denominator, in the same manner as a **filter** and as the term itself. A scope
   narrows within one store, because there is no all-stores surface to scope across.
+  It narrows **both halves** of the answer (ticket 104): the findings from the snapshot and
+  the notes from the log, each still its own block with its own freshness. A note is narrowed
+  by the page it was **written on** — the event carries it — and not by the page a finding of
+  it sits on, and it is therefore the only thing search can truthfully say about a
+  **one-sided** page, which has no findings and can never have any. A bare scope answers the
+  notes half with every note on the page; an empty box is still nothing asked.
   See `docs/adr/0016-a-leading-slash-is-a-page-scope.md`, which records why the reasoning it
   overturns — a key is opaque and nothing splits on a slash — holds for everywhere but first
   position, and why this is not the first step toward a query language.
