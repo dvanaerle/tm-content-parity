@@ -2,9 +2,10 @@
  * The whole Supabase surface: three functions, and nothing else.
  *
  * The port is **passed in**, never imported by `state.mjs`. The derivation is
- * pure and is tested against hand-written event lists; this file is faked in
- * tests, and the real client is never constructed in one. There is no test
- * Supabase project.
+ * pure and is tested against hand-written event lists. There is no test Supabase
+ * project: `createOverridesPort()` takes an optional `client`, so the one behaviour
+ * here that is not a mapper — the read's paging — is tested by handing it a client
+ * that caps the way PostgREST does. The real client is never constructed in a test.
  *
  * **Failure is loud.** A read that fails throws. It must never resolve to an
  * empty list, because an empty list means "nobody has done anything" and a
@@ -19,6 +20,14 @@
 import { createClient } from '@supabase/supabase-js';
 
 const TABLE = 'overrides';
+
+/**
+ * Rows asked for per request. Supabase's own `max-rows` is 1,000 by default, so this is
+ * the largest page that is ever served whole — but the loop must not depend on that
+ * number, because a project is free to lower it and the client is never told what it is.
+ * `read()` therefore stops on an **empty** page and never on a short one.
+ */
+const PAGE = 1000;
 
 /**
  * The columns, in the order `state.mjs` wants them named.
@@ -85,35 +94,75 @@ export const toRow = (event) => ({
  * @param {object} config
  * @param {string} config.url      The project URL.
  * @param {string} config.anonKey  Public by design (ticket 03).
+ * @param {any} [config.client]
+ *   The Postgrest client, for a caller that has one already. It exists for the paging
+ *   test: the read loops until a page comes back empty, and *how many rows a request is
+ *   served* is the server's own behaviour — so the only way to test the loop is to hand
+ *   the port a client that caps. It is the same seam the app already uses one level up,
+ *   where `overrides.mjs` creates this port and `state.mjs` never imports it.
  */
-export function createOverridesPort({ url, anonKey }) {
-  if (!url || !anonKey) {
+export function createOverridesPort({ url, anonKey, client: given }) {
+  if (!given && (!url || !anonKey)) {
     throw new Error(
       'No Supabase configuration. Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY.',
     );
   }
 
   // No Realtime, no session: there is no login, so there is nothing to persist.
-  const client = createClient(url, anonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const client =
+    given ??
+    createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
   /**
    * The full history, not `overrides_current`. `latestByKey()` does the same
    * reduction, and the history is what answers "who dismissed this, and who
    * cleared it" in the interface without a second round trip.
    *
+   * **Paged, because PostgREST caps a select.** Supabase serves at most `max-rows`
+   * (1,000 by default) per request and says nothing when it truncates: the response is
+   * a valid, complete-looking array. This read is ordered oldest-first, so the rows the
+   * cap drops are the **newest** ones — and the newest rows are exactly the decisions an
+   * editor just made. On 2026-08-17 the `nl` store held 1,148 events and the app could
+   * see 1,000 of them, so 148 decisions were invisible and every check-off made after
+   * the cap was reached appeared to do nothing. That is the whole of the defect.
+   *
+   * `id` is the second sort key. Paging needs a total order, and `created_at` alone is
+   * not one: two rows written in the same microsecond could otherwise swap between two
+   * requests, which is how a paged read loses a row and repeats another. It is the same
+   * tiebreak `isLater()` in `state.mjs` uses, for the same reason.
+   *
+   * An **empty** page ends it, never a short one. A short page does not mean the end of
+   * the table: it also means the server's cap is below the page this asks for, and a loop
+   * that stopped there would truncate exactly as the unpaged read did — quietly, and
+   * worse on the projects that configured the smallest cap. Ending on empty costs one
+   * extra request per read and cannot lose a row.
+   *
    * @param {(query: any) => any} narrow
    * @returns {Promise<import('./state.mjs').OverrideEvent[]>}
    */
   async function read(narrow) {
-    const { data, error } = await narrow(
-      client.from(TABLE).select(COLUMNS).order('created_at', { ascending: true }),
-    );
-    // Loud on purpose. An empty list is an answer; a failure is not.
-    if (error)
-      throw new Error(`Could not read the override log: ${error.message}`, { cause: error });
-    return (data ?? []).map(toEvent);
+    /** @type {any[]} */
+    const rows = [];
+
+    for (;;) {
+      const { data, error } = await narrow(
+        client
+          .from(TABLE)
+          .select(COLUMNS)
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+          .range(rows.length, rows.length + PAGE - 1),
+      );
+      // Loud on purpose. An empty list is an answer; a failure is not.
+      if (error)
+        throw new Error(`Could not read the override log: ${error.message}`, { cause: error });
+
+      const page = data ?? [];
+      rows.push(...page);
+      if (page.length === 0) break;
+    }
+
+    return rows.map(toEvent);
   }
 
   return {

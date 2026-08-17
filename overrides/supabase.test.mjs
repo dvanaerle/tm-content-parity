@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { noteEventFor, priorityEventFor } from './state.mjs';
-import { toEvent, toRow } from './supabase.mjs';
+import { createOverridesPort, toEvent, toRow } from './supabase.mjs';
 
 /**
  * The port is thin, and what these tests pin is the one asymmetry left in it: the app
@@ -15,8 +15,10 @@ import { toEvent, toRow } from './supabase.mjs';
  * judgement about a page into a judgement about the content before its first heading. There
  * is no key left that reads either, and the two columns are no longer selected.
  *
- * There is no test Supabase project, so this tests the two mappers and nothing else.
- * `createOverridesPort()` is never constructed here.
+ * There is no test Supabase project, so the mappers are tested against hand-written rows.
+ * `createOverridesPort()` **is** constructed in the last block, over a faked
+ * `@supabase/supabase-js` — because the one thing left in this file that is not a mapper
+ * is the read's paging, and paging is only observable against a server that caps.
  */
 
 /**
@@ -154,5 +156,141 @@ describe('what the app writes', () => {
       action: 'noted',
       note: 'Campagne-update',
     });
+  });
+});
+
+/**
+ * The read pages, because PostgREST caps a select and says nothing when it does.
+ *
+ * This is the defect of 2026-08-17, and it is worth stating in full because nothing on
+ * the response distinguishes it from a complete answer. Supabase serves at most
+ * `max-rows` — 1,000 by default — and returns a valid array of exactly that length. The
+ * read is ordered oldest-first, so the rows the cap drops are the newest: an editor's
+ * own decisions, the moment the store's log passes the cap. On that day the `nl` store
+ * held 1,148 events, the app read 1,000, and 91 decisions were invisible — so checking a
+ * finding off moved no count and the press read as broken.
+ *
+ * A `PostgrestBuilder` is a thenable that collects its own query, so the fake is the same
+ * shape: every method returns the builder, and awaiting it applies the filters, then the
+ * range, then the server's cap — in that order, which is the order PostgREST applies them.
+ */
+const fakeSupabase = (rows, cap) => ({
+  from: () => {
+    const filters = {};
+    let window = [0, Number.MAX_SAFE_INTEGER];
+
+    const builder = {
+      select: () => builder,
+      order: () => builder,
+      eq: (column, value) => {
+        filters[column] = value;
+        return builder;
+      },
+      range: (from, to) => {
+        window = [from, to];
+        return builder;
+      },
+      // Deliberate: a `PostgrestBuilder` is a thenable that collects its query and runs
+      // it on await, and `read()` awaits the builder. A fake without `then` would be a
+      // client shape this port never meets.
+      // oxlint-disable-next-line unicorn/no-thenable
+      then: (resolve) => {
+        const matched = rows.filter((row) =>
+          Object.entries(filters).every(([column, want]) => row[column] === want),
+        );
+        const [from, to] = window;
+        // The range first, then the cap over what the range asked for. A server that caps
+        // at `cap` never returns more than that, however wide the window.
+        resolve({ data: matched.slice(from, to + 1).slice(0, cap), error: null });
+      },
+    };
+    return builder;
+  },
+});
+
+/** `n` events on one store, oldest first, so the newest are the ones a cap would drop. */
+const manyRows = (n, store = 'nl') =>
+  Array.from({ length: n }, (_, i) => ({
+    id: i + 1,
+    created_at: `2026-08-17T${String(Math.floor(i / 60)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}:00.000Z`,
+    editor: 'Danielle',
+    scope: 'finding',
+    action: 'dismissed',
+    store,
+    page: `page-${i}`,
+    finding_id: `f${i}`,
+    class: null,
+    observation_id: null,
+    finding_set_hash: null,
+    note: 'x',
+    priority: null,
+  }));
+
+/** The port over a given client. The config is unused when a client is handed in. */
+const portOver = (client) => createOverridesPort({ url: null, anonKey: null, client });
+
+describe('a read past the server cap', () => {
+  it('returns every event of a store, and not the first page of them', async () => {
+    // The shape of the defect: 1,148 rows behind a 1,000-row cap.
+    const events = await portOver(fakeSupabase(manyRows(1148), 1000)).readEventsForStore('nl');
+
+    expect(events).toHaveLength(1148);
+  });
+
+  it('reaches the newest event, which is the one a decision just wrote', async () => {
+    // The whole symptom in one assertion. Oldest-first ordering means the cap drops the
+    // newest rows, so an editor's own check-off is the first thing to become invisible.
+    const events = await portOver(fakeSupabase(manyRows(1148), 1000)).readEventsForStore('nl');
+
+    expect(events.at(-1).findingId).toBe('f1147');
+  });
+
+  it('pages a project whose cap is lower than the page it asks for', async () => {
+    // A short page must not end the loop: it also means the server caps below `PAGE`, and
+    // stopping there would truncate exactly as the unpaged read did.
+    const events = await portOver(fakeSupabase(manyRows(1148), 500)).readEventsForStore('nl');
+
+    expect(events).toHaveLength(1148);
+  });
+
+  it('ends on an exact multiple of the page size without losing or repeating a row', async () => {
+    const events = await portOver(fakeSupabase(manyRows(2000), 1000)).readEventsForStore('nl');
+
+    expect(events).toHaveLength(2000);
+    expect(new Set(events.map((one) => one.id)).size).toBe(2000);
+  });
+
+  it('keeps the store filter on every page, not only on the first', async () => {
+    // The filter is applied by the caller's `narrow`, and the loop calls it once per page.
+    // A page that dropped it would pull another store's log in behind the first thousand.
+    const client = fakeSupabase([...manyRows(1100, 'nl'), ...manyRows(50, 'uk')], 1000);
+
+    const events = await portOver(client).readEventsForStore('nl');
+
+    expect(events).toHaveLength(1100);
+    expect(events.every((one) => one.store === 'nl')).toBe(true);
+  });
+
+  it('still throws on a failure rather than resolving to a short list', async () => {
+    // The module's first rule. A failed read must never look like an answer, and paging
+    // gives it a second place to go wrong: a page that errors must not end the loop.
+    const failing = {
+      from: () => {
+        const builder = {
+          select: () => builder,
+          order: () => builder,
+          eq: () => builder,
+          range: () => builder,
+          // A thenable for the same reason as above: the read awaits the builder.
+          // oxlint-disable-next-line unicorn/no-thenable
+          then: (resolve) => resolve({ data: null, error: { message: 'nope' } }),
+        };
+        return builder;
+      },
+    };
+
+    await expect(portOver(failing).readEventsForStore('nl')).rejects.toThrow(
+      'Could not read the override log',
+    );
   });
 });
