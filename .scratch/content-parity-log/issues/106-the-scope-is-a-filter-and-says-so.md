@@ -1,7 +1,7 @@
 # 106 — The scope is a filter and says so
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-17 — merged into 104 as part C. Not built; the work is unchanged and it moved.
 Blocked by: 103, 102
 Parent: ../map.md
 
@@ -46,3 +46,15 @@ narrowing by class is the only kind there is.
 - Two sources of truth for the scope is the failure mode. The chip must derive from the
   parsed term rather than hold its own copy.
 - *Inclusief afgesloten* is still not a filter and still does not belong in the strip.
+
+## Answer
+
+**Merged into [104](104-a-scoped-search-says-which-kind-of-nothing.md) as part C, 2026-08-17.**
+Nothing here is withdrawn and nothing is built. This ticket and four others were five
+tickets over one search box — one scope value, one load-time page list, one component
+tree — and not one of them moves a count, a bar or a denominator. The runbook's rule is
+*batch freely inside a gate*, and there was no gate between them to batch across. 104 now
+carries the filter chip as part C, with every criterion and every trap from this file
+copied across, and lands as its own commit on 104's branch.
+
+Read 104. This file is kept as the record of where the work was written.

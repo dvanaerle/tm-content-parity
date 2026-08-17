@@ -1,7 +1,7 @@
 # 135 — The tone maps are gone
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-17 — merged into 133 as part C. Not built; the work is unchanged and it moved.
 Blocked by: 132, 133, 134 — every surface that reads a map.
 Parent: ../map.md
 
@@ -60,3 +60,19 @@ entitled to read this as a regression.
   tickets record the work.
 - If any surface still reads a map when this ticket starts, **stop and finish that migration
   first**. A partial contract leaves a component with no colour and a build that succeeds.
+
+## Answer
+
+**Merged into [133](133-the-dashboard-wears-its-tone.md) as part C, 2026-08-17.**
+Nothing here is withdrawn and nothing is built. This was the **contract** half of an
+expand-migrate-contract, and it could never be verified on its own: its own last trap says
+*if any surface still reads a map when this ticket starts, stop and finish that migration
+first*, which is a ticket admitting it is a phase. 133 now carries the deletion and the ADR
+as part C, gated on part B's *no caller left* criterion, with every criterion and every trap
+from this file copied across.
+
+**132 was deliberately left out of the merge.** It defines the CSS tone contract and carries
+the design decision, and it is the one part of the move that reviews as a decision rather
+than as a transcription.
+
+Read 133. This file is kept as the record of where the work was written.

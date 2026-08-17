@@ -35,6 +35,35 @@ Spec 32 shows why. Phase 1 had to be measured before phase 2 started. The
 directional split and the two new classes moved the count in opposite
 directions. One number would have hidden both.
 
+### The same rule says when two tickets should be one — 2026-08-17
+
+If the rule lets you batch two tickets freely, ask why they are two. **Nine tickets
+were merged into five on 2026-08-17** under it, taking the open queue from 38 to 29.
+Ticket 124 is the precedent for the shape: *a commit per area and not a second
+ticket*.
+
+Merge when all three hold:
+
+1. **No measured number moves in either.** No count, bar, denominator or roll-up. A
+   screenshot baseline is not a gate — it is a review step, and it stays a commit
+   boundary inside the merged ticket.
+2. **They share a surface or a mechanism** — one search box, one primitive, one set
+   of tone maps.
+3. **One of them cannot close on its own.** A guard that fails until every surface
+   has moved, a contract phase with callers left, a glossary entry for a panel that
+   does not exist yet, or a `Type: measure` ticket whose whole subject is the
+   ticket above it. These are phases wearing a ticket's clothes.
+
+Keep them apart when either moves a count — 116, 120 and 121 each move one and stay
+three — or when the later ticket writes to `data/` and the earlier does not, which is
+the shared-resource gate and the reason 93, 94 and 95 stay three.
+
+**A merge keeps every criterion and every trap**, copied into the survivor under a
+lettered part. The absorbed file goes `resolved` with a `merged into NN` note and is
+kept: it is the record of where the work was written, and its filename is the target
+of inbound links. **The survivor keeps its own filename** for the same reason, even
+when its title no longer matches the slug.
+
 ## The corpus is one asset, and it is not in git
 
 `data/` is in `.gitignore`, with **three exceptions**. Ticket 51 tracked the seed

@@ -1,7 +1,10 @@
 # 80 — Three buckets, and the third is Closed
 
 Type: task
-Status: done
+Status: resolved — **corrected 2026-08-17.** Recorded as `done` until today; `done` is not in
+the label vocabulary (`docs/agents/triage-labels.md` gives `claimed` / `resolved`), and the
+same slip was corrected on 15, 17 and 18 on 2026-08-13 where `closed` was used. The work is
+unchanged and it was already closed.
 Blocked by: nothing — **114 resolved 2026-08-13 and the block is lifted; the sentences it
 was waiting on are struck in place below.** The note that added it read: This ticket
 enumerates *"five derived states —

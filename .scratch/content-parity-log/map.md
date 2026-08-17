@@ -213,7 +213,8 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   reach `searchStore()` and are applied through `repeatsWithClasses()`, **after** the
   grouping, so a search row is still a repeat. The strip is one `ClassFilterBanner` for all
   three narrowed lists. The term itself stays out of the strip — it becomes a filter in
-  [106](issues/106-the-scope-is-a-filter-and-says-so.md), for the page scope, and this is
+  [104 part C](issues/104-a-scoped-search-says-which-kind-of-nothing.md) (written as ticket
+  106, merged into 104 on 2026-08-17), for the page scope, and this is
   the strip that scope chip needed somewhere to live. `CONTEXT.md`'s **Filter** entry now
   admits a search. See
   [102](issues/102-the-class-pills-survive-a-search.md).
@@ -2038,35 +2039,53 @@ product signature` — a product page carries all six hreflang alternates, and
   - [98 — The Meta tab becomes a checklist an editor can tick](issues/98-the-meta-tab-becomes-a-checklist.md)
     — this is what retires spec 32's decision 31, _the meta panel is display
     only_. The panel is display-only **until 98 lands**, and not by principle.
-  - [99 — Measure: what the meta check added, beside what the prefactor removed](issues/99-measure-what-the-meta-check-added.md)
-    — the second of the two numbers.
+  - ~~[99 — Measure: what the meta check added, beside what the prefactor removed](issues/99-measure-what-the-meta-check-added.md)
+    — the second of the two numbers.~~ — **merged into 97 on 2026-08-17** as its
+    whole-corpus measurement. It was `Type: measure` with no session, blocked by
+    nothing but 97, measuring what 97 produced: 97's gate, not a ticket. Both
+    numbers are still measured apart, which is what 99 existed to protect.
 
-  - [100 — The glossary names the display-only rows, and the English labels](issues/100-the-glossary-names-the-display-only-rows.md)
+  - ~~[100 — The glossary names the display-only rows, and the English labels](issues/100-the-glossary-names-the-display-only-rows.md)
     — `ready-for-agent`, blocked by 98. The tail of the same chain: once a head
     row can be ticked, `CONTEXT.md` has to say which rows stayed display-only and
-    why the head labels are English in a Dutch interface.
+    why the head labels are English in a Dutch interface.~~ — **merged into 98 on
+    2026-08-17** as slice 7. Two prose edits describing the panel 98 builds, and a
+    separate ticket only opened a window in which `CONTEXT.md` was wrong. Its
+    premise had also gone stale: ADR 0014 made the whole interface English, so the
+    labels are no longer *English in a Dutch interface* — they stay untranslated
+    because a Magento field name is an identifier and not prose.
 
-- **The search learns the page scope** — seven tickets, none of which the map
-  indexed until 2026-08-13. [102](issues/102-the-class-pills-survive-a-search.md)
+- **The search learns the page scope** — ~~seven tickets~~ **three**, none of which
+  the map indexed until 2026-08-13.
+  [102](issues/102-the-class-pills-survive-a-search.md)
   is **resolved** and is the record above, in Decisions so far: a term composes
   with the class pills instead of replacing them. What is left is the scope — a
   term that names a page rather than a string.
 
+  **Merged 2026-08-17: 105, 106, 107 and 108 are now parts B to E of
+  [104](issues/104-a-scoped-search-says-which-kind-of-nothing.md).** Five tickets over
+  one search box — one scope value, one load-time page list, one component tree — and
+  not one measured number between them, so there was no gate to batch across. 124 set
+  the shape: a commit per area, not a ticket per area. **103, 102 and 123 are all
+  resolved, so 104 is unblocked and buildable today.**
+
   ```
-  103 ──> 104, 107, 108
-      └──> 105 <── 123
-  106 (independent)
+  103, 102, 123 (all resolved)
+        └──> 104  A the four kinds of nothing
+                  B the notes      C the chip
+                  D the keys       E the page row
   ```
 
   - [103 — A leading slash narrows the search to pages](issues/103-a-leading-slash-narrows-the-search-to-pages.md)
-    — the root of the chain; the other four wait on it.
-  - [104 — A scoped search says which kind of nothing it found](issues/104-a-scoped-search-says-which-kind-of-nothing.md)
-  - [105 — A scope reaches the notes](issues/105-a-scope-reaches-the-notes.md)
-    — blocked by 103 and 123.
-  - [106 — The scope is a filter and says so](issues/106-the-scope-is-a-filter-and-says-so.md)
-    — the scope chip joins the amber strip 102 built. Independent of 103.
-  - [107 — Typing a slash offers the page keys](issues/107-typing-a-slash-offers-the-page-keys.md)
-  - [108 — A page row hands its key to the search](issues/108-a-page-row-hands-its-key-to-the-search.md)
+    — the root of the chain, **resolved**.
+  - [104 — The search takes a page scope](issues/104-a-scoped-search-says-which-kind-of-nothing.md)
+    — five parts, five commits. Part A returns the four kinds of nothing as a value;
+    B narrows the notes; C makes the scope a chip in the filter strip and amends
+    `CONTEXT.md`'s **Filter** entry; D offers the page keys on `/`; E hands a row's key
+    to the search. **Read its opening note first:** all five parts were written before
+    124 and name Dutch labels that no longer exist.
+  - ~~105, 106, 107, 108~~ — merged into 104. The files are kept as the record of
+    where each part was written.
   - [123 — An unloaded log is not an empty one](issues/123-an-unloaded-log-is-not-an-empty-one.md)
     — _renumbered from 101 on 2026-08-13._ A search in the first moment after a
     store loads must not answer "none" about a log it has not read.
@@ -2198,6 +2217,45 @@ product signature` — a product page carries all six hreflang alternates, and
   have written a row**, because a manual `workflow_dispatch` proves the insert and not the
   cron — and that check now sits in [13](issues/13-supabase-pause-risk.md), which owns
   the mitigation. Nothing waits on it.
+
+- **The presentation carve-out** — the stream that came out of
+  [127](issues/127-the-log-names-its-browser-floor.md) and was never indexed here.
+  Recorded on 2026-08-17, in the shape it has after that day's merges. It moves **no
+  count, bar, denominator or roll-up anywhere**, which is why the merges were available:
+  the runbook batches freely up to a gate and this stream contains none.
+
+  ```
+  127 (resolved) ──> 128 ──> 132 ──> 133  A dashboard  B ledger  C the maps are gone
+                              ↑
+                       131 (resolved)
+  129  A dashboard hints   B every other surface + the guard   (unblocked today)
+  ```
+
+  - [128 — The carve-out reaches for CSS and primitives first](issues/128-the-carve-out-reaches-for-css-and-primitives-first.md)
+    — `ready-for-agent`, blocked by 127. Records *primitive, CSS, JS last* as the second
+    amendment to ADR 0007.
+  - [129 — A hint is reachable without a mouse, on every surface](issues/129-a-hint-is-reachable-without-a-mouse.md)
+    — `ready-for-agent`, **blocked by nothing and buildable today.** Absorbed **130** on
+    2026-08-17: one pattern, one primitive and one guard, and the guard cannot pass until
+    every surface has moved, so it had no ticket of its own to belong to — the same ruling
+    124 made about its stopword guard. 36 `title` attributes against a `Tooltip` primitive
+    with zero importers since 74. Part A is the dashboard and the pattern; part B is the
+    other six components and the guard, landed as its own pass.
+  - [132 — A tone is a selector](issues/132-a-tone-is-a-selector.md)
+    — `ready-for-agent`, blocked by 128 and 131. The **expand** half: `app.css` defines
+    the eight tones and the shapes, and the diff surface moves onto them. **Kept separate
+    from the merge below** — it is the one part of the palette move that reviews as a
+    decision rather than as a transcription.
+  - [133 — Every surface wears its tone, and the maps are gone](issues/133-the-dashboard-wears-its-tone.md)
+    — `ready-for-agent`, blocked by 132. Absorbed **134 and 135** on 2026-08-17. 133 and
+    134 were the same mechanical migration split by surface, and 135 was the **contract**
+    phase, which its own last trap admits — *if any surface still reads a map when this
+    ticket starts, stop and finish that migration first*. Three commits: A the dashboard,
+    B the ledger, C the deletion and the ADR. The per-surface split survives as the commit
+    boundary, because it exists so a moved screenshot baseline is reviewed against one
+    screen.
+  - ~~130, 134, 135~~ — merged. The files are kept as the record of where each part was
+    written.
 
 ## Not yet specified
 

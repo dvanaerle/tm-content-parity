@@ -34,9 +34,14 @@ Canonical                     —                      https://…/bedrijfsinfor
 ```
 
 **The labels are English, and that is deliberate.** They name the Magento admin field
-the editor goes to in order to fix it. They are the only English labels in a Dutch
+the editor goes to in order to fix it. ~~They are the only English labels in a Dutch
 interface, which is why ticket [100](100-the-glossary-names-the-display-only-rows.md)
-writes the rule down.
+writes the rule down.~~ — **2026-08-13, [ADR
+0014](../../../docs/adr/0014-the-interface-speaks-english.md): the interface speaks English
+on all six stores**, so these five stopped being exceptional. The rule is still worth
+recording, and it changes shape: the five are not translated **even if a future reader
+reverses ADR 0014**, because they are field names in another system rather than prose.
+Slice 7 below carries it.
 
 ~~If ticket 92 found keywords empty on both sides everywhere, **the Meta Keywords row
 does not ship** and this ticket records the number that dropped it. The rule and the
@@ -72,11 +77,13 @@ Read these and nothing else. If you need more, the ticket is wrong: say so and s
 - `web/src/lib/classes.mjs` — `TONE`, `CHECK_LABEL`, and the comment that is wrong
 - `web/src/components/OverrideControl.jsx`
 - `34-position-and-ordering.md` — what "every finding says where it is" bought
+- `CONTEXT.md` § `Display-only difference` — slice 7 only, and read it last: the
+  glossary describes the panel, so it is edited after the panel exists
 
 ## Slices
 
 In build order. **Criterion 1 is your first failing test.** Show the red before you
-write the implementation. Do not plan across all six.
+write the implementation. Do not plan across all seven.
 
 - [ ] 1 Five rows in order — Meta Title, Meta Keywords, Meta Description, Robots,
       then a rule, then Canonical — with their labels read from the shared label
@@ -95,6 +102,15 @@ write the implementation. Do not plan across all six.
       *Verschillen* list says **in de `<head>`** where a text finding says
       *onder «heading»*. A silent blank would spend what ticket 34 bought.
 - [ ] 6 Meta findings do **not** appear in the content view.
+- [ ] 7 **The glossary describes the panel this ticket shipped** — two edits to
+      `CONTEXT.md`, absorbed from ticket 100 on 2026-08-17. The `Display-only
+      difference` entry ends *"The `<head>` panel is made of these"*, which was true
+      when every head row was display only; after slices 1 to 3 three of the five rows
+      make findings, so it names **Meta Keywords and Canonical** instead. And a new
+      entry records the English-label rule: these five name the Magento admin field the
+      editor goes to in order to fix the value, so they are not translated — not as an
+      exception to the interface language, but because a field name in another system is
+      an identifier and not prose. Prose only; no number moves.
 
 ## The distortion, accepted
 

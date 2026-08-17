@@ -1,7 +1,7 @@
 # 134 — The ledger wears its tone
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-17 — merged into 133 as part B. Not built; the work is unchanged and it moved.
 Blocked by: 132 — the tones and shapes this surface asks for.
 Parent: ../map.md
 
@@ -55,3 +55,17 @@ red would read it as a claim about content rather than about their own decision.
 - The uncompared row is not coloured, deliberately: the log is saying the comparison did not run,
   not that somebody rewrote the text. A shape that gives it a tone makes the log assert something
   it refuses to assert.
+
+## Answer
+
+**Merged into [133](133-the-dashboard-wears-its-tone.md) as part B, 2026-08-17.**
+Nothing here is withdrawn and nothing is built. 133 and this ticket were the same mechanical
+migration of the same mechanism, split by surface, and no count, bar, denominator or roll-up
+moves in either — so there was no measurement gate between them to batch across. 133 now
+carries the ledger and the controls beside it as part B, with every criterion and every trap
+from this file copied across, and lands as its own commit.
+
+**The per-surface split survives the merge.** It was there so a moved screenshot baseline is
+reviewed against one screen, and 133 keeps that as a commit boundary and as a trap.
+
+Read 133. This file is kept as the record of where the work was written.

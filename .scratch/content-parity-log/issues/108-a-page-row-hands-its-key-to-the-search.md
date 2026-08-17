@@ -1,7 +1,7 @@
 # 108 — A page row hands its key to the search
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-17 — merged into 104 as part E. Not built; the work is unchanged and it moved.
 Blocked by: 103
 Parent: ../map.md
 
@@ -34,3 +34,15 @@ search have nothing to say to each other.
 - Scoping from a one-sided page is reachable from the *Eenzijdige pagina's* aside too,
   and lands on 104's explanation rather than on silence.
 - This ticket adds no new page data. Everything it needs is on the row already.
+
+## Answer
+
+**Merged into [104](104-a-scoped-search-says-which-kind-of-nothing.md) as part E, 2026-08-17.**
+Nothing here is withdrawn and nothing is built. This ticket and four others were five
+tickets over one search box — one scope value, one load-time page list, one component
+tree — and not one of them moves a count, a bar or a denominator. The runbook's rule is
+*batch freely inside a gate*, and there was no gate between them to batch across. 104 now
+carries the page row as part E, with every criterion and every trap from this file
+copied across, and lands as its own commit on 104's branch.
+
+Read 104. This file is kept as the record of where the work was written.

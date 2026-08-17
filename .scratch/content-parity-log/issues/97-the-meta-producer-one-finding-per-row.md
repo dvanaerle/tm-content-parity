@@ -219,5 +219,42 @@ class that happens to sit at 46 on this store. It is not your meta count and it 
 move. Your 46 is on `check: 'meta'`, which that command does not print at all.
 
 If ticket 93 lands first, `nl` is unaffected: all three `no-route` meta findings are on
-`be_fr` and `fr`. Ticket [99](99-measure-what-the-meta-check-added.md) states the
-whole-corpus number properly.
+`be_fr` and `fr`. The whole-corpus number is stated properly below.
+
+## The whole-corpus measurement
+
+**Absorbed from ticket 99 on 2026-08-17.** The gate above is `nl` alone, and it is the
+build's own red-green check. This is the second of the two numbers ticket 58 owes, over all
+six stores, and it is the ticket's real close. Excluding `no-route` removed findings; the
+meta classes add them. **One number would hide both**, exactly as ticket
+[33](33-directional-text-classes.md) found, so the two are measured apart and both go in the
+answer.
+
+**No extra session.** A run of the existing measurement over the six stores, and a diff
+against the baseline ticket 93 left behind. It reads `compare/measure.mjs`, ticket 93's
+recorded baseline and ticket 91's predicted table, and its tables go here and in the probe
+output — never into ticket 58.
+
+- [ ] Per store and totalled: findings added on `check: 'meta'`, and the share of shown they
+      represent. 21 put that share at **0.54%** over 373 comparable pages. The share, not
+      the raw count, is the figure to compare — the corpus is 722 now.
+- [ ] Stated beside ticket 93's `no-route` drop, as two numbers on one line, so the net
+      movement never appears without both halves.
+- [ ] The four `lost`/`added` classes fire **zero** times, or the exceptions are named by
+      page. Both sides always send a title and a description. They ship anyway, because a
+      one-sided check needs both directions and a title that disappears after a later
+      content edit is the exact defect this log exists to catch.
+- [ ] `robots-index-lost` is counted by store. 91 measured it firing **twice**, on `be` and
+      on `de` — the severe direction, where the page leaves Google. This is the one claim
+      that does not scale with the corpus: if it fires more often now, that is a finding
+      about a head and it is named.
+- [ ] **Text, link and image finding counts are unmoved** against ticket 93's baseline, on
+      every store and not just `nl`. This work adds a check; it must not disturb the other
+      three. A moved count here is a defect in the producer above, not a measurement.
+- [ ] The chips move as predicted: open differences up by most of the total, hidden noise by
+      the rest, pages-equal down.
+
+**Why this is not its own ticket.** It is `Type: measure` with no session, it is blocked by
+nothing but this ticket, and it measures exactly what this ticket produced. A build whose
+corpus-wide effect is booked in a separate tracker entry is a build that can land and sit
+unmeasured — and the runbook's rule batches freely up to a gate, which is what this is.

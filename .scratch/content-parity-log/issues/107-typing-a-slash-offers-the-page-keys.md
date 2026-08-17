@@ -1,7 +1,7 @@
 # 107 — Typing a slash offers the page keys
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-17 — merged into 104 as part D. Not built; the work is unchanged and it moved.
 Blocked by: 103
 Parent: ../map.md
 
@@ -37,3 +37,15 @@ first keystroke — including for pages the index does not contain.
 - The count of indexed pages is a number, not a list. It cannot feed this.
 - Do not fetch the index to populate suggestions. The index is large and arrives on the
   first keystroke for a different reason; the page list is already in memory.
+
+## Answer
+
+**Merged into [104](104-a-scoped-search-says-which-kind-of-nothing.md) as part D, 2026-08-17.**
+Nothing here is withdrawn and nothing is built. This ticket and four others were five
+tickets over one search box — one scope value, one load-time page list, one component
+tree — and not one of them moves a count, a bar or a denominator. The runbook's rule is
+*batch freely inside a gate*, and there was no gate between them to batch across. 104 now
+carries the key suggestions as part D, with every criterion and every trap from this file
+copied across, and lands as its own commit on 104's branch.
+
+Read 104. This file is kept as the record of where the work was written.

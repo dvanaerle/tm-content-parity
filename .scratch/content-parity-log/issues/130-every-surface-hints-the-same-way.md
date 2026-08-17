@@ -1,7 +1,7 @@
 # 130 — Every surface hints the same way
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-17 — merged into 129 as part B. Not built; the work is unchanged and it moved.
 Blocked by: 129 — the pattern a hint follows.
 Parent: ../map.md
 
@@ -46,3 +46,20 @@ regenerated is worse than one that lands in two passes.
 - Do not extend the guard to the four local `title` **props**. They are component props, not
   attributes, and a guard that cannot tell them apart will be switched off by whoever it
   first annoys.
+
+## Answer
+
+**Merged into [129](129-a-hint-is-reachable-without-a-mouse.md) as part B, 2026-08-17.**
+Nothing here is withdrawn and nothing is built. This is one pattern, one primitive and one
+guard, and **the guard cannot pass until every surface has moved** — so it had no ticket of
+its own to belong to. Ticket 124 already ruled on this exact shape: the guard it installed
+could not pass until the labels were done, so the split was *a commit per area and not a
+second ticket*.
+
+**This ticket's own reason for existing was a context window, and it says so** — *split from
+129 on size and not on principle*. That reason is honoured rather than dismissed: 129 keeps
+part B as its own commit and its own pass, with the instruction to stop at a reviewed
+baseline rather than regenerate in bulk to finish. What the merge removes is two tracker
+entries that could drift apart in the queue while the interface hints two different ways.
+
+Read 129. This file is kept as the record of where the work was written.

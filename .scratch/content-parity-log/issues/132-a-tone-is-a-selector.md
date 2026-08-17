@@ -37,7 +37,7 @@ status tone on a diff cell and getting no colour and no error.
 
 **`CHROME` and `severityTone()` stay where they are.** `CHROME`'s values are not tone-keyed —
 it is a named-chrome map, not a shape over the tone vocabulary — and `severityTone()` is logic.
-Keeping both out shrinks the blast radius of 133 and 134 without leaving anything behind.
+Keeping both out shrinks the blast radius of 133's migration without leaving anything behind.
 
 - [ ] `app.css` defines each of the eight tones and each of the shapes, in a layer, so a
       component asks for a tone and a shape rather than for a colour.
@@ -63,8 +63,9 @@ Keeping both out shrinks the blast radius of 133 and 134 without leaving anythin
 
 ## Traps
 
-- **Do not delete a map in this ticket.** Expand means both forms exist. 135 contracts, and it
-  is blocked by every migration for that reason.
+- **Do not delete a map in this ticket.** Expand means both forms exist. **133 part C**
+  contracts, and it is last in 133 for that reason. (133 absorbed 134 and 135 on 2026-08-17;
+  the contract is that ticket's part C.)
 - **Do not let the product flatten the sparse shapes.** A tidy eight-by-six grid would give
   the solid shape a solid `caution` and the cell shape six tones it must never have. The
   irregularity is the decision.
@@ -72,7 +73,7 @@ Keeping both out shrinks the blast radius of 133 and 134 without leaving anythin
   what ticket 74 removed, and its reasoning stands: a second vocabulary on top of a palette
   that already has one means only the mapping file can tell you what a name meant. Tones are
   *selectors* mapping to styleguide variables — a different object from a second set of colour
-  names, and the ADR in 135 has to say so.
+  names, and the ADR in **133 part C** has to say so.
 - Use only what 127 permits. Attribute selectors, custom properties and cascade layers are all
   Widely Available; container **style** queries — the feature that looks made for this — are
   Newly Available 2026 and refused.
