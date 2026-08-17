@@ -716,9 +716,11 @@ repeated in each:
   criterion to drop `axis`, and 39 owns the word.
 
 - [34 — Where is it? Position for every finding](issues/34-position-and-ordering.md)
-  — **All nine criteria built. Closed 2026-08-17**, `ready-for-human` for an
-  editor's eyes on a real page. Reopened 2026-08-07 for the ninth, the deep link,
-  which is now built: see "Where is it, for every row" in the ticket.
+  — **Resolved 2026-08-17. All nine criteria built, and the ninth verified in the
+  running interface by the editor**, on `nl/bamboe-vlonder` and `nl/(home)`, with no
+  defects found. Reopened 2026-08-07 for that ninth criterion, the deep link: see
+  "Where is it, for every row" in the ticket. **Closed by a hands-on pass and not by
+  a code read** — this ticket has twice been ticked in error from the source alone.
 
   **The ninth was one value meaning two things.** `anchorHeadings.production ===
   null` said *not on production* in the contract and *above the first heading* in

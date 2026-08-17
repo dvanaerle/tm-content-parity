@@ -13,10 +13,11 @@ Blocked by: [33](33-directional-text-classes.md) — the spec forbids moving
 the same rows twice, and phase 1's measurement must be settled against an
 unmoved baseline before anything else changes the comparison.
 
-Status: ready-for-human — all nine criteria built. The last one closed 2026-08-17;
-it wants an editor's eyes on a real page before it is called resolved, because the
-one thing no test here can measure is how often the browser fails to find a string
-the extractor read.
+Status: resolved 2026-08-17 — all nine criteria built, and the ninth verified in the
+running interface by the editor the same day. No defects found. **This one was closed
+by a hands-on pass and not by a code read**, which matters here: the ticket has twice
+been ticked in error from the source alone, and the one thing no test in it can measure
+is whether the browser finds a string the extractor read.
 
 Reopened on 2026-08-07 by the review of commit `3251d91..HEAD`. Eight of the nine
 criteria hold. The deep-link one does not, and it was ticked in error. See
@@ -357,6 +358,19 @@ takes a finished `href` rather than the pieces to build one. That is the honest 
 anyway: a caller has to be able to ask *is there a url at all* before it lays anything
 out, and one that could only find out by rendering would draw the frame first. A browser
 test mounts the stale shape and asserts the row renders nothing.
+
+### The editor pass, 2026-08-17
+
+Walked in the running interface on `nl/bamboe-vlonder` and `nl/(home)` — the two pages
+that carry every case between them: bare-page links, link findings aimed at their anchor
+wording, image findings aimed at their section, and one-sided rows. **No defects found.**
+
+The fragment match rate is the thing that pass was for, and it is now a **watch** rather
+than an open question: nothing was seen failing, and the failure mode is silent, so
+absence of a report is weaker evidence here than usual. If arrows start opening pages
+without scrolling, this is the ticket to reopen — and the first place to look is a string
+where the extractor and the browser disagree about a character, a curly quote or an NBSP
+or a hyphen.
 
 ### Still deferred, and now smaller
 
