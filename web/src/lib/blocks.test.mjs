@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { siblingPages } from './blocks.mjs';
+import { blockReading, siblingPages } from './blocks.mjs';
 
 /**
  * One seed row, as `crawl/seed-list.mjs` writes it: a page key and a cell per
@@ -10,7 +10,7 @@ import { siblingPages } from './blocks.mjs';
  * @param {string} page
  * @param {Record<string, string>} paths The path of each store that has the page.
  */
-const row = (page, paths) => ({
+const row = (page, paths, provenance = 'sitemap-daily') => ({
   page,
   stores: Object.fromEntries(
     ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'].map((store) => [
@@ -21,7 +21,7 @@ const row = (page, paths) => ({
             path: paths[store],
             prodUrl: `https://prod.example/${paths[store]}`,
             newUrl: `https://new.example/${paths[store]}`,
-            provenance: 'sitemap-daily',
+            provenance,
           },
     ]),
   ),
@@ -132,6 +132,62 @@ describe('the committed seed list', () => {
     expect(tally('fr')).toEqual({ pages: 123, alternate: 28, path: 92, absent: 3 });
   });
 
+  /**
+   * The page keys of one kind, on one store's reading, sorted. Sorted because the
+   * ticket fixes no order for an absent row — only the shared rows are ranked — and a
+   * test that pinned the seed file's own row order would be asserting something
+   * nobody decided.
+   */
+  const ofKind = (store, kind) =>
+    blockReading({ rows: seeds.rows, store })
+      .rows.filter((one) => one.kind === kind)
+      .map((one) => one.page)
+      .sort();
+
+  // The pages the ticket names, checked against the list git holds rather than
+  // against a fixture that agrees with itself by construction.
+  it('finds the pages the Dutch block does not share, on both sides', () => {
+    expect(ofKind('be', 'sibling-absent')).toEqual([
+      '(be)herroeping-deel-geleverd-webformulier',
+      '(be)herroeping-deel-niet-geleverd-webformulier',
+      '(be)herroeping-niet-geleverd-webformulier',
+      '(be)herroeping-webformulier-form',
+      '(be)pergola',
+    ]);
+    // `nl` has 55 that `be` has not, and these three are the ones the ticket names.
+    const absentFromBe = ofKind('nl', 'sibling-absent');
+    expect(absentFromBe).toHaveLength(55);
+    expect(absentFromBe).toContain('blog');
+    expect(absentFromBe).toContain('klantenservice');
+    expect(absentFromBe).toContain('contactformulier');
+    // And each store sees the other's five and fifty-five from its own side.
+    expect(ofKind('be', 'only-in-sibling')).toEqual(absentFromBe.slice().sort());
+    expect(ofKind('nl', 'only-in-sibling')).toHaveLength(5);
+  });
+
+  // The typo split, which is the reason a path rule needs a test on real data: the two
+  // stores spell one page two ways, so neither rule pairs them and both sides report
+  // an absence. That is the honest answer — the log must not guess that `eclairaige`
+  // was meant to be `eclairage`.
+  it('splits the French block on the two spellings of the lighting gallery', () => {
+    // `afterpay` is unprefixed because production declares a Dutch alternate for it,
+    // so it is an anchored key that `be_fr` shares with `nl` — and it still has no
+    // `fr` counterpart. The prefix on a key says how the key was made, never which
+    // store the page belongs to.
+    expect(ofKind('be_fr', 'sibling-absent')).toEqual(['(be_fr)fr/galerie/eclairage', 'afterpay']);
+    expect(ofKind('fr', 'sibling-absent')).toEqual([
+      '(fr)conditions-generales',
+      '(fr)formulaire-de-retrait',
+      '(fr)galerie/eclairaige',
+    ]);
+  });
+
+  // The census sentence, against the store it was measured on: 48 of `nl`'s 181 cells
+  // are carried over, because no sitemap declares them.
+  it('counts the 48 pages of `nl` that no sitemap declares', () => {
+    expect(blockReading({ rows: seeds.rows, store: 'nl' }).census).toEqual({ carriedOver: 48 });
+  });
+
   // A sibling is one page and the relation is symmetric, so no two pages of one store
   // may claim the same sibling. This is the failure a path rule invites — two rows
   // whose paths differ only by the prefix it strips.
@@ -142,5 +198,81 @@ describe('the committed seed list', () => {
         .map((one) => one.sibling.page);
       expect(new Set(claimed).size).toBe(claimed.length);
     }
+  });
+});
+
+describe('the block reading', () => {
+  // The two kinds the dashboard has to tell apart, and the reason it must: a page
+  // the sibling store does not have is work somebody builds, and a page both stores
+  // have is work somebody edits.
+  it('tells a page whose sibling is absent from a page both stores have', () => {
+    const rows = [
+      row('carport', { nl: 'carport', be: 'carport' }),
+      row('pergola', { be: 'pergola' }),
+    ];
+
+    expect(blockReading({ rows, store: 'be' }).rows).toEqual([
+      { page: 'carport', kind: 'shared', sibling: { page: 'carport', rule: 'alternate' } },
+      { page: 'pergola', kind: 'sibling-absent', sibling: null },
+    ]);
+  });
+
+  // The ticket's opening sentence: an editor of `be` sees which pages `nl` has that
+  // they have not. It is the opposite direction of absence from the row above, and
+  // the two must not read as one thing — `pergola` is a page `be` wrote and `nl` did
+  // not, `blog` is a page `be` has yet to build.
+  it('lists the pages the sibling has and this store has not', () => {
+    const rows = [row('pergola', { be: 'pergola' }), row('blog', { nl: 'blog' })];
+
+    expect(blockReading({ rows, store: 'be' }).rows).toEqual([
+      { page: 'pergola', kind: 'sibling-absent', sibling: null },
+      { page: 'blog', kind: 'only-in-sibling', sibling: null },
+    ]);
+    // And the mirror of it from `nl`, because the reading belongs to no one store.
+    expect(blockReading({ rows, store: 'nl' }).rows).toEqual([
+      { page: 'blog', kind: 'sibling-absent', sibling: null },
+      { page: 'pergola', kind: 'only-in-sibling', sibling: null },
+    ]);
+  });
+
+  // The reading states the side it compares, so that an editor never reads a
+  // production divergence as a migration defect. The answer is **production**, and it
+  // is a value here rather than a sentence in a component, because a sentence can
+  // drift from the comparison it describes.
+  it('says which side it compares, and the answer is production', () => {
+    const reading = blockReading({ rows: [row('carport', { be: 'carport' })], store: 'be' });
+
+    expect(reading.side).toBe('production');
+    expect(reading.store).toBe('be');
+    expect(reading.sibling).toBe('nl');
+    expect(reading.language).toBe('nl');
+  });
+
+  // The list is **not a census**, and it carries the evidence rather than only the
+  // claim. A page no sitemap declares is absent from the list entirely, and the
+  // carried-over cells are the pages that were already found that way — so the count
+  // of them is what makes "this list is not everything" a falsifiable sentence
+  // instead of a disclaimer.
+  it('says it is not a census, and counts the pages no sitemap declares', () => {
+    const rows = [
+      row('carport', { nl: 'carport', be: 'carport' }),
+      row('showrooms', { nl: 'showrooms' }, 'carried-over'),
+      row('vloeren', { nl: 'vloeren' }, 'carried-over'),
+    ];
+
+    expect(blockReading({ rows, store: 'nl' }).census).toEqual({ carriedOver: 2 });
+    // Counted in **this** store and not across the block: a carried-over cell of the
+    // sibling is not a gap in the reader's own page list.
+    expect(blockReading({ rows, store: 'be' }).census).toEqual({ carriedOver: 0 });
+  });
+
+  // A store in no block gets no reading at all, rather than an empty one. An empty
+  // reading is a panel that draws itself and says nothing, which is what "half
+  // working" looks like on `de` and `uk`.
+  it('gives a store in no block no reading at all', () => {
+    const rows = [row('carport', { de: 'carport', uk: 'carport' })];
+
+    expect(blockReading({ rows, store: 'de' })).toBe(null);
+    expect(blockReading({ rows, store: 'uk' })).toBe(null);
   });
 });

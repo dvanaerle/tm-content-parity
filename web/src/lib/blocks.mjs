@@ -11,7 +11,7 @@
  * rendered by the component.
  */
 
-import { siblingOf } from '../../../shared/language-blocks.mjs';
+import { languageOf, siblingOf } from '../../../shared/language-blocks.mjs';
 
 /** @typedef {import('../../../shared/seed-rows.mjs').SeedRow} SeedRow */
 
@@ -92,4 +92,61 @@ export function siblingPages({ rows, store }) {
     out.push({ page: row.page, sibling: found ? { page: found, rule: 'path' } : null });
   }
   return out;
+}
+
+/**
+ * @typedef {object} BlockRow
+ * @property {string} page The page key this row is about. On `only-in-sibling` it is
+ *   a key of the **sibling** store, which is the one that has the page.
+ * @property {'shared' | 'sibling-absent' | 'only-in-sibling'} kind
+ * @property {Sibling | null} sibling The matched sibling, on a `shared` row.
+ */
+
+/**
+ * The whole reading one store's dashboard draws, as values.
+ *
+ * @param {object} input
+ * @param {SeedRow[]} input.rows
+ * @param {string} input.store
+ * @returns {{ rows: BlockRow[] } | null}
+ */
+export function blockReading({ rows, store }) {
+  const other = siblingOf(store);
+  if (!other) return null;
+
+  /** @type {BlockRow[]} */
+  const mine = siblingPages({ rows, store }).map((one) => ({
+    page: one.page,
+    kind: one.sibling ? 'shared' : 'sibling-absent',
+    sibling: one.sibling,
+  }));
+
+  // The other direction of absence, and it is a different fact: a page **this** store
+  // has yet to build, against a page it wrote and the sibling did not. The two must
+  // not read as one thing, so they are two kinds and not one.
+  //
+  // It is read off the sibling's own matching rather than recomputed, so the two
+  // directions can never disagree about what counts as absent.
+  /** @type {BlockRow[]} */
+  const theirs = siblingPages({ rows, store: other })
+    .filter((one) => !one.sibling)
+    .map((one) => ({ page: one.page, kind: 'only-in-sibling', sibling: null }));
+
+  return {
+    store,
+    sibling: other,
+    language: languageOf(store),
+    // The reference side, stated rather than implied. An editor who cannot tell which
+    // side is compared reads a production divergence as a migration defect.
+    side: 'production',
+    // What makes *this list is not a census* falsifiable rather than a disclaimer. A
+    // page no sitemap declares is absent from the list entirely; the carried-over
+    // cells are the ones already found that way, and on `nl` there are 48 of 181.
+    // Counted in this store alone — a gap in the sibling's page list is not a gap in
+    // the reader's.
+    census: {
+      carriedOver: rows.filter((row) => row.stores?.[store]?.provenance === 'carried-over').length,
+    },
+    rows: [...mine, ...theirs],
+  };
 }

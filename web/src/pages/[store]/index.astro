@@ -1,9 +1,12 @@
 ---
+import BlockList from '../../components/BlockList.jsx';
 import Dashboard from '../../components/Dashboard.jsx';
 import Shell from '../../layouts/Shell.astro';
+import { blockReading } from '../../lib/blocks.mjs';
 import { storeTotals } from '../../lib/not-checked.mjs';
 import {
-  loadSummaries, notCheckedFor, regionsChangedInLog, regionsRemovedInStore, storesInLog,
+  loadSeedRows, loadSummaries, notCheckedFor, regionsChangedInLog, regionsRemovedInStore,
+  storesInLog,
 } from '../../lib/reports.mjs';
 import { STORE_NAME } from '../../lib/stores.mjs';
 
@@ -37,6 +40,13 @@ const regionsChanged = await regionsChangedInLog();
 // `storeTotals()` does the arithmetic, so the one number two people can quote
 // and mean different things by has a test (ticket 56).
 const totals = storeTotals({ pages, notChecked });
+
+// The language block, where this store is in one. `null` on `de` and `uk`, and the
+// panel then draws nothing at all rather than drawing itself empty.
+//
+// It is decided here, at build time, and handed over as a value: the panel below
+// ships no JavaScript and the browser downloads no second store's reports.
+const block = blockReading({ rows: await loadSeedRows(), store });
 ---
 
 <Shell title={`Dashboard — ${store}`} store={store}>
@@ -63,4 +73,5 @@ const totals = storeTotals({ pages, notChecked });
     regions={regions}
     regionsChanged={regionsChanged}
   />
+  <BlockList reading={block} />
 </Shell>

@@ -265,6 +265,24 @@ export async function regionsChangedInLog() {
 }
 
 /**
+ * The rows of the seed list.
+ *
+ * The block reading needs them whole, because a sibling is matched across two rows
+ * and not inside one. A missing seed file reports nothing rather than failing the
+ * build, for the reason an empty `data/reports/` builds an empty log.
+ *
+ * @returns {Promise<import('../../../shared/seed-rows.mjs').SeedRow[]>}
+ */
+export async function loadSeedRows() {
+  try {
+    return JSON.parse(await readFile(SEEDS, 'utf8')).rows ?? [];
+  } catch (error) {
+    if (/** @type {any} */ (error).code === 'ENOENT') return [];
+    throw error;
+  }
+}
+
+/**
  * Every page of this store the log found and does not check, with its reason
  * (ticket 56). Three things leave a page out and `not-checked.mjs` gives the
  * three words; this function only reads the two files they need.
