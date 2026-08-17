@@ -26,7 +26,7 @@ const finding = (id, state, extra = {}) => ({
   new: '/overkapping/',
   detail: null,
   anchorHeading: null,
-  anchorHeadings: null,
+  locations: null,
   occurrences: 1,
   score: null,
   override:

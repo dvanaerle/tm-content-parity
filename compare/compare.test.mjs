@@ -4,7 +4,7 @@ import { comparePage, newSitePathsFor, skipReason } from './30-compare.mjs';
 import { FindingCollector, median, summarise, summariseReports } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
-import { textFragmentUrl } from './locate.mjs';
+import { locationUrl, textFragmentUrl, unitLocation } from './locate.mjs';
 import { lcsPairs, mayPair, maskNumbers, similarity, tier2 } from './match.mjs';
 import { metaRows } from './meta.mjs';
 import { classifyPair, diffRows, textFindings } from './text.mjs';
@@ -1413,12 +1413,34 @@ describe('the heading a finding sits under', () => {
     const copy = findings.find(
       (finding) => finding.class === 'copy' && finding.prod === 'Antraciet en creme',
     );
-    expect(copy.anchorHeadings).toEqual({
-      production: 'Kleuren en RAL',
-      new: 'Kleuren en kleurkeuze',
+    expect(copy.locations).toEqual({
+      production: { heading: 'Kleuren en RAL', text: 'Antraciet en creme' },
+      new: { heading: 'Kleuren en kleurkeuze', text: 'Antraciet en cremewit' },
     });
     // The displayed section keeps naming production, which is the source of truth.
     expect(copy.anchorHeading).toBe('Kleuren en RAL');
+  });
+
+  it('gives a finding above the first heading a location, and not no location', () => {
+    // The 1,622. A null heading used to mean two things at once — *above the first
+    // heading* and *not on this side* — and this one was served the other's answer, so
+    // the row offered no link at all. The side is present; only its heading is absent,
+    // and the words are still there to aim at.
+    const findings = collect((collector) =>
+      textFindings(
+        diffRows(
+          prod(outline([['Antraciet en creme', 'p']])),
+          extract({ side: 'new', elements: [] }),
+        ),
+        collector,
+      ),
+    );
+
+    expect(findings[0].anchorHeading).toBe(null);
+    expect(findings[0].locations.production).toEqual({
+      heading: null,
+      text: 'Antraciet en creme',
+    });
   });
 
   it('offers no heading for a side the finding is not on', () => {
@@ -1441,7 +1463,10 @@ describe('the heading a finding sits under', () => {
     // be scrolled to, so that side offers nothing rather than a link to the wrong place.
     // The renamed heading is a finding of its own here, and it is on both sides.
     const dropped = findings.find((finding) => finding.class === 'text-missing');
-    expect(dropped.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: null });
+    expect(dropped.locations).toEqual({
+      production: { heading: 'Kleuren en RAL', text: 'Antraciet en creme' },
+      new: null,
+    });
   });
 
   it('positions an image finding, so "which of the eleven images" has an answer', () => {
@@ -1505,7 +1530,12 @@ describe('the heading a finding sits under', () => {
     );
 
     const retarget = findings.find((finding) => finding.class === 'link-target');
-    expect(retarget.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: 'Montage' });
+    // The same anchor wording on both sides — that is what paired them — under two
+    // different headings, so each link is aimed with its own side's section.
+    expect(retarget.locations).toEqual({
+      production: { heading: 'Kleuren en RAL', text: 'Bekijk carports' },
+      new: { heading: 'Montage', text: 'Bekijk carports' },
+    });
   });
 
   it('gives a one-sided link finding no heading on the side it is not on', () => {
@@ -1529,9 +1559,23 @@ describe('the heading a finding sits under', () => {
     );
 
     // The comparative pass reports what production lost before what the new site gained.
-    expect(findings.map((finding) => [finding.class, finding.anchorHeadings])).toEqual([
-      ['missing-link', { production: 'Kleuren en RAL', new: null }],
-      ['extra-link', { production: null, new: 'Montage' }],
+    // A link finding aims at its **anchor wording**, which is what a reader sees on the
+    // page — its target is a folded key and no browser can match that against anything.
+    expect(findings.map((finding) => [finding.class, finding.locations])).toEqual([
+      [
+        'missing-link',
+        {
+          production: { heading: 'Kleuren en RAL', text: 'Carports' },
+          new: null,
+        },
+      ],
+      [
+        'extra-link',
+        {
+          production: null,
+          new: { heading: 'Montage', text: 'Veranda dak' },
+        },
+      ],
     ]);
   });
 
@@ -1557,8 +1601,14 @@ describe('the heading a finding sits under', () => {
       ),
     );
 
-    expect(findings.map((finding) => [finding.class, finding.anchorHeadings])).toEqual([
-      ['alt-changed', { production: 'Kleuren en RAL', new: 'Montage' }],
+    expect(findings.map((finding) => [finding.class, finding.locations])).toEqual([
+      [
+        'alt-changed',
+        {
+          production: { heading: 'Kleuren en RAL', text: null },
+          new: { heading: 'Montage', text: null },
+        },
+      ],
     ]);
   });
 
@@ -1578,9 +1628,12 @@ describe('the heading a finding sits under', () => {
       ),
     );
 
-    expect(findings.map((finding) => [finding.class, finding.anchorHeadings])).toEqual([
-      ['image-missing', { production: 'Kleuren en RAL', new: null }],
-      ['image-added', { production: null, new: 'Montage' }],
+    // An image finding carries no text to aim at. Its key is a basename and its alt is
+    // an attribute, so neither is rendered words a browser could match — the section
+    // heading is as close as this tab can get, and `text` says so by being null.
+    expect(findings.map((finding) => [finding.class, finding.locations])).toEqual([
+      ['image-missing', { production: { heading: 'Kleuren en RAL', text: null }, new: null }],
+      ['image-added', { production: null, new: { heading: 'Montage', text: null } }],
     ]);
   });
 
@@ -1620,7 +1673,10 @@ describe('the heading a finding sits under', () => {
     );
 
     const redirect = findings.find((finding) => finding.class === 'redirect');
-    expect(redirect.anchorHeadings).toEqual({ production: 'Kleuren en RAL', new: 'Dakgoot' });
+    expect(redirect.locations).toEqual({
+      production: { heading: 'Kleuren en RAL', text: 'Carports' },
+      new: { heading: 'Dakgoot', text: 'Carports' },
+    });
   });
 
   it('stays out of the finding id, so a heading edit never detaches a dismissal', () => {
@@ -1669,6 +1725,49 @@ describe('textFragmentUrl', () => {
     expect(textFragmentUrl(PROD, '')).toBe(null);
     expect(textFragmentUrl(PROD, '   ')).toBe(null);
     expect(textFragmentUrl(null, 'hier')).toBe(null);
+  });
+});
+
+describe('locationUrl', () => {
+  const PROD = 'https://www.tuinmaximaal.nl/overkappingen';
+
+  it('aims at the words, which is the closest a link can get', () => {
+    // A `link-target` finding knows the anchor a reader sees. The heading is also in
+    // hand and is not used: the words are nearer.
+    const url = locationUrl(PROD, { heading: 'Kleuren en RAL', text: 'Bekijk carports' });
+    expect(url).toBe(`${PROD}#:~:text=Bekijk%20carports`);
+  });
+
+  it('falls back to the section, for a finding whose own text is not on the page', () => {
+    // An image key and a link target are not words a browser can match, so the section
+    // heading is as close as those two tabs can get.
+    expect(locationUrl(PROD, { heading: 'Montage', text: null })).toBe(`${PROD}#:~:text=Montage`);
+  });
+
+  it('opens the page itself for a finding above the first heading', () => {
+    // The 1,622 findings that used to offer no link at all. They sit in the opening
+    // block by definition, so the top of the page is near enough — and a bare url
+    // cannot be a dead one, which a fragment matching nothing silently is.
+    expect(locationUrl(PROD, { heading: null, text: null })).toBe(PROD);
+  });
+
+  it('offers nothing for a side the finding is not on', () => {
+    // Absence is the side's own answer. A `missing-link` has no position on the new
+    // site, so the alternative to no link is a link to the wrong place.
+    expect(locationUrl(PROD, null)).toBe(null);
+    // A report written before this field says `undefined`, and there is no honest
+    // answer to give for it. Deliberately not a fallback to the page: that would put a
+    // link on the side a one-sided finding is not on, which is the bug this replaced.
+    expect(locationUrl(PROD, undefined)).toBe(null);
+    expect(locationUrl(null, { heading: 'Montage', text: null })).toBe(null);
+  });
+
+  it('reads a content unit as its own words, with no use for the heading', () => {
+    expect(unitLocation(unit('Antraciet en creme'))).toEqual({
+      heading: null,
+      text: 'Antraciet en creme',
+    });
+    expect(unitLocation(null)).toBe(null);
   });
 });
 

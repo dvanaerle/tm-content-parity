@@ -53,7 +53,13 @@ function mount(props) {
 const links = () =>
   [...document.querySelectorAll('a')].map((anchor) => {
     const [url, fragment] = anchor.getAttribute('href').split('#:~:text=');
-    return { url, text: fragment.split(',').map(decodeURIComponent), title: anchor.title };
+    // A link with no fragment opens the page itself, which is what a finding above the
+    // first heading with no words of its own gets. It asks for no text, so it names none.
+    return {
+      url,
+      text: fragment ? fragment.split(',').map(decodeURIComponent) : [],
+      title: anchor.title,
+    };
   });
 
 let unmount = () => {};
@@ -64,7 +70,10 @@ describe('the deep links on a finding row', () => {
     // The finding is the changed paragraph under the renamed heading.
     unmount = mount({
       anchorHeading: 'Kleuren en RAL',
-      anchorHeadings: { production: 'Kleuren en RAL', new: 'Kleuren en kleurkeuze' },
+      locations: {
+        production: { heading: 'Kleuren en RAL', text: 'Antraciet en creme' },
+        new: { heading: 'Kleuren en kleurkeuze', text: 'Antraciet en cremewit' },
+      },
     });
 
     const found = links();
@@ -80,12 +89,34 @@ describe('the deep links on a finding row', () => {
     }
   });
 
+  it('still offers both links for a finding that sits above the first heading', () => {
+    // The 1,622 findings that used to render nothing at all: `Section` gated the whole
+    // block on the heading, so a finding above the page's first one lost its links
+    // along with its section name. It has words of its own, and they are what the link
+    // was always meant to aim at.
+    unmount = mount({
+      anchorHeading: null,
+      locations: {
+        production: { heading: null, text: 'Onze overkappingen' },
+        new: { heading: null, text: 'Onze overkappingen' },
+      },
+    });
+
+    expect(links().map((link) => link.url)).toEqual([PROD_URL, NEW_URL]);
+    // No section to name, so the row says nothing about one rather than saying `under
+    // “null”`.
+    expect(document.body.textContent).not.toContain('under');
+  });
+
   it('offers no link for a side the finding is not on', () => {
     // A paragraph production has and the new site does not. The row still names the
     // section it was in, because that is where an editor goes looking for it.
     unmount = mount({
       anchorHeading: 'Kleuren en RAL',
-      anchorHeadings: { production: 'Kleuren en RAL', new: null },
+      locations: {
+        production: { heading: 'Kleuren en RAL', text: 'Antraciet en creme' },
+        new: null,
+      },
     });
 
     expect(links().map((link) => link.url)).toEqual([PROD_URL]);

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
+import { unitLocation } from '../../../compare/locate.mjs';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
@@ -522,13 +523,17 @@ function Row({ row, control, sides, landed }) {
         prodPrefix={
           <>
             <Tag unit={row.prod} />
-            <Locate url={sides.production.url} text={row.prod?.raw} side="production" />
+            <Locate
+              url={sides.production.url}
+              location={unitLocation(row.prod)}
+              side="production"
+            />
           </>
         }
         newPrefix={
           <>
             <Tag unit={row.new} />
-            <Locate url={sides.new.url} text={row.new?.raw} side="the new site" />
+            <Locate url={sides.new.url} location={unitLocation(row.new)} side="the new site" />
           </>
         }
         strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}

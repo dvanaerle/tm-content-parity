@@ -154,13 +154,34 @@ export {
  */
 
 /**
- * A section heading per side, `null` where the finding is not on that side at all — a
+ * Where a finding is on **one** side, and what a link should aim at to get there.
+ *
+ * The two fields are tried in order, best first. `text` is the finding's own literal
+ * words as that side renders them — the closest a link can get. `heading` is the
+ * section it sits in, which is as close as a link target or an image key can get,
+ * because neither is words on the page. When both are null the link opens the page
+ * with no fragment, which is what a finding above the page's first heading gets: it
+ * is in the opening block by definition, so the top of the page is near enough, and
+ * a bare url can never be a dead one.
+ *
+ * @typedef {object} FindingLocation
+ * @property {string | null} heading  The nearest heading before it, this side's wording.
+ * @property {string | null} text     Its own words, literal — never the normalisation.
+ */
+
+/**
+ * One location per side, `null` where the finding is not on that side **at all** — a
  * paragraph production has and the new site does not is not on the new site to be
  * scrolled to, so that side offers no link rather than a link to the wrong place.
  *
- * @typedef {object} AnchorHeadings
- * @property {string | null} production
- * @property {string | null} new
+ * That distinction is why this replaced a bare pair of headings. A null heading meant
+ * two different things at once — *not on this side* and *above the first heading* —
+ * and the second reading was served the first's answer, so 1,622 findings offered no
+ * link at all. The side entry now carries absence and the fields carry precision.
+ *
+ * @typedef {object} FindingLocations
+ * @property {FindingLocation | null} production
+ * @property {FindingLocation | null} new
  */
 
 /**
@@ -187,19 +208,19 @@ export {
  *                                  editor's dismissal of the words below it.
  *                                  Named in full because `anchor` alone is the `<a>`
  *                                  element everywhere else. See `CONTEXT.md`.
- * @property {AnchorHeadings} anchorHeadings
- *                                  The same section, as **each side words it**. A row
- *                                  offers a deep link per side, and a link opens a page
- *                                  at some text, so the text it carries has to be on the
- *                                  page it opens. One heading could not do that: where
- *                                  the new site reworded the heading, the side that did
- *                                  not supply it got a fragment matching nothing —
- *                                  which scrolls nowhere and reports no error, so a dead
- *                                  link and a live one looked the same until clicked.
- *                                  `anchorHeading` above is still the section's *name*,
- *                                  production-preferred, and is what the row displays and
- *                                  what a mute keys on. These two are for aiming the
- *                                  links. **Not part of the id or the grouping key**, for
+ * @property {FindingLocations} locations
+ *                                  Where the finding is **on each side**, for aiming the
+ *                                  two deep links. A row offers a link per side, and a
+ *                                  link opens a page at some text, so the text it carries
+ *                                  has to be on the page it opens. One shared heading
+ *                                  could not do that: where the new site reworded the
+ *                                  heading, the side that did not supply it got a fragment
+ *                                  matching nothing — which scrolls nowhere and reports no
+ *                                  error, so a dead link and a live one looked the same
+ *                                  until clicked. `anchorHeading` above is still the
+ *                                  section's *name*, production-preferred, and is what the
+ *                                  row displays and what a mute keys on. This is for
+ *                                  aiming. **Not part of the id or the grouping key**, for
  *                                  the same reason `anchorHeading` is not.
  * @property {number} occurrences   Not part of the id.
  * @property {number | null} score  The similarity score. On `copy` findings only.

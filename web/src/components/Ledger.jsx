@@ -509,11 +509,13 @@ const FindingRow = ({ finding, focus, control, sides }) => {
         <ClassPill class={finding.class} />
         <Detail detail={finding.detail} />
         <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
-        {/* A target key and an alt text are not words on the page, so the
-            heading above them is the only thing a browser can scroll to. */}
+        {/* A link finding aims at its anchor wording, which a reader does see. An
+            image key and an alt text are not words on the page, so an image finding
+            falls back to the heading above it — and to the page itself where it has
+            neither, rather than to no link at all. */}
         <Section
           anchorHeading={finding.anchorHeading}
-          anchorHeadings={finding.anchorHeadings}
+          locations={finding.locations}
           sides={sides}
         />
         {/* The state pill is still here, inside the bucket. A bucket summarises; it does

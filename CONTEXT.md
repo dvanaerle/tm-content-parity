@@ -202,6 +202,15 @@ element any more: it folds the links inside it. Both the word and the rule are g
   `anchor`: on its own that word is the `<a>` element, which the extractor and the
   links check both talk about. Two meanings for one word is what this list exists
   to stop.
+- **Location** — where a finding is on **one** side, as `{ heading, text }`, and what
+  its deep link aims at: its own words where it has words on the page, the anchor
+  heading where it does not, the bare page where it has neither. A finding carries a
+  pair of them as `locations`, and the side it is not on is `null` — which is the whole
+  point of the shape. A bare pair of headings could not say the difference between *not
+  on this side* and *above the first heading*, so it gave the second the first's answer
+  and 1,622 rows offered no link at all. **Absence is the side entry; precision is its
+  fields.** It is not a *position*: that word is the document-order index a location is
+  derived from.
 
 ## The interface
 

@@ -52,11 +52,16 @@ export function compareImages(production, next, collector) {
   for (const [key, prod] of prodImages) {
     const image = newImages.get(key);
     const anchorHeading = prodHeading(prod.index);
-    // The same section as each side words it. An image the new site does not have is
-    // not there to be scrolled to, so that side offers no heading and so no link.
-    const anchorHeadings = {
-      production: anchorHeading,
-      new: image ? newHeading(image.index) : null,
+    // Where the finding is on each side. An image the new site does not have is not
+    // there to be scrolled to, so that side is `null` and offers no link.
+    //
+    // `text` is null throughout this check, and that is the honest answer rather than a
+    // gap: an image finding has no words on the page. Its key is a basename and its alt
+    // is an attribute, so a text fragment built from either would match nothing and
+    // scroll nowhere in silence. The section heading is as close as this tab can get.
+    const locations = {
+      production: { heading: anchorHeading, text: null },
+      new: image ? { heading: newHeading(image.index), text: null } : null,
     };
 
     if (!image) {
@@ -65,7 +70,7 @@ export function compareImages(production, next, collector) {
         prod: key,
         new: null,
         anchorHeading,
-        anchorHeadings,
+        locations,
       });
       continue;
     }
@@ -78,7 +83,7 @@ export function compareImages(production, next, collector) {
     if (prodAlt === newAlt) continue;
 
     if (prodAlt && !newAlt) {
-      collector.add({ class: 'alt-lost', prod: prodAlt, new: null, anchorHeading, anchorHeadings });
+      collector.add({ class: 'alt-lost', prod: prodAlt, new: null, anchorHeading, locations });
       continue;
     }
     // The new site gained an alt where production had none. Production is the
@@ -95,7 +100,7 @@ export function compareImages(production, next, collector) {
       prod: prodAlt,
       new: newAlt,
       anchorHeading,
-      anchorHeadings,
+      locations,
     });
   }
 
@@ -108,7 +113,7 @@ export function compareImages(production, next, collector) {
       prod: null,
       new: key,
       anchorHeading: newHeading(image.index),
-      anchorHeadings: { production: null, new: newHeading(image.index) },
+      locations: { production: null, new: { heading: newHeading(image.index), text: null } },
     });
   }
 }

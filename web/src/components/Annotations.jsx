@@ -1,5 +1,5 @@
 import { Badge } from './ui/badge.jsx';
-import { textFragmentUrl } from '../../../compare/locate.mjs';
+import { locationUrl } from '../../../compare/locate.mjs';
 
 /**
  * The small marks beside a difference: its tag, what changed, where it is on the
@@ -32,34 +32,47 @@ export const Detail = ({ detail }) =>
 
 /**
  * Ticket 34. A finding reading `hier` or `carports` used to send an editor hunting
- * through the page by eye. This is the section it sits in: the nearest heading
- * before it in document order, which is what the compare stage recorded.
+ * through the page by eye. This says where it is: the section it sits in, and a link
+ * per side that opens the live page there.
  *
- * With `sides` it also carries the two deep links, for a finding whose own text is
- * not words on the page — a link target and an image key are not there to scroll
- * to. A content row does not pass them, because its own cells carry a link to the
- * exact words, which is closer.
+ * **The section and the links are two separate things, and this used to treat them as
+ * one.** The whole block was gated on there being a heading, so the 1,622 findings
+ * that sit above their page's first heading lost their links along with their section
+ * name — and a finding with no heading is precisely the one an editor cannot find by
+ * eye. Now the words render when there is a section to name and each link renders when
+ * that side has a position, independently.
  *
- * Each link is aimed with **its own side's** wording of the section, which is why
- * `anchorHeadings` is a pair and not the one string displayed beside it. Both links
- * were once built from the displayed heading, and on a page where the new site
- * reworded that heading the new-site fragment matched nothing: it scrolled nowhere
- * and reported no error, so a dead link looked exactly like a live one. A side the
- * finding is not on has no heading and offers no link at all — there is no position
- * there to open.
+ * Each link is aimed with **its own side's** location, which is why `locations` is a
+ * pair and not the one string displayed beside it. Both links were once built from the
+ * displayed heading, and on a page where the new site reworded that heading the
+ * new-site fragment matched nothing: it scrolled nowhere and reported no error, so a
+ * dead link looked exactly like a live one. A side the finding is not on has no
+ * location at all and offers no link — there is no position there to open.
+ *
+ * A content row passes no `sides`, because its own cells carry a link to the exact
+ * words, which is closer than anything this could offer.
  */
-export const Section = ({ anchorHeading, anchorHeadings = null, sides = null }) =>
-  anchorHeading ? (
+export const Section = ({ anchorHeading, locations = null, sides = null }) => {
+  const production = sides && (
+    <Locate url={sides.production.url} location={locations?.production} side="production" />
+  );
+  const next = sides && (
+    <Locate url={sides.new.url} location={locations?.new} side="the new site" />
+  );
+  if (!anchorHeading && !production && !next) return null;
+
+  return (
     <div className="mt-1 flex items-baseline gap-1 text-xs text-muted-foreground">
-      <span className="truncate" title={anchorHeading}>
-        under “{anchorHeading}”
-      </span>
-      {sides && (
-        <Locate url={sides.production.url} text={anchorHeadings?.production} side="production" />
+      {anchorHeading && (
+        <span className="truncate" title={anchorHeading}>
+          under “{anchorHeading}”
+        </span>
       )}
-      {sides && <Locate url={sides.new.url} text={anchorHeadings?.new} side="the new site" />}
+      {production}
+      {next}
     </div>
-  ) : null;
+  );
+};
 
 /**
  * One rename repeated six times is one finding, and the tick acts on all six. The
@@ -84,13 +97,17 @@ export const onePageTitle = (count) =>
   `This finding is ${count} times on the page. ` + `One tick closes all ${count}.`;
 
 /**
- * Opens the live page scrolled to this text, with a `#:~:text=` fragment the
- * browser resolves against what it rendered. That is why it takes the **literal**
- * text and never the normalised one: tier 1 folds curly quotes, NBSP and dashes,
- * and a folded string is not on the page to be found.
+ * Opens the live page as close to the finding as this side can get: its own words
+ * where it has them, the section heading where it does not, and the bare page where
+ * it has neither. `locationUrl()` holds that order, so the compare stage and the
+ * screen cannot disagree about it.
+ *
+ * The fragment is matched by the browser against what it **rendered**, which is why
+ * a location carries the literal text and never the normalised one: tier 1 folds
+ * curly quotes, NBSP and dashes, and a folded string is not on the page to be found.
  */
-export function Locate({ url, text, side }) {
-  const href = textFragmentUrl(url, text);
+export function Locate({ url, location, side }) {
+  const href = locationUrl(url, location);
   if (!href) return null;
 
   return (

@@ -13,7 +13,10 @@ Blocked by: [33](33-directional-text-classes.md) — the spec forbids moving
 the same rows twice, and phase 1's measurement must be settled against an
 unmoved baseline before anything else changes the comparison.
 
-Status: ready-for-agent
+Status: ready-for-human — all nine criteria built. The last one closed 2026-08-17;
+it wants an editor's eyes on a real page before it is called resolved, because the
+one thing no test here can measure is how often the browser fails to find a string
+the extractor read.
 
 Reopened on 2026-08-07 by the review of commit `3251d91..HEAD`. Eight of the nine
 criteria hold. The deep-link one does not, and it was ticked in error. See
@@ -46,8 +49,9 @@ criteria hold. The deep-link one does not, and it was ticked in error. See
       finding id, so no id moves and no override detaches.
 - [x] A finding carries its **anchor heading** — the nearest heading before it in
       document order, null when it precedes every heading.
-- [ ] Every finding row offers a link that scrolls the live page to its text, for
-      production and for the new site.
+- [x] Every finding row offers a link that scrolls the live page to its text, for
+      production and for the new site. **Closed 2026-08-17; see "Where is it, for
+      every row" below.**
 - [x] A finding with more than one occurrence says so on the row.
 - [x] **The row-ordering defect is fixed.** A new-only row currently sorts by its
       index in the *new* document compared against *production* indices — badly
@@ -255,3 +259,89 @@ tiebreakers and the order came out right by accident. The base is now one past t
 last production element, which is what "the additions follow the whole of
 production" means as a number. No behaviour changed — this was a defect in the
 reason, not in the result.
+
+## Where is it, for every row — 2026-08-17
+
+The ninth criterion is closed. It stood open on a decision the ticket had deferred to
+"a ticket of its own" that nobody ever wrote, and the map recorded it as one of three
+items wanting a human. The decision was taken with the user before any code: **a
+finding with no anchor heading offers the page itself**, and a link aims at the
+finding rather than at its section wherever the finding has words on the page.
+
+### The root cause was one value meaning two things
+
+`anchorHeadings.production === null` said *the finding is not on production* in
+`contract.mjs` and *the position precedes every heading* in `anchorHeadingFor()`. The
+second reading was served the first's answer, so a finding above its page's first
+heading was treated as a finding that does not exist on that side — and lost both
+links. That is why 1,622 rows rendered nothing, and no amount of work in `locate.mjs`
+could have fixed it: the field could not express the case.
+
+`anchorHeadings` is therefore replaced by **`locations`**, a pair of
+`{ heading, text } | null`. **Absence is the side entry; precision is its fields.** A
+side the finding is not on is `null` and offers no link, which keeps the 2026-08-13
+decision intact. A side it is on always has a location, even when both fields are
+null.
+
+### The link aims three ways, best first
+
+`locationUrl()` in `compare/locate.mjs` holds the order, so the compare stage and the
+screen cannot disagree about it:
+
+| | aims at | why |
+|---|---|---|
+| text findings | **its own words**, literal `raw` | nearest possible; the words are on the page |
+| link findings | **the anchor wording**, `link.text` | a target is a folded key, and no browser matches that |
+| image findings | the **section heading** | a basename and an `alt` are not rendered words |
+| no heading either | the **bare page url** | it is in the opening block by definition, and a bare url is never a dead one |
+
+That closes the second unmet point as well: Links no longer points at the heading. Only
+Images still does, and that is now recorded as the honest answer rather than a gap —
+`text` is null there on purpose, because an image finding has nothing on the page to
+match.
+
+`Section` no longer gates the links on the heading. The section **name** renders when
+there is a section to name, and each link renders when that side has a position. They
+were one thing and are two.
+
+### Measured, on the regenerated reports
+
+816 pages, 722 comparable, 41,049 findings.
+
+| | |
+|---|---|
+| rows offering **no link at all**, before | **1,522** |
+| rows offering no link at all, now | **368** |
+| links on the page, before → now | 48,010 → **49,460** |
+| sides aimed at the finding's own words | 36,761 |
+| sides aimed at the section heading | 12,154 |
+| sides aimed at the bare page | 545 |
+| sides with no link, because the finding is not there | 32,638 |
+
+**The 368 that remain are all `meta/no-declared-alternate`**, and they are correct.
+A meta finding is about the `<head>`; it renders in `MetaTable`, which never called
+`Section`, and there is no position in the body to scroll to. Every row that has a
+position on the page now offers a link.
+
+### Notes for whoever ships this
+
+- **The reports were regenerated** as part of this change, and the build was run: 823
+  pages. The trap the previous section names still applies to anyone rebuilding from an
+  older extract — `Section` reads `locations`, and against a stale report both links
+  vanish silently. A fallback to `anchorHeading` is still refused, and now for a second
+  reason: it could not tell "not on this side" from "above the first heading" either,
+  which is the bug this replaced.
+- **`links.mjs`'s unreachable branch is gone** with the rewrite of that call site: the
+  `redirect` location reads `counterpart` under the same guard that already required it.
+- The suite is **902 green**, including the three browser tests on `Section`. The new
+  one mounts a finding with no heading and asserts two links come back — it fails with
+  zero links against the previous component, which is the defect it exists to catch.
+
+### Still deferred, and now smaller
+
+Nothing here changes **how often a text fragment actually matches**. The browser
+matches against what it rendered, and `textFragmentUrl()` deliberately takes the
+literal text and never the tier-1 normalisation. 36,761 sides now aim at their own
+words rather than at a heading, so the exposure is larger than it was — but a fragment
+that fails to match now degrades to a page that opens at the top rather than to a link
+that was never there. Watch it on the first editor pass.

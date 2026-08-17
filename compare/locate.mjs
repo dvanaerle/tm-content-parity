@@ -82,3 +82,40 @@ export function textFragmentUrl(url, text) {
  * @param {string[]} words
  */
 const term = (words) => encodeURIComponent(words.join(' ')).replaceAll('-', '%2D');
+
+/**
+ * The url a row's arrow opens for **one** side: as close to the finding as that side
+ * can get, and never nothing.
+ *
+ * Three answers, best first. The finding's own words, where it has words on the page
+ * — a text finding does, and so does a link, whose anchor wording is what a reader
+ * sees. Failing that the section heading, which is as close as a link *target* or an
+ * image *key* can get, because neither is on the page to be matched. Failing both,
+ * the bare page url: a finding with no heading sits above the page's first one, so it
+ * is in the opening block and the top of the page is near enough.
+ *
+ * The bare url is the floor rather than the old behaviour — no link at all — because
+ * a row that offers nothing tells the editor nothing, while a page url is always
+ * true. What it must **not** do is offer a link for a side the finding is not on, and
+ * that is why the whole location is `null` there rather than its fields: absence is
+ * the side's answer, not a missing string.
+ *
+ * @param {string | null | undefined} url  The live page on this side.
+ * @param {import('./contract.mjs').FindingLocation | null | undefined} location
+ * @returns {string | null} `null` when the finding is not on this side, or when the
+ *   report predates this field and there is no honest answer to give.
+ */
+export function locationUrl(url, location) {
+  if (!url || !location) return null;
+  return textFragmentUrl(url, location.text) ?? textFragmentUrl(url, location.heading) ?? url;
+}
+
+/**
+ * A content unit's own location. The content view aims at the words in the cell it is
+ * beside, so it has no use for the heading — the words are already the closest thing
+ * there is.
+ *
+ * @param {import('./contract.mjs').ContentUnit | null | undefined} unit
+ * @returns {import('./contract.mjs').FindingLocation | null}
+ */
+export const unitLocation = (unit) => (unit ? { heading: null, text: unit.raw } : null);

@@ -36,8 +36,8 @@ export const PROMO =
  * @property {import('./contract.mjs').ContentUnit | null} new
  * @property {number | null} score
  * @property {string | null} [anchorHeading]  The heading this position sits under (ticket 34).
- * @property {import('./contract.mjs').AnchorHeadings} [anchorHeadings]  That heading as
- *                                            each side words it, for the two deep links.
+ * @property {import('./contract.mjs').FindingLocations} [locations]  Where the position
+ *                                            is on each side, for the two deep links.
  */
 
 /**
@@ -209,17 +209,22 @@ export function diffRows(production, next) {
   const prodHeading = anchorHeadingFor(prodUnits);
   const newHeading = anchorHeadingFor(newUnits);
   for (const row of sorted) {
-    // Each side's own wording of the section, for the deep link that opens **that**
-    // side. A row is on one side or both, and the side it is not on gets `null`: there
-    // is no position there to scroll to, and a link built from the other side's heading
-    // would name text the page does not contain and scroll nowhere in silence.
-    row.anchorHeadings = {
-      production: row.prod ? prodHeading(row.prod.index) : null,
-      new: row.new ? newHeading(row.new.index) : null,
+    // Where the row is on each side, for the deep link that opens **that** side. A row
+    // is on one side or both, and the side it is not on gets `null`: there is no
+    // position there to scroll to, and a link built from the other side's heading would
+    // name text the page does not contain and scroll nowhere in silence.
+    //
+    // Text is the one check whose finding has words on the page, so it is the one that
+    // fills `text` — and with the literal `raw`, never `norm`. The browser matches a
+    // fragment against what it **rendered**, and tier 1 folds curly quotes, NBSP and
+    // dashes deliberately, so a normalised string is not there to be found.
+    row.locations = {
+      production: row.prod ? { heading: prodHeading(row.prod.index), text: row.prod.raw } : null,
+      new: row.new ? { heading: newHeading(row.new.index), text: row.new.raw } : null,
     };
     // The section's name, which the row displays and a mute keys on. Production is the
     // source of truth, so it names the section wherever it has one.
-    row.anchorHeading = row.prod ? row.anchorHeadings.production : row.anchorHeadings.new;
+    row.anchorHeading = (row.prod ? row.locations.production : row.locations.new).heading;
   }
   return sorted;
 }
@@ -314,7 +319,7 @@ export function textFindings(rows, collector) {
       // same id as an `h2` → `h4`. The detail is what changed.
       detail: tagChange(row),
       anchorHeading: row.anchorHeading ?? null,
-      anchorHeadings: row.anchorHeadings ?? { production: null, new: null },
+      locations: row.locations ?? { production: null, new: null },
       score: row.score,
     });
   }

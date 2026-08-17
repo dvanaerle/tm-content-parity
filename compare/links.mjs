@@ -81,11 +81,18 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
   const prodHeading = anchorHeadingFor(production.elements);
   const newHeading = anchorHeadingFor(next.elements);
 
-  // The same section as each side words it, for the two deep links a row offers. A
-  // link the other side does not have is not there to be scrolled to, so that side
-  // gets `null` and offers no link — rather than one naming text it does not contain.
-  const onNewOnly = (heading) => ({ production: null, new: heading });
-  const onProdOnly = (heading) => ({ production: heading, new: null });
+  // Where the finding is on each side, for the two deep links a row offers. A link the
+  // other side does not have is not there to be scrolled to, so that side gets `null`
+  // and offers no link — rather than one naming text it does not contain.
+  //
+  // The text is the link's **anchor wording**, which is what a reader sees and what a
+  // browser can match. Its target is a folded key (`LinkRecord.key`) and its url is not
+  // on the page as words at all, so neither could aim anything. Where a link has no
+  // wording — an image wrapped in an anchor — `text` falls null and the section heading
+  // takes over, which is what this check could offer before.
+  const at = (link, heading) => ({ heading, text: link.text || null });
+  const onNewOnly = (link, heading) => ({ production: null, new: at(link, heading) });
+  const onProdOnly = (link, heading) => ({ production: at(link, heading), new: null });
 
   // --- Absolute checks on the new site -----------------------------------
   // These run first, because a leaked or cross-store link is already fully
@@ -111,7 +118,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
         prod: null,
         new: link.key,
         anchorHeading,
-        anchorHeadings: onNewOnly(anchorHeading),
+        locations: onNewOnly(link, anchorHeading),
       });
       explained.add(link.key);
     }
@@ -124,7 +131,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
         prod: null,
         new: link.key,
         anchorHeading,
-        anchorHeadings: onNewOnly(anchorHeading),
+        locations: onNewOnly(link, anchorHeading),
       });
       explained.add(link.key);
     }
@@ -142,7 +149,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
         prod: null,
         new: link.key,
         anchorHeading,
-        anchorHeadings: onNewOnly(anchorHeading),
+        locations: onNewOnly(link, anchorHeading),
       });
       continue;
     }
@@ -157,9 +164,12 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
           prod: counterpart?.key ?? null,
           new: link.key,
           anchorHeading,
-          anchorHeadings: {
-            production: counterpart ? prodHeading(counterpart.index) : null,
-            new: anchorHeading,
+          // `redirect` is walked over the new site's links, so production's side comes
+          // from the counterpart it looked up rather than from the link in hand. The
+          // two carry the same target and their own wording of it.
+          locations: {
+            production: counterpart ? at(counterpart, prodHeading(counterpart.index)) : null,
+            new: at(link, anchorHeading),
           },
         });
       }
@@ -181,7 +191,10 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
       new: newLink.key,
       anchorHeading: prodHeading(prodLink.index),
       // The one class here that is on both sides, so it is the one that gets two links.
-      anchorHeadings: { production: prodHeading(prodLink.index), new: newHeading(newLink.index) },
+      locations: {
+        production: at(prodLink, prodHeading(prodLink.index)),
+        new: at(newLink, newHeading(newLink.index)),
+      },
     });
     retargeted.add(prodLink.key);
     retargeted.add(newLink.key);
@@ -198,7 +211,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
       prod: key,
       new: null,
       anchorHeading: prodHeading(link.index),
-      anchorHeadings: onProdOnly(prodHeading(link.index)),
+      locations: onProdOnly(link, prodHeading(link.index)),
     });
   }
 
@@ -211,7 +224,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
       prod: null,
       new: key,
       anchorHeading: newHeading(link.index),
-      anchorHeadings: onNewOnly(newHeading(link.index)),
+      locations: onNewOnly(link, newHeading(link.index)),
     });
   }
 }
