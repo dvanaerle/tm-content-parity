@@ -233,11 +233,15 @@ because editing them is pointless — which covers the shadcn components under
 fixture is shaped as it is already qualifies under *a reason*; adding a named exception for it
 would be read as a licence.
 
-**The CI gap is fixed by running the script that already exists.** A workflow runs
-`npm run lint` on push and on pull request and fails on a non-zero exit. Whether the tree is
-currently clean under `oxlint .` is checked first: if it is not, the failures are fixed — or
-the rules producing them argued down — in a commit before the workflow lands, so the workflow
-does not arrive red.
+**The CI gap is fixed by running the script that already exists, and the run denies warnings.**
+A workflow runs `npm run lint` on push and on pull request. Failing on a non-zero exit is not
+enough on its own: measured 2026-08-18, `oxlint` reports a `no-debugger` violation and still
+**exits 0**, because the built-in correctness rules fire at warning level. The 15 anti-slop
+rules are all `error` and would fail a run, so a bare script would enforce those fifteen and
+tick green over everything else. Warnings are denied.
+
+The tree needs no cleanup first. Measured 2026-08-18, `oxlint .` over the tracked tree emits no
+diagnostic of either severity and exits 0, so the workflow lands green on arrival.
 
 **No marker lint rule.** A rule banning `TODO`/`FIXME`/`XXX`/`HACK` was considered and
 rejected: the scan found none in the tree, so it would guard nothing, and adding it to a lint
@@ -267,13 +271,16 @@ is about the test and is fixed as its own change. Zero new seams.
 
 **Seam 3 — `npm run lint`'s exit code, executed by a workflow.** The one genuinely new seam,
 and it is a new execution point rather than a new interface: the script, the config and the
-plugin all exist already. Acceptance is that a push with a known rule violation fails the run
-and a clean push passes it.
+plugin all exist already. Acceptance is that a push carrying a known **warning-level** violation
+fails the run and a clean push passes it — the warning level is the acceptance case precisely
+because it is the one a bare exit-code check would miss.
 
-**Seam 4 — a measurement script, and explicitly not a test.** The header pass reports a
-before/after count from a throwaway script under `.scratch/code-health/`, following the prior
-art of `.scratch/language-blocks/measure-03.mjs`, whose output was pasted into its ticket as a
-measurement-gate table. The script is evidence in a ticket, not a tracked tool.
+**Seam 4 — measurement, and explicitly not a test.** The header pass and the reading ticket each
+report dated before/after counts, following the prior art of
+`.scratch/language-blocks/measure-03.mjs`, whose output was pasted into its ticket as a
+measurement-gate table. The counting is evidence inside the ticket that needs it rather than a
+tracked tool or a shared prefactor — the header inventory is a single grep, and the ratio counts
+are wanted only by whoever is already reading those files.
 
 **Ruled out: any `vitest` test asserting comment counts, ratios, header presence or divider
 form.** Such a test asserts on the source's style rather than the system's behaviour, breaks
