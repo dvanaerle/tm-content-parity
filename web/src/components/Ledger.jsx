@@ -30,7 +30,7 @@ import {
   useLandOn,
 } from '../lib/landing.mjs';
 import { findingInSearch } from '../lib/page-url.mjs';
-import { BANNER, CHROME, INK, PILL } from '../lib/palette.mjs';
+import { CHROME } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { bucketOf, bucketsOf } from '../../../overrides/state.mjs';
 import { BUCKETS, BUCKET_LABEL, BUCKET_TONE } from '../lib/buckets.mjs';
@@ -198,11 +198,12 @@ export default function Ledger({
 
   if (!report.comparable) {
     return (
-      /* The tone is `BANNER.caution` and not Alert's own `destructive` variant. An
-         uncomparable page is a status, and palette rule 2 keeps status out of the diff
-         hues; Alert's `destructive` reads from `--destructive`, which this repo has
-         already pointed at the amber ink for exactly that reason. */
-      <Alert className={`p-4 ${BANNER.caution}`}>
+      /* The tone is `caution` worn as a banner, and not Alert's own `destructive`
+         variant. An uncomparable page is a status, and palette rule 2 keeps status out of
+         the diff hues; Alert's `destructive` reads from `--destructive`, which this repo has
+         already pointed at the amber ink for exactly that reason. `variant={null}` because
+         every variant the library has paints a ground of its own over the tone. */
+      <Alert variant={null} data-wears="banner" data-tone="caution" className="p-4">
         <AlertTitle className="font-semibold">Cannot be compared</AlertTitle>
         <AlertDescription className="text-current">
           <p className="text-sm">{report.skipReason}</p>
@@ -235,7 +236,7 @@ export default function Ledger({
 
           `caution` and not `warning` for both: a condition, not a loss. */}
       {(asked.missing || asked.unplaced) && (
-        <Alert className={`mb-3 ${BANNER.caution}`}>
+        <Alert variant={null} data-wears="banner" data-tone="caution" className="mb-3">
           <AlertTitle className="font-semibold">
             {asked.missing
               ? 'This difference is not in this snapshot.'
@@ -411,8 +412,11 @@ const BucketStrip = ({ buckets }) => (
     {BUCKETS.map((bucket) => (
       <Badge
         key={bucket}
+        variant={null}
         data-bucket={bucket}
-        className={cn('tabular-nums', PILL[BUCKET_TONE[bucket]])}
+        data-wears="pill"
+        data-tone={BUCKET_TONE[bucket]}
+        className="tabular-nums"
       >
         {BUCKET_LABEL[bucket]} {buckets[bucket]}
       </Badge>
@@ -607,7 +611,7 @@ function MetaTable({ production, next }) {
                   pages and those rows are gone, so the 2 pages where the new
                   site **lost** one must not read like the rest. */}
               {row.field === 'canonical' && row.state === 'lost' && (
-                <span className={`mt-1 block text-xs font-normal ${INK.lost}`}>
+                <span data-wears="ink" data-tone="lost" className="mt-1 block text-xs font-normal">
                   the new site has none
                 </span>
               )}

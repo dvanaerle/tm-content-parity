@@ -4,7 +4,7 @@ import Ledger from './Ledger.jsx';
 import { EditorPrompt, LogBanner, PageBar, ReviewControl } from './Progress.jsx';
 import { Alert, AlertDescription } from './ui/alert.jsx';
 import { Button } from './ui/button.jsx';
-import { BANNER, CHROME } from '../lib/palette.mjs';
+import { CHROME } from '../lib/palette.mjs';
 import { NO_EDITOR, useEditor, useOverrides } from '../lib/overrides.mjs';
 import { usePageReport, useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
 import { moment } from '../lib/dates.mjs';
@@ -100,7 +100,7 @@ export default function PageView({
           message is the palette's to say, and this one is `caution` — a condition
           an editor decides about, not a loss. */}
       {recheck.error && (
-        <Alert className={BANNER.caution}>
+        <Alert variant={null} data-wears="banner" data-tone="caution">
           {/* `text-current` because `AlertDescription` hard-codes `text-muted-foreground`,
               which would repaint the banner's ink in the interface's grey and lose the
               tone. The structure is worth keeping over dropping the description entirely:

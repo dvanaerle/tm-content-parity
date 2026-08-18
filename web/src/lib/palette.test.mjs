@@ -56,7 +56,11 @@ const CSS = (await readFile(STYLESHEET, 'utf8')).replace(/\/\*[\s\S]*?\*\//g, ''
  * @returns {{ tone: string | null, wears: string | null, declarations: string }[]}
  */
 function rulesOf(css) {
-  const SELECTOR = /\[data-(?:tone|wears)='[a-z-]+'\]/;
+  // A shape may also key on a state the primitive publishes — the ticked checkbox is the one
+  // that does, and ticket 133 part B is where that stopped being a hand-written
+  // `data-checked:` prefix. It is read as part of the selector and contributes no tone and no
+  // shape, so the rule below is parsed rather than skipped.
+  const SELECTOR = /\[data-(?:tone|wears)='[a-z-]+'\]|\[data-checked\]/;
   const RULE = new RegExp(
     `((?:${SELECTOR.source})+(?:\\s*,\\s*(?:${SELECTOR.source})+)*)\\s*\\{([^{}]*)\\}`,
     'g',
@@ -274,10 +278,11 @@ describe('the tones written at a call site', () => {
     expect(caught).toEqual([]);
     // Listed rather than counted, because a sweep that found nothing at all would pass
     // every assertion above it. These are the shapes the interface wears today: the diff's
-    // two, and the four ticket 133 part A moved the dashboard's views onto. The remaining
-    // two — `solid`, which has no wearer, and `accent`, which the fix checkbox takes in
-    // part B — join this list when they are worn.
-    expect([...seen].sort()).toEqual(['banner', 'cell', 'fill', 'ink', 'pill', 'word']);
+    // two, the four ticket 133 part A moved the dashboard's views onto, and the tick part B
+    // moved the fix checkbox onto. `solid` is the one shape with no wearer, and it stays
+    // defined for the reason `palette.mjs` gives — a number that must be legible at a
+    // distance — so a component asking for it gets pixels rather than silence.
+    expect([...seen].sort()).toEqual(['banner', 'cell', 'fill', 'ink', 'pill', 'tick', 'word']);
   }, 30_000);
 
   // And it has to be able to fail, or emptying the patterns would go on reporting success.
@@ -462,7 +467,12 @@ describe('the shapes the stylesheet defines', () => {
      * diff's two shapes six tones they must never have, and it would look tidier for it.
      */
     expect(grantedTo('ink').sort()).toEqual(['added', 'caution', 'info', 'lost']);
-    expect(grantedTo('accent').sort()).toEqual(['caution', 'closed']);
+    // The tick's two are the fix checkbox's three visual states less the unticked one: a
+    // claim that stands, and a claim a later observation contradicted. `added` for the first
+    // is the interface's one recorded exception to *no status wears a diff hue*, taken on
+    // preference in 2026 and written down in `app.css` beside the blue it would otherwise
+    // take — so it is asserted here rather than left to look like drift.
+    expect(grantedTo('tick').sort()).toEqual(['added', 'caution']);
   });
 
   it('grants a cell tint and a word mark to the two directions and to nothing else', () => {

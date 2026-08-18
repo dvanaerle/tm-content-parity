@@ -74,11 +74,11 @@
  * tone is a rule instead of a class name. The reasoning in this docblock has been carried
  * across to `app.css` whole; when the two disagree, the stylesheet is the one that draws.
  *
- * The diff moved first, and 133 part A moved the dashboard's two views after it — so
- * `SURFACE`, `TOKEN`, `SOLID` and `FILL` below have no caller left, and `PILL`, `BANNER`
- * and `INK` are read only by the page's ledger and the controls beside it, which part B
- * moves. Every one of the eight stays until then: part C is where the deletion happens,
- * once, with nothing still reading any of them.
+ * The diff moved first, 133 part A moved the dashboard's two views after it, and part B
+ * moved the page's ledger and the controls beside it — so **none of the eight maps below has
+ * a caller left**. Nothing here draws anything any more. They stay for one more commit
+ * because part C is where the deletion happens, once, and a map deleted early is a surface
+ * with no colour and a build that succeeds.
  */
 
 /**
@@ -215,6 +215,12 @@ export const TOKEN = {
  *
  * It holds status tones only. A checkbox is a work state, and a work state never
  * wears the diff hues.
+ *
+ * **It stopped drawing anything before the tone move reached it.** `accent-color` paints a
+ * native control, and the checkbox has been shadcn's on Base UI since the library came in —
+ * so the ticked colour has been a ground and a border for longer than this file has said so,
+ * and the pair on screen is the one `app.css`'s tick shape holds, `added` and `caution`, with
+ * the green recorded there as the exception it is. Deleted in ticket 133 part C with the rest.
  */
 export const ACCENT = {
   closed: 'accent-info',

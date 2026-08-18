@@ -5,7 +5,6 @@ import { Input } from './ui/input.jsx';
 import { noteEventFor, priorityEventFor } from '../../../overrides/state.mjs';
 import { PRIORITIES } from '../../../shared/priorities.mjs';
 import { bulkAnnotation } from '../lib/bulk.mjs';
-import { INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 
 /**
@@ -269,7 +268,7 @@ function Report({ written, total, failedOn, error }) {
   if (written === total && !error) return null;
 
   return (
-    <p className={cn('mb-2 text-xs', INK.caution)}>
+    <p data-wears="ink" data-tone="caution" className="mb-2 text-xs">
       <strong className="font-medium">
         {written} of {total} saved.
       </strong>{' '}

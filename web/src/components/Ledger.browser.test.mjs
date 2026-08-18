@@ -133,6 +133,40 @@ describe('a decided finding says who decided it, and when', () => {
     );
     unmount();
   });
+
+  /**
+   * The two ticked states of the fix checkbox, read off the tone each one publishes.
+   *
+   * Since ticket 133 part B that tone is an attribute the stylesheet reads, and it is asserted
+   * here for the reason `Diff.browser.test.mjs` asserts the diff's: the attribute is the whole
+   * mechanism, Base UI renders the element, and a primitive that swallowed the prop would
+   * leave the tick with no colour and throw nothing. No stylesheet is loaded in this project,
+   * so which pixels a tone prints stays `palette.test.mjs`'s question.
+   */
+  const tickOf = (id) => document.querySelector(`tr#finding-${id} [data-slot="checkbox"]`);
+
+  it('turns the contradicted claim amber, still ticked', async () => {
+    const unmount = mount();
+    await userEvent.click(button('Links'));
+
+    // Ticked because the editor did claim it, and amber because a later observation
+    // disagreed. `caution` is the word; which pixels it prints is `palette.test.mjs`'s.
+    expect(tickOf('c').dataset.tone).toBe('caution');
+    expect(tickOf('c').hasAttribute('data-checked')).toBe(true);
+    unmount();
+  });
+
+  it('leaves an undecided finding’s tick uncoloured', async () => {
+    const unmount = mount();
+    await userEvent.click(button('Links'));
+
+    // The other half of the same rule, and the reason it keys on `data-checked`: an open
+    // finding carries the tone it *would* wear and must not wear it yet, or a box nobody has
+    // ticked is painted for a claim nobody made.
+    expect(tickOf('a').dataset.tone).toBe('added');
+    expect(tickOf('a').hasAttribute('data-checked')).toBe(false);
+    unmount();
+  });
 });
 
 describe('the three buckets on the ledger', () => {

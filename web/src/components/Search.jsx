@@ -6,7 +6,7 @@ import { Checkbox } from './ui/checkbox.jsx';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx';
 import { Label } from './ui/label.jsx';
 import { Separator } from './ui/separator.jsx';
-import { CHROME, INK } from '../lib/palette.mjs';
+import { CHROME } from '../lib/palette.mjs';
 import { Attribution } from './Attribution.jsx';
 import { day } from '../lib/dates.mjs';
 import { cn } from '../lib/utils.js';
@@ -458,7 +458,7 @@ function Notes({ result, link }) {
         <h3 className="text-sm font-medium">
           {notes.length} {notes.length === 1 ? 'note' : 'notes'} {narrowedBy(result)}
         </h3>
-        <p className={cn('mb-2 text-xs', INK.info)}>
+        <p data-wears="ink" data-tone="info" className="mb-2 text-xs">
           Read from the log now, not from the snapshot. This half is current, and the findings above
           are as old as the last build.
         </p>

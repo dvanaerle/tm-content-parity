@@ -14,7 +14,7 @@ part is one commit and starts in a fresh context window.
 | part | what | state |
 |---|---|---|
 | **A** | The dashboard wears its tone | after 132 |
-| **B** | The ledger wears its tone | after A |
+| **B** | The ledger wears its tone | **landed** |
 | **C** | The tone maps are gone | after B, and gated on it |
 
 **C is a gate, not a step.** Part B's *no caller left* criterion is what lets C start. If A
@@ -214,6 +214,10 @@ Read these and nothing else. If you need more, the ticket is wrong: say so and s
 holds `SURFACE` and `TOKEN` colour strings and must move before C can delete them. 132 moved
 the diff *surface* onto tones; these are the cell tints it left.
 
+**`Diff.jsx` was already moved when part B started** — 2026-08-18. 132 took the cell tints with
+the surface, so `SURFACE` and `TOKEN` had no caller left before this part began and it touched
+the file not at all. The note above stays because it is why somebody looked.
+
 ### What to build — B
 
 The page's ledger and the controls beside it stop holding colour strings. The ledger, the
@@ -234,26 +238,63 @@ other two.
 reports work, and a work state never wears the diff hues: an editor who saw a tick in the diff's
 red would read it as a claim about content rather than about their own decision.
 
-- [ ] The ledger, the override control, the annotate bar, the bulk control, the search result,
+- [x] The ledger, the override control, the annotate bar, the bulk control, the search result,
       the page island and the diff's cell tints emit a tone and a shape and hold no colour
-      string.
-- [ ] The fix checkbox's two ticked states are selectors over the state it publishes, and no
-      variant prefix is transcribed by hand.
-- [ ] The accent shape still holds status tones and no direction.
-- [ ] The banner shape still gives its two ambers different pixels. A banner reporting a failure
+      string. The diff's cell tints were already there; the page's own header badge in
+      `[...page].astro` and `Attribution`'s loud state were the two the prose did not name.
+      **One colour string stays on the page island on purpose**: `PageView.jsx`'s
+      `<Alert className="bg-muted">` is the *no editor* notice, and it is a ground with no
+      tone in it — the neutral banner shape would repaint its ink as well as its ground, which
+      moves pixels. It was never a palette caller, so the gate below is unaffected.
+- [x] The fix checkbox's two ticked states are selectors over the state it publishes, and no
+      variant prefix is transcribed by hand. The tick map's six `data-checked:` literals are
+      one rule keyed on the `data-checked` Base UI already publishes, and `Ledger.browser.test.mjs`
+      asserts the attributes reach the DOM — a primitive that swallowed them would leave a tick
+      with no colour and throw nothing.
+- [ ] The accent shape still holds status tones and no direction — **left unticked, because the
+      shape is gone and the tick that replaced it wears a direction.** Read the note through,
+      because this criterion was written against a state
+      that had already changed: `accent-color` paints a native control, the checkbox has been
+      shadcn's on Base UI since the library came in, and the interface has no native checkbox
+      left. So the accent shape drew nothing, the `ACCENT` map it was transcribed from had no
+      code caller, and part B replaced both with a **tick** shape that prints what the ticked
+      control actually prints — a ground, a border and the glyph.
+      **The tick's pair is `added` and `caution`, and the green is a direction on a work
+      state.** That is the interface as it stands and not a thing this part chose: it was
+      decided on preference on 2026-08-13, the tick map has held it since, and moving it to
+      `closed` would move pixels, which this ticket forbids. The decision is recorded in
+      `app.css` beside the blue it would otherwise take, and `palette.test.mjs` asserts the
+      pair by name so it reads as the exception it is rather than as drift. **The box therefore
+      says the opposite of what the code does, and it stays unticked for whoever owns the
+      hue.** Putting the blue back is three edits that land together — the word the component
+      hands over, the tone in the selector, and the pair the test pins — and `app.css` says so
+      beside the rule.
+- [x] The banner shape still gives its two ambers different pixels. A banner reporting a failure
       and a banner reporting a condition must not print the same shape, or a reader cannot tell
       which one they have.
-- [ ] The bucket strip's three buckets keep their tones, and **Needs attention** keeps meaning
+- [x] The bucket strip's three buckets keep their tones, and **Needs attention** keeps meaning
       *contradicted and nothing else* — 131 freed the word `attention` for exactly this reason,
-      so the bucket and the tone must not be wired to each other by name.
-- [ ] The history note's ink and the override state badges move with the rest.
-- [ ] **No map has a caller left after this commit.** This is the gate on part C.
+      so the bucket and the tone must not be wired to each other by name. `BUCKET_TONE` is
+      still the one place the mapping is written, and the strip reads it.
+- [x] The history note's ink and the override state badges move with the rest. `Attribution`
+      takes a `tone` rather than a class: the grey it drops is a utility, and a utility
+      outranks a shape.
+- [x] **No map has a caller left after this commit.** This is the gate on part C. Re-measured
+      2026-08-18: nothing outside `palette.mjs` and its own guard names one of the eight, and
+      the two remaining mentions are prose — `Diff.browser.test.mjs:10` recalls
+      `SURFACE.warning` being `undefined`, which is history and stays true after the deletion.
 - [ ] ~~Screenshot baselines for the page's four tabs are reviewed per tab and unchanged in
       colour.~~ — **2026-08-17: there are no baselines; see the heading block.** The claim
       survives: `Ledger.browser.test.mjs`, `Annotations.browser.test.mjs`,
       `ContentView.browser.test.mjs` and `Search.browser.test.mjs` pass unchanged, and a human
-      checks each of the four tabs.
-- [ ] No count, bar, denominator or roll-up moves.
+      checks each of the four tabs. **The four suites pass and `Ledger.browser.test.mjs` gained
+      one test; the human half is still owed** — left unticked for whoever walks the four tabs.
+- [x] No count, bar, denominator or roll-up moves.
+
+**What part C inherits from this part** — the `ACCENT` prose trap is discharged: the sentence at
+`OverrideControl.jsx:205` went with the tick map, and the checkbox's docblock now points at the
+tick shape in `app.css`. The map's own docblock says it stopped drawing before the move reached
+it. C still deletes all eight.
 
 ### Traps — B
 

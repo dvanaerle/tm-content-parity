@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { clearedEventFor } from '../../../overrides/state.mjs';
 import { classInfo } from '../lib/classes.mjs';
 import { storeHref } from '../lib/page-url.mjs';
-import { INK, PILL } from '../lib/palette.mjs';
 import { searchForRepeat } from '../lib/screen-url.mjs';
 import { Attribution } from './Attribution.jsx';
 import { Badge } from './ui/badge.jsx';
@@ -59,6 +58,11 @@ export default function OverrideControl({ finding, observationId, append, canWri
   const [note, setNote] = useState('');
   const { state, override } = finding;
 
+  // Named here rather than tested inside the attribution below, so the tone handed over is
+  // a tone and nothing else: `palette.test.mjs` sweeps the source for the words written
+  // into a `data-tone`, and a state name riding along in the condition reads as a ninth.
+  const contradicted = state === 'contradicted';
+
   const act = (partial) => append({ scope: 'finding', findingId: finding.id, ...partial });
 
   const close = () => {
@@ -110,7 +114,9 @@ export default function OverrideControl({ finding, observationId, append, canWri
 
       {/* An open finding has nothing to attribute: nobody has decided it. */}
       {state === 'open' ? (
-        <Badge className={PILL[STATE[state].tone]}>{STATE[state].label}</Badge>
+        <Badge variant={null} data-wears="pill" data-tone={STATE[state].tone}>
+          {STATE[state].label}
+        </Badge>
       ) : (
         <Attribution
           action={STATE[state].label}
@@ -119,11 +125,11 @@ export default function OverrideControl({ finding, observationId, append, canWri
           reason={override.note}
           // The contradiction is the one state that stays loud: it names a person whose
           // claim the next reader is about to overturn (ADR 0019).
-          className={state === 'contradicted' ? INK.caution : ''}
+          tone={contradicted ? 'caution' : null}
         />
       )}
 
-      {canWrite && (state === 'open' || state === 'contradicted') && (
+      {canWrite && (state === 'open' || contradicted) && (
         <Action onClick={() => setAsking('dismiss')}>Dismiss…</Action>
       )}
 
@@ -155,8 +161,13 @@ export default function OverrideControl({ finding, observationId, append, canWri
  * they in fact accepted.
  *
  * It is shadcn's checkbox on Base UI since the library came in, and no longer a
- * native `<input type="checkbox">`. That is why the tone below is a fill and no
- * longer an `accent-*` utility.
+ * native `<input type="checkbox">`. That is why the ticked tone is a ground and a border
+ * rather than an `accent-color`, which paints a native control and nothing else.
+ *
+ * The two ticked tones are `added` and `caution`, and the green is an exception to the rule
+ * that a work state never takes a diff hue. It was decided on preference (2026-08-13);
+ * `app.css`'s tick shape records it, names the blue it would otherwise take, and says what
+ * putting that blue back costs now the shape is a rule rather than a class name.
  */
 function FixCheckbox({ finding, canWrite, onTick }) {
   const { state, occurrences } = finding;
@@ -169,7 +180,8 @@ function FixCheckbox({ finding, canWrite, onTick }) {
 
   return (
     <Checkbox
-      className={contradicted ? TICK.caution : TICK.added}
+      data-wears="tick"
+      data-tone={contradicted ? 'caution' : 'added'}
       checked={state === 'fixed' || contradicted}
       disabled={!canWrite || closedByJudgement}
       onCheckedChange={(ticked) => onTick(ticked)}
@@ -182,42 +194,6 @@ function FixCheckbox({ finding, canWrite, onTick }) {
     />
   );
 }
-
-/**
- * The ticked tone of the checkbox above, and the one place in these two files where
- * the palette has to out-shout shadcn rather than merely sit beside it.
- *
- * shadcn paints its own ticked state with `data-checked:bg-primary`. An attribute
- * selector outranks a plain class, so a palette value handed over as `bg-info`
- * would lose, and `tailwind-merge` cannot dedupe the pair either — the two carry
- * different variant modifiers and it reads them as different properties. So the
- * tone is written with the **same** `data-checked:` prefix, and it wins on
- * source order.
- *
- * The entries are literals for the reason `palette.mjs` gives: Tailwind reads
- * class names out of the source text, and a prefix assembled around a palette value
- * at runtime is not in the source text.
- *
- * **A standing claim is green, decided 2026-08-13, and it is the one exception to
- * the rule that `added` is direction and never status.** `palette.mjs` reserves the
- * only green in the interface for *the new site has this and production does not*,
- * and this checkbox spends it on *I corrected this*. It was `closed` blue in the
- * design and the colour is a preference, taken deliberately and recorded here so
- * the next reader does not read it as the drift the one colour map exists to stop.
- * `caution` is unchanged and still means a claim a later observation contradicted.
- * `closed` stays defined and unused, so restoring the blue is a one-word change.
- *
- * The blue is `closed` and not `info`: a standing fix claim is *done*, which is what
- * `closed` says. `ACCENT` in `palette.mjs` holds the same pair for the same reason.
- */
-const TICK = {
-  added:
-    'data-checked:border-success data-checked:bg-success data-checked:text-white dark:data-checked:bg-success',
-  closed:
-    'data-checked:border-info data-checked:bg-info data-checked:text-white dark:data-checked:bg-info',
-  caution:
-    'data-checked:border-warning data-checked:bg-warning data-checked:text-white dark:data-checked:bg-warning',
-};
 
 /**
  * The way out of a single judgement and into the one that covers every page holding the

@@ -418,6 +418,10 @@
  * with an ordinary utility class, because `utilities` comes after. A layer of our own
  * would land after `utilities` and take that away.
  *
+ * The tick shape is the exception and it is written where it can be read as one, at the
+ * foot of this file: a shape that exists to beat the primitive's own utilities has to be in
+ * their layer, and it gives up being departed-from by a class to get there.
+ *
  * **The attribute is `data-wears` and the concept is a shape**, which is one word too
  * many and is not an accident. *Shape* is this repo's word — ADR 0007's amendment is
  * titled *shape is taken too, and tone still is not*, and it draws the line as *shadcn
@@ -452,8 +456,13 @@
  * The same goes for the shapes. **Four of the eight are sparse**, and the sparseness is
  * the decision rather than an enumeration somebody left unfinished — the ink shape holds
  * the four tones a component has asked for, the cell and word shapes hold the two
- * directions, and the accent shape holds two statuses. A tidy eight-by-eight product
- * would give a diff cell six tones it must never have.
+ * directions, and the tick shape holds the two a fix claim can be in. A tidy eight-by-eight
+ * product would give a diff cell six tones it must never have.
+ *
+ * **Seven of the eight are below and the tick is at the foot of this file** (ticket 133
+ * part B), because it has to outrank the primitive it sits on and this layer cannot. The
+ * paragraph above it says why, and it is the one shape the sentence about `@layer
+ * components` does not cover.
  */
 @layer components {
   /* ---- the eight tones */
@@ -669,18 +678,10 @@
   }
 
   /*
-   * A native form control's own colour. The fix checkbox has three visual states and two
-   * of them are ticked: `closed` for a claim that stands, and `caution` for a claim a
-   * later observation contradicted.
-   *
-   * **Status tones only.** A checkbox reports work, and a work state never wears the diff
-   * hues: an editor who saw a tick in the diff's red would read it as a claim about the
-   * content rather than about their own decision.
+   * The ticked colour of a checkbox lives below, in `@layer utilities`, and not here. It is
+   * the one shape that has to outrank the primitive it sits on rather than merely sit
+   * beside it, so it is written where the switch's pressed ground is written.
    */
-  [data-wears='accent'][data-tone='closed'],
-  [data-wears='accent'][data-tone='caution'] {
-    accent-color: var(--tone-solid);
-  }
 }
 
 /*
@@ -715,5 +716,49 @@
 
   [data-chrome='switch'][aria-pressed='true']:hover {
     background-color: var(--color-brand-dark);
+  }
+}
+
+/*
+ * ---- the ticked fix checkbox (ticket 133 part B)
+ *
+ * This one **is** a shape: it reads `--tone-solid` and it answers to `data-wears` like the
+ * eight above. It is down here for the layer, for the reason the rule above it is — shadcn's
+ * checkbox paints its own ticked state with `data-checked:bg-secondary`,
+ * `data-checked:border-secondary` and `data-checked:text-secondary-foreground`, all
+ * utilities, and a components-layer rule loses to a utility however specific it is.
+ *
+ * That is the whole reason the third transcription existed. A plain `bg-info` handed over as
+ * a class loses to those, and `tailwind-merge` cannot dedupe the pair either — the two carry
+ * different variant modifiers and it reads them as different properties. The tick map
+ * answered by writing the **same** `data-checked:` prefix around each palette value by hand,
+ * which Tailwind only finds because all six were spelled out as literals. As a selector over
+ * the attribute Base UI already publishes, in the layer that comes after the primitive's own
+ * utilities, it is ordinary.
+ *
+ * **The glyph is white and that is not `--tone-on-solid`.** The tick is an icon and not
+ * text, which is why `caution` may wear this shape at all: the quiet amber publishes no ink
+ * for its solid step, deliberately, because no *words* stay legible on it.
+ *
+ * **The green is the recorded exception, decided 2026-08-13 and not this ticket's to spend
+ * or to revoke.** Everywhere else `added` means *the new site has this and production does
+ * not*, and a work state never takes a diff hue; here a standing fix claim is green because
+ * an editor preferred it. The blue it would otherwise take is `closed`, since a standing
+ * claim is *done*, and restoring it costs three edits that have to land together: the word
+ * the component hands over, the tone named in the selector below, and the pair
+ * `palette.test.mjs` pins. It was one word while the tone was a class name; a sparse shape
+ * is a list, and the price of the list is that the list is somewhere too. `caution` is
+ * unchanged and still means a claim a later observation contradicted.
+ *
+ * **No dark twin, and no pixel moves for its absence.** The tick map carried a
+ * `dark:data-checked:bg-*` for each tone to beat the primitive's own; this interface writes
+ * no `.dark` ancestor, so neither that rule nor the one it was beating has ever matched.
+ */
+@layer utilities {
+  [data-wears='tick'][data-tone='added'][data-checked],
+  [data-wears='tick'][data-tone='caution'][data-checked] {
+    border-color: var(--tone-solid);
+    background-color: var(--tone-solid);
+    color: #fff;
   }
 }

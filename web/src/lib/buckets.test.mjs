@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BUCKETS } from '../../../overrides/state.mjs';
 import { BUCKET_LABEL, BUCKET_MEANING, BUCKET_TONE, BUCKETS as WORDS_BUCKETS } from './buckets.mjs';
-import { INK, PILL } from './palette.mjs';
+import { TONES } from './palette.mjs';
 
 /**
  * The interface side of ticket 80's grouping.
@@ -27,9 +27,12 @@ describe('the three buckets have words to be drawn with', () => {
     '%s has a label, a meaning and a tone',
     (bucket) => {
       // A label a person reads, a sentence they get on hover, and a tone the palette knows.
+      // Since ticket 133 the tone is checked against the vocabulary and not against a map of
+      // class names: the pixels are `app.css`'s, and a bucket tone the vocabulary does not
+      // hold is a `data-tone` no selector matches — a badge drawn with no colour at all.
       expect(BUCKET_LABEL[bucket]).toBeTruthy();
       expect(BUCKET_MEANING[bucket]).toMatch(/\.$/);
-      expect(PILL[BUCKET_TONE[bucket]]).toBeTruthy();
+      expect(TONES, bucket).toContain(BUCKET_TONE[bucket]);
     },
   );
 
@@ -43,13 +46,15 @@ describe('the three buckets have words to be drawn with', () => {
 
   /**
    * *Open drops to `neutral` so the amber is spent once rather than twice* — ticket 80's
-   * own answer to the open question the prototype raised. `INK` has no neutral, which is
-   * the palette saying a plain number is the neutral, so this is the one bucket whose tone
-   * is asserted by name: it is a decision and not an accident.
+   * own answer to the open question the prototype raised. So these two tones are asserted
+   * by name: they are a decision and not an accident.
+   *
+   * The ink shape has no `neutral`, which is the interface saying a plain number is the
+   * neutral — that is `palette.test.mjs`'s to assert, over the stylesheet that draws it, and
+   * this file stops holding half of it (ticket 133).
    */
   it('spends the amber once, on Needs attention', () => {
     expect(BUCKET_TONE.open).toBe('neutral');
     expect(BUCKET_TONE['needs-attention']).toBe('caution');
-    expect(INK.caution).toBeTruthy();
   });
 });

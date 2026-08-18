@@ -19,11 +19,19 @@ import { cn } from '../lib/utils.js';
  * @param {string} props.editor    Who did it.
  * @param {string} props.at        When, as an ISO 8601 stamp.
  * @param {import('react').ReactNode} [props.reason]  Why, where the action has one.
+ * @param {import('../lib/palette.mjs').Tone | null} [props.tone]  Louder than the grey,
+ *   where the decision itself is the thing being reported on. It is worn as ink, and the
+ *   grey is dropped rather than overridden: a tone is a rule in `app.css` and the grey is a
+ *   utility, which would outrank it.
  * @param {string} [props.className]
  */
-export function Attribution({ action, editor, at, reason = null, className = '' }) {
+export function Attribution({ action, editor, at, reason = null, tone = null, className = '' }) {
   return (
-    <div className={cn('text-xs text-muted-foreground', className)}>
+    <div
+      data-wears={tone ? 'ink' : null}
+      data-tone={tone}
+      className={cn('text-xs', !tone && 'text-muted-foreground', className)}
+    >
       <span>
         {action} · {editor} · {day(at)}
       </span>

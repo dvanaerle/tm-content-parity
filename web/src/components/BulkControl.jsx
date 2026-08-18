@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
-import { INK } from '../lib/palette.mjs';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
 import { crossesBlock } from '../lib/view.mjs';
 import { classInfo } from '../lib/classes.mjs';
@@ -385,7 +384,7 @@ function Report({ written, total, failedOn, error }) {
   if (written === total && !error) return null;
 
   return (
-    <p className={cn('mb-2 text-xs', INK.caution)}>
+    <p data-wears="ink" data-tone="caution" className="mb-2 text-xs">
       <strong className="font-medium">
         {written} of {total} saved.
       </strong>{' '}

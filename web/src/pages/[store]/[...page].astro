@@ -7,7 +7,7 @@ import { loadProductionExtracts, loadReports, loadSeedRows } from '../../lib/rep
 import { closingsFor, firstSeenOn, loadClosings, loadFirstSeen } from '../../lib/run-log.mjs';
 import { siblingPages } from '../../lib/blocks.mjs';
 import { siblingOf } from '../../lib/language-blocks.mjs';
-import { CHROME, PILL } from '../../lib/palette.mjs';
+import { CHROME } from '../../lib/palette.mjs';
 
 // One real HTML page per store page. The tabs are an island inside it. A page key
 // that holds a slash renders through this rest route, verified by ticket 08.
@@ -121,7 +121,7 @@ const { production, new: next } = report.sides;
       </Badge>
       {
         (production.boundary !== 'main' || next.boundary !== 'main') && (
-          <Badge className={`h-auto px-2 py-1 ${PILL.caution}`}>
+          <Badge variant={null} data-wears="pill" data-tone="caution" className="h-auto px-2 py-1">
             boundary: production {production.boundary}, new {next.boundary}
           </Badge>
         )
