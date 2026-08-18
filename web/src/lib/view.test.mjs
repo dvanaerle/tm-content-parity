@@ -274,7 +274,92 @@ describe('prepareRows', () => {
     base.elements.production[4] = heading('Bedankt voor het aanvragen van een samplepakket', 2, 14);
 
     const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
-    expect(outlineFrom(rows).map((entry) => entry.key)).toContain('p14');
+    expect(outlineFrom(rows).map((entry) => entry.anchor)).toContain('p14');
+  });
+
+  it('keeps a heading a later member of the run absorbed, at the row’s own anchor', () => {
+    // Ticket 121, and the half ticket 116 left open. `prod` is the run's **first** member,
+    // so a heading anywhere after it is a landmark no row draws a heading for — and the
+    // jump-list is production's outline, not the new site's markup. The entry is keyed on the
+    // row, which is where the words are, and not on the member: `p17` is no row's anchor.
+    const base = withRun();
+    base.elements.production[5] = heading('Het pakket past door de brievenbus', 3, 17);
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
+    expect(outlineFrom(rows)).toContainEqual(
+      expect.objectContaining({
+        anchor: 'p14',
+        level: 3,
+        text: 'Het pakket past door de brievenbus',
+      }),
+    );
+  });
+
+  it('keeps a heading the new site promoted out of a split, at production’s anchor', () => {
+    // The mirror, and the shape the corpus actually holds: 29 of 189 regrouped rows are
+    // `p → h3 + p`, where production sends one paragraph and the new site promotes its first
+    // sentence. Before ticket 120 that heading was a `text-added` row of its own and had an
+    // entry; the split row absorbed the row, so the entry has to come from the run.
+    const base = withSplit();
+    base.elements.new[3] = heading('Hulp bij uw keuze?', 3, 12);
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
+    expect(outlineFrom(rows)).toContainEqual(
+      expect.objectContaining({ anchor: 'p14', level: 3, text: 'Hulp bij uw keuze?' }),
+    );
+  });
+
+  it('names a heading both sides hold once, and names production’s', () => {
+    // `h2 → h3 + p`: production sends a heading and the new site keeps its first sentence as a
+    // heading of its own. Both sides hold a heading and it is **one** landmark, so the entry
+    // is production's — the reference — and the list does not print two at one anchor.
+    const base = withSplit();
+    base.elements.production[4] = heading(
+      'Hulp bij uw keuze? Lees hier hoe u de juiste maatvoering kiest',
+      2,
+      14,
+    );
+    base.elements.new[3] = heading('Hulp bij uw keuze?', 3, 12);
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
+    expect(outlineFrom(rows).filter((entry) => entry.anchor === 'p14')).toEqual([
+      {
+        id: expect.any(String),
+        anchor: 'p14',
+        level: 2,
+        text: 'Hulp bij uw keuze? Lees hier hoe u de juiste maatvoering kiest',
+      },
+    ]);
+  });
+
+  it('names two headings in one run apart, so the list can key on them', () => {
+    // Two entries on one row share the row's anchor, which is the link and cannot be
+    // unique. `id` is what a list keys on, and it is never a link target. What is asserted
+    // is that the two differ, and not how they are composed.
+    const base = withRun();
+    base.elements.production[4] = heading('Bedankt voor het aanvragen van een samplepakket', 2, 14);
+    base.elements.production[5] = heading('Het pakket past door de brievenbus', 3, 17);
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
+    const absorbed = outlineFrom(rows).filter((entry) => entry.anchor === 'p14');
+    expect(absorbed).toHaveLength(2);
+    expect(new Set(absorbed.map((entry) => entry.id)).size).toBe(2);
+  });
+
+  it('opens the regrouped row a jump-list entry lands in', () => {
+    // The other half of the promise: the row is collapsed by default, so an entry that
+    // scrolls to a marker loses the landmark a second way. `runKeyHolding()` is what the
+    // view seeds `open` from, and it answers for the absorbed heading's entry exactly as it
+    // does for the row's own anchor.
+    const base = withRun();
+    base.elements.production[5] = heading('Het pakket past door de brievenbus', 3, 17);
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
+    const entry = outlineFrom(rows).find(
+      (one) => one.text === 'Het pakket past door de brievenbus',
+    );
+
+    expect(runKeyHolding(rows, entry.anchor)).toBe(collapseRuns(rows).at(-1).key);
   });
 
   it('draws a regrouped row with the diagnostics control off, and offers no decision', () => {
@@ -881,7 +966,12 @@ describe('outlineFrom', () => {
     const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showDiagnostics: false });
     const outline = outlineFrom(rows);
 
-    expect(outline).toEqual([{ key: rows[0].key, level: 2, text: 'Kleuren' }]);
+    // The anchor was called `key` until ticket 121, which gave the entry an `id` of its own:
+    // a row absorbing a run can answer for more than one heading, and the anchor a jump uses
+    // is then not unique.
+    expect(outline).toEqual([
+      { id: expect.any(String), anchor: rows[0].key, level: 2, text: 'Kleuren' },
+    ]);
   });
 
   it('takes a heading the new site alone has, so an invented section is reachable', () => {

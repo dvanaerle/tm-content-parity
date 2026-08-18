@@ -80,7 +80,15 @@ decided — which is the silence `CONTEXT.md` is written to prevent.
 - **Re-pairing collateral is unmeasured.** Inserting a pass changes what the greedy pass
   pairs, so findings this test says nothing about can take new ids and shed overrides. That
   count gates the ticket, not this ADR.
-- **A run may contain a heading.** `be/laagste-prijs-garantie` merges a heading and the
-  paragraph after it into one new-site paragraph. The heading keeps its place in the heading
+- **A run may contain a heading.** ~~`be/laagste-prijs-garantie` merges a heading and the
+  paragraph after it into one new-site paragraph.~~ The heading keeps its place in the heading
   jump-list and still anchors, because a landmark that vanishes when the other site inlines
   it would make production-order navigation depend on the new site's markup.
+  **Corrected 2026-08-18, ticket 121.** The decision stands and the example was wrong: on that
+  page production sends *"Hoe kan het dat…"* as a `p`, so the row reads `p + p → p` and no
+  heading is in the run. The corpus holds the case **the other way round** — 29 of 189
+  regrouped rows are `p → h3 + p` or `p → h2 + p`, where production sends one paragraph and
+  the new site promotes its first sentence to a heading, and **no run on the production side
+  holds a heading at all**. So the consequence is read on either side: a regrouped row answers
+  the jump-list with every heading in production's run, and with the new site's where
+  production holds none. `crawl/probes/probe-121-runs-with-headings.mjs` is the measurement.

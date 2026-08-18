@@ -538,20 +538,72 @@ export function rowKeyFromHash(hash) {
  * and a collapsed row is one click away. So a heading inside a run keeps its entry, and
  * `runKeyHolding()` is what opens the run the jump lands in.
  *
+ * **A regrouped row answers for every heading it holds** (ticket 121). One row stands for a
+ * run of blocks on one side and a single block on the other, and a heading anywhere in that
+ * run is a landmark that had a row of its own until the regrouping absorbed it — a production
+ * heading the new site inlined, or, the shape the corpus actually holds, a heading the new
+ * site promoted out of a production paragraph. Reading one unit per row would drop it, and
+ * navigation on a view whose spine is production order would then depend on which side
+ * divides the words. Every entry aims at the **row**, because the row is where the words are
+ * drawn and an absorbed member's own anchor names no row at all.
+ *
  * @param {ContentRow[]} rows
- * @returns {{ key: string, level: number, text: string }[]}
+ * @returns {{ id: string, anchor: string, level: number, text: string }[]}
+ *   `anchor` is the row a jump goes to, shared by every entry a run absorbed; `id` names the
+ *   entry itself, for a list that has to key on something unique, and is never a link target.
  */
 export function outlineFrom(rows) {
-  /** @type {{ key: string, level: number, text: string }[]} */
+  /** @type {{ id: string, anchor: string, level: number, text: string }[]} */
   const out = [];
   for (const row of rows) {
-    const unit = row.prod ?? row.new;
-    if (unit?.kind !== 'heading') continue;
-    // A heading with no level indents deepest rather than not at all: guessing it
-    // is an `h1` would put an invented section at the top of the list.
-    out.push({ key: row.key, level: unit.level ?? 6, text: unit.raw });
+    for (const { side, unit } of headingsIn(row)) {
+      // A heading with no level indents deepest rather than not at all: guessing it
+      // is an `h1` would put an invented section at the top of the list.
+      out.push({
+        id: `${row.key}:${side}${unit.index}`,
+        anchor: row.key,
+        level: unit.level ?? 6,
+        text: unit.raw,
+      });
+    }
   }
   return out;
+}
+
+/**
+ * The headings a row is the place on the page for, in document order, each with the side it
+ * came from.
+ *
+ * An ordinary row answers with its one unit, production's or — where the row exists on the new
+ * site only — the new site's. That is spec 32's rule and it is untouched here: a promotion the
+ * two sides pair one-to-one is a `heading-level` finding and not a landmark this list gained.
+ *
+ * A regrouped row answers with **production's run, and with the new site's only where
+ * production holds no heading at all**. The precedence is the same one, said over a run
+ * instead of over a unit, and it is what decides the shape neither side of ticket 121
+ * anticipated: `h2 → h3 + p`, production's heading split so that the new site keeps its first
+ * sentence as a heading of its own. Both sides hold a heading there, it is **one** landmark
+ * named twice, and concatenating the two would double the list at one anchor.
+ *
+ * A run may hold more than one heading on the side that answers, and then both are entries:
+ * two blocks are two landmarks.
+ *
+ * @param {ContentRow} row
+ * @returns {Array<{ side: string, unit: ContentUnit }>}
+ */
+function headingsIn(row) {
+  const headings = (/** @type {Array<ContentUnit | null>} */ units) =>
+    /** @type {ContentUnit[]} */ (units.filter((unit) => unit?.kind === 'heading'));
+
+  if (!row.prodRun && !row.newRun) {
+    const unit = row.prod ?? row.new;
+    return unit?.kind === 'heading' ? [{ side: row.prod ? 'p' : 'n', unit }] : [];
+  }
+
+  const held = headings(row.prodRun ?? [row.prod]);
+  return held.length
+    ? held.map((unit) => ({ side: 'p', unit }))
+    : headings(row.newRun ?? [row.new]).map((unit) => ({ side: 'n', unit }));
 }
 
 /**

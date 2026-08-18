@@ -337,9 +337,9 @@ function Outline({ entries }) {
       <h3 className="mb-1 text-xs tracking-wide text-muted-foreground uppercase">Headings</h3>
       <ol className="space-y-0.5 text-sm">
         {entries.map((entry) => (
-          <li key={entry.key} style={{ paddingLeft: `${(entry.level - 1) * 10}px` }}>
+          <li key={entry.id} style={{ paddingLeft: `${(entry.level - 1) * 10}px` }}>
             <a
-              href={`#${entry.key}`}
+              href={`#${entry.anchor}`}
               className={`block truncate hover:underline ${CHROME.link}`}
               title={entry.text}
             >
@@ -522,7 +522,11 @@ function Row({ row, control, sides, landed }) {
 function RunCells({ row, sides }) {
   return (
     <>
-      <RunCell units={row.prodRun ?? asRun(row.prod)} url={sides.production.url} side="production" />
+      <RunCell
+        units={row.prodRun ?? asRun(row.prod)}
+        url={sides.production.url}
+        side="production"
+      />
       <RunCell units={row.newRun ?? asRun(row.new)} url={sides.new.url} side="the new site" />
     </>
   );

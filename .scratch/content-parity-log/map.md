@@ -1390,8 +1390,9 @@ what a finding with no anchor heading offers instead. It offers the page.
   it; the guard costs 3 of 41 instances. A row carries `prodRun` with `prod` as its **first**
   member, which is why sorting, anchoring, deep links and the section name all cost nothing,
   and ticket 86's `canDecide()` gave the whole information-row half away for free.
-  `be/laagste-prijs-garantie` fires with a heading in the run and **121 still has its
-  ticket** — no rule here forbids or handles it.
+  ~~`be/laagste-prijs-garantie` fires with a heading in the run~~ — **it does not: that block is
+  a `p`, and the row reads `p + p → p`** (corrected by 121, 2026-08-18) — and **121 still has
+  its ticket**, because no rule here forbids or handles a heading in a run.
 
   [120 — a split paragraph is one row](issues/120-a-split-paragraph-is-one-row.md) —
   **resolved 2026-08-18.** The other direction, and four times the volume: **151 rows on 121
@@ -1409,6 +1410,23 @@ what a finding with no anchor heading offers instead. It offers the page.
   measurement is `crawl/probes/probe-120-regrouped-split.mjs`, which needs a baseline file
   where 116's did not: the reports on disk predate both halves, so reading them would have
   measured the two together. **121 is unblocked.**
+
+  [121 — a run may hold a heading](issues/121-a-run-may-hold-a-heading.md) —
+  **resolved 2026-08-18.** The last of the spec, and the only one that moves **no number**: the
+  comparison needed no change, and the whole of it is one rule in the view — a regrouped row
+  answers the heading jump-list with **every heading in production's run, and with the new
+  site's where production holds none**, so a heading a regrouping absorbed keeps its entry and
+  the entry opens the collapsed row. **The corpus
+  reversed the ticket.** `be/laagste-prijs-garantie` sends *"Hoe kan het dat…"* as a `p`, so it
+  never held the case and its row has read `p + p → p` since 116; of **189 regrouped rows 29
+  hold a heading, all of them on the new site and all of them the run's first member** —
+  `p → h3 + p` 20 and `p → h2 + p` 9 — and **no production run holds a heading at all**. So the
+  landmarks at risk were **120's**: it absorbed 29 `text-added` rows that each carried a heading
+  in the jump-list, and this ticket gives all 29 back (**+29, −0**). `mayPair()` is untouched and
+  the wall in front of the greedy pass is now pinned by a test, `anchorHeadingFor()`'s *a
+  heading is not its own anchor* answers the anchor question unchanged, and the measurement is
+  `crawl/probes/probe-121-runs-with-headings.mjs`. **Spec 119 is built** — 117 stays
+  `needs-triage` and gates nothing.
 
 - **The interface speaks one language, and it is English** — two tickets from the
   grilling session of 2026-08-13, which started from ticket 42 and found that the

@@ -458,7 +458,7 @@ describe('diffRows', () => {
   });
 });
 
-// --- ticket 116: the same words, divided differently
+// ---- ticket 116: the same words, divided differently
 
 /**
  * `nl/proefpakket/succes`, the case ADR 0012 was written from and this ticket's demo.
@@ -635,7 +635,7 @@ describe('a merged paragraph as a finding', () => {
   });
 });
 
-// --- ticket 120: the same words, divided differently, the other way round
+// ---- ticket 120: the same words, divided differently, the other way round
 
 /**
  * The four blocks of `nl/glazen-schuifwand/productinformatie`, shortened the way the merge
@@ -670,7 +670,14 @@ describe('a split paragraph', () => {
   it('reads in production document order', () => {
     const rows = rowsOf(
       ['Gumax glazen schuifwanden zijn er in vele maten', WHOLE, 'Bekijk de prijzen'],
-      ['Gumax glazen schuifwanden zijn er in vele maten', HELP, SIZING, ADVICE, CONTACT, 'Bekijk de prijzen'],
+      [
+        'Gumax glazen schuifwanden zijn er in vele maten',
+        HELP,
+        SIZING,
+        ADVICE,
+        CONTACT,
+        'Bekijk de prijzen',
+      ],
     );
     expect(classesOf(rows)).toEqual([null, 'regrouped', null]);
   });
@@ -698,7 +705,8 @@ describe('a split paragraph', () => {
     // priced a three-token leftover tolerance at +22 shown findings and refused it on this
     // page, and three tokens is a real addition or a real loss.
     const label = 'Formulaire de commande:';
-    const rest = 'La demande est sans obligation et gratuite et le paquet passe dans la boîte aux lettres';
+    const rest =
+      'La demande est sans obligation et gratuite et le paquet passe dans la boîte aux lettres';
     const rows = diffRows(
       extract({ elements: units([`${label} ${rest}`]) }),
       extract({ side: 'new', elements: [unit(label, { tag: 'h2' }), unit(rest)] }),
@@ -800,7 +808,11 @@ describe('a split paragraph as a finding', () => {
           extract({ elements: units([`${HELP} ${SIZING} ${ADVICE}`]) }),
           extract({
             side: 'new',
-            elements: [unit(HELP, { tag: 'h2' }), unit(SIZING, { tag: 'li' }), unit(ADVICE, { tag: 'li' })],
+            elements: [
+              unit(HELP, { tag: 'h2' }),
+              unit(SIZING, { tag: 'li' }),
+              unit(ADVICE, { tag: 'li' }),
+            ],
           }),
         ),
         collector,
@@ -822,6 +834,83 @@ describe('a split paragraph as a finding', () => {
     const findings = findingsOf([WHOLE], [HELP, SIZING, ADVICE, CONTACT]);
     expect(findings[0].id).toMatch(/^[A-Za-z0-9_-]{16}$/);
     expect(summarise(findings)).toMatchObject({ work: 0, information: 1, total: 1 });
+  });
+});
+
+// ---- ticket 121: a run may hold a heading
+
+describe('a run that holds a heading', () => {
+  /** The section the run sits in, so the anchor has an answer that is not the run itself. */
+  const SECTION = 'Onze laagsteprijsgarantie';
+  const CLAIM = 'Hoe kan het dat Tuinmaximaal de laagsteprijsgarantie heeft?';
+  const BECAUSE = 'Tuinmaximaal zit bovenop het productieproces en slaat de tussenhandel over';
+
+  /**
+   * @param {import('./contract.mjs').ContentUnit[]} prodUnits
+   * @param {import('./contract.mjs').ContentUnit[]} newUnits
+   */
+  const rowsFrom = (prodUnits, newUnits) =>
+    diffRows(extract({ elements: prodUnits }), extract({ side: 'new', elements: newUnits }));
+
+  it('is one row when production’s heading is inlined, and no copy', () => {
+    // The merge direction. The heading-versus-non-heading wall in the leftover matcher
+    // would refuse `CLAIM ↔ merged`, and the greedy pass would otherwise leave a
+    // `text-missing` on a heading whose every word is on the new site.
+    const rows = rowsFrom(
+      [unit(SECTION, { tag: 'h2' }), unit(CLAIM, { tag: 'h3' }), unit(BECAUSE)],
+      [unit(SECTION, { tag: 'h2' }), unit(`${CLAIM} ${BECAUSE}`)],
+    );
+    expect(classesOf(rows)).toEqual([null, 'regrouped']);
+    expect(rows[1].prodRun?.map((one) => one.tag)).toEqual(['h3', 'p']);
+  });
+
+  it('reports the heading above the run, never the heading inside it', () => {
+    // The row is positioned at the run's first member, and `anchorHeadingFor()`'s rule is
+    // unchanged: a heading is not its own anchor, so the row is filed under the section the
+    // absorbed heading opened a subsection of. Naming the run's own heading would file the
+    // row under a landmark the new site no longer draws.
+    const [finding] = collect((collector) =>
+      textFindings(
+        rowsFrom(
+          [unit(SECTION, { tag: 'h2' }), unit(CLAIM, { tag: 'h3' }), unit(BECAUSE)],
+          [unit(SECTION, { tag: 'h2' }), unit(`${CLAIM} ${BECAUSE}`)],
+        ),
+        collector,
+      ),
+    );
+    expect(finding).toMatchObject({ class: 'regrouped', detail: 'h3 + p → p' });
+    expect(finding.anchorHeading).toBe(SECTION);
+  });
+
+  it('is one row when the new site promotes a heading out of a paragraph', () => {
+    // The split direction, and the shape the corpus holds: 29 of its 189 regrouped rows
+    // are `p → h3 + p`, where production sends one paragraph and the new site promotes its
+    // first sentence. The heading is the run's first member, so `new` is a heading and
+    // production's unit is not — which is why the jump-list cannot read one side only.
+    const [finding] = collect((collector) =>
+      textFindings(
+        rowsFrom(
+          [unit(SECTION, { tag: 'h2' }), unit(`${CLAIM} ${BECAUSE}`)],
+          [unit(SECTION, { tag: 'h2' }), unit(CLAIM, { tag: 'h3' }), unit(BECAUSE)],
+        ),
+        collector,
+      ),
+    );
+    expect(finding).toMatchObject({ class: 'regrouped', detail: 'p → h3 + p' });
+    expect(finding.anchorHeading).toBe(SECTION);
+  });
+
+  it('leaves the wall in front of the greedy pass exactly where it was', () => {
+    // The trap. `regrouped` runs earlier and on an exact test, so it does not consult
+    // `mayPair()` — which is a different thing from relaxing it. A demoted heading whose
+    // wording also changed still fails the exact test, and it must not then start pairing
+    // with the paragraph on fuzzy similarity: that pair asserts two texts are the same
+    // content, and a heading is an editorial fact about the outline.
+    const rows = rowsFrom(
+      [unit('Voorwaarden van de laagsteprijsgarantie', { tag: 'h3' })],
+      [unit('De voorwaarden van onze laagsteprijsgarantie')],
+    );
+    expect(classesOf(rows)).toEqual(['text-missing', 'text-added']);
   });
 });
 
@@ -946,7 +1035,7 @@ describe('textFindings', () => {
   });
 });
 
-// --- Links ---------------------------------------------------------------
+// ---- links
 
 /**
  * @param {string} url
@@ -1613,7 +1702,7 @@ describe('compareLinks', () => {
   });
 });
 
-// --- Images --------------------------------------------------------------
+// ---- images
 
 /** @param {string} key @param {string | null} alt @param {number} [index] */
 const image = (key, alt, index = 0) => ({ index, key, src: `/media/wysiwyg/${key}`, alt });
@@ -1766,7 +1855,7 @@ describe('compareImages', () => {
   });
 });
 
-// --- Position ------------------------------------------------------------
+// ---- position
 
 /**
  * Ticket 34. A finding that reads `hier` or `carports` used to send an editor
@@ -2242,7 +2331,7 @@ describe('locationUrl', () => {
   });
 });
 
-// --- The report ----------------------------------------------------------
+// ---- the report
 
 describe('skipReason', () => {
   it('gates on 200, because a 404 page still extracts', () => {

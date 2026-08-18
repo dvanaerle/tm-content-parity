@@ -235,11 +235,18 @@ element any more: it folds the links inside it. Both the word and the rule are g
   It is **built in both directions**, on 2026-08-18: ticket 116 landed the many-to-one half
   — several production blocks the new site sends as one — and ticket 120 the one-to-many, which
   is four times the volume and is mostly the new site rebuilding a paragraph as a heading and
-  a list. `compare/vocabulary.mjs` holds 32 classes and `regrouped` is the thirty-second. The
+  a list. `compare/vocabulary.mjs` holds 32 classes and `regrouped` is the thirty-second.
   Within a page the **merge resolves first**, so a block the merge claimed is not on a split's
   row: no block is ever on two. The wording an editor reads is the same either way: the label is *Same
   text, divided differently*, which is the division and never the merge. `untranslated` is
   still decided and unbuilt.
+  A run **may hold a heading**, and ticket 121 is the navigation half of that: a regrouped row
+  answers the heading jump-list with **every heading in production's run, and with the new
+  site's where production holds none** — so a heading one site inlined and a heading the other
+  promoted both keep their entry, at the row's own anchor, and a jump to it opens the row. The
+  precedence is production's, as everywhere: where both sides hold a heading it is one landmark
+  named twice. 29 of the corpus's 189 regrouped rows hold a heading, all of them promoted by
+  the new site out of a production paragraph.
 - **Anchor heading** — the nearest heading before an element in document order.
   It is how a finding says where it is on the page, and it is null for an element
   that precedes every heading. The code says `anchorHeading` in full, never
