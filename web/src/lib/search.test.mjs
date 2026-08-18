@@ -994,7 +994,7 @@ describe('explainScope', () => {
     ).toEqual({
       scope: 'kerst',
       state: 'found',
-      pages: [{ page: 'kerstactie', kind: 'one-sided', skipReason: 'new site: 404' }],
+      pages: [{ store: 'nl', page: 'kerstactie', kind: 'one-sided', skipReason: 'new site: 404' }],
     });
   });
 
@@ -1004,7 +1004,7 @@ describe('explainScope', () => {
     const result = searchStore({ index: index([entry({ page: 'downloads' })]), term: '/downloads' });
 
     expect(explainScope({ pages: [page({ page: 'downloads' })], result }).pages).toEqual([
-      { page: 'downloads', kind: 'matched', skipReason: null },
+      { store: 'nl', page: 'downloads', kind: 'matched', skipReason: null },
     ]);
   });
 
@@ -1024,7 +1024,7 @@ describe('explainScope', () => {
         pages: [page({ page: 'downloads', findings: [{ id: 'a', class: 'text-missing' }] })],
         result,
       }).pages,
-    ).toEqual([{ page: 'downloads', kind: 'no-open-work', skipReason: null }]);
+    ).toEqual([{ store: 'nl', page: 'downloads', kind: 'no-open-work', skipReason: null }]);
   });
 
   it('says a compared page with no difference on it is clean', () => {
@@ -1035,7 +1035,7 @@ describe('explainScope', () => {
 
     expect(
       explainScope({ pages: [page({ page: 'downloads', findings: [] })], result }).pages,
-    ).toEqual([{ page: 'downloads', kind: 'clean', skipReason: null }]);
+    ).toEqual([{ store: 'nl', page: 'downloads', kind: 'clean', skipReason: null }]);
   });
 
   it('says the second term found nothing on a page that does hold differences', () => {
@@ -1053,7 +1053,7 @@ describe('explainScope', () => {
         pages: [page({ page: 'downloads', findings: [{ id: 'a', class: 'text-missing' }] })],
         result,
       }).pages,
-    ).toEqual([{ page: 'downloads', kind: 'no-match', skipReason: null }]);
+    ).toEqual([{ store: 'nl', page: 'downloads', kind: 'no-match', skipReason: null }]);
   });
 
   it('answers per page, so a scope over mixed kinds does not collapse to one verdict', () => {
@@ -1070,8 +1070,8 @@ describe('explainScope', () => {
         result,
       }).pages,
     ).toEqual([
-      { page: 'kerstactie', kind: 'one-sided', skipReason: 'new site: 404' },
-      { page: 'kerstboom', kind: 'clean', skipReason: null },
+      { store: 'nl', page: 'kerstactie', kind: 'one-sided', skipReason: 'new site: 404' },
+      { store: 'nl', page: 'kerstboom', kind: 'clean', skipReason: null },
     ]);
   });
 
@@ -1088,7 +1088,76 @@ describe('explainScope', () => {
         pages: [page({ page: 'downloads', findings: [{ id: 'a', class: 'copy' }] })],
         result: searchStore({ index: findings, term: '/downloads', classes: ['casing'] }),
       }).pages,
-    ).toEqual([{ page: 'downloads', kind: 'matched', skipReason: null }]);
+    ).toEqual([{ store: 'nl', page: 'downloads', kind: 'matched', skipReason: null }]);
+  });
+
+  it('classifies the sibling’s pages too, and says which store each is on (ticket 05)', () => {
+    // The scope crosses the block because the **corpus** does. A scope narrows what the
+    // search runs over, the search now runs over two stores' indexes, and a header that
+    // listed one store's pages under a result holding both would be the same disagreement
+    // between two halves of one screen that this ticket exists to close.
+    const result = searchStore({
+      index: index([
+        entry({ id: 'a', store: 'nl', page: 'downloads' }),
+        entry({ id: 'b', store: 'be', page: 'downloads-be' }),
+      ]),
+      term: '/downloads',
+    });
+
+    expect(
+      explainScope({
+        pages: [page({ page: 'downloads' }), page({ store: 'be', page: 'downloads-be' })],
+        result,
+      }),
+    ).toEqual({
+      scope: 'downloads',
+      state: 'found',
+      pages: [
+        { store: 'nl', page: 'downloads', kind: 'matched', skipReason: null },
+        { store: 'be', page: 'downloads-be', kind: 'matched', skipReason: null },
+      ],
+    });
+  });
+
+  it('does not call a sibling page no such page, which is the typo’s answer', () => {
+    // The acceptance criterion said as its own line. A scope reaching only the sibling used
+    // to reach no page of *this* store, and the screen answered *check the spelling* about
+    // a page that exists and holds rows in the list below it.
+    const result = searchStore({
+      index: index([entry({ id: 'b', store: 'be', page: 'pergola' })]),
+      term: '/pergola',
+    });
+
+    expect(
+      explainScope({ pages: [page({ store: 'be', page: 'pergola' })], result }),
+    ).toEqual({
+      scope: 'pergola',
+      state: 'found',
+      pages: [{ store: 'be', page: 'pergola', kind: 'matched', skipReason: null }],
+    });
+  });
+
+  it('tells two stores’ copies of one page key apart', () => {
+    // `afhalen` is a page of both stores of a block, and they are two pages. `be/afhalen`
+    // answering must not make `nl/afhalen` read as matched — an editor would be told a page
+    // holds rows it holds none of, and would go looking for them.
+    const result = searchStore({
+      index: index([entry({ id: 'b', store: 'be', page: 'afhalen' })]),
+      term: '/afhalen',
+    });
+
+    expect(
+      explainScope({
+        pages: [
+          page({ store: 'nl', page: 'afhalen', findings: [{ class: 'copy' }] }),
+          page({ store: 'be', page: 'afhalen' }),
+        ],
+        result,
+      }).pages,
+    ).toEqual([
+      { store: 'nl', page: 'afhalen', kind: 'no-open-work', skipReason: null },
+      { store: 'be', page: 'afhalen', kind: 'matched', skipReason: null },
+    ]);
   });
 
   it('has nothing to explain about a term that carries no scope', () => {

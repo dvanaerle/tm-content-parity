@@ -21,6 +21,7 @@
  * **A block is still not an all-stores surface.** Ticket 38 settled that there is none, and
  * nothing here takes a list of stores: `indexOverBlock()` takes one sibling, because
  * `siblingOf()` answers with one store or with nothing.
+ * See `docs/adr/0021-the-search-reaches-the-language-block-in-one-half.md`.
  *
  * **Two sources, two freshnesses.** The index is as old as the last build; the notes
  * are live. `searchStore()` answers about the snapshot and `searchNotes()` answers
@@ -672,6 +673,8 @@ export function searchStore({
  *   `no-such-page`.
  *
  * @typedef {object} ScopedPage
+ * @property {string} store The store this page is on (ticket 05). A scope reaches the whole
+ *   block, so a listed page is a page **of a store** and the line that draws it says which.
  * @property {string} page
  * @property {'matched' | 'one-sided' | 'clean' | 'no-open-work' | 'no-match'} kind
  * @property {string | null} skipReason The aside's own words for why the comparison did
@@ -697,6 +700,7 @@ export function explainScope({ pages, result }) {
   const found = pages
     .filter((one) => inScope(one.page, scope))
     .map((one) => ({
+      store: one.store,
       page: one.page,
       kind: kindOf(one, answered, text),
       skipReason: one.skipReason ?? null,

@@ -122,7 +122,10 @@ say it **on screen** — the dismissal in its form, the clearing on a line of th
 clearing said it in a `title` for one commit, which is a sentence an editor sees only by
 hovering; *states, before the press* is not something a tooltip does.
 
-**The search stays per store, and the widening stops at the hook.** Reading two stores' events
+**The search stays per store, and the widening stops at the hook.** *(Half of this was
+superseded by ADR 0021, which moved the **findings** half of a search onto the block and left
+everything below about the notes half exactly as it stands. The paragraph is kept whole
+because the reason it gives is the reason 0021 could not touch the second half.)* Reading two stores' events
 is safe for every *derivation*, because each is handed the reports it is about and
 `derivePageState()` matches on `event.store`. The **log itself** is the exception: it leaves
 the hook raw for one reader, the notes half of a search, which filters on the words and the

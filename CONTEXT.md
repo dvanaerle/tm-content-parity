@@ -345,7 +345,14 @@ element any more: it folds the links inside it. Both the word and the rule are g
   result still opens the whole content view, never a fragment of it, and a bare scope lists
   that page's **repeats** and is not a second reading of the page. It moves no count, no bar
   and no denominator, in the same manner as a **filter** and as the term itself. A scope
-  narrows within one store, because there is no all-stores surface to scope across.
+  narrows the **language block** since ticket 05, because that is the corpus the search runs
+  over: a scope narrows what is searched, and what is searched is this store's index and its
+  sibling's. So `/pergola` typed on `nl` names `be`'s page too, each line saying which store
+  it is on, and a page of the sibling is never reported as *no such page*. It is still not
+  an all-stores scope — there is no all-stores surface to scope across, and a block is two
+  stores. What is **offered** under the box stays this store's keys: a scope is a substring
+  and cannot name a store, and the two stores of a block share nearly every key, so a list
+  over both would be the same strings twice.
   It **is** a filter and it says so like one (ticket 104): a chip beside the class pills,
   named in the amber strip in one sentence with them, and cleared by the same *Clear
   filter*. The search box stays the source of truth and the chip is a reading of it, so the
@@ -435,8 +442,13 @@ element any more: it folds the links inside it. Both the word and the rule are g
   block. That is still not an all-stores view: a block is two stores, it is derived, and
   the same trade ADR 0017 made for the block panel is the one made here.
   The store's **numbers are untouched** by it: the bar, the chips, the roll-up and *Pages*
-  are built from this store's pages alone, as they always were — and so is the **search**,
-  which stays per store in both halves.
+  are built from this store's pages alone, as they always were.
+  The **search** is half of one and half of the other since ticket 05. Its **findings** half
+  reaches the block — it scans this store's search index and the sibling's, so a searched row
+  is the same row the untouched list holds, and a press armed off one writes in both stores.
+  Its **notes** half stays per store: the log reaching a search is narrowed before it leaves
+  the hook, and a search on `nl` never answers with a note written on a `be` page. That split
+  is ADR 0018's and ADR 0021 is where it is written down. Neither half moves a number.
   **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first, and it answers
   *which page do I open next*. There is no all-stores repeat view, for the reason
   there is no all-stores dashboard.

@@ -58,6 +58,7 @@ import { pagesWithClasses } from '../lib/view.mjs';
 export default function Search({
   store,
   pages,
+  siblingPages = [],
   term,
   classes = [],
   onClearFilters,
@@ -125,7 +126,16 @@ export default function Search({
   // The classification is `search.mjs`' and nothing below decides any of it. That is the
   // ticket's own rule and it is the rule the scope itself follows: one string, one parse,
   // one place the answer is made.
-  const answer = useMemo(() => (result ? explainScope({ pages, result }) : null), [pages, result]);
+  // Over the **block's** page list since ticket 05, because the corpus a scope narrows is
+  // the block's index: a scope reaching only the sibling used to answer *no page of this
+  // store has that in its key* about a page that exists and holds rows in the list below it.
+  // The lists are concatenated rather than merged — each entry carries its own store, and
+  // the two stores share page keys, so `store/page` is what tells them apart.
+  const inTheBlock = useMemo(() => [...pages, ...siblingPages], [pages, siblingPages]);
+  const answer = useMemo(
+    () => (result ? explainScope({ pages: inTheBlock, result }) : null),
+    [inTheBlock, result],
+  );
 
   // The pages whose **name** holds the term, which the removed box used to narrow the
   // page list down to. A page with no open finding is in no result above — it is clean,
@@ -277,8 +287,8 @@ function Scope({ store, answer, found, link }) {
     return (
       <section className="border-b border-border px-4 py-3">
         <p className="text-sm">
-          No page of this store has {answer.scope} in its key, so there is nothing to search inside.
-          Check the spelling — a page key is not always the name you read on the page.
+          No page the search reaches has {answer.scope} in its key, so there is nothing to search
+          inside. Check the spelling — a page key is not always the name you read on the page.
         </p>
       </section>
     );
@@ -290,10 +300,20 @@ function Scope({ store, answer, found, link }) {
       </h3>
       <ul className="mt-1 text-sm">
         {answer.pages.map((page) => (
-          <li key={page.page} className="py-0.5">
-            <a className={cn('hover:underline', CHROME.link)} href={link(store, page.page)}>
+          <li key={`${page.store}/${page.page}`} className="py-0.5">
+            {/* The page's **own** store and not the component's. A scope reaches the block
+                since ticket 05, so a line here can be a page of the sibling — and a link
+                built from the dashboard's store would open a page that is not the one
+                named. */}
+            <a className={cn('hover:underline', CHROME.link)} href={link(page.store, page.page)}>
               {page.page}
             </a>
+            {/* Which store, and only where it is not this one — the same rule the repeat row
+                keeps: the marker appears exactly when a page is outside the store an editor
+                thinks they are working in, and never once per line for no reader. */}
+            {page.store !== store && (
+              <span className="ml-2 text-xs text-muted-foreground">on {page.store}</span>
+            )}
             <WhyNothing page={page} />
           </li>
         ))}

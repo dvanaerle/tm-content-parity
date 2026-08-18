@@ -231,6 +231,53 @@ describe('a search over the language block (ticket 05)', () => {
     unmount();
   });
 
+  it('scopes into the block, and links a sibling page to the sibling', async () => {
+    // The scope crosses because the **corpus** does. Before this, `/pergola` on `nl` reached
+    // no `nl` page and answered *check the spelling* about a page that exists and holds rows
+    // in the list directly below the sentence.
+    sibling = siblingIndex([entry({ id: 'x', store: 'be', page: 'pergola', class: 'copy' })]);
+    const { unmount } = await mount({
+      term: '/pergola',
+      byFinding: byFindingOver(index.findings, sibling.findings),
+      siblingPages: [
+        { store: 'be', page: 'pergola', comparable: true, skipReason: null, findings: [] },
+      ],
+    });
+
+    expect(document.body.textContent).not.toContain('Check the spelling');
+    expect(document.body.textContent).toContain('1 page in /pergola');
+    expect(document.body.textContent).toContain('on be');
+    expect(document.querySelector('a[href="/be/pergola/"]')).not.toBeNull();
+    unmount();
+  });
+
+  it('does not mark this store’s copy of a page key because the sibling’s answered', async () => {
+    // `afhalen` is a page of both stores of a block and they are two pages. The one that
+    // answered says so and the one that did not says which kind of nothing it is.
+    sibling = siblingIndex([entry({ id: 'x', store: 'be', page: 'afhalen', class: 'copy' })]);
+    const { unmount } = await mount({
+      term: '/afhalen',
+      byFinding: byFindingOver(index.findings, sibling.findings),
+      pages: [
+        {
+          store: 'nl',
+          page: 'afhalen',
+          comparable: false,
+          skipReason: 'new site: 404',
+          findings: [],
+          summary: { byClass: {} },
+        },
+      ],
+      siblingPages: [
+        { store: 'be', page: 'afhalen', comparable: true, skipReason: null, findings: [] },
+      ],
+    });
+
+    expect(document.body.textContent).toContain('2 pages in /afhalen');
+    expect(document.body.textContent).toContain('Only one site has this page (new site: 404)');
+    unmount();
+  });
+
   it('fetches the sibling index and nothing wider than it', async () => {
     // A block is two stores. There is no all-stores index, no route that serves one, and
     // this is the assertion that keeps a later reader from adding a third fetch here.
@@ -479,7 +526,7 @@ describe('what a scoped search says when it finds nothing', () => {
   it('says a scope that reaches no page at all is a typo, not an empty page', async () => {
     const { unmount } = await mount({ term: '/dwonloads', pages: store });
 
-    expect(document.body.textContent).toContain('No page of this store has dwonloads in its key');
+    expect(document.body.textContent).toContain('No page the search reaches has dwonloads in its key');
     unmount();
   });
 

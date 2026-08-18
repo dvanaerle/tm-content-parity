@@ -560,6 +560,14 @@ export default function Dashboard({
               // the four answers a scoped search has to be able to give. The by-name half
               // inside `Search` narrows to the comparable ones itself.
               pages={pages}
+              // The sibling's **whole** list too, for the reason the whole list above is the
+              // whole one (ticket 05). A scope now reaches the block, because the corpus the
+              // search runs over does, and the one-sided half is exactly one of the answers
+              // a scoped search has to be able to give about a page it reached. It is what a
+              // scope may **name** and, as everywhere else on this screen, what no number
+              // may read: `comparableSiblings` is what the press gets, and that split is the
+              // hook's.
+              siblingPages={siblingPages}
               term={query}
               classes={classes}
               // Both filters, in one write (ticket 104 part C). The price is that clearing
