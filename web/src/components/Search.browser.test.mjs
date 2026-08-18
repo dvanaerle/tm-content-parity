@@ -18,6 +18,7 @@ import Search from './Search.jsx';
 /** One entry of the store's search index, as `indexStore()` emits it. */
 const entry = (part) => ({
   id: 'a',
+  store: 'nl',
   page: 'afhalen',
   class: 'copy',
   prod: 'Bekijk deals >',
@@ -67,18 +68,51 @@ const pages = [
   },
 ];
 
-const byFinding = new Map(
-  index.findings.map((one) => [
-    one.id,
-    { id: one.id, state: 'open', visibility: 'work', class: one.class },
-  ]),
-);
+/**
+ * The derived state of every finding on screen, by id.
+ *
+ * It has to hold the **sibling's** findings too since ticket 05, and in the app it does:
+ * `useStoreOverrides()` builds one index over both lists precisely so a block-spanning row
+ * can say what is decided over there and a press can read its eligibility. A fixture over
+ * this store's entries alone is a hook that was never widened.
+ */
+const byFindingOver = (...entries) =>
+  new Map(
+    entries.flat().map((one) => [
+      one.id,
+      { id: one.id, state: 'open', visibility: 'work', class: one.class },
+    ]),
+  );
+
+const byFinding = byFindingOver(index.findings);
+
+/**
+ * The sibling's index, which a block store's search now fetches beside its own (ticket 05).
+ *
+ * Empty by default, so every test written before that ticket asks the same question of the
+ * same three entries. The ones that are about the block hand over their own.
+ */
+const siblingIndex = (findings = []) => ({
+  store: 'be',
+  pages: findings.length,
+  builtAt: '2026-08-11T00:00:00Z',
+  findings,
+});
 
 let fetched;
+/** What `/search-index/be.json` answers with, per test. */
+let sibling;
 
 beforeEach(() => {
   fetched = globalThis.fetch;
-  globalThis.fetch = async () => ({ ok: true, json: async () => index });
+  sibling = siblingIndex();
+  // Answered **by URL**. One index for both files would merge `nl`'s entries with a copy of
+  // themselves, which is a store that cannot exist and a doubled count in every assertion
+  // below — the fixture has to know that two files are fetched, because the component does.
+  globalThis.fetch = async (url) => ({
+    ok: true,
+    json: async () => (String(url).includes('/be.json') ? sibling : index),
+  });
 });
 
 afterEach(() => {
@@ -134,6 +168,150 @@ const strip = () =>
   [...document.querySelectorAll('[data-slot="alert"]')].find((element) =>
     element.textContent.includes('Clear filter'),
   );
+
+describe('a search over the language block (ticket 05)', () => {
+  it('answers a term typed on nl with a difference `be` carries too', async () => {
+    // The ticket in one screen. `repeatsInStore()` has keyed on the block since ticket 03,
+    // so the searched row was already *grouped* as though the sibling were there — and the
+    // sibling's findings were never in the array being grouped. The row now says which
+    // store each of its pages is on, which is the mark the untouched list already draws.
+    sibling = siblingIndex([entry({ id: 'x', store: 'be', page: 'pergola', class: 'copy' })]);
+    const { unmount } = await mount({
+      byFinding: byFindingOver(index.findings, sibling.findings),
+    });
+
+    // Three differences on three `nl` pages before; the `copy` one now also holds a `be`
+    // page, so the result is four findings on four pages in the same three rows. The
+    // fourth is the one an editor no longer has to go and find on the other dashboard.
+    expect(document.body.textContent).toContain('4 findings on 4 pages');
+    expect(document.body.textContent).toContain('in 3 differences');
+
+    // Opened, because a repeat lists its pages when it is opened. The row says which store
+    // each page is on — the mark `Repeats` already draws on a spanning row, drawn here for
+    // the first time because until now a searched row could not span.
+    for (const row of document.querySelectorAll('[data-slot="collapsible-trigger"]')) {
+      await act(() => row.click());
+    }
+
+    expect(document.body.textContent).toContain('pergola');
+    expect(document.body.textContent).toContain('on be');
+    expect(document.body.textContent).toContain('on nl');
+    unmount();
+  });
+
+  it('arms a press over both stores off a searched row, and names them', async () => {
+    // The point of the ticket rather than a side effect of it: the reason to reach a
+    // difference by typing is to decide it, and a searched row that held one store's pages
+    // could only ever decide half of it. The presses were widened by ticket 03 and are
+    // untouched here — what changed is that a searched row can now hand them two stores.
+    //
+    // The sentence names the stores of the **events this press would write**, off the
+    // entries it can act on, and never the row's own `stores`. That is ADR 0018's *80% is
+    // not 100%* and `bulk.mjs` owns it; this is the assertion that it survives the trip
+    // through the search.
+    sibling = siblingIndex([entry({ id: 'x', store: 'be', page: 'pergola', class: 'copy' })]);
+    const { unmount } = await mount({
+      byFinding: byFindingOver(index.findings, sibling.findings),
+      bulk: { canWrite: true, busy: false, appendMany: async () => ({}), notWritingReason: null },
+    });
+
+    for (const row of document.querySelectorAll('[data-slot="collapsible-trigger"]')) {
+      await act(() => row.click());
+    }
+    // The select-all of the spanning row, which is the two-page one and so the first.
+    await act(() => document.querySelector('thead [data-slot="checkbox"]').click());
+
+    const dismiss = [...document.querySelectorAll('button')].find((element) =>
+      element.textContent.trim().startsWith('Dismiss on 2 pages'),
+    );
+    expect(dismiss).toBeDefined();
+    await act(() => dismiss.click());
+
+    expect(document.body.textContent).toContain('Written in be and nl');
+    unmount();
+  });
+
+  it('fetches the sibling index and nothing wider than it', async () => {
+    // A block is two stores. There is no all-stores index, no route that serves one, and
+    // this is the assertion that keeps a later reader from adding a third fetch here.
+    const asked = [];
+    globalThis.fetch = async (url) => {
+      asked.push(String(url));
+      return { ok: true, json: async () => (String(url).includes('/be.json') ? sibling : index) };
+    };
+    const { unmount } = await mount();
+
+    expect(asked).toEqual(['/search-index/nl.json', '/search-index/be.json']);
+    unmount();
+  });
+
+  it('fetches one file on a store that is in no block', async () => {
+    // `de` is the only store of its language, so it pays nothing for this feature — the
+    // shape of ADR 0018's trade, and the half of the acceptance criteria that says `de` and
+    // `uk` are unchanged.
+    const asked = [];
+    globalThis.fetch = async (url) => {
+      asked.push(String(url));
+      return { ok: true, json: async () => ({ ...index, store: 'de', findings: [] }) };
+    };
+    const { unmount } = await mount({ store: 'de', pages: [] });
+
+    expect(asked).toEqual(['/search-index/de.json']);
+    unmount();
+  });
+
+  it('says the index was not read when the sibling’s file is missing', async () => {
+    // A narrower answer with nothing on screen saying it is narrower is the bug this
+    // ticket closes, so a half-read block does not quietly become a per-store search.
+    globalThis.fetch = async (url) =>
+      String(url).includes('/be.json')
+        ? { ok: false, status: 404 }
+        : { ok: true, json: async () => index };
+    const { unmount } = await mount();
+
+    expect(document.body.textContent).toContain('be: HTTP 404');
+    unmount();
+  });
+
+  it('never answers with a note written on the sibling’s page', async () => {
+    // ADR 0018's line, and the half this ticket does not move. The log arriving here is
+    // already narrowed to this store by `eventsOfStores()`, so the fixture is the shape the
+    // hook hands over — a `be` note in it would mean the narrowing had been undone
+    // upstream, which is what this test is watching for.
+    sibling = siblingIndex([entry({ id: 'x', store: 'be', page: 'pergola', class: 'copy' })]);
+    const { unmount } = await mount({
+      byFinding: byFindingOver(index.findings, sibling.findings),
+      log: {
+        events: [
+          {
+            id: '1',
+            store: 'nl',
+            page: 'afhalen',
+            scope: 'page',
+            action: 'note',
+            note: 'The deals run until Friday.',
+            at: '2026-08-12T00:00:00Z',
+            editor: 'ik',
+          },
+        ],
+        ready: true,
+        error: null,
+        connected: true,
+      },
+    });
+
+    expect(document.body.textContent).toContain('The deals run until Friday.');
+
+    // `pergola` is in the findings half above — it is a page of the spanning row — and it
+    // is nowhere in the notes half, which is what "the notes stay per store" looks like on
+    // screen. The narrowing itself is `eventsOfStores()`', one layer up.
+    const notes = [...document.querySelectorAll('section')].find((element) =>
+      element.textContent.includes('Read from the log now'),
+    );
+    expect(notes.textContent).not.toContain('pergola');
+    unmount();
+  });
+});
 
 describe('a search under the class pills', () => {
   it('keeps the amber strip up, in the words it uses everywhere else', async () => {

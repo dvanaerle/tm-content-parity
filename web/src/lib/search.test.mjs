@@ -4,6 +4,7 @@ import {
   addPage,
   emptyIndex,
   explainScope,
+  indexOverBlock,
   indexStore,
   inScope,
   matchedFields,
@@ -255,6 +256,156 @@ const entry = (part) => ({
   occurrences: 1,
   linkText: [],
   ...part,
+});
+
+describe('indexOverBlock', () => {
+  /** An index as the build emitted it for one store. */
+  const index = (store, findings, builtAt = '2026-08-11T00:00:00Z') => ({
+    store,
+    pages: findings.length,
+    builtAt,
+    findings,
+  });
+
+  it('holds both stores’ entries, each still saying which store it is on', () => {
+    // The merge itself, and the reason step 1 came first: the entries land in one array
+    // and the only thing left telling them apart is the field each one carries.
+    const merged = indexOverBlock(
+      index('nl', [entry({ id: 'a', store: 'nl' })]),
+      index('be', [entry({ id: 'b', store: 'be' })]),
+    );
+
+    expect(merged.findings.map((one) => [one.id, one.store])).toEqual([
+      ['a', 'nl'],
+      ['b', 'be'],
+    ]);
+  });
+
+  it('answers with the store’s own index where it has no sibling', () => {
+    // `de` and `uk` are each the only store of their language, so there is no second file
+    // to fetch and nothing to merge. The same object back, not a copy of it: a store out
+    // of a block pays nothing for this feature, which is the shape of ADR 0018's trade.
+    const alone = index('de', [entry({ store: 'de' })]);
+    expect(indexOverBlock(alone, null)).toBe(alone);
+  });
+
+  it('keeps the shape of an index, so nothing downstream can tell it was merged', () => {
+    const merged = indexOverBlock(index('nl', [entry({ store: 'nl' })]), index('be', []));
+    expect(Object.keys(merged).sort()).toEqual(['builtAt', 'findings', 'pages', 'store']);
+  });
+
+  it('stays the dashboard’s store, which is what the merged index was assembled for', () => {
+    // `store` is the dashboard this index is held by and never a claim about its entries —
+    // which is exactly why an entry carries its own.
+    expect(indexOverBlock(index('nl', []), index('be', [])).store).toBe('nl');
+  });
+
+  it('counts the pages of both, because the number counts what was scanned', () => {
+    const merged = indexOverBlock(
+      index('nl', [entry({ store: 'nl' })]),
+      index('be', [entry({ store: 'be' }), entry({ store: 'be', page: 'garantie' })]),
+    );
+    expect(merged.pages).toBe(3);
+  });
+
+  it('carries the newer build, the rule `addPage()` already follows one level down', () => {
+    // One rule for *when was this snapshot taken* and not two. The two files are written
+    // by one build, so they carry the same moment in practice; where they do not, this
+    // answers as the accumulator below it answers over two reports.
+    const merged = indexOverBlock(
+      index('nl', [], '2026-08-11T00:00:00Z'),
+      index('be', [], '2026-08-12T00:00:00Z'),
+    );
+    expect(merged.builtAt).toBe('2026-08-12T00:00:00Z');
+  });
+});
+
+describe('searchStore over a language block (ticket 05)', () => {
+  const index = (store, findings) => ({
+    store,
+    pages: findings.length,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings,
+  });
+
+  it('answers a term typed on nl with a repeat holding be’s pages', () => {
+    // The ticket in one test. Before this the searched list was `nl`'s findings grouped by
+    // a key that already spanned the block, so a spanning row could never appear in it —
+    // the sibling's findings were not in the array being grouped.
+    const result = searchStore({
+      index: indexOverBlock(
+        index('nl', [entry({ id: 'a', store: 'nl', page: 'afhalen' })]),
+        index('be', [entry({ id: 'b', store: 'be', page: 'pergola' })]),
+      ),
+      term: 'deals',
+    });
+
+    expect(result.repeats).toHaveLength(1);
+    expect(result.repeats[0].stores).toEqual(['be', 'nl']);
+    expect(result.repeats[0].on.map((one) => `${one.store}/${one.page}`)).toEqual([
+      'nl/afhalen',
+      'be/pergola',
+    ]);
+  });
+
+  it('keeps two stores’ same page key as two pages', () => {
+    // The two stores of a block carry the same keys, and `nl/afhalen` and `be/afhalen` are
+    // two pages of one repeat. Bucketed by the key alone they would be one, wearing
+    // whichever store's name arrived first.
+    const result = searchStore({
+      index: indexOverBlock(
+        index('nl', [entry({ id: 'a', store: 'nl', page: 'afhalen' })]),
+        index('be', [entry({ id: 'b', store: 'be', page: 'afhalen' })]),
+      ),
+      term: 'deals',
+    });
+
+    expect(result.repeats[0].on).toHaveLength(2);
+    expect(result.pages).toBe(2);
+    expect(result.total).toBe(2);
+  });
+
+  it('does not move a store out of a block at all', () => {
+    // `de` is the only store of its language. Its index is its own, its rows are its own,
+    // and this ticket is invisible there — which is the test the ticket asks for by name.
+    const alone = index('de', [entry({ id: 'a', store: 'de', page: 'afhalen' })]);
+    expect(searchStore({ index: indexOverBlock(alone, null), term: 'deals' })).toEqual(
+      searchStore({ index: alone, term: 'deals' }),
+    );
+  });
+
+  it('does not group across a block boundary, because the key never did', () => {
+    // The grouping is `repeatsInStore()`'s and this ticket adds nothing to it. `de` and
+    // `nl` are not a block, so identical words there are two rows — and a merge that
+    // reached past the sibling would be a cross-store search, which ticket 38 refuses.
+    const result = searchStore({
+      index: indexOverBlock(
+        index('nl', [entry({ id: 'a', store: 'nl' })]),
+        index('de', [entry({ id: 'b', store: 'de' })]),
+      ),
+      term: 'deals',
+    });
+
+    expect(result.repeats).toHaveLength(2);
+    expect(result.repeats.every((one) => one.stores.length === 1)).toBe(true);
+  });
+
+  it('asks the log about the sibling’s findings by their own ids', () => {
+    // A press is armed off `byFinding`, which the hook builds over **both** lists. So a
+    // sibling finding somebody already dismissed is closed here too, and the searched row
+    // reads the same on both dashboards of the block — which is the mirroring ADR 0018
+    // says is the point.
+    const result = searchStore({
+      index: indexOverBlock(
+        index('nl', [entry({ id: 'a', store: 'nl', page: 'afhalen' })]),
+        index('be', [entry({ id: 'b', store: 'be', page: 'pergola' })]),
+      ),
+      term: 'deals',
+      stateOf: (id) => (id === 'b' ? 'dismissed' : 'open'),
+    });
+
+    expect(result.repeats[0].on.map((one) => one.id)).toEqual(['a']);
+  });
 });
 
 describe('matchedFields', () => {

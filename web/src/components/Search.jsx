@@ -11,7 +11,8 @@ import { Attribution } from './Attribution.jsx';
 import { day } from '../lib/dates.mjs';
 import { cn } from '../lib/utils.js';
 import { logState } from '../lib/log-read.mjs';
-import { explainScope, inScope, searchNotes, searchStore } from '../lib/search.mjs';
+import { explainScope, inScope, indexOverBlock, searchNotes, searchStore } from '../lib/search.mjs';
+import { siblingOf } from '../lib/language-blocks.mjs';
 import { pagesWithClasses } from '../lib/view.mjs';
 
 /**
@@ -509,27 +510,42 @@ const NotesAside = ({ children }) => (
 );
 
 /**
- * The store's index, fetched the first time someone searches.
+ * The index a search scans: this store's, and its sibling's where it has one (ticket 05).
  *
  * Not an island prop: the index is over a megabyte and every visitor to the dashboard
  * would pay for it, including the ones who never type. It is a static file the build
  * wrote, so one fetch answers every query afterwards and no service is involved.
  *
- * Per store, and there is no version of this that takes several — ticket 38 settled that
- * there is no all-stores surface.
+ * **Two files on a block store and one everywhere else.** The sibling comes from
+ * `siblingOf()`, the same derivation the dashboard's page list goes through, and it is
+ * `null` on `de` and `uk` — each is the only store of its language, so they fetch what they
+ * always fetched. That is ADR 0018's trade in its own shape: a store pays for a block only
+ * if it is in one. Measured over the emitted files, gzipped: `nl` 159 kB → 305 kB, `be_fr`
+ * 158 kB → 315 kB, `de` and `uk` unchanged.
+ *
+ * There is still **no version of this that takes a list** — ticket 38 settled that there is
+ * no all-stores surface, and a block is two stores rather than a step toward six.
+ *
+ * **A sibling that did not answer is an error and not a narrower search.** Both fetches are
+ * one promise, so a missing sibling index says so instead of quietly answering over one
+ * store — which is the bug this ticket exists to close, and it would be worse for arriving
+ * without a message.
  */
 function useSearchIndex(store) {
   const [state, setState] = useState({ index: null, error: null });
+  const sibling = siblingOf(store);
 
   useEffect(() => {
     let live = true;
     setState({ index: null, error: null });
-    fetch(`/search-index/${store}.json`)
-      .then((response) =>
-        response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)),
-      )
-      .then((index) => {
-        if (live) setState({ index, error: null });
+    const read = (one) =>
+      fetch(`/search-index/${one}.json`).then((response) =>
+        response.ok ? response.json() : Promise.reject(new Error(`${one}: HTTP ${response.status}`)),
+      );
+
+    Promise.all([read(store), sibling ? read(sibling) : Promise.resolve(null)])
+      .then(([own, other]) => {
+        if (live) setState({ index: indexOverBlock(own, other), error: null });
       })
       .catch((failure) => {
         if (live) setState({ index: null, error: failure.message });
@@ -537,7 +553,7 @@ function useSearchIndex(store) {
     return () => {
       live = false;
     };
-  }, [store]);
+  }, [store, sibling]);
 
   return state;
 }

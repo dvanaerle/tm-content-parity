@@ -11,8 +11,16 @@
  * probe-search-index.mjs` is the measurement that says so, and it is what a later
  * reader re-runs before adding one.
  *
- * **Per store only.** Ticket 38 settled that there is no all-stores surface, and a
- * cross-store search is the back door to one. Nothing here takes a list of stores.
+ * **The findings half reaches the language block; the notes half does not** (ticket 05).
+ * `searchStore()` scans the store's index and its sibling's, merged by `indexOverBlock()`,
+ * so a searched row is grouped over the block exactly as the untouched *Repeats* list has
+ * been since ticket 03 — the key already spanned, and only the array being grouped did not.
+ * `searchNotes()` stays where ADR 0018 put it: it is handed a log already narrowed to this
+ * store, and a search on `nl` never answers with a note written on a `be` page.
+ *
+ * **A block is still not an all-stores surface.** Ticket 38 settled that there is none, and
+ * nothing here takes a list of stores: `indexOverBlock()` takes one sibling, because
+ * `siblingOf()` answers with one store or with nothing.
  *
  * **Two sources, two freshnesses.** The index is as old as the last build; the notes
  * are live. `searchStore()` answers about the snapshot and `searchNotes()` answers
@@ -127,6 +135,52 @@ import { findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
  */
 export function indexStore(store, reports) {
   return reports.reduce(addPage, emptyIndex(store));
+}
+
+/**
+ * The store's index and its sibling's, as the one index a block search scans (ticket 05).
+ *
+ * The **findings** half of a search reaches the language block, because ticket 03 widened
+ * the repeat key and left this half where it was: `repeatsInStore()` keys on
+ * `blockOf(store)?.language ?? store`, so a searched result was already *grouped* as though
+ * the block were there while the array being grouped held one store. The two lists on one
+ * dashboard therefore disagreed — the untouched *Repeats* list spanned and the searched one
+ * did not — and an editor who typed to reach a difference was asked the same question again
+ * on the sibling.
+ *
+ * **The notes half does not move**, and that is ADR 0018's line rather than an omission
+ * here. `searchNotes()` reads the log, the log is narrowed by `eventsOfStores()` before it
+ * leaves `useStoreOverrides()`, and a search on `nl` still never answers with a note written
+ * on a `be` page. The findings half was per store only because the *index* was per store.
+ *
+ * **A block is two stores and not all of them.** This takes one sibling, not a list, for the
+ * reason `siblingOf()` answers with one store: there is no all-stores index and no route
+ * that would serve one (ticket 38).
+ *
+ * Nothing here knows what a block *is*. The caller resolves the sibling — the same
+ * `siblingOf()` the dashboard's page list already goes through — so this ticket adds no
+ * second reading of the hreflang codes, which is the trap it names.
+ *
+ * @param {SearchIndex} index The dashboard's own.
+ * @param {SearchIndex | null} sibling The other store of its block, or `null` where it is
+ *   in none. `de` and `uk` are each the only store of their language, so they pass `null`
+ *   and get their own index straight back — a store pays for a block only if it is in one.
+ * @returns {SearchIndex}
+ */
+export function indexOverBlock(index, sibling) {
+  if (!sibling) return index;
+  return {
+    // The **dashboard's** store, which is what this index was assembled for. It is not a
+    // claim about the entries, and it stopped being one the moment an entry carried its
+    // own: nothing downstream reads this to decide where a finding is.
+    store: index.store,
+    pages: index.pages + sibling.pages,
+    // The newer of the two, which is the rule `addPage()` follows one level down over two
+    // reports. One answer to *when was this snapshot taken* and not two. In practice the
+    // two files are written by one build and carry the same moment.
+    builtAt: sibling.builtAt > index.builtAt ? sibling.builtAt : index.builtAt,
+    findings: [...index.findings, ...sibling.findings],
+  };
 }
 
 /**
@@ -557,7 +611,11 @@ export function searchStore({
   return {
     repeats,
     total: findingsIn(repeats),
-    pages: new Set(repeats.flatMap((repeat) => repeat.on.map((one) => one.page))).size,
+    // Counted as `store/page`, because a repeat's pages can be on two stores since this
+    // ticket and `afhalen` exists on both of them. The bare key would count two pages as
+    // one and print *2 findings on 1 page*, which is a row contradicting its own footer.
+    pages: new Set(repeats.flatMap((repeat) => repeat.on.map((one) => `${one.store}/${one.page}`)))
+      .size,
     matchedRepeats: matchedRepeats.length,
     matchedPages,
     scope,
