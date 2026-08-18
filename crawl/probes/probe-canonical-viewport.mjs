@@ -45,8 +45,17 @@ const PAGES = [
 ];
 
 /**
- * Magezon's breakpoint utilities. A block marked hidden at `lg` or `xl` is the copy
- * a desktop reader never sees, so it is the copy the canonical viewport drops.
+ * **The selector this probe ran with, and it is the wrong one.** Kept verbatim
+ * because the probe is evidence and its numbers were produced by this line.
+ *
+ * It reads the class *names* — `lg` and `xl` look like large screens — and that is
+ * the reasoning ADR 0020 refuses. Read from production's stylesheet,
+ * `mgz-hidden-lg` hides only between 992px and 1200px, so a block marked with it is
+ * visible at the canonical viewport and must stay. The committed rule in
+ * `shared/canonical-viewport.mjs` names `mgz-hidden-xl` alone.
+ *
+ * Correcting it moved 18 texts across the corpus, measured by
+ * `probe-canonical-viewport-corpus.mjs`. Do not copy this line.
  */
 const HIDDEN_AT_DESKTOP = '[class*="mgz-hidden-lg"],[class*="mgz-hidden-xl"]';
 

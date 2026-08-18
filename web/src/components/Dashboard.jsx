@@ -921,6 +921,29 @@ const SORT_LABEL = {
  *
  * It is a statement about the whole run. A store's own numbers are the line above.
  */
+function RegionCoverage({ store, reason, changes }) {
+  const moved = changes.filter((change) => change.verdict !== 'unchanged');
+  if (!reason && moved.length === 0) return null;
+
+  const scope = store ? `store ${store}` : 'all stores';
+  return (
+    <li className="mt-2 border-t pt-2">
+      <strong className="font-medium">Compared with the previous snapshot ({scope})</strong>
+      {reason ? (
+        <span className="block text-muted-foreground">Not compared. {REGION_VERDICT_REASON}</span>
+      ) : (
+        moved.map((change) => (
+          <span key={change.selector} className="block text-muted-foreground">
+            <code>{change.selector}</code>
+            {' — '}
+            {REGION_VERDICT[change.verdict](change)}
+          </span>
+        ))
+      )}
+    </li>
+  );
+}
+
 /**
  * Ticket 69: the scope statement a reader would otherwise meet nowhere.
  *
@@ -941,29 +964,6 @@ function CanonicalViewportNote() {
         some blocks in one page, so where it sends a separate version for a phone, that version is
         not checked.
       </span>
-    </li>
-  );
-}
-
-function RegionCoverage({ store, reason, changes }) {
-  const moved = changes.filter((change) => change.verdict !== 'unchanged');
-  if (!reason && moved.length === 0) return null;
-
-  const scope = store ? `store ${store}` : 'all stores';
-  return (
-    <li className="mt-2 border-t pt-2">
-      <strong className="font-medium">Compared with the previous snapshot ({scope})</strong>
-      {reason ? (
-        <span className="block text-muted-foreground">Not compared. {REGION_VERDICT_REASON}</span>
-      ) : (
-        moved.map((change) => (
-          <span key={change.selector} className="block text-muted-foreground">
-            <code>{change.selector}</code>
-            {' — '}
-            {REGION_VERDICT[change.verdict](change)}
-          </span>
-        ))
-      )}
     </li>
   );
 }

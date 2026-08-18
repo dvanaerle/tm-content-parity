@@ -110,10 +110,11 @@ shouted, and a column heading is the one place capitals earn their keep.
   reader at that width never sees is dropped at extraction, by a committed list of
   markup conventions that names each one's framework and the pages it was measured
   on. Nothing renders here, so the number is not a window size: it is which
-  breakpoint **band** a hiding class must cover to count, and reading the class name
-  instead of the stylesheet is how the first version of the rule dropped 504 texts of
-  real desktop copy. A consequence to state plainly: the log does not check the
-  mobile version of a page. See `docs/adr/0020-the-log-reads-one-viewport.md`.
+  breakpoint **band** a hiding class must cover to count. A class name is not
+  evidence of a band — two frameworks on this site use the token `lg` for different
+  widths — so a convention quotes the band from the stylesheet. A consequence to
+  state plainly: the log does not check the mobile version of a page. See
+  `docs/adr/0020-the-log-reads-one-viewport.md`.
 - **Raw text** — the text as the page sends it.
 - **Normalised text** — the raw text after tier-1 normalisation only. Letter
   case and trailing punctuation stay. If they do not stay, the `casing` finding
