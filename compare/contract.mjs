@@ -251,15 +251,19 @@ export {
  * @typedef {object} DiffRow
  * @property {keyof FINDING_CLASSES | null} class
  * @property {number | null} prod   Position in `sides.production.elements`.
- * @property {number[]} [prodRun]   On `regrouped` only (ticket 116): every position of the
- *                                  production run the new site sends as one block, in
+ * @property {number[]} [prodRun]   On a `regrouped` merge only (ticket 116): every position of
+ *                                  the production run the new site sends as one block, in
  *                                  document order. `prod` is the **first** of them, so the row
  *                                  sits and links where the run begins and a reader that
  *                                  knows nothing about runs still draws a unit. The key is
- *                                  **absent** and not null on the other rows: some 40 rows
+ *                                  **absent** and not null on the other rows: some 200 rows
  *                                  corpus-wide carry a run, and a null on every other row
  *                                  is bytes in all 816 reports.
  * @property {number | null} new    Position in `sides.new.elements`.
+ * @property {number[]} [newRun]    On a `regrouped` split only (ticket 120): the same, on the
+ *                                  new site's side, with `new` the first of them. A row
+ *                                  carries one run or the other and never both — that would
+ *                                  be the many-to-many ADR 0012 refuses.
  * @property {number | null} score
  * @property {string | null} finding  The grouped finding this position belongs to.
  *                                    `null` on an exact match. Six positions that

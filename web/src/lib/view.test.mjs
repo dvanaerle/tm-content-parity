@@ -192,6 +192,66 @@ describe('prepareRows', () => {
     expect(rows.at(-1).prod.index).toBe(14);
   });
 
+  /**
+   * Ticket 120, the mirror. Production sends one block and the new site divides it over
+   * three, so the **right** cell holds the run and the row is positioned at production's
+   * one unit. Appended to the same fixture and for the same reason.
+   */
+  const withSplit = () => {
+    const base = fixture();
+    base.elements.production.push(
+      unit({ raw: 'Hulp bij uw keuze? Lees hier hoe u de juiste maatvoering kiest', index: 14 }),
+    );
+    base.elements.new.push(
+      unit({ raw: 'Hulp bij uw keuze?', index: 12 }),
+      unit({ raw: 'Lees hier hoe u de juiste', index: 13 }),
+      unit({ raw: 'maatvoering kiest', index: 14 }),
+    );
+    base.rows.push({
+      class: 'regrouped',
+      prod: 4,
+      new: 3,
+      newRun: [3, 4, 5],
+      score: null,
+      finding: 'split1',
+    });
+    base.findings.push({
+      id: 'split1',
+      class: 'regrouped',
+      visibility: 'information',
+      state: 'open',
+      occurrences: 1,
+      detail: 'p → 3×p',
+    });
+    return base;
+  };
+
+  it('reads the new site’s run of a split row into its units', () => {
+    const { rows } = prepareRows({ ...withSplit(), filter: NO_FILTER, showDiagnostics: false });
+    const split = rows.at(-1);
+
+    expect(split.newRun.map((one) => one.index)).toEqual([12, 13, 14]);
+    // The row is positioned at production's unit, which is the only one on that side, so
+    // the anchor is where production put the words and `prodRun` is not the row's to hold.
+    expect(split.prodRun).toBeNull();
+    expect(split.key).toBe('p14');
+  });
+
+  it('drops a split run one of whose members is not on the page', () => {
+    const base = withSplit();
+    base.rows.at(-1).newRun = [3, 4, 99];
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
+    expect(rows.at(-1).newRun).toBeNull();
+    expect(rows.at(-1).new.index).toBe(12);
+  });
+
+  it('leaves every other row without a run on either side', () => {
+    const { rows } = prepareRows({ ...withSplit(), filter: NO_FILTER, showDiagnostics: false });
+
+    expect(rows.slice(0, -1).map((row) => row.newRun)).toEqual([null, null, null, null]);
+  });
+
   it('collapses a regrouped row into a context marker, and opens it on a landing', () => {
     // Spec 119's second seam. Both behaviours are ticket 86's and neither is written for
     // `regrouped` anywhere — `collapses()` reads `decidable` and `runKeyHolding()` reads the

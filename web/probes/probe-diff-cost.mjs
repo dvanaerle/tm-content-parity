@@ -65,10 +65,10 @@ function measure(report) {
 
   for (const row of report.rows) {
     if (row.prod === null || row.new === null) continue;
-    // Ticket 116: a `regrouped` row is two-sided and is never word-diffed — the words are
-    // identical and only the seams moved. Costing it would price a comparison the view
-    // does not run, against a left-hand side that is one member of a run.
-    if (row.prodRun) continue;
+    // Tickets 116 and 120: a `regrouped` row is two-sided and is never word-diffed — the
+    // words are identical and only the seams moved. Costing it would price a comparison the
+    // view does not run, against a side that is one member of a run.
+    if (row.prodRun || row.newRun) continue;
     const prod = prodUnits[row.prod];
     const next = newUnits[row.new];
     if (!prod || !next) continue;

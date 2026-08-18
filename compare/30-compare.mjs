@@ -153,9 +153,11 @@ function wireRow(row, prodAt, newAt) {
     score: row.score,
     finding: row.finding ?? null,
   };
-  // Ticket 116: written on a `regrouped` row and on no other, so the key is absent rather
-  // than null on the 30-odd thousand rows that hold no run. See `DiffRow`.
+  // Tickets 116 and 120: written on a `regrouped` row and on no other, and one of the two at
+  // most, so the key is absent rather than null on the 30-odd thousand rows that hold no run.
+  // See `DiffRow`.
   if (row.prodRun) wire.prodRun = row.prodRun.map((unit) => prodAt.get(unit));
+  if (row.newRun) wire.newRun = row.newRun.map((unit) => newAt.get(unit));
   return wire;
 }
 

@@ -165,62 +165,69 @@ export const joinRun = (run) => run.map((unit) => unit.norm).join(' ');
  *
  * It is **not exported**, and neither are the three numbers above. Spec 119 forbids the only
  * caller it could have — the guards are pinned through `diffRows()`, because the pass order is
- * what we may want to change next — so an export would be surface for nobody. Ticket 120
- * reuses it from inside this file, with the sides swapped.
+ * what we may want to change next — so an export would be surface for nobody. Ticket 120 reuses
+ * it with the sides swapped, and `run` and `covered` are named for the roles rather than for the
+ * sides because of it: neither the criterion nor anything below it knows which side it is on.
  *
  * @param {{ norm: string }[]} run
- * @param {{ norm: string }} merged
+ * @param {{ norm: string }} covered  The single block on the other side.
  * @returns {boolean}
  */
-function coversExactly(run, merged) {
+function coversExactly(run, covered) {
   if (run.length < RUN_MIN || run.length > RUN_MAX) return false;
   if (run.some((unit) => tokensOf(unit.norm).length < MEMBER_MIN_TOKENS)) return false;
   const left = tokensOf(joinRun(run));
-  const right = tokensOf(merged.norm);
+  const right = tokensOf(covered.norm);
   return left.length === right.length && left.every((token, at) => token === right[at]);
 }
 
 /**
- * Pass 2: the production runs the new site sends as one unit.
+ * Pass 2: the runs one side divides the other side's block over.
  *
  * It runs between the LCS and the greedy matcher, and the order is the point. Greedy would
  * claim `P1 ↔ N1` at 0.84 on `nl/proefpakket/succes` and the run would be gone
  * before the exact test ever saw it — the same argument that already puts the LCS ahead of
  * greedy. Exact beats fuzzy.
  *
- * `prodUnits` is **all** of production's units and not the leftovers, because adjacency is
- * a fact about the document: two blocks with a matched block between them are not a run,
+ * **One function, called twice.** A merge asks it for a production run covering a new-site
+ * block (ticket 116); a split asks it for a new-site run covering a production block (ticket
+ * 120). Nothing in here or below it knows which side is which, and ADR 0012's criterion is
+ * *"one side's block is exactly the other side's run"* — one sentence, so one implementation.
+ * `diffRows()` is what fixes the order the two calls resolve in.
+ *
+ * `runUnits` is **all** of that side's units and not its leftovers, because adjacency is a
+ * fact about the document: two blocks with a matched block between them are not a run,
  * however their text reads once it is joined.
  *
- * The arity is many-to-one and never many-to-many, so a unit that one run claims is out of
- * reach of the next. Nothing here reads `kind`: a run may hold a heading
+ * The arity is one-to-many or many-to-one and never many-to-many, so a unit that one run
+ * claims is out of reach of the next. Nothing here reads `kind`: a run may hold a heading
  * (`be/laagste-prijs-garantie`), and ticket 121 owns the jump-list consequence of that.
  *
  * @template {import('./contract.mjs').ContentUnit} T
- * @param {T[]} prodUnits  Production's units, in document order, all of them.
- * @param {T[]} newLeft    The new-site units the LCS left over, in document order.
- * @param {(unit: T) => boolean} claimed  Whether an earlier pass already took a unit.
- * @returns {Array<{ run: T[], new: T }>}
+ * @param {T[]} runUnits  The side that divides the words, in document order, all of it.
+ * @param {T[]} covered   The other side's leftovers — the blocks a run may cover.
+ * @param {(unit: T) => boolean} claimed  Whether an earlier pass already took a run unit.
+ * @returns {Array<{ run: T[], unit: T }>}  `unit` is the single block, `run` covers it.
  */
-export function mergeRuns(prodUnits, newLeft, claimed) {
+export function regroupRuns(runUnits, covered, claimed) {
   /** @type {Set<T>} */
   const taken = new Set();
   const free = (/** @type {T} */ unit) => !claimed(unit) && !taken.has(unit);
-  /** @type {Array<{ run: T[], new: T }>} */
-  const merges = [];
+  /** @type {Array<{ run: T[], unit: T }>} */
+  const regroupings = [];
 
-  for (const merged of newLeft) {
-    const run = runCovering(prodUnits, merged, free, newLeft);
+  for (const unit of covered) {
+    const run = runCovering(runUnits, unit, free, covered);
     if (!run) continue;
-    for (const unit of run) taken.add(unit);
-    merges.push({ run, new: merged });
+    for (const member of run) taken.add(member);
+    regroupings.push({ run, unit });
   }
-  return merges;
+  return regroupings;
 }
 
 /**
  * ADR 0012's third guard: a member of a run is a block that **nothing else claims**, or is
- * the merged block's own counterpart.
+ * the covered block's own counterpart.
  *
  * Without it the pass takes words that were never regrouped. On
  * `de/(de)shading-panel/produktinformationen` the new site sends the two height rows both
@@ -229,23 +236,24 @@ export function mergeRuns(prodUnits, newLeft, claimed) {
  * on the new site are left with no counterpart and read as `text-added`. The page then says
  * the words were regrouped and invented in the same breath, which is not a reading of
  * anything. Measured: it was the whole of the movement outside the three classes ticket 116
- * permits, on 1 page of 722.
+ * permits, on 1 page of 722. Mirrored, it is the same guard against a page saying the words
+ * were regrouped and lost at once.
  *
  * The test is deliberately the conservative one — *any* other candidate at the pair
- * threshold, not merely a better one than the merged block. A member has to be unspoken-for,
+ * threshold, not merely a better one than the covered block. A member has to be unspoken-for,
  * and a pass that runs ahead of the greedy matcher cannot ask the greedy matcher who it
  * would have chosen without becoming the thing it runs ahead of.
  *
  * @template {import('./contract.mjs').ContentUnit} T
  * @param {T} member
- * @param {T} merged
- * @param {T[]} newLeft
+ * @param {T} covered
+ * @param {T[]} candidates  The other side's leftovers.
  * @returns {boolean}
  */
-function claimedElsewhere(member, merged, newLeft) {
-  return newLeft.some(
+function claimedElsewhere(member, covered, candidates) {
+  return candidates.some(
     (candidate) =>
-      candidate !== merged &&
+      candidate !== covered &&
       mayPair(member, candidate) &&
       similarity(member.norm, candidate.norm) >= PAIR_THRESHOLD,
   );
@@ -253,25 +261,25 @@ function claimedElsewhere(member, merged, newLeft) {
 
 /**
  * @template {import('./contract.mjs').ContentUnit} T
- * @param {T[]} prodUnits
- * @param {T} merged
+ * @param {T[]} runUnits
+ * @param {T} covered
  * @param {(unit: T) => boolean} free
- * @param {T[]} newLeft
+ * @param {T[]} candidates
  * @returns {T[] | null}
  */
-function runCovering(prodUnits, merged, free, newLeft) {
-  for (let start = 0; start < prodUnits.length; start += 1) {
-    if (!free(prodUnits[start])) continue;
+function runCovering(runUnits, covered, free, candidates) {
+  for (let start = 0; start < runUnits.length; start += 1) {
+    if (!free(runUnits[start])) continue;
     for (let members = RUN_MIN; members <= RUN_MAX; members += 1) {
-      const run = prodUnits.slice(start, start + members);
+      const run = runUnits.slice(start, start + members);
       // Past the end of the document, or across a unit an earlier pass took: a longer run
       // from this start holds the same unit, so there is nothing further to try here.
       if (run.length < members) break;
       if (!run.every(free)) break;
-      if (!coversExactly(run, merged)) continue;
+      if (!coversExactly(run, covered)) continue;
       // Asked last, because it is the only guard that reads the rest of the document, and
       // the coverage test has already thrown away all but a handful of candidates.
-      if (run.some((member) => claimedElsewhere(member, merged, newLeft))) continue;
+      if (run.some((member) => claimedElsewhere(member, covered, candidates))) continue;
       return run;
     }
   }

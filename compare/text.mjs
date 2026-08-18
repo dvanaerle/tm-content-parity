@@ -12,7 +12,7 @@
  */
 
 import { anchorHeadingFor } from './locate.mjs';
-import { joinRun, lcsPairs, maskNumbers, mergeRuns, pairLeftovers, tier2 } from './match.mjs';
+import { joinRun, lcsPairs, maskNumbers, pairLeftovers, regroupRuns, tier2 } from './match.mjs';
 
 /**
  * Promotional copy. Ticket 02: the pattern must match **both** sides, because a
@@ -33,13 +33,18 @@ export const PROMO =
  * @typedef {object} AlignedRow
  * @property {keyof import('./contract.mjs').FINDING_CLASSES | null} class
  * @property {import('./contract.mjs').ContentUnit | null} prod
- * @property {import('./contract.mjs').ContentUnit[]} [prodRun]  On `regrouped` only: the run
- *                                            production divided the words over, in document
- *                                            order. `prod` is its **first** member, so the
- *                                            row sorts and links where the run begins and
- *                                            every reader that knows nothing about runs
+ * @property {import('./contract.mjs').ContentUnit[]} [prodRun]  On a `regrouped` merge only:
+ *                                            the run production divided the words over, in
+ *                                            document order. `prod` is its **first** member,
+ *                                            so the row sorts and links where the run begins
+ *                                            and every reader that knows nothing about runs
  *                                            still has a unit to draw.
  * @property {import('./contract.mjs').ContentUnit | null} new
+ * @property {import('./contract.mjs').ContentUnit[]} [newRun]  On a `regrouped` split only
+ *                                            (ticket 120): the run the new site divided the
+ *                                            words over, `new` being its first member. One
+ *                                            row never carries both runs — that would be the
+ *                                            many-to-many ADR 0012 refuses.
  * @property {number | null} score
  * @property {string | null} [anchorHeading]  The heading this position sits under (ticket 34).
  * @property {import('./contract.mjs').FindingLocations} [locations]  Where the position
@@ -129,18 +134,47 @@ export function classifyExactPair(prod, next) {
 }
 
 /**
- * What a regrouping did, as an editor reads it: `p + p → p`.
+ * What a regrouping did, as an editor reads it: `p + p → p` one way and `p → h2 + 4×li` the
+ * other.
  *
- * It is the `detail` of a `regrouped` finding, so a run of two paragraphs and a run of
- * three over the same words are two findings with two ids. The tags are the members' own,
- * which is how a run that holds a heading says so.
+ * It is the `detail` of a `regrouped` finding, so a run of two paragraphs and a run of three
+ * over the same words are two findings with two ids. The tags are the members' own, which is
+ * how a run that holds a heading says so.
+ *
+ * **The two sides read differently, and spec 119 writes both shapes down.** A repeat is
+ * counted on the new site's run and spelled out on production's. That is not a rule about the
+ * sides: production's runs are two and three members of prose, where `p + p` is shorter than
+ * `2×p` is cryptic, and the new site's are lists of up to four, where the spelled-out form
+ * would be longer than the row it describes. `detail` is a term of `findingId()`, so this is
+ * also the shape ticket 116's merges are already keyed on.
  *
  * @param {AlignedRow} row
  * @returns {string}
  */
-function mergeDetail(row) {
-  const members = (row.prodRun ?? []).map((unit) => unit.tag).join(' + ');
-  return `${members} → ${row.new?.tag}`;
+function regroupDetail(row) {
+  const left = row.prodRun ? row.prodRun.map((unit) => unit.tag).join(' + ') : row.prod?.tag;
+  return `${left} → ${row.newRun ? countedTags(row.newRun) : row.new?.tag}`;
+}
+
+/**
+ * A run's tags in document order, with a repeat counted: `h2 + 4×li`.
+ *
+ * **Adjacent** repeats only, and that is the same sentence and not a second rule: the tags are
+ * in document order, and `li + p + li` cannot be counted without reordering it into something
+ * the new site does not have. No run in the corpus separates a repeat that way.
+ *
+ * @param {import('./contract.mjs').ContentUnit[]} run
+ * @returns {string}
+ */
+function countedTags(run) {
+  /** @type {Array<{ tag: string, times: number }>} */
+  const spans = [];
+  for (const unit of run) {
+    const last = spans.at(-1);
+    if (last?.tag === unit.tag) last.times += 1;
+    else spans.push({ tag: unit.tag, times: 1 });
+  }
+  return spans.map(({ tag, times }) => (times > 1 ? `${times}×${tag}` : tag)).join(' + ');
 }
 
 /**
@@ -159,21 +193,22 @@ const EXACT_PAIR_CLASSES = new Set(['heading-level', 'tag-changed']);
  * @returns {string | null}
  */
 function detailOf(row) {
-  if (row.class === 'regrouped') return mergeDetail(row);
+  if (row.class === 'regrouped') return regroupDetail(row);
   if (!row.class || !EXACT_PAIR_CLASSES.has(row.class)) return null;
   return `${row.prod?.tag} → ${row.new?.tag}`;
 }
 
 /**
- * The production text a finding is keyed on: the unit's own words, except on
- * `regrouped`, where it is the whole run space-joined. See `joinRun()`.
+ * The text a finding is keyed on, on one side: the unit's own words, except where that side
+ * holds a `regrouped` run, and then it is the whole run space-joined. See `joinRun()`.
  *
- * @param {AlignedRow} row
+ * @param {import('./contract.mjs').ContentUnit | null} unit
+ * @param {import('./contract.mjs').ContentUnit[]} [run]
  * @returns {string | null}
  */
-function prodTextOf(row) {
-  if (row.prodRun) return joinRun(row.prodRun);
-  return row.prod?.norm ?? null;
+function textOf(unit, run) {
+  if (run) return joinRun(run);
+  return unit?.norm ?? null;
 }
 
 /**
@@ -205,15 +240,19 @@ export function diffRows(production, next) {
   // Pass 2, ADR 0012, and it has to be here rather than after the greedy pairing: greedy
   // claims the first member of the run against the merged unit at 0.84 and the run is gone
   // before the exact test runs. What it takes off the table is what the greedy pass below
-  // no longer sees — that re-pairing is the collateral ticket 116 measured before it landed.
-  const merges = mergeRuns(
+  // no longer sees — that re-pairing is the collateral tickets 116 and 120 measured before
+  // they landed.
+  //
+  // **Merge resolves before split**, which is the order the measurement used, and the two
+  // calls share nothing but this order: a unit a merge claimed is not offered to the split,
+  // so no unit is on two rows and the arity stays one-to-many or many-to-one (ADR 0012).
+  /** @type {Set<import('./contract.mjs').ContentUnit>} */
+  const regrouped = new Set();
+  const merges = regroupRuns(
     prodUnits,
     newUnits.filter((unit) => !pairedNew.has(unit)),
     (unit) => pairedProd.has(unit),
   );
-  /** @type {Set<import('./contract.mjs').ContentUnit>} */
-  const regrouped = new Set(merges.flatMap((merge) => [...merge.run, merge.new]));
-
   for (const merge of merges) {
     rows.push({
       class: 'regrouped',
@@ -222,9 +261,30 @@ export function diffRows(production, next) {
       // word diff to draw: only the seams moved.
       prod: merge.run[0],
       prodRun: merge.run,
-      new: merge.new,
+      new: merge.unit,
       score: null,
     });
+    for (const unit of [...merge.run, merge.unit]) regrouped.add(unit);
+  }
+
+  // Ticket 120, the mirror: the production block the new site divides over a run of its own.
+  const splits = regroupRuns(
+    newUnits,
+    prodUnits.filter((unit) => !pairedProd.has(unit) && !regrouped.has(unit)),
+    (unit) => pairedNew.has(unit) || regrouped.has(unit),
+  );
+  for (const split of splits) {
+    rows.push({
+      class: 'regrouped',
+      // There is only one unit on the production side, so the row's position is that unit
+      // and nothing has to be chosen. `new` is the run's first member, for the same reason
+      // `prod` is on a merge: a reader that knows nothing about runs still draws a unit.
+      prod: split.unit,
+      new: split.run[0],
+      newRun: split.run,
+      score: null,
+    });
+    for (const unit of [...split.run, split.unit]) regrouped.add(unit);
   }
 
   const { pairs, prodOnly, newOnly } = pairLeftovers(
@@ -371,8 +431,8 @@ export function textFindings(rows, collector) {
     // six — which is what grouping means.
     row.finding = collector.add({
       class: row.class,
-      prod: prodTextOf(row),
-      new: row.new?.norm ?? null,
+      prod: textOf(row.prod, row.prodRun),
+      new: textOf(row.new, row.newRun),
       // Ticket 33: on `heading-level` and `tag-changed` the two sides of text are
       // equal, so the record would say "identical" and give an `h2` → `h3` the
       // same id as an `h2` → `h4`. The detail is what changed.

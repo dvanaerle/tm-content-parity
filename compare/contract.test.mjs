@@ -95,6 +95,13 @@ describe('findingId', () => {
     // And the detail is a term of it, so a run of two and a run of three over the same words
     // are two findings — the same reason ticket 33 gave `heading-level` its own.
     expect(findingId(run)).not.toBe(findingId({ ...run, detail: 'p + p + p → p' }));
+
+    // Ticket 120 puts the run on the other side, and `newNorm` is a term of the id in exactly
+    // the same way: an edit to the last of four blocks the new site divided the words over
+    // expires the finding rather than carrying a judgement across it.
+    const split = { ...base, rule: 'regrouped', newNorm: `${first} ${second}`, detail: 'p → 2×p' };
+    expect(findingId(split)).not.toBe(findingId({ ...split, newNorm: first }));
+    expect(findingId(split)).not.toBe(findingId({ ...split, newNorm: `${first} edited` }));
   });
 
   it('does not collide on a leading status string', () => {

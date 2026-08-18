@@ -195,8 +195,8 @@ element any more: it folds the links inside it. Both the word and the rule are g
   differ, and it is a different question: the same difference more than once on a
   single page.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
-  `heading-level` or a `tag-changed` finding, `p + p → p` on a `regrouped` one, and null
-  on every other class. It is
+  `heading-level` or a `tag-changed` finding, `p + p → p` or `p → 4×p` on a `regrouped` one,
+  and null on every other class. It is
   part of the finding id, because without it two different demotions of the same
   words are one finding.
 - **Difference** — any place the two sides do not agree. Wider than a finding:
@@ -232,15 +232,14 @@ element any more: it folds the links inside it. Both the word and the rule are g
   It is not **restructured**, which is a pair whose text differs and whose tag differs.
   It is the false `text-missing` and the false `copy` that ADR 0002 accepted while
   many-to-one matching waited for a measurement.
-  It is **built in one of its two directions.** Ticket 116 landed the many-to-one half on
-  2026-08-18 — several production blocks that the new site sends as one — so
-  `compare/vocabulary.mjs` holds 32 classes and `regrouped` is the thirty-second. **The
-  one-to-many half is not emitted yet**: one production block the new site sends as several
-  is ticket 120, and until it lands a reader who finds no such row on a page that has one
-  has found that and not an error. The rule above is whole either way — ADR 0012 settled it
-  in both directions before a producer emitted either — and so is the wording an editor
-  reads: the label is *Same text, divided differently*, which is the division and never the
-  merge. `untranslated` is still decided and unbuilt.
+  It is **built in both directions**, on 2026-08-18: ticket 116 landed the many-to-one half
+  — several production blocks the new site sends as one — and ticket 120 the one-to-many, which
+  is four times the volume and is mostly the new site rebuilding a paragraph as a heading and
+  a list. `compare/vocabulary.mjs` holds 32 classes and `regrouped` is the thirty-second. The
+  Within a page the **merge resolves first**, so a block the merge claimed is not on a split's
+  row: no block is ever on two. The wording an editor reads is the same either way: the label is *Same
+  text, divided differently*, which is the division and never the merge. `untranslated` is
+  still decided and unbuilt.
 - **Anchor heading** — the nearest heading before an element in document order.
   It is how a finding says where it is on the page, and it is null for an element
   that precedes every heading. The code says `anchorHeading` in full, never

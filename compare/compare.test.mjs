@@ -635,6 +635,196 @@ describe('a merged paragraph as a finding', () => {
   });
 });
 
+// --- ticket 120: the same words, divided differently, the other way round
+
+/**
+ * The four blocks of `nl/glazen-schuifwand/productinformatie`, shortened the way the merge
+ * fixtures above are. Production sends one paragraph; the new site sends it as four, and
+ * `HELP` is **exactly** four tokens — the floor a member has to clear, which the corpus case
+ * sits on rather than above.
+ */
+const HELP = 'Hulp bij uw keuze?';
+const SIZING = 'Lees hier hoe u de juiste maatvoering kiest';
+const ADVICE = 'Toch liever laten adviseren door een van ons?';
+const CONTACT = 'Vraag het vrijblijvend via het contactformulier';
+const WHOLE = [HELP, SIZING, ADVICE, CONTACT].join(' ');
+
+describe('a split paragraph', () => {
+  it('is one row, and not a loss beside a handful of additions', () => {
+    // Today the page shows one `TEXT-MISSING` and four `TEXT-ADDED`, and all five are false:
+    // every word production sends is on the new site, divided differently. The greedy
+    // matcher would claim `WHOLE ↔ SIZING` and the run would be gone before the exact test
+    // ran, so this is also the proof that the pass sits ahead of it.
+    expect(classesOf(rowsOf([WHOLE], [HELP, SIZING, ADVICE, CONTACT]))).toEqual(['regrouped']);
+  });
+
+  it('holds the whole run on the right and sits at the production unit', () => {
+    const [row] = rowsOf([WHOLE], [HELP, SIZING, ADVICE, CONTACT]);
+    expect(row.newRun?.map((one) => one.raw)).toEqual([HELP, SIZING, ADVICE, CONTACT]);
+    expect(row.prod?.raw).toBe(WHOLE);
+    // The row is positioned at the production unit, and there is only one on that side, so
+    // `new` is the first member for a reader that knows nothing about runs.
+    expect(row.new?.raw).toBe(HELP);
+  });
+
+  it('reads in production document order', () => {
+    const rows = rowsOf(
+      ['Gumax glazen schuifwanden zijn er in vele maten', WHOLE, 'Bekijk de prijzen'],
+      ['Gumax glazen schuifwanden zijn er in vele maten', HELP, SIZING, ADVICE, CONTACT, 'Bekijk de prijzen'],
+    );
+    expect(classesOf(rows)).toEqual([null, 'regrouped', null]);
+  });
+
+  it('accepts a heading among the blocks the new site divided the words over', () => {
+    // The mirror of the run that holds a heading: the new site rebuilt the paragraph as a
+    // heading and a list. Nothing in the pass reads `kind`, and ticket 121 owns the
+    // jump-list consequence on the production side.
+    const [row] = diffRows(
+      extract({ elements: units([`${SIZING} ${ADVICE}`]) }),
+      extract({
+        side: 'new',
+        elements: [unit(SIZING, { tag: 'h3' }), unit(ADVICE)],
+      }),
+    );
+    expect(row.class).toBe('regrouped');
+    expect(row.newRun).toHaveLength(2);
+  });
+
+  it('refuses a split whose label is three tokens', () => {
+    // `be_fr/fr/echantillons`, and the strings are the page's own. The new site lifts the
+    // label out of production's paragraph into an `h2` and keeps the rest in a `p`, so the
+    // run does cover production's block **exactly** and the four-token floor is the only
+    // guard that refuses it. That is the whole reason the floor is not arithmetic: ADR 0012
+    // priced a three-token leftover tolerance at +22 shown findings and refused it on this
+    // page, and three tokens is a real addition or a real loss.
+    const label = 'Formulaire de commande:';
+    const rest = 'La demande est sans obligation et gratuite et le paquet passe dans la boîte aux lettres';
+    const rows = diffRows(
+      extract({ elements: units([`${label} ${rest}`]) }),
+      extract({ side: 'new', elements: [unit(label, { tag: 'h2' }), unit(rest)] }),
+    );
+    expect(classesOf(rows)).not.toContain('regrouped');
+  });
+
+  it('refuses a split that dropped a block of production', () => {
+    // The mirror of `/fr/avantages`, and the criterion that matters most: production holds
+    // words the new site does not, so this is lost copy and it stays somebody's decision.
+    // Containment — production's paragraph containing the new site's blocks — would have
+    // called it `regrouped`, which is `information` and undecidable.
+    const rows = classesOf(rowsOf([WHOLE], [HELP, SIZING, ADVICE]));
+    expect(rows).not.toContain('regrouped');
+    expect(rows).toContain('text-missing');
+  });
+
+  it('keeps a paragraph that gained one word a copy', () => {
+    // `"Demander un pack d'échantillons"` inside `"Demander un pack d'échantillons
+    // gratuit"`. One added word is not a re-division, and two guards refuse it
+    // independently: the leftover token fails total coverage, and one block is not a run.
+    const asked = "Demander un pack d'échantillons";
+    const rows = classesOf(rowsOf([asked], [`${asked} gratuit`]));
+    expect(rows).toEqual(['copy']);
+  });
+
+  it('refuses a run holding a block of under four tokens', () => {
+    const short = 'Kleuren en afwerking';
+    expect(classesOf(rowsOf([`${short} ${ADVICE}`], [short, ADVICE]))).not.toContain('regrouped');
+  });
+
+  it('refuses blocks that are not adjacent on the new site', () => {
+    // A run is adjacent and uninterrupted in the new site's document order. The paragraph
+    // between the two members is matched in place, so the two are not a run — whatever
+    // their text does when it is joined.
+    const between = 'Wij gaan direct aan de slag';
+    const rows = rowsOf([`${SIZING} ${ADVICE}`, between], [SIZING, between, ADVICE]);
+    expect(classesOf(rows)).not.toContain('regrouped');
+  });
+
+  it('refuses a run whose member another production block claims', () => {
+    // ADR 0012's third guard, mirrored. If production sends a block of its own that holds a
+    // member's words, taking the run would leave that block with no counterpart and the page
+    // would say the words were regrouped and lost in the same breath.
+    const variant = 'Toch liever laten adviseren door ons?';
+    const rows = classesOf(rowsOf([`${SIZING} ${ADVICE}`, variant], [SIZING, ADVICE]));
+    expect(rows).not.toContain('regrouped');
+    expect(rows).not.toContain('text-missing');
+  });
+
+  it('refuses a run of five members', () => {
+    // The cap of four is free: the corpus holds runs of two, three and four and none of five
+    // or more. It is what keeps the row one a reader can verify at a glance.
+    const five = [
+      'Bedankt voor het aanvragen',
+      'van een gratis samplepakket',
+      'Wij gaan direct aan de slag',
+      'Het pakket past door de brievenbus',
+      'U hoeft er niet voor thuis te blijven',
+    ];
+    expect(classesOf(rowsOf([five.join(' ')], five))).not.toContain('regrouped');
+  });
+
+  it('resolves a merge before a split, and puts no unit on two rows', () => {
+    // Both directions on one page. The order is the one the measurement used, and a unit a
+    // merge claimed is out of reach of a split: the arity is one-to-many or many-to-one and
+    // never many-to-many, because a reader can verify that one block is those four and
+    // nobody can verify three against two.
+    const rows = rowsOf([THANKS, BOX, WHOLE], [MERGED, HELP, SIZING, ADVICE, CONTACT]);
+    expect(classesOf(rows)).toEqual(['regrouped', 'regrouped']);
+    const [merge, split] = rows;
+    expect(merge.prodRun).toHaveLength(2);
+    expect(merge.newRun).toBeUndefined();
+    expect(split.newRun).toHaveLength(4);
+    expect(split.prodRun).toBeUndefined();
+  });
+});
+
+describe('a split paragraph as a finding', () => {
+  /**
+   * @param {string[]} prodTexts
+   * @param {string[]} newTexts
+   */
+  const findingsOf = (prodTexts, newTexts) =>
+    collect((collector) => textFindings(rowsOf(prodTexts, newTexts), collector));
+
+  it('counts the repeat in the shape, and carries no score', () => {
+    // `p → 4×p` is the row the ticket's demo page draws. Spelling the four out would make
+    // the one thing the row says harder to read than the row itself.
+    expect(findingsOf([WHOLE], [HELP, SIZING, ADVICE, CONTACT])).toMatchObject([
+      { class: 'regrouped', detail: 'p → 4×p', score: null },
+    ]);
+  });
+
+  it('names the tags in document order, and counts only a repeat', () => {
+    const [finding] = collect((collector) =>
+      textFindings(
+        diffRows(
+          extract({ elements: units([`${HELP} ${SIZING} ${ADVICE}`]) }),
+          extract({
+            side: 'new',
+            elements: [unit(HELP, { tag: 'h2' }), unit(SIZING, { tag: 'li' }), unit(ADVICE, { tag: 'li' })],
+          }),
+        ),
+        collector,
+      ),
+    );
+    expect(finding.detail).toBe('p → h2 + 2×li');
+  });
+
+  it('keys the finding on the whole run, so an edit to any member expires it', () => {
+    // ADR 0004, mirrored: a key built from the first member only would carry a judgement
+    // across an edit to the fourth, silently. This is the same join the coverage test
+    // compared.
+    const [finding] = findingsOf([WHOLE], [HELP, SIZING, ADVICE, CONTACT]);
+    expect(finding.prod).toBe(WHOLE);
+    expect(finding.new).toBe(WHOLE);
+  });
+
+  it('keeps a finding id, and counts nowhere', () => {
+    const findings = findingsOf([WHOLE], [HELP, SIZING, ADVICE, CONTACT]);
+    expect(findings[0].id).toMatch(/^[A-Za-z0-9_-]{16}$/);
+    expect(summarise(findings)).toMatchObject({ work: 0, information: 1, total: 1 });
+  });
+});
+
 describe('textFindings', () => {
   it('counts one rename repeated four times as one finding', () => {
     const before = 'Verkrijgbaar in de volgende kleuren';

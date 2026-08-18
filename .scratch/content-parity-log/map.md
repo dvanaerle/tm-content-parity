@@ -1391,7 +1391,24 @@ what a finding with no anchor heading offers instead. It offers the page.
   member, which is why sorting, anchoring, deep links and the section name all cost nothing,
   and ticket 86's `canDecide()` gave the whole information-row half away for free.
   `be/laagste-prijs-garantie` fires with a heading in the run and **121 still has its
-  ticket** — no rule here forbids or handles it. **120 is unblocked.**
+  ticket** — no rule here forbids or handles it.
+
+  [120 — a split paragraph is one row](issues/120-a-split-paragraph-is-one-row.md) —
+  **resolved 2026-08-18.** The other direction, and four times the volume: **151 rows on 121
+  pages, absorbing 143 `copy` and 184 `text-added`**, plus 3 each of `restructured` and
+  `campaign`, and nothing else moved. `mergeRuns()` became **`regroupRuns()`, one pass called
+  twice** with the sides swapped, and within a page the merge resolves first so no block is on
+  two rows. **The shown movement is −143 and the hidden movement −39**, stated apart because
+  `text-added` was never counted — **190 of the 333 findings it clears, 57%, were already out
+  of sight**, exactly as the ticket warned. **52 of 1,061 live judgements detach**, all dismissals on
+  `copy`, 24 on `nl`, 22 on `uk` and 6 on `be`, announced in a second section of the merge's
+  own note. Two corrections the corpus made: `text-missing` moved by **zero** and not ≈2,
+  because production sends the demo paragraph twice and the second copy is genuinely
+  unmatched; and `be_fr/(be_fr)fr/echantillons` is refused by the **four-token member floor**
+  and not by total coverage, since an adjacent window does cover production exactly. The
+  measurement is `crawl/probes/probe-120-regrouped-split.mjs`, which needs a baseline file
+  where 116's did not: the reports on disk predate both halves, so reading them would have
+  measured the two together. **121 is unblocked.**
 
 - **The interface speaks one language, and it is English** — two tickets from the
   grilling session of 2026-08-13, which started from ticket 42 and found that the

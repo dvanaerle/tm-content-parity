@@ -418,6 +418,9 @@ function Row({ row, control, sides, landed }) {
   // announcement are one mark said three ways rather than three classes
   // that happen to sit here. The class it hands back is merged with this row's.
   const { className, ...mark } = landedRowProps(row.key === landed);
+  // A row where one side divides the words over a run: a merge holds it on the left and a
+  // split on the right, and the two cells and the detail mark are the same answer either way.
+  const regrouped = Boolean(row.prodRun || row.newRun);
 
   return (
     <TableRow id={row.key} {...mark} className={cn('scroll-mt-4 align-top', className)}>
@@ -438,8 +441,9 @@ function Row({ row, control, sides, landed }) {
         {row.score !== null && (
           <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>
         )}
-        {/* `p + p → p`, on a run row and on no other. `Annotations.jsx` carries the reason. */}
-        {row.prodRun && <Detail detail={row.finding?.detail} />}
+        {/* `p + p → p` or `p → 4×p`, on a run row and on no other. `Annotations.jsx` carries
+            the reason. */}
+        {regrouped && <Detail detail={row.finding?.detail} />}
         <Occurrences
           count={row.finding?.occurrences}
           title={onePageTitle(row.finding?.occurrences)}
@@ -459,8 +463,8 @@ function Row({ row, control, sides, landed }) {
          */}
         {row.decidable && <div className="mt-1">{control(row.finding)}</div>}
       </TableCell>
-      {row.prodRun ? (
-        <RunCells run={row.prodRun} merged={row.new} sides={sides} />
+      {regrouped ? (
+        <RunCells row={row} sides={sides} />
       ) : (
         <DiffCells
           prod={row.prod?.norm ?? null}
@@ -494,8 +498,10 @@ function Row({ row, control, sides, landed }) {
 }
 
 /**
- * The two comparison cells of a `regrouped` row: production's run on the left, one block
- * under the next, and the block the new site sends them as on the right (ticket 116).
+ * The two comparison cells of a `regrouped` row: the run on the side that divides the words,
+ * one block under the next, and the single block the other side holds them in. Production is
+ * on the left whichever side that is — a merge divides them there (ticket 116) and a split
+ * divides them on the right (ticket 120).
  *
  * **It is not `DiffCells`, and it must not become it.** That component's job is to show
  * which words differ, and on this row none do: the criterion is total coverage, so the two
@@ -504,36 +510,51 @@ function Row({ row, control, sides, landed }) {
  * clamp budget doing it. The same reason there is no tint: nothing is lost and nothing is
  * added, so neither `lost` nor `added` is the row's to wear.
  *
- * The seam is what the reader is being shown, so each member keeps its own tag and its own
- * link into production, and the run reads down the cell in document order. A member that is
- * a heading is set in the same semibold the rest of the view gives a heading — a run may
- * hold one (ticket 121), and it should not stop looking like a heading because the new site
- * inlined it.
+ * The side holding one block is drawn as a run of one, so the two directions are one
+ * component and not two that have to be kept looking alike.
+ *
+ * A row whose run has a member the page does not hold never arrives here at all: `runOf()`
+ * drops such a run, and the row falls to `DiffCells` and is word-diffed against one member.
+ * That is ticket 116's choice and it stands — a report that names a block it does not carry
+ * has a defect this cell cannot draw around — but it is the one path on which the paragraph
+ * above is not the whole truth.
  */
-function RunCells({ run, merged, sides }) {
-  const layout = 'px-2 py-3 align-top text-sm break-words whitespace-normal';
-  const weight = (unit) => (unit?.kind === 'heading' ? 'font-semibold' : '');
-
+function RunCells({ row, sides }) {
   return (
     <>
-      <TableCell className={layout}>
-        {run.map((unit) => (
-          <p key={unit.index} className="mt-3 first:mt-0">
-            <Tag unit={unit} />
-            <Locate
-              href={locationUrl(sides.production.url, unitLocation(unit))}
-              side="production"
-            />
-            <span className={weight(unit)}>{unit.norm}</span>
-          </p>
-        ))}
-      </TableCell>
-      <TableCell className={layout}>
-        <Tag unit={merged} />
-        <Locate href={locationUrl(sides.new.url, unitLocation(merged))} side="the new site" />
-        <span className={weight(merged)}>{merged?.norm}</span>
-      </TableCell>
+      <RunCell units={row.prodRun ?? asRun(row.prod)} url={sides.production.url} side="production" />
+      <RunCell units={row.newRun ?? asRun(row.new)} url={sides.new.url} side="the new site" />
     </>
+  );
+}
+
+/**
+ * The side that holds the words in one block, as a run of one — or of none, on the report that
+ * names a block the page does not hold. `runOf()` in `view.mjs` drops a run whose members do
+ * not resolve for the same reason: a cell here draws what is there and never a placeholder.
+ */
+const asRun = (unit) => (unit ? [unit] : []);
+
+/**
+ * One side of a `regrouped` row.
+ *
+ * The seam is what the reader is being shown, so each block keeps its own tag and its own
+ * link into its own site, and the run reads down the cell in document order. A block that is
+ * a heading is set in the same semibold the rest of the view gives a heading — a run may
+ * hold one (ticket 121), and it should not stop looking like a heading because the other side
+ * inlined it.
+ */
+function RunCell({ units, url, side }) {
+  return (
+    <TableCell className="px-2 py-3 align-top text-sm break-words whitespace-normal">
+      {units.map((unit) => (
+        <p key={unit.index} className="mt-3 first:mt-0">
+          <Tag unit={unit} />
+          <Locate href={locationUrl(url, unitLocation(unit))} side={side} />
+          <span className={unit.kind === 'heading' ? 'font-semibold' : ''}>{unit.norm}</span>
+        </p>
+      ))}
+    </TableCell>
   );
 }
 

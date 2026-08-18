@@ -22,9 +22,9 @@ export const Tag = ({ unit }) =>
  * so without this the row reads as a finding about nothing. The content view mostly needs
  * no such thing: it prints the tag of each unit next to the words.
  *
- * **The exception is `regrouped`** (ticket 116), and it is the one case where counting the
- * tags in the cells is not reading the finding: the left cell holds two to four of them and
- * the right cell one, and the arity is the whole difference. So that row wears this too.
+ * **The exception is `regrouped`** (tickets 116 and 120), and it is the one case where
+ * counting the tags in the cells is not reading the finding: one cell holds two to four of
+ * them and the other one, and the arity is the whole difference. So that row wears this too.
  *
  * It takes the detail and not the finding, because ticket 81 gives it a second
  * caller that is not a finding: `detail` is a term of the repeat grouping key, so a
