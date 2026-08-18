@@ -25,6 +25,12 @@ import { TableCell } from './ui/table.jsx';
  * Colour is not the only indication. A removed word is a `<del>`, and an added word
  * is an `<ins>`. Thus the strike-through and the underline also show the change.
  *
+ * **Neither layer holds a colour** (ticket 132). A cell says `data-wears="cell"` and a
+ * word says `data-wears="word"`, each with the direction as `data-tone`, and `app.css`
+ * decides what that prints. Both shapes are granted to `lost` and `added` there and to no
+ * other tone, which is the row layer's claim written as a selector: *this content is
+ * missing on the other side*.
+ *
  * **A third state, and it is neither layer.** A pair over the rendering budget is
  * **uncompared** (ticket 68, ADR 0009): both versions in full, no word layer, no
  * tint, and a line that says the comparison did not run. It is not a row-level state,
@@ -134,8 +140,16 @@ export function DiffCells({
  */
 const UNCOMPARED = 'This block is too large for the word comparison. Nothing was compared.';
 
-/** @param {{ spans: import('../../../compare/worddiff.mjs').DiffSpan[] | null }} props */
-function Cell({ side, value, spans, tint, prefix, raw, mono, strong, note }) {
+/**
+ * @param {{
+ *   spans: import('../../../compare/worddiff.mjs').DiffSpan[] | null,
+ *   tone: 'lost' | 'added' | null,
+ * }} props  `tone` is the row layer's, and those two words are the whole of it. `app.css`
+ *           grants the **cell** shape to `lost` and `added` and to nothing else, so a
+ *           status tone written here would print no colour and throw nothing —
+ *           `Diff.browser.test.mjs` is what refuses the third word.
+ */
+function Cell({ side, value, spans, tone, prefix, raw, mono, strong, note }) {
   // `TableCell` defaults to `whitespace-nowrap align-middle`, which is right for a
   // dashboard row and wrong for every cell here: these hold a paragraph of Dutch
   // prose or a long url, and both must wrap and both must sit at the top of a row
@@ -152,7 +166,11 @@ function Cell({ side, value, spans, tint, prefix, raw, mono, strong, note }) {
   }
 
   return (
-    <TableCell className={cn(layout, 'break-words', tint, mono ? 'text-xs' : 'text-sm')}>
+    <TableCell
+      data-wears={tone ? 'cell' : null}
+      data-tone={tone}
+      className={cn(layout, 'break-words', mono ? 'text-xs' : 'text-sm')}
+    >
       {prefix}
       {note && <p className="mb-1 text-xs text-muted-foreground italic">{note}</p>}
       <span className={strong ? 'font-semibold' : ''}>
@@ -176,13 +194,16 @@ function Spans({ spans }) {
     if (span.type === 'same') return <Fragment key={index}>{span.text}</Fragment>;
 
     const [, before, core, after] = span.text.match(/^(\s*)([\s\S]*?)(\s*)$/);
-    const Tag = span.type === 'removed' ? 'del' : 'ins';
-    const tone = span.type === 'removed' ? 'lost' : 'added';
+    const removed = span.type === 'removed';
+    const Tag = removed ? 'del' : 'ins';
+    const tone = removed ? 'lost' : 'added';
 
     return (
       <Fragment key={index}>
         {before}
-        <Tag className={`rounded p-1 ${TOKEN[tone]}`}>{core}</Tag>
+        <Tag data-wears="word" data-tone={tone} className="rounded p-1">
+          {core}
+        </Tag>
         {after}
       </Fragment>
     );

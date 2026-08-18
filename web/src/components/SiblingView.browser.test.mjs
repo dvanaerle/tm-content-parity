@@ -2,7 +2,6 @@ import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import SiblingView from './SiblingView.jsx';
-import { SURFACE } from '../lib/palette.mjs';
 
 /**
  * A page against its sibling page (ticket 04).
@@ -140,10 +139,9 @@ describe('a page against its sibling', () => {
     });
 
     expect(rowIds(host)).toEqual(['b0', 's0']);
-    const tinted = [...host.querySelectorAll('td')].filter(
-      (cell) => cell.classList.contains(SURFACE.lost) || cell.classList.contains(SURFACE.added),
-    );
-    expect(tinted).toEqual([]);
+    // The row layer is a shape and not a class since ticket 132, so the absence to check
+    // is the attribute the stylesheet reads.
+    expect([...host.querySelectorAll('td[data-shape="cell"]')]).toEqual([]);
   });
 
   it('says a page whose sibling says the same words agrees, rather than drawing one marker alone', () => {

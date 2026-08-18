@@ -21,7 +21,86 @@ import {
  * that makes the diff readable: red and green mean direction and never status. The
  * third is the vocabulary itself — ticket 131 settled which eight words the file may
  * use, and a ninth is a colour with no stated meaning.
+ *
+ * **Since ticket 132 those rules live in two places at once**, and this file guards both.
+ * The maps below are the old form; `app.css` is the new one, where a tone is a selector
+ * and a shape is a rule that consumes it. The stylesheet is the half that cannot check
+ * itself: a map with two keys refuses a third, and a selector that does not match prints
+ * nothing and throws nothing.
  */
+
+/** --- The stylesheet, read as rules ---------------------------------------- */
+
+const STYLESHEET = fileURLToPath(new URL('../styles/app.css', import.meta.url));
+
+/**
+ * Comments are stripped first. The block above the tone layer in `app.css` is prose about
+ * tones and shapes, and a sweep that reads it would find whatever the prose quotes.
+ */
+const CSS = (await readFile(STYLESHEET, 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+
+/**
+ * Every rule whose selector is made only of `data-tone` and `data-wears` attributes,
+ * which is every rule the tone layer contains and nothing else in the file.
+ *
+ * It is a regex and not a parser because the shape of what it reads is fixed by the same
+ * ticket: no nesting, one attribute vocabulary, and a selector list at most. A rule that
+ * outgrows it will not be matched — so the counts below are asserted rather than merely
+ * swept, and a missed rule shows up as a missing tone rather than as a silent pass.
+ *
+ * @returns {{ tone: string | null, worn: string | null, declarations: string }[]}
+ */
+function rulesOf(css) {
+  const SELECTOR = /\[data-(?:tone|wears)='[a-z-]+'\]/;
+  const RULE = new RegExp(
+    `((?:${SELECTOR.source})+(?:\\s*,\\s*(?:${SELECTOR.source})+)*)\\s*\\{([^{}]*)\\}`,
+    'g',
+  );
+  const PART = /\[data-(tone|wears)='([a-z-]+)'\]/g;
+
+  return [...css.matchAll(RULE)].flatMap(([, selectors, declarations]) =>
+    selectors.split(',').map((selector) => {
+      const parts = Object.fromEntries(
+        [...selector.matchAll(PART)].map(([, kind, value]) => [kind, value]),
+      );
+      return { tone: parts.tone ?? null, worn: parts.wears ?? null, declarations };
+    }),
+  );
+}
+
+const RULES = rulesOf(CSS);
+
+/** What a tone declares, by tone. A rule with a shape in it is a shape's and not a tone's. */
+const TONE_RULES = new Map(
+  RULES.filter((rule) => rule.tone && !rule.worn).map((rule) => [rule.tone, rule.declarations]),
+);
+
+/**
+ * Which tones each shape is granted to. A shape written without a tone in its selector is
+ * **total** over the vocabulary and takes all eight; one written with a tone is sparse and
+ * takes the tones it names. A shape can be both — the solid shape is total, and it names
+ * `caution` again to say what that one prints instead.
+ *
+ * The prose here says *shape* and the code says *worn*, because
+ * `anti-slop/no-shape-in-symbol-names` bans the substring in an identifier and the concept
+ * is ADR 0007's. `app.css` carries the paragraph that reconciles the two.
+ *
+ * @type {Map<string, { total: boolean, named: Set<string> }>}
+ */
+const WORN = new Map();
+for (const rule of RULES.filter((one) => one.worn)) {
+  const seen = WORN.get(rule.worn) ?? { total: false, named: new Set() };
+  if (rule.tone === null) seen.total = true;
+  else seen.named.add(rule.tone);
+  WORN.set(rule.worn, seen);
+}
+
+/** The tones a shape actually prints something for. */
+const grantedTo = (worn) => {
+  const seen = WORN.get(worn);
+  if (!seen) return [];
+  return seen.total ? [...TONES] : [...seen.named];
+};
 
 /**
  * Every map in the file that is **keyed by tone**. `CHROME` is the one that is not — its
@@ -71,6 +150,10 @@ describe('the tone vocabulary', () => {
  * `STATE` in `OverrideControl.jsx` and `PRIORITY_TONE` in `Chips.jsx`. A wrong word in any
  * of them is `PILL[undefined]`: a pill that draws with no colour, and nothing throws.
  *
+ * Since ticket 132 a tone is also written as a `data-tone` attribute for the stylesheet to
+ * read, which fails the same silent way: a selector that does not match prints nothing and
+ * throws nothing.
+ *
  * So this sweeps the source text, the way `interface-language.test.mjs` sweeps it for
  * Dutch. Two of the three tables write `tone:` and are caught. **`PRIORITY_TONE` is not**,
  * because it keys its tones on the priority (`{ high: 'caution' }`) and a sweep for bare
@@ -82,11 +165,18 @@ describe('the tones written at a call site', () => {
   const ROOT = fileURLToPath(new URL('..', import.meta.url));
   const DRAWN = ['.jsx', '.mjs', '.astro', '.js'];
 
-  /** A tone reached off one of the maps by name, plus the two ways one is passed as a prop. */
+  /**
+   * A tone reached off one of the maps by name, plus the three ways one is written at a
+   * call site: as a table entry, as a string prop, and — since ticket 132, where a tone
+   * became an attribute the stylesheet reads — inside a JSX expression. The last one needs
+   * a lookbehind rather than a leading `tone={`, so that a ternary handing over two of them
+   * is caught twice and not once.
+   */
   const WRITTEN = [
     /\b(?:PILL|SOLID|FILL|BANNER|INK|SURFACE|TOKEN|ACCENT)\.([A-Za-z_$][\w$]*)/g,
     /\btone:\s*'([^']*)'/g,
     /\btone="([^"]*)"/g,
+    /(?<=\btone=\{[^}]*)'([^']*)'/g,
   ];
 
   /** `FILL.secondary` is not a tone, and `palette.mjs` says why. */
@@ -129,9 +219,52 @@ describe('the tones written at a call site', () => {
     expect(caught).toEqual([]);
   }, 30_000);
 
+  /**
+   * The same sweep for the other half of the pair. A shape is as silent as a tone when it
+   * is wrong: `data-wears="chip"` matches no rule, prints nothing and throws nothing, and
+   * the element looks like one somebody forgot to style rather than one they mistyped.
+   *
+   * It reads the shapes out of `app.css` rather than listing them here, so adding a shape
+   * is one rule in one file and this test follows.
+   */
+  it('never names a shape the stylesheet has no rule for', async () => {
+    const WEARS = [/\bdata-wears="([^"]*)"/g, /(?<=\bdata-wears=\{[^}]*)'([^']*)'/g];
+    const files = await filesUnder(ROOT);
+    const read = await Promise.all(
+      files.map(async (file) => /** @type {[string, string]} */ ([file, await readFile(file, 'utf8')])),
+    );
+
+    /** @type {string[]} */
+    const caught = [];
+    /** @type {Set<string>} */
+    const seen = new Set();
+    for (const [file, text] of read) {
+      for (const [index, line] of text.split('\n').entries()) {
+        for (const pattern of WEARS) {
+          for (const [, name] of line.matchAll(pattern)) {
+            seen.add(name);
+            if (!WORN.has(name)) {
+              caught.push(`${relative(ROOT, file)}:${index + 1} — ${name} — ${line.trim()}`);
+            }
+          }
+        }
+      }
+    }
+
+    expect(caught).toEqual([]);
+    // The diff is the one surface that has moved, so these two are what the sweep must
+    // find. Without this the test passes on a sweep that found nothing at all.
+    expect([...seen].sort()).toEqual(['cell', 'word']);
+  }, 30_000);
+
   // And it has to be able to fail, or emptying the patterns would go on reporting success.
   it('catches the tone a rename would leave behind', () => {
-    const stale = ['<Banner tone="severe">', "  contradicted: { tone: 'attention' },", 'PILL.dark'];
+    const stale = [
+      '<Banner tone="severe">',
+      "  contradicted: { tone: 'attention' },",
+      'PILL.dark',
+      "        tone={next === null ? 'severe' : null}",
+    ];
     for (const line of stale) {
       const names = WRITTEN.flatMap((pattern) => [...line.matchAll(pattern)].map(([, name]) => name));
       expect(names.length, line).toBeGreaterThan(0);
@@ -141,7 +274,12 @@ describe('the tones written at a call site', () => {
 
   // And leave the tones that are there alone.
   it('passes the call sites the interface actually has', () => {
-    const live = ['<Banner tone="caution">', "  open: { tone: 'neutral' },", 'FILL.secondary'];
+    const live = [
+      '<Banner tone="caution">',
+      "  open: { tone: 'neutral' },",
+      'FILL.secondary',
+      "        tone={next === null ? 'lost' : null}",
+    ];
     for (const line of live) {
       const names = WRITTEN.flatMap((pattern) => [...line.matchAll(pattern)].map(([, name]) => name));
       expect(names.length, line).toBeGreaterThan(0);
@@ -221,5 +359,88 @@ describe('the tone maps', () => {
     // missing on the other side, which only `lost` and `added` claim.
     expect(Object.keys(SURFACE)).toEqual(['lost', 'added']);
     expect(Object.keys(TOKEN)).toEqual(['lost', 'added']);
+  });
+});
+
+/**
+ * The stylesheet, guarded (ticket 132).
+ *
+ * `app.css` is where a tone becomes a styleguide colour now, and the two rules with
+ * judgement in them moved with it: direction is never spent on status, and the two ambers
+ * must not print the same pixels. Neither is a rule CSS can enforce about itself, and the
+ * failure mode is worse than the maps' — `SURFACE.warning` was `undefined` and a reader
+ * saw it, whereas a selector that matches nothing draws nothing and reports nothing.
+ */
+describe('the tones the stylesheet defines', () => {
+  /** The six that are not a direction. `lost` and `added` are the other two. */
+  const STATUS = ['warning', 'caution', 'closed', 'info', 'neutral', 'total'];
+
+  it('is the same eight words the palette holds', () => {
+    // Both directions: a tone in the stylesheet that the vocabulary does not hold is a
+    // colour with no stated meaning, and a tone in the vocabulary the stylesheet has no
+    // rule for is a component that will ask for it and get nothing.
+    expect([...TONE_RULES.keys()].sort()).toEqual([...TONES].sort());
+  });
+
+  it('gives every tone a ground and an ink, so the shapes that are total answer for all eight', () => {
+    // The pill and the banner have no per-tone rule to fall back on. A tone missing either
+    // half of the pair is a label with no colour, or one with no legible words on it.
+    for (const [tone, declarations] of TONE_RULES) {
+      expect(declarations, `${tone} ground`).toMatch(/--tone-ground:/);
+      expect(declarations, `${tone} ink`).toMatch(/--tone-ink:/);
+    }
+  });
+
+  it('spends the direction colours on direction only', () => {
+    // The rule that makes the diff readable, checked on the new form: red shows a loss and
+    // nothing else. It reads the whole declaration block, so a status tone reaching for
+    // `--color-danger` at any weight is caught, not only one taking it as a ground.
+    for (const tone of STATUS) {
+      expect(TONE_RULES.get(tone), tone).not.toMatch(/danger|success/);
+    }
+  });
+
+  it('gives warning and caution different pixels', () => {
+    // A banner reporting a failure and a banner reporting a condition must not print the
+    // same shape, or a reader cannot tell which of the two they have. The two tones share
+    // a ground, so the difference has to be somewhere in the rest of the block.
+    expect(TONE_RULES.get('warning')).not.toBe(TONE_RULES.get('caution'));
+  });
+
+  it('leaves the quiet amber no ink for its solid step, and says so by omission', () => {
+    // The irregularity, written as an absence rather than as a lie. `caution` has a solid
+    // step — a banner borders with it and a bar fills with it — and nothing legible sits on
+    // it, so the solid shape has its own rule for this one tone.
+    expect(TONE_RULES.get('caution')).toMatch(/--tone-solid:/);
+    expect(TONE_RULES.get('caution')).not.toMatch(/--tone-on-solid:/);
+    expect(WORN.get('solid').named).toEqual(new Set(['caution']));
+  });
+});
+
+describe('the shapes the stylesheet defines', () => {
+  it('keeps the sparse shapes sparse', () => {
+    /*
+     * The irregularity is the decision, and this is the test that says so. A tidy
+     * eight-by-eight product would give the ink shape four tones nobody asked for and the
+     * diff's two shapes six tones they must never have, and it would look tidier for it.
+     */
+    expect(grantedTo('ink').sort()).toEqual(['added', 'caution', 'info', 'lost']);
+    expect(grantedTo('accent').sort()).toEqual(['caution', 'closed']);
+  });
+
+  it('grants a cell tint and a word mark to the two directions and to nothing else', () => {
+    // This is the assertion the two-key map used to make. A tinted cell claims the content
+    // is missing on the other side, and only `lost` and `added` claim that.
+    // `Diff.browser.test.mjs` holds the other half: that the component emits no third word.
+    expect(grantedTo('cell').sort()).toEqual(['added', 'lost']);
+    expect(grantedTo('word').sort()).toEqual(['added', 'lost']);
+  });
+
+  it('answers for every tone in the shapes that are total over them', () => {
+    // Without this the guards above pass on a shape that lost its rule: a pill with no
+    // declaration matches nothing for all eight tones equally.
+    for (const worn of ['pill', 'solid', 'fill', 'banner']) {
+      expect(WORN.get(worn)?.total, worn).toBe(true);
+    }
   });
 });

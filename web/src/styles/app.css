@@ -418,6 +418,15 @@
  * with an ordinary utility class, because `utilities` comes after. A layer of our own
  * would land after `utilities` and take that away.
  *
+ * **The attribute is `data-wears` and the concept is a shape**, which is one word too
+ * many and is not an accident. *Shape* is this repo's word — ADR 0007's amendment is
+ * titled *shape is taken too, and tone still is not*, and it draws the line as *shadcn
+ * owns shape and structure; the palette owns tone* — so the prose keeps it. But
+ * `anti-slop/no-shape-in-symbol-names` bans the substring in every identifier, including a
+ * JSX attribute name, and that rule holds. So the element says what it **wears**, which is
+ * the interface's own verb for this, and the two words name one thing. If the rule ever
+ * grows an allowlist, this is the entry to make and this paragraph is the one to delete.
+ *
  * Every feature here is Baseline Widely Available per ADR 0015: attribute selectors,
  * custom properties and cascade layers. Container **style** queries — the feature that
  * looks made for this — are Newly Available and refused.
@@ -557,13 +566,13 @@
   /* --- The eight shapes ---------------------------------------------------- */
 
   /* A tinted label. The default shape for a class name or a state. */
-  [data-shape='pill'] {
+  [data-wears='pill'] {
     background-color: var(--tone-ground);
     color: var(--tone-ink);
   }
 
   /* A filled chip. Use it for a number that must be legible at a distance. */
-  [data-shape='solid'] {
+  [data-wears='solid'] {
     background-color: var(--tone-solid);
     color: var(--tone-on-solid);
   }
@@ -572,7 +581,7 @@
    * Not solid, and not a mistake. `caution` has no ink for its solid step, so the pair
    * stays apart here by the subtle one staying subtle.
    */
-  [data-shape='solid'][data-tone='caution'] {
+  [data-wears='solid'][data-tone='caution'] {
     background-color: var(--tone-ground);
     color: var(--tone-ink);
   }
@@ -585,12 +594,12 @@
    * becoming a ninth `data-tone`, which would put a colour with no meaning into the
    * vocabulary.
    */
-  [data-shape='fill'] {
+  [data-wears='fill'] {
     background-color: var(--tone-fill);
   }
 
   /* A whole-width message. Border, ground and ink. */
-  [data-shape='banner'] {
+  [data-wears='banner'] {
     border-color: var(--tone-line);
     background-color: var(--tone-ground);
     color: var(--tone-ink);
@@ -602,13 +611,13 @@
    * tell which of the two they have — so `warning` takes the solid ground under white
    * and `caution` keeps the pale one.
    */
-  [data-shape='banner'][data-tone='warning'] {
+  [data-wears='banner'][data-tone='warning'] {
     background-color: var(--tone-solid);
     color: var(--tone-on-solid);
   }
 
   /* The quiet banner sits on the page's own warm ground, not on the pill's grey. */
-  [data-shape='banner'][data-tone='neutral'] {
+  [data-wears='banner'][data-tone='neutral'] {
     background-color: var(--color-surface);
     color: var(--color-text-muted);
   }
@@ -620,10 +629,10 @@
    * **Four tones, listed rather than derived.** This shape holds the tones a component
    * has asked for, and a fifth is one line when one asks.
    */
-  [data-shape='ink'][data-tone='lost'],
-  [data-shape='ink'][data-tone='added'],
-  [data-shape='ink'][data-tone='caution'],
-  [data-shape='ink'][data-tone='info'] {
+  [data-wears='ink'][data-tone='lost'],
+  [data-wears='ink'][data-tone='added'],
+  [data-wears='ink'][data-tone='caution'],
+  [data-wears='ink'][data-tone='info'] {
     color: var(--tone-ink);
   }
 
@@ -636,8 +645,8 @@
    * refusal is written here as a restriction and asserted in `palette.test.mjs` and
    * `Diff.browser.test.mjs`.
    */
-  [data-shape='cell'][data-tone='lost'],
-  [data-shape='cell'][data-tone='added'] {
+  [data-wears='cell'][data-tone='lost'],
+  [data-wears='cell'][data-tone='added'] {
     background-color: var(--tone-ground);
   }
 
@@ -653,8 +662,8 @@
    * gets the row layer and no words; a two-sided pair gets the words and no tint. The two
    * layers never stack, and the word only has to stand off the page.
    */
-  [data-shape='word'][data-tone='lost'],
-  [data-shape='word'][data-tone='added'] {
+  [data-wears='word'][data-tone='lost'],
+  [data-wears='word'][data-tone='added'] {
     background-color: var(--tone-ground);
     color: var(--tone-ink-deep);
   }
@@ -668,8 +677,8 @@
    * hues: an editor who saw a tick in the diff's red would read it as a claim about the
    * content rather than about their own decision.
    */
-  [data-shape='accent'][data-tone='closed'],
-  [data-shape='accent'][data-tone='caution'] {
+  [data-wears='accent'][data-tone='closed'],
+  [data-wears='accent'][data-tone='caution'] {
     accent-color: var(--tone-solid);
   }
 }
