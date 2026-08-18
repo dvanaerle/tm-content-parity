@@ -2302,7 +2302,9 @@ product signature` — a product page carries all six hreflang alternates, and
   deferred in the baseline.
 - Naming the CMS block behind a section. The rendered HTML carries no block
   identifier, so a task cannot yet point at the right admin entity. Needs
-  Magento-side data.
+  Magento-side data. Asked again on 2026-08-18 and parked with a measurement —
+  see [138](issues/.out-of-scope/138-suggest-the-reusable-content.md), which is
+  where this line's re-open condition now lives.
 - How editors learn that a new snapshot is live, or that new findings appeared.
 - Whether blogs re-enter scope once parity closes. 104 posts and 4 blog
   categories are excluded today.
@@ -2324,6 +2326,29 @@ product signature` — a product page carries all six hreflang alternates, and
   is given up is recording a decision, and that is 20's re-open trigger. Numbers worth
   keeping are in 20: the strict cross-tab is **50, not 53**, and **41** is the defensible
   new-only count.
+
+- **Suggesting what should be a Custom Variable or a CMS Block** — parked `wontfix`
+  2026-08-18,
+  [138 — Suggest what should be a Custom Variable or a CMS Block](issues/.out-of-scope/138-suggest-the-reusable-content.md).
+  A `/grill-with-docs` asked whether the log could propose which text to make reusable, for
+  maintainability. Parked on its own measurement, before anything was built: production
+  recurrence inside `<main>` is **shallow** — 40 `nl` texts reach 10 pages, nothing reaches
+  25, nothing is site-wide, and the 10+ tail is 18 link labels, 6 section headings and two
+  showroom clusters. Block-shaped text (60+ chars) caps at **7 pages, 7 texts**. The reason
+  is structural and it is the finding worth keeping: the content that wants to be reused is
+  **chrome** — footer, header, USP strip — and the log never compares chrome, so its corpus
+  is systematically the wrong corpus for the question. The advice would also be
+  **unverifiable**, because a page including a CMS Block and a page with the text pasted in
+  are byte-identical in rendered HTML, so no decision could ever be offered on it. The
+  ticket's whole output — the showroom contact card and the showroom FAQ — is recorded in
+  it. Two re-open triggers: Magento-side `cms_block` / `core_variable` data, or the better
+  question the orphaned `insideCmsBlock()` in `crawl/lib-extract.mjs` makes possible —
+  *which content is a CMS Block on production and pasted inline on the new site*. **Two
+  findings in it are worth more than the ticket**: 13 of 136 `nl` pages are alias
+  duplicates of each other at Jaccard ≥ 0.9 (`fotogalerij` ≈ `algemene-fotogalerij` ≈
+  `fotogalerij/zonwering`, 163 identical units), which would count ~10% of the corpus two
+  or three times; and 42 of 179 `nl` production extracts hold the 404 body. Neither is
+  actioned there.
 
 - **CRO recommendations** — the log says "make new match prod"; CRO advice says
   "make new beat prod". Opposite instructions on the same page destroy trust in
