@@ -147,7 +147,7 @@ needs an argument.
 | 27 | Search unavailable | **shipped** |
 | 28 | Comparison scope | panels are ticket 85; the **route is refused** |
 | 29 | Comparison scope exception | **already ticket 85** — the best idea here, and it is written |
-| 30 | Shared content | the repeat is **shipped**; content-hash regions are ticket 70 |
+| 30 | Shared content | the repeat is **shipped**, and it is the whole answer — content-hash regions (70) **parked `wontfix` 2026-08-18**: `repeatsInStore()` already keys on the content |
 | 31 | Regrouped | tickets 116, 119, 120, 121 — decided and unbuilt |
 | 32 | Page note | `ui-polish/07` — it moves into the dialog the menu opens |
 | 33 | Page actions | menu **adopted** as `ui-polish/07`; *View diagnostics* and *Export Markdown* **refused** |

@@ -111,11 +111,20 @@ The list will grow. Each new entry needs all four:
   `10% Rabatt auf Terrassenüberdachungen und Carports.` in `de` and
   `10% discount on verandas and carports.` in `uk`. A Dutch anchor is blind in four
   stores.
-- **A content hash over regions across the corpus.** Not rejected — deferred to
-  **ticket 70** (this said ticket 66, which is the `ContentUnit` rename). It is the
-  durable rule, because the defining property of the banner is that it repeats on
-  446 pages, not what this campaign says. It needs a corpus-wide pass and a
-  measurement that waits for the new environment.
+- **A content hash over regions across the corpus.** Deferred to **ticket 70** (this
+  said ticket 66, which is the `ContentUnit` rename), and now **rejected on its
+  measurement**. The reasoning that deferred it still reads correctly — the defining
+  property of the banner is that it repeats on 446 pages, not what this campaign says
+  — and the corpus-wide pass it was waiting for says the rule is already had, by a
+  better instrument. `repeatsInStore()` keys on `[language-block-or-store, class,
+  prod, new, detail]`, which is that content hash without the region: it folds 14,449
+  of 22,048 `work` findings into 5,123 rows, and across a language block rather than
+  per store. A hash on a `RegionRemoval` could only fold content inside a region a
+  selector already names, and such a region is already excluded, so it produces no
+  findings to fold. Depth is the other half of the answer: block-shaped content
+  reaches **11 pages at most, 4 keys over 10, none over 25**, measured 2026-08-18 by
+  `crawl/probes/probe-shared-regions.mjs` over the 722-page corpus. See
+  `.scratch/content-parity-log/issues/.out-of-scope/70-shared-regions-by-content-hash.md`.
 
 ## Consequences
 

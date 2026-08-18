@@ -706,6 +706,18 @@ build a rule for one label.
 /clear
 ```
 
+> **The step below is spent** — do not run it. **Ticket 70 was parked `wontfix` on
+> 2026-08-18**, on the measurement this step asked for, and it is at
+> `issues/.out-of-scope/70-shared-regions-by-content-hash.md`. The share is not small
+> and not most: 36.3% of findings share their content with another page, but **81.4% of
+> that is labels** under 60 characters, and block-shaped content reaches **11 pages at
+> most and none over 25**. So the roadmap does not reorder, and *the exclusion half*
+> that this step would have shipped had already shipped by other means — the banner
+> anchors on `#campaign-banner`. The step above called the outcome: what is left **is**
+> labels on category pages, and this says so rather than building a rule for them. The
+> identity half needed no build either, because `repeatsInStore()` already keys on the
+> content across pages, and deeper — across a language block.
+
 ```
 /implement .scratch/content-parity-log/issues/70-shared-regions-by-content-hash.md
 

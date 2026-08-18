@@ -1558,9 +1558,11 @@ what a finding with no anchor heading offers instead. It offers the page.
   [67 the fold](issues/67-a-content-unit-folds-its-inline-links.md),
   [68 the clamp](issues/68-the-content-view-clamps-a-tall-row.md),
   [69 one viewport](issues/69-one-canonical-viewport.md),
-  [70 shared regions](issues/70-shared-regions-by-content-hash.md).
-  61, 62, 63, 64, 65, 66, 67, 68 and 69 are resolved. 70 needs the new environment, which
-  answered HTTP 500 on all six hosts while this was written.
+  [70 shared regions](issues/.out-of-scope/70-shared-regions-by-content-hash.md).
+  61 through 69 are resolved. **70 is parked `wontfix`** 2026-08-18 on its own measurement:
+  the environment answered, the corpus was measured, and both halves turned out to be gone —
+  the exclusion half shipped on `#campaign-banner`, and `repeatsInStore()` is already the
+  content key the identity half asked for. See *Out of scope* below.
 
   **69 is resolved**, 2026-08-18, and its own close-out option was measured and declined.
   The log now compares a page at **one width — desktop, 1280 pixels** — and drops the copy
@@ -2349,6 +2351,34 @@ product signature` — a product page carries all six hreflang alternates, and
   `fotogalerij/zonwering`, 163 identical units), which would count ~10% of the corpus two
   or three times; and 42 of 179 `nl` production extracts hold the 404 body. Neither is
   actioned there.
+
+- **Finding shared regions by content hash** — parked `wontfix` 2026-08-18,
+  [70 — Shared regions are found by content hash](issues/.out-of-scope/70-shared-regions-by-content-hash.md).
+  Both halves are gone, for different reasons. The **exclusion half shipped by other
+  means** on 2026-08-11: `shared/excluded-regions.mjs` anchors the banner on
+  `#campaign-banner`, an id production puts on the block, so no hash was needed to retire
+  the campaign anchor. The **identity half was already built under another name** —
+  `repeatsInStore()` keys on `[language-block-or-store, class, prod, new, detail]`, which
+  *is* the content hash the ticket asked for, minus the region. Measured over the
+  722-page corpus of 2026-08-17 by `crawl/probes/probe-shared-regions.mjs`: it folds
+  **14,449 of 22,048 `work` findings into 5,123 rows, deepest 44 pages**, and it folds
+  across a language block rather than per store, so it is *deeper* than the ticket
+  proposed. A hash on a `RegionRemoval` would be **narrower than what exists**, because it
+  could only fold content inside a region a selector already names — and such a region is
+  already excluded, so it produces no findings to fold. The depth numbers close it: 36.3%
+  of findings share their content with another page, but **81.4% of that is labels** under
+  60 characters and only **5.9% of all findings are block-shaped**; block-shaped content
+  reaches **11 pages at most, 4 keys over 10, none over 25**, and those 4 are one cluster —
+  the showroom FAQ. That is 138's finding reached from the opposite direction, findings
+  rather than production units against themselves. **ADR 0003 is updated**: its "content
+  hash over regions" option moves from *not rejected, deferred* to *rejected on its
+  measurement*. Re-open triggers: a block-shaped key reaching **25 pages**, or a shared
+  block the text fold cannot see — one translated per page, or carrying a per-page token.
+  **One finding in it is worth more than the ticket**: the product-compare toolbar leaks
+  **516 findings** on 30–34 pages each, outside `.filter-content` and on the new side, and
+  every one is `information` rather than `work` — so an exclusion entry would clear noise
+  from the content view and the search and move no number an editor is measured on. Ticket
+  63's business, and it wants its own measurement.
 
 - **CRO recommendations** — the log says "make new match prod"; CRO advice says
   "make new beat prod". Opposite instructions on the same page destroy trust in
