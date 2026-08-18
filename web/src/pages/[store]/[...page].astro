@@ -14,7 +14,7 @@ export async function getStaticPaths() {
   const reports = await loadReports();
 
   /*
-   * The sibling page of each page, and the sibling's production blocks (ticket 04).
+   * The sibling page of each page, and the sibling's production extract (ticket 04).
    *
    * Matched here, at build time, from the seed list — the same `siblingPages()` the
    * dashboard's block list is built from, so the two screens cannot disagree about which
@@ -32,8 +32,8 @@ export async function getStaticPaths() {
   const seeds = await loadSeedRows();
   /** @type {Map<string, Map<string, { page: string, rule: string }>>} */
   const matched = new Map();
-  /** @type {Map<string, Map<string, unknown[]>>} */
-  const blocks = new Map();
+  /** @type {Map<string, Map<string, import('../../../compare/contract.mjs').ContentUnit[]>>} */
+  const extracts = new Map();
 
   for (const store of new Set(reports.map((report) => report.store))) {
     const other = siblingOf(store);
@@ -47,7 +47,7 @@ export async function getStaticPaths() {
           .map((one) => [one.page, one.sibling]),
       ),
     );
-    if (!blocks.has(other)) blocks.set(other, await loadProductionExtracts(other));
+    if (!extracts.has(other)) extracts.set(other, await loadProductionExtracts(other));
   }
 
   return reports.map((report) => {
@@ -66,7 +66,7 @@ export async function getStaticPaths() {
               store: other,
               page: match.page,
               rule: match.rule,
-              units: blocks.get(other)?.get(match.page) ?? null,
+              units: extracts.get(other)?.get(match.page) ?? null,
             }
           : null,
       },

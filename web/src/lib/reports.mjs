@@ -302,6 +302,10 @@ export async function loadProductionExtracts(store) {
  * sibling tab and the dashboard's block list must not disagree about which pages are
  * measurable.
  *
+ * That one answer costs a **peak**: the whole extract is materialised and then projected,
+ * where the earlier direct read never held a `raw` string it did not want. It is paid at
+ * build time on one store and it buys the agreement above, which is the trade taken.
+ *
  * @param {string} store
  * @returns {Promise<Map<string, string[]>>} Page key to unit texts.
  */

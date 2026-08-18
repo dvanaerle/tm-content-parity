@@ -3,10 +3,8 @@ import { Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
 import { locationUrl, unitLocation } from '../../../compare/locate.mjs';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
-import { Marker } from './Marker.jsx';
-import { Checkbox } from './ui/checkbox.jsx';
+import { Marker, MarkerToggle } from './Marker.jsx';
 import { Empty, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
-import { Label } from './ui/label.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { cn } from '../lib/utils.js';
 import { CHROME } from '../lib/palette.mjs';
@@ -269,23 +267,12 @@ function Controls({
         title={(_cls, count) => `${count} rows in this class. A filter changes no count.`}
       />
 
-      {/* Base UI's Checkbox hands back the value, not an event. It is drawn only when
-          there is a run to open: a control over nothing is a control that teaches the
-          reader it does nothing. */}
-      {markers.length > 0 && (
-        <Label
-          className="font-normal text-muted-foreground"
-          title="The blocks that agree with production. They are never removed from this page — this opens all of them at once."
-        >
-          <Checkbox
-            checked={allOpen}
-            onCheckedChange={(checked) =>
-              setOpenRuns(checked ? markers.map((marker) => marker.key) : [])
-            }
-          />
-          Show agreeing blocks
-        </Label>
-      )}
+      <MarkerToggle
+        markers={markers}
+        allOpen={allOpen}
+        agreesWith="production"
+        onOpen={setOpenRuns}
+      />
 
       <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
         Markdown:

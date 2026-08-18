@@ -35,6 +35,18 @@ import { diffRows } from '../../../compare/text.mjs';
  *                           is right, because there is no finding id to land on.
  * @property {boolean} equal Both stores have the block and their `norm` is the same
  *                           string. The renderer must not diff it.
+ *
+ *                           **`norm` only, so a tag change reads as agreement here.**
+ *                           `diffRows()` pairs two blocks whose text matches but whose
+ *                           tag or heading level does not (`EXACT_PAIR_CLASSES`), and
+ *                           such a row is `equal`, collapses, and is drawn undiffed — an
+ *                           `h2` against a `p` is not reported. That is ticket 02's
+ *                           norm-only identity held to deliberately: a block difference
+ *                           on this tab is a difference in **words**, and structure is
+ *                           axis A's, where `tag-changed` is a class with a finding id.
+ *                           The exclusion is written down because the tab's brief is
+ *                           *where the two stores stop agreeing*, and this is one place
+ *                           it stays quiet.
  * @property {ContentUnit | null} here  This store's block.
  * @property {ContentUnit | null} there The sibling's.
  * @property {null} class
@@ -44,8 +56,6 @@ import { diffRows } from '../../../compare/text.mjs';
 
 /**
  * @typedef {object} SiblingReading
- * @property {string} store   The store whose page this is drawn on.
- * @property {string} page
  * @property {{ store: string, page: string, rule: MatchRule }} sibling The matched
  *   sibling, and the rule that matched it, carried through as data in the manner a seed
  *   cell's `provenance` is.
@@ -63,8 +73,6 @@ import { diffRows } from '../../../compare/text.mjs';
  * The whole reading the sibling tab draws, as values.
  *
  * @param {object} input
- * @param {string} input.store
- * @param {string} input.page
  * @param {ContentUnit[]} input.here  This store's **production** content units.
  * @param {{ store: string, page: string, rule: MatchRule, units: ContentUnit[] | null } | null}
  *   input.sibling The matched sibling with its production content units, and `null`
@@ -73,7 +81,7 @@ import { diffRows } from '../../../compare/text.mjs';
  *   **absent and not empty**: a tab that draws itself and says there is nothing to
  *   compare is a tab an editor opens once per page to learn nothing.
  */
-export function siblingReading({ store, page, here, sibling }) {
+export function siblingReading({ here, sibling }) {
   if (!sibling) return null;
 
   const there = sibling.units;
@@ -84,8 +92,6 @@ export function siblingReading({ store, page, here, sibling }) {
   const measured = Boolean(here?.length) && Boolean(there?.length);
 
   return {
-    store,
-    page,
     sibling: { store: sibling.store, page: sibling.page, rule: sibling.rule },
     side: 'production',
     measured,

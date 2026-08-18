@@ -1,4 +1,6 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Checkbox } from './ui/checkbox.jsx';
+import { Label } from './ui/label.jsx';
 import { TableCell, TableRow } from './ui/table.jsx';
 import { CHROME } from '../lib/palette.mjs';
 
@@ -56,5 +58,43 @@ export function Marker({ marker, columns, onToggle }) {
         </button>
       </TableCell>
     </TableRow>
+  );
+}
+
+/**
+ * The one control over every marker in a table: open all the runs at once.
+ *
+ * **The same two tables draw it** as draw the marker above, and for the same reason it
+ * lives here rather than in each of them. The sentence is shared and only the
+ * counterparty differs — the content view's runs agree with **production**, the sibling
+ * tab's agree with **the other store of the block** — so that is the prop and the words
+ * are not. *Agreeing* here too, and never *unchanged*.
+ *
+ * Base UI's `Checkbox` hands back the value, not an event. It is drawn only when there is
+ * a run to open: a control over nothing is a control that teaches the reader it does
+ * nothing, so the caller passes the markers and this decides whether to appear.
+ *
+ * @param {object} props
+ * @param {import('../lib/view.mjs').ContextMarker[]} props.markers
+ * @param {boolean} props.allOpen
+ * @param {string} props.agreesWith  What the collapsed blocks agree with, named as the
+ *                                   reader already reads it: `production` in the content
+ *                                   view, the sibling's store id on the sibling tab.
+ * @param {(keys: string[]) => void} props.onOpen  Every marker key, or none.
+ */
+export function MarkerToggle({ markers, allOpen, agreesWith, onOpen }) {
+  if (markers.length === 0) return null;
+
+  return (
+    <Label
+      className="font-normal text-muted-foreground"
+      title={`The blocks that agree with ${agreesWith}. They are never removed from this page — this opens all of them at once.`}
+    >
+      <Checkbox
+        checked={allOpen}
+        onCheckedChange={(checked) => onOpen(checked ? markers.map((marker) => marker.key) : [])}
+      />
+      Show agreeing blocks
+    </Label>
   );
 }

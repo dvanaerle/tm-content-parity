@@ -378,12 +378,7 @@ export default function Ledger({
                 alignment inside it cost nothing to a reader who never opens it. */}
             {sibling && (
               <TabsContent value={SIBLING_TAB}>
-                <SiblingView
-                  store={report.store}
-                  page={report.page}
-                  here={production.elements}
-                  sibling={sibling}
-                />
+                <SiblingView store={report.store} here={production.elements} sibling={sibling} />
               </TabsContent>
             )}
           </CardContent>

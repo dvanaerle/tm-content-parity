@@ -52,8 +52,9 @@ describe('landingFor', () => {
     );
 
     expect(tabs).not.toContain('Sibling');
-    // A check no tab draws answers null and says so, rather than answering with a tab
-    // that happens to be next to it.
+    // `meta` answers null and says so, rather than answering with a tab that happens to
+    // be next to it. Meta *does* draw a tab; what no tab draws is a meta **finding**, so
+    // there is nowhere for a landing to put one (`TAB_OF_CHECK`).
     expect(tabs).toEqual(['Text', 'Links', 'Images', null]);
   });
 

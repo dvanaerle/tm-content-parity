@@ -1,8 +1,6 @@
 import { Fragment, useMemo, useState } from 'react';
 import { DiffCells } from './Diff.jsx';
-import { Marker } from './Marker.jsx';
-import { Checkbox } from './ui/checkbox.jsx';
-import { Label } from './ui/label.jsx';
+import { Marker, MarkerToggle } from './Marker.jsx';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { STORE_NAME } from '../lib/stores.mjs';
 import { siblingReading } from '../lib/sibling.mjs';
@@ -39,7 +37,7 @@ import { collapseRuns, collapseState, toggleIn } from '../lib/view.mjs';
  * What is on screen is `siblingReading()`'s decision and `collapseRuns()`'s, both of
  * them pure and tested. This file chooses markup and tone and nothing else.
  */
-export default function SiblingView({ store, page, here, sibling }) {
+export default function SiblingView({ store, here, sibling }) {
   const [openRuns, setOpenRuns] = useState([]);
 
   /*
@@ -53,10 +51,7 @@ export default function SiblingView({ store, page, here, sibling }) {
    * while its tab is the selected one, so a reader who never opens the tab never pays
    * for it.
    */
-  const reading = useMemo(
-    () => siblingReading({ store, page, here, sibling }),
-    [store, page, here, sibling],
-  );
+  const reading = useMemo(() => siblingReading({ here, sibling }), [here, sibling]);
 
   const items = useMemo(
     () => collapseRuns(reading?.rows ?? [], { open: openRuns }),
@@ -98,20 +93,12 @@ export default function SiblingView({ store, page, here, sibling }) {
         </p>
       ) : (
         <>
-          {markers.length > 0 && (
-            <Label
-              className="font-normal text-muted-foreground"
-              title="The blocks the two stores agree about. They are never removed from this page — this opens all of them at once."
-            >
-              <Checkbox
-                checked={allOpen}
-                onCheckedChange={(checked) =>
-                  setOpenRuns(checked ? markers.map((marker) => marker.key) : [])
-                }
-              />
-              Show agreeing blocks
-            </Label>
-          )}
+          <MarkerToggle
+            markers={markers}
+            allOpen={allOpen}
+            agreesWith={reading.sibling.store}
+            onOpen={setOpenRuns}
+          />
 
           {/* A page whose sibling says the same words is the common case — half of the
               pages in a block are byte-identical — so it is an **answer**, and it is said
@@ -192,6 +179,15 @@ function Rows({ items, store, sibling, onToggleRun }) {
  * occurrence count and no control. `b<n>` and `s<n>` are `siblingReading()`'s scheme, and
  * they are deliberately neither `p<n>`/`n<n>` nor `finding-<digest>`: a link naming a
  * finding must not open this tab, and there is nothing here for one to name.
+ *
+ * **`prod` and `new` are `DiffCells`' props and not this tab's words.** `CONTEXT.md`
+ * keeps *production* and *the new site* as the only pair of names for the two sides, and
+ * neither is a side here: this store and its sibling are two productions. So the reading
+ * says `here` and `there`, and the last step hands them to the shared component through
+ * the prop names it already has. The mismatch stops at this function — nothing downstream
+ * of `DiffCells` reads a direction, which is exactly what `tinted={false}` guarantees.
+ * Widening `DiffCells` to side-neutral names would touch all four surfaces that use it,
+ * and it is the direction to go if a second two-equals tab ever appears.
  *
  * `tinted={false}` is the whole of *not tinted by direction*, and `DiffCells` is
  * otherwise the same component the other four surfaces use — so a block too large for

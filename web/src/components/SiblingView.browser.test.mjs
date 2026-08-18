@@ -55,7 +55,6 @@ function mount(props = {}) {
     root.render(
       createElement(SiblingView, {
         store: 'nl',
-        page: 'carport',
         here: HERE,
         sibling: sibling(),
         ...props,

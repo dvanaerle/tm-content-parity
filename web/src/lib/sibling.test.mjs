@@ -21,30 +21,11 @@ const sibling = (units, part = {}) => ({
 });
 
 const read = (here, there, part = {}) =>
-  siblingReading({
-    store: 'nl',
-    page: 'carport',
-    here,
-    sibling: there === undefined ? null : sibling(there, part),
-  });
+  siblingReading({ here, sibling: there === undefined ? null : sibling(there, part) });
 
 describe('the sibling reading', () => {
   it('answers null where no sibling was matched, so the tab is absent and not empty', () => {
-    expect(
-      siblingReading({ store: 'de', page: 'carport', here: [unit('Een', 0)], sibling: null }),
-    ).toBe(null);
-  });
-
-  it('says which side it compares, and it is production', () => {
-    expect(read([unit('Een', 0)], [unit('Een', 0)]).side).toBe('production');
-  });
-
-  it('carries the sibling and the rule that matched it, as data', () => {
-    expect(read([unit('Een', 0)], [unit('Een', 0)]).sibling).toEqual({
-      store: 'be',
-      page: 'carport',
-      rule: 'alternate',
-    });
+    expect(siblingReading({ here: [unit('Een', 0)], sibling: null })).toBe(null);
   });
 
   it('puts both stores on one row, in this store document order', () => {
