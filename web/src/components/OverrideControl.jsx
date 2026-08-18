@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { clearedEventFor } from '../../../overrides/state.mjs';
 import { classInfo } from '../lib/classes.mjs';
+import { storeHref } from '../lib/page-url.mjs';
 import { INK, PILL } from '../lib/palette.mjs';
+import { searchForRepeat } from '../lib/screen-url.mjs';
 import { Attribution } from './Attribution.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
@@ -86,6 +88,7 @@ export default function OverrideControl({ finding, observationId, append, canWri
         <Action type="submit" disabled={!note.trim()}>
           Dismiss
         </Action>
+        <Repeat finding={finding} />
         <Action onClick={close}>Cancel</Action>
       </form>
     );
@@ -214,6 +217,26 @@ const TICK = {
     'data-checked:border-info data-checked:bg-info data-checked:text-white dark:data-checked:bg-info',
   caution:
     'data-checked:border-warning data-checked:bg-warning data-checked:text-white dark:data-checked:bg-warning',
+};
+
+/**
+ * The way out of a single judgement and into the one that covers every page holding the
+ * same words — the store's *Repeats* view, which is where a difference is decided across
+ * pages and where a decision may cross a language block (ADR 0018).
+ *
+ * It lives **in the form** and not on the row. A control on the row would be weight on
+ * every open finding an editor scrolls past, which ADR 0019 refuses; in the form it costs
+ * nothing until somebody has decided to make a judgement, which is the only moment the
+ * question *and everywhere else?* is being asked.
+ *
+ * It is a link and not a press. Nothing here writes, so a repeat that turns out to hold
+ * one page has cost a glance, and the note is typed once on the surface that spends it.
+ */
+const Repeat = ({ finding }) => {
+  const search = searchForRepeat(finding);
+  if (!search) return null;
+
+  return <Action render={<a href={storeHref(finding.store, search)} />}>Open the repeat</Action>;
 };
 
 const Action = ({ children, ...props }) => (

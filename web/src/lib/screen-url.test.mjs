@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SCREEN, screenFromSearch, searchFromScreen } from './screen-url.mjs';
+import { parseTerm } from './search.mjs';
+import { SCREEN, screenFromSearch, searchForRepeat, searchFromScreen } from './screen-url.mjs';
 
 /**
  * The dashboard screen, written in the URL (ticket 109).
@@ -124,5 +125,37 @@ describe('a control that belongs to one view', () => {
       'query=deals&closed=1',
     );
     expect(screenFromSearch('query=deals&closed=1').includeClosed).toBe(true);
+  });
+});
+
+/**
+ * The bridge out of a page and into the surface where a difference is decided across
+ * pages. A repeat has nothing to address, so the link is a search — which means it has
+ * to survive the search's own rules about what a term is.
+ */
+describe('the link to a finding’s repeat', () => {
+  // The rule the link has to live under: position 0 of the box is the page-scope marker
+  // (ADR 0016), and a links finding's text is a path. Sent whole, `/downloads` would be a
+  // scope over page keys and would find no words at all.
+  it('reads as words and not as a page scope when the text is a path', () => {
+    const search = searchForRepeat({ store: 'nl', class: 'link-target', prod: '/downloads' });
+
+    expect(parseTerm(screenFromSearch(search).query)).toEqual({ scope: null, text: 'downloads' });
+  });
+
+  // The class is a term of the repeat key, so the same words in two classes are two
+  // repeats and the link would land on both.
+  it('narrows to the class the repeat key holds', () => {
+    const search = searchForRepeat({ store: 'nl', class: 'casing', prod: 'lopende acties' });
+
+    expect(screenFromSearch(search).classes).toEqual(['casing']);
+  });
+
+  // A finding the search box could not be made to hold. Offering a link that lands on the
+  // unnarrowed queue would be worse than offering none.
+  it('offers nothing when the finding has no words', () => {
+    expect(searchForRepeat({ store: 'nl', class: 'image-missing', prod: null, new: null })).toBe(
+      null,
+    );
   });
 });

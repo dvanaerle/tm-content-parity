@@ -115,6 +115,46 @@ export function searchFromScreen(screen) {
 }
 
 /**
+ * The dashboard screen that shows one finding's repeat: the store's *Repeats* list,
+ * narrowed to the finding's words and to its class.
+ *
+ * It is a **search and not an address**, because a repeat has nothing to address. The key
+ * is a grouping the interface makes and has no identity to key on (ADR 0018), which row is
+ * open is session state and never the screen, and no row carries an anchor. So the two
+ * terms of the repeat key an editor could have typed — the text and the class — are the
+ * two this writes. A link therefore outlives the repeat it was made for and lands on the
+ * words, in the manner a stale finding link lands on the page.
+ *
+ * @param {import('../../../compare/contract.mjs').Finding} finding
+ * @returns {string | null} A query string for `storeHref()`, or null when the finding has
+ *   no words to search for.
+ */
+export function searchForRepeat(finding) {
+  const query = wordsOf(finding);
+  if (!query) return null;
+
+  return searchFromScreen({
+    ...SCREEN,
+    query,
+    // The class is a term of the repeat key, so the same words in two classes are two
+    // repeats. Without the pill the link lands on both and asks the editor to pick,
+    // which is the one thing it exists to save them.
+    classes: [finding.class],
+  });
+}
+
+/**
+ * A finding's words, as the search box would have to hold them.
+ *
+ * Production is the reference, so it is read first; a finding the new site invented has
+ * only the other side. The **leading slash is dropped** because position 0 of the box is
+ * the page-scope marker (ADR 0016), and a `links` finding's text is a path — `/downloads`
+ * typed whole is a scope over page keys and finds no words at all. Matching is substring,
+ * so the shortened term still reaches the text it came from.
+ */
+const wordsOf = (finding) => (finding.prod ?? finding.new ?? '').replace(/^\/+/, '').trim();
+
+/**
  * A query string read as a screen.
  *
  * @param {string | null | undefined} search  `location.search`, with or without the `?`.
