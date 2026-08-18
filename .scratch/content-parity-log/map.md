@@ -2325,7 +2325,7 @@ product signature` — a product page carries all six hreflang alternates, and
   the runbook batches freely up to a gate and this stream contains none.
 
   ```
-  127 (resolved) ──> 128 ──> 132 ──> 133  A dashboard  B ledger  C the maps are gone
+  127 (resolved) ──> 128 ──> 132 (resolved) ──> 133  A dashboard  B ledger  C the maps are gone
                               ↑
                        131 (resolved)
   129  A dashboard hints   B every other surface + the guard   (unblocked today)
@@ -2342,13 +2342,14 @@ product signature` — a product page carries all six hreflang alternates, and
     with zero importers since 74. Part A is the dashboard and the pattern; part B is the
     other six components and the guard, landed as its own pass.
   - [132 — A tone is a selector](issues/132-a-tone-is-a-selector.md)
-    — `ready-for-agent`, blocked by 128 and 131. The **expand** half: `app.css` defines
-    the eight tones and the shapes, and the diff surface moves onto them. **Kept separate
-    from the merge below** — it is the one part of the palette move that reviews as a
-    decision rather than as a transcription.
+    — **`resolved` 2026-08-18**, in `66145d9` / `d449b73` / `cbe3837`. The **expand** half:
+    `app.css` defines the eight tones and eight shapes, and the diff surface moves onto
+    them. **Kept separate from the merge below** — it is the one part of the palette move
+    that reviews as a decision rather than as a transcription. Shipped ahead of 128; a
+    shape is `data-wears`, not `data-shape`. **133 is unblocked.**
   - [133 — Every surface wears its tone, and the maps are gone](issues/133-the-dashboard-wears-its-tone.md)
-    — `ready-for-agent`, blocked by 132. Absorbed **134 and 135** on 2026-08-17. 133 and
-    134 were the same mechanical migration split by surface, and 135 was the **contract**
+    — `ready-for-agent`, **unblocked** — 132 is resolved. Absorbed **134 and 135** on
+    2026-08-17. 133 and 134 were the same mechanical migration split by surface, and 135 was the **contract**
     phase, which its own last trap admits — *if any surface still reads a map when this
     ticket starts, stop and finish that migration first*. Three commits: A the dashboard,
     B the ledger, C the deletion and the ADR. The per-surface split survives as the commit

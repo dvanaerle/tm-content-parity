@@ -1,7 +1,15 @@
 # 132 — A tone is a selector
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-18 — built in `66145d9`, corrected in `d449b73` and `cbe3837`, on
+`ticket-104-search-page-scope`. Three criteria shipped differently. **A shape is `data-wears`
+and not `data-shape`**, because `shape` reads as the noun shadcn owns; the stylesheet's own
+prose records that line. **There are eight shapes, not the six this ticket counted** — `token`
+and `surface` were maps too. And **only the diff emitted anything**: the content view holds
+`CHROME.link` alone, which this ticket keeps out on purpose, and the annotation marks hold
+`text-muted-foreground` and nothing tone-keyed, so neither had a tone to emit. Built ahead of
+**128**, which is still `ready-for-agent`: 128 records a policy for ADR 0007 and 127 already
+supplied the CSS this needed, so the blocker was documentary rather than technical.
 Blocked by: 128 — the convention a state-dependent tone follows. 131 — the names this
 transcribes.
 Parent: ../map.md
@@ -39,26 +47,26 @@ status tone on a diff cell and getting no colour and no error.
 it is a named-chrome map, not a shape over the tone vocabulary — and `severityTone()` is logic.
 Keeping both out shrinks the blast radius of 133's migration without leaving anything behind.
 
-- [ ] `app.css` defines each of the eight tones and each of the shapes, in a layer, so a
+- [x] `app.css` defines each of the eight tones and each of the shapes, in a layer, so a
       component asks for a tone and a shape rather than for a colour.
-- [ ] The stylesheet carries the reasoning that lived in `palette.mjs` — why `lost` and
+- [x] The stylesheet carries the reasoning that lived in `palette.mjs` — why `lost` and
       `added` are the only red and green, why a third loud hue must be the brand colour, why
       the word layer inverts, why the two ambers run one way in a fill and the other way in a
       banner. If that prose does not arrive, the move is a downgrade whatever the code looks
       like.
-- [ ] The irregularities are explicit rules and not casualties of the pattern: the solid shape
+- [x] The irregularities are explicit rules and not casualties of the pattern: the solid shape
       keeps `caution` unsolid, the ink shape keeps its four tones, and the cell and word shapes
       keep their two.
-- [ ] The content view, the diff and the small annotation marks emit a tone and a shape, and
+- [x] The content view, the diff and the small annotation marks emit a tone and a shape, and
       hold no colour string.
-- [ ] `palette.test.mjs` reads the stylesheet and asserts: eight tones defined, every tone any
+- [x] `palette.test.mjs` reads the stylesheet and asserts: eight tones defined, every tone any
       component emits is one of the eight, no status tone's rule reaches a direction colour,
       and the two ambers do not print the same pixels.
-- [ ] A test fails if a diff cell carries anything but `lost` or `added`. This is the
+- [x] A test fails if a diff cell carries anything but `lost` or `added`. This is the
       assertion the type used to make and CSS cannot.
-- [ ] The JavaScript maps still work and still have their callers. Nothing outside the diff
+- [x] The JavaScript maps still work and still have their callers. Nothing outside the diff
       surface has moved.
-- [ ] The diff's screenshot baselines are unchanged. Every colour on screen is the colour it
+- [x] The diff's screenshot baselines are unchanged. Every colour on screen is the colour it
       was.
 
 ## Traps
