@@ -9,7 +9,8 @@
  * A store holds a few thousand work findings, and a linear pass over that many
  * objects is fast enough that a dependency would be paid for nothing. `web/probes/
  * probe-search-index.mjs` is the measurement that says so, and it is what a later
- * reader re-runs before adding one.
+ * reader re-runs before adding one. A block store scans **two** indexes since ticket 05,
+ * which doubles the pass and does not change that answer — ADR 0021 holds the numbers.
  *
  * **The findings half reaches the language block; the notes half does not** (ticket 05).
  * `searchStore()` scans the store's index and its sibling's, merged by `indexOverBlock()`,
@@ -119,6 +120,18 @@ import { findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
  */
 
 /**
+ * One page of one store, as the key every map inside this module is built on.
+ *
+ * Written once because the two stores of a language block carry the **same page keys**:
+ * `nl/afhalen` and `be/afhalen` are two pages, and a map keyed on the bare key would merge
+ * them into one. Four maps here answer that question and a fifth would be a fifth chance to
+ * ask it with the store left off.
+ *
+ * @param {{ store: string, page: string }} one
+ */
+const storePage = (one) => `${one.store}/${one.page}`;
+
+/**
  * The index for one store, from the reports the build already read.
  *
  * `linkText` is why this runs at build time and not in the browser. A links finding
@@ -141,26 +154,14 @@ export function indexStore(store, reports) {
 /**
  * The store's index and its sibling's, as the one index a block search scans (ticket 05).
  *
- * The **findings** half of a search reaches the language block, because ticket 03 widened
- * the repeat key and left this half where it was: `repeatsInStore()` keys on
- * `blockOf(store)?.language ?? store`, so a searched result was already *grouped* as though
- * the block were there while the array being grouped held one store. The two lists on one
- * dashboard therefore disagreed — the untouched *Repeats* list spanned and the searched one
- * did not — and an editor who typed to reach a difference was asked the same question again
- * on the sibling.
+ * Which half of a search crosses a block and why the other does not is ADR 0021; the module
+ * header above says it in a paragraph. What is here is the one thing this function decides:
+ * it takes **one** sibling and never a list, because `siblingOf()` answers with one store or
+ * with nothing, and there is no all-stores index and no route that would serve one.
  *
- * **The notes half does not move**, and that is ADR 0018's line rather than an omission
- * here. `searchNotes()` reads the log, the log is narrowed by `eventsOfStores()` before it
- * leaves `useStoreOverrides()`, and a search on `nl` still never answers with a note written
- * on a `be` page. The findings half was per store only because the *index* was per store.
- *
- * **A block is two stores and not all of them.** This takes one sibling, not a list, for the
- * reason `siblingOf()` answers with one store: there is no all-stores index and no route
- * that would serve one (ticket 38).
- *
- * Nothing here knows what a block *is*. The caller resolves the sibling — the same
- * `siblingOf()` the dashboard's page list already goes through — so this ticket adds no
- * second reading of the hreflang codes, which is the trap it names.
+ * Nothing here knows what a block *is*. The caller names the sibling, through the same
+ * `siblingOf()` the dashboard's page list already goes through, so no second reading of the
+ * hreflang codes is added — which is the trap this ticket names.
  *
  * @param {SearchIndex} index The dashboard's own.
  * @param {SearchIndex | null} sibling The other store of its block, or `null` where it is
@@ -545,10 +546,6 @@ export function searchStore({
   includeClosed = false,
   classes = [],
 }) {
-  // Bucketed by **store and page**, not by page. Two stores of a language block carry the
-  // same page keys — `nl/afhalen` and `be/afhalen` are two pages — and a map keyed on the
-  // key alone would merge them into one bucket wearing whichever store arrived first. That
-  // is ticket 05's first trap, arrived at one layer below where the ticket names it.
   /** @type {Map<string, { store: string, page: string, findings: IndexEntry[] }>} */
   const byPage = new Map();
   /** @type {Map<string, string[]>} */
@@ -566,7 +563,7 @@ export function searchStore({
     if (fields.length === 0) continue;
     if (!includeClosed && !isActive(stateOf(entry.id))) continue;
     fieldsById.set(entry.id, fields);
-    const key = `${entry.store}/${entry.page}`;
+    const key = storePage(entry);
     const held = byPage.get(key);
     if (held) held.findings.push(entry);
     else byPage.set(key, { store: entry.store, page: entry.page, findings: [entry] });
@@ -615,8 +612,7 @@ export function searchStore({
     // Counted as `store/page`, because a repeat's pages can be on two stores since this
     // ticket and `afhalen` exists on both of them. The bare key would count two pages as
     // one and print *2 findings on 1 page*, which is a row contradicting its own footer.
-    pages: new Set(repeats.flatMap((repeat) => repeat.on.map((one) => `${one.store}/${one.page}`)))
-      .size,
+    pages: new Set(repeats.flatMap((repeat) => repeat.on.map(storePage))).size,
     matchedRepeats: matchedRepeats.length,
     matchedPages,
     scope,
@@ -695,7 +691,7 @@ export function explainScope({ pages, result }) {
   // Keyed by store **and** page, because the two stores of a language block carry the same
   // page keys: `be/afhalen` answering would otherwise mark `nl/afhalen` as matched, and the
   // editor would be told a page holds rows it holds none of.
-  const answered = new Set(result.matchedPages.map((one) => `${one.store}/${one.page}`));
+  const answered = new Set(result.matchedPages.map(storePage));
 
   const found = pages
     .filter((one) => inScope(one.page, scope))
@@ -744,7 +740,7 @@ export function explainScope({ pages, result }) {
  */
 function kindOf(page, answered, text) {
   if (!page.comparable) return 'one-sided';
-  if (answered.has(`${page.store}/${page.page}`)) return 'matched';
+  if (answered.has(storePage(page))) return 'matched';
   // `page.findings` and not `page.findings ?? []`. `loadSummaries()` always writes the
   // list, and a fallback here would answer *clean* on behalf of a caller that handed over
   // a page shape this cannot read — the quietest possible way to say *nothing is wrong*.

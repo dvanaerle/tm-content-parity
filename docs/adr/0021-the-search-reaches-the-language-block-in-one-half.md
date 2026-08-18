@@ -67,18 +67,30 @@ because the ticket expected them to differ.
 
 | store   | own    | sibling | total  |
 | ------- | ------ | ------- | ------ |
-| `nl`    | 159 kB | +145 kB | 305 kB |
-| `be`    | 145 kB | +159 kB | 305 kB |
-| `be_fr` | 158 kB | +157 kB | 315 kB |
-| `fr`    | 157 kB | +158 kB | 315 kB |
-| `de`    | 169 kB | —       | 169 kB |
-| `uk`    | 153 kB | —       | 153 kB |
+| `nl`    | 162 kB | +148 kB | 310 kB |
+| `be`    | 148 kB | +162 kB | 310 kB |
+| `be_fr` | 159 kB | +159 kB | 319 kB |
+| `fr`    | 159 kB | +159 kB | 319 kB |
+| `de`    | 171 kB | —       | 171 kB |
+| `uk`    | 156 kB | —       | 156 kB |
 
 The same shape ADR 0018 priced for the second summaries read — 148 kB → 283 kB — and the
 same trade: a store pays for a block only if it is in one. It is also cheaper than that one
 in the way that matters, because the index is fetched **on the first keystroke** and not on
 paint, so a visitor who never types pays nothing at all. That is why the second read here
 could be deferred where 0018's could not: a search has no selection to be uncertain about.
+
+**The `store` field costs about 3 kB gzipped per store** — `nl` was 159 kB before it and is
+162 kB after — which is what a repeated short string compresses to. `de` and `uk` pay that
+and nothing else, so *unchanged* above is *unchanged apart from this*.
+
+**The scan doubles on a block store, and stays a scan.** `web/probes/probe-search-index.mjs`
+is the measurement that says a linear pass needs no search library, and this ticket is the
+first thing to move the number it reports. On `nl` merged with `be` — 3,850 entries becoming
+7,166 — the median of 20 runs of the query that matches nearly everything goes 16 ms → 26 ms,
+and the one that matches nothing 2.0 ms → 3.9 ms. Both are inside a keystroke, and the
+conclusion that ticket 82 reached still holds at twice the corpus. A later reader adding a
+dependency re-runs the probe first, as its own header has always said.
 
 **A sibling that did not answer is an error and not a narrower search.** Both fetches are
 one promise. A half-read block quietly answering over one store is the bug this ADR closes,

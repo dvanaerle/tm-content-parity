@@ -282,11 +282,11 @@ describe('indexOverBlock', () => {
   });
 
   it('answers with the store’s own index where it has no sibling', () => {
-    // `de` and `uk` are each the only store of their language, so there is no second file
-    // to fetch and nothing to merge. The same object back, not a copy of it: a store out
-    // of a block pays nothing for this feature, which is the shape of ADR 0018's trade.
+    // `de` and `uk` are each the only store of their language, so there is no second file to
+    // fetch and nothing to merge. A store out of a block pays nothing for this feature,
+    // which is the shape of ADR 0018's trade.
     const alone = index('de', [entry({ store: 'de' })]);
-    expect(indexOverBlock(alone, null)).toBe(alone);
+    expect(indexOverBlock(alone, null)).toEqual(alone);
   });
 
   it('keeps the shape of an index, so nothing downstream can tell it was merged', () => {

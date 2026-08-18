@@ -79,11 +79,12 @@ export default function Dashboard({
    * The sibling store's summaries, where this store is in a language block, and an empty
    * list on `de` and `uk` (ticket 03).
    *
-   * They are here for **one** reader: the repeat grouping, which spans the two stores of a
-   * block where they carry the same words. Nothing else on this screen touches them — not
-   * the bar, not the chips, not the pages table, not the search. A store is still the unit
-   * an editor is responsible for, and the only thing that crosses the edge is a judgement
-   * about text the two stores share.
+   * They are here for **two** readers: the repeat grouping, which spans the two stores of a
+   * block where they carry the same words, and — since ticket 05 — the search, whose findings
+   * half is the same grouping over the same block. Nothing else on this screen touches them:
+   * not the bar, not the chips, not the pages table. A store is still the unit an editor is
+   * responsible for, and the only thing that crosses the edge is a judgement about text the
+   * two stores share. ADR 0021 says which half of a search moved and which did not.
    */
   siblingPages = [],
   notChecked = [],

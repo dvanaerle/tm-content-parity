@@ -57,10 +57,13 @@ figure to differ and they do not — both are 11,162, because the index holds th
 findings on the same comparable pages the summaries do. That is the one prediction this gate
 corrected.
 
-**2. What it costs.** Gzipped, per dashboard: `nl` 159 → 305 kB, `be` 145 → 305 kB, `be_fr`
-158 → 315 kB, `fr` 157 → 315 kB; `de` (169 kB) and `uk` (153 kB) unchanged. The same shape
-ADR 0018 priced at 148 → 283 kB, and cheaper in the way that matters: the index is fetched on
-the **first keystroke**, so a visitor who never types pays none of it.
+**2. What it costs.** Gzipped, per dashboard **as shipped**: `nl` 162 → 310 kB, `be` 148 →
+310 kB, `be_fr` 159 → 319 kB, `fr` 159 → 319 kB; `de` (171 kB) and `uk` (156 kB) unchanged.
+The same shape ADR 0018 priced at 148 → 283 kB, and cheaper in the way that matters: the
+index is fetched on the **first keystroke**, so a visitor who never types pays none of it.
+About 3 kB per store of that is step 1's own `store` field, which is the only thing `de` and
+`uk` pay. The scan doubles on a block store and stays a scan: 3,850 entries become 7,166 on
+`nl`, and the query that matches nearly everything goes 16 ms → 26 ms.
 
 ## Order of work
 
@@ -112,10 +115,15 @@ meaningless without step 2, and a feature this size is one slice.
       matched.*
 - [x] No bar, chip, roll-up, denominator or *Pages* count moves. The store's numbers are built
       from this store's pages alone, as ADR 0018 left them.
-      *The sibling's pages reach `Search` and the hook and nothing else. Two counts **inside**
-      the search moved and are named here rather than hidden: `result.pages` and
-      `explainScope()`'s matched set were keyed on a bare page key, and `afhalen` is a page of
-      both stores — the bare key counted two pages as one. Made correct, not made wider.*
+      *The sibling's pages reach `Search` and the hook and nothing else; in `overrides.mjs`
+      they feed `siblingState`, `byPage` and `byFinding`, and `derived` — where the bar, the
+      buckets and the roll-up come from — is built from `pages` alone. Three counts **inside**
+      the search moved and are named here rather than hidden. Two were wrong: `result.pages`
+      and `explainScope()`'s matched set were keyed on a bare page key, and `afhalen` is a page
+      of both stores, so the bare key counted two pages as one — made correct, not made wider.
+      The third is the scope header's own `N pages in /scope`, which now counts the sibling's
+      pages because it names them; it is a count of what the scope reached, and it moved
+      because the scope did.*
 - [x] `CONTEXT.md:438` is corrected: the search no longer "stays per store in both halves", and
       the entry says which half moved and which did not.
       *And the **Page scope** entry above it, which said a scope narrows within one store.*

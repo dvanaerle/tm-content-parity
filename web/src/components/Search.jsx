@@ -131,10 +131,10 @@ export default function Search({
   // store has that in its key* about a page that exists and holds rows in the list below it.
   // The lists are concatenated rather than merged — each entry carries its own store, and
   // the two stores share page keys, so `store/page` is what tells them apart.
-  const inTheBlock = useMemo(() => [...pages, ...siblingPages], [pages, siblingPages]);
+  const blockPages = useMemo(() => [...pages, ...siblingPages], [pages, siblingPages]);
   const answer = useMemo(
-    () => (result ? explainScope({ pages: inTheBlock, result }) : null),
-    [inTheBlock, result],
+    () => (result ? explainScope({ pages: blockPages, result }) : null),
+    [blockPages, result],
   );
 
   // The pages whose **name** holds the term, which the removed box used to narrow the
@@ -168,7 +168,7 @@ export default function Search({
   if (error) {
     return (
       <p className="px-4 py-6 text-sm text-muted-foreground">
-        The search index of this store was not read ({error}). Search works again after a new build.
+        A search index was not read ({error}). Search works again after a new build.
       </p>
     );
   }
@@ -264,10 +264,13 @@ export default function Search({
  * this line an editor reads that list as one page's work, which is the one way a scope
  * can lie.
  *
- * The pages come from the store's whole page list and not from the search index, so a page
- * with no open finding is named here too: it is in scope, it is often the page somebody is
- * looking for, and it is in no result. That is the capability the by-name block below
- * carries under an ordinary term, and this is where it lives under a scope.
+ * The pages come from a whole page list and not from the search index, so a page with no open
+ * finding is named here too: it is in scope, it is often the page somebody is looking for,
+ * and it is in no result. That is the capability the by-name block below carries under an
+ * ordinary term, and this is where it lives under a scope.
+ *
+ * It is the **block's** page list since ticket 05, because the corpus a scope narrows is the
+ * block's index, so a line here can be a page of the sibling and says which store it is on.
  *
  * A page name opens the **whole content view** and never a fragment of it — ADR 0006, and
  * this ticket's first trap. A scope narrows the corpus a search runs over; it does not
@@ -539,9 +542,8 @@ const NotesAside = ({ children }) => (
  * **Two files on a block store and one everywhere else.** The sibling comes from
  * `siblingOf()`, the same derivation the dashboard's page list goes through, and it is
  * `null` on `de` and `uk` — each is the only store of its language, so they fetch what they
- * always fetched. That is ADR 0018's trade in its own shape: a store pays for a block only
- * if it is in one. Measured over the emitted files, gzipped: `nl` 159 kB → 305 kB, `be_fr`
- * 158 kB → 315 kB, `de` and `uk` unchanged.
+ * always fetched. A store pays for a block only if it is in one, which is ADR 0018's trade
+ * in its own shape; ADR 0021 holds what the second file costs.
  *
  * There is still **no version of this that takes a list** — ticket 38 settled that there is
  * no all-stores surface, and a block is two stores rather than a step toward six.
