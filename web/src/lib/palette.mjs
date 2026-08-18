@@ -195,17 +195,11 @@ export const SURFACE = {
  * The word layer of the diff: a changed token inside a cell that is otherwise
  * calm. It takes the same ground as `SURFACE` under a darker ink.
  *
- * It used to be a mid tint under dark ink, which the styleguide has no step for —
- * its ramps go subtle → solid → text → on-subtle, and nothing in between. It then
- * inverted: the `*-text` step as a ground, white on top.
- *
- * *Corrected 2026-08-18: the paragraph above described the code until commit `a38d7c4`
- * (2026-08-12), which stopped it inverting and never updated these words.* What it does now
- * is take the styleguide's own pairing — the `*-subtle` ground under `on-*-subtle` — which
- * is a step darker than the pill's ink and is loud enough, because **the word layer only
- * ever appears on an untinted cell.** A one-sided pair has nothing to diff against, so it
- * gets the row layer and no words; a two-sided pair gets the words and no tint. The two
- * layers never stack, so the word only has to stand off the page.
+ * It takes the styleguide's own pairing: the `*-subtle` ground under `on-*-subtle`, a step
+ * darker than the pill's ink. That is loud enough because **the word layer only ever
+ * appears on an untinted cell.** A one-sided pair has nothing to diff against, so it gets
+ * the row layer and no words; a two-sided pair gets the words and no tint. The two layers
+ * never stack, so the word only has to stand off the page.
  */
 export const TOKEN = {
   lost: 'bg-danger-subtle text-on-danger-subtle',

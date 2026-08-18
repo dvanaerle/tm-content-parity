@@ -350,7 +350,7 @@
 }
 
 /*
- * --- A tone is a selector, and a shape is a rule (ticket 132) -------------- *
+ * ---- a tone is a selector, and a shape is a rule (ticket 132)
  *
  * **This is where a tone becomes a styleguide colour.** Everything above this block
  * publishes the styleguide's own names — `danger-subtle`, `on-warning`, `info-text`.
@@ -393,7 +393,7 @@
  * and it moved no pixel. They share one rule below so they cannot drift apart by
  * accident.
  *
- * --- Why this is CSS and not a table of class names ------------------------
+ * ---- why this is CSS and not a table of class names
  *
  * `palette.mjs` holds eight maps of Tailwind class names under one constraint: *Tailwind
  * finds class names in the source text, therefore each value is a literal and no value is
@@ -431,7 +431,7 @@
  * custom properties and cascade layers. Container **style** queries — the feature that
  * looks made for this — are Newly Available and refused.
  *
- * --- The seven properties a tone sets --------------------------------------
+ * ---- the seven properties a tone sets
  *
  * | property          | what it is                                                  |
  * |-------------------|-------------------------------------------------------------|
@@ -456,7 +456,7 @@
  * would give a diff cell six tones it must never have.
  */
 @layer components {
-  /* --- The eight tones ----------------------------------------------------- */
+  /* ---- the eight tones */
 
   /*
    * `Danger` and `Success`, spent on **direction** and never on status. Each is used in
@@ -563,7 +563,7 @@
     --tone-fill: var(--color-border-strong);
   }
 
-  /* --- The eight shapes ---------------------------------------------------- */
+  /* ---- the eight shapes */
 
   /* A tinted label. The default shape for a class name or a state. */
   [data-wears='pill'] {
@@ -656,11 +656,11 @@
    *
    * It takes the pale ground under `--tone-ink-deep` — the `on-*-subtle` step, which is
    * the ink the styleguide itself pairs with that ground, and one step darker than the
-   * pill's. It inverted once, a solid `*-text` ground under white, and that was dropped
-   * in August 2026 because it did not need to be that loud: **the word layer only ever
-   * appears on an untinted cell.** A one-sided pair has nothing to diff against, so it
-   * gets the row layer and no words; a two-sided pair gets the words and no tint. The two
-   * layers never stack, and the word only has to stand off the page.
+   * pill's. Inverting it instead, a solid `*-text` ground under white, is the louder
+   * option and is refused: **the word layer only ever appears on an untinted cell.** A
+   * one-sided pair has nothing to diff against, so it gets the row layer and no words; a
+   * two-sided pair gets the words and no tint. The two layers never stack, and the word
+   * only has to stand off the page.
    */
   [data-wears='word'][data-tone='lost'],
   [data-wears='word'][data-tone='added'] {

@@ -29,7 +29,7 @@ import {
  * nothing and throws nothing.
  */
 
-/** --- The stylesheet, read as rules ---------------------------------------- */
+// ---- the stylesheet, read as rules
 
 const STYLESHEET = fileURLToPath(new URL('../styles/app.css', import.meta.url));
 
@@ -44,11 +44,16 @@ const CSS = (await readFile(STYLESHEET, 'utf8')).replace(/\/\*[\s\S]*?\*\//g, ''
  * which is every rule the tone layer contains and nothing else in the file.
  *
  * It is a regex and not a parser because the shape of what it reads is fixed by the same
- * ticket: no nesting, one attribute vocabulary, and a selector list at most. A rule that
- * outgrows it will not be matched — so the counts below are asserted rather than merely
- * swept, and a missed rule shows up as a missing tone rather than as a silent pass.
+ * ticket: no nesting, one attribute vocabulary, and a selector list at most. `[^{}]*` for
+ * the body is where that assumption lives, so a rule that ever nests another is skipped
+ * rather than read.
  *
- * @returns {{ tone: string | null, worn: string | null, declarations: string }[]}
+ * **Both ways of being skipped fail loud, which is why a regex is enough.** A missed tone
+ * rule reads as a tone the stylesheet does not define, and a missed shape rule reads as a
+ * shape it has no rule for — so the sweeps below report a valid `data-wears` as unknown
+ * rather than passing over it. Every count here is asserted, never merely gathered.
+ *
+ * @returns {{ tone: string | null, wears: string | null, declarations: string }[]}
  */
 function rulesOf(css) {
   const SELECTOR = /\[data-(?:tone|wears)='[a-z-]+'\]/;
@@ -63,7 +68,7 @@ function rulesOf(css) {
       const parts = Object.fromEntries(
         [...selector.matchAll(PART)].map(([, kind, value]) => [kind, value]),
       );
-      return { tone: parts.tone ?? null, worn: parts.wears ?? null, declarations };
+      return { tone: parts.tone ?? null, wears: parts.wears ?? null, declarations };
     }),
   );
 }
@@ -72,7 +77,7 @@ const RULES = rulesOf(CSS);
 
 /** What a tone declares, by tone. A rule with a shape in it is a shape's and not a tone's. */
 const TONE_RULES = new Map(
-  RULES.filter((rule) => rule.tone && !rule.worn).map((rule) => [rule.tone, rule.declarations]),
+  RULES.filter((rule) => rule.tone && !rule.wears).map((rule) => [rule.tone, rule.declarations]),
 );
 
 /**
@@ -81,23 +86,37 @@ const TONE_RULES = new Map(
  * takes the tones it names. A shape can be both — the solid shape is total, and it names
  * `caution` again to say what that one prints instead.
  *
- * The prose here says *shape* and the code says *worn*, because
+ * The prose here says *shape* and the code says *wears*, because
  * `anti-slop/no-shape-in-symbol-names` bans the substring in an identifier and the concept
  * is ADR 0007's. `app.css` carries the paragraph that reconciles the two.
  *
  * @type {Map<string, { total: boolean, named: Set<string> }>}
  */
-const WORN = new Map();
-for (const rule of RULES.filter((one) => one.worn)) {
-  const seen = WORN.get(rule.worn) ?? { total: false, named: new Set() };
+const WEARERS = new Map();
+for (const rule of RULES.filter((one) => one.wears)) {
+  const seen = WEARERS.get(rule.wears) ?? { total: false, named: new Set() };
   if (rule.tone === null) seen.total = true;
   else seen.named.add(rule.tone);
-  WORN.set(rule.worn, seen);
+  WEARERS.set(rule.wears, seen);
 }
 
+/**
+ * A declaration block as the properties it sets, so two blocks can be compared on what they
+ * declare rather than on how they are typed out.
+ *
+ * @returns {Map<string, string>}
+ */
+const declarationsOf = (block) =>
+  new Map(
+    [...block.matchAll(/(--[a-z-]+):\s*([^;]+);/g)].map(([, property, value]) => [
+      property,
+      value.trim(),
+    ]),
+  );
+
 /** The tones a shape actually prints something for. */
-const grantedTo = (worn) => {
-  const seen = WORN.get(worn);
+const grantedTo = (wears) => {
+  const seen = WEARERS.get(wears);
   if (!seen) return [];
   return seen.total ? [...TONES] : [...seen.named];
 };
@@ -228,7 +247,7 @@ describe('the tones written at a call site', () => {
    * is one rule in one file and this test follows.
    */
   it('never names a shape the stylesheet has no rule for', async () => {
-    const WEARS = [/\bdata-wears="([^"]*)"/g, /(?<=\bdata-wears=\{[^}]*)'([^']*)'/g];
+    const WRITTEN = [/\bdata-wears="([^"]*)"/g, /(?<=\bdata-wears=\{[^}]*)'([^']*)'/g];
     const files = await filesUnder(ROOT);
     const read = await Promise.all(
       files.map(async (file) => /** @type {[string, string]} */ ([file, await readFile(file, 'utf8')])),
@@ -240,10 +259,10 @@ describe('the tones written at a call site', () => {
     const seen = new Set();
     for (const [file, text] of read) {
       for (const [index, line] of text.split('\n').entries()) {
-        for (const pattern of WEARS) {
+        for (const pattern of WRITTEN) {
           for (const [, name] of line.matchAll(pattern)) {
             seen.add(name);
-            if (!WORN.has(name)) {
+            if (!WEARERS.has(name)) {
               caught.push(`${relative(ROOT, file)}:${index + 1} — ${name} — ${line.trim()}`);
             }
           }
@@ -401,10 +420,24 @@ describe('the tones the stylesheet defines', () => {
   });
 
   it('gives warning and caution different pixels', () => {
-    // A banner reporting a failure and a banner reporting a condition must not print the
-    // same shape, or a reader cannot tell which of the two they have. The two tones share
-    // a ground, so the difference has to be somewhere in the rest of the block.
-    expect(TONE_RULES.get('warning')).not.toBe(TONE_RULES.get('caution'));
+    /*
+     * A banner reporting a failure and a banner reporting a condition must not print the
+     * same shape, or a reader cannot tell which of the two they have.
+     *
+     * It compares the two blocks **property by property** and not as text. Comparing the
+     * declaration strings would go green on two blocks that differ only in whitespace or
+     * in a property no shape reads, which is a test that says *pixels* and checks
+     * formatting. So the difference has to be in a property a shape actually consumes, and
+     * the two named below are where it is: the bar fill, and the ink that decides whether
+     * the banner may take the solid ground at all.
+     */
+    const warning = declarationsOf(TONE_RULES.get('warning'));
+    const caution = declarationsOf(TONE_RULES.get('caution'));
+
+    const differ = [...warning.keys(), ...caution.keys()].filter(
+      (property) => warning.get(property) !== caution.get(property),
+    );
+    expect([...new Set(differ)].sort()).toEqual(['--tone-fill', '--tone-line', '--tone-on-solid']);
   });
 
   it('leaves the quiet amber no ink for its solid step, and says so by omission', () => {
@@ -413,7 +446,7 @@ describe('the tones the stylesheet defines', () => {
     // it, so the solid shape has its own rule for this one tone.
     expect(TONE_RULES.get('caution')).toMatch(/--tone-solid:/);
     expect(TONE_RULES.get('caution')).not.toMatch(/--tone-on-solid:/);
-    expect(WORN.get('solid').named).toEqual(new Set(['caution']));
+    expect(WEARERS.get('solid').named).toEqual(new Set(['caution']));
   });
 });
 
@@ -439,8 +472,8 @@ describe('the shapes the stylesheet defines', () => {
   it('answers for every tone in the shapes that are total over them', () => {
     // Without this the guards above pass on a shape that lost its rule: a pill with no
     // declaration matches nothing for all eight tones equally.
-    for (const worn of ['pill', 'solid', 'fill', 'banner']) {
-      expect(WORN.get(worn)?.total, worn).toBe(true);
+    for (const wears of ['pill', 'solid', 'fill', 'banner']) {
+      expect(WEARERS.get(wears)?.total, wears).toBe(true);
     }
   });
 });

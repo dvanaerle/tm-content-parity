@@ -139,9 +139,19 @@ describe('a page against its sibling', () => {
     });
 
     expect(rowIds(host)).toEqual(['b0', 's0']);
-    // The row layer is a shape and not a class since ticket 132, so the absence to check
-    // is the attribute the stylesheet reads.
-    expect([...host.querySelectorAll('td[data-shape="cell"]')]).toEqual([]);
+    /*
+     * The row layer is a shape and not a class since ticket 132, so the absence to check is
+     * the attribute the stylesheet reads.
+     *
+     * It reads the attribute **off the cells** rather than selecting by it, and that is the
+     * point. `querySelectorAll('td[data-wears="cell"]')` returns nothing when the attribute
+     * is misspelled in the selector *and* when the tab is correct, and the two are the same
+     * empty array — so the first draft of this line asked for `data-shape` and passed while
+     * proving nothing. Finding the cells first makes the query's own failure visible.
+     */
+    const cells = [...host.querySelectorAll('tbody td')];
+    expect(cells.length).toBeGreaterThan(0);
+    expect(cells.filter((cell) => cell.dataset.wears ?? cell.dataset.tone)).toEqual([]);
   });
 
   it('says a page whose sibling says the same words agrees, rather than drawing one marker alone', () => {
