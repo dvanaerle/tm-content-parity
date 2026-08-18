@@ -13,6 +13,7 @@ import {
   searchStore,
   withScope,
 } from './search.mjs';
+import { screenFromSearch, searchForRepeat } from './screen-url.mjs';
 
 /**
  * Ticket 82. An editor types the words and sees every finding that holds them, across
@@ -118,12 +119,30 @@ describe('indexStore', () => {
       'occurrences',
       'page',
       'prod',
+      'store',
     ]);
   });
 
   it('carries the page of every finding, because the result says which pages', () => {
     const index = indexStore('nl', [report({ page: 'garantie' })]);
     expect(index.findings[0].page).toBe('garantie');
+  });
+
+  it('carries the store of every finding, so two indexes can be merged (ticket 05)', () => {
+    // The tenth field, and the ticket's first trap. Until an entry says which store it is
+    // on, the store lives on the **index** — so merging `be`'s entries into `nl`'s array
+    // files every `be` finding under `nl`, and a press writes an event where the finding
+    // id does not exist. The entry has to carry it before anything may be merged.
+    const index = indexStore('be', [report({ store: 'be', page: 'garantie' })]);
+    expect(index.findings[0].store).toBe('be');
+  });
+
+  it('takes the store off the report and never off the index it is being added to', () => {
+    // The same trap from the other side. `addPage()` is the accumulator two indexes are
+    // merged through, and an entry stamped with the accumulator's store rather than with
+    // the report's own is the mislabelling this field exists to make impossible.
+    const index = [report({ store: 'be', page: 'garantie' })].reduce(addPage, emptyIndex('nl'));
+    expect(index.findings[0].store).toBe('be');
   });
 
   it('leaves out a class that is not work, for the reason the bar leaves it out', () => {
@@ -226,6 +245,7 @@ describe('indexStore', () => {
 /** One index entry, as `indexStore` emits it. */
 const entry = (part) => ({
   id: 'a',
+  store: 'nl',
   page: 'afhalen',
   class: 'text-missing',
   prod: 'Bekijk deals >',
@@ -1277,5 +1297,50 @@ describe('searchNotes, before the log has answered', () => {
 
     expect(result.state).toBe('answered');
     expect(result.notes).toEqual([]);
+  });
+});
+
+/**
+ * The bridge out of a page and into the surface that decides across pages. An editor
+ * fixing a page meets a difference that is a judgement rather than a defect, and the
+ * judgement is the one action that was never about this page.
+ *
+ * The link is a **search**, so the thing worth pinning is not its string but what the
+ * search does with it: the words and the class have to be enough to reach every page
+ * holding the same difference, and nothing else.
+ */
+describe('the link a page makes to a repeat', () => {
+  const words = '*Prijzen zijn exclusief lopende acties';
+
+  /** The store's index, as the dashboard would have loaded it. */
+  const index = (findings) => ({
+    store: 'nl',
+    pages: 3,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings,
+  });
+
+  const held = (id, page) => entry({ id, page, class: 'casing', prod: words, new: `${words}.` });
+
+  /** The dashboard, opened on what the link asked for. */
+  const opened = (finding, findings) => {
+    const screen = screenFromSearch(searchForRepeat(finding));
+    return searchStore({ index: index(findings), term: screen.query, classes: screen.classes });
+  };
+
+  it('finds the difference on every page that holds it, as one row', () => {
+    const result = opened({ store: 'nl', class: 'casing', prod: words, new: `${words}.` }, [
+      held('a', 'zonwering/prijzen'),
+      held('b', 'zonwering/plisse'),
+      // The same words, demoted rather than repunctuated. A different class is a
+      // different repeat, and the pill the link carries is what keeps them apart.
+      entry({ id: 'c', page: 'montage', class: 'copy', prod: words, new: 'Prijzen op aanvraag' }),
+    ]);
+
+    expect(result.repeats).toHaveLength(1);
+    expect(result.repeats[0].on.map((one) => one.page)).toEqual([
+      'zonwering/prijzen',
+      'zonwering/plisse',
+    ]);
   });
 });

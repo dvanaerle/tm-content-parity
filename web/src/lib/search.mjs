@@ -62,8 +62,8 @@
  * **3. A search result must not extend `Repeat.on`.** The grouping is ticket 81's
  * `repeatsInStore()` and it is reused rather than rewritten, as this ticket's trap
  * demands. `view.test.mjs` pins `Object.keys(repeat.on[0])` to exactly
- * `['id', 'occurrences', 'page']`, so which field matched is carried on the **repeat**
- * and never on its per-page entries.
+ * `['id', 'occurrences', 'page', 'store']`, so which field matched is carried on the
+ * **repeat** and never on its per-page entries.
  */
 
 import { latestByKey } from '../../../overrides/state.mjs';
@@ -76,12 +76,19 @@ import { findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
  *
  * The named trap: **the index must not become the report.** A `PageReport` holds both
  * extracts — 54 MB across the corpus — and shipping it twice is not a search index.
- * These nine fields are the searchable text plus the id, and a tenth has to be argued
- * for in `search.test.mjs` before it is added.
+ * These ten fields are the searchable text plus the two halves of the finding's address,
+ * and an eleventh has to be argued for in `search.test.mjs` before it is added.
  *
  * @typedef {object} IndexEntry
  * @property {string} id            The finding. A repeat has none, so this is the only
  *                                 identity in the file.
+ * @property {string} store         The store this finding is on (ticket 05). Redundant
+ *                                 inside one file, where it is `index.store` on every
+ *                                 entry — and load-bearing the moment two files are
+ *                                 merged, which is what a block search does. Without it
+ *                                 the store lives only on the index, and a merge
+ *                                 then files the sibling's findings under this store's
+ *                                 name.
  * @property {string} page          The page key. Opaque, and it can hold a slash.
  * @property {keyof FINDING_CLASSES} class
  * @property {string | null} prod
@@ -163,6 +170,12 @@ export function addPage(index, report) {
     if (!isWork(finding.class)) continue;
     index.findings.push({
       id: finding.id,
+      // The **report's** store and never `index.store`. They are the same string while an
+      // index is built out of one store's reports, and they are not while two indexes are
+      // merged through this accumulator — which is what `indexOverBlock()` does. Reading
+      // the accumulator's here is ticket 05's first trap, and it files `be`'s findings
+      // under `nl`, where a press would write an event against an id that does not exist.
+      store: report.store,
       page: report.page,
       class: finding.class,
       prod: finding.prod ?? null,
@@ -453,7 +466,7 @@ export const inScope = (page, scope) => page.toLowerCase().includes(fold(scope))
  *   total: number,
  *   pages: number,
  *   matchedRepeats: number,
- *   matchedPages: string[],
+ *   matchedPages: { store: string, page: string }[],
  *   scope: string | null,
  *   text: string,
  * }} The two `matched*` fields are the answer **before the pills cut it**, which is the
@@ -477,7 +490,11 @@ export function searchStore({
   includeClosed = false,
   classes = [],
 }) {
-  /** @type {Map<string, IndexEntry[]>} */
+  // Bucketed by **store and page**, not by page. Two stores of a language block carry the
+  // same page keys — `nl/afhalen` and `be/afhalen` are two pages — and a map keyed on the
+  // key alone would merge them into one bucket wearing whichever store arrived first. That
+  // is ticket 05's first trap, arrived at one layer below where the ticket names it.
+  /** @type {Map<string, { store: string, page: string, findings: IndexEntry[] }>} */
   const byPage = new Map();
   /** @type {Map<string, string[]>} */
   const fieldsById = new Map();
@@ -494,13 +511,17 @@ export function searchStore({
     if (fields.length === 0) continue;
     if (!includeClosed && !isActive(stateOf(entry.id))) continue;
     fieldsById.set(entry.id, fields);
-    const held = byPage.get(entry.page);
-    if (held) held.push(entry);
-    else byPage.set(entry.page, [entry]);
+    const key = `${entry.store}/${entry.page}`;
+    const held = byPage.get(key);
+    if (held) held.findings.push(entry);
+    else byPage.set(key, { store: entry.store, page: entry.page, findings: [entry] });
   }
 
-  const matchedPages = [...byPage.keys()];
-  const pages = [...byPage].map(([page, findings]) => ({ store: index.store, page, findings }));
+  // The store rides on each one, for the reason it rides on the entry: a page of this
+  // result is a page **of a store**, and the reader that classifies them (`explainScope`)
+  // has both stores' page lists in front of it.
+  const matchedPages = [...byPage.values()].map(({ store, page }) => ({ store, page }));
+  const pages = [...byPage.values()];
 
   // The matched fields ride **on the repeat** — decision 3. The union over its
   // findings, because the page key is a searchable field and the members differ in
@@ -610,7 +631,10 @@ export function explainScope({ pages, result }) {
   // true-looking. CONTEXT.md gives a filter no power over a bar, a denominator or a count,
   // and a sentence about the page is not the exception. The strip above says what the
   // classes cut; this says what the term found, and they are two jobs.
-  const answered = new Set(result.matchedPages);
+  // Keyed by store **and** page, because the two stores of a language block carry the same
+  // page keys: `be/afhalen` answering would otherwise mark `nl/afhalen` as matched, and the
+  // editor would be told a page holds rows it holds none of.
+  const answered = new Set(result.matchedPages.map((one) => `${one.store}/${one.page}`));
 
   const found = pages
     .filter((one) => inScope(one.page, scope))
@@ -652,13 +676,13 @@ export function explainScope({ pages, result }) {
  * a reading that consulted the log would call a finished page clean and lose the
  * distinction above.
  *
- * @param {{ page: string, comparable: boolean, findings: object[] }} page
- * @param {Set<string>} answered The pages the result holds rows on.
+ * @param {{ store: string, page: string, comparable: boolean, findings: object[] }} page
+ * @param {Set<string>} answered The pages the result holds rows on, as `store/page`.
  * @param {string} text The words after the scope, empty on a bare one.
  */
 function kindOf(page, answered, text) {
   if (!page.comparable) return 'one-sided';
-  if (answered.has(page.page)) return 'matched';
+  if (answered.has(`${page.store}/${page.page}`)) return 'matched';
   // `page.findings` and not `page.findings ?? []`. `loadSummaries()` always writes the
   // list, and a fallback here would answer *clean* on behalf of a caller that handed over
   // a page shape this cannot read — the quietest possible way to say *nothing is wrong*.
