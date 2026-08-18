@@ -232,11 +232,15 @@ element any more: it folds the links inside it. Both the word and the rule are g
   It is not **restructured**, which is a pair whose text differs and whose tag differs.
   It is the false `text-missing` and the false `copy` that ADR 0002 accepted while
   many-to-one matching waited for a measurement.
-  It is **decided and not yet built**: `compare/vocabulary.mjs` holds 31 classes on
-  2026-08-17 and `regrouped` is not one of them, as `untranslated` is not. This list is
-  ahead of the vocabulary in both places, deliberately — ADR 0012 settled the rule before
-  a producer emits it — and a reader who greps for the class and finds nothing has found
-  that and not an error.
+  It is **built in one of its two directions.** Ticket 116 landed the many-to-one half on
+  2026-08-18 — several production blocks that the new site sends as one — so
+  `compare/vocabulary.mjs` holds 32 classes and `regrouped` is the thirty-second. **The
+  one-to-many half is not emitted yet**: one production block the new site sends as several
+  is ticket 120, and until it lands a reader who finds no such row on a page that has one
+  has found that and not an error. The rule above is whole either way — ADR 0012 settled it
+  in both directions before a producer emitted either — and so is the wording an editor
+  reads: the label is *Same text, divided differently*, which is the division and never the
+  merge. `untranslated` is still decided and unbuilt.
 - **Anchor heading** — the nearest heading before an element in document order.
   It is how a finding says where it is on the page, and it is null for an element
   that precedes every heading. The code says `anchorHeading` in full, never

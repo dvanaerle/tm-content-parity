@@ -92,6 +92,11 @@ export function toggleClass(filter, cls) {
  *                                     context marker reads one thing off the row and
  *                                     does not have to reach for the finding again.
  * @property {ContentUnit | null} prod
+ * @property {ContentUnit[] | null} prodRun  On a `regrouped` row only (ticket 116): the
+ *                                     production run the new site sends as one block, in
+ *                                     document order. `prod` is its first member, so a
+ *                                     reader of this row that knows nothing about runs still
+ *                                     has the unit the row is anchored to.
  * @property {ContentUnit | null} new
  */
 
@@ -127,6 +132,7 @@ export function prepareRows({ rows, findings, elements, filter, showDiagnostics 
 
     const prod = row.prod === null ? null : (elements.production[row.prod] ?? null);
     const next = row.new === null ? null : (elements.new[row.new] ?? null);
+    const prodRun = runOf(row, elements.production);
 
     onThePage.push({
       key: anchorKey(prod, next),
@@ -140,6 +146,7 @@ export function prepareRows({ rows, findings, elements, filter, showDiagnostics 
       finding,
       decidable: canDecide(finding),
       prod,
+      prodRun,
       new: next,
     });
   }
@@ -158,6 +165,26 @@ export function prepareRows({ rows, findings, elements, filter, showDiagnostics 
     total: onThePage.length,
     classes: classCounts(onThePage),
   };
+}
+
+/**
+ * The production run of a `regrouped` row, read into its units (ticket 116).
+ *
+ * **A member that does not resolve makes the whole run absent**, and that is not
+ * defensiveness for its own sake: the class asserts *total* coverage, so a row drawing
+ * three members of a run of four would claim the words on the right are the words on the
+ * left while showing less than all of them. Absent, the row falls back to its first member
+ * against the merged block — visibly not a whole answer — and that is the failure this
+ * class exists to refuse in the first place (ADR 0012).
+ *
+ * @param {import('../../../compare/contract.mjs').DiffRow} row
+ * @param {ContentUnit[]} elements
+ * @returns {ContentUnit[] | null}
+ */
+function runOf(row, elements) {
+  if (!row.prodRun) return null;
+  const run = row.prodRun.map((at) => elements[at] ?? null);
+  return run.every(Boolean) ? /** @type {ContentUnit[]} */ (run) : null;
 }
 
 /**

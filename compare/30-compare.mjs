@@ -128,18 +128,35 @@ export function comparePage({ sides, newSitePaths, statuses, observationId = new
     comparable: true,
     skipReason: null,
     findings,
-    rows: aligned.map((row) => ({
-      class: row.class,
-      prod: row.prod ? prodAt.get(row.prod) : null,
-      new: row.new ? newAt.get(row.new) : null,
-      score: row.score,
-      finding: row.finding ?? null,
-    })),
+    rows: aligned.map((row) => wireRow(row, prodAt, newAt)),
     summary: summarise(findings),
     observationId,
     findingSetHash: findingSetHash(findings),
     builtAt: new Date().toISOString(),
   };
+}
+
+/**
+ * One aligned row as the report carries it: the units reduced to their position in each
+ * side's `elements` array, which is what the browser reads them back with.
+ *
+ * @param {import('./text.mjs').AlignedRow} row
+ * @param {Map<import('./contract.mjs').ContentUnit, number>} prodAt
+ * @param {Map<import('./contract.mjs').ContentUnit, number>} newAt
+ * @returns {import('./contract.mjs').DiffRow}
+ */
+function wireRow(row, prodAt, newAt) {
+  const wire = {
+    class: row.class,
+    prod: row.prod ? prodAt.get(row.prod) : null,
+    new: row.new ? newAt.get(row.new) : null,
+    score: row.score,
+    finding: row.finding ?? null,
+  };
+  // Ticket 116: written on a `regrouped` row and on no other, so the key is absent rather
+  // than null on the 30-odd thousand rows that hold no run. See `DiffRow`.
+  if (row.prodRun) wire.prodRun = row.prodRun.map((unit) => prodAt.get(unit));
+  return wire;
 }
 
 /**

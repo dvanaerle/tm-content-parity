@@ -104,6 +104,35 @@ export const FINDING_CLASSES = {
     meaning: 'Promotional copy. The pattern must match both sides.',
   },
 
+  // Ticket 116 and ADR 0012 — the same words, divided differently. Production sends a run
+  // of blocks that the new site sends as one, and the log used to report a `copy` and a
+  // `text-missing` that were both false: no word was edited and no word was lost, only the
+  // seams moved. It is `information` for the reason `restructured` is — a difference an
+  // editor reads and cannot act on — and it inherits ticket 86's information-row behaviour.
+  //
+  // The class is the one thing that can be relied on to be **exact**: ADR 0012 fixes the
+  // criterion at total coverage and prices every alternative, because a rule that
+  // over-detects here moves lost content into a class that is not counted and cannot be
+  // decided. That is the silence `CONTEXT.md` is written to prevent.
+  //
+  // **The ticket asks for the Dutch phrase here and it cannot have it.** Ticket 116's own
+  // words are *dezelfde tekst, anders verdeeld* — the editors' phrase for the fold, from
+  // seven notes that describe it in prose (*"de content staat een regel erboven"*); none of
+  // them says *samengevoegd*, so *merged* would have been the log's word and not theirs.
+  // ADR 0014 landed after the ticket was written and the interface speaks English on all six
+  // stores, and `meaning` is drawn — `Chips.jsx` puts it on the class pill. So the
+  // phrase survives as the **sense** of the label rather than as its letters: what the
+  // editors were pointing at is the division, never the merge. That binds what an editor
+  // **reads**. Inside the matcher `mergeRuns()` is the right name and stays: the ticket and
+  // ADR 0012 use *merge* and *split* for the two directions of the arity, and ticket 120
+  // needs the pair.
+  regrouped: {
+    check: 'text',
+    visibility: 'information',
+    label: 'Same text, divided differently',
+    meaning: 'The same words in both places. Production divides them over more blocks.',
+  },
+
   // Ticket 33 — text, by direction. These replace `structure`.
   'text-missing': {
     check: 'text',

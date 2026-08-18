@@ -12,7 +12,7 @@
  */
 
 import { anchorHeadingFor } from './locate.mjs';
-import { lcsPairs, maskNumbers, pairLeftovers, tier2 } from './match.mjs';
+import { joinRun, lcsPairs, maskNumbers, mergeRuns, pairLeftovers, tier2 } from './match.mjs';
 
 /**
  * Promotional copy. Ticket 02: the pattern must match **both** sides, because a
@@ -33,6 +33,12 @@ export const PROMO =
  * @typedef {object} AlignedRow
  * @property {keyof import('./contract.mjs').FINDING_CLASSES | null} class
  * @property {import('./contract.mjs').ContentUnit | null} prod
+ * @property {import('./contract.mjs').ContentUnit[]} [prodRun]  On `regrouped` only: the run
+ *                                            production divided the words over, in document
+ *                                            order. `prod` is its **first** member, so the
+ *                                            row sorts and links where the run begins and
+ *                                            every reader that knows nothing about runs
+ *                                            still has a unit to draw.
  * @property {import('./contract.mjs').ContentUnit | null} new
  * @property {number | null} score
  * @property {string | null} [anchorHeading]  The heading this position sits under (ticket 34).
@@ -123,23 +129,51 @@ export function classifyExactPair(prod, next) {
 }
 
 /**
+ * What a regrouping did, as an editor reads it: `p + p → p`.
+ *
+ * It is the `detail` of a `regrouped` finding, so a run of two paragraphs and a run of
+ * three over the same words are two findings with two ids. The tags are the members' own,
+ * which is how a run that holds a heading says so.
+ *
+ * @param {AlignedRow} row
+ * @returns {string}
+ */
+function mergeDetail(row) {
+  const members = (row.prodRun ?? []).map((unit) => unit.tag).join(' + ');
+  return `${members} → ${row.new?.tag}`;
+}
+
+/**
  * The two classes `classifyExactPair()` makes, and the only ones whose two sides
  * of text are equal. They are the reason a finding needs a `detail`.
  */
 const EXACT_PAIR_CLASSES = new Set(['heading-level', 'tag-changed']);
 
 /**
- * What changed on a row whose two texts are equal, as an editor reads it.
+ * What changed on a row whose two sides of text hold the same words, as an editor reads it.
  *
- * `null` on every other class, and that keeps their finding ids exactly where
- * they were: `findingId()` joins `detail` only when it is present.
+ * `null` on every other class, and that keeps their finding ids exactly where they
+ * were: `findingId()` joins `detail` only when it is present.
  *
  * @param {AlignedRow} row
  * @returns {string | null}
  */
-function tagChange(row) {
+function detailOf(row) {
+  if (row.class === 'regrouped') return mergeDetail(row);
   if (!row.class || !EXACT_PAIR_CLASSES.has(row.class)) return null;
   return `${row.prod?.tag} → ${row.new?.tag}`;
+}
+
+/**
+ * The production text a finding is keyed on: the unit's own words, except on
+ * `regrouped`, where it is the whole run space-joined. See `joinRun()`.
+ *
+ * @param {AlignedRow} row
+ * @returns {string | null}
+ */
+function prodTextOf(row) {
+  if (row.prodRun) return joinRun(row.prodRun);
+  return row.prod?.norm ?? null;
 }
 
 /**
@@ -168,9 +202,34 @@ export function diffRows(production, next) {
     score: null,
   }));
 
-  const { pairs, prodOnly, newOnly } = pairLeftovers(
-    prodUnits.filter((unit) => !pairedProd.has(unit)),
+  // Pass 2, ADR 0012, and it has to be here rather than after the greedy pairing: greedy
+  // claims the first member of the run against the merged unit at 0.84 and the run is gone
+  // before the exact test runs. What it takes off the table is what the greedy pass below
+  // no longer sees — that re-pairing is the collateral ticket 116 measured before it landed.
+  const merges = mergeRuns(
+    prodUnits,
     newUnits.filter((unit) => !pairedNew.has(unit)),
+    (unit) => pairedProd.has(unit),
+  );
+  /** @type {Set<import('./contract.mjs').ContentUnit>} */
+  const regrouped = new Set(merges.flatMap((merge) => [...merge.run, merge.new]));
+
+  for (const merge of merges) {
+    rows.push({
+      class: 'regrouped',
+      // The row is **one** row, positioned at the first unit of the run, and the run is
+      // beside it. The words are identical on the two sides, so there is no score and no
+      // word diff to draw: only the seams moved.
+      prod: merge.run[0],
+      prodRun: merge.run,
+      new: merge.new,
+      score: null,
+    });
+  }
+
+  const { pairs, prodOnly, newOnly } = pairLeftovers(
+    prodUnits.filter((unit) => !pairedProd.has(unit) && !regrouped.has(unit)),
+    newUnits.filter((unit) => !pairedNew.has(unit) && !regrouped.has(unit)),
   );
 
   for (const pair of pairs) {
@@ -312,12 +371,12 @@ export function textFindings(rows, collector) {
     // six — which is what grouping means.
     row.finding = collector.add({
       class: row.class,
-      prod: row.prod?.norm ?? null,
+      prod: prodTextOf(row),
       new: row.new?.norm ?? null,
       // Ticket 33: on `heading-level` and `tag-changed` the two sides of text are
       // equal, so the record would say "identical" and give an `h2` → `h3` the
       // same id as an `h2` → `h4`. The detail is what changed.
-      detail: tagChange(row),
+      detail: detailOf(row),
       anchorHeading: row.anchorHeading ?? null,
       locations: row.locations ?? { production: null, new: null },
       score: row.score,

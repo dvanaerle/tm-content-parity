@@ -125,6 +125,109 @@ describe('prepareRows', () => {
     expect(rows).toHaveLength(2);
   });
 
+  /**
+   * Ticket 116. Production divides the words over two blocks and the new site sends them
+   * as one, so one row holds a **run** on the left. It is appended to the fixture rather
+   * than given its own fixture, because what has to be true is that it is one row among
+   * the others: the run resolves, and every row beside it still resolves the way it did.
+   */
+  const withRun = () => {
+    const base = fixture();
+    base.elements.production.push(
+      unit({ raw: 'Bedankt voor het aanvragen van een samplepakket', index: 14 }),
+      unit({ raw: 'Het pakket past door de brievenbus', index: 17 }),
+    );
+    base.elements.new.push(
+      unit({
+        raw: 'Bedankt voor het aanvragen van een samplepakket Het pakket past door de brievenbus',
+        index: 12,
+      }),
+    );
+    base.rows.push({
+      class: 'regrouped',
+      prod: 4,
+      prodRun: [4, 5],
+      new: 3,
+      score: null,
+      finding: 'run1',
+    });
+    base.findings.push({
+      id: 'run1',
+      class: 'regrouped',
+      visibility: 'information',
+      state: 'open',
+      occurrences: 1,
+      detail: 'p + p → p',
+    });
+    return base;
+  };
+
+  it('reads the run of a regrouped row into its units', () => {
+    const { rows } = prepareRows({ ...withRun(), filter: NO_FILTER, showDiagnostics: false });
+    const merged = rows.at(-1);
+
+    expect(merged.prodRun.map((one) => one.index)).toEqual([14, 17]);
+    // The row is anchored at the **first** member, so a hash link and the jump list name
+    // where the run begins.
+    expect(merged.prod.index).toBe(14);
+    expect(merged.key).toBe('p14');
+  });
+
+  it('leaves every other row without a run', () => {
+    const { rows } = prepareRows({ ...withRun(), filter: NO_FILTER, showDiagnostics: false });
+
+    expect(rows.slice(0, -1).map((row) => row.prodRun)).toEqual([null, null, null, null]);
+  });
+
+  it('drops a run one of whose members is not on the page', () => {
+    // The class asserts **total** coverage. A row drawing three members of four would say
+    // the words on the right are the words on the left while showing less than all of
+    // them, which is the silence ADR 0012 refuses. Absent, the row falls back to its
+    // first member and is visibly not a whole answer.
+    const base = withRun();
+    base.rows.at(-1).prodRun = [4, 5, 99];
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
+    expect(rows.at(-1).prodRun).toBeNull();
+    expect(rows.at(-1).prod.index).toBe(14);
+  });
+
+  it('collapses a regrouped row into a context marker, and opens it on a landing', () => {
+    // Spec 119's second seam. Both behaviours are ticket 86's and neither is written for
+    // `regrouped` anywhere — `collapses()` reads `decidable` and `runKeyHolding()` reads the
+    // collapse set. That is exactly why they are pinned here: a row nothing asks about
+    // belongs behind a marker, and a link to it has to open the marker it is behind, or the
+    // finding has an id that leads nowhere.
+    const { rows } = prepareRows({ ...withRun(), filter: NO_FILTER, showDiagnostics: false });
+    const merged = rows.at(-1);
+
+    expect(collapses(merged)).toBe(true);
+    expect(runKeyHolding(rows, merged.key)).toBe(collapseRuns(rows).at(-1).key);
+  });
+
+  it('keeps a heading the run absorbed in the jump-list', () => {
+    // Spec 119: *"keeps an absorbed heading in the jump-list"*. It holds for a run whose
+    // **first** member is the heading, which is what `prod` is, so the outline reads the
+    // heading it always read and a landmark does not vanish because the new site inlined it.
+    // A heading in a **later** member is ticket 121's, and this asserts nothing about it.
+    const base = withRun();
+    base.elements.production[4] = heading('Bedankt voor het aanvragen van een samplepakket', 2, 14);
+
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
+    expect(outlineFrom(rows).map((entry) => entry.key)).toContain('p14');
+  });
+
+  it('draws a regrouped row with the diagnostics control off, and offers no decision', () => {
+    // It inherits ticket 86's information-row behaviour whole: it is drawn, it carries a
+    // finding an editor can link to, and there is nothing to ask about it.
+    const { rows } = prepareRows({ ...withRun(), filter: NO_FILTER, showDiagnostics: false });
+    const merged = rows.at(-1);
+
+    expect(merged.class).toBe('regrouped');
+    expect(merged.finding.id).toBe('run1');
+    expect(merged.decidable).toBe(false);
+  });
+
   it('hides a diagnostic class until the diagnostics control is on', () => {
     const base = fixture();
     base.rows.push({ class: 'tag-changed', prod: null, new: 2, score: null, finding: 'tag1' });

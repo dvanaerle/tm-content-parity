@@ -458,6 +458,183 @@ describe('diffRows', () => {
   });
 });
 
+// --- ticket 116: the same words, divided differently
+
+/**
+ * `nl/proefpakket/succes`, the case ADR 0012 was written from and this ticket's demo.
+ * Production sends two paragraphs and the new site sends one paragraph holding both, in
+ * order, unchanged. The corpus units are 42 and 22 tokens against the merged 64; they are
+ * shortened here, and what a shorter version has to keep is the seam and the fact that the
+ * **first member alone** already scores above `PAIR_THRESHOLD` against the merged unit —
+ * 0.67 here, 0.84 on the page. That is why the pass has to run ahead of the greedy matcher.
+ */
+const THANKS = 'Bedankt voor het aanvragen van een samplepakket';
+const BOX = 'Het pakket past door de gemiddelde brievenbus';
+const MERGED = `${THANKS} ${BOX}`;
+
+/**
+ * @param {string[]} prodTexts
+ * @param {string[]} newTexts
+ */
+const rowsOf = (prodTexts, newTexts) =>
+  diffRows(
+    extract({ elements: units(prodTexts) }),
+    extract({ side: 'new', elements: units(newTexts) }),
+  );
+
+/** @param {import('./text.mjs').AlignedRow[]} rows */
+const classesOf = (rows) => rows.map((row) => row.class);
+
+describe('a merged paragraph', () => {
+  it('is one row, and not a false copy beside a false loss', () => {
+    // Today's log shows `COPY 0.84` and `TEXT-MISSING` on this page, and both are false:
+    // no word was edited and no word was lost. The greedy matcher would claim
+    // `THANKS ↔ MERGED` at 0.67 and the run would be gone before the exact test ran, so
+    // this assertion is also the proof that the pass sits ahead of it.
+    expect(classesOf(rowsOf([THANKS, BOX], [MERGED]))).toEqual(['regrouped']);
+  });
+
+  it('holds the whole run on the left and sits at its first unit', () => {
+    const [row] = rowsOf([THANKS, BOX], [MERGED]);
+    expect(row.prodRun?.map((one) => one.raw)).toEqual([THANKS, BOX]);
+    expect(row.prod?.raw).toBe(THANKS);
+    expect(row.new?.raw).toBe(MERGED);
+  });
+
+  it('reads in production document order, at the first unit of the run', () => {
+    const rows = rowsOf(
+      ['Bedankt voor uw aanvraag', THANKS, BOX, 'Terug naar de homepage'],
+      ['Bedankt voor uw aanvraag', MERGED, 'Terug naar de homepage'],
+    );
+    expect(classesOf(rows)).toEqual([null, 'regrouped', null]);
+  });
+
+  it('accepts a heading as a member of the run', () => {
+    // `be/laagste-prijs-garantie` merges a heading and the paragraph after it. Ticket 121
+    // owns the heading jump-list consequence; this ticket must not add the rule that
+    // would forbid the case before 121 can have it.
+    const [row] = diffRows(
+      extract({
+        elements: [unit('Waarom kiest u voor Tuinmaximaal', { tag: 'h2' }), unit(BOX)],
+      }),
+      extract({ side: 'new', elements: units([`Waarom kiest u voor Tuinmaximaal ${BOX}`]) }),
+    );
+    expect(row.class).toBe('regrouped');
+    expect(row.prodRun).toHaveLength(2);
+  });
+
+  it('refuses a merge the new site did not cover completely', () => {
+    // The criterion that matters most. Production's `/fr/avantages` block ends with a
+    // sentence about aluminium that the new site drops — 16 tokens of lost copy — and
+    // containment would have called that `regrouped`, which is `information` and
+    // undecidable. Total coverage keeps it a finding somebody has to decide.
+    const kept = `${THANKS} Het pakket past door de brievenbus`;
+    expect(classesOf(rowsOf([THANKS, BOX], [kept]))).not.toContain('regrouped');
+  });
+
+  it('keeps a merge that added a word a copy', () => {
+    const andMore = `${MERGED} altijd`;
+    const rows = classesOf(rowsOf([THANKS, BOX], [andMore]));
+    expect(rows).toContain('copy');
+    expect(rows).not.toContain('regrouped');
+  });
+
+  it('refuses a pair that differs by a trailing token', () => {
+    // `"… exacte prijs"` inside `"… exacte prijs >"` is the trailing-token noise editors
+    // dismiss by hand, and 38 of 100 candidates under an early looser rule were this. Two
+    // guards refuse it independently: the leftover token fails total coverage, and one
+    // unit is not a run of two.
+    const rows = rowsOf(['Bekijk hier de exacte prijs'], ['Bekijk hier de exacte prijs >']);
+    expect(classesOf(rows)).toEqual(['copy']);
+  });
+
+  it('refuses a run holding a member of under four tokens', () => {
+    const short = 'Kleuren en afwerking';
+    expect(classesOf(rowsOf([short, BOX], [`${short} ${BOX}`]))).not.toContain('regrouped');
+  });
+
+  it('refuses a run the new site interrupted', () => {
+    // A run is adjacent and uninterrupted in production's document order. The paragraph
+    // between the two members is matched in place, so the two are not a run — whatever
+    // their text does when it is joined.
+    const between = 'Wij gaan direct aan de slag';
+    const rows = rowsOf([THANKS, between, BOX], [between, MERGED]);
+    expect(classesOf(rows)).not.toContain('regrouped');
+  });
+
+  it('refuses a run whose member another block on the new site claims', () => {
+    // ADR 0012's third guard, and the corpus names the page:
+    // `de/(de)shading-panel/produktinformationen` sends its two height rows both as
+    // themselves and as one joined block. The run covers the joined block exactly, and
+    // taking it would leave the two blocks that hold the same words with no counterpart, so
+    // the page would say the words were regrouped and invented at once. A member has to be
+    // unspoken-for.
+    const variant = 'Het pakket past door de gemiddelde bus';
+    const rows = classesOf(rowsOf([THANKS, BOX], [MERGED, variant]));
+    expect(rows).not.toContain('regrouped');
+    expect(rows).not.toContain('text-added');
+  });
+
+  it('refuses a run of five members', () => {
+    // The cap of four is free today — the corpus holds no five-member exact coverage — and
+    // it is what makes a row a reader can verify at a glance.
+    const five = [
+      'Bedankt voor het aanvragen',
+      'van een gratis samplepakket',
+      'Wij gaan direct aan de slag',
+      'Het pakket past door de brievenbus',
+      'U hoeft er niet voor thuis te blijven',
+    ];
+    expect(classesOf(rowsOf(five, [five.join(' ')]))).not.toContain('regrouped');
+  });
+});
+
+describe('a merged paragraph as a finding', () => {
+  /**
+   * @param {string[]} prodTexts
+   * @param {string[]} newTexts
+   */
+  const findingsOf = (prodTexts, newTexts) =>
+    collect((collector) => textFindings(rowsOf(prodTexts, newTexts), collector));
+
+  it('carries the shape as its detail and no score', () => {
+    // The score belongs to `copy`, which is the class that claims two texts are the same
+    // content edited. Nothing here was edited.
+    expect(findingsOf([THANKS, BOX], [MERGED])).toMatchObject([
+      { class: 'regrouped', detail: 'p + p → p', score: null },
+    ]);
+  });
+
+  it('names the tag of every member in the shape', () => {
+    const [finding] = collect((collector) =>
+      textFindings(
+        diffRows(
+          extract({ elements: [unit(THANKS, { tag: 'h3' }), unit(BOX)] }),
+          extract({ side: 'new', elements: units([`${THANKS} ${BOX}`]) }),
+        ),
+        collector,
+      ),
+    );
+    expect(finding.detail).toBe('h3 + p → p');
+  });
+
+  it('keys the finding on the whole run, so an edit to any member expires it', () => {
+    // ADR 0004: a key built from the first member only would carry an editor's judgement
+    // across an edit to the second, silently. This is the same join the coverage test
+    // compared.
+    const [finding] = findingsOf([THANKS, BOX], [MERGED]);
+    expect(finding.prod).toBe(MERGED);
+    expect(finding.new).toBe(MERGED);
+  });
+
+  it('keeps a finding id, and counts nowhere', () => {
+    // `Landing` needs an id: the row is a finding an editor can link to and cannot decide.
+    const findings = findingsOf([THANKS, BOX], [MERGED]);
+    expect(findings[0].id).toMatch(/^[A-Za-z0-9_-]{16}$/);
+    expect(summarise(findings)).toMatchObject({ work: 0, information: 1, total: 1 });
+  });
+});
+
 describe('textFindings', () => {
   it('counts one rename repeated four times as one finding', () => {
     const before = 'Verkrijgbaar in de volgende kleuren';

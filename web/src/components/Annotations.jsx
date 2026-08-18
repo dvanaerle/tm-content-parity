@@ -19,8 +19,12 @@ export const Tag = ({ unit }) =>
 
 /**
  * Ticket 33. On `heading-level` and `tag-changed` the two text columns are equal,
- * so without this the row reads as a finding about nothing. The content view needs
+ * so without this the row reads as a finding about nothing. The content view mostly needs
  * no such thing: it prints the tag of each unit next to the words.
+ *
+ * **The exception is `regrouped`** (ticket 116), and it is the one case where counting the
+ * tags in the cells is not reading the finding: the left cell holds two to four of them and
+ * the right cell one, and the arity is the whole difference. So that row wears this too.
  *
  * It takes the detail and not the finding, because ticket 81 gives it a second
  * caller that is not a finding: `detail` is a term of the repeat grouping key, so a

@@ -81,6 +81,22 @@ describe('findingId', () => {
     expect(findingId({ ...base, newNorm: null })).toBe(findingId({ ...base, newNorm: '' }));
   });
 
+  it('separates a run from its first member, so an edit to any member expires it', () => {
+    // Ticket 116 and ADR 0004. A `regrouped` finding's `prodNorm` is the **space-joined run**,
+    // and the reason is here rather than at the matcher: keyed on the first member alone, an
+    // edit to the second would leave an editor's judgement attached to text nobody judged.
+    // `joinRun()` in `compare/match.mjs` is the join both this id and the coverage test read.
+    const first = 'Bedankt voor het aanvragen van een samplepakket';
+    const second = 'Het pakket past door de gemiddelde brievenbus';
+    const run = { ...base, rule: 'regrouped', prodNorm: `${first} ${second}`, detail: 'p + p → p' };
+
+    expect(findingId(run)).not.toBe(findingId({ ...run, prodNorm: first }));
+    expect(findingId(run)).not.toBe(findingId({ ...run, prodNorm: `${first} edited` }));
+    // And the detail is a term of it, so a run of two and a run of three over the same words
+    // are two findings — the same reason ticket 33 gave `heading-level` its own.
+    expect(findingId(run)).not.toBe(findingId({ ...run, detail: 'p + p + p → p' }));
+  });
+
   it('does not collide on a leading status string', () => {
     // The prototype cut the key itself, not a hash. The leading status string
     // used the whole 16-character budget, and 156 findings fell to 88 ids.
@@ -241,15 +257,15 @@ describe('FINDING_CLASSES', () => {
     expect(VISIBILITIES).toEqual(['work', 'information', 'diagnostic']);
   });
 
-  it('is closed at 31 classes', () => {
+  it('is closed at 32 classes', () => {
     // Ticket 33 took it from 18 to 21: `structure` out, `text-missing`,
     // `text-added`, `heading-level` and `tag-changed` in. Ticket 54 added the
     // twenty-second, `no-declared-alternate`, and it is the first `meta` class:
     // `CHECKS` had declared the check since ticket 08 with nothing using it.
     // Ticket 96 adds the nine the head check will emit. It says 21 → 30, which was
     // written before ticket 54 landed the twenty-second class; the nine are the nine,
-    // so the pin is 31.
-    expect(Object.keys(FINDING_CLASSES).length).toBe(31);
+    // so the pin was 31. Ticket 116 adds `regrouped`, and it is the thirty-second.
+    expect(Object.keys(FINDING_CLASSES).length).toBe(32);
   });
 
   it('has retired structure', () => {
@@ -329,6 +345,12 @@ describe('FINDING_CLASSES', () => {
    * every finding in a `work` class and nothing else. Two tickets have moved the group
    * since — 86 took `heading-level` out, 96 put the seven head classes in — so it is
    * eighteen now, and the pin is what makes each of those moves say so out loud.
+   *
+   * Ticket 116 is the third move, and the first that adds to a group instead of moving
+   * between them: `regrouped` arrives `information`, so `work` is untouched and the
+   * denominator does not move by the class existing. What it takes **out** of `work` is 74
+   * findings of `copy` and `text-missing`, one page at a time, and no list here can pin that
+   * — `crawl/probes/probe-116-regrouped-collateral.mjs` is where that number lives.
    */
   it('pins the three visibility groups', () => {
     const group = (visibility) =>
@@ -364,6 +386,7 @@ describe('FINDING_CLASSES', () => {
       'meta-description-added',
       'meta-title-added',
       'price',
+      'regrouped',
       'restructured',
       'text-added',
     ]);

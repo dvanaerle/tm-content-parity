@@ -251,6 +251,14 @@ export {
  * @typedef {object} DiffRow
  * @property {keyof FINDING_CLASSES | null} class
  * @property {number | null} prod   Position in `sides.production.elements`.
+ * @property {number[]} [prodRun]   On `regrouped` only (ticket 116): every position of the
+ *                                  production run the new site sends as one block, in
+ *                                  document order. `prod` is the **first** of them, so the row
+ *                                  sits and links where the run begins and a reader that
+ *                                  knows nothing about runs still draws a unit. The key is
+ *                                  **absent** and not null on the other rows: some 40 rows
+ *                                  corpus-wide carry a run, and a null on every other row
+ *                                  is bytes in all 816 reports.
  * @property {number | null} new    Position in `sides.new.elements`.
  * @property {number | null} score
  * @property {string | null} finding  The grouped finding this position belongs to.

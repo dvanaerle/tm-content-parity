@@ -1374,6 +1374,25 @@ what a finding with no anchor heading offers instead. It offers the page.
   under either rule, and 43 were already stale for reasons that predate the decision.
   **86 is unblocked.**
 
+  [116 — a merged paragraph is one row](issues/116-a-merged-paragraph-is-one-row.md) —
+  **resolved 2026-08-18.** `regrouped` exists, as pass 2 between the LCS and the greedy
+  matcher: **38 rows on 34 pages, absorbing 32 `copy`, 42 `text-missing` and 6
+  `restructured`, and no class outside those four moved** —
+  `crawl/probes/probe-116-regrouped-collateral.mjs` re-measures it and fails on it, reading
+  the reports on disk as the pipeline before the pass. **18 of 1,061 live judgements detach,
+  all dismissals, 11 on `nl` and 7 on `uk`, and no fix claim and no page review**, announced
+  by [notes/2026-08-18-the-same-words-divided-differently.md](notes/2026-08-18-the-same-words-divided-differently.md).
+  The ticket's ≈59 was three times too pessimistic. **The corpus caught a missing guard**:
+  ADR 0012's *each member is a block nothing else claims* is not implied by the pass order,
+  and without it `de/(de)shading-panel/produktinformationen` — which sends two rows both as
+  themselves and as one joined block — read as regrouped and invented at once. That was the
+  entire movement outside the permitted classes, and the acceptance criterion is what refused
+  it; the guard costs 3 of 41 instances. A row carries `prodRun` with `prod` as its **first**
+  member, which is why sorting, anchoring, deep links and the section name all cost nothing,
+  and ticket 86's `canDecide()` gave the whole information-row half away for free.
+  `be/laagste-prijs-garantie` fires with a heading in the run and **121 still has its
+  ticket** — no rule here forbids or handles it. **120 is unblocked.**
+
 - **The interface speaks one language, and it is English** — two tickets from the
   grilling session of 2026-08-13, which started from ticket 42 and found that the
   question it raises is not 42's at all. Decision:

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
+import { Detail, Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
 import { locationUrl, unitLocation } from '../../../compare/locate.mjs';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
@@ -438,6 +438,8 @@ function Row({ row, control, sides, landed }) {
         {row.score !== null && (
           <span className="ml-2 text-xs text-muted-foreground">{row.score}</span>
         )}
+        {/* `p + p → p`, on a run row and on no other. `Annotations.jsx` carries the reason. */}
+        {row.prodRun && <Detail detail={row.finding?.detail} />}
         <Occurrences
           count={row.finding?.occurrences}
           title={onePageTitle(row.finding?.occurrences)}
@@ -457,30 +459,81 @@ function Row({ row, control, sides, landed }) {
          */}
         {row.decidable && <div className="mt-1">{control(row.finding)}</div>}
       </TableCell>
-      <DiffCells
-        prod={row.prod?.norm ?? null}
-        new={row.new?.norm ?? null}
-        prodRaw={row.prod?.raw ?? null}
-        newRaw={row.new?.raw ?? null}
-        prodPrefix={
-          <>
-            <Tag unit={row.prod} />
+      {row.prodRun ? (
+        <RunCells run={row.prodRun} merged={row.new} sides={sides} />
+      ) : (
+        <DiffCells
+          prod={row.prod?.norm ?? null}
+          new={row.new?.norm ?? null}
+          prodRaw={row.prod?.raw ?? null}
+          newRaw={row.new?.raw ?? null}
+          prodPrefix={
+            <>
+              <Tag unit={row.prod} />
+              <Locate
+                href={locationUrl(sides.production.url, unitLocation(row.prod))}
+                side="production"
+              />
+            </>
+          }
+          newPrefix={
+            <>
+              <Tag unit={row.new} />
+              <Locate
+                href={locationUrl(sides.new.url, unitLocation(row.new))}
+                side="the new site"
+              />
+            </>
+          }
+          strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
+          equal={row.equal}
+        />
+      )}
+    </TableRow>
+  );
+}
+
+/**
+ * The two comparison cells of a `regrouped` row: production's run on the left, one block
+ * under the next, and the block the new site sends them as on the right (ticket 116).
+ *
+ * **It is not `DiffCells`, and it must not become it.** That component's job is to show
+ * which words differ, and on this row none do: the criterion is total coverage, so the two
+ * sides hold the same tokens in the same order and only the seams moved. A word diff here
+ * would paint an empty answer over the one thing the row is about, and it would spend the
+ * clamp budget doing it. The same reason there is no tint: nothing is lost and nothing is
+ * added, so neither `lost` nor `added` is the row's to wear.
+ *
+ * The seam is what the reader is being shown, so each member keeps its own tag and its own
+ * link into production, and the run reads down the cell in document order. A member that is
+ * a heading is set in the same semibold the rest of the view gives a heading — a run may
+ * hold one (ticket 121), and it should not stop looking like a heading because the new site
+ * inlined it.
+ */
+function RunCells({ run, merged, sides }) {
+  const layout = 'px-2 py-3 align-top text-sm break-words whitespace-normal';
+  const weight = (unit) => (unit?.kind === 'heading' ? 'font-semibold' : '');
+
+  return (
+    <>
+      <TableCell className={layout}>
+        {run.map((unit) => (
+          <p key={unit.index} className="mt-3 first:mt-0">
+            <Tag unit={unit} />
             <Locate
-              href={locationUrl(sides.production.url, unitLocation(row.prod))}
+              href={locationUrl(sides.production.url, unitLocation(unit))}
               side="production"
             />
-          </>
-        }
-        newPrefix={
-          <>
-            <Tag unit={row.new} />
-            <Locate href={locationUrl(sides.new.url, unitLocation(row.new))} side="the new site" />
-          </>
-        }
-        strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
-        equal={row.equal}
-      />
-    </TableRow>
+            <span className={weight(unit)}>{unit.norm}</span>
+          </p>
+        ))}
+      </TableCell>
+      <TableCell className={layout}>
+        <Tag unit={merged} />
+        <Locate href={locationUrl(sides.new.url, unitLocation(merged))} side="the new site" />
+        <span className={weight(merged)}>{merged?.norm}</span>
+      </TableCell>
+    </>
   );
 }
 
