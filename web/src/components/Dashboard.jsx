@@ -35,6 +35,7 @@ import { pageHref } from '../lib/page-url.mjs';
 import { parseTerm, withScope } from '../lib/search.mjs';
 import { useScreen } from '../lib/screen-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
+import { CANONICAL_VIEWPORT } from '../../../shared/canonical-viewport.mjs';
 import { emptyBuckets } from '../../../overrides/state.mjs';
 import {
   pagesWithClasses,
@@ -769,6 +770,7 @@ export default function Dashboard({
           </li>
         ))}
         <RegionCoverage {...regionsChanged} />
+        <CanonicalViewportNote />
       </Aside>
     </div>
   );
@@ -919,6 +921,30 @@ const SORT_LABEL = {
  *
  * It is a statement about the whole run. A store's own numbers are the line above.
  */
+/**
+ * Ticket 69: the scope statement a reader would otherwise meet nowhere.
+ *
+ * It sits under the regions rather than in an aside of its own. Both answer the
+ * one question a reader is asking here — what the log leaves out on purpose — and
+ * ADR 0019 keeps a panel that only ever says one static sentence off every store.
+ *
+ * It is about **what is compared** and never about what this interface runs on.
+ * The log reads one width; the screen you read it on is ticket 87's subject, and
+ * confusing the two would read as a promise that the dashboard is desktop-only.
+ */
+function CanonicalViewportNote() {
+  return (
+    <li className="mt-2 border-t pt-2">
+      <strong className="font-medium">One width</strong>
+      <span className="block text-muted-foreground">
+        A page is compared as its {CANONICAL_VIEWPORT} version. Production sends both versions of
+        some blocks in one page, so where it sends a separate version for a phone, that version is
+        not checked.
+      </span>
+    </li>
+  );
+}
+
 function RegionCoverage({ store, reason, changes }) {
   const moved = changes.filter((change) => change.verdict !== 'unchanged');
   if (!reason && moved.length === 0) return null;

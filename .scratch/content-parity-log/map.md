@@ -1559,8 +1559,26 @@ what a finding with no anchor heading offers instead. It offers the page.
   [68 the clamp](issues/68-the-content-view-clamps-a-tall-row.md),
   [69 one viewport](issues/69-one-canonical-viewport.md),
   [70 shared regions](issues/70-shared-regions-by-content-hash.md).
-  61, 62, 63, 64, 65, 66, 67 and 68 are resolved. 70 needs the new environment, which
+  61, 62, 63, 64, 65, 66, 67, 68 and 69 are resolved. 70 needs the new environment, which
   answered HTTP 500 on all six hosts while this was written.
+
+  **69 is resolved**, 2026-08-18, and its own close-out option was measured and declined.
+  The log now compares a page at **one width — desktop, 1280 pixels** — and drops the copy
+  a reader at that width never sees: **1,318 units on 264 of 816 pages**, taking findings
+  from 41,182 to **40,091 (−2.65%)**, with **110 rows appearing** because a production
+  mobile copy was absorbing the new site's unit. The rule is one-sided and measured to be:
+  the new site removes **0 units on every page**. Two things this changed about how such a
+  rule is written. A breakpoint class name is **not** evidence — `mgz-hidden-lg` hides only
+  between 992 and 1200 pixels, while the theme's Bootstrap `.hidden-lg` means 1200 and up,
+  so the same token on one page gives opposite answers and a convention must name its
+  framework and quote the band. And the extraction cannot check its own premise, so a
+  browser probe does: at 1,280 pixels the conventions match **119 elements and 0 are
+  visible**. That probe also found the larger blind spot this rule does **not** close —
+  617 units invisible behind a closed modal or a collapsed accordion, compared today, which
+  over-reports and is safe (ticket 137). Recorded in
+  `docs/adr/0020-the-log-reads-one-viewport.md`; the residual duplication that is *not*
+  responsive is 3,612 copies on 495 pages and is legitimate repetition, which is why the
+  rule is by markup and never by text.
 
   **The clamp was withdrawn on 2026-08-14 and 68 is `wontfix` for that half.** A row shows
   its block whole: most blocks are shorter than four lines, so the clamp changed nothing on

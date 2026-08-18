@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  CANONICAL_VIEWPORT,
+  HIDDEN_AT_CANONICAL_VIEWPORT,
+  validateConventions,
+} from '../shared/canonical-viewport.mjs';
+import {
   ABSOLUTE_MAX_UNITS,
   DEFAULT_MAX_UNITS,
   EXCLUDED_REGIONS,
@@ -1066,10 +1071,134 @@ describe('validateRegions', () => {
   });
 });
 
+describe('the committed viewport conventions', () => {
+  it('is desktop, and this is the one place that says so', () => {
+    expect(CANONICAL_VIEWPORT).toBe('desktop');
+  });
+
+  it('lists every convention with the pages it was measured on', () => {
+    for (const convention of HIDDEN_AT_CANONICAL_VIEWPORT) {
+      expect(convention.framework).toBeTruthy();
+      expect(convention.measured.pages.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('names the framework and never a store, because a convention is markup', () => {
+    // A Dutch or a per-store hook is the mistake ADR 0003 rejected for the banner,
+    // and a responsive convention is exactly the kind of rule that invites it.
+    const list = JSON.stringify(HIDDEN_AT_CANONICAL_VIEWPORT);
+    for (const store of ['nl', 'be_fr', 'de', 'uk']) {
+      expect(list).not.toMatch(new RegExp(`"${store}"`));
+    }
+  });
+});
+
+describe('validateConventions', () => {
+  const good = {
+    selector: '[class*="hide-on-wide"]',
+    framework: 'Some Page Builder',
+    measured: { pages: ['a', 'b', 'c'], production: 4, new: 0 },
+  };
+  const check = (patch) => () => validateConventions([{ ...good, ...patch }]);
+
+  it('accepts a convention that meets the bar', () => {
+    expect(check({})).not.toThrow();
+  });
+
+  it('refuses a convention that names no framework', () => {
+    expect(check({ framework: '' })).toThrow(/belongs to a front end/);
+  });
+
+  it('refuses a measurement on fewer than three pages', () => {
+    expect(check({ measured: { pages: ['a', 'b'], production: 4, new: 0 } })).toThrow(
+      /The bar is 3/,
+    );
+  });
+
+  it("refuses a cap below the convention's own measurement", () => {
+    expect(
+      check({ measured: { pages: ['a', 'b', 'c'], production: 30, new: 0 }, maxUnits: 25 }),
+    ).toThrow(/throw on its own evidence/);
+  });
+
+  it('refuses a cap above the ceiling, so an author cannot declare their way out', () => {
+    expect(
+      check({ measured: { pages: ['a', 'b', 'c'], production: 400, new: 0 }, maxUnits: 400 }),
+    ).toThrow(/ceiling is 100/);
+  });
+
+  it("names where the list came from, so a caller's list is told apart from the committed one", () => {
+    expect(() =>
+      validateConventions([{ ...good, framework: '' }], 'context.hiddenAtCanonicalViewport'),
+    ).toThrow(/context\.hiddenAtCanonicalViewport: \[class\*="hide-on-wide"\]/);
+  });
+
+  it('holds a list the extractor was given, so no path into the extraction skips the bar', () => {
+    expect(() =>
+      extractPage(page('<h1>Kop</h1>'), {
+        ...CONTEXT,
+        hiddenAtCanonicalViewport: [{ ...good, framework: '' }],
+      }),
+    ).toThrow(/belongs to a front end/);
+  });
+});
+
 describe('failuresFilename', () => {
   it('carries the store, so a be run does not erase the nl record', () => {
     expect(failuresFilename('nl')).toBe('extract-failures-nl.json');
     expect(failuresFilename('be_fr')).toBe('extract-failures-be_fr.json');
     expect(failuresFilename('be')).not.toBe(failuresFilename('be_fr'));
+  });
+});
+
+describe('the canonical viewport', () => {
+  const at = (main) => extractPage(page(main), CONTEXT);
+
+  it('does not extract a unit the page hides at the canonical viewport', () => {
+    const extract = at(`
+      <div class="mgz-hidden-xs mgz-hidden-sm mgz-hidden-md"><p>Onderhoudsproducten</p></div>
+      <div class="mgz-hidden-lg mgz-hidden-xl"><p>Onderhoudsproducten</p></div>`);
+
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Onderhoudsproducten']);
+  });
+
+  it('counts what it dropped, so the choice of width is visible on the page it cut', () => {
+    const extract = at(`
+      <h1>Downloads</h1>
+      <div class="mgz-hidden-xl"><p>Montagehandleiding</p><p>Energielabel</p></div>`);
+
+    expect(extract.diagnostics.hiddenAtViewport).toEqual({ matches: 1, units: 2 });
+  });
+
+  it('says zero on a page that sends one version, so a convention that stops matching reads as a change', () => {
+    const extract = at('<h1>Downloads</h1><p>Kies een handleiding.</p>');
+
+    expect(extract.diagnostics.hiddenAtViewport).toEqual({ matches: 0, units: 0 });
+    expect(extract.elements).toHaveLength(2);
+  });
+
+  it("keeps a block hidden only in Magezon's laptop band, which a desktop reader sees", () => {
+    // The trap a substring selector falls into: `[class*="hidden-lg"]` also matches
+    // `mgz-hidden-lg`, which hides between 992px and 1200px and nowhere else.
+    // Measured on production: 3 to 12 elements per page would be taken wrongly.
+    const extract = at(
+      '<h1>Overkapping</h1><div class="mgz-hidden-lg"><p>Zichtbaar op 1280.</p></div>',
+    );
+
+    expect(extract.elements.map((unit) => unit.raw)).toEqual(['Overkapping', 'Zichtbaar op 1280.']);
+  });
+
+  it('throws above the cap, because a match that wide is a wrapper and not a second copy', () => {
+    const body = '<p>Een regel met tekst.</p>'.repeat(61);
+
+    expect(() => at(`<div class="mgz-hidden-xl">${body}</div>`)).toThrow(
+      /holds 61 content units at the desktop viewport/,
+    );
+  });
+
+  it('counts one page and not one match, so two half-width matches fail like one wide one', () => {
+    const half = '<div class="mgz-hidden-xl">' + '<p>Een regel.</p>'.repeat(31) + '</div>';
+
+    expect(() => at(half + half)).toThrow(/Its cap is 60/);
   });
 });

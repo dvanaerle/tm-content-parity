@@ -104,10 +104,16 @@ shouted, and a column heading is the one place capitals earn their keep.
   with the reason, so an excluded region says why. The log is blind to what
   changes inside one, and that is correct: neither kind can make editor work.
   See `docs/adr/0003-regions-are-excluded-at-extraction.md`.
-- **Canonical viewport** — the one screen width the log reads a page at. Production
-  sends the desktop and the mobile version of some blocks in the same HTML, and the
-  extraction has no computed style, so it must choose. It chooses desktop. A
-  consequence to state plainly: the log does not check the mobile version.
+- **Canonical viewport** — the one width the log compares a page at: **desktop, 1280
+  pixels**. Production sends the desktop and the mobile version of some blocks in the
+  same HTML, and the extraction has no computed style, so it must choose. The copy a
+  reader at that width never sees is dropped at extraction, by a committed list of
+  markup conventions that names each one's framework and the pages it was measured
+  on. Nothing renders here, so the number is not a window size: it is which
+  breakpoint **band** a hiding class must cover to count, and reading the class name
+  instead of the stylesheet is how the first version of the rule dropped 504 texts of
+  real desktop copy. A consequence to state plainly: the log does not check the
+  mobile version of a page. See `docs/adr/0020-the-log-reads-one-viewport.md`.
 - **Raw text** — the text as the page sends it.
 - **Normalised text** — the raw text after tier-1 normalisation only. Letter
   case and trailing punctuation stay. If they do not stay, the `casing` finding

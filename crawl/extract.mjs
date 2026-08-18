@@ -8,6 +8,12 @@
 
 import { parse } from 'node-html-parser';
 import {
+  HIDDEN_AT_CANONICAL_VIEWPORT,
+  capBreachMessage as viewportCapBreachMessage,
+  capFor as viewportCapFor,
+  validateConventions,
+} from '../shared/canonical-viewport.mjs';
+import {
   EXCLUDED_REGIONS,
   capBreachMessage,
   capFor,
@@ -209,6 +215,43 @@ function removeExcludedRegions(scope, entries, where) {
   }
 
   return removed;
+}
+
+/**
+ * Ticket 69: the page sends both versions of a block and the parse cannot see which
+ * one a reader gets, so the log picks one width and drops the other copy here.
+ *
+ * The cap is the same guard the regions have, for the same reason and against a
+ * worse outcome: a breakpoint utility on a wrapper rather than on a copy would take
+ * content the page holds nowhere else, and nothing downstream would report it.
+ *
+ * @param {import('node-html-parser').HTMLElement} scope
+ * @param {import('../shared/canonical-viewport.mjs').ResponsiveConvention[]} conventions
+ * @param {string} where
+ * @returns {{ matches: number, units: number }}
+ */
+function removeHiddenAtCanonicalViewport(scope, conventions, where) {
+  let matches = 0;
+  let units = 0;
+
+  for (const convention of conventions) {
+    const all = scope.querySelectorAll(convention.selector);
+    const outermost = all.filter((node) => !isInsideAnother(node, all));
+    if (outermost.length === 0) continue;
+
+    const held = outermost.reduce((total, node) => total + countUnitsIn(node), 0);
+    if (held > viewportCapFor(convention)) {
+      throw new Error(
+        viewportCapBreachMessage(convention, { units: held, matches: outermost.length, where }),
+      );
+    }
+
+    for (const node of outermost) node.remove();
+    matches += outermost.length;
+    units += held;
+  }
+
+  return { matches, units };
 }
 
 /**
@@ -500,7 +543,14 @@ export function extractPage(html, context) {
   const entries = context.excludedRegions
     ? validateRegions(context.excludedRegions, 'context.excludedRegions')
     : EXCLUDED_REGIONS;
-  const regionsExcluded = removeExcludedRegions(scope, entries, `${store}/${page} ${side}`);
+  const where = `${store}/${page} ${side}`;
+  const regionsExcluded = removeExcludedRegions(scope, entries, where);
+  // After the regions, so a block that is both excluded and duplicated is counted
+  // once, by the list that names a reason for it.
+  const conventions = context.hiddenAtCanonicalViewport
+    ? validateConventions(context.hiddenAtCanonicalViewport, 'context.hiddenAtCanonicalViewport')
+    : HIDDEN_AT_CANONICAL_VIEWPORT;
+  const hiddenAtViewport = removeHiddenAtCanonicalViewport(scope, conventions, where);
   const content = walk(scope, url, { prodHost, newHost });
 
   const extract = {
@@ -521,6 +571,7 @@ export function extractPage(html, context) {
       imagesWithoutSrc: content.imagesWithoutSrc,
       regionsExcluded,
       unitsExcluded: regionsExcluded.reduce((total, region) => total + region.units, 0),
+      hiddenAtViewport,
     },
     fetchedAt: new Date().toISOString(),
   };

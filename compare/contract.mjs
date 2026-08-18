@@ -119,10 +119,16 @@ export {
  * Ticket 63 adds the regions. `regionsExcluded` is empty on a page no entry
  * matched, so a region that stops matching reads as a change and not as absence.
  *
+ * Ticket 69 adds `hiddenAtViewport`. It is a count and not a list, because the
+ * conventions are markup and not a scope decision: a reader asks how much of the
+ * page the chosen width dropped, never which utility class did it.
+ *
  * @typedef {object} PageDiagnostics
  * @property {number} imagesWithoutSrc
  * @property {RegionRemoval[]} regionsExcluded
  * @property {number} unitsExcluded  Sum of `units` over `regionsExcluded`.
+ * @property {{ matches: number, units: number }} [hiddenAtViewport]  Absent on an
+ *   extract written before ticket 69, which reads as "nothing dropped here".
  */
 
 /**
