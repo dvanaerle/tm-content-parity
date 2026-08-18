@@ -53,6 +53,17 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
  * @param {boolean} [props.strong]
  * @param {boolean} [props.equal]  The caller compared the two sides and got equal, on
  *                                 values it does not show. Both cells stay plain.
+ * @param {boolean} [props.tinted] Whether a one-sided pair tints its cell. It is what
+ *                                 makes the row layer a statement about **direction** —
+ *                                 red where production has the content and green where
+ *                                 the new site invented it — and it is switched off by
+ *                                 the one caller comparing two **equals**. Two stores of
+ *                                 a language block have no reference between them:
+ *                                 neither lost anything, they differ, and `lost` and
+ *                                 `added` are tones for a class that a block difference
+ *                                 does not carry. The word layer is untouched, because
+ *                                 it says which words are on which side and not which
+ *                                 side is wrong.
  * @returns Two `TableCell`s, for a caller that owns the `TableRow`.
  */
 export function DiffCells({
@@ -65,6 +76,7 @@ export function DiffCells({
   mono = false,
   strong = false,
   equal = false,
+  tinted = true,
 }) {
   // The diff is computed on `norm` and `norm` is what is rendered. Tier 1 folds
   // curly quotes, NBSP, dashes and entities deliberately, so diffing `raw` would
@@ -93,7 +105,7 @@ export function DiffCells({
         side="production"
         value={prod}
         spans={uncompared ? null : spans}
-        tint={!equal && next === null ? SURFACE.lost : null}
+        tint={tinted && !equal && next === null ? SURFACE.lost : null}
         prefix={prodPrefix}
         raw={prodRaw}
         mono={mono}
@@ -104,7 +116,7 @@ export function DiffCells({
         side="new"
         value={next}
         spans={uncompared ? null : spans}
-        tint={!equal && prod === null ? SURFACE.added : null}
+        tint={tinted && !equal && prod === null ? SURFACE.added : null}
         prefix={newPrefix}
         raw={newRaw}
         mono={mono}

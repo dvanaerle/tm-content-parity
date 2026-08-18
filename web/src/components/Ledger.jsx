@@ -5,6 +5,7 @@ import { ClassPill } from './Chips.jsx';
 import ContentView from './ContentView.jsx';
 import { DiffCells } from './Diff.jsx';
 import OverrideControl from './OverrideControl.jsx';
+import SiblingView from './SiblingView.jsx';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Card, CardContent } from './ui/card.jsx';
@@ -60,9 +61,26 @@ const HEAD_TONE =
  * across pages, which is where the repetition actually is.
  *
  * Coverage is absent: Axis B is ticket 24, and ticket 11 forbids summing its bar
- * with this one. It arrives as a fifth tab, not as extra rows in these.
+ * with this one. When it arrives it is a tab of its own, not extra rows in these — and
+ * it is **not the fifth tab**, because ticket 04 took that place first.
  */
 const TABS = ['Text', 'Links', 'Images', 'Meta'];
+
+/**
+ * The fifth tab: this page against its **sibling page**, the same page in the other
+ * store of its language block (ticket 04).
+ *
+ * It is **not a fifth check**. `Check` is the closed family `text | links | images |
+ * meta` and it stays closed: a block difference has no id, no override and no place in a
+ * bar, and it is never called a finding. So this name is outside `TABS`, it has no badge,
+ * and `TAB_OF_CHECK` in `landing.mjs` cannot resolve to it — which is what keeps a link
+ * naming a finding from opening it.
+ *
+ * It is **not named after a store**. The tab is drawn on both stores of a block, so `BE`
+ * on `nl`'s page and `NL` on `be`'s would be two labels for one tab. *Sibling* is the
+ * glossary's word for the other page and it is nobody's store name.
+ */
+const SIBLING_TAB = 'Sibling';
 
 /**
  * `findings` are the **derived** findings from `derivePageState()` — the same
@@ -83,6 +101,7 @@ export default function Ledger({
   canWrite,
   observationId,
   settled,
+  sibling,
 }) {
   /*
    * The difference a link named, and what this ledger has to do about it (ticket 109).
@@ -102,6 +121,19 @@ export default function Ledger({
 
   const asked = useMemo(() => landingFor({ findings: derived, focus }), [derived, focus]);
   const { tab, noise, chooseTab, chooseNoise } = useLanding(asked, TABS[0]);
+
+  /*
+   * The strip, which is four tabs or five (ticket 04).
+   *
+   * The sibling tab is **absent and not empty** on a page with no sibling — which is
+   * every page of `de` and `uk`, and the pages of a block store the other store has no
+   * counterpart for. A tab that draws itself to say there is nothing to compare is a tab
+   * an editor opens once per page to learn nothing.
+   *
+   * Absence is read off the prop and not off the reading: `SiblingView` works the reading
+   * out when it is mounted, and the strip has to know before anything is mounted.
+   */
+  const tabs = sibling ? [...TABS, SIBLING_TAB] : TABS;
 
   /**
    * The landing, as the one thing the two tables below need: `focus` says which row and
@@ -279,7 +311,7 @@ export default function Ledger({
               variant="line"
               className="flex-wrap gap-1 p-0 group-data-horizontal/tabs:h-auto"
             >
-              {TABS.map((name) => (
+              {tabs.map((name) => (
                 <TabsTrigger
                   key={name}
                   value={name}
@@ -342,6 +374,18 @@ export default function Ledger({
             <TabsContent value="Meta">
               <MetaTable production={production} next={next} />
             </TabsContent>
+            {/* Mounted only while it is the selected tab, which is what makes the
+                alignment inside it cost nothing to a reader who never opens it. */}
+            {sibling && (
+              <TabsContent value={SIBLING_TAB}>
+                <SiblingView
+                  store={report.store}
+                  page={report.page}
+                  here={production.elements}
+                  sibling={sibling}
+                />
+              </TabsContent>
+            )}
           </CardContent>
         </Tabs>
       </Card>

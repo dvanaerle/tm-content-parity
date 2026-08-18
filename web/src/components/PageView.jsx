@@ -19,7 +19,7 @@ import { cn } from '../lib/utils.js';
  * A saved re-check from an earlier press replaces it the same way (ticket 71),
  * and the footer says which of the two the reader is looking at.
  */
-export default function PageView({ report: built }) {
+export default function PageView({ report: built, sibling = null }) {
   const { editor, save } = useEditor();
   const recheckAvailable = useRecheckAvailable();
   const { report, source, onReport } = usePageReport(built, recheckAvailable);
@@ -109,6 +109,12 @@ export default function PageView({ report: built }) {
         append={append}
         canWrite={canWrite}
         observationId={report.observationId}
+        /* The sibling page and its production blocks, matched and read at build time
+           (ticket 04). `null` where this store is in no language block, or where the
+           block has no counterpart for this page — and the tab is then absent rather
+           than empty. It is **not** replaced by a re-check: a re-check crawls this
+           store's page, and the sibling is a different store's. */
+        sibling={sibling}
       />
 
       {/* A restored re-check must not look like a crawl result. */}

@@ -265,12 +265,11 @@ export async function regionsChangedInLog() {
 }
 
 /**
- * The normalised texts of every page's **production** content units, in one store.
+ * Every page's **production** content units, in one store, whole.
  *
- * What the block reading measures identity over, and the smallest thing that can
- * answer it. It reads full reports because `loadSummaries()` throws both extracts
- * away, and it keeps only the text column — so the sibling store costs the parse and
- * not the 11 MB.
+ * What both block readings are measured over. It reads full reports because
+ * `loadSummaries()` throws both extracts away, and it keeps **production's** extract
+ * only — so the sibling store costs the parse and one side, and not the 11 MB of both.
  *
  * Only pages whose **production** side answered 200. A page production did not serve
  * has no units to compare, and the reading then calls it unmeasured rather than
@@ -278,19 +277,37 @@ export async function regionsChangedInLog() {
  * production, so a one-sided page is still measurable here.
  *
  * @param {string} store
- * @returns {Promise<Map<string, string[]>>} Page key to unit texts.
+ * @returns {Promise<Map<string, import('../../../compare/contract.mjs').ContentUnit[]>>}
+ *   Page key to production's content units, in document order.
  */
-export async function loadProductionUnits(store) {
-  /** @type {Map<string, string[]>} */
+export async function loadProductionExtracts(store) {
+  /** @type {Map<string, import('../../../compare/contract.mjs').ContentUnit[]>} */
   const out = new Map();
   for (const name of await reportFiles(store)) {
     /** @type {PageReport} */
     const report = JSON.parse(await readFile(join(DIR, name), 'utf8'));
     const production = report.sides?.production;
     if (production?.status !== 200) continue;
-    out.set(report.page, production.elements.map((unit) => unit.norm));
+    out.set(report.page, production.elements);
   }
   return out;
+}
+
+/**
+ * The normalised texts of the same units, which is all the dashboard's block reading
+ * needs: it measures set membership over `norm` and never renders a block.
+ *
+ * It is the text column of `loadProductionExtracts()` and not a second read of the same
+ * files, so *which pages have production units* has one answer and not two — the page's
+ * sibling tab and the dashboard's block list must not disagree about which pages are
+ * measurable.
+ *
+ * @param {string} store
+ * @returns {Promise<Map<string, string[]>>} Page key to unit texts.
+ */
+export async function loadProductionUnits(store) {
+  const extracts = await loadProductionExtracts(store);
+  return new Map([...extracts].map(([page, units]) => [page, units.map((unit) => unit.norm)]));
 }
 
 /**

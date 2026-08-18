@@ -156,3 +156,66 @@ describe('the three buckets on the ledger', () => {
     unmount();
   });
 });
+
+/**
+ * The fifth tab (ticket 04).
+ *
+ * The reading is `siblingReading()`'s and the panel is `SiblingView`'s, both tested where
+ * they live. What is left for the strip is the one thing neither can answer: that the tab
+ * is **absent and not empty** on a page with no sibling, and that it is reachable where
+ * there is one.
+ */
+describe('the sibling tab on the ledger', () => {
+  const unit = (raw, index) => ({ tag: 'p', kind: 'text', level: null, raw, norm: raw, index });
+
+  /** A page with an extract on both stores, which is what the panel compares. */
+  const comparing = {
+    ...report,
+    sides: {
+      production: { ...report.sides.production, elements: [unit('Gelijk een', 0)] },
+      new: report.sides.new,
+    },
+  };
+
+  const sibling = {
+    store: 'be',
+    page: 'overkappingen',
+    rule: 'alternate',
+    units: [unit('Gelijk een', 0)],
+  };
+
+  /** The words on the tab strip, in order. A badge is read as part of its trigger, so
+      a name with no number after it is a tab carrying no badge. */
+  const tabs = () =>
+    [...document.querySelectorAll('[role="tab"]')].map((one) => one.textContent.trim());
+
+  it('is absent, and not empty, on a page with no sibling', () => {
+    // A tab that draws itself to say there is nothing to compare is a tab an editor
+    // opens once per page to learn nothing. `de` and `uk` are in no block at all.
+    const unmount = mount({ report: comparing, sibling: null });
+
+    expect(tabs()).toEqual(['Text0', 'Links4', 'Images0', 'Meta']);
+
+    unmount();
+  });
+
+  it('is the fifth tab where the page has a sibling, and it carries no badge', () => {
+    // No badge, because a badge here counts findings and a block difference is never a
+    // finding. **Sibling** and not a store name: the tab is drawn on both stores of the
+    // block, so `BE` here and `NL` over there would be two labels for one tab.
+    const unmount = mount({ report: comparing, sibling });
+
+    expect(tabs()).toEqual(['Text0', 'Links4', 'Images0', 'Meta', 'Sibling']);
+
+    unmount();
+  });
+
+  it('opens the sibling comparison when it is pressed', async () => {
+    const unmount = mount({ report: comparing, sibling });
+    await userEvent.click(button('Sibling'));
+
+    expect(document.body.textContent).toContain('It compares production on both sides');
+
+    unmount();
+  });
+});

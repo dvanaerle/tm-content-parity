@@ -745,13 +745,29 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   is the half two stages read. It compares
   **production** on both sides — the reference side — and the panel says so, so that a
   divergence between two stores is never read as a defect on the new site.
+- The block has **two surfaces and one vocabulary**. The store dashboard's block list
+  answers *which page* diverges; the **sibling tab** on a store page answers *where on
+  it*, drawing this page against its sibling page in document order. It is the fifth tab
+  and it is **not a fifth check**: `Check` stays the closed family
+  `text | links | images | meta`, so no finding id can name a row on it and no landing can
+  open one — `landingFor()` resolves a tab from a finding's check, and this tab is not
+  one. It is named **Sibling** and never after a store, because it is drawn on both stores
+  of the block and a store name would be two labels for one tab. It is **absent — not
+  empty** — on a page with no sibling. `siblingReading()` in `web/src/lib/sibling.mjs`
+  decides it as values and `SiblingView.jsx` renders it; the collapse predicate and the
+  context marker are the content view's own, shared and not copied.
 - **Block difference** — where two sibling pages do not agree. Words are compared,
   which no cross-store comparison in this repo has done before: axis B is
   presence-only **because** the language differs, and inside a block it does not.
 - A block difference is a **display-only difference**. It has no id, no override and
   no place in a bar, and it moves no count, no denominator and no percentage. It is
   **never** called a finding: a finding is actionable and carries a decision, and this
-  carries none. Nothing about it is `work`.
+  carries none. Nothing about it is `work`. On the sibling tab that means a row carries
+  no override control, no finding id and no class pill, and no decision is offered
+  anywhere on it — a decision that crosses a block is a decision about an axis-A
+  **finding** and it belongs on the tab that shows that finding. A row is also **not
+  tinted by direction**: `lost` and `added` are the tones of a class, a block difference
+  has none, and neither store lost anything — they differ.
 - A block is **not an axis**, and there is no axis C. The axes are what an editor
   works; a block is what an editor reads. The word is refused on purpose, because an
   axis in this repo means a tab, a task and in the end a count — ticket 11 forbids

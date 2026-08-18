@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CHECKS } from '../../../compare/vocabulary.mjs';
 import { findingAnchor, landedRowProps, landingFor, landingRow } from './landing.mjs';
 import { CHROME } from './palette.mjs';
 
@@ -32,6 +33,28 @@ describe('landingFor', () => {
     visibility: 'work',
     state: 'open',
     ...part,
+  });
+
+  /*
+   * The sibling tab is unreachable from a link, and this is where that is guaranteed
+   * (ticket 04).
+   *
+   * There is no finding id on it to land on: a block difference is a display-only
+   * difference and it is never a finding. So the guarantee is not a rule about the tab,
+   * it is a property of this function — it resolves a tab from the finding's **check**,
+   * `Check` is a closed family of four, and the sibling tab is not one of them. It is
+   * read against `CHECKS` rather than against a second copy of the four names, so the day
+   * somebody adds a fifth check this test is what asks whether it should open a tab.
+   */
+  it('cannot open the sibling tab, whatever a link names', () => {
+    const tabs = CHECKS.map(
+      (check) => landingFor({ findings: [finding({ check })], focus: 'a1' }).tab,
+    );
+
+    expect(tabs).not.toContain('Sibling');
+    // A check no tab draws answers null and says so, rather than answering with a tab
+    // that happens to be next to it.
+    expect(tabs).toEqual(['Text', 'Links', 'Images', null]);
   });
 
   // The link can name a finding on any of the three checks, and two of them are not in

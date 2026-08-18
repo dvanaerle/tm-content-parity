@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
 import { locationUrl, unitLocation } from '../../../compare/locate.mjs';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
+import { Marker } from './Marker.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Empty, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
 import { Label } from './ui/label.jsx';
@@ -406,7 +406,7 @@ function Rows({ items, control, sides, landed, onToggleRun }) {
         {items.map((item) =>
           item.kind === 'marker' ? (
             <Fragment key={item.key}>
-              <Marker marker={item} onToggle={() => onToggleRun(item.key)} />
+              <Marker marker={item} columns={3} onToggle={() => onToggleRun(item.key)} />
               {/* An opened run draws the rows it holds, and they are the rows this view
                   draws everywhere else — the marker compacts nothing and renders
                   nothing of its own. */}
@@ -421,51 +421,6 @@ function Rows({ items, control, sides, landed, onToggleRun }) {
         )}
       </TableBody>
     </Table>
-  );
-}
-
-/**
- * A run of blocks holding no open work, standing in one row (ticket 79, ADR 0006).
- *
- * It says **how many blocks it holds**, which is the distance between the finding above
- * it and the finding below it, and it gives them back on one click. That is the whole
- * difference from the *Diff* tab ticket 12 retired: the tab deleted the position, and
- * this keeps it. `CONTEXT.md` reserves *fold* to two other meanings, so a run
- * **collapses** and this is a **context marker**.
- *
- * **Two sentences, chosen by `marker.agrees`** (ticket 48, which 79 left the copy to). A
- * run nobody found anything in agrees with production; a run holding a finding somebody
- * closed says it holds no open work, which is the thing that is true of every row in it.
- * A **mixed** run says the second rather than splitting into two markers: the run is a
- * unit of skipping and not of reading, and two markers where one will do is furniture
- * asking to be counted. *Agreeing* and never *unchanged* — `CONTEXT.md` spends that word
- * on a finding id that survives a re-measure.
- *
- * **No tint.** Once every visible row is a difference the row tint says nothing — which
- * is the specific failure that retired the tab — so the class pill on each row carries
- * the class and no row carries a colour. The marker is quieter still: it is furniture
- * between two findings and it must not read as one.
- */
-function Marker({ marker, onToggle }) {
-  const Chevron = marker.open ? ChevronDown : ChevronRight;
-  const noun = marker.blocks === 1 ? 'block' : 'blocks';
-
-  return (
-    <TableRow id={marker.key} className="scroll-mt-4 border-dashed hover:bg-transparent">
-      <TableCell colSpan={3} className="px-2 py-1">
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={marker.open}
-          className={`flex items-center gap-1 text-xs hover:underline ${CHROME.link}`}
-        >
-          <Chevron className="size-3.5" aria-hidden="true" />
-          {marker.agrees
-            ? `${marker.blocks} agreeing ${noun}`
-            : `${marker.blocks} ${noun} with no open work`}
-        </button>
-      </TableCell>
-    </TableRow>
   );
 }
 

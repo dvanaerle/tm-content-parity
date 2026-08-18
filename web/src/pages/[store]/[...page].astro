@@ -3,20 +3,78 @@ import PageBreadcrumb from '../../components/PageBreadcrumb.jsx';
 import PageView from '../../components/PageView.jsx';
 import Shell from '../../layouts/Shell.astro';
 import { Badge } from '../../components/ui/badge.jsx';
-import { loadReports } from '../../lib/reports.mjs';
+import { loadProductionExtracts, loadReports, loadSeedRows } from '../../lib/reports.mjs';
+import { siblingPages } from '../../lib/blocks.mjs';
+import { siblingOf } from '../../lib/language-blocks.mjs';
 import { CHROME, PILL } from '../../lib/palette.mjs';
 
 // One real HTML page per store page. The tabs are an island inside it. A page key
 // that holds a slash renders through this rest route, verified by ticket 08.
 export async function getStaticPaths() {
   const reports = await loadReports();
-  return reports.map((report) => ({
-    params: { store: report.store, page: report.page },
-    props: { report },
-  }));
+
+  /*
+   * The sibling page of each page, and the sibling's production blocks (ticket 04).
+   *
+   * Matched here, at build time, from the seed list — the same `siblingPages()` the
+   * dashboard's block list is built from, so the two screens cannot disagree about which
+   * page is whose sibling or about which rule matched it.
+   *
+   * Read **once per store** and not once per page: the match is over the whole seed list
+   * either way, and a per-page read would parse the sibling store's reports 181 times.
+   *
+   * `de` and `uk` are in no block, so nothing here runs for them and their pages carry
+   * no sibling at all. What a block store's page does carry is one more extract in its
+   * props — production's, from the other store. That is the price of comparing two pages
+   * on one screen and there is no cheaper form of it; only production is shipped, and
+   * only for the one sibling page.
+   */
+  const seeds = await loadSeedRows();
+  /** @type {Map<string, Map<string, { page: string, rule: string }>>} */
+  const matched = new Map();
+  /** @type {Map<string, Map<string, unknown[]>>} */
+  const blocks = new Map();
+
+  for (const store of new Set(reports.map((report) => report.store))) {
+    const other = siblingOf(store);
+    if (!other) continue;
+
+    matched.set(
+      store,
+      new Map(
+        siblingPages({ rows: seeds, store })
+          .filter((one) => one.sibling)
+          .map((one) => [one.page, one.sibling]),
+      ),
+    );
+    if (!blocks.has(other)) blocks.set(other, await loadProductionExtracts(other));
+  }
+
+  return reports.map((report) => {
+    const other = siblingOf(report.store);
+    const match = matched.get(report.store)?.get(report.page) ?? null;
+
+    return {
+      params: { store: report.store, page: report.page },
+      props: {
+        report,
+        // `units` is null where the sibling page has no production report. The reading
+        // calls that unmeasured, in the block list's own word: nothing was compared, and
+        // that is a different fact from finding nothing.
+        sibling: match
+          ? {
+              store: other,
+              page: match.page,
+              rule: match.rule,
+              units: blocks.get(other)?.get(match.page) ?? null,
+            }
+          : null,
+      },
+    };
+  });
 }
 
-const { report } = Astro.props;
+const { report, sibling } = Astro.props;
 const { production, new: next } = report.sides;
 ---
 
@@ -59,5 +117,5 @@ const { production, new: next } = report.sides;
     </div>
   </header>
 
-  <PageView client:load report={report} />
+  <PageView client:load report={report} sibling={sibling} />
 </Shell>
