@@ -251,7 +251,7 @@ const [prodHtml, newHtml] = await Promise.all([
   fetch(NEW).then((r) => r.text()),
 ]);
 
-// --- Noise control -------------------------------------------------------
+// ---- noise control
 // The raw diff of one page produced 88 findings, of which roughly a dozen were
 // real. These two passes are what the log lives or dies on.
 

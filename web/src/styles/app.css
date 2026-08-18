@@ -109,7 +109,7 @@
  * class remains in the interface.
  */
 @theme {
-  /* --- Brand ------------------------------------------------------------- */
+  /* ---- brand */
   --color-brand: #003017;
   --color-brand-dark: #001a13;
   --color-on-brand: #fff;
@@ -146,7 +146,7 @@
   --color-surface-strong: #e0d2c5;
   --color-on-surface: #003017;
 
-  /* --- Text --------------------------------------------------------------- */
+  /* ---- text */
   --color-text: var(--color-brand);
   --color-text-muted: #636363;
 
@@ -598,7 +598,7 @@
     background-color: var(--tone-fill);
   }
 
-  /* A whole-width message. Border, ground and ink. */
+  /* A whole-width message. */
   [data-wears='banner'] {
     border-color: var(--tone-line);
     background-color: var(--tone-ground);

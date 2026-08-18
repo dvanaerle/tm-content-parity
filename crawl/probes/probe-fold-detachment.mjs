@@ -183,7 +183,7 @@ function foldEffect(html, { onWarn }) {
   };
 }
 
-// --- the override log ------------------------------------------------------
+// ---- the override log
 
 async function supabaseConfig() {
   const fromEnv = {
@@ -226,7 +226,7 @@ async function readOverrideLog() {
   }));
 }
 
-// --- the measurement -------------------------------------------------------
+// ---- the measurement
 
 const events = await readOverrideLog();
 const live = [...latestByKey(events).values()].filter((event) => event.action !== 'cleared');

@@ -148,7 +148,7 @@ await Promise.all(
   }),
 );
 
-// --- The tables the ticket asks for ---------------------------------------
+// ---- the tables the ticket asks for
 const ok = rows.filter((row) => !row.error);
 const failed = rows.filter((row) => row.error);
 

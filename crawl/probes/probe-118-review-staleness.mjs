@@ -40,7 +40,7 @@ import { isWork } from '../../compare/vocabulary.mjs';
 
 const ROOT = new URL('../../', import.meta.url);
 
-// --- the override log ------------------------------------------------------
+// ---- the override log
 //
 // `supabaseConfig()` and `readOverrideLog()` are copied from
 // `probe-fold-detachment.mjs`. There is no day-specific reason for the copy — a
@@ -91,7 +91,7 @@ async function readOverrideLog() {
   }));
 }
 
-// --- the measurement -------------------------------------------------------
+// ---- the measurement
 
 const events = await readOverrideLog();
 const live = [...latestByKey(events).values()].filter((event) => event.action !== 'cleared');
@@ -141,7 +141,7 @@ for (const review of reviews) {
   else tally('goes-stale', line);
 }
 
-// --- the report ------------------------------------------------------------
+// ---- the report
 
 console.log(
   `\n${events.length} events, ${live.length} live, ${reviews.length} live page reviews.\n`,

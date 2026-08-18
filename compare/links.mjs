@@ -94,7 +94,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
   const onNewOnly = (link, heading) => ({ production: null, new: locationOf(link, heading) });
   const onProdOnly = (link, heading) => ({ production: locationOf(link, heading), new: null });
 
-  // --- Absolute checks on the new site -----------------------------------
+  // ---- absolute checks on the new site
   // These run first, because a leaked or cross-store link is already fully
   // explained. Reporting it a second time as `extra-link` would inflate the
   // count with no new instruction for the editor.
@@ -178,7 +178,7 @@ export function compareLinks({ production, new: next, collector, newSitePaths, s
     }
   }
 
-  // --- Comparative checks ------------------------------------------------
+  // ---- comparative checks
   const prodByText = byUniqueText(production.links);
   const newByText = byUniqueText(next.links);
   const retargeted = new Set();

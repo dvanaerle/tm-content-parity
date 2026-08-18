@@ -35,7 +35,7 @@ for (const row of seeds.rows) {
 }
 console.log(`nl pages: ${jobs.length} (${jobs.length * 2} requests)`);
 
-// ---------------------------------------------------------------- maintenance
+// ---- maintenance
 const MAINT = [
   /Service\s+Temporarily\s+Unavailable/i,
   /maintenance/i,
@@ -52,7 +52,7 @@ function maintenanceReason(status, html) {
   return null;
 }
 
-// ------------------------------------------------------------------ extraction
+// ---- extraction
 function basenameOf(src) {
   const noQuery = src.split('#')[0].split('?')[0];
   let base = noQuery.split('/').pop() ?? '';
@@ -149,7 +149,7 @@ function extract(html, origin) {
   return { hasMain, hasBody, allImgs, sources, imgs };
 }
 
-// ---------------------------------------------------------------------- fetch
+// ---- fetch
 async function get(url) {
   const response = await fetch(url, {
     headers: { 'user-agent': 'Mozilla/5.0 (content-parity-images; internal)' },
@@ -194,7 +194,7 @@ if (maintenanceHits.length > 3) {
   process.exit(1);
 }
 
-// -------------------------------------------------------------------- analysis
+// ---- analysis
 const usable = pages.filter((p) => p.prod?.imgs && p.new?.imgs);
 const skipped = pages.filter((p) => !(p.prod?.imgs && p.new?.imgs));
 
@@ -393,7 +393,7 @@ for (const p of usable) {
 }
 worst.sort((a, b) => b.count - a.count);
 
-// ------------------------------------------------------------------- reporting
+// ---- reporting
 const pct = (n, d) => (d ? `${((n / d) * 100).toFixed(1)}%` : '—');
 const top = (obj, n = 12) =>
   Object.entries(obj)

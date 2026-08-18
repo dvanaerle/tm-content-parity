@@ -51,7 +51,7 @@ const CONCURRENCY = 8;
 const ATTEMPTS = 3;
 const SIDES = ['production', 'new'];
 
-// ------------------------------------------------------------------ the reading
+// ---- the reading
 
 /**
  * @typedef {'absent' | 'no-content-attribute' | 'empty' | 'value'} FieldState
@@ -158,7 +158,7 @@ function readHead(html) {
   };
 }
 
-// ------------------------------------------------------------------- the counts
+// ---- the counts
 
 /** @param {FieldReading[]} readings */
 const countField = (readings) => {
@@ -208,7 +208,7 @@ function tally(heads) {
   };
 }
 
-// -------------------------------------------------------------- the self-check
+// ---- the self-check
 
 const doc = (head) => `<!doctype html><html><head>${head}</head><body><p>x</p></body></html>`;
 
@@ -391,7 +391,7 @@ function selfCheck() {
   console.log(`Reader checked on ${CHECKS.length} documents and the tally on 3. Fetching.\n`);
 }
 
-// ---------------------------------------------------------------------- the run
+// ---- the run
 
 /**
  * One url, three attempts. A `MaintenanceError` is never retried and never
@@ -477,7 +477,7 @@ async function main() {
 
   await Promise.all(Array.from({ length: CONCURRENCY }, work));
 
-  // ------------------------------------------------------------------ reporting
+  // ---- reporting
   //
   // **The denominator is the status-200 page-sides, and that choice moves a number.**
   // A Magento 404 sends a head of its own, and its `keywords` carries the 404 page's
