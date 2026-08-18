@@ -4,8 +4,9 @@ import { EditorPrompt, LogBanner, PageBar, ReviewControl } from './Progress.jsx'
 import { Alert, AlertDescription } from './ui/alert.jsx';
 import { Button } from './ui/button.jsx';
 import { BANNER, CHROME } from '../lib/palette.mjs';
-import { useEditor, useOverrides } from '../lib/overrides.mjs';
+import { NO_EDITOR, useEditor, useOverrides } from '../lib/overrides.mjs';
 import { usePageReport, useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
+import { moment } from '../lib/dates.mjs';
 import { cn } from '../lib/utils.js';
 
 /**
@@ -90,10 +91,7 @@ export default function PageView({ report: built, sibling = null }) {
 
       {log.connected && !editor && (
         <Alert className="bg-muted">
-          <AlertDescription>
-            Give your name to decide. Each action carries a name, so nobody overturns the judgement
-            of a colleague without knowing whose it was.
-          </AlertDescription>
+          <AlertDescription>{NO_EDITOR}</AlertDescription>
         </Alert>
       )}
 
@@ -120,7 +118,7 @@ export default function PageView({ report: built, sibling = null }) {
       {/* A restored re-check must not look like a crawl result. */}
       <p className="text-xs text-muted-foreground">
         {source === 'recheck' ? 'Re-check of ' : 'Snapshot of '}
-        {new Date(report.builtAt).toLocaleString('en-GB')}
+        {moment(report.builtAt)}
         {' · '}observation <code>{report.observationId}</code>
         {!recheckAvailable && ' · a re-check needs the local service'}
       </p>

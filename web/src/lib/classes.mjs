@@ -7,7 +7,7 @@
  * The tone rule is one rule: a class that is not `work` is grey. Ticket 09 gives it
  * no place in the bar either, so nothing coloured is ever something the editor was
  * not asked to look at. Ticket 75 split the grey half in two — `information` renders
- * and `diagnostic` sits behind the noise toggle — and it is one tone, because the
+ * and `diagnostic` sits behind the diagnostics control — and it is one tone, because the
  * colour answers *is this work* and that answer is the same for both.
  */
 
@@ -91,7 +91,7 @@ function toneOf(cls) {
  * live in `view.mjs`, which is the content view's own module.
  *
  * It is deliberately **not** `isWork()`. A `diagnostic` finding is decidable: what a rule
- * saw sits behind *Show noise*, and it keeps the control it has. Only `information` says
+ * saw sits behind *Show diagnostics*, and it keeps the control it has. Only `information` says
  * that nothing is being asked.
  *
  * A row whose two sides agree carries no finding at all (ticket 02) and has nothing to
@@ -107,8 +107,9 @@ export const canDecide = (finding) => Boolean(finding) && finding.visibility !==
 /**
  * @param {string} cls
  * @returns {{ class: string, check: string,
- *   visibility: import('../../../compare/vocabulary.mjs').Visibility, meaning: string,
- *   direction: 'lost' | 'added' | null, tone: import('./palette.mjs').Tone, pill: string }}
+ *   visibility: import('../../../compare/vocabulary.mjs').Visibility, label: string,
+ *   meaning: string, direction: 'lost' | 'added' | null,
+ *   tone: import('./palette.mjs').Tone, pill: string }}
  */
 export function classInfo(cls) {
   const record = FINDING_CLASSES[cls];
@@ -117,6 +118,9 @@ export function classInfo(cls) {
     class: cls,
     check: record?.check ?? 'text',
     visibility: visibilityOf(cls),
+    // A class the vocabulary does not hold falls back to its key. That is the one place an
+    // editor may still see one, and it is the place where a name is the only honest answer.
+    label: record?.label ?? cls,
     meaning: record?.meaning ?? '',
     // The diff paints a whole cell only on a one-sided class, so it needs the
     // direction itself and not the tone: `text-added` is `information` and

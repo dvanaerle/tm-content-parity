@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { clearedEventFor } from '../../../overrides/state.mjs';
+import { classInfo } from '../lib/classes.mjs';
 import { INK, PILL } from '../lib/palette.mjs';
+import { Attribution } from './Attribution.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
@@ -103,18 +105,19 @@ export default function OverrideControl({ finding, observationId, append, canWri
         }
       />
 
-      <Badge className={PILL[STATE[state].tone]}>{STATE[state].label}</Badge>
-
-      {state === 'contradicted' && (
-        <span className={`text-xs ${INK.caution}`}>
-          claimed fixed by {override.editor}, still differs
-        </span>
-      )}
-      {(state === 'fixed' || state === 'dismissed') && (
-        <span className="text-xs text-muted-foreground" title={override.note ?? undefined}>
-          {override.editor}
-          {override.note ? ` — ${override.note}` : ''}
-        </span>
+      {/* An open finding has nothing to attribute: nobody has decided it. */}
+      {state === 'open' ? (
+        <Badge className={PILL[STATE[state].tone]}>{STATE[state].label}</Badge>
+      ) : (
+        <Attribution
+          action={STATE[state].label}
+          editor={override.editor}
+          at={override.at}
+          reason={override.note}
+          // The contradiction is the one state that stays loud: it names a person whose
+          // claim the next reader is about to overturn (ADR 0019).
+          className={state === 'contradicted' ? INK.caution : ''}
+        />
       )}
 
       {canWrite && (state === 'open' || state === 'contradicted') && (
@@ -129,7 +132,7 @@ export default function OverrideControl({ finding, observationId, append, canWri
           same press to a whole difference; two copies of that rule would be two places
           for the next change to a key to land, and it would land in one of them. */}
       {canWrite && state === 'dismissed' && (
-        <Action onClick={() => append(clearedEventFor(finding))}>Clear</Action>
+        <Action onClick={() => append(clearedEventFor(finding))}>Clear the decision</Action>
       )}
     </div>
   );
@@ -167,7 +170,7 @@ function FixCheckbox({ finding, canWrite, onTick }) {
       checked={state === 'fixed' || contradicted}
       disabled={!canWrite || closedByJudgement}
       onCheckedChange={(ticked) => onTick(ticked)}
-      aria-label={`Fixed — ${finding.class}`}
+      aria-label={`Fixed — ${classInfo(finding.class).label}`}
       title={
         contradicted
           ? `You claimed this as fixed, but a later observation still sees the difference.${grouped}`

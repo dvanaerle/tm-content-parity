@@ -44,8 +44,7 @@ export const BUCKET_LABEL = {
  */
 export const BUCKET_MEANING = {
   open: 'Waits for a decision.',
-  'needs-attention':
-    'Contradicted, and nothing else. A page review that went stale is a fact about a page, so it is a badge on the page and never a finding in this bucket.',
+  'needs-attention': 'Contradicted, and nothing else.',
   closed: 'Absent from the snapshot, or dismissed, or claimed fixed and not contradicted.',
 };
 

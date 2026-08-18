@@ -30,7 +30,9 @@ const finding = (id, state, extra = {}) => ({
   occurrences: 1,
   score: null,
   override:
-    state === 'open' ? null : { action: 'fixed', editor: 'Danielle', at: '2026-08-14', note: null },
+    state === 'open'
+      ? null
+      : { action: 'fixed', editor: 'Danielle', at: '2026-08-14T12:00:00.000Z', note: null },
   ...extra,
 });
 
@@ -99,6 +101,34 @@ const button = (words) =>
   [...document.querySelectorAll('button')].find((element) =>
     element.textContent.trim().startsWith(words),
   );
+
+describe('a decided finding says who decided it, and when', () => {
+  /**
+   * One shape for every attribution (ticket 01): the action, the editor and the day on one
+   * line. Two of the three shapes this replaced had a date to draw and drew neither, so an
+   * editor could not tell a judgement made this morning from one made in June.
+   */
+  it('reads as the action, the editor and the day', async () => {
+    const unmount = mount();
+    await userEvent.click(button('Links'));
+    await userEvent.click(button('Closed'));
+
+    expect(document.body.textContent).toContain('fixed · Danielle · 14 Aug 2026');
+    unmount();
+  });
+
+  // The contradiction is the one state that stays loud, and it stays a sentence naming the
+  // person whose claim the reader is about to overturn (ADR 0019).
+  it('names the person whose claim a re-check contradicted', async () => {
+    const unmount = mount();
+    await userEvent.click(button('Links'));
+
+    expect(document.body.textContent).toContain(
+      'claimed fixed, still differs · Danielle · 14 Aug 2026',
+    );
+    unmount();
+  });
+});
 
 describe('the three buckets on the ledger', () => {
   it('counts the page into Open, Needs attention and Closed', () => {

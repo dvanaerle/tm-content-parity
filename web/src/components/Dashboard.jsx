@@ -26,11 +26,11 @@ import {
 } from './ui/select.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
-import { CHECK_LABEL } from '../lib/classes.mjs';
+import { CHECK_LABEL, classInfo } from '../lib/classes.mjs';
 import { BUCKETS, BUCKET_LABEL, BUCKET_MEANING, BUCKET_TONE } from '../lib/buckets.mjs';
 import { CHROME, INK } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
-import { useEditor, useStoreOverrides } from '../lib/overrides.mjs';
+import { NO_EDITOR, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { parseTerm, withScope } from '../lib/search.mjs';
 import { useScreen } from '../lib/screen-url.mjs';
@@ -349,7 +349,7 @@ export default function Dashboard({
 
   const totals = useMemo(() => {
     const byClass = {};
-    // The chip below says *hidden (noise)*, so it counts what is actually hidden:
+    // The chip below says *diagnostics*, so it counts what is actually hidden:
     // the `diagnostic` findings. Ticket 75 moved `information` out from behind the
     // toggle, and it is on screen on the page it is on.
     let diagnostic = 0;
@@ -377,9 +377,7 @@ export default function Dashboard({
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <EditorPrompt editor={editor} save={save} />
           <span className="text-muted-foreground">
-            {editor
-              ? 'A decision on a difference is recorded under this name, for each finding.'
-              : 'Give your name to decide a difference in one press. Each decision carries a name.'}
+            {editor ? 'A decision on a difference is recorded under this name.' : NO_EDITOR}
           </span>
         </div>
       )}
@@ -423,7 +421,7 @@ export default function Dashboard({
           label="pages reviewed"
           title="A human looked at everything on this page, also at what the tool cannot see."
         />
-        <Chip value={totals.diagnostic} label="hidden (noise)" />
+        <Chip value={totals.diagnostic} label="diagnostics" />
         <Chip value={oneSided.length} label="one-sided" title="Only one site has this page." />
         <Chip
           value={notChecked.length}
@@ -454,10 +452,12 @@ export default function Dashboard({
               // is, which is not a question about what is on screen. What a press *does*
               // depends on which of the three lists is under it, so the tooltip does too.
               title={(cls) => {
-                if (searching) return `Search inside ${cls} only. The counts above do not change.`;
+                const { label } = classInfo(cls);
+                if (searching)
+                  return `Search inside ${label} only. The counts above do not change.`;
                 return view === 'repeats'
-                  ? `Show the differences of class ${cls} only. The counts above do not change.`
-                  : `Show the pages with ${cls} only. The counts above do not change.`;
+                  ? `Show the differences of class ${label} only. The counts above do not change.`
+                  : `Show the pages with ${label} only. The counts above do not change.`;
               }}
             />
             {/* The scope, beside the pills because it is the same kind of thing (ticket 104
@@ -487,11 +487,7 @@ export default function Dashboard({
                 index is fetched, so the first keystroke is answered. The write is still
                 `patch({ query })`, so a scope chosen from the list and one typed by hand are
                 one write. */}
-            <SearchBox
-              value={query}
-              onChange={(next) => patch({ query: next })}
-              pages={pages}
-            />
+            <SearchBox value={query} onChange={(next) => patch({ query: next })} pages={pages} />
             {/* The switch belongs to the two views, and a search answers past both of
                 them, so it steps aside while one is on screen. */}
             {!searching && <ViewSwitch view={view} onChange={(next) => patch({ view: next })} />}

@@ -7,6 +7,8 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx
 import { Label } from './ui/label.jsx';
 import { Separator } from './ui/separator.jsx';
 import { CHROME, INK } from '../lib/palette.mjs';
+import { Attribution } from './Attribution.jsx';
+import { day } from '../lib/dates.mjs';
 import { cn } from '../lib/utils.js';
 import { logState } from '../lib/log-read.mjs';
 import { explainScope, inScope, searchNotes, searchStore } from '../lib/search.mjs';
@@ -203,8 +205,7 @@ export default function Search({
           </strong>
           <span className="text-muted-foreground">
             {result.repeats.length > 1 && ` in ${result.repeats.length} differences`}. From the
-            snapshot of {new Date(index.builtAt).toLocaleDateString('en-GB')} — the counts at the
-            top do not move with it.
+            snapshot of {day(index.builtAt)} — the counts at the top do not move with it.
           </span>
         </p>
 
@@ -449,18 +450,15 @@ function Notes({ result, link }) {
               <a className={cn('hover:underline', CHROME.link)} href={link(note.store, note.page)}>
                 {note.page}
               </a>
-              <NoteKind note={note} />
               {/* A page note is quoted and italic, the way it is drawn on the page and in
                   the store list. A dismissal note is the plain sentence it has always
                   been, and it sits inside the decision it explains. */}
-              {note.action === 'noted' ? (
-                <PageNote note={note.note} className="ml-2" />
-              ) : (
-                <span className="ml-2 text-muted-foreground">{note.note}</span>
-              )}
-              <span className="ml-2 text-xs text-muted-foreground">
-                {note.editor}, {new Date(note.createdAt).toLocaleDateString('en-GB')}
-              </span>
+              <Attribution
+                action={note.action === 'noted' ? 'page note' : note.action}
+                editor={note.editor}
+                at={note.createdAt}
+                reason={note.action === 'noted' ? <PageNote note={note.note} /> : note.note}
+              />
             </li>
           ))}
         </ul>
@@ -508,19 +506,6 @@ const NotesAside = ({ children }) => (
       </EmptyHeader>
     </Empty>
   </>
-);
-
-/**
- * Which kind of note this is, said in one word beside it.
- *
- * It is a word and not a colour: both kinds are somebody's writing and neither is a status,
- * so a tone here would be the palette claiming a meaning it does not have. The words are the
- * vocabulary's own — a note **on this page**, or the reason for a **dismissal**.
- */
-const NoteKind = ({ note }) => (
-  <span className="ml-2 text-xs tracking-wide text-muted-foreground uppercase">
-    {note.action === 'noted' ? 'page note' : `${note.action} · reason`}
-  </span>
 );
 
 /**

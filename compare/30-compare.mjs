@@ -64,7 +64,7 @@ export function skipReason(production, next) {
  * It is emitted whether or not the page is comparable, because the alternate is
  * missing either way. **No view states it yet.** `Ledger.jsx` renders the "not
  * comparable" panel before any finding, so on a one-sided page nothing shows it,
- * and on a comparable page it sits behind the noise toggle. The record has
+ * and on a comparable page it sits behind the diagnostics control. The record has
  * to exist before a view can read it; tickets 20 and 56 own that surface.
  *
  * @param {{ store: import('./contract.mjs').Store, page: string }} scope

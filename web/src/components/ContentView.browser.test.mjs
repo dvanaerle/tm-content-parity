@@ -112,7 +112,7 @@ function mounting(props = {}) {
         createElement(ContentView, {
           report: report(),
           findings,
-          showNoise: false,
+          showDiagnostics: false,
           control: () => null,
           landing: null,
           ...props,
@@ -174,9 +174,11 @@ describe('the content view opens on the differences', () => {
     const rows = [...host.querySelectorAll('tbody tr[id]')].filter(
       (row) => !row.id.startsWith('run-'),
     );
+    // The label and never the key: an editor reads what the class is, not what the
+    // contract stores it as.
     expect(rows.map((row) => row.querySelector('td span')?.textContent)).toEqual([
-      'copy',
-      'text-missing',
+      'Copy changed',
+      'Text missing',
     ]);
 
     // Two rows of two different classes, dressed the same. Nothing at row level reads
@@ -287,7 +289,7 @@ describe('the content view opens on the differences', () => {
   it('leaves a row where the editor left it when they tick it', async () => {
     // The collapse set is taken **when the page opens**. On a 168-row page an editor
     // working top-down would otherwise lose their place at every tick, which is worse
-    // than the noise being removed — and they could not check what they had just
+    // than the clutter being removed — and they could not check what they had just
     // claimed. The fold answers *what did I arrive with*, so the ticked row stays and
     // joins the run the next time the page is opened.
     const { host, render } = mounting();

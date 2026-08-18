@@ -58,18 +58,22 @@ afterEach(() => {
  * **independent**: taking one back must not hand the other one back as well.
  */
 function mountControls(asked) {
-  const seen = /** @type {{ tab: string, noise: boolean }} */ ({});
+  const seen = /** @type {{ tab: string, diagnostics: boolean }} */ ({});
 
   function Probe() {
-    const { tab, noise, chooseTab, chooseNoise } = useLanding(asked, 'Text');
+    const { tab, diagnostics, chooseTab, chooseDiagnostics } = useLanding(asked, 'Text');
     seen.tab = tab;
-    seen.noise = noise;
+    seen.diagnostics = diagnostics;
 
     return createElement(
       'div',
       null,
       createElement('button', { id: 'take-tab', onClick: () => chooseTab('Text') }, 'Text'),
-      createElement('button', { id: 'take-noise', onClick: () => chooseNoise(false) }, 'ruis uit'),
+      createElement(
+        'button',
+        { id: 'take-diagnostics', onClick: () => chooseDiagnostics(false) },
+        'diagnostics off',
+      ),
     );
   }
 
@@ -92,31 +96,31 @@ function mountControls(asked) {
  * of what puts a landing behind the toggle since ADR 0011, and it is why
  * the subject here is a class and not a judgement.
  */
-const askedForBoth = { tab: 'Links', needsNoise: true, missing: false, unplaced: false };
+const askedForBoth = { tab: 'Links', needsDiagnostics: true, missing: false, unplaced: false };
 
 describe('useLanding', () => {
-  // The reader landed on Links and then looked at something else. The noise toggle is
+  // The reader landed on Links and then looked at something else. The diagnostics control is
   // still the only reason the row they came for is drawable, so switching tabs must not
   // switch it off — that used to make the landed row vanish the moment they clicked a tab.
-  it('keeps the borrowed noise toggle when the reader takes the tab strip', () => {
+  it('keeps the borrowed diagnostics control when the reader takes the tab strip', () => {
     const { seen, press, unmount } = mountControls(askedForBoth);
-    expect(seen).toEqual({ tab: 'Links', noise: true });
+    expect(seen).toEqual({ tab: 'Links', diagnostics: true });
 
     press('take-tab');
 
-    expect(seen).toEqual({ tab: 'Text', noise: true });
+    expect(seen).toEqual({ tab: 'Text', diagnostics: true });
     unmount();
   });
 
-  // And the other way round. The reader landed on Links and switched the noise off,
+  // And the other way round. The reader landed on Links and switched the diagnostics off,
   // which is their business — but it is not a request to be sent back to Text, which
   // is what one shared flag did.
-  it('keeps the borrowed tab when the reader takes the noise box', () => {
+  it('keeps the borrowed tab when the reader takes the diagnostics box', () => {
     const { seen, press, unmount } = mountControls(askedForBoth);
 
-    press('take-noise');
+    press('take-diagnostics');
 
-    expect(seen).toEqual({ tab: 'Links', noise: false });
+    expect(seen).toEqual({ tab: 'Links', diagnostics: false });
     unmount();
   });
 
@@ -125,15 +129,15 @@ describe('useLanding', () => {
   it('is the reader´s own two controls when no link named a finding', () => {
     const { seen, press, unmount } = mountControls({
       tab: null,
-      needsNoise: false,
+      needsDiagnostics: false,
       missing: false,
       unplaced: false,
     });
-    expect(seen).toEqual({ tab: 'Text', noise: false });
+    expect(seen).toEqual({ tab: 'Text', diagnostics: false });
 
-    press('take-noise');
+    press('take-diagnostics');
 
-    expect(seen).toEqual({ tab: 'Text', noise: false });
+    expect(seen).toEqual({ tab: 'Text', diagnostics: false });
     unmount();
   });
 });

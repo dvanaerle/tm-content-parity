@@ -142,9 +142,9 @@ describe('a search under the class pills', () => {
     // narrowed — and a narrowed list that looks whole is read as whole.
     const { unmount } = await mount({ classes: ['copy'] });
 
-    expect(strip().textContent).toContain('Filtered on copy.');
+    expect(strip().textContent).toContain('Filtered on Copy changed.');
     expect(strip().textContent).toContain('1 of 3 differences.');
-    expect(strip().textContent).toContain('The counts above count everything.');
+    expect(strip().textContent).toContain('The counts above do not change.');
     unmount();
   });
 
@@ -171,7 +171,7 @@ describe('a search under the class pills', () => {
     await rerender({ classes: ['text-missing'] });
 
     expect(document.body.textContent).toContain('Bekijk deals nu >');
-    expect(strip().textContent).toContain('Filtered on text-missing.');
+    expect(strip().textContent).toContain('Filtered on Text missing.');
     unmount();
   });
 
@@ -545,10 +545,10 @@ describe('the notes half, under a page scope', () => {
     });
 
     expect(document.body.textContent).toContain('2 notes on /afhalen');
-    // The newer first, and each said in its own word — a note **on this page**, and the
-    // reason for a **dismissal**.
-    expect(document.body.textContent).toContain('page note');
-    expect(document.body.textContent).toContain('dismissed · reason');
+    // The newer first, and each said in its own word — a note **on this page**, and a
+    // **dismissal** — in the one attribution shape: the action, the editor and the day.
+    expect(document.body.textContent).toContain('page note · Dennis · 13 Aug 2026');
+    expect(document.body.textContent).toContain('dismissed · Dennis · 12 Aug 2026');
     // The page note is quoted the way it is drawn everywhere else, and never labelled as a
     // reason for anything.
     expect(document.body.textContent).toContain('“BE-versie volgt”');
@@ -598,7 +598,7 @@ describe('the amber strip over a scoped search', () => {
     const { unmount } = await mount({ term: '/afhalen', classes: [] });
 
     expect(strip().textContent).toContain('Filtered on page /afhalen.');
-    expect(strip().textContent).toContain('The counts above count everything.');
+    expect(strip().textContent).toContain('The counts above do not change.');
     unmount();
   });
 
@@ -608,7 +608,7 @@ describe('the amber strip over a scoped search', () => {
     // joined the sentence rather than starting a second one.
     const { unmount } = await mount({ term: '/garantie deals', classes: ['casing'] });
 
-    expect(strip().textContent).toContain('Filtered on page /garantie and casing.');
+    expect(strip().textContent).toContain('Filtered on page /garantie and Case or punctuation.');
     expect([...strip().parentElement.querySelectorAll('[data-slot="alert"]')]).toHaveLength(1);
     unmount();
   });
@@ -634,7 +634,7 @@ describe('the amber strip over a scoped search', () => {
 
     expect(document.body.textContent).not.toContain('bekijk DEALS >');
     expect(document.body.textContent).toContain('No difference with these words.');
-    expect(strip().textContent).toContain('Filtered on page /garantie and copy.');
+    expect(strip().textContent).toContain('Filtered on page /garantie and Copy changed.');
     expect(strip().textContent).toContain('0 of 1 differences.');
     unmount();
   });
@@ -646,7 +646,7 @@ describe('the amber strip over a scoped search', () => {
     const { unmount } = await mount({ term: '/garantie', classes: ['casing'] });
 
     expect(strip().textContent).toContain('1 of 1 differences.');
-    expect(strip().textContent).toContain('The counts above count everything.');
+    expect(strip().textContent).toContain('The counts above do not change.');
     unmount();
   });
 });

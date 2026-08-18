@@ -49,7 +49,7 @@ import {
  * What is on screen is `view.mjs`'s decision, not this component's. The filter is
  * the judgement in this feature and it is pure and tested; this file is the pixels.
  */
-export default function ContentView({ report, findings, showNoise, control, landing }) {
+export default function ContentView({ report, findings, showDiagnostics, control, landing }) {
   const [filter, setFilter] = useState(NO_FILTER);
   const [openRuns, setOpenRuns] = useState([]);
   const { production, new: next } = report.sides;
@@ -61,9 +61,9 @@ export default function ContentView({ report, findings, showNoise, control, land
         findings,
         elements: { production: production.elements, new: next.elements },
         filter,
-        showNoise,
+        showDiagnostics,
       }),
-    [report.rows, findings, production, next, filter, showNoise],
+    [report.rows, findings, production, next, filter, showDiagnostics],
   );
 
   const outline = useMemo(() => outlineFrom(rows), [rows]);
@@ -99,12 +99,12 @@ export default function ContentView({ report, findings, showNoise, control, land
    * It is keyed on the **page** and not on the report object, which a parent may build
    * fresh on any render. A different page is a different document whose anchors are
    * counted from zero again, so a set carried into it would collapse rows by
-   * coincidence. The noise toggle is in the key for the other half of that: it changes
+   * coincidence. The diagnostics control is in the key for the other half of that: it changes
    * which rows the page **has**, and a row that was not there when the set was taken
    * could never collapse. Neither is a tick, which is the one thing this must not
    * follow — and opening the view again, by a tab or by a link, is opening the page.
    */
-  const page = `${report.store}/${report.page}/${showNoise}`;
+  const page = `${report.store}/${report.page}/${showDiagnostics}`;
   const [taken, setTaken] = useState(() => ({ page, collapsed: collapsedKeys(all) }));
   const collapsed = taken.page === page ? taken.collapsed : collapsedKeys(all);
   if (taken.page !== page) setTaken({ page, collapsed });
@@ -264,7 +264,7 @@ function Controls({
         counts={classes.map(({ class: cls, rows }) => ({ class: cls, count: rows }))}
         selected={filter.classes}
         onToggle={(cls) => setFilter(toggleClass(filter, cls))}
-        title={(_cls, count) => `${count} rows in this class. A filter changes no count.`}
+        title={(_cls, count) => `${count} rows in this class. The counts above do not change.`}
       />
 
       <MarkerToggle

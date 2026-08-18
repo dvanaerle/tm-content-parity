@@ -33,15 +33,18 @@ export function Chip({ value, label, tone = 'neutral', title, ...props }) {
   );
 }
 
-/** One finding class, coloured by whether it is work. */
+/**
+ * One finding class, coloured by whether it is work.
+ *
+ * It draws the **label** and never the key. The key is the contract's — it makes the
+ * finding id, so it cannot change — and an editor reading `IMAGE-MISSING` was reading the
+ * contract (ADR 0019).
+ */
 export function ClassPill({ class: cls }) {
   const info = classInfo(cls);
   return (
-    <Badge
-      className={cn('h-auto px-1.5 py-0.5 text-xs tracking-wide uppercase', info.pill)}
-      title={info.meaning}
-    >
-      {cls}
+    <Badge className={cn('h-auto px-1.5 py-0.5 text-xs', info.pill)} title={info.meaning}>
+      {info.label}
     </Badge>
   );
 }
@@ -353,7 +356,7 @@ export function ClassFilterBanner({
   // odd punctuation. The word is what tells the two kinds apart in one sentence.
   const on = [
     scope && `page /${scope}`,
-    classes.length > 0 && classes.join(', '),
+    classes.length > 0 && classes.map((cls) => classInfo(cls).label).join(', '),
     priorities.length > 0 && `priority ${priorities.join(', ')}`,
   ]
     .filter(Boolean)
@@ -366,7 +369,7 @@ export function ClassFilterBanner({
           children after it collapse into one anonymous item, and there the space has to
           be written. */}
       <strong>Filtered on {on}.</strong>
-      {`${shown} of ${total} ${noun}.`} The counts above count everything.
+      {`${shown} of ${total} ${noun}.`} The counts above do not change.
     </FilterBanner>
   );
 }

@@ -85,7 +85,7 @@ describe('prepareRows', () => {
   it('shows the whole page in document order, matched rows included', () => {
     // Decision 18 of spec 32. A tint only reads as a signal against untinted
     // baseline, so the default view is the page and not the complaints.
-    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showDiagnostics: false });
 
     expect(rows.map((row) => row.prod?.raw ?? null)).toEqual([
       'Kleuren',
@@ -96,7 +96,7 @@ describe('prepareRows', () => {
   });
 
   it('resolves each side to its unit, and to null where the side has none', () => {
-    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showDiagnostics: false });
     const lost = rows.at(-1);
 
     expect(lost.prod.raw).toBe('Weg');
@@ -104,7 +104,7 @@ describe('prepareRows', () => {
   });
 
   it('attaches the derived finding, so a row can be ticked off', () => {
-    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showDiagnostics: false });
 
     expect(rows[1].finding.id).toBe('copy1');
     expect(rows[0].finding).toBeNull();
@@ -113,19 +113,19 @@ describe('prepareRows', () => {
   it('narrows to the selected classes, and to those only', () => {
     // The whole point: a pass of nothing but copy edits.
     const filter = { ...NO_FILTER, classes: ['copy'] };
-    const { rows } = prepareRows({ ...fixture(), filter, showNoise: false });
+    const { rows } = prepareRows({ ...fixture(), filter, showDiagnostics: false });
 
     expect(rows.map((row) => row.class)).toEqual(['copy']);
   });
 
   it('takes several classes at once', () => {
     const filter = { ...NO_FILTER, classes: ['copy', 'text-missing'] };
-    const { rows } = prepareRows({ ...fixture(), filter, showNoise: false });
+    const { rows } = prepareRows({ ...fixture(), filter, showDiagnostics: false });
 
     expect(rows).toHaveLength(2);
   });
 
-  it('hides a diagnostic class until the noise toggle is on', () => {
+  it('hides a diagnostic class until the diagnostics control is on', () => {
     const base = fixture();
     base.rows.push({ class: 'tag-changed', prod: null, new: 2, score: null, finding: 'tag1' });
     base.findings.push({
@@ -136,11 +136,13 @@ describe('prepareRows', () => {
       occurrences: 1,
     });
 
-    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(4);
-    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(5);
+    expect(prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false }).rows).toHaveLength(
+      4,
+    );
+    expect(prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: true }).rows).toHaveLength(5);
   });
 
-  it('draws an information row with the toggle off, because it is not noise', () => {
+  it('draws an information row with the toggle off, because it is not a diagnostic', () => {
     // Ticket 75. `information` is the half of the old hidden side that an editor may
     // want to read: it is drawn beside the work and it counts nowhere. Only the
     // `diagnostic` half is behind the toggle, and the toggle never moves this row.
@@ -154,8 +156,10 @@ describe('prepareRows', () => {
       occurrences: 1,
     });
 
-    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(5);
-    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(5);
+    expect(prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false }).rows).toHaveLength(
+      5,
+    );
+    expect(prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: true }).rows).toHaveLength(5);
   });
 
   it('hides a row whose class the derivation could not name, as a diagnostic', () => {
@@ -165,19 +169,23 @@ describe('prepareRows', () => {
     const base = fixture();
     base.rows.push({ class: 'copy', prod: null, new: 2, score: null, finding: 'gone1' });
 
-    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(4);
-    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(5);
+    expect(prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false }).rows).toHaveLength(
+      4,
+    );
+    expect(prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: true }).rows).toHaveLength(5);
   });
 
   it('draws a row in a work class whatever the log decided about it', () => {
     // The toggle asks about the **class**, and after ADR 0011 that is all it asks.
     // A diagnostic row stays behind the toggle; a decided row in a work class is not
-    // noise and was never behind this toggle to begin with.
+    // a diagnostic and was never behind this control to begin with.
     const base = fixture();
     base.findings[0] = { ...base.findings[0], state: 'dismissed' };
 
-    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: false }).rows).toHaveLength(4);
-    expect(prepareRows({ ...base, filter: NO_FILTER, showNoise: true }).rows).toHaveLength(4);
+    expect(prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false }).rows).toHaveLength(
+      4,
+    );
+    expect(prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: true }).rows).toHaveLength(4);
   });
 
   it('says of a row that the two sides are already equal', () => {
@@ -185,7 +193,7 @@ describe('prepareRows', () => {
     // diff over 448 reports was rows that agree, because the view asked for a diff
     // of two identical strings. They are also the longest rows, because they hold
     // the untouched paragraphs.
-    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showDiagnostics: false });
 
     expect(rows.map((row) => row.equal)).toEqual([true, false, true, false]);
   });
@@ -196,7 +204,7 @@ describe('prepareRows', () => {
     // below it and carried every hash link to the wrong row. Ticket 79 changes
     // which rows the view holds, so the key has to name something the view does
     // not decide: where the unit is in the document.
-    const before = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+    const before = prepareRows({ ...fixture(), filter: NO_FILTER, showDiagnostics: false });
 
     const withInvented = fixture();
     withInvented.rows.unshift({
@@ -206,7 +214,7 @@ describe('prepareRows', () => {
       score: null,
       finding: null,
     });
-    const after = prepareRows({ ...withInvented, filter: NO_FILTER, showNoise: true });
+    const after = prepareRows({ ...withInvented, filter: NO_FILTER, showDiagnostics: true });
 
     const keyOf = (rows, raw) => rows.find((row) => row.prod?.raw === raw).key;
     expect(keyOf(after.rows, 'Weg')).toBe(keyOf(before.rows, 'Weg'));
@@ -218,13 +226,13 @@ describe('prepareRows', () => {
     const base = fixture();
     base.rows.push({ class: 'text-added', prod: null, new: 0, score: null, finding: null });
 
-    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: true });
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: true });
     expect(new Set(rows.map((row) => row.key)).size).toBe(rows.length);
   });
 
   it('reports how much of the page is on screen, so a filter is never invisible', () => {
     const filter = { ...NO_FILTER, classes: ['copy'] };
-    const narrowed = prepareRows({ ...fixture(), filter, showNoise: false });
+    const narrowed = prepareRows({ ...fixture(), filter, showDiagnostics: false });
 
     expect(narrowed.rows).toHaveLength(1);
     expect(narrowed.total).toBe(4);
@@ -234,7 +242,7 @@ describe('prepareRows', () => {
     // The chips must not disappear as they are ticked, or the filter cannot be
     // widened again without clearing it first.
     const filter = { ...NO_FILTER, classes: ['copy'] };
-    const { classes } = prepareRows({ ...fixture(), filter, showNoise: false });
+    const { classes } = prepareRows({ ...fixture(), filter, showDiagnostics: false });
 
     expect(classes).toEqual([
       { class: 'copy', rows: 1 },
@@ -262,7 +270,7 @@ describe('prepareRows', () => {
       detail: 'h2 → h3',
     });
 
-    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: false });
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
     const level = rows.find((row) => row.class === 'heading-level');
 
     expect(level.decidable).toBe(false);
@@ -286,7 +294,7 @@ describe('prepareRows', () => {
       occurrences: 1,
     });
 
-    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: true });
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: true });
 
     expect(rows.find((row) => row.class === 'copy').decidable).toBe(true);
     expect(rows.find((row) => row.class === 'text-missing').decidable).toBe(true);
@@ -297,7 +305,7 @@ describe('prepareRows', () => {
     // A row whose two sides agree is not a finding at all (ticket 02), so there is no
     // decision to offer on it either. Saying so in the same field is what lets ticket
     // 79's context marker read one rule instead of two.
-    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showDiagnostics: false });
 
     expect(rows.filter((row) => row.class === null).map((row) => row.decidable)).toEqual([
       false,
@@ -313,7 +321,7 @@ describe('prepareRows', () => {
     const narrowed = prepareRows({
       ...fixture(),
       filter: { ...NO_FILTER, classes: ['copy'] },
-      showNoise: false,
+      showDiagnostics: false,
     });
 
     expect(narrowed.rows).toHaveLength(1);
@@ -326,7 +334,7 @@ describe('prepareRows', () => {
     const narrowed = prepareRows({
       ...fixture(),
       filter: { ...NO_FILTER, classes: ['copy'] },
-      showNoise: false,
+      showDiagnostics: false,
     });
 
     // `all` is a row **list** and not a number. It is here so the collapse set can be
@@ -436,7 +444,7 @@ describe('collapses', () => {
   });
 
   it('keeps a row whose class the derivation did not reach', () => {
-    // Noise an editor asked to see, with no derived finding behind it — the case
+    // A diagnostic an editor asked to see, with no derived finding behind it — the case
     // `prepareRows` describes as a class the vocabulary does not hold. Nobody decided
     // it and nothing says it is closed, so it is drawn exactly as ticket 79 drew it.
     // `decidable` is false here for want of a finding and must not be read as *this
@@ -452,7 +460,7 @@ describe('collapses', () => {
  *
  * The content view asks for it when the page opens and hands the same keys back on
  * every render after that. A tick that moved a row under the reader on a 168-row page
- * would be worse than the noise it removed: the fold answers *what did I arrive with*
+ * would be worse than the clutter it removed: the fold answers *what did I arrive with*
  * and never *what am I doing now*, so the row an editor just ticked stays where they
  * can check it.
  */
@@ -707,7 +715,7 @@ describe('outlineFrom', () => {
     // Decision 19: Outline stops being a tab and becomes navigation. It is derived
     // from the rendered rows, so a narrowed view never offers a jump to a row that
     // is filtered away.
-    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showNoise: false });
+    const { rows } = prepareRows({ ...fixture(), filter: NO_FILTER, showDiagnostics: false });
     const outline = outlineFrom(rows);
 
     expect(outline).toEqual([{ key: rows[0].key, level: 2, text: 'Kleuren' }]);
@@ -725,7 +733,7 @@ describe('outlineFrom', () => {
       occurrences: 1,
     });
 
-    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: true });
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: true });
     expect(outlineFrom(rows).map((entry) => entry.text)).toEqual(['Kleuren', 'Nieuw kopje']);
   });
 
@@ -733,7 +741,7 @@ describe('outlineFrom', () => {
     const base = fixture();
     base.elements.production[0] = { ...base.elements.production[0], level: null };
 
-    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showNoise: false });
+    const { rows } = prepareRows({ ...base, filter: NO_FILTER, showDiagnostics: false });
     expect(outlineFrom(rows)[0].level).toBe(6);
   });
 });

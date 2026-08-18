@@ -8,12 +8,12 @@
  */
 
 import { logState } from '../lib/log-read.mjs';
-import { BANNER, CHROME, FILL, INK, PILL } from '../lib/palette.mjs';
+import { BANNER, CHROME, FILL, INK } from '../lib/palette.mjs';
 import { Alert, AlertDescription } from './ui/alert.jsx';
-import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { Progress } from './ui/progress.jsx';
+import { Attribution } from './Attribution.jsx';
 import { cn } from '../lib/utils.js';
 
 export function PageBar({ bar, ready }) {
@@ -60,11 +60,11 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
   if (review) {
     return (
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        {/* `closed` and not `info`: a fresh review is a human saying they looked at
-            everything here, which is done. */}
-        <Badge className={review.fresh ? PILL.closed : PILL.caution}>
-          {review.fresh ? 'reviewed' : 'changed since review'} · {review.editor}
-        </Badge>
+        <Attribution
+          action={review.fresh ? 'reviewed' : 'changed since review'}
+          editor={review.editor}
+          at={review.at}
+        />
         {canWrite && (
           <Button
             variant="link"
@@ -72,7 +72,7 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
             onClick={() => append({ scope: 'page', action: 'cleared' })}
             className="px-0 text-muted-foreground"
           >
-            Clear
+            Clear the review
           </Button>
         )}
         {canWrite && !review.fresh && (

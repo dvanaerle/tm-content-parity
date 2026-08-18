@@ -279,9 +279,7 @@ function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw, searche
 function Total({ repeats }) {
   return (
     <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-      {repeats.length} differences over {findingsIn(repeats)} findings. The grouping saves reading
-      and no work: one decision on one row stays one decision for each finding, so this list does
-      not become empty. What goes forward is how much is decided.
+      {repeats.length} differences over {findingsIn(repeats)} findings.
     </p>
   );
 }

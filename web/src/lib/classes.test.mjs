@@ -20,7 +20,7 @@ describe('canDecide', () => {
     expect(canDecide({ visibility: 'information' })).toBe(false);
   });
 
-  it('offers a decision on work, and on a diagnostic behind the noise toggle', () => {
+  it('offers a decision on work, and on a diagnostic behind the diagnostics control', () => {
     // The gate is `information` and nothing wider. What a rule saw is behind *Ruis tonen*
     // and it keeps the control it has: that is a different question and not this one.
     expect(canDecide({ visibility: 'work' })).toBe(true);

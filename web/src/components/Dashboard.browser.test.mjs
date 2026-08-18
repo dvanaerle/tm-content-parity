@@ -262,7 +262,7 @@ describe('a page scope worn as a chip', () => {
     expect(box().value).toBe('deals');
     expect(chip()).toBe(null);
     // The classes are not the chip's to touch, and the strip is still up for them.
-    expect(strip().textContent).toContain('Filtered on copy.');
+    expect(strip().textContent).toContain('Filtered on Copy changed.');
     unmount();
   });
 
@@ -674,7 +674,7 @@ describe('scoping the search from a page row', () => {
     const strip = [...document.querySelectorAll('[data-slot="alert"]')].find((one) =>
       one.textContent.includes('Clear filter'),
     );
-    expect(strip.textContent).toContain('Filtered on page /schuttingen and copy.');
+    expect(strip.textContent).toContain('Filtered on page /schuttingen and Copy changed.');
     expect(document.body.textContent).toContain('Bravo');
     expect(document.body.textContent).not.toContain('Alpha');
     // On the scoped page and of the wrong class: the result is what both agree on.

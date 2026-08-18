@@ -12,7 +12,7 @@
  * filterable denominator would make two people quoting "the number" mean different
  * things (spec 32, decision 25).
  *
- * The noise toggle is **not** part of the filter. It belongs to the whole ledger
+ * The diagnostics control is **not** part of the filter. It belongs to the whole ledger
  * and it survives a click on *clear filter*: an editor who asked to see what a rule
  * saw did not ask a question about classes.
  */
@@ -101,12 +101,12 @@ export function toggleClass(filter, cls) {
  * @param {object[]} input.findings   Derived findings, from `derivePageState()`.
  * @param {{ production: ContentUnit[], new: ContentUnit[] }} input.elements
  * @param {ContentFilter} input.filter
- * @param {boolean} input.showNoise   The ledger's toggle: the classes it does not show.
+ * @param {boolean} input.showDiagnostics   The ledger's toggle: the classes it does not show.
  * @returns {{ rows: ContentRow[], total: number, classes: { class: string, rows: number }[] }}
- *   `total` counts the rows the page has under the noise toggle, so the interface can
+ *   `total` counts the rows the page has under the diagnostics control, so the interface can
  *   say *42 of 310 rows*. It is a row count and never a finding count.
  */
-export function prepareRows({ rows, findings, elements, filter, showNoise }) {
+export function prepareRows({ rows, findings, elements, filter, showDiagnostics }) {
   const byId = new Map(findings.map((finding) => [finding.id, finding]));
 
   /** @type {ContentRow[]} */
@@ -114,16 +114,16 @@ export function prepareRows({ rows, findings, elements, filter, showNoise }) {
   for (const row of rows) {
     const finding = row.finding ? (byId.get(row.finding) ?? null) : null;
 
-    // The toggle asks about the **class** and about nothing else. Noise is a
+    // The control asks about the **class** and about nothing else. What it reveals is a
     // `diagnostic` row — what the rule saw, for the author of the rule. An
     // `information` row is drawn beside the work and simply counts nowhere, and what
     // an editor decided about a row never moves it out from under this toggle.
     //
-    // A row that carries a class the derivation did not reach is noise as well: that
+    // A row that carries a class the derivation did not reach is a diagnostic as well: that
     // is `visibilityOf()`'s answer for a name the vocabulary does not hold, and it is
     // the behaviour `!finding?.shown` had before ticket 75.
-    const noise = Boolean(row.class) && (finding?.visibility ?? 'diagnostic') === 'diagnostic';
-    if (noise && !showNoise) continue;
+    const diagnostic = Boolean(row.class) && (finding?.visibility ?? 'diagnostic') === 'diagnostic';
+    if (diagnostic && !showDiagnostics) continue;
 
     const prod = row.prod === null ? null : (elements.production[row.prod] ?? null);
     const next = row.new === null ? null : (elements.new[row.new] ?? null);
@@ -232,7 +232,7 @@ function classCounts(rows) {
  *
  * A row carrying a class the derivation never reached has **no finding at all**, and it
  * stays on screen. `decidable` is false for it too, for want of anything to read, and
- * reading that as *no work* would quietly collapse noise an editor asked to see.
+ * reading that as *no work* would quietly collapse a diagnostic an editor asked to see.
  *
  * One decision closes **every position** of one finding, because occurrence count is
  * not part of a finding id: the rule reads the finding, so six rows drawn from it
@@ -252,7 +252,7 @@ export const collapses = (row) =>
  * The content view asks when the page opens and holds the answer; nothing here re-reads
  * it. A tick that collapsed its own row would move the page under the reader, and on a
  * 168-row page an editor working top-down would lose their place at every tick, which
- * is worse than the noise this ticket removes. The fold answers *what did I arrive
+ * is worse than the clutter this ticket removes. The fold answers *what did I arrive
  * with* and never *what am I doing now*, so a row an editor just ticked stays where
  * they can check it, and the run it would have joined is one page-open away.
  *

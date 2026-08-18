@@ -4,6 +4,7 @@ import { Input } from './ui/input.jsx';
 import { INK } from '../lib/palette.mjs';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
 import { crossesBlock } from '../lib/view.mjs';
+import { classInfo } from '../lib/classes.mjs';
 import { cn } from '../lib/utils.js';
 
 /**
@@ -143,7 +144,7 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
                 >
                   {bulk.busy
                     ? 'Saving…'
-                    : `Clear on ${cleared.covers === 1 ? 'this page' : `${cleared.covers} pages`}`}
+                    : `Clear the decision on ${cleared.covers === 1 ? 'this page' : `${cleared.covers} pages`}`}
                 </Button>
               )}
             </>
@@ -421,7 +422,9 @@ const clearTitle = ({ covers, skipped }) =>
  * label on a row; here the class is what the selection is *on*, and a coloured chip
  * mid-sentence reads as a second control.
  */
-const ClassWord = ({ class: cls }) => <span className="font-medium text-foreground">{cls}</span>;
+const ClassWord = ({ class: cls }) => (
+  <span className="font-medium text-foreground">{classInfo(cls).label}</span>
+);
 
 /** Why the buttons are absent, which is never nothing at all. */
 const NotWriting = ({ reason }) => (

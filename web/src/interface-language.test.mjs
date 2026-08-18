@@ -21,11 +21,15 @@ import { describe, expect, it } from 'vitest';
  * (`CONTEXT.md`); so is this file, which has to hold the words to refuse them.
  *
  * A word here has to be one that cannot be an English label. `text` is Dutch-adjacent
- * and English; `niet` is not. **`resolved`** is the one English word on the list, and it
- * is here because `CONTEXT.md` retires it: it hid the difference between a claim of fact
- * and a judgement, ticket 80 banned it, and until now nothing enforced that.
+ * and English; `niet` is not. **`resolved`** and **`noise`** are the two English words on
+ * the list. `resolved` is here because `CONTEXT.md` retires it: it hid the difference
+ * between a claim of fact and a judgement, ticket 80 banned it, and until now nothing
+ * enforced that. `noise` is here because ticket 01 renamed the control to *Show
+ * diagnostics*, and one word for what a rule saw is the whole point of that rename — a
+ * new label, a new prop or a new comment reaching for the old word would undo it
+ * quietly.
  */
-const STOPWORDS = ['pagina', 'winkel', 'verschil', 'wissen', 'geen', 'niet', 'resolved'];
+const STOPWORDS = ['pagina', 'winkel', 'verschil', 'wissen', 'geen', 'niet', 'resolved', 'noise'];
 
 // `fileURLToPath` and not `.pathname`, which keeps the percent-encoding: a checkout under
 // a path holding a space would then be a directory name `readdir` cannot find. It is also
@@ -100,11 +104,12 @@ describe('the interface speaks one language', () => {
     expect(STOPWORDS.some((word) => holds('Filter wissen', word))).toBe(true);
     expect(STOPWORDS.some((word) => holds('nog niet opgelost', word))).toBe(true);
     expect(STOPWORDS.some((word) => holds('Resolved', word))).toBe(true);
+    expect(STOPWORDS.some((word) => holds('Show noise (12)', word))).toBe(true);
   });
 
   // And it has to leave the interface's own words alone.
   it('leaves an English label alone', () => {
-    for (const label of ['Choose a store', 'Repeats', 'Clear filter', 'Show noise', 'Text']) {
+    for (const label of ['Choose a store', 'Repeats', 'Clear filter', 'Show diagnostics', 'Text']) {
       expect(STOPWORDS.some((word) => holds(label, word))).toBe(false);
     }
   });

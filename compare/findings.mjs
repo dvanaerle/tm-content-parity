@@ -111,7 +111,7 @@ export class FindingCollector {
  * put up as work.
  *
  * One tally per visibility since ticket 75. `total` is their sum, and no reader has
- * to subtract two numbers to learn how many findings are behind the noise toggle.
+ * to subtract two numbers to learn how many findings are behind the diagnostics control.
  *
  * @param {import('./contract.mjs').Finding[]} findings
  * @returns {import('./contract.mjs').ReportSummary}

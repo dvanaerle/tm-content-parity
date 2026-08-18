@@ -264,7 +264,7 @@ const decided = (finding, state, override) => ({
   state,
   // The class's visibility, carried on the finding so that every reader of a derived
   // finding — the bar, the ledger's toggle, a landing — asks the vocabulary once and
-  // in one place. `work` counts, `information` renders, `diagnostic` is noise.
+  // in one place. `work` counts, `information` renders, `diagnostic` is what a rule saw.
   visibility: visibilityOf(finding.class),
   override: override
     ? {
@@ -345,7 +345,7 @@ export function noteEventFor(note) {
  * - **Only `work` is in the bar.** Anything else is in neither the numerator nor the
  *   denominator, or the bar could never reach zero. Since ticket 75 that is one word
  *   on the class and not a boolean: `information` renders beside the work and counts
- *   nowhere, `diagnostic` stays behind the noise toggle.
+ *   nowhere, `diagnostic` stays behind the diagnostics control.
  * - **Nothing leaves the denominator.** It is the `work` findings on this snapshot,
  *   full stop. The one override that used to take findings out of it was withdrawn by
  *   ADR 0011, and whether something is work at all is now a property of the class alone

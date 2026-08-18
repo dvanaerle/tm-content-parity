@@ -346,7 +346,7 @@ describe('the selection on a difference', () => {
     );
     // Two of the three: a claim of fact is not this control's to take back — `fixed` has
     // its own checkbox on the page, and two controls for one event would let them disagree.
-    expect(button('Clear on 2 pages')).toBeDefined();
+    expect(button('Clear the decision on 2 pages')).toBeDefined();
     unmount();
   });
 
@@ -383,7 +383,7 @@ describe('the selection on a difference', () => {
     press(selectAll());
 
     // Over the ticked pages it can act on: the third is open and has nothing to undo.
-    await pressAndWait(button('Clear on 2 pages'));
+    await pressAndWait(button('Clear the decision on 2 pages'));
 
     expect(bulk.calls).toHaveLength(1);
     // No note and no second press: a `cleared` event carries no reason, and the single
@@ -615,7 +615,7 @@ describe('a difference that spans a language block', () => {
     press(pageTicks()[0]);
 
     const bar = document.querySelector('[data-slot="bulk-bar"]').textContent;
-    expect(button('Clear on this page')).toBeTruthy();
+    expect(button('Clear the decision on this page')).toBeTruthy();
     expect(bar).not.toContain('Written in');
     unmount();
   });

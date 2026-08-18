@@ -112,7 +112,7 @@ export default function Ledger({
    *
    * `landingFor()` decides what the landing asks for and `useLanding()` holds it against
    * the reader's own two controls — each of which is released on its own, because
-   * switching tabs is not a request to switch the noise toggle off and vice versa. The
+   * switching tabs is not a request to switch the diagnostics control off and vice versa. The
    * mark on the row stays either way: looking at something else is not a reason to lose
    * where you came from.
    */
@@ -120,7 +120,7 @@ export default function Ledger({
   useEffect(() => setFocus(findingInSearch(window.location.search)), []);
 
   const asked = useMemo(() => landingFor({ findings: derived, focus }), [derived, focus]);
-  const { tab, noise, chooseTab, chooseNoise } = useLanding(asked, TABS[0]);
+  const { tab, diagnostics, chooseTab, chooseDiagnostics } = useLanding(asked, TABS[0]);
 
   /*
    * The strip, which is four tabs or five (ticket 04).
@@ -145,12 +145,12 @@ export default function Ledger({
 
   // The toggle asks about the **class**: a `diagnostic` is what a rule saw, told to the
   // author of the rule. An `information` finding is drawn beside the work and counted
-  // nowhere (ticket 75), and what an editor decided about a finding is not noise, so
+  // nowhere (ticket 75), and what an editor decided about a finding is not a diagnostic, so
   // neither a decision nor a visibility other than `diagnostic` moves a row behind this
   // toggle.
   const findings = useMemo(
-    () => derived.filter((finding) => noise || finding.visibility !== 'diagnostic'),
-    [derived, noise],
+    () => derived.filter((finding) => diagnostics || finding.visibility !== 'diagnostic'),
+    [derived, diagnostics],
   );
 
   // One closure for all three tabs, so the question *is there a decision here* is asked
@@ -170,7 +170,7 @@ export default function Ledger({
 
   /**
    * The three buckets of this page (ticket 80), counted off the **derivation** and never
-   * re-decided here. It reads `derived` and not the noise-filtered list on purpose:
+   * re-decided here. It reads `derived` and not the diagnostics-filtered list on purpose:
    * `bucketsOf()` counts `work` findings, a `diagnostic` is not work, and so the toggle
    * cannot move a number that says how much work is left.
    */
@@ -178,7 +178,7 @@ export default function Ledger({
 
   // What the toggle would reveal, which is the `diagnostic` findings and nothing else.
   // The label must count what it uncovers: an `information` finding is on screen already.
-  const noiseCount = derived.filter((f) => f.visibility === 'diagnostic').length;
+  const diagnosticCount = derived.filter((f) => f.visibility === 'diagnostic').length;
 
   // Every badge counts **findings**, including Text's. The content view is a list
   // of rows and a grouped finding covers several of them, so a row count here would
@@ -270,7 +270,7 @@ export default function Ledger({
           four, and Home and End reach the ends. The hand-rolled strip put four Tab
           stops in a row and answered no arrow key at all.
 
-          The noise toggle now sits **beside** the `TabsList` rather than inside it.
+          The diagnostics control now sits **beside** the `TabsList` rather than inside it.
           It was a child of the old `role="tablist"`, which told a screen reader that
           a checkbox was a fifth tab.
 
@@ -302,7 +302,7 @@ export default function Ledger({
               `border-b`, and they are meant to be the same line. On a narrow screen it
               was worse than cosmetic — the strip wraps to two rows inside a box still
               claiming to be 32 pixels tall, so row two rendered outside its parent and
-              landed on top of the noise checkbox.
+              landed on top of the diagnostics checkbox.
 
               Matching the prefix lets the two collapse to one class, and the list is
               finally as tall as what it contains.
@@ -335,8 +335,8 @@ export default function Ledger({
                 value rather than as an event: `onCheckedChange` and not
                 `event.target.checked`. */}
             <Label className="ml-auto py-2 font-normal text-muted-foreground">
-              <Checkbox checked={noise} onCheckedChange={chooseNoise} />
-              Show noise ({noiseCount})
+              <Checkbox checked={diagnostics} onCheckedChange={chooseDiagnostics} />
+              Show diagnostics ({diagnosticCount})
             </Label>
           </div>
 
@@ -348,7 +348,7 @@ export default function Ledger({
               <ContentView
                 report={report}
                 findings={derived}
-                showNoise={noise}
+                showDiagnostics={diagnostics}
                 control={control}
                 landing={landing}
               />

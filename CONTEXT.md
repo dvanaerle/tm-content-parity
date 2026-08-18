@@ -129,6 +129,14 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Class** — why the two sides are different. The class vocabulary is closed. See
   `compare/contract.mjs`. It was also the mute key until the mute was withdrawn
   (ADR 0011); the class is now the only axis and keys nothing.
+- **Label** — what an editor reads for a class. **A class has a label, and an editor never
+  sees a key.** `copy` is *Copy changed*; `image-missing` is *Image missing*. It is in
+  sentence case, it is unique, and it is never the key itself: a label that reads `copy` has
+  named nothing. It lives beside `meaning` in
+  `compare/vocabulary.mjs` — what a class *is* does not depend on who draws it — and a
+  class arriving without one fails the test suite (ADR 0019). The **key** is unchanged and
+  unchangeable: it makes the finding id, so renaming one would expire every override in the
+  database. Two names for one thing, and only one of them is on the screen.
 - **Visibility** — what a class is for. One of three words, and each class has
   exactly one. **Work** is migration work: it counts. **Information** is a
   difference an editor may want to read: it is rendered and it does not count. Said
@@ -140,10 +148,10 @@ element any more: it folds the links inside it. Both the word and the rule are g
   is needed in. It is what the override control and the context marker both read, and it
   asks the **visibility** and never a class name — so a class re-triaged in
   `vocabulary.mjs` needs no second edit. A `diagnostic` finding is decidable: what a rule
-  saw is behind *Show noise* (~~*Ruis tonen*~~, 2026-08-13), and it keeps the control it
+  saw is behind *Show diagnostics*, and it keeps the control it
   has.
   **Diagnostic** tells the author of a rule what the rule saw: it stays behind the
-  noise toggle. Visibility is not a second axis; it replaced a shown-or-hidden
+  diagnostics control. Visibility is not a second axis; it replaced a shown-or-hidden
   boolean, and the class stays the only axis. "Excluded from comparison" is not a
   visibility: an excluded region leaves at extraction and never reaches a class.
   See `docs/adr/0005-class-visibility-is-one-enum.md`.
@@ -310,7 +318,7 @@ element any more: it folds the links inside it. Both the word and the rule are g
   strip stays up over the result. *Include closed* (~~*Inclusief afgesloten*~~,
   2026-08-13) is not a filter — it says what
   counts as a result and not what is on screen — and it is absent from the strip. Neither
-  is the **noise toggle**, for the stronger version of the same reason: it changes what
+  is the **diagnostics control**, for the stronger version of the same reason: it changes what
   counts as a finding at all, which is why it survives a *Clear filter* and a scope does
   not.
   On the dashboard the filter is part of the **screen** and therefore lives in the URL
@@ -399,7 +407,7 @@ element any more: it folds the links inside it. Both the word and the rule are g
   ADR 0006 keeps the content view whole. A finding id is a term of the text, so a link
   outlives the finding it names, and a page reached by a stale one says so — as does one
   naming a finding no tab draws, which is the `meta` check: Meta is display only.
-  The tab and *Show noise* are **borrowed**, each released on its own the
+  The tab and *Show diagnostics* are **borrowed**, each released on its own the
   moment the reader touches that control. Taking one back is not taking the other back:
   switching tabs must not switch off the toggle that was drawing the landed row.
 - **Dashboard** — one store's work on one screen, at `/<store>/`. It carries only
@@ -446,13 +454,18 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Store switcher** — the six store ids in the shell header, each a link to that
   store's dashboard. It never goes to the same page in another store: the stores
   translate the category url keys, so that page often does not exist.
-- **Noise toggle** — *Show noise* (~~*Ruis tonen*~~, 2026-08-13), the control that shows
-  the classes whose visibility is `diagnostic`. It is **not** a filter: it belongs to the
-  whole log, and *clear filter* (~~*filter wissen*~~, 2026-08-13)
-  does not clear it. An editor who asked to see what a rule saw did not ask a question
-  about classes. It had a second job until ADR 0011 — it also showed muted findings, and
-  it was called *Ruis en gedempt tonen* — and a diagnostic class is not a judgement, so
-  the job that is left is the one it was named for.
+- **Diagnostics control** — *Show diagnostics* (~~*Show noise*~~, 2026-08-18;
+  ~~*Ruis tonen*~~, 2026-08-13), the control that shows the classes whose visibility is
+  `diagnostic`. The control and the thing it reveals are now **one word**: *noise* named the
+  same set in a second vocabulary, and it also said the log's own judgement of what a rule
+  saw. **Diagnostics** means *what a rule saw* and never the health of the build, the crawl
+  or the log; a sentence using it the other way is the collision the rename closed. The word
+  is refused by the stopword guard, so the rename cannot rot.
+  It is **not** a filter: it belongs to the whole log, and *Clear filter*
+  (~~*filter wissen*~~, 2026-08-13) does not clear it. An editor who asked to see what a rule
+  saw did not ask a question about classes. It had a second job until ADR 0011 — it also
+  showed muted findings, and it was called *Ruis en gedempt tonen* — and a diagnostic class
+  is not a judgement, so the job that is left is the one it was named for.
 
 Four tab names are retired, and the content view is what replaced the first three.
 **"Diff"** showed the differing rows only, so once every row was tinted the tint said
@@ -563,10 +576,10 @@ who wins against re-check.
   translation of the Dutch would have written, so the label is a **correction** and not a
   translation.
   **A *Clear* says what disappears.** The bare word is the action's name in this list; a
-  control that wears it names its object — *Clear search*, *Clear filter*, *Clear
-  selection*, *Clear note*, *Clear the page scope* — because an editor pressing it is
-  entitled to know what they are about to lose, and this interface has five things one
-  press could take. The qualifier belongs to the label and never to the vocabulary: there
+  control that wears it names its object — *Clear filter*, *Clear the selection*, *Clear
+  note*, *Clear the decision*, *Clear the review*, *Clear the page scope* — because an
+  editor pressing it is entitled to know what they are about to lose, and this interface has
+  six things one press could take. A guard refuses a bare *Clear* on a control. The qualifier belongs to the label and never to the vocabulary: there
   is still one action and it is still **Clear**.
   It does **not** clear an annotation, and ticket 83 says why: on the `page` scope
   `cleared` already means *withdraw the review*, and reusing it for three annotation

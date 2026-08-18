@@ -40,7 +40,7 @@
  * - `information` — a difference an editor may want to read. It renders and it does not
  *   count. It is a finding you can link to and cannot decide.
  * - `diagnostic` — it tells the author of a rule what the rule saw. It stays behind the
- *   noise toggle.
+ *   diagnostics control.
  *
  * There is no fourth value for "excluded from comparison". An excluded region leaves at
  * extraction (ADR 0003) and never reaches a class, so a fourth value would claim the log
@@ -56,6 +56,9 @@ export const VISIBILITIES = ['work', 'information', 'diagnostic'];
  * @typedef {object} FindingClass
  * @property {Check} check
  * @property {Visibility} visibility  What the class is for. The only axis there is.
+ * @property {string} label  What an editor reads instead of the key, in sentence case. It
+ *                           lives here and not in the web layer because what a class *is*
+ *                           does not depend on who draws it (ADR 0019).
  * @property {string} meaning
  * @property {'lost' | 'added'} [direction]  On a one-sided class only. `lost` is always
  *                                           `work`, `added` is always `information`.
@@ -64,10 +67,16 @@ export const VISIBILITIES = ['work', 'information', 'diagnostic'];
 /** @type {Record<string, FindingClass>} */
 export const FINDING_CLASSES = {
   // Ticket 02 — text
-  copy: { check: 'text', visibility: 'work', meaning: 'The text changed. Both sides are present.' },
+  copy: {
+    check: 'text',
+    visibility: 'work',
+    label: 'Copy changed',
+    meaning: 'The text changed. Both sides are present.',
+  },
   casing: {
     check: 'text',
     visibility: 'work',
+    label: 'Case or punctuation',
     meaning: 'Only letter case or trailing punctuation is different.',
   },
   // Triaged by ticket 75. It is the class that tells *moved* from *gone* (ADR 0006), which
@@ -75,16 +84,23 @@ export const FINDING_CLASSES = {
   restructured: {
     check: 'text',
     visibility: 'information',
+    label: 'Moved to another element',
     meaning: 'The same content, but a different element on each side.',
   },
   // Triaged by ticket 75. A number that differs is a real content difference worth reading;
   // it is nobody's migration work.
-  price: { check: 'text', visibility: 'information', meaning: 'Only the numbers are different.' },
+  price: {
+    check: 'text',
+    visibility: 'information',
+    label: 'Numbers differ',
+    meaning: 'Only the numbers are different.',
+  },
   // Triaged by ticket 75. The finding exists because a promotional pattern matched on both
   // sides — it reports what the rule matched, which is a diagnostic.
   campaign: {
     check: 'text',
     visibility: 'diagnostic',
+    label: 'Promotional copy',
     meaning: 'Promotional copy. The pattern must match both sides.',
   },
 
@@ -93,6 +109,7 @@ export const FINDING_CLASSES = {
     check: 'text',
     visibility: 'work',
     direction: 'lost',
+    label: 'Text missing',
     meaning: 'Production has the text. The new site does not.',
   },
   // Triaged by ticket 75, and it is the example ADR 0005 argues from: content the new site
@@ -101,6 +118,7 @@ export const FINDING_CLASSES = {
     check: 'text',
     visibility: 'information',
     direction: 'added',
+    label: 'Text added',
     meaning: 'The new site has text that production does not have.',
   },
 
@@ -122,6 +140,7 @@ export const FINDING_CLASSES = {
   'heading-level': {
     check: 'text',
     visibility: 'information',
+    label: 'Heading level changed',
     meaning: 'The text is the same, and it is a heading on one side or at another level.',
   },
   // Triaged by ticket 75. The same words in a different element, neither of them a heading:
@@ -129,6 +148,7 @@ export const FINDING_CLASSES = {
   'tag-changed': {
     check: 'text',
     visibility: 'diagnostic',
+    label: 'Element changed',
     meaning: 'The text is the same, and it sits in a different element. Neither side is a heading.',
   },
 
@@ -136,27 +156,32 @@ export const FINDING_CLASSES = {
   'broken-link': {
     check: 'links',
     visibility: 'work',
+    label: 'Broken link',
     meaning: 'The target does not answer. It fires also if production is broken.',
   },
   'missing-link': {
     check: 'links',
     visibility: 'work',
     direction: 'lost',
+    label: 'Link missing',
     meaning: 'Production has the link. The new site does not.',
   },
   'link-target': {
     check: 'links',
     visibility: 'work',
+    label: 'Link target changed',
     meaning: 'The two sides point at different targets.',
   },
   leakage: {
     check: 'links',
     visibility: 'work',
+    label: 'Link to production',
     meaning: 'The new site points at the live domain, and that path exists as a new-site page.',
   },
   'cross-store-link': {
     check: 'links',
     visibility: 'work',
+    label: 'Link to another store',
     meaning: 'The link goes to the host of a different store.',
   },
   // Triaged by ticket 75, and it is the other example ADR 0005 argues from: the target
@@ -164,6 +189,7 @@ export const FINDING_CLASSES = {
   redirect: {
     check: 'links',
     visibility: 'diagnostic',
+    label: 'Link redirects',
     meaning: 'The target answers, after a redirect.',
   },
   // Triaged by ticket 75. The `added` side of the direction rule, the same on all three
@@ -172,6 +198,7 @@ export const FINDING_CLASSES = {
     check: 'links',
     visibility: 'information',
     direction: 'added',
+    label: 'Link added',
     meaning: 'The new site has a link that production does not have.',
   },
 
@@ -180,16 +207,19 @@ export const FINDING_CLASSES = {
     check: 'images',
     visibility: 'work',
     direction: 'lost',
+    label: 'Image missing',
     meaning: 'Production has the image. The new site does not.',
   },
   'alt-lost': {
     check: 'images',
     visibility: 'work',
+    label: 'Alt text lost',
     meaning: 'Production has alt text. The new site has none.',
   },
   'alt-changed': {
     check: 'images',
     visibility: 'work',
+    label: 'Alt text changed',
     meaning: 'Both sides have alt text, and it is different.',
   },
   // Triaged by ticket 75. The `added` side of the direction rule, on the images check.
@@ -197,12 +227,14 @@ export const FINDING_CLASSES = {
     check: 'images',
     visibility: 'information',
     direction: 'added',
+    label: 'Image added',
     meaning: 'The new site has an image that production does not have.',
   },
   // Triaged by ticket 75, as `campaign`: it reports a pattern the rule matched.
   'image-campaign': {
     check: 'images',
     visibility: 'diagnostic',
+    label: 'Campaign image',
     meaning: 'A campaign image. The pattern matches on either side.',
   },
 
@@ -217,6 +249,7 @@ export const FINDING_CLASSES = {
   'no-declared-alternate': {
     check: 'meta',
     visibility: 'diagnostic',
+    label: 'No declared alternate',
     meaning:
       'Production declares no hreflang alternate for this page, so the log cannot put it beside the other stores.',
   },
@@ -247,35 +280,41 @@ export const FINDING_CLASSES = {
   'meta-title-changed': {
     check: 'meta',
     visibility: 'work',
+    label: 'Title changed',
     meaning: 'Both sides have a title, and it is different.',
   },
   'meta-title-lost': {
     check: 'meta',
     visibility: 'work',
     direction: 'lost',
+    label: 'Title missing',
     meaning: 'Production has a title. The new site has none.',
   },
   'meta-title-added': {
     check: 'meta',
     visibility: 'information',
     direction: 'added',
+    label: 'Title added',
     meaning: 'The new site has a title that production does not have.',
   },
   'meta-description-changed': {
     check: 'meta',
     visibility: 'work',
+    label: 'Description changed',
     meaning: 'Both sides have a description, and it is different.',
   },
   'meta-description-lost': {
     check: 'meta',
     visibility: 'work',
     direction: 'lost',
+    label: 'Description missing',
     meaning: 'Production has a description. The new site has none.',
   },
   'meta-description-added': {
     check: 'meta',
     visibility: 'information',
     direction: 'added',
+    label: 'Description added',
     meaning: 'The new site has a description that production does not have.',
   },
   // A new class, and deliberately **not** the existing `casing`: that one carries
@@ -285,6 +324,7 @@ export const FINDING_CLASSES = {
   'meta-casing': {
     check: 'meta',
     visibility: 'work',
+    label: 'Head case or punctuation',
     meaning: 'Only letter case or trailing punctuation is different, in a head field.',
   },
   // Robots is measured in both directions, and neither is a `direction` in the contract's
@@ -294,11 +334,13 @@ export const FINDING_CLASSES = {
   'robots-index-lost': {
     check: 'meta',
     visibility: 'work',
+    label: 'Page leaves the index',
     meaning: 'Production is indexable. The new site is noindex.',
   },
   'robots-noindex-lost': {
     check: 'meta',
     visibility: 'work',
+    label: 'Page enters the index',
     meaning: 'Production is noindex. The new site is indexable.',
   },
 };
@@ -307,7 +349,7 @@ export const FINDING_CLASSES = {
  * The visibility of a class, and the answer for a name the vocabulary does not hold.
  *
  * An unknown class reads as `diagnostic`: it is not work, so it cannot enter a
- * denominator by accident, and it stays behind the noise toggle where a rule author
+ * denominator by accident, and it stays behind the diagnostics control where a rule author
  * will find it. That is what `shown ?? false` did before ticket 75, said in one word.
  *
  * @param {string} cls

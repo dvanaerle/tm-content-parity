@@ -2,7 +2,7 @@
  * Landing on the difference the link named (ticket 109).
  *
  * A page link from the dashboard carries a finding id, and the page has to put that
- * finding in front of the reader: on the right tab, with the noise toggle on if that
+ * finding in front of the reader: on the right tab, with the diagnostics control on if that
  * is what it takes to draw it, scrolled to and marked.
  *
  * It is a **landing** and never a filter. The row arrives with the rows around it in
@@ -49,8 +49,8 @@ const TAB_OF_CHECK = { text: 'Text', links: 'Links', images: 'Images' };
  * @typedef {object} Landing
  * @property {string | null} tab  The tab that must be on screen, or null when there is
  *                                nothing to land on and the reader's own choice stands.
- * @property {boolean} needsNoise Whether *Show noise* has to be on for the finding to be
- *                                drawn at all.
+ * @property {boolean} needsDiagnostics  Whether *Show diagnostics* has to be on for the
+ *                                finding to be drawn at all.
  * @property {boolean} missing    A link named a finding and this snapshot has no such
  *                                finding. A finding id is a term of the text, so it
  *                                expires when the text does: the difference was fixed,
@@ -75,7 +75,7 @@ export function landingFor({ findings, focus }) {
     // The same test `Ledger.jsx` and `prepareRows()` already apply, asked the other way
     // round: those two decide what to hide, and this decides whether what the reader
     // was sent to is one of them. It is a question about the **class** only — a
-    // decision is not noise, so a `genegeerd` row is on screen already and the toggle
+    // decision is not a diagnostic, so a `genegeerd` row is on screen already and the toggle
     // is left where it was.
     //
     // Since ticket 75 only a `diagnostic` is behind the toggle. A link to an
@@ -85,7 +85,7 @@ export function landingFor({ findings, focus }) {
     // **Only when a tab would draw it.** The toggle is asked for so that the row the
     // reader was sent to appears, so with no such row there is nothing to ask for, and
     // switching it on would only fill the page with rows nobody asked to see.
-    needsNoise: Boolean(tab) && target.visibility === 'diagnostic',
+    needsDiagnostics: Boolean(tab) && target.visibility === 'diagnostic',
     missing: Boolean(focus) && target === null,
     unplaced: Boolean(target) && tab === null,
   };
@@ -115,7 +115,7 @@ export const landedRowProps = (landed) => ({
 /**
  * The two controls a landing borrows, and the reader taking either one back.
  *
- * A landing needs a tab on screen and, sometimes, *Show noise* switched on.
+ * A landing needs a tab on screen and, sometimes, *Show diagnostics* switched on.
  * Both are the reader's controls, so the landing only borrows them: it holds until the
  * reader touches that control, and from then on their choice stands.
  *
@@ -129,25 +129,25 @@ export const landedRowProps = (landed) => ({
  * first render, so `asked` changes under the reader — which is why this holds an
  * *untaken* flag rather than seeding state from the first answer.
  *
- * @param {{ tab: string | null, needsNoise: boolean }} asked  From `landingFor()`.
+ * @param {{ tab: string | null, needsDiagnostics: boolean }} asked  From `landingFor()`.
  * @param {string} defaultTab  The tab a reader who was sent nowhere gets.
  */
 export function useLanding(asked, defaultTab) {
   const [chosenTab, setChosenTab] = useState(defaultTab);
   const [tabTaken, setTabTaken] = useState(false);
-  const [showNoise, setShowNoise] = useState(false);
-  const [noiseTaken, setNoiseTaken] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [diagnosticsTaken, setDiagnosticsTaken] = useState(false);
 
   return {
     tab: !tabTaken && asked.tab ? asked.tab : chosenTab,
-    noise: noiseTaken ? showNoise : asked.needsNoise,
+    diagnostics: diagnosticsTaken ? showDiagnostics : asked.needsDiagnostics,
     chooseTab: (name) => {
       setTabTaken(true);
       setChosenTab(name);
     },
-    chooseNoise: (on) => {
-      setNoiseTaken(true);
-      setShowNoise(on);
+    chooseDiagnostics: (on) => {
+      setDiagnosticsTaken(true);
+      setShowDiagnostics(on);
     },
   };
 }
@@ -202,7 +202,7 @@ export function useLandOn(anchor, settled = true) {
     // The effect runs after the commit that drew the row, so the element is here. If it
     // is not, the finding is on a tab or behind a filter that is not on screen, and
     // `landingFor()` is what tells the reader about it — landing nowhere is the right
-    // amount of noise for this function to make.
+    // amount of fuss for this function to make.
     const element = document.getElementById(anchor);
     if (!element) return;
 

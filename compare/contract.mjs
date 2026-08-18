@@ -268,7 +268,7 @@ export {
  * @typedef {object} ReportSummary
  * @property {number} work         The denominator, and nothing else is.
  * @property {number} information  Rendered, not counted.
- * @property {number} diagnostic   Behind the noise toggle.
+ * @property {number} diagnostic   Behind the diagnostics control.
  * @property {number} total
  * @property {Record<string, number>} byClass
  * @property {Record<string, number>} byCheck

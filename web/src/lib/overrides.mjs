@@ -178,7 +178,8 @@ function whyNotWriting({ port, editor, events, error }) {
   return null;
 }
 
-const NO_EDITOR = 'Give your name at the top to decide here. Each decision carries a name.';
+/** Asked for in three wordings before ticket 01; one sentence, and it lives here. */
+export const NO_EDITOR = 'Give your name at the top to decide. Each decision carries a name.';
 
 /**
  * The dashboard's side: every event for the store, reduced to a bar per page and
