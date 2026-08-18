@@ -6,6 +6,7 @@ import {
   findingId,
   findingSetHash,
   newObservationId,
+  observedAt,
   reportFilename,
   storeOfFile,
   VISIBILITIES,
@@ -54,6 +55,13 @@ describe('newObservationId', () => {
   it('separates two runs in the same millisecond', () => {
     const many = new Set(Array.from({ length: 50 }, () => newObservationId()));
     expect(many.size).toBe(50);
+  });
+
+  // What the run log's dates are read back with. The tail is what stops the whole id
+  // being a date, so taking it off is the whole of the reading.
+  it('gives back the moment it was made', () => {
+    const id = newObservationId();
+    expect(new Date(observedAt(id)).toISOString()).toBe(observedAt(id));
   });
 });
 

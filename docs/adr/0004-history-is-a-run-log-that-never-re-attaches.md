@@ -67,6 +67,32 @@ place in a bar, and it asserts no identity. It reports what the run log saw.
   The second question is answered by `git log` on the index, and that is the intended
   answer.
 
+### The writer is `compare/`, not `crawl/`, 2026-08-18
+
+This record said "`crawl/` writes it". Ticket 77 built it and the sentence could not be
+kept. The index is keyed on the finding **id**, and no finding id exists until the
+comparison has run — so `crawl/` could only write it by reading `compare/`'s output back,
+and a module under `crawl/` that both `compare/` and `web/` import is the back-arrow ADR
+0001 exists to refuse.
+
+It is `compare/run-log.mjs`, written at the end of the compare batch. Everything the
+sentence was protecting is intact: the arrow still points one way, `web/` reads and never
+writes, and nothing imports back up it. Not `shared/` either — that folder is for pure
+rules and half the module is a disk.
+
+### *Seen* is asked per store, 2026-08-18
+
+`node compare/30-compare.mjs nl` compares one store, and *not looked at* is not *gone*. So
+the index records, per store, the observation that last covered it, and a row is retired
+only against a run that looked at its own store.
+
+The grain is the **store and not the page**. A page that leaves the corpus — its extract
+deleted, or dropped from the seed list — retires its rows on the next run of its store,
+and that reads as *no longer seen* rather than *no longer looked at*. It matches what this
+record asks the index for, which is whether an id is in the current snapshot; a page with
+no report is not in it. A finer grain would put a row per page in the file's header and
+buy a distinction no screen draws.
+
 ## Scope
 
 Axis A only. Axis B keeps its own tab and its own bar, and it is not summed with

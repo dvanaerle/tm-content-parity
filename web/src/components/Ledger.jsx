@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { metaRows } from '../../../compare/meta.mjs';
-import { Detail, Occurrences, Section, onePageTitle } from './Annotations.jsx';
+import { Detail, FirstSeen, Occurrences, Section, onePageTitle } from './Annotations.jsx';
 import { ClassPill } from './Chips.jsx';
 import ContentView from './ContentView.jsx';
 import { DiffCells } from './Diff.jsx';
@@ -557,6 +557,7 @@ const FindingRow = ({ finding, focus, control, sides }) => {
           locations={finding.locations}
           sides={sides}
         />
+        <FirstSeen at={finding.firstSeen} />
         {/* The state pill is still here, inside the bucket. A bucket summarises; it does
             not replace what an editor decided about one finding. */}
         <div className="mt-1">{control(finding)}</div>

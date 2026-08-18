@@ -1,7 +1,19 @@
 # 77 — A finding says when it was first seen
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-18 — built on `ticket-104-search-page-scope`. Every criterion
+met, with **two deviations**, both recorded below. The labels are English, not Dutch:
+ADR 0014 landed after this ticket was written and the interface speaks one language on
+all six stores, so *eerst gezien* is **first seen** and the stopword guard in
+`interface-language.test.mjs` would have refused the Dutch. And **no rendered finding
+says *no longer seen***: a finding drawn on a page is in the snapshot being drawn, by
+construction, and the index is routinely older than the reports beside it — so the mark
+would have been a lie on the one case that can reach a row. The fact lives where it is
+true, on the index row and in the run's own output. Third: the writer is
+`compare/run-log.mjs` and **not `crawl/`** — a finding id does not exist until the
+comparison has run, so a module under `crawl/` that `compare/` and `web/` both import is
+the back-arrow ADR 0001 refuses. ADR 0004 is amended to say so, along with the grain of
+*seen*, which is the store and not the page.
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
@@ -41,24 +53,24 @@ match carries a dismissal onto text nobody dismissed, and it fails silently.
 
 ## Acceptance criteria
 
-- [ ] The index is one committed file per corpus, keyed on the finding id, holding the
+- [x] The index is one committed file per corpus, keyed on the finding id, holding the
       store, the page, the class, the first observation id and the last observation id.
       No text and no decision.
-- [ ] The crawl writes it after the comparison, and a run that aborts leaves the
+- [x] The crawl writes it after the comparison, and a run that aborts leaves the
       previous index intact rather than half-written.
-- [ ] A second run of the same corpus with no site change moves **no** first-seen date.
+- [x] A second run of the same corpus with no site change moves **no** first-seen date.
       This is the regression gate: an index that churns on an unchanged site is broken.
-- [ ] A finding new in the second run has that run's date, and a finding absent from it
+- [x] A finding new in the second run has that run's date, and a finding absent from it
       is marked and keeps its last-seen date.
-- [ ] The page view shows the date on every finding. A finding with no row in the index
+- [x] The page view shows the date on every finding. A finding with no row in the index
       says nothing rather than guessing, because an index older than the report is the
       normal case on a fresh clone.
-- [ ] The index is in git and `data/` is not, so the file goes where a committed
+- [x] The index is in git and `data/` is not, so the file goes where a committed
       artefact goes and the answer says why that location was chosen.
-- [ ] Nothing in the pipeline compares two texts to decide whether two ids are related.
+- [x] Nothing in the pipeline compares two texts to decide whether two ids are related.
       A test asserts the index derivation is a pure function of the finding ids in the
       snapshot and the previous index — nothing else.
-- [ ] `npm test` passes and the corpus totals are unmoved. This ticket adds a record;
+- [x] `npm test` passes and the corpus totals are unmoved. This ticket adds a record;
       it must not disturb a count.
 
 ## Traps

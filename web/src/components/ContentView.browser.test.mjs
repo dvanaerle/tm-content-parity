@@ -339,3 +339,24 @@ describe('the content view opens on the differences', () => {
     expect(host.textContent).not.toContain('Nothing differs');
   });
 });
+
+/**
+ * Ticket 77, on the spine. The content view and the ledger wear the same mark, and the
+ * reason both are asserted is that they are two tables: one date on one of them is the
+ * shape this would regress into.
+ */
+describe('a content row says when its finding was first seen', () => {
+  it('says the day the run log first saw the id', () => {
+    const host = mount({
+      findings: findings.map((one) =>
+        one.id === 'copy1' ? { ...one, firstSeen: '2026-06-03T09:00:00.000Z' } : one,
+      ),
+    });
+
+    expect(host.textContent).toContain('first seen 03 Jun 2026');
+  });
+
+  it('says nothing about a finding the index does not hold', () => {
+    expect(mount().textContent).not.toContain('first seen');
+  });
+});

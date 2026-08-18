@@ -4,6 +4,7 @@ import PageView from '../../components/PageView.jsx';
 import Shell from '../../layouts/Shell.astro';
 import { Badge } from '../../components/ui/badge.jsx';
 import { loadProductionExtracts, loadReports, loadSeedRows } from '../../lib/reports.mjs';
+import { firstSeenOn, loadFirstSeen } from '../../lib/run-log.mjs';
 import { siblingPages } from '../../lib/blocks.mjs';
 import { siblingOf } from '../../lib/language-blocks.mjs';
 import { CHROME, PILL } from '../../lib/palette.mjs';
@@ -29,6 +30,11 @@ export async function getStaticPaths() {
    * on one screen and there is no cheaper form of it; only production is shipped, and
    * only for the one sibling page.
    */
+  // The run log, read once for the whole build and narrowed per page. It is the one
+  // artefact here that outlives a run: the reports say what the sites hold now, and this
+  // says since when (ticket 77).
+  const seenIndex = await loadFirstSeen();
+
   const seeds = await loadSeedRows();
   /** @type {Map<string, Map<string, { page: string, rule: string }>>} */
   const matched = new Map();
@@ -58,6 +64,7 @@ export async function getStaticPaths() {
       params: { store: report.store, page: report.page },
       props: {
         report,
+        firstSeen: firstSeenOn(seenIndex, report.findings),
         // `units` is null where the sibling page has no production report. The reading
         // calls that unmeasured, in the block list's own word: nothing was compared, and
         // that is a different fact from finding nothing.
@@ -74,7 +81,7 @@ export async function getStaticPaths() {
   });
 }
 
-const { report, sibling } = Astro.props;
+const { report, sibling, firstSeen } = Astro.props;
 const { production, new: next } = report.sides;
 ---
 
@@ -117,5 +124,5 @@ const { production, new: next } = report.sides;
     </div>
   </header>
 
-  <PageView client:load report={report} sibling={sibling} />
+  <PageView client:load report={report} sibling={sibling} firstSeen={firstSeen} />
 </Shell>

@@ -10,6 +10,10 @@ data/*
 !data/sitemap-extract.json
 !data/sitemap-manifest.json
 !data/11-page-status.json
+# The run log's index is committed — it is the one artefact of a run that cannot be
+# rebuilt, because the run that saw a finding first is over (ADR 0004). What is not
+# committed is the half-written copy an aborted run leaves beside it.
+history/*.partial
 dist/
 .astro/
 .env

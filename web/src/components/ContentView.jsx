@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Detail, Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
+import { Detail, FirstSeen, Locate, Occurrences, Tag, onePageTitle } from './Annotations.jsx';
 import { locationUrl, unitLocation } from '../../../compare/locate.mjs';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells } from './Diff.jsx';
@@ -448,6 +448,7 @@ function Row({ row, control, sides, landed }) {
           count={row.finding?.occurrences}
           title={onePageTitle(row.finding?.occurrences)}
         />
+        <FirstSeen at={row.finding?.firstSeen} />
         {/*
          * `decidable` and not `row.finding`: an `information` row keeps its
          * finding — it has an id and a link can name it — and offers no

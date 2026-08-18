@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { PageAnnotations } from './Annotate.jsx';
 import Ledger from './Ledger.jsx';
 import { EditorPrompt, LogBanner, PageBar, ReviewControl } from './Progress.jsx';
@@ -20,7 +21,7 @@ import { cn } from '../lib/utils.js';
  * A saved re-check from an earlier press replaces it the same way (ticket 71),
  * and the footer says which of the two the reader is looking at.
  */
-export default function PageView({ report: built, sibling = null }) {
+export default function PageView({ report: built, sibling = null, firstSeen = {} }) {
   const { editor, save } = useEditor();
   const recheckAvailable = useRecheckAvailable();
   const { report, source, onReport } = usePageReport(built, recheckAvailable);
@@ -29,6 +30,17 @@ export default function PageView({ report: built, sibling = null }) {
   const recheck = useRecheck(onReport);
 
   const { derived, append, canWrite } = log;
+
+  /*
+   * The run log's dates, joined on here rather than in each table, so the ledger and the
+   * content view cannot come to disagree about which date belongs to which id. It is a
+   * display field: no bar counts it, and a re-check mints ids the committed index has
+   * never seen, which is why a finding may carry no date at all.
+   */
+  const findings = useMemo(
+    () => derived.findings.map((finding) => ({ ...finding, firstSeen: firstSeen[finding.id] })),
+    [derived.findings, firstSeen],
+  );
 
   return (
     <div className="space-y-3">
@@ -97,7 +109,7 @@ export default function PageView({ report: built, sibling = null }) {
 
       <Ledger
         report={report}
-        findings={derived.findings}
+        findings={findings}
         /* Whether the page has stopped changing shape, which is what a landing has to
            wait for: the override log arrives a beat after the first paint and adds a
            control to every decided row, so a scroll taken before it lands is measured

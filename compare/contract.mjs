@@ -348,6 +348,66 @@ export function newObservationId() {
 }
 
 /**
+ * The calendar moment an observation id names, as an ISO 8601 stamp.
+ *
+ * The id is that stamp with a random tail joined on, and the tail is there to separate
+ * two runs of the same millisecond — so reading the date back is taking the stamp off
+ * the front and never parsing the id. `newObservationId()` above is the only writer of
+ * the shape, and this is the only reader of it.
+ *
+ * @param {string} observationId
+ * @returns {string}
+ */
+export function observedAt(observationId) {
+  return observationId.slice(0, STAMP);
+}
+
+/** The length of an ISO 8601 UTC stamp with milliseconds: `2026-08-18T09:36:17.824Z`. */
+const STAMP = 24;
+
+/**
+ * What one finding is, to an index keyed on the id alone: the id, and the three facts
+ * that say where it is. There is no fourth. No text, no decision, and no relation
+ * between two ids — ADR 0004 rules all three out, and the shape is where that is
+ * enforced rather than remembered.
+ *
+ * @typedef {object} FindingRef
+ * @property {string} id
+ * @property {Store} store
+ * @property {string} page
+ * @property {keyof FINDING_CLASSES} class
+ */
+
+/**
+ * One row of the run log.
+ *
+ * `firstSeen` and `lastSeen` are observation ids, which sort chronologically by
+ * construction, so comparing two of them is a string comparison and never a parsed date.
+ *
+ * `seen` says the snapshot of the run that **last covered this row's store** held the id.
+ * It is not a decision and nobody made it: a run compares two sites and reports what it
+ * saw, and an editor's judgement about this finding lives in the overrides and nowhere
+ * near here.
+ *
+ * @typedef {FindingRef & { firstSeen: string, lastSeen: string, seen: boolean }} RunLogRow
+ */
+
+/**
+ * The whole index: one committed file for the corpus, rewritten at each run, with git
+ * history as the archive. `crawl/run-log.mjs` owns it; `compare/` and `web/` read it.
+ *
+ * `stores` is what makes a one-store run safe. `node compare/30-compare.mjs nl` looks at
+ * one store, and *not looked at* is not *gone* — so `seen` is asked against the
+ * observation that last covered the row's own store, never against the file's.
+ *
+ * @typedef {object} RunLog
+ * @property {string} observationId  The run that wrote the file. It carries its own
+ *                                   moment, so the index keeps no separate build stamp.
+ * @property {Record<string, string>} stores  Store to the observation that last covered it.
+ * @property {RunLogRow[]} rows      Sorted by id.
+ */
+
+/**
  * A hash over the sorted ids of **every** finding on the page, in any class.
  *
  * A page review records this, and goes stale when it stops matching. Ticket 118 and

@@ -20,6 +20,7 @@ import { FindingCollector, summarise } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
 import { CoverageTally, coverageDelta, coverageLines } from './region-coverage.mjs';
+import { nextRunLog, readRunLog, RUN_LOG, writeRunLog } from './run-log.mjs';
 import { diffRows, textFindings } from './text.mjs';
 
 const EXTRACTS = new URL('../data/extract/', import.meta.url);
@@ -240,8 +241,16 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
   // previous run's excluded-region coverage.
   const previous = await readJson(SNAPSHOT);
 
+  // The index the run log leaves behind is keyed on the finding id, and the ids of this
+  // run do not exist until the loop below has run. So it is read here and written after.
+  const previousLog = await readRunLog();
+
   const files = await jsonFiles(only ? new URL(`${only}/`, EXTRACTS) : EXTRACTS);
   const coverage = new CoverageTally();
+  /** @type {import('./contract.mjs').FindingRef[]} */
+  const snapshot = [];
+  /** @type {Set<string>} */
+  const covered = new Set();
   let comparable = 0;
   let findings = 0;
   let work = 0;
@@ -266,6 +275,19 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
       new URL(reportFilename(report.store, report.page), REPORTS),
       JSON.stringify(report),
     );
+
+    // The stores this run actually looked at, taken from the reports rather than from the
+    // argument: `only` is absent on a full run, and *not looked at* is what the index has
+    // to tell apart from *gone*.
+    covered.add(report.store);
+    for (const finding of report.findings) {
+      snapshot.push({
+        id: finding.id,
+        store: finding.store,
+        page: finding.page,
+        class: finding.class,
+      });
+    }
 
     if (report.comparable) comparable += 1;
     findings += report.summary.total;
@@ -296,6 +318,16 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
     ),
   );
 
+  // After the reports and after the snapshot, because a run that aborts before here must
+  // leave the previous index whole rather than half a run's worth of first-seen dates.
+  const runLog = nextRunLog({
+    previous: previousLog,
+    snapshot,
+    observationId,
+    covered: [...covered],
+  });
+  await writeRunLog(runLog);
+
   console.log(
     `${files.length} pages, ${comparable} comparable, ` +
       `${findings} findings of which ${work} count as work.`,
@@ -304,5 +336,10 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
   // than 2,600 rows down in the report.
   for (const line of coverageLines(regionsChanged)) console.log(`region coverage: ${line}`);
   console.log(`observation ${observationId}`);
+  console.log(
+    `run log: ${runLog.rows.length} ids, ` +
+      `${runLog.rows.filter((row) => !row.seen).length} no longer seen ` +
+      `(${fileURLToPath(RUN_LOG)})`,
+  );
   console.log(`wrote ${fileURLToPath(REPORTS)}`);
 }

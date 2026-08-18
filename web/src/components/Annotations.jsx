@@ -1,4 +1,5 @@
 import { Badge } from './ui/badge.jsx';
+import { day } from '../lib/dates.mjs';
 import { locationUrl } from '../../../compare/locate.mjs';
 
 /**
@@ -95,6 +96,28 @@ export const Occurrences = ({ count, title }) =>
     <Badge className="ml-2" title={title}>
       ×{count}
     </Badge>
+  ) : null;
+
+/**
+ * How long the difference has been there (ticket 77).
+ *
+ * It renders nothing where the run log has no row for the id, which is the ordinary
+ * reading on a fresh clone: the index is committed and the reports are not. A guess here
+ * would say *first seen today* about a difference that has been on the page all along.
+ *
+ * It says **first seen** and never *still seen* or *no longer seen*. A finding that is
+ * drawn is in the snapshot being drawn, by construction — and the index's own *no longer
+ * seen* mark is a fact about a row, not a decision anybody made, so it has no place on a
+ * row that is asking an editor for one (ADR 0004).
+ */
+export const FirstSeen = ({ at }) =>
+  at ? (
+    <span
+      className="ml-2 text-xs text-muted-foreground"
+      title="The first run that saw this difference"
+    >
+      first seen {day(at)}
+    </span>
   ) : null;
 
 /** What the badge means on a finding: the same difference, several times on this page. */

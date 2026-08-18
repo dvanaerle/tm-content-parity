@@ -80,6 +80,23 @@ the status measurement are tracked for the reason in the next sections. A fresh
 clone has the seed list and needs the first three commands before the front end
 has anything to show.
 
+## The run log
+
+`30-compare.mjs` also rewrites `history/run-log.jsonl`, the index that says when
+each finding id was first seen, whether the last run that looked still saw it,
+and when it was last seen. It holds no text and no decision, and it never
+re-attaches one finding to another — ADR 0004 is every rule of it.
+
+It is **in git while `data/` is not**, because it is the one artefact of a run
+that cannot be rebuilt: the run that saw a finding first is over. Git history is
+the archive the ADR chose in place of a file per run, which is why the file is
+one JSON object per line and why a row that is still seen does not restate the
+date — a run that finds nothing new rewrites the header and no row under it.
+
+A run over one store leaves the other five stores' rows untouched. *Not looked
+at* is not *no longer seen*. The grain is the store: a page that leaves the
+corpus retires its rows on the next run of its store.
+
 ## The production sitemap evidence
 
 ```sh

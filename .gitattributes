@@ -9,3 +9,10 @@
 #
 # `eol=lf` pins the working copy, so the evidence is the same bytes everywhere.
 data/*.json text eol=lf
+
+# The run log's index is rewritten by every run and its git history is the archive
+# (ADR 0004), so a row that did not change must come back byte for byte. The writer
+# emits LF; a Windows checkout with `core.autocrlf=true` would hand back CRLF, and the
+# first run after a clone would then rewrite all 40,000 rows for the line endings alone
+# — which is the diff the line-per-row format exists to avoid.
+history/*.jsonl text eol=lf

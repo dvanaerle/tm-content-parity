@@ -249,3 +249,35 @@ describe('the sibling tab on the ledger', () => {
     unmount();
   });
 });
+
+/**
+ * Ticket 77. The run log makes the *history* visible, and this is the whole of what it
+ * says on a row: how long the difference has been there.
+ *
+ * A browser test because the question is what an editor reads. That a finding with no row
+ * in the index gets no date is settled purely in `lib/run-log.test.mjs`; that the row it
+ * lands on draws the words rather than an empty mark is only answerable here.
+ */
+describe('a finding says when it was first seen', () => {
+  const rowOf = (id) => document.querySelector(`tr[id="finding-${id}"]`);
+
+  it('says the day the run log first saw the id', async () => {
+    const unmount = mount({
+      findings: [finding('a', 'open', { firstSeen: '2026-06-03T09:00:00.000Z' })],
+    });
+    await userEvent.click(button('Links'));
+
+    expect(rowOf('a').textContent).toContain('first seen 03 Jun 2026');
+    unmount();
+  });
+
+  // The index is committed and the reports are not, so a report newer than the index is
+  // the normal case. Nothing is the honest answer; *first seen today* would be a guess.
+  it('says nothing about a finding the index does not hold', async () => {
+    const unmount = mount({ findings: [finding('a', 'open')] });
+    await userEvent.click(button('Links'));
+
+    expect(rowOf('a').textContent).not.toContain('first seen');
+    unmount();
+  });
+});
