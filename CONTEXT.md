@@ -564,7 +564,13 @@ who wins against re-check.
   **beats** re-check, because re-check cannot decide what is acceptable. Keyed on
   content, thus on the finding id, so it expires when either side changes. This
   is correct behaviour: the judgement is stale, and the tool must ask again. A
-  note is necessary.
+  note is necessary. The note may be **about a pattern and not about the two strings**
+  (ticket 138): a wide selection carries one note over unlike string pairs — `Links hebben
+  geen ">" meer.` lands identically on `Meer informatie >` and on 471 others. That widens
+  what a note *says*, not what a dismissal *is*: the events are still ordinary per-page
+  events carrying their own exact strings, each still expiring when its own text changes.
+  What makes the pattern note honest is the query it was written over — see **Bulk
+  decision** and `docs/adr/0022-a-wide-selection-answers-a-narrowed-question.md`.
 - **Mute** — ~~a judgement about a class in one place: "this class is never a defect
   here", keyed on store, page, class and anchor heading~~. **Withdrawn from the vocabulary
   2026-08-13**, together with the `page-class` scope. It was built, tried and never
@@ -596,6 +602,22 @@ who wins against re-check.
   There were three presses until ADR 0011 took the bulk mute; a difference whose every
   finding is already decided therefore offers only the clearing, which is correct — the
   work there is done. See tickets 31 and 110.
+  A selection may span **differences** since ticket 138, and not only pages within one: a
+  narrowed result is ticked whole in one press, and the selection stops being a property of a
+  difference — it is one flat set of findings over the whole result, so ticking in a second
+  difference no longer takes the selection away from the first. It is **offered only over a
+  narrowed result** — a term, a scope or a class pill — and never over the bare *Repeats*
+  list, because a wide press needs a proposition to be about and only a narrowed list is one.
+  Everything above still holds over the wider selection: the ticks say *these pages* and each
+  press filters to what it can act on, one selection may still span a language block and no
+  further, and the write is still N ordinary events. Two things are added by the size of it.
+  The **clearing** takes a typed-count confirmation above a threshold, because it revokes
+  colleagues' judgements and the dismissal's mandatory note is a gate the clearing has none
+  of. And the press **reports its progress and can be stopped**, because the write is
+  sequential by design and 472 events is minutes — a half-finished run is a legitimate
+  outcome of an append-only table, and what is left ticked afterwards is precisely the
+  unwritten remainder, so pressing again resumes rather than retries.
+  See `docs/adr/0022-a-wide-selection-answers-a-narrowed-question.md`.
 - **Page review** — "a human looked at this whole page." Keyed on store and page.
   It covers what the tool cannot see: layout, tone, an image that agrees by name
   and shows something else. It never expires; it becomes **stale**.
