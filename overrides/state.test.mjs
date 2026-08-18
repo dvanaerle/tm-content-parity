@@ -10,6 +10,7 @@ import {
   deriveStoreState,
   emptyBuckets,
   eventKey,
+  eventsOfStores,
   latestByKey,
   noteEventFor,
   priorityEventFor,
@@ -676,5 +677,42 @@ describe('deriveStoreState', () => {
     ];
     const store = deriveStoreState({ reports: [heavy, light], events: reviews });
     expect(store).toMatchObject({ pagesTotal: 2, reviewed: 2, reviewedFresh: 1 });
+  });
+});
+
+/**
+ * The narrowing that keeps a **search** per store while a press crosses a block (ticket 03).
+ *
+ * A block store's dashboard reads two stores' events, and every derivation is safe under
+ * that: each is handed the reports it is about. The log itself is handed out raw to one
+ * reader — the notes half of a search — which filters on the words and the page scope and
+ * never on a store. So `nl`'s search answered with notes written on `be` pages, which is the
+ * cross-store surface `search.mjs` refuses in its first paragraph.
+ */
+describe('the events of the named stores', () => {
+  const written = [
+    dismiss('finding-nl'),
+    event({ store: 'be', page: 'pergola', scope: 'finding', action: 'cleared', findingId: 'f-be' }),
+  ];
+
+  it('keeps the store whose screen it is, and drops its sibling', () => {
+    const kept = eventsOfStores({ events: written, stores: ['nl'] });
+    expect(kept).toHaveLength(1);
+    expect(kept[0].store).toBe('nl');
+  });
+
+  it('keeps both where both are named, because a press writes in both', () => {
+    expect(eventsOfStores({ events: written, stores: ['nl', 'be'] })).toHaveLength(2);
+  });
+
+  // The rule this module opens with, carried through one more field: a read in flight is
+  // not an empty log, and the notes half draws `null` as *still reading* and `[]` as *no
+  // notes*. Coercing here would answer "no notes" on a log nobody had read yet.
+  it('passes an unread log through as unread, and never as empty', () => {
+    expect(eventsOfStores({ events: null, stores: ['nl'] })).toBeNull();
+  });
+
+  it('names no store, and so keeps nothing', () => {
+    expect(eventsOfStores({ events: written, stores: [] })).toEqual([]);
   });
 });

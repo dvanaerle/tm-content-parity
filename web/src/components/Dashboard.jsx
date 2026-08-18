@@ -127,12 +127,15 @@ export default function Dashboard({
   const oneSided = pages.filter((page) => !page.comparable);
 
   /**
-   * The sibling's comparable pages: what a press can **reach** and no number may read.
+   * The sibling's comparable pages: what a press can reach and no number may read.
    *
    * One-sided pages are out of it for the same reason they are out of `comparable` — a page
    * the new site does not answer 200 on has no decidable finding on either store.
+   *
+   * It is a **sibling page** here, in the hook, and in the page that loads it, because that
+   * is the one word `CONTEXT.md` has for it. It went by three names for a while.
    */
-  const reachable = useMemo(
+  const comparableSiblings = useMemo(
     () => siblingPages.filter((page) => page.comparable),
     [siblingPages],
   );
@@ -140,9 +143,13 @@ export default function Dashboard({
   // The same name the page view writes under, out of the same `localStorage` key. A
   // repeat row can write since ticket 31, and every row it writes carries the editor.
   const { editor, save } = useEditor();
-  // `pages` is this store's numbers; `reached` is what a block-spanning press can touch and
-  // what no number here reads. The hook keeps that split — see its own comment.
-  const log = useStoreOverrides({ pages: comparable, reached: reachable, editor });
+  // `pages` is this store's numbers; the sibling's pages are what a block-spanning press can
+  // touch and what no number here reads. The hook keeps that split — see its own comment.
+  const log = useStoreOverrides({
+    pages: comparable,
+    siblingPages: comparableSiblings,
+    editor,
+  });
 
   /** The open count **after** overrides, so the worst page is the worst remaining page. */
   const openOf = (page) =>
@@ -226,13 +233,22 @@ export default function Dashboard({
    * difference only one of them carries is a row of one store the way it always was. On
    * `de` and `uk` the second array is empty and this is the call it always was.
    *
+   * So a block store's list holds **three** kinds of row, and the third is the one to say out
+   * loud: rows spanning both stores, rows of this store alone, and rows of the **sibling
+   * alone** — a difference `be` carries on a page where `nl`'s text is fine. That is not a
+   * side effect to be filtered out. The two dashboards of a block mirror one list, which is
+   * what makes a decision on either of them the same decision; a list that dropped the
+   * sibling's own rows would be two different lists again, and the row an editor cleared on
+   * `be` would vanish from `nl` rather than reading as decided. It is the reason the count
+   * beside the list names the block rather than the store — `narrowed` below.
+   *
    * This is the *Repeats* view only. `rows`, `totals` and the bar above are built from
    * `comparable`, so the sibling moves no number on this screen — a repeat is a grouping
    * the interface makes, and it has never moved one.
    */
   const repeats = useMemo(
-    () => repeatsInStore([...comparable, ...reachable]),
-    [comparable, reachable],
+    () => repeatsInStore([...comparable, ...comparableSiblings]),
+    [comparable, comparableSiblings],
   );
   const shownRepeats = useMemo(() => repeatsWithClasses(repeats, classes), [repeats, classes]);
 
@@ -244,10 +260,21 @@ export default function Dashboard({
    * three chances for the noun to end up over the other list's number. The searching
    * case is absent on purpose — a search counts its own result, and only `Search` holds
    * that count.
+   *
+   * The repeats noun says **in this language block** where there is one, because that is what
+   * the number is over: the list is mirrored across the block and holds rows the sibling
+   * carries alone, so *3,264 differences* on `nl`'s screen would be a count of `nl`'s work,
+   * which it is not — `totals` and the bar above are that. On `de` and `uk` there is no
+   * sibling, the two counts are the same number they always were, and the words are too.
    */
   const narrowed =
     view === 'repeats'
-      ? { shown: shownRepeats.length, total: repeats.length, noun: 'differences' }
+      ? {
+          shown: shownRepeats.length,
+          total: repeats.length,
+          noun:
+            comparableSiblings.length > 0 ? 'differences in this language block' : 'differences',
+        }
       : { shown: rows.length, total: comparable.length, noun: 'pages' };
 
   /**
@@ -300,15 +327,6 @@ export default function Dashboard({
     }
     return counts;
   }, [comparable, log.byPage]);
-
-  /**
-   * Every derived finding a row can be about, by id, so a repeat row can say what is
-   * decided. It comes off the hook since ticket 03, because it has to cover the sibling's
-   * findings too and the hook is the one place that holds both lists — an index rebuilt
-   * here off this store's pages alone would read the sibling's decided findings as `open`
-   * and offer a press that overwrites a colleague.
-   */
-  const byFinding = log.byFinding;
 
   /**
    * What a repeat row needs to be able to decide, in one prop.
@@ -553,7 +571,7 @@ export default function Dashboard({
               // silently surviving that is the more surprising outcome. The words after
               // the scope are a search and not a filter, so they stay.
               onClearFilters={() => patch({ classes: [], query: withoutScope })}
-              byFinding={byFinding}
+              byFinding={log.byFinding}
               // The whole read and not the events alone (ticket 123). The readiness
               // flag has sat beside them here since the hook was written, and the
               // notes half never asked for it, so a log in flight drew as a log
@@ -594,7 +612,11 @@ export default function Dashboard({
                 key={classes.join(',')}
                 repeats={shownRepeats}
                 classes={classes}
-                byFinding={byFinding}
+                // Off the hook and never rebuilt here (ticket 03): it has to cover the
+                // sibling's findings too, and the hook is the one place holding both lists.
+                // An index built here off this store's pages would read the sibling's decided
+                // findings as `open` and offer a press that overwrites a colleague.
+                byFinding={log.byFinding}
                 bulk={bulk}
                 link={link}
               />

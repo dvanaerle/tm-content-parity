@@ -3,6 +3,7 @@ import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { INK } from '../lib/palette.mjs';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
+import { crossesBlock } from '../lib/view.mjs';
 import { cn } from '../lib/utils.js';
 
 /**
@@ -174,6 +175,14 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
 
       {report && <Report {...report} />}
 
+      {/* The clearing's size and its stores, beneath the press that has no form to say them
+          in. It is under the `asking === null` gate the button itself is under: with the
+          dismissal's form open, `Covers` is saying the same thing about the other press and
+          two sentences naming two stores would read as two decisions crossing. */}
+      {bulk?.canWrite && asking === null && cleared.covers > 0 && crossesBlock(cleared) && (
+        <ClearCrossesBlock cleared={cleared} />
+      )}
+
       {bulk?.canWrite && asking === null && dismissal.covers === 0 && <NothingToDismiss />}
 
       {bulk?.canWrite && dismissal.covers > 0 && asking === 'dismiss' && (
@@ -309,7 +318,7 @@ function Covers({ dismissal }) {
       {dismissal.decided > 0
         ? ` of the ${pages}: the other ${dismissal.decided} ${dismissal.decided === 1 ? 'is' : 'are'} decided already.`
         : '.'}
-      <InWhichStores stores={dismissal.stores} />
+      {crossesBlock(dismissal) && <InWhichStores stores={dismissal.stores} />}
     </p>
   );
 }
@@ -317,23 +326,41 @@ function Covers({ dismissal }) {
 /**
  * **In which stores**, said before the press (ticket 03).
  *
- * Drawn only where the press reaches more than one, which is only ever the two stores of
- * one language block. On a single store it would name the store whose dashboard this is,
- * which an editor already knows — and the rule ADR 0018 has to keep is that this sentence
- * appears exactly when a decision leaves the store an editor thinks they are working in.
- *
- * The stores come from the press's own `stores`, so what is named is where the **events**
- * go and never how wide the row is. A row spanning `nl` and `be` whose `be` page a
- * colleague already dismissed says `nl`, because that is where the one event lands.
+ * The sentence itself and not the decision to draw it — `crossesBlock()` is that, and this is
+ * written once for the two presses that say it. It used to exist twice in two wordings: this
+ * one, and a shorter one inside the clearing's `title`. Two wordings of one fact is two facts
+ * as far as an editor reading them is concerned.
  */
-const InWhichStores = ({ stores }) =>
-  stores.length > 1 ? (
-    <>
-      {' '}
-      Written in <strong className="font-medium text-foreground">{stores.join(' and ')}</strong>:
-      these two stores share a language, so the same words are one decision.
-    </>
-  ) : null;
+const InWhichStores = ({ stores }) => (
+  <>
+    {' '}
+    Written in <strong className="font-medium text-foreground">{stores.join(' and ')}</strong>:
+    these two stores share a language, so the same words are one decision.
+  </>
+);
+
+/**
+ * The clearing's own **in which stores**, on screen (ticket 03).
+ *
+ * The dismissal has a form to state its size and its stores in; this press writes on the
+ * first click and had only its `title`, so the sentence naming a second store was visible on
+ * hover and nowhere else — absent on touch, and absent to anyone arriving at the button by
+ * keyboard. *States, before the press, in which stores* is not a thing a tooltip can do.
+ *
+ * It is drawn **only** where the press crosses, which is what keeps it from being a line
+ * under every clearing on `de` and `uk`: the interface is quiet by default (ADR 0019), and
+ * this sentence earns its place by saying that a decision is about to leave the store.
+ */
+const ClearCrossesBlock = ({ cleared }) => (
+  <p className="text-xs text-muted-foreground">
+    Clearing on{' '}
+    <strong className="font-medium text-foreground tabular-nums">
+      {cleared.covers} {cleared.covers === 1 ? 'page' : 'pages'}
+    </strong>
+    .
+    <InWhichStores stores={cleared.stores} />
+  </p>
+);
 
 /**
  * The honest report of a press that did not write everything.
@@ -382,15 +409,12 @@ function Report({ written, total, failedOn, error }) {
  * `title`, which is where round two put everything that explains a number already on
  * screen rather than changing what an editor presses.
  */
-const clearTitle = ({ covers, skipped, stores }) =>
+const clearTitle = ({ covers, skipped }) =>
   'Removes the decision and puts the difference back to open.' +
   (skipped > 0
     ? ` ${skipped} of the ${covers + skipped} selected pages stays as it is: nothing is` +
       ' decided there, or it is a claim that the Fixed tick takes back.'
-    : '') +
-  // Which stores, on the press that has no form to say it in (ticket 03). The clearing
-  // inherits the block-spanning selection and states it in the one place it has.
-  (stores.length > 1 ? ` Written in ${stores.join(' and ')}.` : '');
+    : '');
 
 /**
  * The class named inside a sentence, in words rather than as a pill. The pill is a

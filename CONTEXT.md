@@ -409,15 +409,20 @@ element any more: it folds the links inside it. Both the word and the rule are g
   **Repeats** (~~*Verschillen*~~, 2026-08-13) is the store's repeats in **class groups**,
   worst-first by pages inside each one, and it answers *what do I decide next*; opening a
   row lists its pages, and a page name opens the whole content view for that page and
-  never a fragment of it. Since ticket 03 a row here may be a repeat **spanning this
-  store's language block**, so its pages say which store each is on and a press writes in
-  both. That is still not an all-stores view: a block is two stores, it is derived, and the
-  two dashboards of one block show the same rows mirrored — the same trade ADR 0017 made
-  for the block panel. The store's **numbers are untouched** by it: the bar, the chips, the
-  roll-up and *Pages* are built from this store's pages alone, as they always were. The Dutch label named the wider word: a **difference** is wider
+  never a fragment of it. The Dutch label named the wider word: a **difference** is wider
   than a finding and the view lists **repeats**, so this is a correction and not a
-  translation. **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first,
-  and it answers
+  translation.
+  Since ticket 03 a row here may be a repeat **spanning this store's language block**, so
+  its pages say which store each is on and a press writes in both. The list is then over
+  the **block** and holds three kinds of row: spanning, this store's alone, and the
+  sibling's alone — the two dashboards of a block mirror one list, which is what makes a
+  decision on either of them the same decision. So the count beside the list names the
+  block. That is still not an all-stores view: a block is two stores, it is derived, and
+  the same trade ADR 0017 made for the block panel is the one made here.
+  The store's **numbers are untouched** by it: the bar, the chips, the roll-up and *Pages*
+  are built from this store's pages alone, as they always were — and so is the **search**,
+  which stays per store in both halves.
+  **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first, and it answers
   *which page do I open next*. There is no all-stores repeat view, for the reason
   there is no all-stores dashboard.
 - **Class group** — the repeats of one class in *Repeats*, under a label carrying
@@ -540,8 +545,11 @@ who wins against re-check.
   page that a later crawl finds. Since ticket 03 one selection may span a **language
   block**, and each press then states **in which stores** it will write — off its own
   events and never off the row, because a row spanning two stores whose sibling page a
-  colleague already decided writes in one. Only the **judgement** travels: there is no bulk
-  fix claim, because correcting one store's page does not correct the other's. A partial failure is reported as *N of M saved*: the table
+  colleague already decided writes in one. Both presses say it **on screen**: the
+  dismissal in its form, the clearing on a line of the bar, and neither in a tooltip.
+  Only the **judgement** travels: there is no bulk fix claim, because correcting one
+  store's page does not correct the other's.
+  A partial failure is reported as *N of M saved*: the table
   is append-only, so what was written stands and the interface says how far it got.
   There were three presses until ADR 0011 took the bulk mute; a difference whose every
   finding is already decided therefore offers only the clearing, which is correct — the

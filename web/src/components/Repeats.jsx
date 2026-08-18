@@ -19,7 +19,7 @@ import {
 } from './ui/table.jsx';
 import { CHROME, INK, PILL } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
-import { findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
+import { crossesBlock, findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
 
 /**
  * A store's work listed as differences rather than as pages (ticket 81).
@@ -476,6 +476,16 @@ function SelectAll({ repeat, selected, onTickAll }) {
 }
 
 /**
+ * What one tick announces. It names the store only where the difference crosses a block,
+ * which is the same test — and the same one call — the cell beside it draws under.
+ *
+ * Two pages of one difference can otherwise carry the same name: `afhalen` on `nl` and
+ * `afhalen` on `be` are two ticks a screen reader could not tell apart (ticket 03).
+ */
+const selectLabel = (repeat, entry) =>
+  crossesBlock(repeat) ? `Select ${entry.page} on ${entry.store}` : `Select ${entry.page}`;
+
+/**
  * The pages of one difference, with a tick each (ticket 110).
  *
  * It was a list until this ticket and it is a table now, because a tick is a column and a
@@ -496,13 +506,6 @@ function SelectAll({ repeat, selected, onTickAll }) {
  * which group was open — that is session state by the rule `groupRepeatsByClass()` states,
  * and a pill that is on re-opens its own group anyway.
  */
-/**
- * What one tick announces. It names the store only where the difference is on more than
- * one, which is the same rule the cell beside it draws under.
- */
-const selectLabel = (repeat, entry) =>
-  repeat.stores.length > 1 ? `Select ${entry.page} on ${entry.store}` : `Select ${entry.page}`;
-
 function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searched }) {
   return (
     <div className="border-t border-border bg-muted px-4 py-2 text-sm">
@@ -534,10 +537,7 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
           {repeat.on.map((entry) => (
             <TableRow key={entry.id} data-state={selected.has(entry.id) ? 'selected' : undefined}>
               <TableCell>
-                {/* The label names the store on a row that spans a block, because two
-                    pages of one difference can then carry the same name — `afhalen` on
-                    `nl` and `afhalen` on `be` — and two ticks announced identically are
-                    two ticks a screen reader cannot tell apart (ticket 03). */}
+                {/* `selectLabel()` above holds why the store is in the label. */}
                 <Checkbox
                   checked={selected.has(entry.id)}
                   onCheckedChange={(ticked) => onTick(entry.id, ticked)}
@@ -551,10 +551,10 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
                 >
                   {entry.page}
                 </a>
-                {/* Which store this page is on, and **only** where the difference is on
-                    more than one. On a row inside a single store it would be the store
-                    whose dashboard this is, printed once per page for no reader. */}
-                {repeat.stores.length > 1 && (
+                {/* Which store this page is on, and **only** where the difference crosses a
+                    block. On a row inside a single store it would be the store whose
+                    dashboard this is, printed once per page for no reader. */}
+                {crossesBlock(repeat) && (
                   <span className="ml-2 text-xs text-muted-foreground">on {entry.store}</span>
                 )}
                 <Occurrences count={entry.occurrences} title={onePageTitle(entry.occurrences)} />

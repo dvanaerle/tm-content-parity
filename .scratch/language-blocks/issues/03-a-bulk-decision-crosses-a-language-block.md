@@ -11,7 +11,10 @@ editor is asked about twice.** Measured 2026-08-17.
 
 **Blocked by:** 02 — the sibling match. It does not need the ranked list or the sibling tab.
 
-**Status:** ready-for-human
+**Status:** resolved — 2026-08-17, `75cab6e` on `ticket-104-search-page-scope`, with the code
+review's three findings fixed in the commit after it. Every criterion below is ticked and two
+shipped differently from the ticket; *What shipped differently* at the foot of this file says
+which and why.
 
 ## The measurement gate
 
@@ -93,3 +96,28 @@ never to batch across a gate.
   refused, and this ticket is the reason the refusal can hold rather than a step toward it.
 - **The repeat key is the highest-traffic derivation in the app.** A mistake there moves counts on
   every store, including `de` and `uk`, which are in no block at all.
+
+## What shipped differently
+
+Three things the code review found, fixed in the commit after `75cab6e`.
+
+- **The list is over the block, and the count says so.** The ticket says the *selection* is
+  what widens. It is — a press still writes N ordinary events — but the **rows** widened too:
+  feeding the sibling's pages to the grouping puts three kinds of row on a block store's list,
+  and the third is a difference the **sibling carries alone**. That is kept rather than
+  filtered, because the two dashboards of a block mirror one list and that mirroring is what
+  makes a decision on either of them the same decision; a filtered list would be two lists
+  again, and a row cleared on `be` would vanish from `nl` rather than read as decided. What
+  changed is the wording: the amber strip counts *differences in this language block* where
+  there is a sibling. The gate table is unaffected — it measured this list.
+- **The search stays per store.** Reading both stores' events for the press also handed both
+  stores' events to the one reader that takes the log raw rather than a derivation of it: the
+  notes half of a search, which filters on the words and the page scope and never on a store.
+  So `nl`'s search answered with notes written on `be` pages. `eventsOfStores()` in
+  `overrides/state.mjs` narrows the log back to this store's before it leaves the hook, with
+  four cases in `state.test.mjs`. Every other derivation was already safe: each is handed the
+  reports it is about.
+- **The clearing states its stores on screen.** It stated them in the button's `title`, which
+  is visible on hover and nowhere else — absent on touch, absent to a keyboard. *States,
+  before the press* is not something a tooltip does. It is a line on the bar now, drawn only
+  where the press crosses, with two browser tests.

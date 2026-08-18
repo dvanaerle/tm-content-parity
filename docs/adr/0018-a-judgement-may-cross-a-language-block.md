@@ -69,9 +69,20 @@ and pays for it with an async state on the selection, which is the one control i
 interface that must never be uncertain about what it is aimed at.
 
 **A second `deriveStoreState()` call per dashboard.** `useStoreOverrides()` takes two lists
-since this ticket: `pages`, which is what the store's **numbers** are about, and `reached`,
-which is what a press can touch and no number may read. One list would have been less code
-and would have put `be`'s findings into `nl`'s denominator.
+since this ticket: `pages`, which is what the store's **numbers** are about, and
+`siblingPages`, which is what a press can touch and no number may read. One list would have
+been less code and would have put `be`'s findings into `nl`'s denominator.
+
+**The repeat list is over the block, and three kinds of row are on it.** Feeding the sibling's
+pages to the grouping widens the **rows** as well as the selection: a block store's list holds
+rows spanning both stores, rows of this store alone, and rows the **sibling carries alone** —
+`nl`'s list shows a difference `be` has on a page where `nl`'s own text is fine. That is kept
+rather than filtered out, because the mirroring is the point: the two dashboards of a block
+show one list, which is what makes a decision on either of them the same decision, and a
+filtered list would be two lists again — a row cleared on `be` would vanish from `nl` rather
+than read as decided. The cost is paid in words: the count beside the list says *differences
+in this language block*, because it is no longer a count of this store's work. The bar, the
+chips, the roll-up and *Pages* still are.
 
 ## The boundary that keeps it safe
 
@@ -106,7 +117,21 @@ checkbox stays the only way to make one.
 own events** are in, derived from the entries it can act on — not from the row's `stores`.
 A selection spanning `nl` and `be` whose `be` page a colleague already dismissed says `nl`.
 A sentence that named the block there would imply the block is being decided when a fifth of
-it is not, and that is the trap this feature is most likely to fall into later.
+it is not, and that is the trap this feature is most likely to fall into later. Both presses
+say it **on screen** — the dismissal in its form, the clearing on a line of the bar. The
+clearing said it in a `title` for one commit, which is a sentence an editor sees only by
+hovering; *states, before the press* is not something a tooltip does.
+
+**The search stays per store, and the widening stops at the hook.** Reading two stores' events
+is safe for every *derivation*, because each is handed the reports it is about and
+`derivePageState()` matches on `event.store`. The **log itself** is the exception: it leaves
+the hook raw for one reader, the notes half of a search, which filters on the words and the
+page scope and never on a store. Handed both stores' events, `nl`'s search answered with notes
+written on `be` pages — the cross-store surface `search.mjs` refuses in its first paragraph,
+arrived at without anyone deciding to build it. `eventsOfStores()` narrows the log back before
+it leaves `useStoreOverrides()`, which is where the two lists are told apart; the search has no
+business knowing a block exists. **The general rule this leaves:** what crosses a block is a
+*press* and a *row*. Anything given the log itself must be narrowed first.
 
 ## This is not axis C
 

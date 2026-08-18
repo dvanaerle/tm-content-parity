@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { appendEach } from '../../../overrides/bulk.mjs';
-import { derivePageState, deriveStoreState } from '../../../overrides/state.mjs';
+import { derivePageState, deriveStoreState, eventsOfStores } from '../../../overrides/state.mjs';
 import { createOverridesPort } from '../../../overrides/supabase.mjs';
 import { logState } from './log-read.mjs';
 
@@ -201,20 +201,25 @@ const NO_EDITOR = 'Give your name at the top to decide here. Each decision carri
  * - `pages` is what this store's **numbers** are about — the bar, the roll-up, the review
  *   counts. It is this store's pages and nothing else, which is what keeps the dashboard's
  *   promise that it carries only that store's progress numbers.
- * - `reached` is what a **press** can touch and no number may read: the sibling store's
- *   pages, where this store is in a language block. Their events are fetched and their
- *   findings are derived, so a repeat spanning the block can say what is decided over
+ * - `siblingPages` is what a **press** can touch and no number may read: the sibling
+ *   store's pages, where this store is in a language block. Their events are fetched and
+ *   their findings are derived, so a repeat spanning the block can say what is decided over
  *   there and a press can write there — and `derived.bar` never sees them.
  *
  * A single list would have been less code and would have put `be`'s findings into `nl`'s
  * denominator, which is the one thing ADR 0018 promises this feature does not do.
  *
+ * The second list is called what `CONTEXT.md` calls it — a **sibling page** — and not
+ * *reached* or *reachable*. One concept had picked up three names between the page that
+ * loads it, the dashboard that filters it and this hook, and the glossary has owned the
+ * word since ticket 02.
+ *
  * @param {object} input
  * @param {import('./reports.mjs').PageSummary[]} input.pages
- * @param {import('./reports.mjs').PageSummary[]} [input.reached]
+ * @param {import('./reports.mjs').PageSummary[]} [input.siblingPages]
  * @param {string} [input.editor]
  */
-export function useStoreOverrides({ pages, reached = [], editor = '' }) {
+export function useStoreOverrides({ pages, siblingPages = [], editor = '' }) {
   const { port, reason } = usePort();
   const [events, setEvents] = useState(/** @type {any[] | null} */ (null));
   const [error, setError] = useState(/** @type {string | null} */ (null));
@@ -224,8 +229,8 @@ export function useStoreOverrides({ pages, reached = [], editor = '' }) {
   // only one of them would leave the other's decisions invisible — the state a repeat row
   // shows and the eligibility a press reads are the same lookup.
   const stores = useMemo(
-    () => [...new Set([...pages, ...reached].map((page) => page.store))].sort().join(','),
-    [pages, reached],
+    () => [...new Set([...pages, ...siblingPages].map((page) => page.store))].sort().join(','),
+    [pages, siblingPages],
   );
 
   useEffect(() => {
@@ -262,25 +267,31 @@ export function useStoreOverrides({ pages, reached = [], editor = '' }) {
   );
 
   /**
-   * The reached pages, derived by the **same function** over the same events. Nothing here
+   * The sibling pages, derived by the **same function** over the same events. Nothing here
    * is summed: only `pages` is a store's work, and this list exists so a press can see and
    * write past the store's edge. It is a second call and not a second implementation, so a
    * sibling page's `dismissed` means what a page's `dismissed` means.
    */
-  const reachedState = useMemo(
-    () => deriveStoreState({ reports: reached, events: events ?? [] }),
-    [reached, events],
+  const siblingState = useMemo(
+    () => deriveStoreState({ reports: siblingPages, events: events ?? [] }),
+    [siblingPages, events],
+  );
+
+  /**
+   * Both derivations' pages as one list, which is what the two indexes below are built over.
+   *
+   * Spread **once**. Two indexes ask the same *every page either list holds* question, and
+   * two spreads is two chances for one of them to be built over `derived.pages` alone — the
+   * failure `byFinding` documents below, arrived at by a typo rather than by a decision.
+   */
+  const everyPage = useMemo(
+    () => [...derived.pages, ...siblingState.pages],
+    [derived, siblingState],
   );
 
   const byPage = useMemo(
-    () =>
-      new Map(
-        [...derived.pages, ...reachedState.pages].map((page) => [
-          `${page.store}/${page.page}`,
-          page,
-        ]),
-      ),
-    [derived, reachedState],
+    () => new Map(everyPage.map((page) => [`${page.store}/${page.page}`, page])),
+    [everyPage],
   );
 
   /**
@@ -293,11 +304,11 @@ export function useStoreOverrides({ pages, reached = [], editor = '' }) {
    */
   const byFinding = useMemo(() => {
     const index = new Map();
-    for (const page of [...derived.pages, ...reachedState.pages]) {
+    for (const page of everyPage) {
       for (const finding of page.findings) index.set(finding.id, finding);
     }
     return index;
-  }, [derived, reachedState]);
+  }, [everyPage]);
 
   /**
    * One press, N events, each aimed at its own page (ticket 31).
@@ -312,6 +323,26 @@ export function useStoreOverrides({ pages, reached = [], editor = '' }) {
    * the banner appears. The rows that *were* written still enter the list: they are in
    * the table, and a list that dropped them would disagree with the log it reports on.
    */
+  /**
+   * The events of **this store's** pages, which is the whole of what leaves this hook as a
+   * log rather than as a derived state (ticket 03).
+   *
+   * The fetch above reads both stores of a block, because a press writes in both and a repeat
+   * row has to say what is decided over there. That widening is for the **press and the row**:
+   * `derived.bar` is insulated from it by taking only `pages`, and so is every other
+   * derivation, but `events` is handed out raw to the one reader that is neither — the notes
+   * half of a search. `eventsOfStores()` holds why that reader may not have the sibling's, and
+   * it is asked here, where the two lists are told apart, rather than in the search, which has
+   * no business knowing a block exists.
+   *
+   * The stores come off `pages` and never off the `stores` the effect read: that one is both
+   * of them by design, and narrowing with it would narrow to everything.
+   */
+  const ownEvents = useMemo(
+    () => eventsOfStores({ events, stores: pages.map((page) => page.store) }),
+    [events, pages],
+  );
+
   const appendMany = useCallback(
     async (toWrite) => {
       if (!port || !editor) {
@@ -354,7 +385,9 @@ export function useStoreOverrides({ pages, reached = [], editor = '' }) {
     // 123). The derivation below still coerces, because a state derived from no events
     // is the same state as one derived from none — but a *list of what an editor wrote*
     // is not, and that is the reader this field has.
-    events,
+    //
+    // **This store's** events and not both stores' — `ownEvents` above holds why.
+    events: ownEvents,
     appendMany,
     busy,
     ready: events !== null,

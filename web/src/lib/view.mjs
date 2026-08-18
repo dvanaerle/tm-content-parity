@@ -562,6 +562,39 @@ export function pagesWithPriorities(pages, priorities, priorityOf) {
 }
 
 /**
+ * The stores a set of repeat entries is on, sorted (ticket 03).
+ *
+ * One definition, because there are two readers and they must never disagree: the row's own
+ * `stores` below, and the sentence `bulk.mjs` says above the button about **where the events
+ * go**. The two ask the same question of different arrays — the whole repeat, and the entries
+ * one press can act on — and a second implementation of *which stores* would be free to drift
+ * from the first exactly where the ticket's *80% is not 100%* trap lives.
+ *
+ * Sorted, so a row's answer does not depend on which page was read first.
+ *
+ * @param {{ store: string }[]} on
+ * @returns {string[]}
+ */
+export const storesOf = (on) => [...new Set(on.map((entry) => entry.store))].sort();
+
+/**
+ * Whether a repeat — or a press on one — reaches past a single store (ticket 03).
+ *
+ * More than one store is only ever the two of one language block, so this is the whole test.
+ * It is here rather than written out at each of the four places that ask it, because those
+ * four have to agree: the row names its stores, each tick names one in its label, the
+ * dismissal says where its events go, and the clearing says the same. A block-spanning row
+ * that named its stores in three of the four is a row an editor cannot read.
+ *
+ * It takes anything carrying `stores`, which is a repeat and both presses' results. The
+ * *subject* differs — a whole row, or the entries one press can act on — and that is the
+ * caller's to choose; the question does not change with it.
+ *
+ * @param {{ stores: string[] }} subject
+ */
+export const crossesBlock = (subject) => subject.stores.length > 1;
+
+/**
  * A store's work listed as differences rather than as pages (ticket 81).
  *
  * A **repeat** is every finding in **one store** with the same class, the same two
@@ -656,7 +689,7 @@ export function repeatsInStore(pages) {
   // is one store on all but the block-spanning rows.
   const repeats = [...groups.values()].map((repeat) => ({
     ...repeat,
-    stores: [...new Set(repeat.on.map((entry) => entry.store))].sort(),
+    stores: storesOf(repeat.on),
   }));
 
   // Worst-first, which here is the repeat on the most pages. The tie-break is the

@@ -1,17 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { bulkAnnotation, bulkClear, bulkDismissal } from './bulk.mjs';
 import { noteEventFor, priorityEventFor } from '../../../overrides/state.mjs';
+import { storesOf } from './view.mjs';
 
 /**
  * A repeat as `repeatsInStore()` returns it, narrowed to what this file reads.
  *
- * `stores` is derived from the entries here exactly as the derivation derives it, because
- * a fixture that could name a store its own entries are not on would let these tests pass
- * a shape the real function never produces.
+ * `stores` is derived from the entries by **`storesOf()` itself** and not by a copy of it
+ * here, which is the difference between a fixture that agrees with the derivation and one
+ * that claims to: a fixture free to name a store its own entries are not on would let these
+ * tests pass a shape the real function never produces.
  */
 const repeat = (on) => ({
   key: '["nl","copy","oud","nieuw",null]',
-  stores: [...new Set(on.map((entry) => entry.store))].sort(),
+  stores: storesOf(on),
   class: 'copy',
   prod: 'oud',
   new: 'nieuw',

@@ -576,6 +576,50 @@ describe('a difference that spans a language block', () => {
     unmount();
   });
 
+  /**
+   * The **clearing** says it too, and on screen (the review of ticket 03).
+   *
+   * It shipped in the button's `title`, which is a sentence an editor sees only by hovering:
+   * absent on touch, and absent to anyone who arrived at the button by keyboard. The ticket
+   * asks that the selection *states, before the press, how many events it will write and in
+   * which stores*, and a tooltip does not state anything. The dismissal has a form to say it
+   * in; this press writes on the first click, so the sentence is a line on the bar.
+   */
+  const decidedAcross = () => ({
+    repeats: [acrossBlock],
+    byFinding: new Map(
+      acrossBlock.on.map((entry) => [entry.id, derived(entry.id, { state: 'dismissed' })]),
+    ),
+  });
+
+  it('says in which stores a clearing writes, on the bar and not in a tooltip', () => {
+    const { unmount } = mount(decidedAcross());
+
+    press(differenceRow());
+    press(selectAll());
+
+    // No press yet, and no hover: the words are on the bar as it stands.
+    const bar = document.querySelector('[data-slot="bulk-bar"]').textContent;
+    expect(bar).toContain('Clearing on 2 pages');
+    expect(bar).toContain('Written in be and nl');
+    unmount();
+  });
+
+  it('leaves the clearing quiet where it writes in one store', () => {
+    const { unmount } = mount(decidedAcross());
+
+    press(differenceRow());
+    // One page ticked, so the clearing lands in `nl` alone and there is nothing to warn
+    // about. ADR 0019: the interface is quiet by default, and this sentence earns its place
+    // only by saying a decision is leaving the store.
+    press(pageTicks()[0]);
+
+    const bar = document.querySelector('[data-slot="bulk-bar"]').textContent;
+    expect(button('Clear on this page')).toBeTruthy();
+    expect(bar).not.toContain('Written in');
+    unmount();
+  });
+
   it('says one store where the press reaches one, however wide the difference is', () => {
     const { unmount } = mount(across());
 

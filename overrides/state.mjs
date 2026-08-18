@@ -468,3 +468,34 @@ export function deriveStoreState({ reports, events, observationId }) {
 
   return { pages, bar: totals, buckets, pagesTotal: pages.length, reviewed, reviewedFresh };
 }
+
+/**
+ * The events of the named stores, and no others (ticket 03).
+ *
+ * Since a bulk decision may cross a language block, a dashboard reads the log of **two**
+ * stores: a press writes in both, and a repeat row has to say what is already decided over
+ * there. Every derivation downstream is safe under that widening, because each one is given
+ * the reports it is about and `derivePageState()` matches on `event.store` — so a `be` event
+ * cannot land on an `nl` page's bar however wide the list of events is.
+ *
+ * The **log itself** is the exception, and it has one reader: searching the notes. A note is
+ * a sentence an editor wrote, and that half filters on the words and on the page scope and
+ * never on a store, so handing it both stores' events answers `nl`'s search with notes
+ * written on `be` pages. `search.mjs` opens by refusing exactly that — *per store only* — and
+ * a cross-store search is the back door to a cross-store surface.
+ *
+ * So this narrows the log back to the store whose screen it is, and it lives here, beside the
+ * derivations, because it is the same question they ask of the same field: **which store is
+ * this event about**. `null` is passed through rather than coerced. A read in flight is not an
+ * empty log, which is this module's first rule and the one its one bug was about.
+ *
+ * @param {object} input
+ * @param {OverrideEvent[] | null} input.events
+ * @param {Iterable<string>} input.stores
+ * @returns {OverrideEvent[] | null}
+ */
+export function eventsOfStores({ events, stores }) {
+  if (events === null) return null;
+  const named = new Set(stores);
+  return events.filter((event) => named.has(event.store));
+}

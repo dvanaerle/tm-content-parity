@@ -1,4 +1,5 @@
 import { clearedEventFor } from '../../../overrides/state.mjs';
+import { storesOf } from './view.mjs';
 
 /**
  * What one press on a repeat row would write, and what it covers (ticket 31).
@@ -56,6 +57,13 @@ export function bulkDismissal({ repeat, byFinding, note, selected }) {
   // Both numbers over the **selection**: *4 pages of the 6* is a sentence about the
   // press that is about to be made, and taking its total off the repeat would report a
   // remainder the press was never aimed at.
+  //
+  // `stores` likewise: it is `view.mjs`'s one definition asked about `on` — the entries this
+  // press **can act on** — and never the repeat's own `stores`. That is the ticket's *80% is
+  // not 100%* trap answered in one line: a selection whose sibling page a colleague already
+  // dismissed writes in one store, and a sentence naming two would imply the block is being
+  // decided when a fifth of it is not. Like `covers`, it is over the eligible entries rather
+  // than the events, so it is true before a reason has been typed.
   return { covers: on.length, decided: chosen.length - on.length, stores: storesOf(on), events };
 }
 
@@ -158,20 +166,6 @@ export function bulkClear({ repeat, byFinding, selected }) {
   // gap between the count on the strip and the count on the button is not self-evident.
   return { covers: on.length, skipped: chosen.length - on.length, stores: storesOf(on), events };
 }
-
-/**
- * The stores a press will write in, said before it is made (ticket 03).
- *
- * It is off the entries this press **can act on** and never off the repeat's own `stores`,
- * and that is the ticket's *80% is not 100%* trap answered in one line: a selection whose
- * sibling page a colleague already dismissed writes in one store, and a sentence naming
- * two would imply the block is being decided when a fifth of it is not.
- *
- * It is derived here and not in the bar, for this file's own reason: the sentence above the
- * button and the events behind it come off one array. Like `covers`, it is over the
- * eligible entries rather than the events, so it is true before a reason has been typed.
- */
-const storesOf = (on) => [...new Set(on.map((entry) => entry.store))].sort();
 
 /**
  * The one state a clearing is offered on, which is `OverrideControl.jsx`'s one.
