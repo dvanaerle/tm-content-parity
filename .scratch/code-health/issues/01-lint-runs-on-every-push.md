@@ -16,11 +16,18 @@ all set to `error` and would fail a run, but every built-in correctness rule fir
 level, so a workflow running a bare `npm run lint` would enforce fifteen rules and tick green
 over all the rest. Deny warnings.
 
+**The type-check is in the same hole.** `tsconfig.json` and a `typecheck` script arrived on
+`ticket-104-search-page-scope` after this ticket was written, covering `oxlint.config.ts` and
+the plugin sources under `tools/oxlint/` at `strict: true`. Nothing runs it either. The plugin
+that implements the 15 rules is now type-checked by a script no workflow calls, which is the
+same defect twice, so this ticket runs both checks.
+
 **This lands green.** Measured 2026-08-18: `oxlint .` over the tracked tree emits no
-diagnostic at all — not an error, not a warning — and exits 0. So no cleanup precedes this
-ticket, and the workflow does not arrive red.
+diagnostic at all — not an error, not a warning — and exits 0. `tsc --noEmit` emits nothing and
+exits 0. So no cleanup precedes this ticket, and the workflow does not arrive red.
 
 - [ ] A workflow runs the repo's lint script on push and on pull request.
+- [ ] The same workflow runs the type-check script.
 - [ ] A warning fails the run, not only an error.
 - [ ] Verified end to end: a branch carrying a deliberate warning-level violation goes red,
       and a clean branch goes green. The test branch is deleted, not merged.

@@ -240,8 +240,15 @@ enough on its own: measured 2026-08-18, `oxlint` reports a `no-debugger` violati
 rules are all `error` and would fail a run, so a bare script would enforce those fifteen and
 tick green over everything else. Warnings are denied.
 
+The same workflow runs the type-check. `tsconfig.json` and a `typecheck` script arrived on
+`ticket-104-search-page-scope` while this spec was being written, covering `oxlint.config.ts`
+and the plugin sources at `strict: true`, and no workflow calls that either — so the plugin
+implementing the 15 rules is type-checked by a script nothing runs. It is the same defect twice
+and it is fixed once.
+
 The tree needs no cleanup first. Measured 2026-08-18, `oxlint .` over the tracked tree emits no
-diagnostic of either severity and exits 0, so the workflow lands green on arrival.
+diagnostic of either severity and exits 0, and `tsc --noEmit` emits nothing and exits 0, so the
+workflow lands green on arrival.
 
 **No marker lint rule.** A rule banning `TODO`/`FIXME`/`XXX`/`HACK` was considered and
 rejected: the scan found none in the tree, so it would guard nothing, and adding it to a lint
