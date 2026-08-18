@@ -535,7 +535,6 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
           {repeat.on.map((entry) => (
             <TableRow key={entry.id} data-state={selected.has(entry.id) ? 'selected' : undefined}>
               <TableCell>
-                {/* `selectLabel()` above holds why the store is in the label. */}
                 <Checkbox
                   checked={selected.has(entry.id)}
                   onCheckedChange={(ticked) => onTick(entry.id, ticked)}

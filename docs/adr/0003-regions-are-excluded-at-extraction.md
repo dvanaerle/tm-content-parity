@@ -123,7 +123,7 @@ The list will grow. Each new entry needs all four:
   selector already names, and such a region is already excluded, so it produces no
   findings to fold. Depth is the other half of the answer: block-shaped content
   reaches **11 pages at most, 4 keys over 10, none over 25**, measured 2026-08-18 by
-  `crawl/probes/probe-shared-regions.mjs` over the 722-page corpus. See
+  `web/probes/probe-shared-regions.mjs` over the 722-page corpus. See
   `.scratch/content-parity-log/issues/.out-of-scope/70-shared-regions-by-content-hash.md`.
 
 ## Consequences

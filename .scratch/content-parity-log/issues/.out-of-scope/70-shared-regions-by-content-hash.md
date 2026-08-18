@@ -1,11 +1,14 @@
 # 70 — Shared regions are found by content hash
 
 Type: grilling (deferred half)
-Status: wontfix — **parked 2026-08-18**, on the measurement in this file. Both halves are
-gone for different reasons: the exclusion half shipped by other means, and the identity half
-is **already built under another name** — `repeatsInStore()` is the content key this ticket
-asked for, and it folds deeper than the ticket proposed. Parked before a line of it was
-written, on the numbers below.
+Status: wontfix — **parked 2026-08-18**, on the measurement in this file. Both halves of the
+mechanism are gone, for different reasons: the exclusion half shipped by other means, and the
+identity half is **already built under another name** — `repeatsInStore()` is the content key
+this ticket asked for, and it folds deeper than the ticket proposed. **One box is not gone
+and is not built**: surfacing an unlisted frequent block for a person to classify. It is
+handed to ticket 63, because everything the measurement found under it is `information` or
+`diagnostic` and so is out of reach of the `work`-only surface that answers the rest. Parked
+before a line of it was written, on the numbers below.
 Parent: ../../map.md
 
 **Origin:** the grilling of 2026-08-07 on the content unit, questions 22 and 24. It was the
@@ -24,30 +27,51 @@ Was: blocked by 64, 67. Both resolved.
       2026-08-11 without a hash.** `shared/excluded-regions.mjs` keys on
       `selector: '#campaign-banner'`, an id production puts on the block, which is the same
       signal in all six stores and names no campaign.
-- [x] A hash that appears on many pages and is not in the list is surfaced **once**, for a
-      person to classify as legacy-only, non-editorial, or real work. — **The repeats
-      surface already is this**, worst-first. Its top rows are exactly the unclassified
-      chrome this box wanted surfaced, and they are listed below.
+- [ ] A hash that appears on many pages and is not in the list is surfaced **once**, for a
+      person to classify as legacy-only, non-editorial, or real work. — **Not built, and not
+      satisfied by the repeats surface.** The repeats list and the search index are
+      `work`-only (`view.mjs`'s docblock; `search.mjs` skips `!isWork`), and the two frequent
+      unlisted blocks this measurement actually found are **not** `work` — the compare
+      toolbar is 516 `information` findings and `no-declared-alternate` is 349 `diagnostic`.
+      So the one box with a live want behind it is **out of scope of the surface that
+      answers the other two**, and it is handed to ticket 63, where an excluded-region
+      entry is the decision a person would record anyway. This probe is the surfacing for
+      now: `recurrence.deepestShared` is the list, and re-running it is the classification
+      pass.
 - [x] Measure first, and put the number in this ticket. — **Done, below.** The share is
       small in the only shape that matters, so by this ticket's own gate the identity half
       is not worth building.
 - [x] If the measurement shows most findings are shared-block findings, stop and say so. —
-      **It does not.** 36.3% of findings share content with another page, which is not most,
-      and 81.4% of that is labels rather than blocks. The roadmap does not reorder.
+      **Answered on the word `block`, and it needs saying carefully, because one reading of
+      the number is a majority.** Findings that recur across pages *at all* are **most of
+      the work queue**: `repeatsInStore()` folds 14,449 of 22,048 `work` findings, 65.5%,
+      into multi-page rows. What is **not** most is shared-*block* findings — the thing this
+      ticket proposed to identify. 81.4% of shared findings are labels under 60 characters,
+      block-shaped content is **5.9% of all findings**, and it reaches 11 pages at most. So
+      the roadmap does not reorder, and the reason it does not is the shape of what recurs
+      and never the headline share. Stated rather than left implied, because the 36.3% on
+      its own would not carry this box.
 - [x] Needs the new environment. It answered HTTP 500 on all six hosts while this was
       written. — **It has since answered.** The corpus read below was built 2026-08-17.
 
 ## The measurement
 
-`node crawl/probes/probe-shared-regions.mjs`, over `data/reports/` as built **2026-08-17**:
+`node web/probes/probe-shared-regions.mjs`, over `data/reports/` as built **2026-08-17**:
 816 reports, **722 comparable**, all six stores, both sides. Written to
 `data/probe-shared-regions.json`. It needs no network — the corpus on disk holds every
 finding, and every key is a pure function of it.
 
-The instrument is the **content key**: the finding id minus store and page — check, class,
-the two normalised sides, detail. Two pages carrying the same authored block land on one
-key. It is deliberately the widest reading of "the same block", with no region boundary
-required, so every share below is an **upper bound** on what a region hash could fold.
+The instrument is the **content key**: the finding id minus store, page and `rule` — check,
+class, the two normalised sides, detail. Two pages carrying the same authored block land on
+one key, and no region boundary is required, so it counts recurrence a region hash could not
+reach as well as recurrence it could.
+
+**It is not an upper bound on the fold in §"Why it is parked", and a first draft of this file
+said it was.** This key is *finer* than `repeatsInStore()` in two ways — it carries `check`,
+and it never crosses a store — so the shipped fold folds strictly coarser and reaches
+further. The two measurements answer different questions: how much content recurs at all,
+and how much the log already folds. Neither bounds the other. Dropping `rule` cuts the same
+way, and can only *under*-count.
 
 **41,030 findings over 30,087 distinct content keys. 14,913 findings (36.3%) share their
 content with at least one other page**; 37.1% of units, and 32.8% of the 22,048 `work`
@@ -62,7 +86,9 @@ findings.
 | 11–25 | 3,085 | 7.5% |
 | 25+ | **377** | **0.9%** |
 
-**36.3% is the wrong number to act on, and the shape says why.** Of the shared findings:
+**36.3% is the wrong number to act on in either direction, and the shape says why.** It reads
+low against the fold below, which reaches 65.5% of the work queue; it reads alarmingly high
+against what a region hash could ever fold. Of the shared findings:
 
 - **81.4% (12,135) are label-shaped** — under 60 characters. `Sluiten`, `Montage`,
   `Fotogalerij`, `Clear all`, `Vergelijken`, `Filteren & Sorteren`, and link targets.
