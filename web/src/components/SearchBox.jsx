@@ -187,7 +187,7 @@ export default function SearchBox({ value, onChange, pages }) {
                 index === active && 'bg-accent text-accent-foreground',
               )}
             >
-              <span className="truncate font-mono text-xs">/{one.page}</span>
+              <span className="truncate text-xs">/{one.page}</span>
               {/* Offered **and marked**: a one-sided page is the one kind a search cannot
                   otherwise reach — it has no findings and can never have any, so nothing
                   indexes it — and a scope onto one lands on part A's explanation rather

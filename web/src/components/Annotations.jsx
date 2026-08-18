@@ -15,7 +15,7 @@ import { locationUrl } from '../../../compare/locate.mjs';
  * finding: the two texts are identical and the tag is what changed.
  */
 export const Tag = ({ unit }) =>
-  unit ? <span className="mr-2 font-mono text-xs text-muted-foreground">{unit.tag}</span> : null;
+  unit ? <span className="mr-2 text-xs text-muted-foreground">{unit.tag}</span> : null;
 
 /**
  * Ticket 33. On `heading-level` and `tag-changed` the two text columns are equal,
@@ -28,7 +28,7 @@ export const Tag = ({ unit }) =>
  * the one distinction that ticket keeps.
  */
 export const Detail = ({ detail }) =>
-  detail ? <span className="ml-2 font-mono text-xs text-muted-foreground">{detail}</span> : null;
+  detail ? <span className="ml-2 text-xs text-muted-foreground">{detail}</span> : null;
 
 /**
  * Ticket 34. A finding reading `hier` or `carports` used to send an editor hunting

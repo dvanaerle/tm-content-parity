@@ -214,7 +214,7 @@ export function ScopeChip({ scope, onClear }) {
       // `overkap` is the one thing spelled two ways this component exists to avoid.
       title={`The search is narrowed to /${scope} — the pages whose key holds ${scope}. The counts above do not change.`}
     >
-      <span className="font-mono">/{scope}</span>
+      <span>/{scope}</span>
       <Button
         variant="ghost"
         size="icon-xs"

@@ -3,7 +3,6 @@ import { isUncompared, spansFor, wordDiff } from '../../../compare/worddiff.mjs'
 import { cn } from '../lib/utils.js';
 import { Button } from './ui/button.jsx';
 import { TableCell } from './ui/table.jsx';
-import { SURFACE, TOKEN } from '../lib/palette.mjs';
 
 /**
  * One diff, four surfaces: content rows, link findings, image findings and the
@@ -33,10 +32,7 @@ import { SURFACE, TOKEN } from '../lib/palette.mjs';
  * was compared.
  *
  * **`mono` is for a machine string, and not for prose.** A url, an image path and a
- * `<head>` value align character by character, and an editor reads them for the one
- * character that changed. A content cell holds Dutch prose. On a long paragraph,
- * `font-mono text-xs` costs more legibility than the alignment returns, and the word
- * layer already shows which words changed.
+ * `<head>` value are set smaller than Dutch prose so they sit apart from a paragraph.
  */
 
 /**
@@ -105,7 +101,7 @@ export function DiffCells({
         side="production"
         value={prod}
         spans={uncompared ? null : spans}
-        tint={tinted && !equal && next === null ? SURFACE.lost : null}
+        tone={tinted && !equal && next === null ? 'lost' : null}
         prefix={prodPrefix}
         raw={prodRaw}
         mono={mono}
@@ -116,7 +112,7 @@ export function DiffCells({
         side="new"
         value={next}
         spans={uncompared ? null : spans}
-        tint={tinted && !equal && prod === null ? SURFACE.added : null}
+        tone={tinted && !equal && prod === null ? 'added' : null}
         prefix={newPrefix}
         raw={newRaw}
         mono={mono}
@@ -156,7 +152,7 @@ function Cell({ side, value, spans, tint, prefix, raw, mono, strong, note }) {
   }
 
   return (
-    <TableCell className={cn(layout, 'break-words', tint, mono ? 'font-mono text-xs' : 'text-sm')}>
+    <TableCell className={cn(layout, 'break-words', tint, mono ? 'text-xs' : 'text-sm')}>
       {prefix}
       {note && <p className="mb-1 text-xs text-muted-foreground italic">{note}</p>}
       <span className={strong ? 'font-semibold' : ''}>

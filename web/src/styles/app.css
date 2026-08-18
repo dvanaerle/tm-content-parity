@@ -32,8 +32,7 @@
  * library at all.
  *
  * Fonts are self-hosted under `web/public/fonts/`, not fetched from a CDN: this
- * build is opened from outside the network. Articulat CF marks a changed word
- * (`ins` / `del`); Geist Mono is the monospaced family for machine strings.
+ * build is opened from outside the network.
  */
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -50,22 +49,6 @@
   font-family: 'Articulat CF';
   src: url('/fonts/Articulat_CF/articulatcf-demibold-600.woff2') format('woff2');
   font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Geist Mono';
-  src: url('/fonts/Geist_Mono/GeistMono-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Geist Mono';
-  src: url('/fonts/Geist_Mono/GeistMono-Medium.woff2') format('woff2');
-  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
@@ -228,14 +211,7 @@
   --color-info-text: var(--color-sky-700);
   --color-on-info-subtle: var(--color-sky-900);
 
-  /*
-   * The comparison cells. The styleguide has no monospaced family. Two strings that
-   * are almost the same align only in a monospaced family. Geist Mono is self-hosted
-   * under `public/fonts/`; the device stack behind it covers a missing file.
-   */
-  --font-mono:
-    'Geist Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'SF Mono', Menlo, Consolas,
-    monospace;
+  --font-sans: 'Articulat CF', ui-sans-serif, system-ui, sans-serif;
 }
 
 /*
@@ -340,15 +316,6 @@
 
   /* `rounded`, matching the corner the rest of the interface has. */
   --radius: 0.25rem;
-
-  /*
-   * A changed word inside a diff cell (`ins` / `del`). Articulat CF is the brand
-   * sans from the measuring tool; medium is the lightest cut we ship (there is no
-   * regular), so a mark that does not ask for bold still lands on a real face.
-   * Declared here rather than in `@theme`: Tailwind only emits theme keys a utility
-   * class references, and nothing wears a `font-diff` class.
-   */
-  --font-diff: 'Articulat CF', ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -368,14 +335,341 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    font-weight: 500;
+  }
+
   /*
-   * Word-level diff marks. Colour and decoration already say what changed; the
-   * brand sans separates the edit from the surrounding cell text (which stays on
-   * the UI stack, including Geist Mono when the cell is a machine string).
+   * Weight stays medium so a mark inside a semibold cell does not pick up the
+   * cell's cut.
    */
   del,
   ins {
-    font-family: var(--font-diff);
     font-weight: 500;
+  }
+}
+
+/*
+ * --- A tone is a selector, and a shape is a rule (ticket 132) -------------- *
+ *
+ * **This is where a tone becomes a styleguide colour.** Everything above this block
+ * publishes the styleguide's own names — `danger-subtle`, `on-warning`, `info-text`.
+ * Everything below turns those into the eight **tones** this tool reasons in, and into
+ * the **shapes** a component wears them as. A component asks for a tone and a shape; it
+ * never asks for a colour.
+ *
+ * A tone is a meaning, and not a hue:
+ *
+ * | tone      | meaning                                                         |
+ * |-----------|-----------------------------------------------------------------|
+ * | `lost`    | production has this and the new site does not                   |
+ * | `added`   | the new site has this and production does not                   |
+ * | `warning` | the new site is wrong on its own terms — a dead or leaked link   |
+ * | `caution` | something changed and an editor decides what to do about it     |
+ * | `closed`  | done                                                            |
+ * | `info`    | information the editor did not ask for                          |
+ * | `neutral` | carrying no judgement                                           |
+ * | `total`   | a total                                                         |
+ *
+ * **The vocabulary is generic where the hue is free and the domain's where it is not**
+ * (ticket 131). `warning`, `caution`, `info` and `neutral` are ordinary words because
+ * amber, blue and grey are this file's to spend. The other four are not. `lost` and
+ * `added` are `CONTEXT.md`'s **Direction** — which side a one-sided difference is missing
+ * from — and `error` and `success` were refused for them: `error` promises red over an
+ * amber tone, and new-only content is a difference an editor still has to resolve, so
+ * green claiming *this went well* would be a false statement in the interface. `closed`
+ * is the real success state and it is blue, which is the second reason `success` would
+ * mislead. `total` is worn by any total and so is not the glossary's **Roll-up**, which
+ * is a summed number of a particular kind.
+ *
+ * **`lost` and `added` are the only red and the only green in the interface. No status
+ * uses them.** This rule is what makes the diff readable: red shows a loss, and nothing
+ * else. `warning` and `caution` are two weights of one amber for the same reason — a
+ * third loud hue would have to be the brand orange, and brand colour is for chrome only,
+ * because it says *this is a Tuinmaximaal tool* and must never look like a finding.
+ *
+ * `closed` and `info` take the **same** step of `Info` on purpose. They were one tone
+ * until ticket 131; the split is about which of two meanings a reader is being handed,
+ * and it moved no pixel. They share one rule below so they cannot drift apart by
+ * accident.
+ *
+ * --- Why this is CSS and not a table of class names ------------------------
+ *
+ * `palette.mjs` holds eight maps of Tailwind class names under one constraint: *Tailwind
+ * finds class names in the source text, therefore each value is a literal and no value is
+ * assembled from parts.* That constraint is not satisfied here — it stops existing,
+ * because there is no class name for Tailwind to find. And it is what forced three
+ * hand-written transcriptions elsewhere in the interface: a pressed tone carrying its own
+ * variant prefix, a tick map carrying `data-checked:` prefixes, and a tab height behind a
+ * group-data modifier. None of those is a palette problem. All three are the same
+ * problem — **a tone that depends on a state cannot be a literal, and everything in the
+ * palette has to be a literal.** As a selector it is ordinary.
+ *
+ * **These are selectors over styleguide variables, and not a second set of colour
+ * names.** Ticket 74 removed a second `--color-*` vocabulary from this file and its
+ * reasoning stands: two sets of names means only a mapping file can tell you what a name
+ * meant. Nothing below adds a `--color-*` name. A tone sets `--tone-*` properties that
+ * *point at* the styleguide variables above, and a shape reads them. The styleguide names
+ * stay the only colour names in this interface.
+ *
+ * **`@layer components`, so a utility still wins.** Tailwind emits its own layer order —
+ * `theme, base, components, utilities` — and a shape belongs in `components` for the
+ * reason that layer exists: a component that has to depart from a shape can still do it
+ * with an ordinary utility class, because `utilities` comes after. A layer of our own
+ * would land after `utilities` and take that away.
+ *
+ * Every feature here is Baseline Widely Available per ADR 0015: attribute selectors,
+ * custom properties and cascade layers. Container **style** queries — the feature that
+ * looks made for this — are Newly Available and refused.
+ *
+ * --- The seven properties a tone sets --------------------------------------
+ *
+ * | property          | what it is                                                  |
+ * |-------------------|-------------------------------------------------------------|
+ * | `--tone-ground`   | the pale ground a tinted label or cell is made of           |
+ * | `--tone-ink`      | the ink that sits on that ground, and on the page            |
+ * | `--tone-ink-deep` | the styleguide's own `on-*-subtle` pairing, a step darker     |
+ * | `--tone-solid`    | the loud ground                                              |
+ * | `--tone-on-solid` | the ink that stays legible on the loud ground                |
+ * | `--tone-line`     | a banner's border                                            |
+ * | `--tone-fill`     | one flat colour, with nothing on top of it                   |
+ *
+ * A tone that does not publish a property has not got that step, and a shape reading it
+ * prints nothing. That is the decision and not a hole: `caution` has no `--tone-on-solid`
+ * because no ink stays legible on the quiet amber's solid step, and only `lost` and
+ * `added` have a `--tone-ink-deep` because the word layer is the only shape that reads
+ * one and the word layer is direction-only.
+ *
+ * The same goes for the shapes. **Four of the eight are sparse**, and the sparseness is
+ * the decision rather than an enumeration somebody left unfinished — the ink shape holds
+ * the four tones a component has asked for, the cell and word shapes hold the two
+ * directions, and the accent shape holds two statuses. A tidy eight-by-eight product
+ * would give a diff cell six tones it must never have.
+ */
+@layer components {
+  /* --- The eight tones ----------------------------------------------------- */
+
+  /*
+   * `Danger` and `Success`, spent on **direction** and never on status. Each is used in
+   * three weights, and that is the only reason the ramp needs three: `*-subtle` tints a
+   * whole cell that exists on one side only, `*-text` is the ink, and `on-*-subtle` is
+   * the deeper ink the word layer sits under.
+   */
+  [data-tone='lost'] {
+    --tone-ground: var(--color-danger-subtle);
+    --tone-ink: var(--color-danger-text);
+    --tone-ink-deep: var(--color-on-danger-subtle);
+    --tone-solid: var(--color-danger);
+    --tone-on-solid: #fff;
+    --tone-line: var(--color-danger);
+    --tone-fill: var(--color-danger);
+  }
+
+  [data-tone='added'] {
+    --tone-ground: var(--color-success-subtle);
+    --tone-ink: var(--color-success-text);
+    --tone-ink-deep: var(--color-on-success-subtle);
+    --tone-solid: var(--color-success);
+    --tone-on-solid: #fff;
+    --tone-line: var(--color-success);
+    --tone-fill: var(--color-success);
+  }
+
+  /*
+   * The loud amber: the new site is wrong on its own terms. It has a solid step with
+   * white on it, and it is the one tone whose banner takes that solid step rather than
+   * the pale ground — see the banner override below.
+   *
+   * `--tone-fill` is the deeper `warning-text` and not the solid `warning`, which reads
+   * backwards until you know why: a fill carries no ink, so the pale end of the ramp is
+   * invisible against the page and **both ambers have to come from the deep end**. Read
+   * against each other they still run the right way round — the loud tone is the darker
+   * of the two — but this is the one place the ramp is read from the far end.
+   */
+  [data-tone='warning'] {
+    --tone-ground: var(--color-warning-subtle);
+    --tone-ink: var(--color-on-warning);
+    --tone-solid: var(--color-warning);
+    --tone-on-solid: #fff;
+    --tone-line: var(--color-warning-text);
+    --tone-fill: var(--color-warning-text);
+  }
+
+  /*
+   * The quiet amber: something changed and an editor decides what to do about it.
+   *
+   * **No `--tone-on-solid`, and that is the decision.** The solid amber exists here — a
+   * banner draws its border with it and a bar fills with it — but nothing legible sits
+   * *on* it that is not already `warning`'s white. So the two ambers stay apart by the
+   * quiet one having no ink for its loud ground, and the solid shape below says what a
+   * `caution` chip does instead.
+   */
+  [data-tone='caution'] {
+    --tone-ground: var(--color-warning-subtle);
+    --tone-ink: var(--color-on-warning);
+    --tone-solid: var(--color-warning);
+    --tone-line: var(--color-warning);
+    --tone-fill: var(--color-warning);
+  }
+
+  /*
+   * `Info`, twice. One rule and not two: `closed` and `info` take the same step
+   * deliberately, and a shared rule is what stops them drifting apart by accident. Blue
+   * and not green marks a resolved finding, because green is `added` and a reader who
+   * saw both would have one hue carrying two meanings.
+   */
+  [data-tone='closed'],
+  [data-tone='info'] {
+    --tone-ground: var(--color-info-subtle);
+    --tone-ink: var(--color-info-text);
+    --tone-solid: var(--color-info);
+    --tone-on-solid: #fff;
+    --tone-line: var(--color-info);
+    --tone-fill: var(--color-info);
+  }
+
+  /*
+   * Carrying no judgement. The two greys are not one grey: the ground pairs shadcn's
+   * `--muted` with `--muted-foreground`, and the solid step pairs the styleguide's
+   * `surface-strong` with `text-muted`. That is how the maps had it, and it is
+   * transcribed rather than tidied — unifying them would move pixels, and this ticket
+   * moves none.
+   */
+  [data-tone='neutral'] {
+    --tone-ground: var(--muted);
+    --tone-ink: var(--muted-foreground);
+    --tone-solid: var(--color-surface-strong);
+    --tone-on-solid: var(--color-text-muted);
+    --tone-line: var(--border);
+    --tone-fill: var(--border);
+  }
+
+  /* A total. One value at every weight, because a total is never louder or quieter. */
+  [data-tone='total'] {
+    --tone-ground: var(--color-border-strong);
+    --tone-ink: #fff;
+    --tone-solid: var(--color-border-strong);
+    --tone-on-solid: #fff;
+    --tone-line: var(--color-border-strong);
+    --tone-fill: var(--color-border-strong);
+  }
+
+  /* --- The eight shapes ---------------------------------------------------- */
+
+  /* A tinted label. The default shape for a class name or a state. */
+  [data-shape='pill'] {
+    background-color: var(--tone-ground);
+    color: var(--tone-ink);
+  }
+
+  /* A filled chip. Use it for a number that must be legible at a distance. */
+  [data-shape='solid'] {
+    background-color: var(--tone-solid);
+    color: var(--tone-on-solid);
+  }
+
+  /*
+   * Not solid, and not a mistake. `caution` has no ink for its solid step, so the pair
+   * stays apart here by the subtle one staying subtle.
+   */
+  [data-shape='solid'][data-tone='caution'] {
+    background-color: var(--tone-ground);
+    color: var(--tone-ink);
+  }
+
+  /*
+   * A bar fill or a dot. One flat colour, no ink.
+   *
+   * A progress track also fills with the brand step, and that is **not** a tone — it is
+   * a fill because a fill is what it is. It stays a class on the element rather than
+   * becoming a ninth `data-tone`, which would put a colour with no meaning into the
+   * vocabulary.
+   */
+  [data-shape='fill'] {
+    background-color: var(--tone-fill);
+  }
+
+  /* A whole-width message. Border, ground and ink. */
+  [data-shape='banner'] {
+    border-color: var(--tone-line);
+    background-color: var(--tone-ground);
+    color: var(--tone-ink);
+  }
+
+  /*
+   * The two ambers must not print the same banner. A `warning` banner reports a failure
+   * and a `caution` banner reports a condition, and a reader who sees one shape cannot
+   * tell which of the two they have — so `warning` takes the solid ground under white
+   * and `caution` keeps the pale one.
+   */
+  [data-shape='banner'][data-tone='warning'] {
+    background-color: var(--tone-solid);
+    color: var(--tone-on-solid);
+  }
+
+  /* The quiet banner sits on the page's own warm ground, not on the pill's grey. */
+  [data-shape='banner'][data-tone='neutral'] {
+    background-color: var(--color-surface);
+    color: var(--color-text-muted);
+  }
+
+  /*
+   * Ink on the page ground, for a word or a number beside other text. No border and no
+   * fill: a tinted label is the pill.
+   *
+   * **Four tones, listed rather than derived.** This shape holds the tones a component
+   * has asked for, and a fifth is one line when one asks.
+   */
+  [data-shape='ink'][data-tone='lost'],
+  [data-shape='ink'][data-tone='added'],
+  [data-shape='ink'][data-tone='caution'],
+  [data-shape='ink'][data-tone='info'] {
+    color: var(--tone-ink);
+  }
+
+  /*
+   * The row layer of the diff: a whole cell whose content exists on one side only.
+   *
+   * **Two tones and no more.** A tinted cell is a claim that the content is missing on
+   * the other side, and only `lost` and `added` make that claim. In JavaScript a map
+   * with two keys refused a third; a selector that does not match fails silently, so the
+   * refusal is written here as a restriction and asserted in `palette.test.mjs` and
+   * `Diff.browser.test.mjs`.
+   */
+  [data-shape='cell'][data-tone='lost'],
+  [data-shape='cell'][data-tone='added'] {
+    background-color: var(--tone-ground);
+  }
+
+  /*
+   * The word layer of the diff: a changed token inside a cell that is otherwise calm.
+   * The same two tones, and for the same reason.
+   *
+   * It takes the pale ground under `--tone-ink-deep` — the `on-*-subtle` step, which is
+   * the ink the styleguide itself pairs with that ground, and one step darker than the
+   * pill's. It inverted once, a solid `*-text` ground under white, and that was dropped
+   * in August 2026 because it did not need to be that loud: **the word layer only ever
+   * appears on an untinted cell.** A one-sided pair has nothing to diff against, so it
+   * gets the row layer and no words; a two-sided pair gets the words and no tint. The two
+   * layers never stack, and the word only has to stand off the page.
+   */
+  [data-shape='word'][data-tone='lost'],
+  [data-shape='word'][data-tone='added'] {
+    background-color: var(--tone-ground);
+    color: var(--tone-ink-deep);
+  }
+
+  /*
+   * A native form control's own colour. The fix checkbox has three visual states and two
+   * of them are ticked: `closed` for a claim that stands, and `caution` for a claim a
+   * later observation contradicted.
+   *
+   * **Status tones only.** A checkbox reports work, and a work state never wears the diff
+   * hues: an editor who saw a tick in the diff's red would read it as a claim about the
+   * content rather than about their own decision.
+   */
+  [data-shape='accent'][data-tone='closed'],
+  [data-shape='accent'][data-tone='caution'] {
+    accent-color: var(--tone-solid);
   }
 }
