@@ -12,7 +12,10 @@ editor is asked about twice.** Measured 2026-08-17.
 **Blocked by:** 02 — the sibling match. It does not need the ranked list or the sibling tab.
 
 **Status:** resolved — 2026-08-17, `75cab6e` on `ticket-104-search-page-scope`, with the code
-review's three findings fixed in the commit after it. Every criterion below is ticked and two
+review's three findings fixed in `ace4d84`, 2026-08-18. That commit is named rather than called
+*the next one*, because it was not: it sat uncommitted in a working tree while two ticket-04
+commits went in ahead of it, and this line said *the commit after it* for a day when `HEAD`
+carried none of the three fixes. Every criterion below is ticked and two
 shipped differently from the ticket; *What shipped differently* at the foot of this file says
 which and why.
 
