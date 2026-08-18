@@ -21,11 +21,16 @@ import { cn } from '../lib/utils.js';
  * A saved re-check from an earlier press replaces it the same way (ticket 71),
  * and the footer says which of the two the reader is looking at.
  */
-export default function PageView({ report: built, sibling = null, firstSeen = {} }) {
+export default function PageView({
+  report: built,
+  sibling = null,
+  firstSeen = {},
+  closedWith = {},
+}) {
   const { editor, save } = useEditor();
   const recheckAvailable = useRecheckAvailable();
   const { report, source, onReport } = usePageReport(built, recheckAvailable);
-  const log = useOverrides({ report, editor });
+  const log = useOverrides({ report, editor, closedWith });
 
   const recheck = useRecheck(onReport);
 
@@ -38,8 +43,13 @@ export default function PageView({ report: built, sibling = null, firstSeen = {}
    * never seen, which is why a finding may carry no date at all.
    */
   const findings = useMemo(
-    () => derived.findings.map((finding) => ({ ...finding, firstSeen: firstSeen[finding.id] })),
-    [derived.findings, firstSeen],
+    () =>
+      derived.findings.map((finding) => ({
+        ...finding,
+        firstSeen: firstSeen[finding.id],
+        historyNote: derived.history[finding.id],
+      })),
+    [derived.findings, derived.history, firstSeen],
   );
 
   return (

@@ -1,3 +1,4 @@
+import { Attribution } from './Attribution.jsx';
 import { Badge } from './ui/badge.jsx';
 import { day } from '../lib/dates.mjs';
 import { locationUrl } from '../../../compare/locate.mjs';
@@ -119,6 +120,61 @@ export const FirstSeen = ({ at }) =>
       first seen {day(at)}
     </span>
   ) : null;
+
+/**
+ * What closed on this page as this difference appeared (ticket 78).
+ *
+ * **It is a display-only difference, and the `<head>` panel is the precedent**: like the
+ * meta rows, it wears the interface's quietest ink, carries no control of any kind, and
+ * reaches no bar, no denominator and no badge. Nothing here is something an editor can
+ * complete, so nothing here may look like it.
+ *
+ * The wording is the whole of the risk. It says what **closed**, and never what changed:
+ * *"Changed"* named a finding the tool believed to be an older finding with new text, and
+ * the tool cannot know that (ADR 0004). Two ids of one class on one page, one of them last
+ * seen in the run before the other appeared, is a coincidence of run and place — so the
+ * line reports the coincidence and leaves the reader to judge it.
+ *
+ * Where several closed at once it counts them instead of naming one. A pick is a match.
+ *
+ * The reason under it is free text an editor wrote about **other** words, so it can
+ * contradict the text on screen. That is the point of showing it, and it is why the visible
+ * line says whose difference the decision was — *about it*, not about the words above. The
+ * row draws its own `Attribution` a few pixels below, so a lead-in that left the subject to
+ * a `title` would put two decisions on one row with only a hover to tell them apart.
+ *
+ * @param {object} props
+ * @param {{ count: number, decision: { action: string, editor: string, at: string,
+ *   note: string | null } | null }} [props.note]
+ */
+export const HistoryNote = ({ note }) => {
+  if (!note) return null;
+
+  return (
+    <div
+      data-history-note
+      className="mt-1 text-xs text-muted-foreground"
+      title={
+        'The run that first saw this difference stopped seeing another one of this class ' +
+        'here. It is a decision about that one, not about this one, and no count holds it.'
+      }
+    >
+      {note.decision
+        ? 'earlier on this page, a difference of this class closed. ' +
+          'What an editor decided about it:'
+        : `earlier on this page, ${note.count} differences of this class closed, ` +
+          'each with a decision of its own'}
+      {note.decision && (
+        <Attribution
+          action={note.decision.action}
+          editor={note.decision.editor}
+          at={note.decision.at}
+          reason={note.decision.note}
+        />
+      )}
+    </div>
+  );
+};
 
 /** What the badge means on a finding: the same difference, several times on this page. */
 export const onePageTitle = (count) =>

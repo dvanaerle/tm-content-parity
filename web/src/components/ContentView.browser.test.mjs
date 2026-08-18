@@ -360,3 +360,34 @@ describe('a content row says when its finding was first seen', () => {
     expect(mount().textContent).not.toContain('first seen');
   });
 });
+
+/**
+ * Ticket 78, on the spine. The note is on both tables for the reason the date is: two
+ * tables drawing one thing is two chances for one of them to stop drawing it.
+ */
+describe('a content row says what closed as its finding appeared', () => {
+  const note = {
+    count: 1,
+    decision: {
+      action: 'dismissed',
+      editor: 'Danielle',
+      at: '2026-08-14T12:00:00.000Z',
+      note: 'Prijs verschilt per omgeving.',
+    },
+  };
+
+  it('names what closed, and what an editor decided about it', () => {
+    const host = mount({
+      findings: findings.map((one) => (one.id === 'copy1' ? { ...one, historyNote: note } : one)),
+    });
+
+    expect(host.querySelector('[data-history-note]').textContent).toContain(
+      'earlier on this page, a difference of this class closed',
+    );
+    expect(host.textContent).toContain('dismissed · Danielle · 14 Aug 2026');
+  });
+
+  it('says nothing where no id closed as the difference appeared', () => {
+    expect(mount().querySelector('[data-history-note]')).toBeNull();
+  });
+});

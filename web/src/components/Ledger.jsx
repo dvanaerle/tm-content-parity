@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { metaRows } from '../../../compare/meta.mjs';
-import { Detail, FirstSeen, Occurrences, Section, onePageTitle } from './Annotations.jsx';
+import {
+  Detail,
+  FirstSeen,
+  HistoryNote,
+  Occurrences,
+  Section,
+  onePageTitle,
+} from './Annotations.jsx';
 import { ClassPill } from './Chips.jsx';
 import ContentView from './ContentView.jsx';
 import { DiffCells } from './Diff.jsx';
@@ -558,6 +565,9 @@ const FindingRow = ({ finding, focus, control, sides }) => {
           sides={sides}
         />
         <FirstSeen at={finding.firstSeen} />
+        {/* Beside the date and above the control, which is where a fact about the row's
+            past belongs: after what the row is, and before what is being asked about it. */}
+        <HistoryNote note={finding.historyNote} />
         {/* The state pill is still here, inside the bucket. A bucket summarises; it does
             not replace what an editor decided about one finding. */}
         <div className="mt-1">{control(finding)}</div>

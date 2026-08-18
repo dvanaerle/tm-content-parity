@@ -93,6 +93,42 @@ record asks the index for, which is whether an id is in the current snapshot; a 
 no report is not in it. A finer grain would put a row per page in the file's header and
 buy a distinction no screen draws.
 
+### The index records which run stopped seeing a row, 2026-08-18
+
+Ticket 78 built the history note, and the note asks a question this record did not have a
+field for: **which run ended this id**. A row held its last *sighting*, and the two are one
+run apart.
+
+It is a fourth fact on the row — `retiredAt` — and not a reconstruction. Rebuilding the run
+sequence from the observations the rows name looks free and is wrong: a run that retires an
+id without introducing one names itself on no row, because every row it still sees is seen
+again later and overwrites it. That run drops out of the sequence, and its closures are then
+attributed to a later run — a note beside a finding that appeared after them. An editor
+fixing the new site to match production produces exactly that run.
+
+The field is of the kind this record already permits: an observation id, no text, no
+decision, and no relation between two ids. It is written only on a retired row, so a run
+over an unchanged corpus still rewrites no line, and the 40,825 rows on disk are byte for
+byte where ticket 77 left them.
+
+### A history note is derived beside the findings, 2026-08-18
+
+The note comes back from `derivePageState()` as its own field, keyed on the finding id, and
+never on the finding. A note held on a finding is one field away from a bar, a bucket and a
+tab badge — and a note that moves a count has claimed the two ids are one finding, which is
+the whole of what this record refuses.
+
+Two things it cannot say, both because this record holds no text:
+
+- **It cannot show the old wording.** No text of the closed finding survives anywhere: not
+  in the index, which holds none, and not in the overrides table, which holds judgements.
+  What the note shows is the **reason an editor wrote**, which may name the old wording and
+  may contradict the words on screen. That is the point of showing it, and the visible line
+  says the decision is about the difference that closed and not about the one beside it.
+- **It counts the closures that carry a decision**, not every closure. A closure nobody
+  decided about has nothing to report — *something closed here* is not a fact an editor can
+  use — so it is not in the count either.
+
 ## Scope
 
 Axis A only. Axis B keeps its own tab and its own bar, and it is not summed with

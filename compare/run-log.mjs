@@ -1,7 +1,7 @@
 /**
  * The run log: a committed index, keyed on the finding id alone, that says when an id
- * was first seen, whether the run that last looked still saw it, and when it was last
- * seen. ADR 0004 is the decision and every rule in it.
+ * was first seen, whether the run that last looked still saw it, when it was last seen, and
+ * which run stopped seeing it. ADR 0004 is the decision and every rule in it.
  *
  * It **never re-attaches**. `nextRunLog()` is not given a finding's text, so no
  * threshold can be added later without changing the signature — which is the point of
@@ -60,8 +60,14 @@ export function nextRunLog({ previous, snapshot, observationId, covered }) {
       rows.push(row);
       continue;
     }
-    const seen = found.delete(row.id);
-    rows.push({ ...row, seen, lastSeen: seen ? observationId : row.lastSeen });
+    if (found.delete(row.id)) {
+      rows.push({ ...row, seen: true, lastSeen: observationId, retiredAt: null });
+      continue;
+    }
+    // The run that stopped seeing it, kept once. A retirement happened in one run, and a
+    // later run that also does not see the id has stopped seeing nothing — restamping it
+    // would walk the answer forward and make every closure read as the newest run's.
+    rows.push({ ...row, seen: false, retiredAt: row.retiredAt ?? observationId });
   }
 
   for (const finding of found.values()) {
@@ -73,6 +79,7 @@ export function nextRunLog({ previous, snapshot, observationId, covered }) {
       firstSeen: observationId,
       lastSeen: observationId,
       seen: true,
+      retiredAt: null,
     });
   }
 
@@ -121,7 +128,13 @@ export function encodeRunLog(log) {
       class: row.class,
       first: row.firstSeen,
     };
-    if (!row.seen) line.last = row.lastSeen;
+    if (!row.seen) {
+      line.last = row.lastSeen;
+      // `gone` is the run that stopped seeing it, which `last` is one run short of
+      // (ticket 78). It is on the retired rows only, so a run over an unchanged corpus
+      // still rewrites no line.
+      if (row.retiredAt) line.gone = row.retiredAt;
+    }
     return JSON.stringify(line);
   });
   return [JSON.stringify(header), ...lines].join('\n');
@@ -149,6 +162,9 @@ export function decodeRunLog(text) {
         firstSeen: row.first,
         lastSeen: row.last ?? covering,
         seen: row.last === undefined,
+        // `null` on a row written before this field existed. The honest answer: nothing
+        // recorded which run stopped seeing it, so nothing reports one.
+        retiredAt: row.gone ?? null,
       };
     }),
   };

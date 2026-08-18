@@ -197,8 +197,15 @@ const isContradicted = (claim, observationId) => (claim.observationId ?? '') < o
  * @param {import('../compare/contract.mjs').ObservedPage} input.report
  * @param {OverrideEvent[]} input.events   Every event for this store page.
  * @param {string} [input.observationId]   Defaults to the report's own.
+ * @param {Record<string, string[]>} [input.closedWith]  Per finding id, the ids the run
+ *   log says stopped being seen in the run that first saw it (ticket 78). Display only.
  */
-export function derivePageState({ report, events, observationId = report.observationId }) {
+export function derivePageState({
+  report,
+  events,
+  observationId = report.observationId,
+  closedWith = {},
+}) {
   const current = latestByKey(
     events.filter((event) => event.store === report.store && event.page === report.page),
   );
@@ -230,7 +237,50 @@ export function derivePageState({ report, events, observationId = report.observa
     buckets: bucketsOf(findings),
     review: review(current, report),
     annotations: annotationsOf(current, report),
+    history: historyOf(current, place, closedWith),
   };
+}
+
+/**
+ * What an editor decided about the ids that closed as each finding appeared (ticket 78).
+ *
+ * It is **beside** `findings` and never on them, because the decision belongs to an id
+ * that is not on the page. Held on a finding it would be one field away from a bar, a
+ * bucket and a badge — and a note that moves a count has claimed the two ids are one
+ * finding, which is the whole of what ADR 0004 refuses.
+ *
+ * It reads `current`, the derivation's own latest-per-key map, so it walks no event list
+ * of its own: the note reports the decision that stands, and a dismissal an editor took
+ * back is not one. A closed id with nothing decided about it yields nothing at all —
+ * *something closed here* is not a fact an editor can use.
+ *
+ * A **fix claim is taken as made** and never contradicted here. Contradiction is a later
+ * observation that still gives the finding, and this id is not in the snapshot to be
+ * given: there is nothing for a run to disagree with.
+ *
+ * @param {Map<string, OverrideEvent>} current
+ * @param {{ store: string, page: string }} place
+ * @param {Record<string, string[]>} closedWith
+ */
+function historyOf(current, place, closedWith) {
+  /** @type {Record<string, { count: number, decision: ReturnType<typeof judgement> | null }>} */
+  const history = {};
+  for (const [id, closed] of Object.entries(closedWith)) {
+    const decided = closed
+      .map((one) => current.get(eventKey({ ...place, scope: 'finding', findingId: one })))
+      .filter(decides);
+
+    // Where several closed at once the count is the answer and the decision is not. One
+    // of several is a pick, a pick is a match, and the note asserts no identity.
+    if (decided.length > 0) {
+      history[id] = {
+        count: decided.length,
+        decision:
+          decided.length === 1 ? judgement(/** @type {OverrideEvent} */ (decided[0])) : null,
+      };
+    }
+  }
+  return history;
 }
 
 /**
@@ -266,14 +316,33 @@ const decided = (finding, state, override) => ({
   // finding — the bar, the ledger's toggle, a landing — asks the vocabulary once and
   // in one place. `work` counts, `information` renders, `diagnostic` is what a rule saw.
   visibility: visibilityOf(finding.class),
-  override: override
-    ? {
-        action: override.action,
-        editor: override.editor,
-        at: override.createdAt,
-        note: override.note ?? null,
-      }
-    : null,
+  override: override ? judgement(override) : null,
+});
+
+/**
+ * Whether an event on a finding records a decision. `cleared` revokes one and is not one,
+ * which is what makes a dismissal an editor took back invisible to the history note.
+ *
+ * @param {OverrideEvent | undefined} event
+ */
+const decides = (event) => event?.action === 'dismissed' || event?.action === 'fixed';
+
+/**
+ * One decision, as every surface that draws one reads it. `Attribution.jsx` is the shape:
+ * the action, the editor and the day, and the reason under them where there is one.
+ *
+ * It is a function because there are two callers and they name different ids — a finding's
+ * own decision, and the decision on an id that closed (ticket 78). Two copies of the four
+ * fields is how one of them comes to omit the date, which is what `Attribution.jsx` was
+ * written to end.
+ *
+ * @param {OverrideEvent} event
+ */
+const judgement = (event) => ({
+  action: event.action,
+  editor: event.editor,
+  at: event.createdAt,
+  note: event.note ?? null,
 });
 
 /**

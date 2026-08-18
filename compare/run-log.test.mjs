@@ -179,3 +179,69 @@ describe('the file the run log is committed as', () => {
     });
   });
 });
+
+/**
+ * Ticket 78. The note beside a finding asks *which run stopped seeing that id*, and the
+ * last run that **saw** a row is one run short of the answer.
+ *
+ * It is recorded rather than reconstructed. A reader can only rebuild the run sequence from
+ * the observations the rows name, and a run that retires an id without introducing one
+ * names itself nowhere: every row it still sees is seen again later and overwrites it. That
+ * run then drops out of the sequence, and its closures are attributed to a later run — a
+ * note beside a finding that appeared after them.
+ */
+describe('the run log records which run stopped seeing an id', () => {
+  const THIRD = '2026-08-15T09:00:00.000Z-cccccccc';
+
+  const upTo = (...snapshots) =>
+    snapshots.reduce(
+      (previous, snapshot, at) =>
+        nextRunLog({
+          previous,
+          snapshot,
+          observationId: [FIRST, SECOND, THIRD][at],
+          covered: ['nl'],
+        }),
+      /** @type {any} */ (null),
+    );
+
+  it('names the run, and not the last run that saw the id', () => {
+    const log = upTo([finding('aaa')], []);
+
+    expect(rowsById(log).get('aaa')).toMatchObject({ lastSeen: FIRST, retiredAt: SECOND });
+  });
+
+  /**
+   * The retirement is a fact about one moment, so a later run that also fails to see the id
+   * must not restamp it. Without this the answer walks forward one run at a time and every
+   * closure reads as having happened in the newest run.
+   */
+  it('keeps the run that retired it when a later run does not see it either', () => {
+    const log = upTo([finding('aaa')], [], []);
+
+    expect(rowsById(log).get('aaa').retiredAt).toBe(SECOND);
+  });
+
+  // An id that comes back is seen, and nothing has stopped seeing it.
+  it('clears the run where the id is seen again', () => {
+    const log = upTo([finding('aaa')], [], [finding('aaa')]);
+
+    expect(rowsById(log).get('aaa')).toMatchObject({ seen: true, retiredAt: null });
+  });
+
+  it('survives the file', () => {
+    const log = upTo([finding('aaa')], []);
+
+    expect(rowsById(decodeRunLog(encodeRunLog(log))).get('aaa').retiredAt).toBe(SECOND);
+  });
+
+  /**
+   * The gate ticket 77 rests on, asked of the new field: a run over an unchanged corpus
+   * must rewrite no line. A row that is seen carries no retirement, so it writes none.
+   */
+  it('writes no retirement on a row that is seen', () => {
+    const log = upTo([finding('aaa')], [finding('aaa')]);
+
+    expect(encodeRunLog(log)).not.toContain('gone');
+  });
+});

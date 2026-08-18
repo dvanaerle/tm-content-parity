@@ -78,6 +78,13 @@ Settled while charting, in the destination-naming session. No ticket holds them.
 - **Six-store data model from day one; NL populated first.**
 - **The content unit is every text element in document order.** The content
   outline and the diff are one structure, not two features.
+- **History is a run log and it never re-attaches.** One committed index keyed on the
+  finding id, and beside a new finding a **history note** saying what closed on the page in
+  the run that first saw it, and what an editor decided about it. The note is display-only:
+  no id, no control, no count. Tickets
+  [77](issues/77-a-finding-says-when-it-was-first-seen.md) and
+  [78](issues/78-a-closed-finding-leaves-a-history-note.md), and every rule is in
+  `docs/adr/0004-history-is-a-run-log-that-never-re-attaches.md`.
 - **Variant A won the UI prototype** — tabbed ledger, prod and new side by side.
   Tabs: Diff, Outline, Links, Images, Content (Markdown), Meta, Tasks.
 - **Markdown is a reading and export artifact, never the diff spine.** It

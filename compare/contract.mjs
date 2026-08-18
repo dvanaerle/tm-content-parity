@@ -389,7 +389,14 @@ const STAMP = 24;
  * saw, and an editor's judgement about this finding lives in the overrides and nowhere
  * near here.
  *
- * @typedef {FindingRef & { firstSeen: string, lastSeen: string, seen: boolean }} RunLogRow
+ * `retiredAt` is the run that stopped seeing the id, which `lastSeen` is one run short of:
+ * a row records its last **sighting**, and the note of ticket 78 asks which run ended it. It
+ * is recorded and not reconstructed, because a run that retires an id without introducing
+ * one names itself on no row and would drop out of any sequence a reader rebuilt. It is
+ * `null` while the row is seen, and on a row written before the field existed.
+ *
+ * @typedef {FindingRef & { firstSeen: string, lastSeen: string, seen: boolean,
+ *   retiredAt: string | null }} RunLogRow
  */
 
 /**

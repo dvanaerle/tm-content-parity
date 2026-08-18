@@ -78,12 +78,19 @@ function usePort() {
   }, []);
 }
 
+/** One object for every caller that names none. A fresh `{}` per render is a new
+    dependency, and the page would re-derive on every one of them. */
+const NO_CLOSINGS = {};
+
 /**
  * @param {object} input
  * @param {import('../../../compare/contract.mjs').PageReport} input.report
  * @param {string} input.editor
+ * @param {Record<string, string[]>} [input.closedWith]  Per finding id, the ids the run log
+ *   says stopped being seen in the run that first saw it (ticket 78). Read at build time,
+ *   because the index is a committed file and this hook runs in the browser.
  */
-export function useOverrides({ report, editor }) {
+export function useOverrides({ report, editor, closedWith = NO_CLOSINGS }) {
   const { port, reason } = usePort();
   const [events, setEvents] = useState(/** @type {any[] | null} */ (null));
   const [error, setError] = useState(/** @type {string | null} */ (null));
@@ -136,8 +143,8 @@ export function useOverrides({ report, editor }) {
   );
 
   const derived = useMemo(
-    () => derivePageState({ report, events: events ?? [] }),
-    [report, events],
+    () => derivePageState({ report, events: events ?? [], closedWith }),
+    [report, events, closedWith],
   );
 
   return {

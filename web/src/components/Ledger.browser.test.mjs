@@ -96,6 +96,11 @@ const rows = () =>
     row.id.replace('finding-', ''),
   );
 
+/** The words on the tab strip, in order. A badge is read as part of its trigger, so a name
+    with no number after it is a tab carrying no badge. */
+const tabs = () =>
+  [...document.querySelectorAll('[role="tab"]')].map((one) => one.textContent.trim());
+
 /** A button whose words start with `words`, which is how the disclosure is found. */
 const button = (words) =>
   [...document.querySelectorAll('button')].find((element) =>
@@ -214,11 +219,6 @@ describe('the sibling tab on the ledger', () => {
     units: [unit('Gelijk een', 0)],
   };
 
-  /** The words on the tab strip, in order. A badge is read as part of its trigger, so
-      a name with no number after it is a tab carrying no badge. */
-  const tabs = () =>
-    [...document.querySelectorAll('[role="tab"]')].map((one) => one.textContent.trim());
-
   it('is absent, and not empty, on a page with no sibling', () => {
     // A tab that draws itself to say there is nothing to compare is a tab an editor
     // opens once per page to learn nothing. `de` and `uk` are in no block at all.
@@ -279,5 +279,107 @@ describe('a finding says when it was first seen', () => {
 
     expect(rowOf('a').textContent).not.toContain('first seen');
     unmount();
+  });
+});
+
+/**
+ * Ticket 78. The run log says an id of this class stopped being seen in the run that first
+ * saw this difference, and the overrides say what an editor had decided about it. What is
+ * left is the reading, and the reading is the whole risk: a line that says *changed* claims
+ * the tool matched two ids, which is the one thing ADR 0004 refuses.
+ *
+ * A browser test because every criterion here is about what an editor sees — the words, the
+ * absence of a control, and that no number beside it moves.
+ */
+describe('a closed finding leaves a history note', () => {
+  const rowOf = (id) => document.querySelector(`tr[id="finding-${id}"]`);
+  const noteOf = (id) => rowOf(id)?.querySelector('[data-history-note]');
+
+  const dismissed = {
+    count: 1,
+    decision: {
+      action: 'dismissed',
+      editor: 'Danielle',
+      at: '2026-08-14T12:00:00.000Z',
+      note: 'Prijs verschilt per omgeving.',
+    },
+  };
+
+  const withNote = (historyNote) => ({ findings: [finding('a', 'open', { historyNote })] });
+
+  it('names the decision, the editor, the day and the reason of what closed', async () => {
+    const unmount = mount(withNote(dismissed));
+    await userEvent.click(button('Links'));
+
+    expect(noteOf('a').textContent).toContain('earlier on this page, a difference of this class');
+    expect(noteOf('a').textContent).toContain('dismissed · Danielle · 14 Aug 2026');
+    expect(noteOf('a').textContent).toContain('Prijs verschilt per omgeving.');
+    unmount();
+  });
+
+  // Picking one of several is a match. The count is what the note can say without one.
+  it('counts them where several closed in one run', async () => {
+    const unmount = mount(withNote({ count: 3, decision: null }));
+    await userEvent.click(button('Links'));
+
+    expect(noteOf('a').textContent).toContain('3 differences of this class closed');
+    expect(noteOf('a').textContent).not.toContain('Danielle');
+    unmount();
+  });
+
+  it('says nothing where no id closed as the difference appeared', async () => {
+    const unmount = mount({ findings: [finding('a', 'open')] });
+    await userEvent.click(button('Links'));
+
+    expect(noteOf('a')).toBeNull();
+    expect(rowOf('a').textContent).not.toContain('earlier on this page');
+    unmount();
+  });
+
+  /**
+   * The most likely defect is a helpful one: a *reuse this reason* button saves typing and
+   * buries a real difference under a decision nobody made about the text in front of them.
+   * A human matcher with an accept button is the same matcher with a slower threshold.
+   */
+  it('offers nothing to press', async () => {
+    const unmount = mount(withNote(dismissed));
+    await userEvent.click(button('Links'));
+
+    expect(noteOf('a').querySelectorAll('button, a, input, [role="button"]')).toHaveLength(0);
+    unmount();
+  });
+
+  /**
+   * Two words are refused. **"Changed"** named a finding the tool believed to be an older
+   * finding with new text, and "was" says the same thing in the past tense. The note says
+   * what closed.
+   */
+  it('says what closed and never what changed', async () => {
+    const unmount = mount(withNote(dismissed));
+    await userEvent.click(button('Links'));
+
+    expect(noteOf('a').textContent).not.toMatch(/\bchanged\b|\bwas\b/i);
+    unmount();
+  });
+
+  /**
+   * The criterion the ticket pins hardest. The derivation keeps the note off the findings
+   * (`overrides/state.mjs`), and this is the other half: the strip and the tab badges are
+   * identical with the note on screen and without it.
+   */
+  it('moves no count', async () => {
+    const bare = mount({ findings: FOUR });
+    await userEvent.click(button('Links'));
+    const before = { strip: strip(), tabs: tabs() };
+    bare();
+
+    const noted = mount({
+      findings: [finding('a', 'open', { historyNote: dismissed }), ...FOUR.slice(1)],
+    });
+    await userEvent.click(button('Links'));
+
+    expect(noteOf('a')).not.toBeNull();
+    expect({ strip: strip(), tabs: tabs() }).toEqual(before);
+    noted();
   });
 });

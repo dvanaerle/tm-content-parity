@@ -716,3 +716,88 @@ describe('the events of the named stores', () => {
     expect(eventsOfStores({ events: written, stores: [] })).toEqual([]);
   });
 });
+
+/**
+ * Ticket 78. The run log says which ids stopped being seen in the run that first saw the
+ * finding on screen; this says what an editor had decided about them. Nothing here relates
+ * two ids — `closedWith` is a list of ids that shared a run and a place, and the wording
+ * the interface draws off it says what closed and never what changed (ADR 0004).
+ */
+describe('a closed finding leaves a history note', () => {
+  const one = report([finding('A')]);
+  const closedWith = { A: ['OLD'] };
+
+  it('names the decision, the editor and the day, and shows the note', () => {
+    const { history } = derivePageState({ report: one, events: [dismiss('OLD')], closedWith });
+
+    expect(history).toEqual({
+      A: {
+        count: 1,
+        decision: {
+          action: 'dismissed',
+          editor: 'Danielle',
+          at: expect.any(String),
+          note: 'Prijs verschilt per omgeving.',
+        },
+      },
+    });
+  });
+
+  it('carries a fix claim the same way', () => {
+    const { history } = derivePageState({ report: one, events: [fix('OLD')], closedWith });
+
+    expect(history.A.decision?.action).toBe('fixed');
+  });
+
+  /**
+   * Picking one of them is a match, and the note is display-only: it reports how many
+   * without asserting which. So the count moves and the decision goes.
+   */
+  it('counts them where several of one class closed in one run', () => {
+    const { history } = derivePageState({
+      report: one,
+      events: [dismiss('OLD'), fix('OLDER')],
+      closedWith: { A: ['OLD', 'OLDER'] },
+    });
+
+    expect(history.A).toEqual({ count: 2, decision: null });
+  });
+
+  /**
+   * Silence is the default. An id that closed with nothing decided about it is the
+   * ordinary case — a difference production corrected leaves no judgement behind — and a
+   * note saying only *something closed here* tells an editor nothing they can use.
+   */
+  it('says nothing where the closed id carries no decision', () => {
+    expect(derivePageState({ report: one, events: [], closedWith }).history).toEqual({});
+  });
+
+  it('says nothing where the decision was taken back', () => {
+    const events = [dismiss('OLD'), clearFinding('OLD')];
+
+    expect(derivePageState({ report: one, events, closedWith }).history).toEqual({});
+  });
+
+  it('says nothing where no id closed as the finding appeared', () => {
+    expect(derivePageState({ report: one, events: [dismiss('OLD')] }).history).toEqual({});
+  });
+
+  /**
+   * The criterion the ticket pins hardest. A note is a display-only difference, so the
+   * bar, the denominator and the three buckets read the same with it and without it —
+   * and the decision it reports belongs to an id that is **not** on the page, so it must
+   * not reach a number that counts what is.
+   */
+  it('moves no count', () => {
+    const page = report([finding('A'), finding('B'), finding('C', 'restructured')]);
+    const events = [dismiss('OLD'), dismiss('B')];
+
+    const without = derivePageState({ report: page, events });
+    const with_ = derivePageState({ report: page, events, closedWith });
+
+    expect(with_.history.A).toBeDefined();
+    expect(with_.bar).toEqual(without.bar);
+    expect(with_.buckets).toEqual(without.buckets);
+    expect(with_.findings).toEqual(without.findings);
+  });
+});
