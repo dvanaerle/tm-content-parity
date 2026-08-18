@@ -1,7 +1,7 @@
 # 101 — The image campaign rule hides editorial images
 
 Type: bug
-Status: ready-for-agent
+Status: resolved
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
@@ -142,6 +142,77 @@ the folder path, and it survives someone re-filing the image under a different f
 call sites, `compare/images.mjs:64` and `:107`, and no other importer in the repo. There is
 no `.out-of-scope/` entry resembling this.
 
+**2026-08-18 — resolved**, on `ticket-104-search-page-scope`. `compare/images.mjs`, one
+export and its doc comment; tests in `compare/compare.test.mjs`. The pattern is now
+
+```js
+/korting|aanbieding|black[-_]?friday|(?<![a-z])deals?(?![a-z])|(?<![a-z])sales?(?![a-z])/i;
+```
+
+the recommended shape, lookbehind and all — the first in the repo, and chosen over
+`(^|[^a-z])` because that group would capture and `.test` is the only caller.
+
+**Counts, re-derived and not carried.** Both columns are a full `node compare/30-compare.mjs`
+over the 816 extracts on disk, run in a throwaway worktree at `HEAD` with `data/extract`
+mounted read-only and **the pattern as the only difference between the two runs**. The
+worktree matters: a second session was editing `compare/` throughout (see the last paragraph),
+and the point of measuring outside the shared tree is that neither column can be blamed on it.
+Both columns were also produced in the shared tree first, and came out identical — so the
+contamination risk was real and did not materialise.
+
+| class | | be | be_fr | de | fr | nl | uk | total |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `image-campaign` | before | 5 | 4 | 4 | 4 | 6 | 6 | **29** |
+| | after | 0 | 0 | 0 | 0 | 0 | 0 | **0** |
+| `image-added` | before | 432 | 432 | 434 | 426 | 505 | 487 | **2,716** |
+| | after | 436 | 436 | 438 | 430 | 510 | 492 | **2,742** |
+| `image-missing` | before | 644 | 728 | 774 | 736 | 754 | 754 | **4,390** |
+| | after | 645 | 728 | 774 | 736 | 755 | 755 | **4,393** |
+
+Total findings 41,049 both times. The three new `image-missing` are `nl`, `be` and `uk`, one
+each; nothing else moves. **`image-campaign` is now an empty class**, which is the correct
+reading of a corpus that carries no campaign artwork.
+
+**The before column is not the brief's, and the difference is not this change.** The brief
+baselined on the `2026-08-13T13:40Z` report build, and rebuilding on `HEAD` moves
+`image-added` 2,713 → 2,716, `image-missing` 4,387 → 4,390 and the finding total 40,966 →
+41,049 *before this change touches anything*: 16 commits have landed on `compare/`, `shared/`
+and `crawl/extract.mjs` in the five days since. The **deltas** are what the brief predicted,
+to the store: −29, +26, +3.
+
+**Nothing starts matching, and there are two independent reasons.** Measured: one pass over
+all 11,122 image records in `data/extract/**`, both sides, old pattern against new — **35
+occurrences stop matching, 0 start**, being the 7 key/side pairs the brief named at the counts
+it named, including the two pair matches (`ontwerp_je_ideale_overkapping-2.jpg`,
+`ideal-wero.svg`) that were silent today. Structural, and stronger: the new pattern is a
+strict **subset** of the old one. `korting`, `aanbieding` and `black[-_]?friday` are unchanged,
+and the two new arms only add boundaries to `deal` and `sale` — the `s?` plurals were already
+covered by the bare stems. A subset cannot gain a match, so the criterion holds by
+construction and the scan is a check on the reasoning rather than the evidence for it.
+
+`alt-lost` and `alt-changed`: **structural**, not measured. `IMAGE_CAMPAIGN` has two call
+sites and both sit in the missing/added branch, above the alt comparison. There is now a test
+that fails if the rule moves below it.
+
+**The `actie` arm's cost is written into the doc comment**, named as `zomeractie-2027.jpg`,
+together with the reason `\b` was refused and the German store's agreement.
+
+**Ticket 90's constraint is pinned on the pattern's text, not its behaviour.** That is
+deliberate and worth knowing before someone "fixes" it: "names no campaign, month or year" is
+a claim about what the rule *says*, and no filename input observes it. The test asserts no
+digit and no month, in the shape `crawl/extract.test.mjs:919-926` uses. A campaign *name*
+cannot be enumerated — that is the residual gap, and the digit rule carries the weight.
+
+**One thing to know about the run, not about the change.** A second session was editing
+`compare/{text,match,vocabulary,contract,30-compare}.mjs` and the same test file throughout —
+ticket 116b, adding a `regrouped` class. Its in-progress state fails `compare/contract.test.mjs`
+(32 classes against a pinned 31) in the shared tree, so a full `npm test` there is red for
+reasons that are not this ticket. What was verified instead: this commit's content alone,
+checked out against `HEAD` in a throwaway worktree — **430 tests green** across `compare/
+crawl/ shared/ api/`, `tsc --noEmit` clean, `oxlint` and `oxfmt --check` clean. The commit
+carries only my two hunks of `compare.test.mjs`; 116b's 164-line hunk in the same file is left
+uncommitted for its own session.
+
 ## Agent Brief
 
 **Category:** bug
@@ -202,28 +273,29 @@ placed outside the banner. Do not delete the rule.
 
 **Acceptance criteria.**
 
-- [ ] `ontwerp_je_ideale_overkapping.jpg`, `ontwerp_je_ideale_overkapping-2.jpg`,
+- [x] `ontwerp_je_ideale_overkapping.jpg`, `ontwerp_je_ideale_overkapping-2.jpg`,
       `ideal-wero.svg` and `actie-updates_*.jpg` are not `image-campaign` on any page of any
       store.
-- [ ] The before and after counts are recorded per store for `image-campaign`,
+- [x] The before and after counts are recorded per store for `image-campaign`,
       `image-added` and `image-missing`. The table above is the prediction; a difference
       from it is a defect in the diff, not a bonus.
-- [ ] **No key in the corpus starts matching that did not match before.** This is the
+- [x] **No key in the corpus starts matching that did not match before.** This is the
       "nothing else moves" criterion and it is checkable in one pass over
       `data/extract/**`.
-- [ ] Tests pin the boundary in both directions, because a rule with no test is not a rule:
+- [x] Tests pin the boundary in both directions, because a rule with no test is not a rule:
       a filename with `deal` inside a word that is not a campaign (`ideale`, `wholesale`),
       **and** a campaign filename using `_` as its separator (`summer_sale_2026.svg`) which
       a naive `\b` would wrongly drop, **and** the plural forms.
-- [ ] The existing test at `compare/compare.test.mjs:1254-1266` passes unchanged — its
+- [x] The existing test at `compare/compare.test.mjs:1254-1266` passes unchanged — its
       fixture `2026-07-23-kortingactie-nl-16aug.svg` still matches, via `korting`. If it
       needed editing, the `korting` arm was broken.
-- [ ] `alt-lost` and `alt-changed` are unaffected. `IMAGE_CAMPAIGN` has no call site in the
+- [x] `alt-lost` and `alt-changed` are unaffected. `IMAGE_CAMPAIGN` has no call site in the
       alt path, so this should hold structurally rather than by measurement — say which of
       the two you relied on.
-- [ ] The three new `image-missing` findings are visible work findings and that is the
+- [x] The three new `image-missing` findings are visible work findings and that is the
       intended outcome, not a regression to explain away.
-- [ ] `npm test` is green.
+- [x] `npm test` is green — for this change, verified in isolation, because the shared
+      tree is red on ticket 116b in-progress. See the run note above.
 
 **Traps.**
 

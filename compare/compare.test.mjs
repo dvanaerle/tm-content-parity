@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { comparePage, newSitePathsFor, skipReason } from './30-compare.mjs';
 import { FindingCollector, median, summarise, summariseReports } from './findings.mjs';
-import { compareImages } from './images.mjs';
+import { compareImages, IMAGE_CAMPAIGN } from './images.mjs';
 import { compareLinks } from './links.mjs';
 import { locationUrl, textFragmentUrl, unitLocation } from './locate.mjs';
 import { lcsPairs, mayPair, maskNumbers, similarity, tier2 } from './match.mjs';
@@ -1263,6 +1263,104 @@ describe('compareImages', () => {
       ),
     );
     expect(findings.map((f) => f.class)).toEqual(['image-campaign']);
+  });
+
+  /**
+   * Ticket 101: the class a production-only image of this key lands in. The
+   * campaign rule is one-sided, so one key on one side is the whole input.
+   *
+   * @param {string} key
+   */
+  const soleClass = (key) =>
+    collect((collector) =>
+      compareImages(
+        extract({ images: [image(key, '')] }),
+        extract({ side: 'new', images: [] }),
+        collector,
+      ),
+    )[0].class;
+
+  it('reads a campaign word only where the filename has one, not inside another word', () => {
+    // Ticket 89 §6's near-miss list, which is the input to ticket 101 and not a
+    // list to re-derive. Every one of these matched before the boundary landed,
+    // and on the corpus on disk they were the rule's entire output: 29 findings,
+    // 29 collateral. `ideal-wero.svg` is the sharpest of them — a payment-provider
+    // logo, hidden by a campaign rule.
+    for (const key of [
+      'ontwerp_je_ideale_overkapping.jpg',
+      'ideal-wero.svg',
+      'actie-updates_nl.jpg',
+      'winactie-terrasverwarmer.jpg',
+      'interactieve-configurator.png',
+      'wholesale-partners.jpg',
+      'idealisierend.jpg',
+      'idealen.png',
+      'antractiet.jpg',
+      'salete.jpg',
+      'dealing.png',
+    ])
+      expect(soleClass(key), key).toBe('image-missing');
+  });
+
+  it('hides campaign artwork whichever character separates the campaign word', () => {
+    // The first two entries are the ones `\b` would wrongly drop — see the rule's own
+    // comment for why. The plurals are the other half of that trap: campaign filenames.
+    for (const key of [
+      'summer_sale_2026.svg',
+      'sales_uk.png',
+      'deals-overzicht.jpg',
+      '2026-07-23-kortingactie-nl-16aug.svg',
+      'deal.svg',
+      'black_friday_nl.jpg',
+      'aanbieding-van-de-week.png',
+    ])
+      expect(soleClass(key), key).toBe('image-campaign');
+  });
+
+  it('applies the same rule to the new site its images', () => {
+    const findings = collect((collector) =>
+      compareImages(
+        extract({ images: [] }),
+        extract({
+          side: 'new',
+          images: [
+            image('summer_sale_2026.svg', ''),
+            image('ontwerp_je_ideale_overkapping.jpg', ''),
+          ],
+        }),
+        collector,
+      ),
+    );
+    expect(findings.map((f) => f.class)).toEqual(['image-campaign', 'image-added']);
+  });
+
+  it('carries no digit and no month, so it outlives the campaign it was written for', () => {
+    // Ticket 90's constraint, in the shape `crawl/extract.test.mjs:919-926` enforces it
+    // on the region entry. This one reads the pattern's text rather than its behaviour,
+    // and that is the point: "names nothing dated" is a claim about what the rule says,
+    // and no input observes it.
+    //
+    // Every dated thing a campaign filename carries — `2026`, `16aug`, a version suffix
+    // — is a digit, and the vocabulary this rule needs has none. A month is the one
+    // dated thing spellable without a digit, so it gets the second assertion. A campaign
+    // *name* cannot be enumerated at all, which is why the digit rule carries the weight.
+    expect(IMAGE_CAMPAIGN.source).not.toMatch(/\d/);
+    expect(IMAGE_CAMPAIGN.source).not.toMatch(
+      /januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december/i,
+    );
+  });
+
+  it('leaves the alt path alone, campaign word or not', () => {
+    // Structural, not measured: `IMAGE_CAMPAIGN` has no call site below the alt
+    // comparison. This pins that, so moving the rule down there fails a test.
+    const findings = collect((collector) =>
+      compareImages(
+        extract({ images: [image('summer_sale_2026.svg', 'Zomeractie')] }),
+        extract({ side: 'new', images: [image('summer_sale_2026.svg', 'Sale')] }),
+        collector,
+      ),
+    );
+    expect(findings.map((f) => f.class)).toEqual(['alt-changed']);
   });
 
   it('reports a lost alt but not an empty alt on both sides', () => {

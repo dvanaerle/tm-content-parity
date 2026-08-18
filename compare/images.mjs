@@ -21,8 +21,41 @@ import { tier2 } from './match.mjs';
  * word, so that ambiguity does not exist. Under the both-sides rule production's
  * `2026-07-23-KortingActie-NL-16Aug.svg` would fire as `image-missing` on 123 of
  * 124 pages: the largest single source of findings in the dataset, all noise.
+ *
+ * Since ticket 64 that artwork no longer arrives: `#campaign-banner` is cut at
+ * extraction (ADR 0003), which is now the primary mechanism. This rule is the net
+ * for campaign artwork placed in page content *outside* the banner, where nothing
+ * upstream removes it.
+ *
+ * The boundary is letters, not `\b`. Both are ticket 101, and both are measured
+ * over every image key in `data/extract/`:
+ *
+ * - Without a boundary, `deal` matched `ideale` and `ideal`, and `actie` matched
+ *   `actie-updates`. That was the rule's *entire* output on the corpus — 29
+ *   findings, 29 collateral — because a diagnostic class is unread by design, so
+ *   its mistakes never surfaced. `ideal-wero.svg` is the shape of the damage: a
+ *   payment-provider logo, called a campaign.
+ * - `\b` is worse, in the other direction: a filename separates words with `-`,
+ *   `_`, `.`, digits and the string edges, and `\b` reads only two of those. It
+ *   drops `summer_sale_2026.svg` and `sales_uk.png`, which are campaigns, while
+ *   still matching `winactie` and `interactieve`, which are not.
+ *
+ * `actie` has no arm at all now. A left boundary alone still matches
+ * `actie-updates_*.jpg`, a newsletter block on the reviews page, and the German
+ * store settles it: the same block is named `aktions-update_erhalten.jpg` there
+ * and has always been a visible `image-missing`, because the pattern says `actie`
+ * and not `aktion`. Dropping the arm makes all six stores agree in the direction
+ * `de` already had. **The cost is real and accepted:** a future
+ * `zomeractie-2027.jpg` outside the banner, carrying none of the words below,
+ * lands as `image-missing` on every page it sits on. No regex separates
+ * `actie-updates` from `zomer-actie` without naming a filename, which ticket 90
+ * forbids — so the banner exclusion carries that case, not this rule.
+ *
+ * Ticket 126 asked for the other five stores' vocabulary and answered "add none":
+ * filenames on this site are not translated even where the copy is.
  */
-export const IMAGE_CAMPAIGN = /korting|actie(?!f)|deal|aanbieding|black[-_]?friday|sale/i;
+export const IMAGE_CAMPAIGN =
+  /korting|aanbieding|black[-_]?friday|(?<![a-z])deals?(?![a-z])|(?<![a-z])sales?(?![a-z])/i;
 
 /**
  * @param {import('./contract.mjs').ImageRecord[]} images
