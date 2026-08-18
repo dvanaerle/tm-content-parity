@@ -1,7 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Badge } from './ui/badge.jsx';
 import { Input } from './ui/input.jsx';
-import { PILL } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { scopeSuggestions, withScope } from '../lib/search.mjs';
 
@@ -195,7 +194,10 @@ export default function SearchBox({ value, onChange, pages }) {
                   situation is how a vocabulary rots. */}
               {!one.comparable && (
                 <Badge
-                  className={cn('h-auto shrink-0 px-1.5 py-0 text-xs', PILL.neutral)}
+                  variant={null}
+                  data-wears="pill"
+                  data-tone="neutral"
+                  className="h-auto shrink-0 px-1.5 py-0 text-xs"
                   title="Only one site has this page."
                 >
                   one-sided

@@ -117,6 +117,11 @@ Read these and nothing else. If you need more, the ticket is wrong: say so and s
 - `web/src/lib/classes.mjs:126` — `classInfo()` returns `pill: PILL[tone]`, with `toneOf(cls)`
   just above it. This is where **transcription 2** originates
 
+**`SearchBox.jsx` is in scope even though this part's list never named it** — found
+2026-08-18, the same way `Diff.jsx` was found for part B. Its one `PILL.neutral` marks a
+one-sided page in the suggestion list, the box is drawn by `Dashboard.jsx` and nothing else,
+and it is on screen on the surface this part is reviewed against. It moved with the rest.
+
 ### What to build — A
 
 The dashboard's two views stop holding colour strings. The dashboard, the repeats queue, the
@@ -134,26 +139,35 @@ answers with. `severityTone()` stays in JavaScript — it is a threshold with ju
 and `palette.test.mjs` pins it — but what it answers with becomes an attribute rather than a
 lookup.
 
-- [ ] The dashboard, the repeats queue, the chips and the progress marks emit a tone and a
+- [x] The dashboard, the repeats queue, the chips and the progress marks emit a tone and a
       shape and hold no colour string.
-- [ ] The pressed state of the view switch and the pills is a selector over the state the
+- [x] The pressed state of the view switch and the pills is a selector over the state the
       control already publishes, and no variant prefix is transcribed by hand.
-- [ ] The parity sparkline takes its fill from the tone the share answers with.
-- [ ] The amber pair keeps its inversion: in a bar fill the loud tone runs darker and the quiet
+      **Read as the two transcriptions this part names**: the switch's `aria-pressed:`
+      prefix became a `data-chrome` rule in `app.css`, and the pills' tone became a
+      `data-tone` the stylesheet reads instead of a `PILL[tone]` lookup. The filter pills'
+      pressed **ring** stays a class and is deliberately not moved — it is the brand's, it
+      says *this filter is on* and makes no claim about a finding, and no prefix was ever
+      transcribed around a palette value there. If the criterion meant that ring too, it is
+      one rule and it belongs to whoever says so.
+- [x] The parity sparkline takes its fill from the tone the share answers with.
+- [x] The amber pair keeps its inversion: in a bar fill the loud tone runs darker and the quiet
       one lighter, which is the opposite of every other shape and is the one place the ramp is
       read from the far end.
-- [ ] A class pill's tone still comes from the class vocabulary, and a page's tone still comes
+- [x] A class pill's tone still comes from the class vocabulary, and a page's tone still comes
       from its share. The two must not converge on one rule — a class says what kind of
       difference, a share says how much of a page.
-- [ ] `severityTone()` is untouched, and its tests with it.
-- [ ] **At this commit** the maps still exist and still have callers on the surfaces part B has
+- [x] `severityTone()` is untouched, and its tests with it.
+- [x] **At this commit** the maps still exist and still have callers on the surfaces part B has
       not moved yet. A is not allowed to leave a surface with no colour.
 - [ ] ~~Screenshot baselines for the dashboard's two views are reviewed per view and unchanged
       in colour.~~ — **2026-08-17: there are no baselines; see the heading block.** The claim
       survives: `Dashboard.browser.test.mjs`, `Repeats.browser.test.mjs` and
       `Progress.browser.test.mjs` pass unchanged, and a human confirms every colour on both
       views is the colour it was. A moved pixel is a bug in this part, not a new design.
-- [ ] No count, bar, denominator or roll-up moves.
+      **The three suites pass unchanged; the human half is still owed** — left unticked for
+      whoever walks the two views.
+- [x] No count, bar, denominator or roll-up moves.
 
 ### Traps — A
 

@@ -682,3 +682,38 @@
     accent-color: var(--tone-solid);
   }
 }
+
+/*
+ * ---- the pressed segment of the view switch (ticket 133 part A)
+ *
+ * **Not a tone and not a shape.** The ground is the brand green, which `CHROME` holds and
+ * a tone may never take — the block above says why, and this rule is not an exception to
+ * it. It is here for the other half of ticket 132's reason. The pressed ground was written
+ * as `aria-pressed:bg-brand aria-pressed:hover:bg-brand-dark`, a variant prefix carrying a
+ * transcribed brand colour, because a palette value assembled into a prefix is a class name
+ * Tailwind never sees in the source text. As a selector over the attribute the toggle
+ * already publishes, it is ordinary.
+ *
+ * **`@layer utilities`, which is the opposite of every shape above, and the reason is the
+ * opposite too.** A shape is in `components` so a component can depart from it with a
+ * utility. This rule exists to *outrank* one: shadcn's toggle paints its pressed item with
+ * `aria-pressed:bg-muted` and its hover with `hover:bg-muted`, both utilities, and a
+ * components-layer rule loses to a utility however specific it is. Written into the same
+ * layer after them, it wins on order — which is what the hand-written prefix was buying
+ * before, by being the same variant on the same element.
+ *
+ * The attribute is `data-chrome` and not `data-wears`, because the two vocabularies must
+ * not run together: `data-wears` names a shape that reads `--tone-*`, and this reads none.
+ * `palette.test.mjs` sweeps the source for shapes, and a brand ground answering to that
+ * sweep would be a chrome colour inside the tone product.
+ */
+@layer utilities {
+  [data-chrome='switch'][aria-pressed='true'] {
+    background-color: var(--color-brand);
+    color: var(--color-on-brand);
+  }
+
+  [data-chrome='switch'][aria-pressed='true']:hover {
+    background-color: var(--color-brand-dark);
+  }
+}

@@ -74,9 +74,11 @@
  * tone is a rule instead of a class name. The reasoning in this docblock has been carried
  * across to `app.css` whole; when the two disagree, the stylesheet is the one that draws.
  *
- * The diff has moved already, so `SURFACE` and `TOKEN` below have no caller left. They stay
- * because 133 part C is where the deletion happens, once, with nothing still reading any of
- * them.
+ * The diff moved first, and 133 part A moved the dashboard's two views after it — so
+ * `SURFACE`, `TOKEN`, `SOLID` and `FILL` below have no caller left, and `PILL`, `BANNER`
+ * and `INK` are read only by the page's ledger and the controls beside it, which part B
+ * moves. Every one of the eight stays until then: part C is where the deletion happens,
+ * once, with nothing still reading any of them.
  */
 
 /**

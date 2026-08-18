@@ -8,7 +8,7 @@
  */
 
 import { logState } from '../lib/log-read.mjs';
-import { BANNER, CHROME, FILL, INK } from '../lib/palette.mjs';
+import { CHROME } from '../lib/palette.mjs';
 import { Alert, AlertDescription } from './ui/alert.jsx';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
@@ -34,7 +34,7 @@ export function PageBar({ bar, ready }) {
         </span>
         {ready && <span className="text-muted-foreground tabular-nums">{bar.open} open</span>}
         {ready && bar.contradicted > 0 && (
-          <span className={cn('tabular-nums', INK.caution)}>
+          <span data-wears="ink" data-tone="caution" className="tabular-nums">
             {bar.contradicted} claimed fixed, still differs
           </span>
         )}
@@ -44,7 +44,10 @@ export function PageBar({ bar, ready }) {
       <Progress
         value={ready ? percent : 0}
         trackClassName="h-2 rounded"
-        indicatorClassName={FILL.secondary}
+        /* The brand step, and **not** a tone: a progress track's fill says how far along
+           this page is and makes no claim about the content. `app.css` says the same
+           where the fill shape is written. */
+        indicatorClassName="bg-secondary"
       />
     </div>
   );
@@ -172,13 +175,13 @@ export function LogBanner(log) {
 }
 
 /*
- * shadcn's `Alert` gives the shape; the tone is `BANNER`'s, as ADR 0007 requires,
- * so no `variant` is asked for here. `AlertDescription` paints itself
- * `text-muted-foreground`, which would swallow the banner's own ink, so it is told
- * to inherit instead.
+ * shadcn's `Alert` gives the shape and the banner shape gives the tone, as ADR 0007
+ * requires — so `variant` is refused rather than left at its default, which would paint
+ * `bg-card` over the tone. `AlertDescription` paints itself `text-muted-foreground`,
+ * which would swallow the banner's own ink, so it is told to inherit instead.
  */
 const Banner = ({ tone, children }) => (
-  <Alert className={BANNER[tone]}>
+  <Alert variant={null} data-wears="banner" data-tone={tone}>
     <AlertDescription className="text-inherit">{children}</AlertDescription>
   </Alert>
 );

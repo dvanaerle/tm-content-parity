@@ -167,7 +167,8 @@ describe('the tone vocabulary', () => {
  * tone outside the eight is used*: a tone is also **written at the call site**, and three
  * tables produce one without `palette.mjs` ever seeing the word — `BUCKET_TONE`,
  * `STATE` in `OverrideControl.jsx` and `PRIORITY_TONE` in `Chips.jsx`. A wrong word in any
- * of them is `PILL[undefined]`: a pill that draws with no colour, and nothing throws.
+ * of them is a `data-tone` no selector matches: a pill that draws with no colour, and
+ * nothing throws.
  *
  * Since ticket 132 a tone is also written as a `data-tone` attribute for the stylesheet to
  * read, which fails the same silent way: a selector that does not match prints nothing and
@@ -177,8 +178,8 @@ describe('the tone vocabulary', () => {
  * Dutch. Two of the three tables write `tone:` and are caught. **`PRIORITY_TONE` is not**,
  * because it keys its tones on the priority (`{ high: 'caution' }`) and a sweep for bare
  * quoted words would match every string in the interface. Its cover is
- * `PILL[PRIORITY_TONE[priority]]` being read by a person, and that is the honest limit of
- * this test.
+ * `data-tone={PRIORITY_TONE[priority]}` being read by a person, and that is the honest
+ * limit of this test.
  */
 describe('the tones written at a call site', () => {
   const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -271,9 +272,12 @@ describe('the tones written at a call site', () => {
     }
 
     expect(caught).toEqual([]);
-    // The diff is the one surface that has moved, so these two are what the sweep must
-    // find. Without this the test passes on a sweep that found nothing at all.
-    expect([...seen].sort()).toEqual(['cell', 'word']);
+    // Listed rather than counted, because a sweep that found nothing at all would pass
+    // every assertion above it. These are the shapes the interface wears today: the diff's
+    // two, and the four ticket 133 part A moved the dashboard's views onto. The remaining
+    // two — `solid`, which has no wearer, and `accent`, which the fix checkbox takes in
+    // part B — join this list when they are worn.
+    expect([...seen].sort()).toEqual(['banner', 'cell', 'fill', 'ink', 'pill', 'word']);
   }, 30_000);
 
   // And it has to be able to fail, or emptying the patterns would go on reporting success.

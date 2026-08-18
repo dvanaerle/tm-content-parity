@@ -28,7 +28,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
 import { CHECK_LABEL, classInfo } from '../lib/classes.mjs';
 import { BUCKETS, BUCKET_LABEL, BUCKET_MEANING, BUCKET_TONE } from '../lib/buckets.mjs';
-import { CHROME, INK } from '../lib/palette.mjs';
+import { CHROME } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { NO_EDITOR, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
@@ -795,26 +795,13 @@ export default function Dashboard({
  * be emptied by pressing the selected button, and a view that is neither of the two
  * is not a state this screen has, so an empty change is ignored.
  *
- * Colour is still the palette's. shadcn tints the pressed item with `bg-muted` under
- * an `aria-pressed:` prefix, which outranks a plain class, so that prefix is spent on
- * `bg-transparent` and `CHROME.button` is left to draw the selected tone.
+ * Colour is still ours and not shadcn's. The pressed segment says `data-chrome="switch"`
+ * and `app.css` draws the brand ground off the `aria-pressed` the toggle already
+ * publishes — including the ink, so which segment is selected is asked once, by the
+ * browser, rather than a second time here in JavaScript. The rule sits in `@layer
+ * utilities` because it exists to outrank one: shadcn tints the pressed item `bg-muted`
+ * under an `aria-pressed:` prefix, and that is a utility.
  */
-/**
- * The selected segment's ground, written with the **same** `aria-pressed:` prefix that
- * shadcn writes `aria-pressed:bg-muted` with, so `tailwind-merge` sees one group and
- * the last one wins. Countering the grey with `aria-pressed:bg-transparent` and letting
- * `CHROME.button` paint underneath does not work and is worth saying why: an attribute
- * selector outranks a plain class, so the transparent ground beat the brand green and
- * the white label was drawn on white. It was invisible, not wrong-coloured.
- *
- * The hexes are `CHROME.button`'s, transcribed rather than interpolated, because a
- * prefix assembled around a palette value at runtime is a class name Tailwind never
- * sees in the source text. `CHROME.button` stays the source of the meaning, and this
- * constant has to move with it — the same bargain `OverrideControl.jsx` strikes for a
- * checked box.
- */
-const PRESSED_TONE = 'aria-pressed:bg-brand aria-pressed:hover:bg-brand-dark';
-
 /**
  * One page's three counts, in the same order and the same words as the store strip above
  * and the ledger inside (ticket 80).
@@ -828,25 +815,37 @@ const PRESSED_TONE = 'aria-pressed:bg-brand aria-pressed:hover:bg-brand-dark';
  */
 const PageBuckets = ({ buckets }) => (
   <span className="ml-2 text-sm tabular-nums">
-    {BUCKETS.map((bucket, index) => (
-      <span key={bucket}>
-        {index > 0 && <span className="mx-1 text-muted-foreground">·</span>}
-        <span
-          title={`${BUCKET_LABEL[bucket]} — ${BUCKET_MEANING[bucket]}`}
-          className={cn(
-            buckets[bucket] === 0 && 'text-muted-foreground',
-            // Open carries the weight when there is work in it, and the other two carry
-            // their tone. `INK` has no neutral, which is the palette saying that a plain
-            // number is the neutral — so Open asks for no colour at all.
-            buckets[bucket] > 0 && bucket === 'open' && 'font-semibold',
-            buckets[bucket] > 0 && bucket === 'needs-attention' && INK.caution,
-            buckets[bucket] > 0 && bucket === 'closed' && INK.added,
-          )}
-        >
-          {buckets[bucket]}
+    {BUCKETS.map((bucket, index) => {
+      /*
+       * `BUCKET_TONE` and not a second table: the store strip above draws the same three
+       * buckets from it, and two tables would let one row's Closed drift green while the
+       * other's did not.
+       *
+       * Open's tone is `neutral`, which the ink shape has no rule for — the stylesheet
+       * saying that a plain number is the neutral. So Open prints no colour without
+       * anybody here deciding that a second time.
+       */
+      const tone = buckets[bucket] > 0 ? BUCKET_TONE[bucket] : null;
+
+      return (
+        <span key={bucket}>
+          {index > 0 && <span className="mx-1 text-muted-foreground">·</span>}
+          <span
+            title={`${BUCKET_LABEL[bucket]} — ${BUCKET_MEANING[bucket]}`}
+            className={cn(
+              buckets[bucket] === 0 && 'text-muted-foreground',
+              // Open carries the weight when there is work in it, and the other two carry
+              // their tone.
+              buckets[bucket] > 0 && bucket === 'open' && 'font-semibold',
+            )}
+            data-wears={tone ? 'ink' : null}
+            data-tone={tone}
+          >
+            {buckets[bucket]}
+          </span>
         </span>
-      </span>
-    ))}
+      );
+    })}
   </span>
 );
 
@@ -890,10 +889,8 @@ function ViewSwitch({ view, onChange }) {
           key={name}
           value={name}
           title={title}
-          className={cn(
-            PRESSED_TONE,
-            view === name ? 'text-white hover:text-white' : 'text-muted-foreground',
-          )}
+          data-chrome="switch"
+          className="text-muted-foreground"
         >
           {label}
         </ToggleGroupItem>

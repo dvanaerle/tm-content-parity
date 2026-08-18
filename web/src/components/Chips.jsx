@@ -6,14 +6,22 @@ import { Alert } from './ui/alert.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
-import { BANNER, FILL, PILL, severityTone } from '../lib/palette.mjs';
+import { severityTone } from '../lib/palette.mjs';
 
 /*
- * Every chip in this file is a shadcn `Badge` for its shape and a palette token for
- * its colour. Badge's own variants — `default`, `secondary`, `destructive` — are
- * refused on purpose: they read from `--primary` and `--destructive`, and a class tone
- * is not a brand colour and is not a status. `BANNER`, `PILL` and `FILL` are the only
- * things that know what a class means, so they arrive through `className` and win.
+ * Every chip in this file is a shadcn `Badge` for its shape and a **tone** for its
+ * colour. Badge's own variants — `default`, `secondary`, `destructive` — are refused on
+ * purpose: they read from `--primary` and `--destructive`, and a class tone is not a
+ * brand colour and is not a status. The tone arrives as `data-tone` beside a
+ * `data-wears`, and `app.css` decides what that prints.
+ *
+ * **`variant={null}` and not a variant with no colour in it**, because the library has
+ * none: every one of the seven paints a ground. `cva` reads `null` as *this element has
+ * no variant*, so the badge keeps its shape — the pill radius, the height, the icon
+ * sizing — and brings no `bg-*` utility to outrank the tone. A variant left at its
+ * default would win, since a shape is a rule in `@layer components` and a utility comes
+ * after it; that is deliberate, so a component can still depart from a shape with a
+ * class.
  *
  * That is a deliberate breach of shadcn's own guidance that `className` is for layout
  * and never for colour. ADR 0007 outranks it: the palette decides tone.
@@ -26,7 +34,14 @@ import { BANNER, FILL, PILL, severityTone } from '../lib/palette.mjs';
  */
 export function Chip({ value, label, tone = 'neutral', title, ...props }) {
   return (
-    <Badge className={cn('h-auto gap-1.5 px-2 py-1', PILL[tone])} title={title} {...props}>
+    <Badge
+      variant={null}
+      data-wears="pill"
+      data-tone={tone}
+      className="h-auto gap-1.5 px-2 py-1"
+      title={title}
+      {...props}
+    >
       <strong className="font-semibold">{value}</strong>
       <span>{label}</span>
     </Badge>
@@ -43,7 +58,13 @@ export function Chip({ value, label, tone = 'neutral', title, ...props }) {
 export function ClassPill({ class: cls }) {
   const info = classInfo(cls);
   return (
-    <Badge className={cn('h-auto px-1.5 py-0.5 text-xs', info.pill)} title={info.meaning}>
+    <Badge
+      variant={null}
+      data-wears="pill"
+      data-tone={info.tone}
+      className="h-auto px-1.5 py-0.5 text-xs"
+      title={info.meaning}
+    >
       {info.label}
     </Badge>
   );
@@ -90,11 +111,11 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
           title={title(cls, count)}
           className={cn(
             'h-auto gap-1 px-0.5 py-0',
-            // The ring is the brand's, so it is written as a literal from the same
-            // place `CHROME` takes it. Base UI marks the pressed item with
-            // `data-pressed`, but the tone is chosen here rather than in a
-            // `data-pressed:` prefix, because the prefix would have to be assembled
-            // around a palette value at runtime and Tailwind cannot see such a name.
+            // The ring is the brand's and stays a class: it is chrome, which says *this
+            // filter is on* and makes no claim about a finding, so it is outside the tone
+            // product this pill's colour comes from. Nothing is assembled here — the
+            // group already holds which classes are pressed, and the class name is a
+            // literal Tailwind can see.
             selected.includes(cls) && 'ring-2 ring-primary',
           )}
         >
@@ -125,11 +146,10 @@ export function PriorityPill({ priority, className = '' }) {
   if (!priority) return null;
   return (
     <Badge
-      className={cn(
-        'h-auto px-1.5 py-0.5 text-xs tracking-wide uppercase',
-        PILL[PRIORITY_TONE[priority]],
-        className,
-      )}
+      variant={null}
+      data-wears="pill"
+      data-tone={PRIORITY_TONE[priority]}
+      className={cn('h-auto px-1.5 py-0.5 text-xs tracking-wide uppercase', className)}
       title={`An editor set the priority of this page to ${priority}.`}
     >
       {priority}
@@ -209,7 +229,10 @@ export function ScopeChip({ scope, onClear }) {
   return (
     <Badge
       data-scope-chip={scope}
-      className={cn('h-auto gap-1 py-0.5 pr-0.5 pl-1.5 text-xs', PILL.caution)}
+      variant={null}
+      data-wears="pill"
+      data-tone="caution"
+      className="h-auto gap-1 py-0.5 pr-0.5 pl-1.5 text-xs"
       // The slash is on here too. The chip draws `/overkap` and a tooltip explaining
       // `overkap` is the one thing spelled two ways this component exists to avoid.
       title={`The search is narrowed to /${scope} — the pages whose key holds ${scope}. The counts above do not change.`}
@@ -277,11 +300,16 @@ export function ScopeRowButton({ page, onScope, className = '' }) {
  */
 export function FilterBanner({ onClear, className = '', children }) {
   return (
-    /* `Alert` for the shape and `BANNER.caution` for the tone. Alert's `destructive`
-       variant is refused for the reason above: a live filter is a status, and status
-       never wears a diff hue. `border-current` on the button keeps the outline in the
-       banner's own ink rather than the interface's border grey. */
-    <Alert className={cn('flex flex-wrap items-center gap-2 text-sm', BANNER.caution, className)}>
+    /* `Alert` for the shape and the `caution` tone worn as a banner. Alert's
+       `destructive` variant is refused for the reason above: a live filter is a status,
+       and status never wears a diff hue. `border-current` on the button keeps the outline
+       in the banner's own ink rather than the interface's border grey. */
+    <Alert
+      variant={null}
+      data-wears="banner"
+      data-tone="caution"
+      className={cn('flex flex-wrap items-center gap-2 text-sm', className)}
+    >
       {children}
       <Button
         variant="outline"
@@ -386,17 +414,23 @@ export function Bar({ shown, units }) {
   const share = Math.min(1, shown / scale);
   return (
     /*
-     * The one thing in this file that stays hand-rolled, and the reason is the palette
-     * again. shadcn's `Progress` composes its own track and indicator internally and
-     * paints the indicator `bg-primary`; the fill here is `FILL[severityTone(share)]`,
-     * chosen per row, and there is no prop that reaches the indicator. Wrapping the
-     * palette class in a descendant selector would build the class name at runtime,
-     * which Tailwind cannot see. It is also not a progress bar: it is a 24-pixel
-     * sparkline sitting inline in a table cell, with no label and no value.
+     * The one thing in this file that stays hand-rolled. shadcn's `Progress` composes its
+     * own track and indicator internally and paints the indicator `bg-primary`, and there
+     * is no prop that reaches the indicator — so the tone the share answers with could not
+     * get there. It is also not a progress bar: it is a 24-pixel sparkline sitting inline
+     * in a table cell, with no label and no value.
+     *
+     * `severityTone()` stays in JavaScript because it is a threshold with judgement in it,
+     * and `palette.test.mjs` pins it. What it answers with is now an attribute rather than
+     * a lookup, and the fill shape reads it — including the one inversion in the ramp: with
+     * no ink on top, both ambers come from the deep end, so the loud tone runs darker here
+     * and the quiet one lighter.
      */
     <span className="inline-flex h-1.5 w-24 overflow-hidden rounded bg-muted align-middle">
       <span
-        className={`h-full ${FILL[severityTone(share)]}`}
+        data-wears="fill"
+        data-tone={severityTone(share)}
+        className="h-full"
         style={{ width: `${Math.round(share * 100)}%` }}
       />
     </span>

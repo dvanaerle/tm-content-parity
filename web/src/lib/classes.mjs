@@ -1,8 +1,8 @@
 /**
  * How a finding class looks. The vocabulary itself is the contract's, never
  * restated here — this file only names the **tone** of each class and the Dutch
- * label an editor reads. The tone's pixels come from `palette.mjs`, which is the
- * one place a colour is defined.
+ * label an editor reads. The tone's pixels come from `app.css`, which is the
+ * one place a colour is defined; this file hands over the word and nothing else.
  *
  * The tone rule is one rule: a class that is not `work` is grey. Ticket 09 gives it
  * no place in the bar either, so nothing coloured is ever something the editor was
@@ -14,7 +14,6 @@
 // `vocabulary.mjs`, not `contract.mjs`: the contract also makes finding ids and
 // needs `node:crypto`, which a browser bundle cannot resolve.
 import { FINDING_CLASSES, isWork, visibilityOf } from '../../../compare/vocabulary.mjs';
-import { PILL } from './palette.mjs';
 
 /**
  * `lost` is not in this table. It is the tone of "production had this and the new
@@ -109,7 +108,7 @@ export const canDecide = (finding) => Boolean(finding) && finding.visibility !==
  * @returns {{ class: string, check: string,
  *   visibility: import('../../../compare/vocabulary.mjs').Visibility, label: string,
  *   meaning: string, direction: 'lost' | 'added' | null,
- *   tone: import('./palette.mjs').Tone, pill: string }}
+ *   tone: import('./palette.mjs').Tone }}
  */
 export function classInfo(cls) {
   const record = FINDING_CLASSES[cls];
@@ -127,7 +126,6 @@ export function classInfo(cls) {
     // therefore grey, and its cell is still green.
     direction: record?.direction ?? null,
     tone,
-    pill: PILL[tone],
   };
 }
 

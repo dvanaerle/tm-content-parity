@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table.jsx';
-import { CHROME, INK, PILL } from '../lib/palette.mjs';
+import { CHROME } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { crossesBlock, findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
 
@@ -344,6 +344,10 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
   // row would then say *3 of 3 closed* about four findings.
   const bar = barOf(repeat.on.map((entry) => byFinding.get(entry.id)));
 
+  // The green is worn only when something is closed. A row with nothing done reads as a
+  // plain muted number, so a zero is never green.
+  const closedTone = bar.closed ? 'added' : null;
+
   return (
     <li className="border-b border-border last:border-0">
       {/* The trigger is the whole row, as it was before ticket 110 and is again since its
@@ -390,7 +394,9 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
               <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
             )}
             <span
-              className={cn('ml-2 tabular-nums', bar.closed ? INK.added : 'text-muted-foreground')}
+              data-wears={closedTone ? 'ink' : null}
+              data-tone={closedTone}
+              className={cn('ml-2 tabular-nums', !closedTone && 'text-muted-foreground')}
             >
               {bar.closed} of {bar.denominator} closed
             </span>
@@ -603,5 +609,7 @@ const FIELD_LABEL = {
  */
 const FindingState = ({ finding }) =>
   finding && finding.state !== 'open' ? (
-    <Badge className={PILL[STATE[finding.state].tone]}>{STATE[finding.state].label}</Badge>
+    <Badge variant={null} data-wears="pill" data-tone={STATE[finding.state].tone}>
+      {STATE[finding.state].label}
+    </Badge>
   ) : null;
