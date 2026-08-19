@@ -9,6 +9,7 @@ import { logState } from '../lib/log-read.mjs';
 import { NO_EDITOR, useEditor, useOverrides } from '../lib/overrides.mjs';
 import { usePageReport, useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
 import { moment } from '../lib/dates.mjs';
+import { headerReading } from '../lib/page-header.mjs';
 import { cn } from '../lib/utils.js';
 
 /**
@@ -38,6 +39,18 @@ export default function PageView({
   const { derived, append, canWrite } = log;
 
   /*
+   * What the header may offer, decided before anything is drawn (ui-polish 08). It used to
+   * be worked out in the four places that drew it, so the only way to ask whether an
+   * editor could act on this page was to render the page.
+   */
+  const header = headerReading({
+    review: derived.review,
+    annotations: derived.annotations,
+    notWritingReason: log.notWritingReason,
+    recheckAvailable,
+  });
+
+  /*
    * The run log's dates, joined on here rather than in each table, so the ledger and the
    * content view cannot come to disagree about which date belongs to which id. It is a
    * display field: no bar counts it, and a re-check mints ids the committed index has
@@ -64,7 +77,7 @@ export default function PageView({
           review={derived.review}
           findingSetHash={report.findingSetHash}
           append={append}
-          canWrite={canWrite}
+          actions={header.actions}
         />
 
         {/* Ticket 83. Beside the review because both are about **this page** rather than
@@ -72,12 +85,13 @@ export default function PageView({
         <PageAnnotations
           annotations={derived.annotations}
           append={append}
-          canWrite={canWrite}
+          canWrite={header.actions.annotate.state === 'offered'}
           busy={log.busy}
         />
 
-        {/* Feature detection: absent on the webhost, never broken. */}
-        {recheckAvailable && (
+        {/* Feature detection: absent on the webhost, never broken — which is `recheck`
+            being **absent** rather than refused, a distinction `headerReading()` keeps. */}
+        {header.actions.recheck.state === 'offered' && (
           <Button
             disabled={recheck.running}
             onClick={() => recheck.run(report.store, report.page)}

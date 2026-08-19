@@ -14,25 +14,25 @@ After this ticket the header draws exactly what it draws today, from a value it 
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** resolved — 2026-08-19, branch `ticket-104-search-page-scope`.
 
 **Parent:** 07-the-page-header-is-one-quiet-line.md
 
-- [ ] One module under the web layer's `lib`, exporting **one** function. It takes the page's
+- [x] One module under the web layer's `lib`, exporting **one** function. It takes the page's
       review, its annotations, whether the log can be written, whether an editor name is set, and
       whether the local service answers. It returns the header's reading and, for each action the
       page offers, whether it is present, absent, or present-and-refused with a reason.
-- [ ] It imports no component and renders nothing, in the same shape as `explainScope()`,
+- [x] It imports no component and renders nothing, in the same shape as `explainScope()`,
       `blockReading()`, `bucketOf()` and `collapses()`.
-- [ ] The refusal sentences come from `whyNotWriting()`. No second set is written.
-- [ ] *Absent* and *refused* are different answers and the type says so: a re-check with no local
+- [x] The refusal sentences come from `whyNotWriting()`. No second set is written.
+- [x] *Absent* and *refused* are different answers and the type says so: a re-check with no local
       service is **absent**, and a decision with no editor name is **refused with a reason**.
-- [ ] The page header consumes the value for its existing reading. No control moves, no wording
+- [x] The page header consumes the value for its existing reading. No control moves, no wording
       changes, and the rendered header is the one that is there today.
-- [ ] A data-level test in the shape of `search.test.mjs` and `blocks.test.mjs`, built one cycle at
+- [x] A data-level test in the shape of `search.test.mjs` and `blocks.test.mjs`, built one cycle at
       a time — one test, then the implementation it asks for, then the next. Do not write the suite
       first.
-- [ ] `npm test && npm run lint && npm run build`.
+- [x] `npm test && npm run lint && npm run build`.
 
 ## Traps
 

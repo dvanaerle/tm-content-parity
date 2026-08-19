@@ -60,8 +60,22 @@ export function PageBar({ bar, ready }) {
  * the tool cannot see**. It goes stale when the finding set changes and never
  * expires on its own — so the words are *changed since review*, never
  * *needs review*. The log does not manufacture work.
+ *
+ * **Which of its three controls are on offer is not decided here.** *Clear the review* is
+ * absent without a review, *Mark again* without a stale one, and *Page reviewed* once
+ * there is one at all — three conditions over the same two facts, and `headerReading()`
+ * holds them so a test can ask them without mounting anything.
+ *
+ * @param {object} props
+ * @param {{ editor: string, at: string, fresh: boolean } | null} props.review
+ * @param {string} props.findingSetHash
+ * @param {(event: object) => Promise<boolean>} props.append
+ * @param {Record<string, import('../lib/page-header.mjs').Offer>} props.actions
+ *   `headerReading().actions`.
  */
-export function ReviewControl({ review, findingSetHash, append, canWrite }) {
+export function ReviewControl({ review, findingSetHash, append, actions }) {
+  const offered = (action) => actions[action].state === 'offered';
+
   if (review) {
     return (
       <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -70,7 +84,7 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
           editor={review.editor}
           at={review.at}
         />
-        {canWrite && (
+        {offered('clearReview') && (
           <Button
             variant="link"
             size="xs"
@@ -80,7 +94,7 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
             Clear the review
           </Button>
         )}
-        {canWrite && !review.fresh && (
+        {offered('markAgain') && (
           <Button
             variant="link"
             size="xs"
@@ -94,7 +108,7 @@ export function ReviewControl({ review, findingSetHash, append, canWrite }) {
     );
   }
 
-  if (!canWrite) return null;
+  if (!offered('markReviewed')) return null;
   return (
     <Button
       variant="outline"

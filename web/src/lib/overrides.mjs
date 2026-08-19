@@ -166,6 +166,13 @@ export function useOverrides({ report, editor, closedWith = NO_CLOSINGS }) {
     notConnectedReason: reason,
     /** No name, no writing: every event carries an author. */
     canWrite: Boolean(port) && Boolean(editor) && events !== null && !error,
+    /**
+     * Why not, in the one wording. `canWrite` says whether, and a control that has to tell
+     * an editor *why* had nowhere to read it before ui-polish 08 — the store's side has
+     * published this since ticket 31 and the page's side composed nothing, which is how a
+     * second set of sentences would have started.
+     */
+    notWritingReason: whyNotWriting({ port, editor, events, error }),
   };
 }
 
