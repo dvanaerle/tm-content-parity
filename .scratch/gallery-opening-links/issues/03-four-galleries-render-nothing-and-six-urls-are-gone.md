@@ -13,6 +13,11 @@ production:
 | de | `galerie` | 57 | 1 |
 | fr | `galerie` | 61 | 0 |
 | be_fr | `fr/galerie` | 61 | 0 |
+| uk | `general-photo-gallery` | 76 | 0 |
+
+**`uk` `general-photo-gallery` was added on 2026-08-19** by ticket 02's measurement
+(`../BYTES.md`), which re-crawled all 52 gallery pages live. The title still says four; the
+table is now five, and the count in the title is the one to trust least.
 
 One album page is a genuine regression rather than a general-page gap: `fr` `galerie/eclairaige`
 renders 0 against 24, while its `be_fr` twin `galerie/eclairage` renders 22.

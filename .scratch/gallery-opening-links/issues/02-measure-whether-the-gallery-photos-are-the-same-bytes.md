@@ -31,26 +31,30 @@ carries it onto the image record as `fullSrc` — the raw href, as the page send
 resolves against the page url the same way `src` does. It is `null` on every image no
 opening link wraps.
 
-**Status:** ready-for-agent
+**Status:** resolved — 2026-08-19, branch `ticket-104-search-page-scope`.
+The probe is `crawl/probes/probe-gallery-image-bytes.mjs` and the conclusion is `../BYTES.md`.
+One criterion shipped wider than written: the general pages and the 404 URLs are separated
+*empirically* rather than from issue 03's lists, which found a fifth empty general page —
+`uk` `general-photo-gallery`, 76 photos against none.
 
 **Parent:** ../PRD.md
 
-- [ ] A probe fetches the full-size original for every photo on the 52 gallery pages, both
+- [x] A probe fetches the full-size original for every photo on the 52 gallery pages, both
       sides — roughly 1,900 production and 900 new-site images — and digests each one. It
       follows the existing probe pattern and writes its measurement into the data directory.
-- [ ] It reports, per page and in total: how many photos pair by content, against the 17%
+- [x] It reports, per page and in total: how many photos pair by content, against the 17%
       that pair by filename on album pages today.
-- [ ] It reports how many photos pair by content but **not** by filename. These are the
+- [x] It reports how many photos pair by content but **not** by filename. These are the
       carport case — the same photograph under a localised name — and they are the findings
       the log is currently getting wrong in the direction an editor notices.
-- [ ] It reports how many pair by filename but **not** by content. These are the opposite
+- [x] It reports how many pair by filename but **not** by content. These are the opposite
       error and there should be very few; a large number means filenames are being reused for
       different photographs and would change what the real check can promise.
-- [ ] It reports the four general gallery pages and the six 404 URLs separately, so their
+- [x] It reports the four general gallery pages and the six 404 URLs separately, so their
       zeros do not sink the album pages' numbers the way they did in the first measurement.
-- [ ] A short written conclusion says which check to build: a byte digest if pairing rises
+- [x] A short written conclusion says which check to build: a byte digest if pairing rises
       sharply, or a perceptual hash with a measured threshold if the files were re-encoded.
-- [ ] Gallery pages only. Do not fetch the whole corpus to answer a gallery question.
+- [x] Gallery pages only. Do not fetch the whole corpus to answer a gallery question.
 
 ## Traps
 
