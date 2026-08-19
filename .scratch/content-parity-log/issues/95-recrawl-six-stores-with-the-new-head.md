@@ -4,10 +4,9 @@ Type: measure
 Status: resolved 2026-08-19 — the run happened on branch
 `ticket-93-no-route-exclusion-withdrawn`, over the extractor from `a3f5073`. It writes
 no code, so what it leaves behind is the corpus: 816 extracts, all
-`extractVersion: 2`. The gate is met. One number came in outside the range the gate
-predicted — findings and work fell 13% and 19% — and that is recorded below
-unexplained, because observing the run was this ticket's job and explaining the site
-is not.
+`extractVersion: 2`. The gate is met. Findings and work fell 13% and 19%, outside the
+range the gate predicted, and the cause is identified below: four fifths of it is
+`71a6cea` taking effect, not the site changing.
 Blocked by: 94. (93 was the other blocker and no longer blocks anything: its abort
 half landed in `feabe7c`, its exclusion half is out of scope. This ticket is still
 needed — 94, not 93, is what invalidates every extract on disk.)
@@ -97,17 +96,38 @@ and should not be read as one.
 Against the gate's reference of 722 / ~40,802 / ~21,830: **comparable is +2**, and that
 is the shape expected of a fresh crawl. **Findings are down 5,416 (-13.3%) and work is
 down 4,198 (-19.2%)**, which is more movement than "expect movement" comfortably covers.
-The head classes exist in the vocabulary and nothing emits them, so this run added no
-class — the drop is the new site having changed under the corpus, or something narrowing
-what is compared. This ticket observes it and does not explain it. **Whoever takes
-[97](97-the-meta-producer-one-finding-per-row.md) inherits a corpus whose totals moved a
-fifth, and should not read the 17,632 as continuous with the 21,830.**
 
-**The drop is logged, not silent.** This compare run closed **5,704 observations** in
-`history/run-log.jsonl` — `"gone":"2026-08-19T15:15..."` — against a findings fall of
-5,416. So the findings did not vanish from the tally without the run log noticing them
-go: each one is a named observation on a named page, and `git diff` on that file is the
-list. That says the compare stage saw them disappear; it does not yet say why they did.
+**Four fifths of the drop is `71a6cea`, not the site.** "An opening link is not a link,
+and the gallery goes quiet" stopped a gallery's opening anchors becoming link records.
+It edits `crawl/extract.mjs`, so it changes nothing until a re-crawl — and this is the
+re-crawl. Of the 5,704 observations this run closed, **4,568 are `missing-link` or
+`extra-link`, and 4,089 of those sit on a gallery page**. That is the rule landing, and
+it landed in every store at once because every store has galleries.
+
+The first reading of this number in this ticket said the drop could not be this build's,
+on the grounds that no class was added. **That reasoning was wrong and is corrected
+here:** a class being added is not the only way a build moves a count. Removing a
+*record* moves it too, and the extractor is where the removal lives, so a rule merged
+five days ago shows up in the tally on the day someone re-crawls. A gate that predicts
+findings has to be read against every extractor commit since the number was set, not
+only against the vocabulary.
+
+**The rest is small and looks like content work.** 837 `text-missing` closures over 132
+pages, led by `shading-panel` at 32 to 39 closures in five stores and
+`downloads`/`telechargements` at 26 — one shared block fixed once, showing up in every
+store that derives it. That is what an editor resolving a page looks like here, and it
+is about 15% of the movement rather than the cause of it.
+
+**Whoever takes [97](97-the-meta-producer-one-finding-per-row.md) inherits a corpus
+whose totals moved a fifth for a reason that is now known**, and should set a fresh
+reference from the 724 / 35,386 / 17,632 above rather than reconciling against 21,830.
+
+**The drop is logged, not silent, and the log is what identified it.** This compare run
+closed **5,704 observations** in `history/run-log.jsonl` — `"gone":"2026-08-19T15:15..."`
+— and opened 288. Each closure carries its store, page and class, so the run log is not
+just a record that the number moved: it is the evidence of *what* moved, and tallying it
+by class and page is what found `71a6cea` above. `git diff 27b7d26^ history/run-log.jsonl`
+is the list.
 
 One observation on the run itself, recorded because the next person will size a crawl
 from this ticket: each store took **8 to 11 seconds**, not the two minutes the runbook
