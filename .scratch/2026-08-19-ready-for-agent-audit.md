@@ -1290,7 +1290,7 @@ Nothing is deleted: every control is one press away.
 | 1 | `gallery` 01 — opening links stop becoming link records | 1 | — | ~~keep, first~~ **done, `71a6cea`** |
 | 2 | `gallery` 02 — are the gallery photos the same bytes | 3 | — | ~~keep~~ **done, see `BYTES.md`** |
 | 3 | `cross-store` 01 — measure finding churn | gate | — | ~~keep, first~~ **done, see `CHURN.md`** |
-| 4 | `code-health` 01 — lint runs on every push | 3 | 1 workflow | **keep** |
+| 4 | `code-health` 01 — lint runs on every push | 3 | ~~1 workflow~~ | **split** — `--deny-warnings` landed; enforcement undecided, now `needs-info` |
 | 5 | `cross-store` 09 — a class on its own is a query | 2 | small | **keep** |
 | 6 | `cpl` 141 — a difference is ordered by what is left | 2 | small | **keep** |
 | 7 | `cross-store` 03 — the search reaches every store | 2 | 1 session | **keep** |
@@ -1375,7 +1375,9 @@ the three new ones:
 
 ```
   now        cross-store 11 (probe)                  the flattening and the pairing
-             code-health 01                          (any time, cheap, verified green)
+             (code-health 01 is no longer queued: its `--deny-warnings` half landed
+              in package.json on 2026-08-19, and whether the rest is a pre-commit
+              hook, a CI workflow or nothing is an open decision. `needs-info`.)
 
   then       cross-store 09  ->  03  ->  04          the no-new-data half
              cpl 141                                 order by what is left

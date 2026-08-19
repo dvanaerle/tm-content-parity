@@ -8,7 +8,33 @@ push that breaks every rule in the set goes green.
 
 **Blocked by:** none — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** needs-info — **2026-08-19**. The half of this ticket that was a defect has landed;
+the half that is left is a decision the maintainer has not made yet.
+
+**Landed, outside a session.** `package.json`'s `lint` script is now
+`oxlint --deny-warnings .` and exits 0 over the tracked tree. That closes the trap this ticket
+named, and it closed it **at the source rather than in CI** — which matters, because the
+warnings hole was never a CI problem. The linter is already run by hand before every commit,
+so a bare `oxlint .` had been reporting every built-in correctness rule and returning success
+on all of them. Anyone running the script now gets the answer the 15 anti-slop rules were
+already getting.
+
+**What is left is enforcement, and it is a real question rather than an oversight.** There is
+no pre-commit hook in this repo — no `husky`, `lefthook`, `lint-staged` or `simple-git-hooks`
+in `package.json`, nothing in `.git/hooks/`, and `core.hooksPath` unset. Linting before a
+commit is a discipline that is kept, not a gate. Three answers are open:
+
+1. **A pre-commit hook.** Closest to how the work is actually done, catches it before the
+   commit rather than after the push, and covers agent commits because they run locally here.
+   Bypassable with `--no-verify`, and absent from a fresh clone.
+2. **The workflow this ticket describes.** The backstop a hook cannot be. Verified to land
+   green, with the four caveats below.
+3. **Neither.** *We lint by hand and we know it* is a legitimate answer now that the warnings
+   hole is closed. If this is the answer, close the ticket `wontfix` with that reason rather
+   than leaving it open as a reproach.
+
+Until that is decided this is `needs-info` and not `ready-for-agent`: an agent picking it up
+would build the workflow because the ticket says to, and the workflow may not be wanted.
 
 > **Verified 2026-08-19, by the audit of every open `ready-for-agent` ticket.** The premise and
 > the green landing both hold, measured by running the commands rather than reading them:
