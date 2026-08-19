@@ -8,7 +8,9 @@ The rules:
 
 - The folder holds `wontfix` tickets only. A resolved ticket stays in `issues/`.
 - Every file states its re-open trigger, or says that there is none.
-- A file here keeps its number. Numbers are never reused.
+- A file here keeps its number. Numbers are never reused. The one exception on record:
+  ticket 138 was renumbered to 140 on 2026-08-19, because 138 had been issued twice and a
+  number that points at two tickets is worse than a number that moved once.
 - `map.md` still links to it. Moving a ticket here does not hide it.
 - Links inside a moved file need one more `../`, because the file went one level
   down.

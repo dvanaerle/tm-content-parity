@@ -1,7 +1,8 @@
 # Code health — the comment bar, and what the tree actually breaks
 
 Type: prd
-Status: ready-for-agent
+Status: live — 2026-08-19: issues 02, 03 and 04 are resolved; 01 is the open work. A PRD
+carries no triage label (see `docs/agents/triage-labels.md`).
 Written: 2026-08-18
 Decided in: a grilling session against `docs/standards/CODING_STANDARDS.md`
 Records: no ADR. The record is the amended *Existing code* clause in the standard itself,

@@ -837,7 +837,7 @@ repeated in each:
   `cross-store-link` reads — 14 be_fr anchors on 5 pages point outside `/fr` on
   the shared host, and 13 are shared `/media/` files rather than pages. The one
   page link is `/blog`, which is out of scope. Not zero, so
-  [49](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md) was opened with a
+  [49](issues/49-be-fr-shared-host-blind-spot.md) was opened with a
   recommendation of wontfix. **No rule was written against it**, and the triage of
   2026-08-07 took the recommendation.
 
@@ -1105,7 +1105,7 @@ repeated in each:
 
   - [47 — Where a shared identity key lives](issues/47-shared-keys-layering.md)
     — the ticket behind
-    [ADR 0001](../../docs/adr/0001-a-pure-rule-that-both-stages-need-lives-in-shared.md).
+    [ADR 0001](../../docs/adr/0001-shared-pure-rules.md).
     A rule both the crawl and the compare need lives in `shared/`.
   - [54 — The French store shows all of its pages](issues/54-french-store-shows-all-its-pages.md)
     — resolved 2026-08-10; the identity half landed on the day and the crawl
@@ -1584,7 +1584,7 @@ what a finding with no anchor heading offers instead. It offers the page.
   `canDecide()` rule that 79, 48 and 116 read; the **context marker itself is still 79's**,
   so the collapse third of its criterion eight is a predicate here and a feature there,
   [90 a campaign is a class](issues/90-a-campaign-is-a-class-not-a-commit.md),
-  [87 three widths](issues/87-three-widths.md).
+  [87 three widths](issues/.out-of-scope/87-three-widths.md).
 
   78 needs 77. 81 needs 76. 31 needs 81 and 88, and 30. 82 needs 81. 85 and 86 need 75,
   and 86 needs 76. **89 and 90 are both closed**: 89 refused 90's rule on exactly the
@@ -1859,7 +1859,7 @@ product signature` — a product page carries all six hreflang alternates, and
   [20](issues/.out-of-scope/20-one-sided-pages-checklist.md). Both count out of the seed list,
   and both re-triage after it. **55 landed on 2026-08-10, so both are unblocked**,
   and so is [04](issues/04-six-store-page-lists.md).
-  [49](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md) is **re-opened**:
+  [49](issues/49-be-fr-shared-host-blind-spot.md) is **re-opened**:
   its own trigger fired and the number that made it wontfix went from 1 to 12.
   `WORKLIST.md` step 33 holds all four.
 
@@ -2012,7 +2012,7 @@ product signature` — a product page carries all six hreflang alternates, and
     79's own first criterion forbids — so 79 gains a criterion narrowing it, and 48 is
     the deliberate widening afterwards. This makes 48 a correctness fix, not a
     convenience. `CONTEXT.md`'s **Context marker** entry is corrected; no new term, no ADR.
-  - [49 — The be/be_fr shared-host blind spot, measured](issues/.out-of-scope/49-be-fr-shared-host-blind-spot.md)
+  - [49 — The be/be_fr shared-host blind spot, measured](issues/49-be-fr-shared-host-blind-spot.md)
     — **closed `wontfix`** on 2026-08-07 and moved to `issues/.out-of-scope/`.
   - [59 — `link-status.mjs` erases the other stores](issues/59-link-status-overwrite.md)
     — **resolved** 2026-08-07. The script takes no argument. Given one,
@@ -2066,7 +2066,7 @@ product signature` — a product page carries all six hreflang alternates, and
     — **parked `wontfix` 2026-08-13**, ADR 0011: its second half was bulk muting and there
     is no mute for a matrix to offer. The matrix itself is not refused; a revival starts
     from 40.
-  - [42 — Untranslated text](issues/42-untranslated-text.md) — the highest-value
+  - [42 — Untranslated text](issues/.out-of-scope/42-untranslated-text.md) — the highest-value
     check on the axis.
   - [43 — Alt language and meta](issues/43-alt-language-and-meta.md)
   - [44 — Heading outline shape](issues/44-heading-outline-shape.md)
@@ -2372,7 +2372,7 @@ product signature` — a product page carries all six hreflang alternates, and
 - Naming the CMS block behind a section. The rendered HTML carries no block
   identifier, so a task cannot yet point at the right admin entity. Needs
   Magento-side data. Asked again on 2026-08-18 and parked with a measurement —
-  see [138](issues/.out-of-scope/138-suggest-the-reusable-content.md), which is
+  see [140](issues/.out-of-scope/140-suggest-the-reusable-content.md), which is
   where this line's re-open condition now lives.
 - How editors learn that a new snapshot is live, or that new findings appeared.
 - Whether blogs re-enter scope once parity closes. 104 posts and 4 blog
@@ -2398,7 +2398,7 @@ product signature` — a product page carries all six hreflang alternates, and
 
 - **Suggesting what should be a Custom Variable or a CMS Block** — parked `wontfix`
   2026-08-18,
-  [138 — Suggest what should be a Custom Variable or a CMS Block](issues/.out-of-scope/138-suggest-the-reusable-content.md).
+  [140 — Suggest what should be a Custom Variable or a CMS Block](issues/.out-of-scope/140-suggest-the-reusable-content.md).
   A `/grill-with-docs` asked whether the log could propose which text to make reusable, for
   maintainability. Parked on its own measurement, before anything was built: production
   recurrence inside `<main>` is **shallow** — 40 `nl` texts reach 10 pages, nothing reaches
@@ -2436,7 +2436,7 @@ product signature` — a product page carries all six hreflang alternates, and
   of findings share their content with another page, but **81.4% of that is labels** under
   60 characters and only **5.9% of all findings are block-shaped**; block-shaped content
   reaches **11 pages at most, 4 keys over 10, none over 25**, and those 4 are one cluster —
-  the showroom FAQ. That is 138's finding reached from the opposite direction, findings
+  the showroom FAQ. That is 140's finding reached from the opposite direction, findings
   rather than production units against themselves. **ADR 0003 is updated**: its "content
   hash over regions" option moves from *not rejected, deferred* to *rejected on its
   measurement*. Re-open triggers: a block-shaped key reaching **25 pages**, or a shared

@@ -1,7 +1,8 @@
 # UI and copy polish — the interface is quiet by default
 
 Type: prd
-Status: ready-for-agent
+Status: live — 2026-08-19: issues 01 to 05 and 07 to 10 are resolved; 06 is `needs-triage`,
+11 and 12 are `needs-info`. A PRD carries no triage label (see `docs/agents/triage-labels.md`).
 Written: 2026-08-17
 Decided in: a grilling session against an outside audit, `UI and Copy Polish Blueprint`
 Records: `docs/adr/0019-the-interface-is-quiet-by-default.md`

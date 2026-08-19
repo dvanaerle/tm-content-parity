@@ -4,6 +4,11 @@ Type: task
 Status: ready-for-agent
 Blocked by: 75
 Parent: ../map.md
+Narrowed: 2026-08-19. The drafting endpoint left this ticket and is now
+[142](.out-of-scope/142-an-exclusion-entry-is-drafted-against-a-live-measurement.md), parked.
+What is left here is the read-only half: the warning hoist, the per-entry store count, the
+class-visibility panel, the named pull-request route, and the answer recording who owns the
+exclusion list.
 
 > **About half of this is already built, verified 2026-08-13 in a triage sweep of every
 > open ticket. Read the criteria against this note before building anything.**
@@ -115,33 +120,6 @@ validator's evidence is supposed to be.
       finding count on the current snapshot.
 - [ ] The three read-only panels read from the committed lists and the snapshot that
       already exist. They crawl nothing and they write nothing.
-
-### The drafting panel
-
-- [ ] Drafting is an endpoint on the local service. The hosted build makes no request for
-      it and shows no control, because nothing answers `/api/health` there.
-- [ ] A selector and three page keys give back the unit counts on both sides for those
-      three pages, fetched live. Three is what `validateRegions()` demands as evidence.
-- [ ] The panel reports the counts per side and per page, so a `legacy-only` entry's zero
-      on the new site is visible as the evidence for its own kind, as ticket 64 recorded.
-- [ ] It proposes a `maxUnits` above the widest page it measured, and it refuses to
-      propose one above the ceiling of 100. A region wider than the ceiling needs a new
-      decision in ADR 0003 and not a larger number.
-- [ ] It warns when the selector removes a large share of a page's units. The
-      `.magezon-builder` near-miss took 99.7% of `/downloads`, and a panel that would have
-      shown that number is the point of this feature.
-- [ ] It warns when a selector anchors on something campaign-shaped, such as an option id
-      or a year, because that is the anchor that stops matching.
-- [ ] The output is the entry text, ready to paste. **The panel writes nothing** — not to
-      the list, not to the database, not to disk. A re-check writes to `data/rechecks/`;
-      drafting writes nowhere, because a draft is not an observation of a page.
-- [ ] The measurement runs on live production and live new-site URLs for the same page, so
-      the two sides are cut by one definition, as ADR 0003's third bar for a new entry
-      requires.
-- [ ] Production has served a maintenance page on 446 of 451 URLs for a whole session, so
-      a failed fetch reports as a failed measurement and never as a count of zero.
-- [ ] A missing snapshot reports nothing rather than failing the build, as the coverage
-      loader already does.
 - [ ] The answer records who or what the owner of the exclusion list now is. A panel that
       shows staleness to nobody in particular has not solved the problem the ADR named.
 

@@ -1,9 +1,22 @@
 # 87 — Three widths
 
 Type: task
-Status: ready-for-agent
+Status: wontfix — **parked 2026-08-19** by the audit of every open `ready-for-agent` ticket,
+as *three widths, the programme*. Not disproven: refused on its reader. The reader it names is
+*an editor standing in a showroom with a phone*, and we have no evidence anybody reads the log
+on a phone; the canonical viewport was settled as desktop by ticket
+[69](../69-one-canonical-viewport.md). One of its criteria is also **unbuildable today** — the
+*expand and collapse by touch* criterion depends on ticket [79](../79-the-content-view-opens-on-the-differences.md)'s
+context markers, which do not exist, and a ticket with an unbuildable criterion was never
+`ready-for-agent`.
+**Two criteria were carved out first**, because they were never about width: touch-target
+sizing and the header wrap are now `ui-polish` ticket
+[13](../../../ui-polish/issues/13-a-control-is-large-enough-to-hit-and-the-header-wraps.md).
+Both are struck from the criteria below.
+**Re-open trigger:** evidence that an editor reads the log on a phone or a tablet, or a request
+for it.
 Blocked by: 79, 81
-Parent: ../map.md
+Parent: ../../map.md
 
 > **Part of this arrived on the way to other tickets, verified 2026-08-13 in a triage sweep
 > of every open ticket.**
@@ -54,16 +67,16 @@ wrap.
       adds a fourth deliberately or not at all.
 - [ ] Every data table has a horizontal scroll wrapper, and the side-by-side diff scrolls
       sideways rather than compressing. Fixed pixel columns become minimum widths.
-- [ ] The header wraps. The brand, the store switcher and the page title all remain
-      reachable at the narrowest width.
+- [~] ~~The header wraps. The brand, the store switcher and the page title all remain
+      reachable at the narrowest width.~~ **Carved out to `ui-polish` 13.**
 - [ ] The page groups collapse, and the context markers from
-      [79](79-the-content-view-opens-on-the-differences.md) still expand and collapse by
+      [79](../79-the-content-view-opens-on-the-differences.md) still expand and collapse by
       touch.
-- [ ] The repeat list from [81](81-the-repeat-is-the-queue.md) is usable at the narrowest
+- [ ] The repeat list from [81](../81-the-repeat-is-the-queue.md) is usable at the narrowest
       width. It carries two counts and two texts per row, and it is the row most likely to
       break.
-- [ ] Every interactive control meets a touch-target size, including the override
-      controls, the checkboxes and the class pills.
+- [~] ~~Every interactive control meets a touch-target size, including the override
+      controls, the checkboxes and the class pills.~~ **Carved out to `ui-polish` 13.**
 - [ ] Checked at all three widths on: a store dashboard, the worst page
       (`nl__fotogalerij/zonwering`, 399 shown findings), a page with two findings, and a
       non-comparable page.

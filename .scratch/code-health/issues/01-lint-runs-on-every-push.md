@@ -2,13 +2,43 @@
 
 **What to build:** a contributor pushes a branch and the lint rules this repo already owns
 decide whether it passes. Today they decide nothing: `oxlint.config.ts` enables 15 rules and
-the local plugin under `tools/oxlint/anti-slop/` implements them across 1,917 lines, while
+the local plugin under `tools/oxlint/anti-slop/` implements them across 2,121 lines, while
 `.github/workflows/` holds a Supabase backup and a keepalive and nothing that runs them. A
 push that breaks every rule in the set goes green.
 
 **Blocked by:** none — can start immediately.
 
 **Status:** ready-for-agent
+
+> **Verified 2026-08-19, by the audit of every open `ready-for-agent` ticket.** The premise and
+> the green landing both hold, measured by running the commands rather than reading them:
+> `npm run lint` exits **0** with no output, `npx oxlint --deny-warnings .` exits **0**, and
+> `npm run typecheck` exits **0**. `.github/workflows/` holds only `supabase-backup.yml` and
+> `supabase-keepalive.yml`, so nothing enforces either today. Four things the ticket should
+> carry before it is built:
+>
+> 1. **The type-check reaches 19 files, not the tree.** `tsconfig.json` is the only one in the
+>    repo and its `include` is `["oxlint.config.ts", "tools/oxlint/**/*.ts"]`, with `allowJs`
+>    and `checkJs` both defaulting to false. `--listFiles` gives exactly 19 files. **`web/`,
+>    `api/`, `compare/`, `crawl/`, `shared/` and `overrides/` are type-checked by nothing**, and
+>    the JSDoc `@param` / `@type` annotations throughout them are checked by nothing. `oxlint`,
+>    by contrast, lints **249** files. Do not let the workflow's green tick be read as repo-wide
+>    type coverage; say in the workflow or the ticket what it actually covers.
+> 2. **Do not raise the oxlint categories in this ticket.** `oxlint . -D correctness -D suspicious`
+>    exits **1** today with dozens of diagnostics (`unicorn(no-array-sort)`,
+>    `unicorn(consistent-function-scoping)`, …). `--deny-warnings` alone stays green. Raising
+>    categories is its own ticket with its own cleanup.
+> 3. **Unknown rule names fail open.** `oxlint -D anti-slop/does-not-exist .` exits 0 with no
+>    message. A typo in a future CI invocation silently enforces nothing — which is the exact
+>    failure this ticket exists to end. Pin the invocation and test that a deliberate violation
+>    fails the workflow.
+> 4. **`npm test` needs a browser.** `vitest run` passes (60 files, 1,304 tests, ~26 s) but drives
+>    real Chromium through Playwright, so adding it to the workflow means adding
+>    `playwright install`. Decide that deliberately rather than discovering it in CI.
+>
+> Not covered and deliberately out of scope: the 7 `.astro` files are linted but type-checked by
+> nothing, and covering them needs `@astrojs/check`, `typescript` and a `web/tsconfig.json` in
+> `web/` — new dependencies, and near-certain to arrive red on code that has never been checked.
 
 **The trap to avoid.** `oxlint` exits **0 on a warning**. Measured 2026-08-18: a file with a
 `no-debugger` violation reports the diagnostic and still exits 0. The 15 anti-slop rules are

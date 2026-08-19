@@ -14,7 +14,7 @@ finding on the page, shown or hidden. The reasoning is in
 ## Why it goes first
 
 It is a prerequisite for both [86](86-heading-level-becomes-information.md) and
-[116](116-the-regrouped-class.md), and for the same reason. The hash is what a **page
+[116](116-a-merged-paragraph-is-one-row.md), and for the same reason. The hash is what a **page
 review**'s staleness is measured against. Filtered on visibility, it makes a vocabulary edit
 look like a change to the page: flipping `heading-level` to `information` would print
 **"changed since review"** on all **392** pages that carry one, on a day when not a word on

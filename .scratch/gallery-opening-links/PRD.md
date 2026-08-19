@@ -1,5 +1,10 @@
 # The opening link is not a link
 
+Type: prd
+Status: live — 2026-08-19: issues 01 (`71a6cea`) and 02 are both resolved; 02's answer is
+`BYTES.md`. Only 03 is open, at `needs-triage`. A PRD carries no triage label (see
+`docs/agents/triage-labels.md`).
+
 The spec for this feature. The tickets that carry it out are in `issues/`.
 
 ## Problem Statement

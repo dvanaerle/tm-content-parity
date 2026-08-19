@@ -1,7 +1,9 @@
 # Triage — `tm-content-parity Production UX Blueprint`
 
 Type: record
-Status: closed
+Status: resolved — 2026-08-18. This is a record and not a unit of work, so it carries no
+triage label; `closed` was retired from the vocabulary on 2026-08-13 and this file was never
+migrated. The triage happened, and what survived it was filed as ordinary issues.
 Written: 2026-08-18
 Decided in: a grilling session against the blueprint, with `CONTEXT.md` and the source as the
 authority.

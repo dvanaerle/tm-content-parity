@@ -8,10 +8,10 @@ Parent: ../map.md
 > **Superseded 2026-08-06.** This ticket was one task for the whole axis B
 > compare stage. `/to-tickets` cut it into slices that each fit one session:
 > [39](39-class-vocabulary-axes.md) the contract prefactor,
-> [42](42-untranslated-text.md) untranslated text,
+> [42](.out-of-scope/42-untranslated-text.md) untranslated text,
 > [43](43-alt-language-and-meta.md) alt and meta,
 > [44](44-heading-outline-shape.md) the heading outline, and
-> [45](45-images-across-stores.md) the images. Presence went to
+> [45](.out-of-scope/45-images-across-stores.md) the images. Presence went to
 > [40](40-coverage-missing-pages.md), because it needs no crawl.
 > The crawl it needs is [38](38-six-stores.md), from spec 32.
 > Nothing below is withdrawn. The rules stay as written; only the packaging

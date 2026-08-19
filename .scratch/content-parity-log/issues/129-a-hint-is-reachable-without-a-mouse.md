@@ -49,8 +49,19 @@ keyboard, unstyleable, and announced unreliably by screen readers. The `Tooltip`
 has been installed since ticket 74 at `web/src/components/ui/tooltip.jsx` and **has no
 importer anywhere** — verified again on 2026-08-17, still zero.
 
-That is the largest undocumented gap in the interface: 36 real `title` attributes against a
-primitive with zero imports, and no comment anywhere acknowledging the choice. Several
+That is the largest undocumented gap in the interface: **11** real `title` attributes over
+**9 files** against a primitive with zero imports, and no comment anywhere acknowledging the
+choice.
+
+> **Re-counted 2026-08-19, by the audit of every open `ready-for-agent` ticket.** This ticket
+> said **36**. The tree holds 13 `title=` occurrences in `web/src`, and two of them are
+> `<Shell title="...">` component props rather than DOM tooltips, so the real figure is **11**:
+> `Annotate.jsx:350,372`, `Annotations.jsx:121`, `BulkControl.jsx:382`, `Chips.jsx:336`,
+> `Dashboard.jsx:484,983`, `RecordLayout.jsx:158`, `Repeats.jsx:611`, `SearchBox.jsx:146,202`.
+> The argument is unchanged — a hint a touch user cannot see is a hidden hint, the primitive is
+> installed and unused, and the guard is what makes it stick — but the *cost* is a third of
+> what was written, and so is the case for splitting it into two sessions. Re-price part B
+> before starting: 11 attributes over 9 files is plausibly one sitting. Several
 comments discuss "the tooltip" as a designed thing — the caller owning the tooltip that names
 the unit, the tooltip that keeps two rows apart, the tooltip that says what each view
 answers — while the thing they describe is an attribute the browser draws however it likes.
@@ -136,7 +147,7 @@ pattern that survives the dashboard survives everywhere.
 
 - **A tooltip is not a place to put something an editor must read.** If the hidden text is
   required to act, the text belongs on screen. Moving an essential sentence from a `title`
-  into a `Tooltip` makes it reachable but keeps it hidden, and some of these 36 hints are
+  into a `Tooltip` makes it reachable but keeps it hidden, and some of these 11 hints are
   carrying more than a hint.
 - **Do not wrap a `title` in a `Tooltip` and leave both.** The browser will draw its own box
   over the primitive's, and a reader gets the same words twice in two shapes.

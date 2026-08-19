@@ -107,7 +107,7 @@ pages, and all of them are one cluster:
 | `de` | 11 | `text-missing` | `Kann ich während meines Besuchs ein Angebot erstellen lassen?` |
 | `nl`, `be` | 9 | `text-added` | `Nee, je bent binnen onze openingstijden van harte welkom…` |
 
-That is the **showroom FAQ**, on the ~11 showroom pages. Ticket 138 found the same cluster
+That is the **showroom FAQ**, on the ~11 showroom pages. Ticket 140 found the same cluster
 from the opposite direction — production units against themselves, not findings — and capped
 block-shaped text at 7 pages over 7 texts. **Two instruments, two corpora, one cluster.**
 There is no third thing hiding.
@@ -153,7 +153,7 @@ fold. The mechanism is circular for everything except an *unlisted* frequent blo
 box 3, which the repeats surface already answers.
 
 **4. What actually recurs is chrome, and the log is a `<main>`-shaped instrument.** The
-deepest rows are nav labels, section headings and toolbar text. Ticket 138
+deepest rows are nav labels, section headings and toolbar text. Ticket 140
 parked on this same structural fact and stated it best: the content that wants to be shared is
 footer, header and USP-strip content, and the log never compares chrome. Deepening the log's
 grip on shared content means moving the content boundary, which is ADR 0003 and the boundary
@@ -162,7 +162,7 @@ definition both.
 **5. `hash` would be the fifth overloaded word here.** The repo already carries
 `findingSetHash`, the finding id's own `sha256`, the generated wrapper-class hashes the banner
 entry warns about, and the catalog cache hashes `imageKey()` folds. `Block` was refused a
-fourth meaning in 138 for the same reason.
+fourth meaning in 140 for the same reason.
 
 ## Re-open trigger
 

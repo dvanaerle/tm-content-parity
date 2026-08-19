@@ -1,9 +1,27 @@
 # 42 — Untranslated text
 
 Type: task
-Status: ready-for-agent
+Status: wontfix — **parked 2026-08-19** by the audit of every open `ready-for-agent` ticket.
+The value is not zero — an untranslated sentence on a live foreign-language store is a genuine
+customer-facing defect, and the kind that gets noticed from outside. It is parked on three
+counts:
+**Its own blockers are demoted.** It is blocked by 39, and 39 was moved off `ready-for-agent`
+to `needs-triage` on 2026-08-13 with the note that its conclusion may still be right but its
+reasoning needs re-reading. A ticket blocked by an untriaged ticket was never ready.
+**Its surface may not exist.** It builds *the axis B tab* against a tab layout that is two
+rewrites old: ticket 81 removed the Taken tab and 98 restructures the panel.
+**Its own volume note is the argument against it.** *If one shared page footer is untranslated
+on every `de` page, the tab fills with the same finding* — so the most likely outcome is a
+large number of findings whose correct disposition is a single bulk press. That is a lot of new
+axis for one press, and it opens a second axis while the first is 22,000 findings from drained.
+**Re-open trigger, in two parts:** (a) ticket [39](../39-class-vocabulary-axes.md) is
+re-triaged and its axis conclusion holds, **and** (b) axis A `work` on the non-`nl` stores is
+low enough that a second axis is readable — or a store is going live and untranslated copy
+becomes a launch blocker rather than a backlog item.
+**Keep the file.** The skip rule and the set-membership argument are settled design and are
+worth not re-deriving.
 Blocked by: 39, 38, 124
-Parent: ../map.md
+Parent: ../../map.md
 
 ## What to build
 

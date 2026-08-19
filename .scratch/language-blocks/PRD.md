@@ -1,6 +1,6 @@
 # Language blocks — two stores that share a language, compared
 
-Status: ready-for-agent
+Status: resolved — 2026-08-18. All five issues under this PRD are resolved.
 Written: 2026-08-17, from a grilling session. Vocabulary is in `CONTEXT.md` → **Language blocks**.
 
 ## Problem Statement

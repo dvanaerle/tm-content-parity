@@ -1,7 +1,12 @@
 # 58 — The head becomes a check: Meta Title, Keywords, Description, Robots
 
 Type: task
-Status: ready-for-agent
+Status: resolved — superseded by 93, 94, 95, 96, 97 and 98, 2026-08-19. This ticket holds no
+work of its own: every rule it carries was split out into one of the six, re-measured there,
+and in two places corrected. Its own arithmetic is stale and its children say so — it puts
+`no-route` at ~150 findings over six stores where 93 measured **85**, and meta at ~130 where
+97 measured **197**. Its acceptance criteria are not ticked here because they are not met
+here; each one is met, or refused, on the child that inherited it. Read the children.
 Blocked by: —
 Parent: ../map.md
 

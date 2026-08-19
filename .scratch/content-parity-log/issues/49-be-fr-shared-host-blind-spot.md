@@ -10,12 +10,14 @@ Ticket 38 said to open a follow-up **only if the number is not zero**. It is not
 zero, so this ticket exists. But it is 1.
 
 Status: needs-triage — **re-opened 2026-08-10 by ticket
-[55](../55-five-stores-show-all-their-pages.md).** The first re-open trigger below
-fired. The number that made this wontfix was **1**; it is **12** now. The wontfix
+[55](55-five-stores-show-all-their-pages.md).** The first re-open trigger below
+fired. The number that made this wontfix was **1**; it is **12** now. Moved back out of
+`.out-of-scope/` on 2026-08-19: that folder holds `wontfix` only, and a re-opened ticket
+sitting in it is invisible to any sweep that does not descend into a dot-folder. The wontfix
 answer is kept below, unedited, because the reasoning is still sound and only the
 number under it moved.
 
-**Origin:** ticket [38](../38-six-stores.md), measured on 2026-08-07 by
+**Origin:** ticket [38](38-six-stores.md), measured on 2026-08-07 by
 `crawl/probes/probe-be-fr-shared-host.mjs` over all 29 crawled be_fr pages.
 
 ## The measurement
@@ -87,8 +89,8 @@ Ticket 05's host-based test stands. Do not make it store-based.
 Re-run `crawl/probes/probe-be-fr-shared-host.mjs` and re-open this ticket when
 either of these happens:
 
-- **After ticket [55](../55-five-stores-show-all-their-pages.md).** Spec
-  [50](../50-content-page-discriminator.md) takes `be_fr` from 29 pages to about
+- **After ticket [55](55-five-stores-show-all-their-pages.md).** Spec
+  [50](50-content-page-discriminator.md) takes `be_fr` from 29 pages to about
   110. The measurement above covers 29 pages. Roughly four times the pages can be
   roughly four times the anchors, and the number that made this wontfix is 1.
 - **When the blog re-enters scope.** The one page link is to `/blog`. If the blog

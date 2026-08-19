@@ -4,6 +4,10 @@ Type: task
 Status: ready-for-agent
 Blocked by: 127 — the policy that says which CSS is allowed.
 Parent: ../map.md
+Narrowed: 2026-08-19. The six CSS conversions left this ticket and are now
+[143](.out-of-scope/143-six-presentational-behaviours-move-to-css.md), parked. What is left
+here is the drift prevention: the ADR clause, the three primitive dedups, the two comments and
+the stale docblock. That half is cheap and it is the durable one.
 
 **What to build:** the presentation the interface draws by hand is drawn by the platform
 instead — CSS where no primitive fits, a primitive where one does — and the rule that
@@ -19,28 +23,6 @@ copied byte-for-byte into two files while six other components import `Badge`.
 The rule is: **primitive first, CSS second, JavaScript last.** It is one clause and it
 belongs in ADR 0007, next to the carve-out it governs, because a reader who has just learned
 that the diff stays custom is the reader who needs it.
-
-**Six presentational behaviours move to CSS.** Each is a place where no primitive fits and
-JavaScript is deciding something a selector can decide:
-
-- The disclosure glyphs. Two components render `▾` or `▸` from a ternary; the state is
-  already on the element as `aria-expanded`, so the glyph comes from it.
-- The heading outline's indent, computed per row as a pixel `style`. Heading level is a
-  closed set of six, so it is an attribute and six rules.
-- The landed row's outline, handed down as a class string beside the `aria-current` that
-  already says the same thing. The selector reads the attribute; the props shrink to the
-  two things CSS cannot do — take focus and set `tabIndex`.
-- The floating bar's `fixed` class string, duplicated verbatim in the bulk control and the
-  annotate bar. One rule, two wearers.
-- The parity sparkline's fill width, formatted into a percentage string in JavaScript. The
-  share is a number and `calc()` is arithmetic; JavaScript hands over the number.
-- The copy button's 1200 ms flash, held in a `setTimeout` while the animation it belongs to
-  is described in CSS. The duration lives once, and the end of the animation is an event.
-
-**The last one is not JavaScript being deleted, and the ticket should not claim it is.** The
-state stays; what changes is that a number stops being written in two places that can
-disagree. That is the same principle as the other five — the platform holds the fact — and
-it is worth saying plainly rather than counting it as a `useState` removed.
 
 **Three hand-rolled shapes become the primitives they already shadow**, per ADR 0007's
 amendment, which names badge, divider and panel in the list of shapes shadcn owns:
@@ -61,17 +43,6 @@ this kind. The missing sentence *is* the defect.
 - [ ] ADR 0007 carries a second amendment with two sentences: inside the custom carve-out,
       reach for Widely Available CSS before JavaScript; and a tone that depends on a state
       is a selector and not a token.
-- [ ] The disclosure glyphs are drawn from `aria-expanded` and no component renders a
-      chevron character from state.
-- [ ] The outline's indent comes from the heading level as an attribute, not from a computed
-      pixel value.
-- [ ] The landed row's outline is a selector on the attribute that already marks it. The
-      shared props keep only focus and `tabIndex`.
-- [ ] The floating bar's shape is one rule that both bars wear, and neither file holds the
-      class string.
-- [ ] The sparkline receives the share as a number and CSS computes the width.
-- [ ] The copy flash's duration is stated once, in CSS, and the reset is driven by the
-      animation ending.
 - [ ] The count badge, the vertical rule and the annotate bar's panel are primitives.
 - [ ] Both table-bound disclosures carry a comment saying why `Collapsible` cannot wrap
       sibling rows, in the voice the rest of the file uses.
@@ -81,8 +52,11 @@ this kind. The missing sentence *is* the defect.
       surviving reason — a 24-pixel bar in a table cell is not a progress bar — stays.
 - [ ] Every feature used is Widely Available per 127. Attribute selectors, custom
       properties, `calc()` and `animationend` are the whole toolkit, and none of them is new.
-- [ ] Screens are pixel-identical apart from the primitive swaps, and the screenshot
-      baselines that move are reviewed one surface at a time.
+- [ ] Screens are unchanged apart from the primitive swaps, checked by eye on the store
+      dashboard, a page and the repeat list. **There are no screenshot baselines** — ADR 0019
+      refuses a screenshot suite, and no matcher exists anywhere in the tree. The three
+      source-text tests (`web/src/interface-reach.test.mjs`, `interface-weight.test.mjs`,
+      `interface-words.test.mjs`) are what stands in for one, and they must still pass.
 
 ## Traps
 

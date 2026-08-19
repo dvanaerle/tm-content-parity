@@ -1,4 +1,9 @@
-# 138 — Suggest what should be a Custom Variable or a CMS Block
+# 140 — Suggest what should be a Custom Variable or a CMS Block
+
+> **Renumbered 2026-08-19, from 138.** Number 138 had been given to two different tickets —
+> this one and `issues/138-a-wide-selection-answers-a-narrowed-question.md`, which is resolved
+> and is cited by name from four other files. This one moved because it is parked and cited
+> less. 140 was free.
 
 Type: grilling
 Status: wontfix — **parked 2026-08-18**, on the measurement in this file. The idea is
