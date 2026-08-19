@@ -18,48 +18,48 @@ had nowhere to put the controls it displaced.
 **Blocked by:** 09, and externally by ui-polish 02, which decides what a badge is and carries the
 no-uppercase guard this ticket must pass.
 
-**Status:** ready-for-agent
+**Status:** resolved — 2026-08-19, branch `ticket-104-search-page-scope`.
 
 **Parent:** 07-the-page-header-is-one-quiet-line.md
 
 ### The dialog
 
-- [ ] The menu gains **Edit page details**, opening `ui/dialog.jsx` — installed since ticket 74 and
+- [x] The menu gains **Edit page details**, opening `ui/dialog.jsx` — installed since ticket 74 and
       used nowhere until now.
-- [ ] The dialog carries the priority picker and the note input, relocated and not redesigned.
-- [ ] When a review exists the dialog also carries **Clear**, and **Mark again** when the review is
+- [x] The dialog carries the priority picker and the note input, relocated and not redesigned.
+- [x] When a review exists the dialog also carries **Clear**, and **Mark again** when the review is
       stale. The reading of the review stays on the line; the acting on it lives here.
-- [ ] The menu gains **Mark page reviewed**, present **only** when there is no review. It is one
+- [x] The menu gains **Mark page reviewed**, present **only** when there is no review. It is one
       press with no form, so it does not go behind the dialog.
-- [ ] A half-typed note survives a click outside the dialog. This is the assertion that encodes why
+- [x] A half-typed note survives a click outside the dialog. This is the assertion that encodes why
       this is a dialog and not a popover, and it is not optional.
-- [ ] The note is visible while it is being edited.
-- [ ] A priority can be cleared as easily as it is set.
-- [ ] The dialog closes on a successful save and stays open on a failure.
-- [ ] When the log is read-only or no name has been given, the writing controls are refused **before**
+- [x] The note is visible while it is being edited.
+- [x] A priority can be cleared as easily as it is set.
+- [x] The dialog closes on a successful save and stays open on a failure.
+- [x] When the log is read-only or no name has been given, the writing controls are refused **before**
       anything is typed, with the reason ticket 08's value carries.
-- [ ] A saved annotation reaches the one live region ui-polish 03 owns. This ticket consumes that
+- [x] A saved annotation reaches the one live region ui-polish 03 owns. This ticket consumes that
       region and does not build one.
 
 ### The line
 
-- [ ] Review state, priority and note-presence render as **one quiet line**.
-- [ ] They are text. The priority is the one badge, because ADR 0019 already allows it; the review
+- [x] Review state, priority and note-presence render as **one quiet line**.
+- [x] They are text. The priority is the one badge, because ADR 0019 already allows it; the review
       state and the note mark are not.
-- [ ] The line says only that a note exists. The note itself is in the dialog.
-- [ ] A page with no priority, no note and no review draws a shorter line, not three empty slots.
-- [ ] *changed since review* stays legible on the line.
-- [ ] The progress bar keeps its absolute counts beside its percentage.
-- [ ] *Re-check* stays a visible button, and stays absent rather than broken when the local service
+- [x] The line says only that a note exists. The note itself is in the dialog.
+- [x] A page with no priority, no note and no review draws a shorter line, not three empty slots.
+- [x] *changed since review* stays legible on the line.
+- [x] The progress bar keeps its absolute counts beside its percentage.
+- [x] *Re-check* stays a visible button, and stays absent rather than broken when the local service
       does not answer.
-- [ ] The header passes ui-polish 02's no-uppercase guard and 03's accessible-name guard.
+- [x] The header passes ui-polish 02's no-uppercase guard and 03's accessible-name guard.
 
 ### Gate
 
-- [ ] `Annotations.browser.test.mjs` gains the dialog assertions, including the surviving note. No
+- [x] `Annotations.browser.test.mjs` gains the dialog assertions, including the surviving note. No
       new browser test file is created.
-- [ ] `Progress.browser.test.mjs` gains the quiet line's reading.
-- [ ] `npm test && npm run lint && npm run build`.
+- [x] `Progress.browser.test.mjs` gains the quiet line's reading.
+- [x] `npm test && npm run lint && npm run build`.
 
 ## Traps
 

@@ -1,7 +1,10 @@
-import { act, createElement } from 'react';
+import { act, createElement, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Section } from './Annotations.jsx';
+import { PageDetailsDialog } from './Annotate.jsx';
+import { PageMenu } from './Progress.jsx';
+import { headerReading } from '../lib/page-header.mjs';
 
 /**
  * The two deep links a finding row offers, mounted and read (ticket 34, criterion 9).
@@ -138,5 +141,231 @@ describe('the deep links on a finding row', () => {
 
     expect(links().map((link) => link.url)).toEqual([PROD_URL]);
     expect(document.body.textContent).toContain('under “Kleuren en RAL”');
+  });
+});
+
+/**
+ * The dialog the page's annotations moved into (ui-polish ticket 10).
+ *
+ * It sits in this file rather than in a new one because the ticket opens no new browser
+ * seam, and the components it drives — `PageAnnotations`' priority picker and note input —
+ * are the page-annotation surface these assertions are about. The module they live in is
+ * `Annotate.jsx`; the assertions are here.
+ *
+ * **A dialog and not a popover, and one test says why.** A popover dismisses on an outside
+ * click, and an editor halfway through typing a note about a page is exactly the person who
+ * clicks away to check something. The surviving note below is that reason written as an
+ * assertion, and it is the one test in here that is not optional.
+ */
+const NOTHING = { priority: null, note: null };
+
+function openDialog({ page = {}, annotations = NOTHING, review = null, append, closed } = {}) {
+  const dialogHost = document.createElement('div');
+  document.body.append(dialogHost);
+  const root = createRoot(dialogHost);
+  const { actions } = headerReading({
+    review,
+    annotations,
+    notWritingReason: null,
+    recheckAvailable: true,
+    ...page,
+  });
+  act(() =>
+    root.render(
+      createElement(PageDetailsDialog, {
+        open: true,
+        onOpenChange: (next) => closed?.(next),
+        annotations,
+        findingSetHash: 'abc',
+        append: append ?? (async () => true),
+        actions,
+      }),
+    ),
+  );
+  return {
+    // Portalled onto the body, so the dialog is not under the host that drew it.
+    popup: () => document.querySelector('[data-slot="dialog-content"]'),
+    noteBox: () => document.querySelector('input[aria-label="A note about this page"]'),
+    button: (words) =>
+      [...document.querySelectorAll('[data-slot="dialog-content"] button')].find(
+        (control) => control.textContent === words,
+      ),
+    unmount: () => {
+      act(() => root.unmount());
+      dialogHost.remove();
+    },
+  };
+}
+
+/**
+ * What the browser does when an editor types, so React's own handler runs.
+ *
+ * The value goes through the **prototype's** setter rather than the element's own. React
+ * replaces `value` on the instance with a tracked property, so a plain `input.value = …`
+ * updates the node and leaves React's cache agreeing with it — the change event then looks
+ * like no change and `onChange` never fires. This is the same node the browser writes to.
+ */
+function type(input, text) {
+  const { set } = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  act(() => {
+    set.call(input, text);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
+/**
+ * The menu and the dialog wired the way the page wires them, because the connection between
+ * them is the thing being asserted and neither component holds it alone.
+ */
+function PageWithMenu() {
+  const [open, setOpen] = useState(false);
+  const trigger = useRef(null);
+  const { actions } = headerReading({
+    review: null,
+    annotations: NOTHING,
+    notWritingReason: null,
+    recheckAvailable: true,
+  });
+
+  return createElement(
+    'div',
+    null,
+    createElement(PageMenu, {
+      actions,
+      href: '/nl/overkappingen/',
+      triggerRef: trigger,
+      onEditDetails: () => setOpen(true),
+      onMarkReviewed: () => {},
+    }),
+    createElement(PageDetailsDialog, {
+      open,
+      onOpenChange: setOpen,
+      annotations: NOTHING,
+      findingSetHash: 'abc',
+      append: async () => true,
+      actions,
+      finalFocus: trigger,
+    }),
+  );
+}
+
+describe('the page details dialog', () => {
+  it('carries the priority and the note, and shows the note while it is edited', () => {
+    const dialog = openDialog({
+      annotations: { priority: 'high', note: 'The hero image is still the old one.' },
+    });
+
+    // The three priorities, relocated and not redesigned.
+    expect(dialog.popup().textContent).toContain('High');
+    // The note is in the box, so the page does not hide the note it is asking about.
+    expect(dialog.noteBox().value).toBe('The hero image is still the old one.');
+    dialog.unmount();
+  });
+
+  it('keeps a half-typed note through a click outside itself', () => {
+    const dialog = openDialog();
+
+    type(dialog.noteBox(), 'The footer still says 2024 and the');
+    act(() => {
+      document.body.click();
+    });
+
+    // Still open, and still holding what was typed. This is the whole reason it is a dialog.
+    expect(dialog.popup()).not.toBeNull();
+    expect(dialog.noteBox().value).toBe('The footer still says 2024 and the');
+    dialog.unmount();
+  });
+
+  it('closes on a stored note and stays open when the write fails', async () => {
+    const shut = [];
+    const stored = openDialog({ append: async () => true, closed: (next) => shut.push(next) });
+    type(stored.noteBox(), 'The footer still says 2024.');
+    await act(async () => stored.button('Save note').click());
+
+    expect(shut).toEqual([false]);
+    stored.unmount();
+
+    const dropped = [];
+    const failing = openDialog({ append: async () => false, closed: (next) => dropped.push(next) });
+    type(failing.noteBox(), 'The footer still says 2024.');
+    await act(async () => failing.button('Save note').click());
+
+    // A dialog that closed either way would report a dropped write as a saved one.
+    expect(dropped).toEqual([]);
+    expect(failing.popup()).not.toBeNull();
+    failing.unmount();
+  });
+
+  it('stays put when a priority is pressed, so one visit is one task', async () => {
+    const shut = [];
+    const dialog = openDialog({ closed: (next) => shut.push(next) });
+
+    await act(async () => dialog.button('High').click());
+
+    // A priority is a toggle and not a submission. Closing here would throw an editor out
+    // between setting a priority and writing the note they came to write.
+    expect(shut).toEqual([]);
+    dialog.unmount();
+  });
+
+  it('says it cannot save before anything is typed, when the log is read-only', () => {
+    const READ_ONLY = 'The log does not answer, so this is read-only.';
+    const dialog = openDialog({ page: { notWritingReason: READ_ONLY } });
+
+    // The reason `whyNotWriting()` gives, and not a second wording of it.
+    expect(dialog.popup().textContent).toContain(READ_ONLY);
+    expect(dialog.noteBox().disabled).toBe(true);
+    dialog.unmount();
+  });
+
+  it('acts on the review beside the annotations, and only where there is one to act on', () => {
+    const none = openDialog();
+    expect(none.button('Clear the review')).toBeUndefined();
+    expect(none.button('Mark again')).toBeUndefined();
+    none.unmount();
+
+    const fresh = openDialog({
+      review: { editor: 'Dylan', at: '2026-08-19T09:00:00.000Z', fresh: true },
+    });
+    expect(fresh.button('Clear the review')).toBeDefined();
+    // Nothing to mark again on a review that still matches the page.
+    expect(fresh.button('Mark again')).toBeUndefined();
+    fresh.unmount();
+
+    const stale = openDialog({
+      review: { editor: 'Dylan', at: '2026-08-19T09:00:00.000Z', fresh: false },
+    });
+    expect(stale.button('Mark again')).toBeDefined();
+    stale.unmount();
+  });
+
+  it('opens the dialog from the menu, and hands the focus back on close', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    act(() => root.render(createElement(PageWithMenu)));
+
+    const trigger = host.querySelector('[data-slot="dropdown-menu-trigger"]');
+    await act(async () => trigger.click());
+    const item = [...document.querySelectorAll('[data-slot="dropdown-menu-item"]')].find(
+      (each) => each.textContent === 'Edit page details',
+    );
+    await act(async () => item.click());
+
+    expect(document.querySelector('[data-slot="dialog-content"]')).not.toBeNull();
+
+    await act(async () => {
+      document.querySelector('[data-slot="dialog-close"]').click();
+    });
+
+    // The trigger an editor came from, and not the body. The menu item they pressed is gone
+    // by now, so the focus has to be aimed rather than restored — which is what `finalFocus`
+    // is for and why the dialog is handed the trigger.
+    //
+    // Waited for, because the close is animated and the focus moves when it finishes. A bare
+    // assertion here would read the frame in which the dialog is still on screen.
+    await vi.waitFor(() => expect(document.activeElement).toBe(trigger));
+    act(() => root.unmount());
+    host.remove();
   });
 });

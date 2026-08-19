@@ -1,7 +1,7 @@
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
-import { LogBanner, PageMenu, RecheckButton } from './Progress.jsx';
+import { LogBanner, PageLine, PageMenu, RecheckButton } from './Progress.jsx';
 import { headerReading } from '../lib/page-header.mjs';
 
 /**
@@ -150,13 +150,6 @@ describe('the page menu', () => {
     unmount();
   });
 
-  it('holds Copy link', async () => {
-    const { host, unmount } = drawMenu();
-
-    expect(await itemsOf(host)).toEqual(['Copy link']);
-    unmount();
-  });
-
   it('keeps Re-check out of itself, as a button of its own', async () => {
     const { host, unmount } = drawMenu();
 
@@ -177,5 +170,106 @@ describe('the page menu', () => {
 
     expect(button.host.querySelector('button')).toBeNull();
     button.unmount();
+  });
+
+  it('offers the two items the header displaced, and Copy link', async () => {
+    const { host, unmount } = drawMenu();
+
+    expect(await itemsOf(host)).toEqual([
+      'Mark page reviewed',
+      'Edit page details',
+      'Copy link',
+    ]);
+    unmount();
+  });
+
+  it('stops offering Mark page reviewed once the page has a review', async () => {
+    const { host, unmount } = drawMenu({
+      review: { editor: 'Dylan', at: '2026-08-19T09:00:00.000Z', fresh: true },
+    });
+
+    // The menu never offers something that has already happened.
+    expect(await itemsOf(host)).toEqual(['Edit page details', 'Copy link']);
+    unmount();
+  });
+
+  it('stays whole on a read-only log, refusing the write and saying why', async () => {
+    const READ_ONLY = 'The log does not answer, so this is read-only.';
+    const { host, unmount } = drawMenu({ notWritingReason: READ_ONLY });
+
+    // Present and refused, not gone: an editor learns the state rather than wondering
+    // where the controls went.
+    expect(await itemsOf(host)).toEqual([
+      'Mark page reviewed',
+      'Edit page details',
+      'Copy link',
+    ]);
+    const write = [...document.querySelectorAll('[data-slot="dropdown-menu-item"]')].find(
+      (item) => item.textContent === 'Mark page reviewed',
+    );
+    expect(write.getAttribute('data-disabled')).not.toBeNull();
+    // The log's own sentence, said once. `whyNotWriting()` words it and this menu does not
+    // write a second version of it.
+    expect(document.querySelector('[data-slot="dropdown-menu-content"]').textContent).toContain(
+      READ_ONLY,
+    );
+    unmount();
+  });
+});
+
+/**
+ * The header's quiet line (ui-polish ticket 10).
+ *
+ * It **reads** the three annotations that used to be three controls drawn open on every
+ * page. What is asserted is what an editor can see: the words, and that a page nobody has
+ * annotated draws a shorter line rather than three empty slots.
+ */
+function drawLine(page = {}) {
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  const { line } = headerReading({
+    review: null,
+    annotations: { priority: null, note: null },
+    notWritingReason: null,
+    recheckAvailable: true,
+    ...page,
+  });
+  act(() => root.render(createElement(PageLine, { line })));
+  return { host, text: host.textContent, unmount: () => act(() => root.unmount()) };
+}
+
+describe('the header quiet line', () => {
+  it('says a review went stale without anything being opened', () => {
+    const { text, unmount } = drawLine({
+      review: { editor: 'Dylan', at: '2026-08-19T09:00:00.000Z', fresh: false },
+    });
+
+    // The vocabulary's own words. Never *needs review*: a page also goes stale when an
+    // editor corrects something, and the log does not manufacture work.
+    expect(text).toContain('changed since review');
+    expect(text).toContain('Dylan');
+    unmount();
+  });
+
+  it('reads a priority as a word and a note as only a note', () => {
+    const { text, unmount } = drawLine({
+      annotations: { priority: 'high', note: 'The hero image is still the old one.' },
+    });
+
+    // *High* and not `HIGH`: a priority is information and not an alarm.
+    expect(text).toContain('High');
+    expect(text).toContain('has a note');
+    // The note itself is in the dialog. A note has no length limit, and one page must not
+    // get to set the width of the header.
+    expect(text).not.toContain('hero image');
+    unmount();
+  });
+
+  it('draws nothing at all for a page nobody has annotated or reviewed', () => {
+    const { text, unmount } = drawLine();
+
+    expect(text).toBe('');
+    unmount();
   });
 });

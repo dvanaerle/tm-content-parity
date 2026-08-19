@@ -1,13 +1,13 @@
-import { useMemo } from 'react';
-import { PageAnnotations } from './Annotate.jsx';
+import { useMemo, useRef, useState } from 'react';
+import { PageDetailsDialog } from './Annotate.jsx';
 import Ledger from './Ledger.jsx';
 import {
   EditorPrompt,
   LogBanner,
   PageBar,
+  PageLine,
   PageMenu,
   RecheckButton,
-  ReviewControl,
 } from './Progress.jsx';
 import { Alert, AlertDescription } from './ui/alert.jsx';
 import { logState } from '../lib/log-read.mjs';
@@ -40,6 +40,10 @@ export default function PageView({
   const log = useOverrides({ report, editor, closedWith });
 
   const recheck = useRecheck(onReport);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  /* Where the dialog hands the focus back to. The menu item that opened it has unmounted by
+     the time it closes, so without this an editor lands on the body. */
+  const menuTrigger = useRef(null);
 
   const { derived, append, canWrite } = log;
 
@@ -78,21 +82,9 @@ export default function PageView({
           <PageBar bar={derived.bar} ready={log.ready} />
         </div>
 
-        <ReviewControl
-          review={derived.review}
-          findingSetHash={report.findingSetHash}
-          append={append}
-          actions={header.actions}
-        />
-
-        {/* Ticket 83. Beside the review because both are about **this page** rather than
-            about a finding on it — and unlike the review, neither of them moves a count. */}
-        <PageAnnotations
-          annotations={derived.annotations}
-          append={append}
-          canWrite={header.actions.annotate.state === 'offered'}
-          busy={log.busy}
-        />
+        {/* The review, the priority and the note **read** on one line (PRD story 27). Each
+            of them used to be a control drawn open here on every page. */}
+        <PageLine line={header.line} />
 
         <RecheckButton
           action={header.actions.recheck}
@@ -103,10 +95,29 @@ export default function PageView({
 
         {/* Everything an editor touches on a minority of pages, in one place they can look
             for it. `Re-check` stays outside it, above. */}
-        <PageMenu actions={header.actions} href={pageHref(report.store, report.page)} />
+        <PageMenu
+          actions={header.actions}
+          href={pageHref(report.store, report.page)}
+          triggerRef={menuTrigger}
+          onEditDetails={() => setDetailsOpen(true)}
+          onMarkReviewed={() =>
+            append({ scope: 'page', action: 'reviewed', findingSetHash: report.findingSetHash })
+          }
+        />
 
         <EditorPrompt editor={editor} save={save} />
       </div>
+
+      <PageDetailsDialog
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        annotations={derived.annotations}
+        findingSetHash={report.findingSetHash}
+        append={append}
+        actions={header.actions}
+        finalFocus={menuTrigger}
+        busy={log.busy}
+      />
 
       <LogBanner
         connected={log.connected}

@@ -3,6 +3,14 @@ import { PriorityPill } from './Chips.jsx';
 import PressReport from './PressReport.jsx';
 import { OfPages, Selected } from './Selected.jsx';
 import { Button } from './ui/button.jsx';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog.jsx';
 import { Input } from './ui/input.jsx';
 import { noteEventFor, priorityEventFor } from '../../../overrides/state.mjs';
 import { PRIORITIES } from '../../../shared/priorities.mjs';
@@ -67,19 +75,50 @@ export function PriorityPicker({ value, onPick, busy = false }) {
 }
 
 /**
- * The page's own annotation strip: the priority, the note, and what they are now.
+ * Everything about this page an editor can change, in one dialog behind one menu item.
  *
- * The note is a form and not a live-saving field. Every keystroke would be a row in an
- * append-only table, and the sentence an editor is halfway through typing is not a sentence
- * they have written yet.
+ * The priority picker and the note input were drawn open in the page header on every page,
+ * whether or not anybody intended to annotate it — so the interface spent its most prominent
+ * row on a form that was usually not being filled in, competing with the page key. They are
+ * **relocated and not redesigned**: the same three toggles and the same one field.
+ *
+ * **A dialog and not a popover, and the reason is a lost note.** A popover dismisses on an
+ * outside click, and an editor halfway through typing a note about a page is exactly the
+ * person who clicks away to check something. `disablePointerDismissal` is what makes that
+ * true and a browser assertion holds it.
+ *
+ * The review is **read** on the header's quiet line and **acted on** here, beside the
+ * annotations it sits with — *Clear the review* wherever there is one, *Mark again* only
+ * where it has gone stale. *Mark page reviewed* is the exception and stays in the menu: it
+ * is one press with no form, and a dialog around one button is ceremony.
+ *
+ * Nothing here announces its own outcome. Every write goes through `append()`, which is the
+ * one seam every decision passes through and the one place the live region is spoken to.
  *
  * @param {object} props
+ * @param {boolean} props.open
+ * @param {(open: boolean) => void} props.onOpenChange
  * @param {{ priority: string | null, note: string | null }} props.annotations
+ * @param {string} props.findingSetHash
  * @param {(event: object) => Promise<boolean>} props.append
- * @param {boolean} props.canWrite
+ * @param {Record<string, import('../lib/page-header.mjs').Offer>} props.actions
+ *   `headerReading().actions`.
+ * @param {import('react').RefObject<HTMLElement | null>} [props.finalFocus]
+ *   The control an editor opened this from. Focus is **aimed** and not restored, because the
+ *   menu item they pressed has unmounted by the time this closes and the default would leave
+ *   them on the body, at the top of a page they were partway down.
  * @param {boolean} [props.busy]
  */
-export function PageAnnotations({ annotations, append, canWrite, busy = false }) {
+export function PageDetailsDialog({
+  open,
+  onOpenChange,
+  annotations,
+  findingSetHash,
+  append,
+  actions,
+  finalFocus,
+  busy = false,
+}) {
   const { priority, note } = annotations;
   const [typed, setTyped] = useState(note ?? '');
 
@@ -88,65 +127,105 @@ export function PageAnnotations({ annotations, append, canWrite, busy = false })
   // sentence is not overwritten by a re-read that returned the same value.
   useEffect(() => setTyped(note ?? ''), [note]);
 
-  if (!canWrite) {
-    // Read-only, and never blank: an annotation a colleague set is worth reading by
-    // somebody who cannot write one.
-    if (!priority && !note) return null;
-    return (
-      <div className="flex flex-wrap items-baseline gap-2 text-xs">
-        <PriorityPill priority={priority} />
-        {note && <PageNote note={note} />}
-      </div>
-    );
-  }
-
+  const { annotate } = actions;
+  const refused = annotate.state === 'refused';
   const changed = typed.trim() !== (note ?? '');
 
+  /**
+   * A write that leaves the dialog where it is, for the priority.
+   *
+   * A priority is a toggle and not a submission: an editor setting one and then writing a
+   * note would be thrown out of the dialog between the two, and clearing a wrong priority
+   * would mean reopening it to press the same button again. One task in one place means the
+   * dialog outlasts the presses inside it.
+   */
+  const write = (event) => append(event);
+
+  /**
+   * A write that closes on success and **stays open on failure**, so the outcome of a
+   * submission is never ambiguous — a dialog that closed either way would report a dropped
+   * write as a saved one.
+   */
+  const writeAndClose = async (event) => {
+    if (await append(event)) onOpenChange(false);
+  };
+
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
-      <span className="text-muted-foreground">Priority</span>
-      <PriorityPicker
-        value={priority}
-        busy={busy}
-        onPick={(next) => append(priorityEventFor(next))}
-      />
+    <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal>
+      <DialogContent finalFocus={finalFocus}>
+        <DialogHeader>
+          <DialogTitle>Page details</DialogTitle>
+          {/* Said before anything is typed, and not after a press that went nowhere. An
+              editor who cannot save must not write a note into nothing first. */}
+          <DialogDescription>
+            {refused ? annotate.reason : 'A priority and a note, for this page.'}
+          </DialogDescription>
+        </DialogHeader>
 
-      <form
-        className="flex flex-wrap items-center gap-1"
-        onSubmit={(submit) => {
-          submit.preventDefault();
-          append(noteEventFor(typed));
-        }}
-      >
-        <Input
-          value={typed}
-          onChange={(change) => setTyped(change.target.value)}
-          // Not *why*: a page note explains nothing in particular, and a placeholder
-          // asking for a reason would make it read as the note a dismissal carries.
-          placeholder="A note about this page"
-          className="w-56"
-          aria-label="A note about this page"
-        />
-        {changed && (
-          <Button type="submit" variant="outline" size="xs" disabled={busy}>
-            {busy ? 'Saving…' : typed.trim() ? 'Save note' : 'Clear note'}
-          </Button>
+        <div className="flex flex-col gap-4 text-xs">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-muted-foreground">Priority</span>
+            {/* Pressing the set one takes it off, so a wrong priority is cleared as easily
+                as it was set. That is the picker's own rule and it did not change. */}
+            <PriorityPicker
+              value={priority}
+              busy={busy || refused}
+              onPick={(next) => write(priorityEventFor(next))}
+            />
+          </div>
+
+          <form
+            className="flex flex-col gap-1.5"
+            onSubmit={(submit) => {
+              submit.preventDefault();
+              writeAndClose(noteEventFor(typed));
+            }}
+          >
+            <label className="text-muted-foreground" htmlFor="page-note">
+              Note
+            </label>
+            <Input
+              id="page-note"
+              value={typed}
+              onChange={(change) => setTyped(change.target.value)}
+              disabled={refused}
+              // Not *why*: a page note explains nothing in particular, and a placeholder
+              // asking for a reason would make it read as the note a dismissal carries.
+              placeholder="A note about this page"
+              aria-label="A note about this page"
+            />
+            {changed && !refused && (
+              <Button type="submit" variant="outline" size="xs" className="self-start" disabled={busy}>
+                {busy ? 'Saving…' : typed.trim() ? 'Save note' : 'Clear note'}
+              </Button>
+            )}
+          </form>
+        </div>
+
+        {(actions.clearReview.state !== 'absent' || actions.markAgain.state !== 'absent') && (
+          <DialogFooter className="justify-start">
+            {actions.clearReview.state === 'offered' && (
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => writeAndClose({ scope: 'page', action: 'cleared' })}
+              >
+                Clear the review
+              </Button>
+            )}
+            {actions.markAgain.state === 'offered' && (
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => writeAndClose({ scope: 'page', action: 'reviewed', findingSetHash })}
+              >
+                Mark again
+              </Button>
+            )}
+          </DialogFooter>
         )}
-      </form>
-
-      {/* The **stored** note, beside the box that changes it.
-
-          The page showed the note or let you change it and never both: an editor who can
-          write got a 224-pixel input and nothing else, so a note longer than that was
-          only readable by somebody who could not edit it. A note has no length limit —
-          `PageNoteMark` says why the list draws a mark instead — and this is the surface
-          that draws it in full.
-
-          It is the stored value and not what is typed. `typed` is already on screen in
-          the box, and echoing it under itself would say the sentence twice while telling
-          a reader nothing about what the log holds. */}
-      <PageNote note={note} className="basis-full" />
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

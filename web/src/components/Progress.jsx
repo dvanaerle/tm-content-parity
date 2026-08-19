@@ -7,7 +7,7 @@
  * trust is the count, and the bar is the glance.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { EllipsisIcon } from 'lucide-react';
 import { announce } from '../lib/announce.mjs';
 import { logState } from '../lib/log-read.mjs';
@@ -20,10 +20,12 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu.jsx';
 import { Progress } from './ui/progress.jsx';
 import { Attribution } from './Attribution.jsx';
+import { PriorityPill } from './Chips.jsx';
 import { cn } from '../lib/utils.js';
 
 export function PageBar({ bar, ready }) {
@@ -64,66 +66,53 @@ export function PageBar({ bar, ready }) {
 }
 
 /**
- * A page review records that a human looked at everything here, **including what
- * the tool cannot see**. It goes stale when the finding set changes and never
- * expires on its own — so the words are *changed since review*, never
- * *needs review*. The log does not manufacture work.
+ * The three annotations a page carries, read on one quiet line.
  *
- * **Which of its three controls are on offer is not decided here.** *Clear the review* is
- * absent without a review, *Mark again* without a stale one, and *Page reviewed* once
- * there is one at all — three conditions over the same two facts, and `headerReading()`
- * holds them so a test can ask them without mounting anything.
+ * This is what PRD story 27 asked for and what could not be built until there was somewhere
+ * for the controls to go. Before it, an editor opening a page to decide the differences on
+ * it met a review control, the word *Priority*, three priority toggles, a note input and
+ * its save button — all drawn permanently, all at full weight, and none of them the thing
+ * they came for. The page key, which is the one fact that says *where am I*, competed with
+ * three controls most editors touch on a minority of pages.
+ *
+ * It **reads** and does not set. The acting lives in the dialog behind the menu, and every
+ * fact that was here is still one press away — a fact may be relocated and never removed.
+ *
+ * **Text, with one exception.** ADR 0019 closes the badge list at four and the priority is
+ * already one of them, so it keeps its pill; the review state and the note mark are words.
+ * There is no amber on it either: that ADR spends amber on states that are genuinely wrong,
+ * and a page whose review went stale is not one. The words carry it.
+ *
+ * A page with none of the three draws **nothing**, rather than three empty slots, so an
+ * unannotated page looks unannotated.
  *
  * @param {object} props
- * @param {{ editor: string, at: string, fresh: boolean } | null} props.review
- * @param {string} props.findingSetHash
- * @param {(event: object) => Promise<boolean>} props.append
- * @param {Record<string, import('../lib/page-header.mjs').Offer>} props.actions
- *   `headerReading().actions`.
+ * @param {import('../lib/page-header.mjs').LinePart[]} props.line  `headerReading().line`.
  */
-export function ReviewControl({ review, findingSetHash, append, actions }) {
-  const offered = (action) => actions[action].state === 'offered';
+export function PageLine({ line }) {
+  if (line.length === 0) return null;
 
-  if (review) {
-    return (
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <Attribution
-          action={review.fresh ? 'reviewed' : 'changed since review'}
-          editor={review.editor}
-          at={review.at}
-        />
-        {offered('clearReview') && (
-          <Button
-            variant="link"
-            size="xs"
-            onClick={() => append({ scope: 'page', action: 'cleared' })}
-            className="px-0 text-muted-foreground"
-          >
-            Clear the review
-          </Button>
-        )}
-        {offered('markAgain') && (
-          <Button
-            variant="link"
-            size="xs"
-            onClick={() => append({ scope: 'page', action: 'reviewed', findingSetHash })}
-            className={cn('px-0', CHROME.link)}
-          >
-            Mark again
-          </Button>
-        )}
-      </div>
-    );
-  }
-
-  if (!offered('markReviewed')) return null;
   return (
-    <Button
-      variant="outline"
-      onClick={() => append({ scope: 'page', action: 'reviewed', findingSetHash })}
-    >
-      Page reviewed
-    </Button>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+      {line.map((part) => {
+        if (part.kind === 'priority') {
+          return <PriorityPill key="priority" priority={part.priority} />;
+        }
+        if (part.kind === 'note') {
+          // That there is one, and never what it says. *Edit page details* is where the
+          // note is read in full and where it is changed.
+          return <span key="note">has a note</span>;
+        }
+        return (
+          <Attribution
+            key="review"
+            action={part.fresh ? 'reviewed' : 'changed since review'}
+            editor={part.editor}
+            at={part.at}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -180,13 +169,30 @@ export function RecheckButton({ action, recheck, store, page }) {
  * @param {Record<string, import('../lib/page-header.mjs').Offer>} props.actions
  *   `headerReading().actions`.
  * @param {string} props.href  This page's own path, from `pageHref()`.
+ * @param {() => void} props.onEditDetails  Opens the dialog holding the annotations.
+ * @param {() => void} props.onMarkReviewed
+ * @param {import('react').RefObject<HTMLElement | null>} [props.triggerRef]
+ *   Where the dialog this menu opens should hand the focus back to. The item an editor
+ *   pressed is gone by the time the dialog closes, so the way back has to be named.
  */
-export function PageMenu({ actions, href }) {
+export function PageMenu({ actions, href, onEditDetails, onMarkReviewed, triggerRef }) {
+  /*
+   * The one sentence, said once at the foot of the menu rather than on each item that
+   * carries it. Every refusal here has the same cause — the log, or a missing name — so
+   * `whyNotWriting()`'s sentence is one fact about the page, and repeating it per item would
+   * say it twice and tell a reader nothing the second time.
+   */
+  const refusal = Object.values(actions).find((offer) => offer.state === 'refused')?.reason ?? null;
+  /* Named, so a refused item can point at the sentence rather than only look disabled. A
+     page may draw more than one menu, so the id is the hook's and not a constant. */
+  const refusalId = useId();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
           <Button
+            ref={triggerRef}
             variant="ghost"
             /* The glyph stays small and the target does not: `size-9` is a comfortable
                thing for a finger to land on, which is the half of ui-polish 03 a guard
@@ -204,12 +210,75 @@ export function PageMenu({ actions, href }) {
 
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
-          {actions.copyLink.state === 'offered' && (
-            <DropdownMenuItem onClick={() => copyLink(href)}>Copy link</DropdownMenuItem>
-          )}
+          {/* One press and no form, so it stays here rather than going behind the dialog —
+              making an editor open one to reach a single button would be ceremony. It is
+              **absent** once a review exists, because a page cannot be reviewed twice. */}
+          <MenuAction action={actions.markReviewed} onClick={onMarkReviewed} refusalId={refusalId}>
+            Mark page reviewed
+          </MenuAction>
+
+          {/* Never refused, because opening it is a read: a note a colleague wrote is worth
+              reading by an editor who cannot write one. What a read-only log stops is the
+              saving, and the dialog says so where the saving is. */}
+          <MenuAction action={actions.editDetails} onClick={onEditDetails} refusalId={refusalId}>
+            Edit page details
+          </MenuAction>
+
+          <MenuAction
+            action={actions.copyLink}
+            onClick={() => copyLink(href)}
+            refusalId={refusalId}
+          >
+            Copy link
+          </MenuAction>
         </DropdownMenuGroup>
+
+        {refusal && (
+          <>
+            <DropdownMenuSeparator />
+            {/* A plain node and not `DropdownMenuLabel`, which is the primitive's
+                `GroupLabel` and names the group of items above it. This names no group: it
+                is why one of them cannot be pressed, and the refused items point at it. */}
+            <p id={refusalId} className="max-w-64 px-1.5 py-1 text-xs text-muted-foreground">
+              {refusal}
+            </p>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/**
+ * One item, drawn for what the reading says about it.
+ *
+ * **Absent and refused are drawn differently, and that is the whole reason the reading
+ * distinguishes them.** An absent action is not here at all, because there is nothing to
+ * offer — a page cannot be reviewed twice. A refused one is here and cannot be pressed,
+ * because there *is* something to offer and the log will not take it right now: an editor
+ * who finds the item disabled with a reason under it learns the state, and an editor who
+ * finds it gone concludes the interface lost a feature.
+ *
+ * @param {object} props
+ * @param {import('../lib/page-header.mjs').Offer} props.action
+ * @param {() => void} props.onClick
+ * @param {string} props.refusalId  The node holding the reason, for a refused item to name.
+ * @param {import('react').ReactNode} props.children
+ */
+function MenuAction({ action, onClick, refusalId, children }) {
+  if (action.state === 'absent') return null;
+
+  const refused = action.state === 'refused';
+  return (
+    <DropdownMenuItem
+      disabled={refused}
+      // Disabled is not a reason. A reader who cannot see the sentence at the foot of the
+      // menu hears it here, on the item it is about.
+      aria-describedby={refused ? refusalId : undefined}
+      onClick={onClick}
+    >
+      {children}
+    </DropdownMenuItem>
   );
 }
 

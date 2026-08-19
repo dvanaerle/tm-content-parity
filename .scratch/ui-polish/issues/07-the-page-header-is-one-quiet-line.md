@@ -1,7 +1,7 @@
 # 07 — The page header is one quiet line, and the rest is behind a menu
 
 Type: spec
-Status: ready-for-agent
+Status: resolved — 2026-08-19, branch `ticket-104-search-page-scope`. Built as 08, 09 and 10.
 Blocked by: 02 (the weights, which decides what a badge is) — not by 133, which rewrites the
 dashboard and the ledger and does not touch this header.
 Parent: ../PRD.md
