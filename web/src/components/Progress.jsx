@@ -8,12 +8,20 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { EllipsisIcon } from 'lucide-react';
 import { announce } from '../lib/announce.mjs';
 import { logState } from '../lib/log-read.mjs';
 import { CHROME } from '../lib/palette.mjs';
 import { Alert, AlertDescription } from './ui/alert.jsx';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu.jsx';
 import { Progress } from './ui/progress.jsx';
 import { Attribution } from './Attribution.jsx';
 import { cn } from '../lib/utils.js';
@@ -117,6 +125,118 @@ export function ReviewControl({ review, findingSetHash, append, actions }) {
       Page reviewed
     </Button>
   );
+}
+
+/**
+ * The one action with a real cost, and the reason it is not in the menu.
+ *
+ * A re-check crawls two live pages and writes a report, so it takes seconds and it is felt.
+ * PRD story 28 keeps it visible for exactly that: a menu hides its items behind a press,
+ * and this is the press an editor should be able to see before making it.
+ *
+ * It is **absent** rather than disabled where the local service does not answer — the
+ * distinction `headerReading()` keeps, and the reason it keeps it. There is no service on
+ * the webhost, so there is nothing to explain and nothing an editor could do about it.
+ *
+ * @param {object} props
+ * @param {import('../lib/page-header.mjs').Offer} props.action  `actions.recheck`.
+ * @param {{ running: boolean, run?: (store: string, page: string) => void }} props.recheck
+ * @param {string} [props.store]
+ * @param {string} [props.page]
+ */
+export function RecheckButton({ action, recheck, store, page }) {
+  if (action.state !== 'offered') return null;
+
+  return (
+    <Button
+      disabled={recheck.running}
+      onClick={() => recheck.run(store, page)}
+      className={cn('text-white', CHROME.button)}
+    >
+      {recheck.running ? 'Re-checking…' : 'Re-check'}
+    </Button>
+  );
+}
+
+/**
+ * The one place the header keeps everything that is not the page and not *Re-check*.
+ *
+ * **A menu and not four more controls.** The header's most prominent row used to hold a
+ * review control, three priority toggles, a note input with its own save button, a
+ * *Re-check* and a name field, all drawn at full weight on every page and none of them the
+ * thing an editor came for. This is where the ones an editor touches on a minority of pages
+ * go, and the page key gets the row back.
+ *
+ * *Re-check* is deliberately **not** in here. PRD story 28 keeps the one action with a real
+ * cost visible, and a browser assertion holds it there.
+ *
+ * The menu is the installed primitive and not a panel of our own. ADR 0007 records one
+ * hand-rolled panel — the search suggestion list — and says a second should be read as
+ * evidence this repo wants a focus-free panel primitive rather than as licence for a third.
+ * That list is hand-rolled *because* it must never take the focus; a menu's whole job is to
+ * take it, so it is the primitive's case and not the exception's.
+ *
+ * @param {object} props
+ * @param {Record<string, import('../lib/page-header.mjs').Offer>} props.actions
+ *   `headerReading().actions`.
+ * @param {string} props.href  This page's own path, from `pageHref()`.
+ */
+export function PageMenu({ actions, href }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            /* The glyph stays small and the target does not: `size-9` is a comfortable
+               thing for a finger to land on, which is the half of ui-polish 03 a guard
+               cannot check. */
+            className="size-9"
+            /* An icon is not a name. The guard in `interface-reach.test.mjs` refuses a
+               control whose whole content is a glyph, and it is right to: this is the only
+               thing a reader who cannot see the `⋯` is told. */
+            aria-label="More about this page"
+          />
+        }
+      >
+        <EllipsisIcon aria-hidden />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end">
+        <DropdownMenuGroup>
+          {actions.copyLink.state === 'offered' && (
+            <DropdownMenuItem onClick={() => copyLink(href)}>Copy link</DropdownMenuItem>
+          )}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/**
+ * This page's address on the clipboard.
+ *
+ * The deep link has been shipped since ticket 109 and no control in this interface has ever
+ * offered it, so an editor who wants to send a colleague to a page reads the address bar.
+ *
+ * The path is made whole against `location` **here rather than by the caller**, because the
+ * caller renders on the server too and there is no address there to be relative to. The
+ * clipboard wants the whole address: a colleague is being sent this page, and a path is not
+ * somewhere a person can be sent.
+ *
+ * @param {string} href  A path, from `pageHref()`.
+ */
+async function copyLink(href) {
+  const link = new URL(href, location.href).href;
+  try {
+    await navigator.clipboard.writeText(link);
+    announce('The link to this page is copied.');
+  } catch (failure) {
+    // A clipboard write is refused outright by a browser that has not been given
+    // permission, and it fails silently otherwise — which is the one outcome an editor
+    // must not read as success, because they will paste the last thing they copied.
+    announce(`The link is not copied. ${/** @type {Error} */ (failure).message}`);
+  }
 }
 
 /** No name, no writing. Attribution must cost nothing, so it is one field. */

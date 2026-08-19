@@ -13,23 +13,23 @@ it. An editor who wants to send a colleague to a page reads the address bar toda
 
 **Blocked by:** 08 — the trigger reads its value from that module.
 
-**Status:** ready-for-agent
+**Status:** resolved — 2026-08-19, branch `ticket-104-search-page-scope`.
 
 **Parent:** 07-the-page-header-is-one-quiet-line.md
 
-- [ ] `dropdown-menu` is installed with the project's shadcn setup, as the twenty-second file under
+- [x] `dropdown-menu` is installed with the project's shadcn setup, as the twenty-second file under
       `ui/`. It is not hand-rolled.
-- [ ] ADR 0007 gains a consequence line naming it, in the shape that ADR already uses for a new
+- [x] ADR 0007 gains a consequence line naming it, in the shape that ADR already uses for a new
       primitive. It records that the menu is taken for **behaviour** — a keyboard menu, a roving
       focus, a dismiss on escape that restores focus — which is what that ADR bought the dependency
       for.
-- [ ] The header carries one icon-only trigger with an accessible name and a comfortable hit area,
+- [x] The header carries one icon-only trigger with an accessible name and a comfortable hit area,
       passing ui-polish 03's guard. The glyph stays small; the target does not.
-- [ ] The menu holds **Copy link**. It puts this page's address on the clipboard.
-- [ ] The menu opens, moves and closes from the keyboard, and focus returns to the trigger on close.
-- [ ] `Progress.browser.test.mjs` gains the assertions: the trigger has an accessible name, and
+- [x] The menu holds **Copy link**. It puts this page's address on the clipboard.
+- [x] The menu opens, moves and closes from the keyboard, and focus returns to the trigger on close.
+- [x] `Progress.browser.test.mjs` gains the assertions: the trigger has an accessible name, and
       *Re-check* is still a visible button and not a menu item. No new browser test file is created.
-- [ ] `npm test && npm run lint && npm run build`.
+- [x] `npm test && npm run lint && npm run build`.
 
 ## Traps
 

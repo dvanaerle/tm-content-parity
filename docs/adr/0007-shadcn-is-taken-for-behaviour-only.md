@@ -114,6 +114,36 @@ Two things follow from it and are worth writing down:
   hand, and none of them is a decision about meaning. The count of npm packages did
   not move: these are source files, and they arrived on the dependencies the seven
   already brought.
+- **A new primitive, and it is taken for exactly what this file says.** `DropdownMenu`
+  arrives with ui-polish ticket 09 as the twenty-second file under `ui/`, and it is a keyboard
+  menu, a roving focus and a dismiss on escape that restores focus — three of the four
+  behaviours the section above names as the reason this dependency was worth having, and the
+  fourth is a focus trap a menu has no use for. No npm package moved: it is one source file
+  on `@base-ui/react`, which the seven already brought.
+
+  It is recorded because a new primitive is a small decision this list holds, and because the
+  obvious alternative had to be refused out loud. The suggestion list two bullets down is
+  hand-rolled, and this file says a **second** hand-rolled panel should be read as evidence
+  the repo wants a focus-free panel primitive rather than as licence for a third. A menu is
+  not that case and cannot be: the suggestion list is hand-rolled *because* it must never
+  take the focus, and a menu's whole job is to take it.
+
+  **It arrived needing the third in-place edit, and the two above said to notice that.**
+  `DropdownMenuContent` shipped `outline-none` with no `focus-visible:` ring beside it, and
+  the positioner shipped `outline-none` on a wrapper that is never focused — so ui-polish
+  03's focus guard failed on the file the moment it landed. The fix is what the sibling
+  primitives already do: `dialog.jsx` and `popover.jsx` both carry
+  `focus-visible:ring-3 focus-visible:ring-ring/50` on their panel, and the menu now
+  carries it too; the positioner's is deleted, because an outline on an element that
+  cannot hold the focus was never drawing anything.
+  It is recorded here for the reason the other two are: **a `shadcn add dropdown-menu`
+  will overwrite it**, and this list is the only place a re-add would be caught. It is
+  unlike them in what it is *for* — the checkbox edit bought a behaviour and the progress
+  edit opened a door for a token, and this one only brings a vendored file up to a rule
+  this repo already enforces on its own files and the registry already meets in two others.
+  That makes it the weakest of the three as evidence, and it is still the third. The
+  question the bullets above park — whether this repo wants `ui/` files it maintains rather
+  than vendors — is now due, and it is not this ticket's to answer.
 - **One thing stays hand-rolled inside a component that otherwise did not.** The
   parity bar in `Chips.jsx` is not a shadcn `Progress`, because `Progress` composes
   its own indicator and paints it `bg-primary`, and the fill here is chosen per row

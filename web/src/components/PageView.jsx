@@ -1,16 +1,21 @@
 import { useMemo } from 'react';
 import { PageAnnotations } from './Annotate.jsx';
 import Ledger from './Ledger.jsx';
-import { EditorPrompt, LogBanner, PageBar, ReviewControl } from './Progress.jsx';
+import {
+  EditorPrompt,
+  LogBanner,
+  PageBar,
+  PageMenu,
+  RecheckButton,
+  ReviewControl,
+} from './Progress.jsx';
 import { Alert, AlertDescription } from './ui/alert.jsx';
-import { Button } from './ui/button.jsx';
-import { CHROME } from '../lib/palette.mjs';
 import { logState } from '../lib/log-read.mjs';
 import { NO_EDITOR, useEditor, useOverrides } from '../lib/overrides.mjs';
 import { usePageReport, useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
 import { moment } from '../lib/dates.mjs';
 import { headerReading } from '../lib/page-header.mjs';
-import { cn } from '../lib/utils.js';
+import { pageHref } from '../lib/page-url.mjs';
 
 /**
  * The island that owns one store page.
@@ -89,17 +94,16 @@ export default function PageView({
           busy={log.busy}
         />
 
-        {/* Feature detection: absent on the webhost, never broken — which is `recheck`
-            being **absent** rather than refused, a distinction `headerReading()` keeps. */}
-        {header.actions.recheck.state === 'offered' && (
-          <Button
-            disabled={recheck.running}
-            onClick={() => recheck.run(report.store, report.page)}
-            className={cn('text-white', CHROME.button)}
-          >
-            {recheck.running ? 'Re-checking…' : 'Re-check'}
-          </Button>
-        )}
+        <RecheckButton
+          action={header.actions.recheck}
+          recheck={recheck}
+          store={report.store}
+          page={report.page}
+        />
+
+        {/* Everything an editor touches on a minority of pages, in one place they can look
+            for it. `Re-check` stays outside it, above. */}
+        <PageMenu actions={header.actions} href={pageHref(report.store, report.page)} />
 
         <EditorPrompt editor={editor} save={save} />
       </div>
