@@ -13,7 +13,7 @@
     "deploy": "npm run build && wrangler deploy",
     "serve": "node api/server.mjs",
     "start": "npm run build && npm run serve",
-    "lint": "oxlint .",
+    "lint": "oxlint --deny-warnings .",
     "lint:fix": "oxlint --fix .",
     "format": "oxfmt --check",
     "format:fix": "oxfmt .",
