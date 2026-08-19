@@ -159,15 +159,16 @@ export function RecheckButton({ action, recheck, store, page }) {
  * *Re-check* is deliberately **not** in here. PRD story 28 keeps the one action with a real
  * cost visible, and a browser assertion holds it there.
  *
- * The menu is the installed primitive and not a panel of our own. ADR 0007 records one
- * hand-rolled panel — the search suggestion list — and says a second should be read as
- * evidence this repo wants a focus-free panel primitive rather than as licence for a third.
- * That list is hand-rolled *because* it must never take the focus; a menu's whole job is to
- * take it, so it is the primitive's case and not the exception's.
+ * Why it is the installed primitive rather than a panel of our own is ADR 0007's, which
+ * records the argument and the refusal of the alternative.
  *
  * @param {object} props
- * @param {Record<string, import('../lib/page-header.mjs').Offer>} props.actions
+ * @param {import('../lib/page-header.mjs').HeaderActions} props.actions
  *   `headerReading().actions`.
+ * @param {string | null} props.refusal
+ *   `headerReading().refusal`: the one sentence every refused item here carries, said once at
+ *   the foot of the menu. Every refusal has the same cause — the log, or a missing name — so
+ *   repeating it per item would say it twice and tell a reader nothing the second time.
  * @param {string} props.href  This page's own path, from `pageHref()`.
  * @param {() => void} props.onEditDetails  Opens the dialog holding the annotations.
  * @param {() => void} props.onMarkReviewed
@@ -175,14 +176,7 @@ export function RecheckButton({ action, recheck, store, page }) {
  *   Where the dialog this menu opens should hand the focus back to. The item an editor
  *   pressed is gone by the time the dialog closes, so the way back has to be named.
  */
-export function PageMenu({ actions, href, onEditDetails, onMarkReviewed, triggerRef }) {
-  /*
-   * The one sentence, said once at the foot of the menu rather than on each item that
-   * carries it. Every refusal here has the same cause — the log, or a missing name — so
-   * `whyNotWriting()`'s sentence is one fact about the page, and repeating it per item would
-   * say it twice and tell a reader nothing the second time.
-   */
-  const refusal = Object.values(actions).find((offer) => offer.state === 'refused')?.reason ?? null;
+export function PageMenu({ actions, refusal, href, onEditDetails, onMarkReviewed, triggerRef }) {
   /* Named, so a refused item can point at the sentence rather than only look disabled. A
      page may draw more than one menu, so the id is the hook's and not a constant. */
   const refusalId = useId();
@@ -210,16 +204,10 @@ export function PageMenu({ actions, href, onEditDetails, onMarkReviewed, trigger
 
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
-          {/* One press and no form, so it stays here rather than going behind the dialog —
-              making an editor open one to reach a single button would be ceremony. It is
-              **absent** once a review exists, because a page cannot be reviewed twice. */}
           <MenuAction action={actions.markReviewed} onClick={onMarkReviewed} refusalId={refusalId}>
             Mark page reviewed
           </MenuAction>
 
-          {/* Never refused, because opening it is a read: a note a colleague wrote is worth
-              reading by an editor who cannot write one. What a read-only log stops is the
-              saving, and the dialog says so where the saving is. */}
           <MenuAction action={actions.editDetails} onClick={onEditDetails} refusalId={refusalId}>
             Edit page details
           </MenuAction>

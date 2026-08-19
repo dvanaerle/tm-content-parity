@@ -147,10 +147,10 @@ describe('the deep links on a finding row', () => {
 /**
  * The dialog the page's annotations moved into (ui-polish ticket 10).
  *
- * It sits in this file rather than in a new one because the ticket opens no new browser
- * seam, and the components it drives — `PageAnnotations`' priority picker and note input —
- * are the page-annotation surface these assertions are about. The module they live in is
- * `Annotate.jsx`; the assertions are here.
+ * It sits in this file rather than in a new one because ticket 10 opens no new browser seam,
+ * and the priority picker and note input it drives are the page-annotation surface these
+ * assertions are about. The module they live in is `Annotate.jsx`; the assertions are here,
+ * which is where that ticket put them.
  *
  * **A dialog and not a popover, and one test says why.** A popover dismisses on an outside
  * click, and an editor halfway through typing a note about a page is exactly the person who
@@ -185,7 +185,14 @@ function openDialog({ page = {}, annotations = NOTHING, review = null, append, c
   return {
     // Portalled onto the body, so the dialog is not under the host that drew it.
     popup: () => document.querySelector('[data-slot="dialog-content"]'),
-    noteBox: () => document.querySelector('input[aria-label="A note about this page"]'),
+    // The dialog's one text field, reached through the label that names it — which is the
+    // way a reader reaches it too, and would fail if the label stopped being associated.
+    noteBox: () => {
+      const label = [...document.querySelectorAll('[data-slot="dialog-content"] label')].find(
+        (each) => each.textContent === 'Note',
+      );
+      return document.getElementById(label.getAttribute('for'));
+    },
     button: (words) =>
       [...document.querySelectorAll('[data-slot="dialog-content"] button')].find(
         (control) => control.textContent === words,
@@ -232,6 +239,7 @@ function PageWithMenu() {
     null,
     createElement(PageMenu, {
       actions,
+      refusal: null,
       href: '/nl/overkappingen/',
       triggerRef: trigger,
       onEditDetails: () => setOpen(true),
@@ -367,5 +375,19 @@ describe('the page details dialog', () => {
     await vi.waitFor(() => expect(document.activeElement).toBe(trigger));
     act(() => root.unmount());
     host.remove();
+  });
+
+  it('refuses the review controls on a read-only log rather than dropping them', () => {
+    const dialog = openDialog({
+      review: { editor: 'Dylan', at: '2026-08-19T09:00:00.000Z', fresh: false },
+      page: { notWritingReason: 'The log does not answer, so this is read-only.' },
+    });
+
+    // Present and refused, not absent — the distinction the reading exists to keep. A
+    // control that vanished here would read as a feature this page does not have, and the
+    // footer would be an empty strip.
+    expect(dialog.button('Clear the review').disabled).toBe(true);
+    expect(dialog.button('Mark again').disabled).toBe(true);
+    dialog.unmount();
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { PriorityPill } from './Chips.jsx';
 import PressReport from './PressReport.jsx';
 import { OfPages, Selected } from './Selected.jsx';
@@ -101,7 +101,7 @@ export function PriorityPicker({ value, onPick, busy = false }) {
  * @param {{ priority: string | null, note: string | null }} props.annotations
  * @param {string} props.findingSetHash
  * @param {(event: object) => Promise<boolean>} props.append
- * @param {Record<string, import('../lib/page-header.mjs').Offer>} props.actions
+ * @param {import('../lib/page-header.mjs').HeaderActions} props.actions
  *   `headerReading().actions`.
  * @param {import('react').RefObject<HTMLElement | null>} [props.finalFocus]
  *   The control an editor opened this from. Focus is **aimed** and not restored, because the
@@ -121,6 +121,7 @@ export function PageDetailsDialog({
 }) {
   const { priority, note } = annotations;
   const [typed, setTyped] = useState(note ?? '');
+  const noteId = useId();
 
   // The log answers a beat after the first paint, and a note a colleague wrote has to
   // arrive in the box. It re-syncs on the **stored** note only, so an editor's half-typed
@@ -130,16 +131,6 @@ export function PageDetailsDialog({
   const { annotate } = actions;
   const refused = annotate.state === 'refused';
   const changed = typed.trim() !== (note ?? '');
-
-  /**
-   * A write that leaves the dialog where it is, for the priority.
-   *
-   * A priority is a toggle and not a submission: an editor setting one and then writing a
-   * note would be thrown out of the dialog between the two, and clearing a wrong priority
-   * would mean reopening it to press the same button again. One task in one place means the
-   * dialog outlasts the presses inside it.
-   */
-  const write = (event) => append(event);
 
   /**
    * A write that closes on success and **stays open on failure**, so the outcome of a
@@ -166,11 +157,16 @@ export function PageDetailsDialog({
           <div className="flex flex-col gap-1.5">
             <span className="text-muted-foreground">Priority</span>
             {/* Pressing the set one takes it off, so a wrong priority is cleared as easily
-                as it was set. That is the picker's own rule and it did not change. */}
+                as it was set. That is the picker's own rule and it did not change.
+
+                It **appends and does not close**, unlike the note below. A priority is a
+                toggle and not a submission: an editor setting one and then writing a note
+                would be thrown out of the dialog between the two, and clearing a wrong
+                priority would mean reopening to press the same button again. */}
             <PriorityPicker
               value={priority}
               busy={busy || refused}
-              onPick={(next) => write(priorityEventFor(next))}
+              onPick={(next) => append(priorityEventFor(next))}
             />
           </div>
 
@@ -181,42 +177,54 @@ export function PageDetailsDialog({
               writeAndClose(noteEventFor(typed));
             }}
           >
-            <label className="text-muted-foreground" htmlFor="page-note">
+            {/* A visible label and **no `aria-label` beside it**: an `aria-label` overrides
+                the label element, so the word on screen would be the one word never read
+                out. The id is the hook's, because a page may draw this twice. */}
+            <label className="text-muted-foreground" htmlFor={noteId}>
               Note
             </label>
             <Input
-              id="page-note"
+              id={noteId}
               value={typed}
               onChange={(change) => setTyped(change.target.value)}
               disabled={refused}
               // Not *why*: a page note explains nothing in particular, and a placeholder
               // asking for a reason would make it read as the note a dismissal carries.
               placeholder="A note about this page"
-              aria-label="A note about this page"
             />
             {changed && !refused && (
               <Button type="submit" variant="outline" size="xs" className="self-start" disabled={busy}>
                 {busy ? 'Saving…' : typed.trim() ? 'Save note' : 'Clear note'}
               </Button>
             )}
+            {/* The **stored** note, in full, beside the box that changes it. A note has no
+                length limit — `PageNoteMark` says why the dashboard draws a mark instead —
+                and this is the surface that draws it whole, as the old header did. It is
+                the stored value and not `typed`, which is already on screen above and
+                would say the sentence twice while telling a reader nothing about the log. */}
+            <PageNote note={note} />
           </form>
         </div>
 
-        {(actions.clearReview.state !== 'absent' || actions.markAgain.state !== 'absent') && (
+        {/* Present whenever there is a review to act on, and **refused rather than absent**
+            where the log will not take the write: the two are different answers, and a
+            control that vanished on a read-only log would read as a feature this page does
+            not have. The reason is already above, in the description. */}
+        {actions.clearReview.state !== 'absent' && (
           <DialogFooter className="justify-start">
-            {actions.clearReview.state === 'offered' && (
+            <Button
+              variant="outline"
+              size="xs"
+              disabled={refused}
+              onClick={() => writeAndClose({ scope: 'page', action: 'cleared' })}
+            >
+              Clear the review
+            </Button>
+            {actions.markAgain.state !== 'absent' && (
               <Button
                 variant="outline"
                 size="xs"
-                onClick={() => writeAndClose({ scope: 'page', action: 'cleared' })}
-              >
-                Clear the review
-              </Button>
-            )}
-            {actions.markAgain.state === 'offered' && (
-              <Button
-                variant="outline"
-                size="xs"
+                disabled={refused}
                 onClick={() => writeAndClose({ scope: 'page', action: 'reviewed', findingSetHash })}
               >
                 Mark again
@@ -375,8 +383,10 @@ export function PageNote({ note, className = '' }) {
  * the side with it — the defect ticket 04 found, in a cell that does not wrap.
  *
  * So the list draws the mark and the **page draws the note**, in full, where an editor also
- * changes it. That is why the mark is a link and not a glyph: *reachable* has to mean somewhere
- * a reader can go, and the note's own page is the place it already lives.
+ * changes it — which since ui-polish 10 is the page's details dialog rather than its header,
+ * and is still one press from the page this links to. That is why the mark is a link and not a
+ * glyph: *reachable* has to mean somewhere a reader can go, and the note's own page is the
+ * place it already lives.
  *
  * **The note is in the accessible name and not only in the `title`.** ADR 0019 refuses hover
  * that reveals something a reader needs, so the text cannot be a tooltip's alone: a keyboard

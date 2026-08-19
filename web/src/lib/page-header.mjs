@@ -39,6 +39,20 @@
  * @typedef {{ state: 'offered' } | { state: 'absent' } | { state: 'refused', reason: string }} Offer
  */
 
+/**
+ * Every action the header offers, named. A bag keyed by `string` would take
+ * `actions.markAgian` without complaint, and these seven names are read in three files.
+ *
+ * @typedef {object} HeaderActions
+ * @property {Offer} recheck        Crawls the two live pages again.
+ * @property {Offer} copyLink       This page's address on the clipboard.
+ * @property {Offer} markReviewed   A human looked at this whole page.
+ * @property {Offer} editDetails    Opens the dialog. A read, so never refused.
+ * @property {Offer} annotate       The priority and the note, which are refused together.
+ * @property {Offer} clearReview    Withdraws the review.
+ * @property {Offer} markAgain      Reviews a page whose findings changed since the last one.
+ */
+
 /** @type {Offer} */
 const OFFERED = { state: 'offered' };
 
@@ -57,7 +71,9 @@ const ABSENT = { state: 'absent' };
  *   **one** input for the four not-writing states, because that function's `null` is
  *   exactly `canWrite` — a second flag beside it could only ever disagree with it.
  * @param {boolean} page.recheckAvailable  Whether the local re-check service answers.
- * @returns {{ line: LinePart[], actions: Record<string, Offer> }}
+ * @returns {{ line: LinePart[], actions: HeaderActions, refusal: string | null }}
+ *   `refusal` is the one sentence every refusal here carries, so a surface drawing several
+ *   refused controls can say it once instead of finding it by scanning the actions for one.
  */
 export function headerReading({ review, annotations, notWritingReason, recheckAvailable }) {
   /** A write the log will not take is refused with the log's own sentence for it. */
@@ -65,6 +81,7 @@ export function headerReading({ review, annotations, notWritingReason, recheckAv
 
   return {
     line: linePartsOf(review, annotations),
+    refusal: notWritingReason,
     actions: {
       /* Feature detection and never permission: the service is absent on the webhost, and
          PRD story 28 keeps this one visible wherever it exists because it is the action

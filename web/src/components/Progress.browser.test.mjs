@@ -105,7 +105,13 @@ function drawMenu(page = {}) {
     ...page,
   });
   act(() =>
-    root.render(createElement(PageMenu, { actions: reading.actions, href: '/nl/overkappingen/' })),
+    root.render(
+      createElement(PageMenu, {
+        actions: reading.actions,
+        refusal: reading.refusal,
+        href: '/nl/overkappingen/',
+      }),
+    ),
   );
   return { host, unmount: () => act(() => root.unmount()) };
 }

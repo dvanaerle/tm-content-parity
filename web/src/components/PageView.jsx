@@ -97,6 +97,7 @@ export default function PageView({
             for it. `Re-check` stays outside it, above. */}
         <PageMenu
           actions={header.actions}
+          refusal={header.refusal}
           href={pageHref(report.store, report.page)}
           triggerRef={menuTrigger}
           onEditDetails={() => setDetailsOpen(true)}
