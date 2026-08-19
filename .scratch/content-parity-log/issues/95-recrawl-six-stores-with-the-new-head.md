@@ -2,7 +2,9 @@
 
 Type: measure
 Status: ready-for-agent
-Blocked by: 93, 94
+Blocked by: 94. (93 was the other blocker and no longer blocks anything: its abort
+half landed in `feabe7c`, its exclusion half is out of scope. This ticket is still
+needed — 94, not 93, is what invalidates every extract on disk.)
 Parent: 58-axis-a-meta-check.md
 
 **What this delivers:** every extract on disk carries `extractVersion` and the new
@@ -26,11 +28,14 @@ in place.
 - [ ] `MaintenanceError` is the one thing that aborts a store. Production has served
       the maintenance page on 446 of 451 urls for a whole session. If a store aborts,
       re-run that store; ticket 93 has already made the aborted run write its failure
-      log, so the log names what was missed.
+      log, so the log names what was missed. That half of 93 shipped and stands.
 - [ ] Per store, record the extract count written, and whether the run was clean or
       retried. Paste it into this ticket.
-- [ ] `no-route` is absent from the new extracts. Ticket 93 excluded it, and this is
-      the run that proves the exclusion reached the crawl.
+- [ ] `no-route` is **present** in the new extracts on all six stores, like any other
+      page. Ticket 93's exclusion was withdrawn as out of scope on 2026-08-19 — the 404
+      body is a CMS page an editor writes, and the new site has rewritten it. An absent
+      `no-route` means a stale checkout still carries the exclusion; fix that before
+      trusting the run.
 
 `compare/link-status.mjs` needs no care here: ticket
 [59](59-link-status-overwrite.md) made it refuse a store argument on 2026-08-07, so
@@ -44,6 +49,8 @@ the overwrite that used to threaten a multi-store sitting cannot be typed.
 
 ## Gate
 
-`node compare/measure.mjs nl` runs again and no longer refuses. The finding counts
-should sit where ticket 93 left them: the head classes exist in the vocabulary but
-nothing emits them yet.
+`node compare/measure.mjs nl` runs again and no longer refuses. The head classes exist
+in the vocabulary but nothing emits them yet, so the counts should sit near where this
+run finds them: **722 comparable, ~40,802 findings, ~21,830 work** over all six stores
+as of 2026-08-19, `no-route` included. Expect movement beyond that — this is a fresh
+crawl of a site that changes, and the point of the run is to observe it.

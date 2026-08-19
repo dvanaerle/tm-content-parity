@@ -136,13 +136,17 @@ the denominator move together; a gate that checks for 0.90% is checking the wron
 
 ### `no-route` is inside these numbers
 
-Ticket [93](93-no-route-leaves-the-log.md) removes it, and this measurement was taken
-before that. `no-route` contributes **3** of the 197: `meta-title-changed` on `be_fr`
+Ticket [93](../.out-of-scope/93-no-route-leaves-the-log.md) proposed to remove it and is
+now **out of scope**, so it stays. This measurement counts it, and counts it correctly. `no-route` contributes **3** of the 197: `meta-title-changed` on `be_fr`
 and on `fr`, and `meta-description-changed` on `fr` — production's
 `Page non trouvée | Tuinmaximaal` against the new site's `Page introuvable | Tuinmaximaal`.
 
-So expect **194 meta findings over 716 comparable pages** once 93 has landed. If 93
-lands first, that is the number to check against, not 197.
+~~So expect **194 meta findings over 716 comparable pages** once 93 has landed.~~
+**Corrected 2026-08-19: 93's exclusion was reversed.** `no-route` is a CMS content
+page — its body is written in CMS > Pages and the new site has rewritten it — so it
+stays in the log and so do its 3 meta findings. The number to check against is
+**197 over 722**, which is what this measurement already read. See ticket 93's
+`## Correction`.
 
 ### What the counts must survive
 

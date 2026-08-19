@@ -1,7 +1,17 @@
 # 93 — `no-route` leaves the log, and an aborted run writes its failures
 
 Type: build
-Status: resolved 2026-08-19 — built on branch `ticket-104-search-page-scope`. See the answer.
+Status: two halves, two labels, both settled 2026-08-19.
+**The exclusion (slices 1–2) is `wontfix` — out of scope.** `no-route` is a CMS
+content page, so keeping it out of the parity log is not this project's work to do.
+Re-open trigger: the new site's 404 body stops being editable CMS content, or an
+editor says its copy is not theirs to write.
+**The failure log (slices 3–4) is `resolved`** in `feabe7c` on branch
+`ticket-104-search-page-scope`, and stands.
+Filed under `.out-of-scope/` so the issue list reads as work still to do. Half of
+this ticket shipped and is recorded here rather than in `issues/`: **the abort fix is
+in `feabe7c` and needs nothing further.** See the answer, then the correction under
+it.
 Blocked by: 91
 Parent: 58-axis-a-meta-check.md
 
@@ -88,6 +98,10 @@ page against the new site's 404 page, both sides still answer 200, and the statu
 still cannot see it. Only the size of the removal moved.
 
 ## Slices
+
+**Slices 1 and 2 were built, then reversed, and are now out of scope** — see
+`## Correction`. They stay ticked because they were built; they are no longer in the
+tree and nobody should build them again.
 
 In build order. **Criterion 1 is your first failing test.** Run
 `npm test -- <file>` and show the red before you write the implementation. Then the
@@ -213,3 +227,72 @@ agreeing on one shape rather than new surface, and no caller reads more than
 | `npm test` | 1,304 in 60 files | **1,308 in 61 files** |
 | `node compare/measure.mjs` | 722 comparable, 40,805 findings, 21,833 work | **716, 40,720, 21,799** |
 | `npm run typecheck` | clean | clean |
+
+
+## Correction — the exclusion is out of scope; `no-route` is back in the log
+
+Written 2026-08-19, after the answer above, on the same branch. The reviewer opened
+the page and said what the ticket did not know: **`no-route` is a CMS content page.**
+In Magento the 404 *template* is layout, but the body of `no-route` is a page an
+editor writes in CMS > Pages — so "comparing two error pages tells an editor
+nothing" was the wrong premise, and the 85 findings were the defect rather than
+noise.
+
+Re-crawled all six stores and read the reports. `nl`, both sides answering 200:
+
+| class | production | new site |
+|---|---|---|
+| `text-missing` ×4 | "Helaas, deze pagina is niet gevonden.", the explanatory paragraph, "Via de homepage kunt u naar de gewenste pagina gaan.", "Terug naar homepage" | — |
+| `text-added` ×6 | — | "Oeps! Deze pagina bestaat niet meer", "Geen zorgen, gebruik de knoppen hieronder…", "Ga naar de homepage", "Bekijk onze terrasoverkappingen", "Ontdek glazen schuifwanden", "Onze klantenservice" |
+| `extra-link` ×3 | — | `/terrasoverkapping`, `/glazen-schuifwand`, `/klantenservice` |
+| `alt-lost` ×1 | image alt "Pagina niet gevonden" | — |
+
+That is not two error pages agreeing. It is a **rewritten** CMS page: new copy, three
+links production does not have, and an image alt lost. `de` additionally carries a
+`broken-link`. Every one of those is a thing an editor can act on, which is the bar
+the log is for.
+
+**So the exclusion is out of scope, not merely wrong.** Deciding that a CMS page
+should not be compared is a content decision, and this project's job is to report what
+the migration changed, not to choose which editorial pages an editor is allowed to see.
+The ticket asked the parity log to make that call; it should not have been asked.
+
+### What was reversed, and what stands
+
+- `shared/excluded-pages.mjs` is back to one entry. Its header no longer names a
+  second reason for the list.
+- The two tests that asserted the exclusion are gone. In their place,
+  `crawl/extract.test.mjs` asserts `isExcludedPage('no-route')` is **false**, so a
+  future reader cannot re-exclude it without deleting a test that says why.
+- **Slices 3 and 4 stand untouched.** The `MaintenanceError` failure-log write, the
+  `crawlStore()` boundaries, and `crawl/21-crawl-store.test.mjs` had nothing to do
+  with the exclusion and were the other half of this ticket.
+
+### The corpus is restored, and the numbers with it
+
+`node crawl/20-extract.mjs <store> no-route` on all six, then
+`node compare/30-compare.mjs <store>` on all six. **722 comparable pages again**, and
+the gate now reads:
+
+| | before 93 | after 93 | now |
+|---|---|---|---|
+| comparable | 722 | 716 | **722** |
+| findings | 40,805 | 40,720 | **40,802** |
+| work | 21,833 | 21,799 | **21,830** |
+
+Three findings short of the pre-93 baseline, and that is a real observation rather
+than drift: the new site's 404 page has moved on `be_fr`, `de` and `fr` since it was
+last crawled, where a `text-missing`/`text-added` pair has collapsed into one `copy`
+finding. Per store now: `nl` 14, `be` 14, `be_fr` 13, `de` 14, `fr` 13, `uk` 14 — 82
+findings, against ticket 91's 85.
+
+**Ticket 97's denominator goes back to 722**, and its meta figure back to 197, not
+194. The three `no-route` meta findings are in the log again. Ticket 97 is corrected
+in place.
+
+### What the answer above got right and should be kept
+
+The `### Recorded and not fixed` section still stands for `veranda-configurator`:
+`30-compare.mjs` never consults the exclusion list, so an exclusion rests on the
+crawler not fetching the page rather than on a rule. That gap did not cause this
+mistake — the wrong premise did — but it is still worth its own ticket.

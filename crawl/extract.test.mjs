@@ -773,13 +773,12 @@ describe('excluded pages', () => {
     expect(exclusionReason('configurator-vergelijken')).toBeNull();
   });
 
-  it('names no-route, and the reason says why the status gate cannot see it', () => {
-    // Ticket 93: production's 404 page against the new site's 404 page. Both
-    // sides answer 200, so `skipReason()` never fires and the page emitted 85
-    // findings over the six stores that no editor can act on.
-    expect(isExcludedPage('no-route')).toBe(true);
-    expect(exclusionReason('no-route')).toMatch(/404/);
-    expect(exclusionReason('no-route')).toMatch(/200/);
+  it('does not name no-route, whose body is CMS content an editor writes', () => {
+    // Ticket 93 excluded it as "the 404 page itself" and was wrong: the 404
+    // *template* is layout, but its body is a CMS page, and production's copy is
+    // missing on the new site. Those findings are the defect, not noise.
+    expect(isExcludedPage('no-route')).toBe(false);
+    expect(exclusionReason('no-route')).toBeNull();
   });
 });
 

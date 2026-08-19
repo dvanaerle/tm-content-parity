@@ -171,28 +171,6 @@ describe('notCheckedInStore', () => {
     expect(notCheckedInStore({ rows: [], dropped: [], crawled: [], store: 'uk' })).toEqual([]);
   });
 
-  it('names no-route on every store, because all six have the 404 page', () => {
-    // Ticket 93 excluded it, and an excluded page must be *named* as excluded
-    // rather than disappear: the crawler writes no report for it, so without the
-    // exclusion the dashboard would file the 404 page as a failed fetch.
-    const seeds = JSON.parse(
-      readFileSync(new URL('../../../data/10-store-seeds.json', import.meta.url), 'utf8'),
-    );
-
-    for (const store of STORES) {
-      const [entry] = notCheckedInStore({
-        rows: seeds.rows,
-        dropped: [],
-        crawled: [],
-        store,
-      }).filter((page) => page.page === 'no-route');
-
-      expect(entry.kind).toBe('excluded-page');
-      expect(entry.reason).toMatch(/404 page/);
-      expect(entry.reason).toMatch(/answer 200/);
-    }
-  });
-
   it('reaches the dashboard of the store it belongs to, on the committed list', () => {
     const seeds = JSON.parse(
       readFileSync(new URL('../../../data/10-store-seeds.json', import.meta.url), 'utf8'),

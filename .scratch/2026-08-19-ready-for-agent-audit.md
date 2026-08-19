@@ -239,7 +239,7 @@ landed.
 
 ```
   58  The head becomes a check
-      +- 93  no-route leaves the log          ready-for-agent
+      +- 93  no-route leaves the log          half resolved, half out of scope
       +- 94  the extract carries the head     ready-for-agent
       +- 95  re-crawl six stores              ready-for-agent
       +- 96  nine meta classes                resolved 2026-08-14
@@ -282,22 +282,35 @@ landed.
            pins it - not the order of two statements.
 ```
 
-| store | findings | work | comparable |
-|---|---|---|---|
-| all six, before | 40,947 | 22,003 | 722 |
-| all six, after | **40,862** | **21,969** | **716** |
+~~| store | findings | work | comparable |~~
+~~| all six, before | 40,947 | 22,003 | 722 |~~
+~~| all six, after | **40,862** | **21,969** | **716** |~~
+
+**Withdrawn 2026-08-19.** The exclusion is out of scope and the numbers never held:
+`no-route` is a CMS content page, it is back in the log, and the corpus reads
+**722 comparable, 40,802 findings, 21,830 work**. The dashboard prototype above shows a
+*Niet gecontroleerd* row that no longer exists; the abort prototype under it is what shipped.
 
 ### Audit
 
 - **The headline collapsed under measurement, and the ticket says so.** 85 findings, not
   ~150. That is **0.21%** of findings. As a noise-removal ticket it is now marginal.
+- **And on 2026-08-19 it collapsed entirely: the exclusion is out of scope.** The 404 page's
+  body is a CMS page an editor writes, and the new site has rewritten it — new copy, three
+  extra links, an alt lost, a `broken-link` on `de`. Choosing that an editorial page should
+  not be compared is a content decision this project does not get to make. The 0.21% was the
+  defect, not the noise. Reverted; `wontfix — out of scope`.
 - **The second half is the real one.** A failure log that describes the previous run makes
   every aborted crawl unreadable - and production has served the maintenance page on 446 of
   451 URLs for a whole session, so an abort is the normal case, not the edge case. That is
   route 3 and it is worth the session on its own.
 - **It also unblocks 95**, and 95 unblocks 97 and 98.
-- **Verdict: keep** - but re-frame it honestly. It is *the failure log tells the truth*,
-  with an exclusion worth 0.21% attached. Do not sell it as the 150-finding prefactor.
+- **Filed to `.out-of-scope/93-no-route-leaves-the-log.md`** on 2026-08-19, half shipped
+  and recorded there.
+- **Verdict, revised 2026-08-19: it was *only* the failure log.** The exclusion worth 0.21%
+  is out of scope and withdrawn; slices 3–4 shipped in `feabe7c` and stand. The lesson for
+  the next ticket of this shape: a ticket that proposes to stop comparing a page must first
+  say who writes that page's content.
 
 ## 94 — The extract carries the head, and a stale one refuses to compare
 
@@ -343,8 +356,9 @@ sides, `stateOf()` calls it `same`, and the head panel is **silently green**.
   fr      ___                clean / retried
   uk      ___                clean / retried
 
-  no-route absent from the new extracts:  yes / no
-  (the proof that 93's exclusion reached the crawl)
+  no-route present in the new extracts:   yes / no
+  (93's exclusion is out of scope and withdrawn - the 404
+   page is CMS content and must be crawled like any other)
 ```
 
 ### Audit
@@ -430,10 +444,10 @@ All 197 are `work`. Share of work: **0.90%**. 79% of pages get no meta row at al
   94 --+
 ```
 
-Five sittings, one six-store re-crawl, +197 findings, -85 findings, one silent-green class
-of defect closed, two pages found to have left Google. **Keep the chain, sequence it after
-the gallery work**, and re-frame 93 and 97 on their measured numbers rather than their
-written ones.
+Five sittings, one six-store re-crawl, +197 findings, ~~-85 findings~~ **no removal — 93's
+exclusion is out of scope**, one silent-green class of defect closed, two pages found to have
+left Google. **Keep the chain, sequence it after the gallery work**, and re-frame 97 on its
+measured numbers rather than its written ones. 97 faces **722** comparable pages, not 716.
 
 ---
 
@@ -1298,7 +1312,7 @@ Nothing is deleted: every control is one press away.
 | 9 | `ui-polish` 10 — page details move into a dialog | 3 | — | ~~keep~~ **done, `68205c7`** |
 | 10 | `cpl` 94 — the extract carries the head | 3 | 1 session | **keep** |
 | 11 | `cpl` 95 — re-crawl six stores | — | a run | **keep, welded to 94** |
-| 12 | `cpl` 93 — `no-route` leaves, the abort writes its failures | 1+3 | 1 session | **keep, re-framed** |
+| 12 | `cpl` 93 — ~~`no-route` leaves~~, the abort writes its failures | 1+3 | 1 session | **done** — abort half `feabe7c`; exclusion half `wontfix — out of scope` |
 | 13 | `cpl` 129 — a hint is reachable without a mouse | 3 | ~~2 sessions~~ re-price: **11** hints, 9 files | **keep** |
 | 14 | `cross-store` 02 — a renamed image is one finding | 3 | 1 session | **keep** — `gallery` 02 has reported; **re-read the matcher** |
 | 15 | `cpl` 125 — a content cell says which language | 3 | 1 session | **keep** |
@@ -1383,7 +1397,7 @@ the three new ones:
              cpl 141                                 order by what is left
              ui-polish 13                            touch targets, header wrap
 
-  then       cpl 93  ->  94  ->  95  ->  97  ->  98  the meta chain
+  then       cpl 93 (done)  ->  94  ->  95  ->  97  ->  98   the meta chain
              cross-store 02                          re-read the matcher: BYTES.md
                                                      says a digest pairs directly
 

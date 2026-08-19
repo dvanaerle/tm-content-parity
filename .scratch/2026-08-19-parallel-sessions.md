@@ -32,7 +32,15 @@ durable part: if priorities change, re-derive the waves from it rather than trus
 ## Precondition — cleared 2026-08-19
 
 **Ticket 93 is committed** — `feabe7c`, *"The 404 page leaves the log, and an aborted run writes
-its failures"* — and its status now reads `resolved`. Wave 1 may start.
+its failures"*. Wave 1 may start.
+
+**Half of it was then withdrawn as out of scope, the same day.** `no-route` is a CMS content
+page — its body is written in CMS > Pages, and the new site has rewritten it — so keeping it out
+of the parity log was never this project's call to make. The exclusion (93's slices 1–2) is
+`wontfix — out of scope` and is reverted in the tree; the failure-log half (slices 3–4) is
+`resolved` and stands. The ticket has moved to
+`content-parity-log/.out-of-scope/93-no-route-leaves-the-log.md`, so the issue list reads as
+work still to do. Nobody should re-derive the exclusion: see 93's `## Correction`.
 
 This section is kept because the hazard it described is the one that recurs: 93 sat **built but
 uncommitted** in the working tree, its four files (`crawl/21-crawl-store.mjs`,
@@ -41,10 +49,13 @@ carrying a `ready-for-agent` status line, while tickets **85** and **94** both w
 them. Before opening any wave, check that the tree is clean of a finished ticket nobody has
 committed — a footprint table cannot see uncommitted work.
 
-**One thing 93 leaves behind.** It removed the `no-route` extracts and reports for all six
-stores, but `data/snapshot.json` and `history/run-log.jsonl` still carry those 85 findings until
-the next real run. That is expected, not a defect — but a session that reads those two files
-before the next crawl is reading a corpus that disagrees with `data/reports/`.
+**What 93 leaves behind, after the withdrawal.** The `no-route` extracts and reports it deleted
+have been re-crawled and re-compared on all six stores, so `data/reports/` is back to **722
+comparable pages, 40,802 findings, 21,830 work** and `history/run-log.jsonl` is current. What is
+still stale is **`data/snapshot.json` and `dist/search-index/`**, neither rebuilt: a one-page-per-
+store crawl is not an observation, and 95 will settle them. A session reading the snapshot or the
+search index before 95 is reading a corpus that disagrees with `data/reports/` by those 82
+findings.
 
 ---
 
@@ -168,10 +179,10 @@ A pair may share a wave only if it is **absent** from this table.
 | 13 × 125 | `Diff.jsx` |
 | 13 × 128 | `Annotate.jsx`, `BulkControl.jsx`, `Chips.jsx`, `interface-weight.test.mjs` |
 | 13 × 129 | `Annotate.jsx`, `BulkControl.jsx`, `Chips.jsx`, `Diff.jsx`, `OverrideControl.jsx`, `StoreSwitcher.astro` |
-| 85 × 93 | `not-checked.test.mjs` |
+| ~~85 × 93~~ | ~~`not-checked.test.mjs`~~ — gone: 93's edit to that file was withdrawn |
 | 85 × 129 | `Dashboard.jsx`, `Dashboard.browser.test.mjs` |
 | 85 × 141 | `Dashboard.jsx` |
-| 93 × 94 | `extract.test.mjs` |
+| 93 × 94 | `extract.test.mjs` — 93 has landed, so this is history; 94 owns the file |
 | 94 × 97 | `30-compare.mjs` |
 | 97 × 98 | `Ledger.jsx` |
 | 97 × 125 | `Ledger.jsx` |

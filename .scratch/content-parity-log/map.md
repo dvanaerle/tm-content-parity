@@ -299,7 +299,7 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   denominator is the one `measure.mjs` prints and not `data/snapshot.json`'s 40,966. See
   [91](issues/91-measure-meta-classes-on-todays-corpus.md); the meta table and the gate
   baseline are pasted into [97](issues/97-the-meta-producer-one-finding-per-row.md) and
-  the `no-route` table into [93](issues/93-no-route-leaves-the-log.md).
+  the `no-route` table into [93](.out-of-scope/93-no-route-leaves-the-log.md).
 
 ### Resolved tickets
 
@@ -2125,8 +2125,10 @@ product signature` — a product page carries all six hreflang alternates, and
     85 findings, not about 150. Both tables are pasted into the tickets that
     waited on them.
   - [92 — Measure: does either side send `<meta name="title">` or keywords?](issues/92-measure-meta-title-and-keywords-presence.md)
-  - [93 — `no-route` leaves the log, and an aborted run writes its failures](issues/93-no-route-leaves-the-log.md)
-    — the prefactor half, the one that **removes** about 150 findings.
+  - [93 — `no-route` leaves the log, and an aborted run writes its failures](.out-of-scope/93-no-route-leaves-the-log.md)
+    — **the abort half landed (`feabe7c`); the prefactor half is out of scope.**
+    `no-route` is a CMS content page and stays in the log, so nothing is removed
+    here — not 150 findings, not 85. See the ticket's `## Correction`.
   - [94 — The extract carries the head, and a stale one refuses to compare](issues/94-the-extract-carries-the-head.md)
     — `extractVersion`, so a new head field can never fold to `null` on both
     sides and report `same`.
