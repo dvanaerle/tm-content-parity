@@ -17,7 +17,26 @@ Exactly one override in the log is stranded by this, and it is a `broken-link`.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-human
+**Status:** resolved — 2026-08-19, `71a6cea` on `ticket-104-search-page-scope`. Ten
+assertions at the extraction seam, one at the comparison seam, all written before the
+implementation. Three things shipped differently from the text above, none of them a
+change to what an editor sees:
+
+- **The rule sits beside the link-record builder, not inside it.** The ticket asked for
+  `linkRecord` to return nothing for an opening link. It stayed a pure builder, and the
+  walk drops the record by two named predicates — `imageAnchorOpens` and
+  `isPhotoDetailRoute`. The behaviour is the one the ticket specified; the side effect
+  the full-size url needs would have made the builder a writer as well as a returner.
+- **`fullSrc` carries the raw href**, as the page sends it, matching `src` on the same
+  record rather than the resolved absolute url. Ticket 02 resolves both the same way.
+- **The predicates run before any host check.** An external `https://elders.tld/gallery/a/b`
+  would be dropped too. That is the predicate as specified, and it is recorded here as the
+  residual risk rather than fixed unasked.
+
+The 28-link trap is pinned in the shape that is actually dangerous: an editorial target
+whose basename matches a photo the same page shows, with the photo adjacent. A first
+draft of that test put no matching image on the page and would have passed against the
+rejected rule.
 
 **Parent:** ../PRD.md
 

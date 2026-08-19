@@ -25,8 +25,11 @@ lives, in whichever store — and it survives the English rename for free.
 
 This ticket does not build the check. It measures which check to build.
 
-**Blocked by:** 01 — production's `<img src>` is a resized thumbnail; the original appears
-only in the opening link's target, and 01 is what carries that onto the image record.
+**Blocked by:** ~~01~~ — cleared 2026-08-19 by `71a6cea`. Production's `<img src>` is a
+resized thumbnail; the original appears only in the opening link's target, and 01 now
+carries it onto the image record as `fullSrc` — the raw href, as the page sends it, so it
+resolves against the page url the same way `src` does. It is `null` on every image no
+opening link wraps.
 
 **Status:** ready-for-agent
 
