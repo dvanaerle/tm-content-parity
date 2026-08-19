@@ -3,6 +3,7 @@ import { barOf } from '../../../overrides/state.mjs';
 import { Detail, Occurrences, onePageTitle } from './Annotations.jsx';
 import BulkControl from './BulkControl.jsx';
 import { ClassPill } from './Chips.jsx';
+import { BUCKET_TONE } from '../lib/buckets.mjs';
 import { Comparison } from './Diff.jsx';
 import { STATE, attributionTone } from './OverrideControl.jsx';
 import { Attribution } from './Attribution.jsx';
@@ -484,9 +485,13 @@ function Row({ repeat, byFinding, link, searched }) {
   // row would then say *3 of 3 closed* about four findings.
   const bar = barOf(repeat.on.map((entry) => byFinding.get(entry.id)));
 
-  // The green is worn only when something is closed. A row with nothing done reads as a
-  // plain muted number, so a zero is never green.
-  const closedTone = bar.closed ? 'added' : null;
+  // The tone is worn only when something is closed. A row with nothing done reads as a plain
+  // muted number, so a zero carries no colour at all.
+  //
+  // It is read off `BUCKET_TONE` and not written out here, so this row and the two bucket
+  // strips cannot come to colour one bucket two ways. That is what caught it: the tone was the
+  // literal `added` in both places, and green is Direction.
+  const closedTone = bar.closed ? BUCKET_TONE.closed : null;
 
   return (
     <li className="border-b border-border last:border-0">

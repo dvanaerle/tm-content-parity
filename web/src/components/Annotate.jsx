@@ -270,3 +270,41 @@ export function PageNote({ note, className = '' }) {
     </span>
   );
 }
+
+/**
+ * The same note in a **list**: a mark saying there is one, and never the note itself.
+ *
+ * A page note has no length limit, and a table cell has no width to spare. One 400-character
+ * note stretched a row past the width of the screen and carried every count in that row off
+ * the side with it — the defect ticket 04 found, in a cell that does not wrap.
+ *
+ * So the list draws the mark and the **page draws the note**, in full, where an editor also
+ * changes it. That is why the mark is a link and not a glyph: *reachable* has to mean somewhere
+ * a reader can go, and the note's own page is the place it already lives.
+ *
+ * **The note is in the accessible name and not only in the `title`.** ADR 0019 refuses hover
+ * that reveals something a reader needs, so the text cannot be a tooltip's alone: a keyboard
+ * or touch reader would be left with a row of identical marks reading *Note*. The name carries
+ * the page as well, because a list of these is a list of links and *Note* twelve times over
+ * tells a screen reader nothing about which page it is on. The `title` is then a convenience
+ * for a pointer and the only thing that is hover-only, which is what the ADR permits.
+ *
+ * @param {object} props
+ * @param {string | null | undefined} props.note
+ * @param {string} props.page  The page key, for the name a reader hears.
+ * @param {string} props.href  The page the note is about.
+ * @param {string} [props.className]
+ */
+export function PageNoteMark({ note, page, href, className = '' }) {
+  if (!note) return null;
+  return (
+    <a
+      href={href}
+      title={note}
+      aria-label={`A note on ${page}: ${note}`}
+      className={cn('text-xs text-muted-foreground italic hover:underline', className)}
+    >
+      Note
+    </a>
+  );
+}

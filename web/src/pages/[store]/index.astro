@@ -38,8 +38,11 @@ const regions = regionsRemovedInStore(pages);
 // 2,600 rows that came back.
 const regionsChanged = await regionsChangedInLog();
 
-// The found total is stated beside the store. The chips below start at
-// `Pages compared`, and that number counts the **comparable** pages only.
+// The found total is stated beside the store, and since ticket 04 the sentence below is
+// the **only** place the compared count is stated: the dashboard drew it again as a chip
+// over the queue, which is a census where an editor is looking for work. This sentence
+// carries the whole arithmetic — found, crawled, comparable — so the chip was the
+// duplicate half of it and not the fact.
 // On nl the gap is 179 to 124. Nobody reads 124 as the size of the store. On fr
 // the gap is 28 to 25. A reader who arrives through the switcher does read 25 as
 // the size of the store.

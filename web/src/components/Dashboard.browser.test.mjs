@@ -2,6 +2,7 @@ import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import Dashboard from './Dashboard.jsx';
+import { PageNoteMark } from './Annotate.jsx';
 
 /**
  * The three buckets, on the store dashboard (ticket 80).
@@ -353,12 +354,7 @@ describe('the page keys offered while a scope is typed', () => {
     const unmount = mountFresh();
     await type('/');
 
-    expect(offered()).toEqual([
-      'kerstactie',
-      'overkappingen',
-      'overkappingen-hout',
-      'schuttingen',
-    ]);
+    expect(offered()).toEqual(['kerstactie', 'overkappingen', 'overkappingen-hout', 'schuttingen']);
     // The index is still in flight, which is the point: the page list answered this and it
     // was in memory from the moment the store page loaded.
     expect(document.body.textContent).toContain('loading');
@@ -714,6 +710,232 @@ describe('scoping the search from a page row', () => {
     expect(box().value).toBe('/kerstactie');
     expect(document.body.textContent).toContain('Only one site has this page');
     expect(document.body.textContent).toContain('new site answered 404');
+
+    unmount();
+  });
+});
+
+/**
+ * Ticket 04 of the polish pass. An editor opens a store dashboard to answer one question —
+ * *what do I decide next* — and the header answered with a census: eight counters, four of
+ * them counting lists that are already further down the same page.
+ *
+ * **Nothing is deleted, and that is what most of this block is for.** Every figure the
+ * strip carried is still on this screen, so each one is asserted *where it moved to* and
+ * not merely absent from where it was. A count that vanished altogether would pass the
+ * first test here and fail the second, which is the whole point of writing them as a pair.
+ */
+describe('the dashboard leads with the work', () => {
+  const withDiagnostics = (name, count) => {
+    const built = page(name, []);
+    return { ...built, summary: { ...built.summary, diagnostic: count } };
+  };
+
+  const ONE_SIDED = {
+    ...page('kerstactie', []),
+    comparable: false,
+    skipReason: 'new site answered 404',
+  };
+
+  const NOT_CHECKED = [
+    {
+      page: 'zonwering-p-12',
+      kind: 'dropped-by-rule',
+      rule: 'product-page',
+      reason: 'A product page.',
+    },
+    { page: 'winkelwagen', kind: 'excluded-page', rule: null, reason: 'An application page.' },
+  ];
+
+  const mountStore = () =>
+    mount({
+      pages: [...PAGES, withDiagnostics('vlonders', 7), ONE_SIDED],
+      notChecked: NOT_CHECKED,
+    });
+
+  const header = () =>
+    document.querySelector('section[aria-label="Work in this store"]').textContent;
+
+  it('leads with open work and needs attention, and recites no census', () => {
+    const unmount = mountStore();
+
+    // The two an editor came for, and the two that are a record of work already done. The
+    // three buckets stay whole — a bucket partitions the denominator and dropping one
+    // would be a number moving, which this pass never does.
+    expect(header()).toContain('Open');
+    expect(header()).toContain('Needs attention');
+    expect(header()).toContain('Closed');
+    expect(header()).toContain('pages reviewed');
+
+    // The four that were counting a list further down the same page.
+    for (const census of ['pages compared', 'one-sided', 'not checked', 'diagnostics']) {
+      expect(header(), census).not.toContain(census);
+    }
+
+    unmount();
+  });
+
+  it('keeps every relocated figure at the head of the list it describes', () => {
+    const unmount = mountStore();
+
+    const heading = (starts) =>
+      [...document.querySelectorAll('h2')]
+        .map((element) => element.textContent.trim())
+        .find((text) => text.startsWith(starts));
+
+    expect(heading('One-sided pages')).toBe('One-sided pages (1)');
+    expect(heading('Not checked')).toBe('Not checked (2)');
+    // The one figure with no list of its own on this screen until now. It is a number an
+    // editor cannot act on, so it goes behind a disclosure rather than beside their queue.
+    expect(heading('Diagnostics')).toContain('(7)');
+
+    unmount();
+  });
+
+  /**
+   * `app.css` says it in its own words — *`closed` is the real success state and it is
+   * blue*, and *`lost` and `added` are the only red and the only green in the interface. No
+   * status uses them.* The Closed bucket wore `added` anyway, because ticket 131 moved no
+   * pixel and left the one-word change ready. This is the ticket that spends it: normal
+   * operation recedes, and green goes back to meaning the new site added something.
+   */
+  it('spends no green on work an editor already closed', () => {
+    const unmount = mountStore();
+
+    const closed = document.querySelector('[data-bucket="closed"] strong');
+    expect(closed.dataset.tone).toBe('closed');
+
+    unmount();
+  });
+});
+
+/**
+ * The pages table, turned right side up (ticket 04).
+ *
+ * It drew the page key at the same weight as everything else in a cell carrying five
+ * things, and put the one column that says how much work a page holds behind four columns
+ * of per-check counts. So an editor reading worst-first read four numbers to find the one.
+ */
+describe('the pages table puts the page first', () => {
+  const mountPages = () => {
+    history.replaceState(null, '', '?view=pages');
+    return mount();
+  };
+
+  const heads = () => [...document.querySelectorAll('th')].map((cell) => cell.textContent.trim());
+  const cells = (name) =>
+    [...document.querySelectorAll('tbody tr')]
+      .find((row) => row.textContent.includes(name))
+      .querySelectorAll('td');
+
+  it('reads Page, then open work, then the counts', () => {
+    const unmount = mountPages();
+
+    // The select-all cell draws its word for a screen reader only, so it is the empty
+    // string an eye sees. The three buckets keep their joined head: they are one column of
+    // three numbers and the head is their legend.
+    expect(heads()).toEqual([
+      'Select',
+      'Page',
+      'Open · Needs attention · Closed',
+      'Blocks',
+      'Text',
+      'Links',
+      'Images',
+      'Diagnostics',
+    ]);
+
+    unmount();
+  });
+
+  it('gives the block count a cell of its own, so the page cell carries the page', () => {
+    const unmount = mountPages();
+
+    const row = cells('overkappingen');
+    // The key, its scope control and the two annotations. The count of blocks was the fifth
+    // thing in here and it is a number, so it belongs in a column of numbers.
+    expect(row[1].textContent).not.toContain('blocks');
+    expect(row[3].textContent.trim()).toBe('40');
+
+    unmount();
+  });
+
+  /**
+   * The four counts drop out by the width of the **table** and not of the window, so the
+   * same table keeps them inside a wide page and lets them go inside a narrow one.
+   *
+   * What is asserted is the markup contract and not the computed layout, for the reason
+   * ticket 02 recorded about its own container query: nothing mounts Tailwind's stylesheet
+   * in this project, so a measured width would be the same in a narrow box and a wide one.
+   * The query itself is verified against the built stylesheet.
+   */
+  it('drops the four counts by the width of the table and not the viewport', () => {
+    const unmount = mountPages();
+
+    expect(document.querySelector('table').closest('[class~="@container"]')).not.toBe(null);
+
+    const wide = heads().slice(4);
+    expect(wide).toHaveLength(4);
+    for (const [index, cell] of [...document.querySelectorAll('th')].slice(4).entries()) {
+      expect(cell.className, wide[index]).toContain('@4xl:table-cell');
+    }
+    for (const cell of [...cells('overkappingen')].slice(4)) {
+      expect(cell.className).toContain('@4xl:table-cell');
+    }
+
+    unmount();
+  });
+});
+
+/**
+ * The page note in a list (ticket 04). It had no clamp and sat in a cell that does not wrap,
+ * so one long note stretched a table row across the screen and took that row's counts off the
+ * side with it.
+ *
+ * The mark is mounted **directly** rather than through the dashboard, and the reason is worth
+ * stating: a note is an annotation, so it arrives on the derivation the override log builds,
+ * and a test has no port to answer as that log. Faking one would mean mocking this repo's own
+ * module, which the standards refuse. What is left is the rule itself, which is the whole of
+ * what the defect was about — a list draws a mark, and never the note.
+ */
+describe('a page note in a list', () => {
+  const LONG =
+    'Production still shows the 2024 delivery promise here and legal have asked for the ' +
+    'wording to match the terms page before we touch anything else on this page.';
+
+  const mountMark = (note) => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    act(() => root.render(createElement(PageNoteMark, { note, href: '/nl/overkappingen/' })));
+    return [host, () => act(() => root.unmount())];
+  };
+
+  it('draws a mark and never the note itself, however long the note is', () => {
+    const [host, unmount] = mountMark(LONG);
+
+    expect(host.textContent).toBe('Note');
+    expect(host.textContent).not.toContain('delivery promise');
+
+    unmount();
+  });
+
+  it('keeps the note reachable, on the page the note is about', () => {
+    const [host, unmount] = mountMark(LONG);
+
+    const mark = host.querySelector('a');
+    // The page it is about is where the note is drawn in full and where it is edited, so the
+    // mark goes there rather than revealing the text in place.
+    expect(mark.getAttribute('href')).toBe('/nl/overkappingen/');
+    expect(mark.title).toBe(LONG);
+
+    unmount();
+  });
+
+  it('draws nothing at all for a page with no note', () => {
+    const [host, unmount] = mountMark(null);
+
+    expect(host.textContent).toBe('');
 
     unmount();
   });

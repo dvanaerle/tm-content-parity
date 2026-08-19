@@ -42,11 +42,7 @@ import { severityTone } from '../lib/palette.mjs';
  */
 export function Count({ value, label, tone = 'neutral', title, className = '', ...props }) {
   return (
-    <span
-      className={cn('flex items-baseline gap-1.5 text-sm', className)}
-      title={title}
-      {...props}
-    >
+    <span className={cn('flex items-baseline gap-1.5 text-sm', className)} title={title} {...props}>
       <Reading value={value} label={label} tone={tone} />
     </span>
   );
@@ -100,6 +96,7 @@ export function BucketCount({ bucket, value, title, className = '' }) {
         label={BUCKET_LABEL[bucket]}
         tone={BUCKET_TONE[bucket]}
         title={title}
+        className={className}
         data-bucket={bucket}
       />
     );

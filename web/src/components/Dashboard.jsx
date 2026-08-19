@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AnnotateBar, PageNote } from './Annotate.jsx';
+import { AnnotateBar, PageNoteMark } from './Annotate.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import {
   Bar,
@@ -17,6 +17,7 @@ import { ClassGroups } from './Repeats.jsx';
 import Search from './Search.jsx';
 import SearchBox from './SearchBox.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible.jsx';
 import {
   Select,
   SelectContent,
@@ -28,7 +29,13 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
 import { CHECK_LABEL, classInfo } from '../lib/classes.mjs';
-import { BUCKETS, BUCKET_LABEL, BUCKET_MEANING, BUCKET_TONE } from '../lib/buckets.mjs';
+import {
+  awaitsDecision,
+  BUCKETS,
+  BUCKET_LABEL,
+  BUCKET_MEANING,
+  BUCKET_TONE,
+} from '../lib/buckets.mjs';
 import { CHROME } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { NO_EDITOR, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
@@ -47,6 +54,28 @@ import {
 } from '../lib/view.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
+
+/**
+ * The header's two rows of buckets, split by the vocabulary's own predicate.
+ *
+ * `awaitsDecision()` is total over `BUCKETS`, so between them these two draw every bucket
+ * exactly once — a fourth one arrives in a row rather than falling off the screen. What
+ * recedes is the record of work already done, because that is normal operation and ADR 0019
+ * keeps prominent weight off it.
+ */
+const LEADING = BUCKETS.filter(awaitsDecision);
+const RECEDING = BUCKETS.filter((bucket) => !awaitsDecision(bucket));
+
+/**
+ * The four per-check counts drop out when the table has no room for them, by the width of
+ * the **container** and not of the viewport — a size query, which ADR 0015 permits and
+ * ticket 02 already spends on the comparison. On a wide screen an editor loses nothing.
+ *
+ * Written once because eight cells wear it, four heads and four bodies. A head that dropped
+ * while its cells stayed would shift every count one column to the left, which is the one
+ * failure this constant exists to make impossible.
+ */
+const WIDE_ONLY = 'hidden @4xl:table-cell';
 
 /**
  * One store's work on one screen. A store is what an editor is responsible for
@@ -352,9 +381,9 @@ export default function Dashboard({
 
   const totals = useMemo(() => {
     const byClass = {};
-    // The chip below says *diagnostics*, so it counts what is actually hidden:
-    // the `diagnostic` findings. Ticket 75 moved `information` out from behind the
-    // toggle, and it is on screen on the page it is on.
+    // The disclosure at the foot of this screen says *diagnostics*, so this counts what is
+    // actually behind the toggle: the `diagnostic` findings. Ticket 75 moved `information` out
+    // from behind it, and that is on screen on the page it is on.
     let diagnostic = 0;
     for (const page of comparable) {
       diagnostic += page.summary.diagnostic;
@@ -385,9 +414,20 @@ export default function Dashboard({
         </div>
       )}
 
-      <section className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Count value={comparable.length} label="pages compared" />
+      {/* The strip carried **eight** counters until ticket 04, four of them counting a list
+          that is already further down this same page: *pages compared*, *diagnostics*,
+          *one-sided* and *not checked*. An editor arriving to ask *what do I decide next*
+          read a census first and found the answer fifth.
 
+          None of the four is deleted — the standing rule is that a fact is never silently
+          absent, and a count at the head of its own list is not absent. *pages compared* is
+          in the sentence beside the store name, which states the whole arithmetic (found,
+          crawled, comparable) and always did; the other three are at the head of the three
+          lists below. So what leaves this strip is the duplication and not the information.
+
+          It is a named region because it is the one an editor's eye is sent to, and because
+          the two lists further down are landmarks already. */}
+      <section aria-label="Work in this store" className="space-y-1">
         {/* The store's three totals (ticket 80), in the strip's own order and with the
             same three words the ledger uses. They are **absolute counts and no
             percentage**, because the denominator moves at each crawl: a genuinely
@@ -401,33 +441,50 @@ export default function Dashboard({
             again. Three buckets partition the same denominator exactly once.
 
             Which of the three is a badge is `BucketCount`'s, so this strip and the
-            ledger's cannot come to disagree about which one an editor's eye is sent to. */}
-        {BUCKETS.map((bucket) => (
-          <BucketCount
-            key={bucket}
-            bucket={bucket}
-            value={log.derived.buckets[bucket]}
-            title={BUCKET_MEANING[bucket]}
-          />
-        ))}
+            ledger's cannot come to disagree about which one an editor's eye is sent to.
 
-        {/* *pages equal* stood here until ticket 79. It counted the pages with no open
+            The three are drawn in **two rows** since ticket 04 and they are still one
+            partition: `LEADING` and `RECEDING` are complements over `BUCKETS`, so every
+            bucket is drawn exactly once and a fourth one cannot fall off the screen by
+            being in neither list. */}
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+          {LEADING.map((bucket) => (
+            <BucketCount
+              key={bucket}
+              bucket={bucket}
+              value={log.derived.buckets[bucket]}
+              title={BUCKET_MEANING[bucket]}
+              className="text-base"
+            />
+          ))}
+        </div>
+
+        {/* What is true and not what is next. Closed counts work an editor has already
+            decided and *pages reviewed* counts pages they have already read, so neither is
+            a queue — and normal operation recedes (ADR 0019).
+
+            *pages equal* stood here until ticket 79. It counted the pages with no open
             finding — a thing nobody works on, and the one number on this strip that
             could only ever go up while the work went nowhere. The equal **rows** stay,
             behind the content view's context markers, because they answer *where does
             this text belong*; a tally of the pages holding them answers nothing. */}
-        <Count
-          value={log.derived.reviewedFresh}
-          label="pages reviewed"
-          title="A human looked at everything on this page, also at what the tool cannot see."
-        />
-        <Count value={totals.diagnostic} label="diagnostics" />
-        <Count value={oneSided.length} label="one-sided" title="Only one site has this page." />
-        <Count
-          value={notChecked.length}
-          label="not checked"
-          title="Found and visible, but there is nothing to compare. The bottom of this page says why, for each one."
-        />
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 text-xs">
+          {RECEDING.map((bucket) => (
+            <BucketCount
+              key={bucket}
+              bucket={bucket}
+              value={log.derived.buckets[bucket]}
+              title={BUCKET_MEANING[bucket]}
+              className="text-xs"
+            />
+          ))}
+          <Count
+            value={log.derived.reviewedFresh}
+            label="pages reviewed"
+            title="A human looked at everything on this page, also at what the tool cannot see."
+            className="text-xs"
+          />
+        </div>
       </section>
 
       {/* A section and no longer a `Card` (ADR 0019). A card says *this is a thing*, and a
@@ -631,91 +688,128 @@ export default function Dashboard({
               />
             )}
 
-          {!searching && view === 'pages' && (
-            <Table>
-              <TableHeader>
-                {/* The capitals are addressed to the `th` and not to the row, which is the
+          {!searching &&
+            view === 'pages' && (
+              // The `@container` the four count columns drop out by. It is here and not on the
+              // table because a table is not a layout box a query can trust: the wrapper's
+              // width is the room the table has, which is the question being asked.
+              <div className="@container">
+                <Table>
+                  <TableHeader>
+                    {/* The capitals are addressed to the `th` and not to the row, which is the
                     one spelling ADR 0019 sanctions: a row that shouts shouts whatever a
                     later edit puts in it, and a `th` selector cannot come to mean anything
                     but a heading cell. */}
-                <TableRow className="[&_th]:text-xs [&_th]:tracking-wide [&_th]:uppercase">
-                  {/* The header word is drawn for a screen reader and not for an eye, the
+                    <TableRow className="[&_th]:text-xs [&_th]:tracking-wide [&_th]:uppercase">
+                      {/* The header word is drawn for a screen reader and not for an eye, the
                     way `Repeats.jsx` draws its own: a header cell holding nothing but a
                     checkbox announces nothing. */}
-                  <TableHead className="w-8 px-4">
-                    <SelectAllPages rows={rows} selected={selected} onTickAll={tickAll} />
-                    <span className="sr-only">Select</span>
-                  </TableHead>
-                  <TableHead className="px-4 text-muted-foreground">Page</TableHead>
-                  {/* The three buckets name themselves in the head, so the three numbers
+                      <TableHead className="w-8 px-4">
+                        <SelectAllPages rows={rows} selected={selected} onTickAll={tickAll} />
+                        <span className="sr-only">Select</span>
+                      </TableHead>
+                      <TableHead className="px-4 text-muted-foreground">Page</TableHead>
+                      {/* The three buckets name themselves in the head, so the three numbers
                       under it need no legend of their own. Joined from the same list the
                       cells below are drawn from, so the head cannot come to name two of
-                      them, or name them in another order than they are drawn in. */}
-                  <TableHead className="w-56 px-4 text-muted-foreground">
-                    {BUCKETS.map((bucket) => BUCKET_LABEL[bucket]).join(' · ')}
-                  </TableHead>
-                  {CHECKS.map((check) => (
-                    <TableHead key={check} className="w-24 text-muted-foreground">
-                      {CHECK_LABEL[check]}
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-24 px-4 text-muted-foreground">Hidden</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((page) => (
-                  <TableRow
-                    key={`${page.store}/${page.page}`}
-                    data-state={selected.has(keyOf(page)) ? 'selected' : undefined}
-                  >
-                    <TableCell className="px-4">
-                      <Checkbox
-                        checked={selected.has(keyOf(page))}
-                        onCheckedChange={(ticked) => tick(keyOf(page), ticked)}
-                        aria-label={`Select ${page.page}`}
-                      />
-                    </TableCell>
-                    <TableCell className="px-4">
-                      <a
-                        className={cn('font-medium hover:underline', CHROME.link)}
-                        href={link(page.store, page.page)}
+                      them, or name them in another order than they are drawn in.
+
+                      **Second column since ticket 04.** It is the one column that says how
+                      much work a page holds, and it stood sixth — so an editor reading
+                      worst-first read four per-check counts to reach the number the sort was
+                      made on. */}
+                      <TableHead className="w-56 px-4 text-muted-foreground">
+                        {BUCKETS.map((bucket) => BUCKET_LABEL[bucket]).join(' · ')}
+                      </TableHead>
+                      <TableHead className="w-20 px-4 text-muted-foreground">Blocks</TableHead>
+                      {CHECKS.map((check) => (
+                        <TableHead
+                          key={check}
+                          className={cn(WIDE_ONLY, 'w-24 text-muted-foreground')}
+                        >
+                          {CHECK_LABEL[check]}
+                        </TableHead>
+                      ))}
+                      {/* *Hidden* until ticket 04. The control that reveals these is *Show
+                      diagnostics* and the visibility they carry is `diagnostic`, so a third
+                      word for one thing was the collision `CONTEXT.md` closed elsewhere. */}
+                      <TableHead className={cn(WIDE_ONLY, 'w-24 px-4 text-muted-foreground')}>
+                        Diagnostics
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((page) => (
+                      <TableRow
+                        key={`${page.store}/${page.page}`}
+                        data-state={selected.has(keyOf(page)) ? 'selected' : undefined}
                       >
-                        {page.page}
-                      </a>
-                      {/* The row hands its key to the search (ticket 104 part E), which is
+                        <TableCell className="px-4">
+                          <Checkbox
+                            checked={selected.has(keyOf(page))}
+                            onCheckedChange={(ticked) => tick(keyOf(page), ticked)}
+                            aria-label={`Select ${page.page}`}
+                          />
+                        </TableCell>
+                        {/* The page key is **the** thing in this row (ticket 04), so it is the
+                        only content in here at full weight. The cell carried five things and
+                        the key was one of five; a reader scanning for a page had nothing to
+                        scan. What is left beside it is its own scope control and its two
+                        annotations, both of which are about this page and neither of which is
+                        a number. */}
+                        <TableCell className="px-4">
+                          <a
+                            className={cn('text-base font-semibold hover:underline', CHROME.link)}
+                            href={link(page.store, page.page)}
+                          >
+                            {page.page}
+                          </a>
+                          {/* The row hands its key to the search (ticket 104 part E), which is
                           what keeps the classes on and the view where it was. */}
-                      <ScopeRowButton
-                        page={page.page}
-                        onScope={() => scopeTo(page.page)}
-                        className="ml-2"
-                      />
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        <span className="tabular-nums">{page.sides.production.units}</span> blocks
-                      </span>
-                      {/* The two annotations, beside the page they are about. The note is
-                        quoted and never labelled as a reason — a dismissal's note is the
-                        other thing in this log that lives in the `note` column, and the
-                        two must not read as one. */}
-                      <PriorityPill priority={priorityOf(page)} className="ml-2" />
-                      <PageNote note={annotationsOf(page)?.note} className="ml-2 text-xs" />
-                    </TableCell>
-                    <TableCell className="px-4">
-                      <Bar shown={openOf(page)} units={page.sides.production.units} />
-                      <PageBuckets buckets={bucketsOfPage(page)} />
-                    </TableCell>
-                    {CHECKS.map((check) => (
-                      <TableCell key={check} className="text-muted-foreground tabular-nums">
-                        {page.summary.byCheck[check] ?? '—'}
-                      </TableCell>
+                          <ScopeRowButton
+                            page={page.page}
+                            onScope={() => scopeTo(page.page)}
+                            className="ml-2"
+                          />
+                          {/* The two annotations, beside the page they are about. The note is a
+                        **mark** here and never the note itself: it has no length limit and
+                        this cell has no width to spare, so one long note used to stretch the
+                        row past the width of the screen and take every count with it. It is
+                        in full on the page it is about, which is also where it is edited. */}
+                          <PriorityPill priority={priorityOf(page)} className="ml-2" />
+                          <PageNoteMark
+                            note={annotationsOf(page)?.note}
+                            page={page.page}
+                            href={link(page.store, page.page)}
+                            className="ml-2"
+                          />
+                        </TableCell>
+                        <TableCell className="px-4">
+                          <Bar shown={openOf(page)} units={page.sides.production.units} />
+                          <PageBuckets buckets={bucketsOfPage(page)} />
+                        </TableCell>
+                        <TableCell className="px-4 text-muted-foreground tabular-nums">
+                          {page.sides.production.units}
+                        </TableCell>
+                        {CHECKS.map((check) => (
+                          <TableCell
+                            key={check}
+                            className={cn(WIDE_ONLY, 'text-muted-foreground tabular-nums')}
+                          >
+                            {page.summary.byCheck[check] ?? '—'}
+                          </TableCell>
+                        ))}
+                        <TableCell
+                          className={cn(WIDE_ONLY, 'px-4 text-muted-foreground tabular-nums')}
+                        >
+                          {page.summary.diagnostic}
+                        </TableCell>
+                      </TableRow>
                     ))}
-                    <TableCell className="px-4 text-muted-foreground tabular-nums">
-                      {page.summary.diagnostic}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           {!searching && view === 'pages' && rows.length === 0 && (
             <p className="px-4 py-6 text-sm text-muted-foreground">No page found.</p>
           )}
@@ -758,7 +852,13 @@ export default function Dashboard({
         ))}
       </Aside>
 
-      <Aside title={`Not checked (${notChecked.length})`} note="Pages found but not compared.">
+      {/* The note carries what the header chip's tooltip carried, because the chip is gone and
+          a fact is never silently absent. Its last clause is dropped and only that: it pointed
+          the reader at the bottom of the page, which is where they now are. */}
+      <Aside
+        title={`Not checked (${notChecked.length})`}
+        note="Found and visible, but there is nothing to compare. Each one says why."
+      >
         {groupNotChecked(notChecked).map((group) => (
           <li key={group.key} className="border-t py-2 first:border-0">
             <strong className="font-medium">
@@ -774,6 +874,8 @@ export default function Dashboard({
           <li className="py-1 text-muted-foreground">Each page found in this store is checked.</li>
         )}
       </Aside>
+
+      <DiagnosticsAside count={totals.diagnostic} pages={comparable} link={link} />
 
       <Aside title={`Excluded regions (${regions.length})`} note="Page areas outside editor work.">
         {regions.map((region) => (
@@ -1027,20 +1129,106 @@ const REGION_KIND = {
   'legacy-only': 'Production only',
 };
 
-function Aside({ id, title, note, children }) {
+/**
+ * What a rule saw and did not count as work, with its count at the head of it.
+ *
+ * The number stood in the store strip until ticket 04, beside the three buckets that are an
+ * editor's queue — and it is the one number up there that **nobody can act on**. A
+ * `diagnostic` class is what a rule saw; it is not a defect, so it is never work. So it comes
+ * down here, to the pages it is about, and the pages are behind a click because *how many* is
+ * the whole of what most readers want from it.
+ *
+ * It is also the count's only home that survives a narrow screen: the per-page column drops
+ * out by container width, and a fact must never be silently absent.
+ *
+ * *Diagnostics* means what a rule saw, and never the health of the build, the crawl or the
+ * log. `CONTEXT.md` closed that collision when it renamed the control that reveals them.
+ */
+function DiagnosticsAside({ count, pages, link }) {
+  const carrying = pages.filter((page) => page.summary.diagnostic > 0);
+
+  return (
+    <Aside
+      disclosure
+      title={
+        <>
+          Diagnostics (<span className="tabular-nums">{count}</span>)
+        </>
+      }
+      note="What a rule saw and did not count as work. Nothing here is a defect."
+    >
+      {carrying.map((page) => (
+        <li key={`${page.store}/${page.page}`} className="flex items-center gap-2 py-1">
+          <a className={`hover:underline ${CHROME.link}`} href={link(page.store, page.page)}>
+            {page.page}
+          </a>
+          <span className="text-muted-foreground tabular-nums">{page.summary.diagnostic}</span>
+        </li>
+      ))}
+      {carrying.length === 0 && (
+        <li className="py-1 text-muted-foreground">
+          No rule saw anything of this kind in this store.
+        </li>
+      )}
+    </Aside>
+  );
+}
+
+/**
+ * One panel at the foot of the dashboard: a heading that counts what it holds, a sentence
+ * saying what it is, and the list.
+ *
+ * A `Card` is earned here on ADR 0019's own test — each of these could be moved to another
+ * screen and still mean the same thing, which is not true of the toolbar or the count strip
+ * above.
+ *
+ * `disclosure` closes the list behind its own heading. It is a prop rather than a second
+ * component because the only difference is whether the list is on screen: ticket 04 added a
+ * fourth panel and a near-copy of this one went with it, which is two places for a heading to
+ * stop being an `h2` in.
+ */
+function Aside({ id, title, note, disclosure = false, children }) {
+  const [open, setOpen] = useState(false);
+
+  const body = <ul className="text-sm">{children}</ul>;
+
   return (
     <Card id={id}>
-      <CardHeader className="gap-2">
-        {/* `CardTitle` renders a div, and the heading is what puts these three panels
-            in the page's outline, so the h2 stays inside it. */}
-        <CardTitle>
-          <h2 className="font-semibold">{title}</h2>
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">{note}</p>
-      </CardHeader>
-      <CardContent>
-        <ul className="text-sm">{children}</ul>
-      </CardContent>
+      <Collapsible open={!disclosure || open} onOpenChange={setOpen}>
+        <CardHeader className="gap-2">
+          {/* `CardTitle` renders a div, and the heading is what puts these panels in the
+              page's outline, so the h2 stays inside it. */}
+          <CardTitle>
+            <h2 className="font-semibold">
+              {disclosure ? (
+                /* The chevron **trails** the words. Every other disclosure in this interface
+                   leads with one, and those are rows in a list where the glyph is the column an
+                   eye runs down; this is a heading, and a heading that starts with punctuation
+                   is a heading you read second. */
+                <CollapsibleTrigger className="flex items-center gap-2">
+                  <span>{title}</span>
+                  <span aria-hidden className="text-muted-foreground">
+                    {open ? '▾' : '▸'}
+                  </span>
+                </CollapsibleTrigger>
+              ) : (
+                title
+              )}
+            </h2>
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">{note}</p>
+        </CardHeader>
+        {/* A panel that is always open renders its list directly. Wrapping it in the
+            `CollapsibleContent` as well would put every one of these behind a panel element
+            that has no trigger to open it. */}
+        {disclosure ? (
+          <CollapsibleContent>
+            <CardContent>{body}</CardContent>
+          </CollapsibleContent>
+        ) : (
+          <CardContent>{body}</CardContent>
+        )}
+      </Collapsible>
     </Card>
   );
 }

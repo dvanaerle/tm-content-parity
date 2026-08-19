@@ -23,6 +23,25 @@
  */
 export { BUCKETS } from '../../../overrides/state.mjs';
 
+/**
+ * Whether a bucket holds findings that still want a decision.
+ *
+ * `CONTEXT.md` defines **Open** as *waits for a decision*, and a contradicted claim reads as
+ * open for the same reason the bar counts it there — a claim that did not survive has closed
+ * nothing. So two of the three are a queue and the third is a record of work already done.
+ *
+ * It is a **predicate and not two lists**, because a predicate is total over the buckets: a
+ * surface that splits them by this draws every bucket exactly once, which is the property the
+ * three have and must keep. A fourth bucket therefore arrives in one group or the other and
+ * never in neither.
+ *
+ * It lives here rather than on the screen that draws it. Which of these is a queue is a fact
+ * about the buckets, and the dashboard consumes it to decide what leads its header (ticket 04).
+ *
+ * @param {import('../../../overrides/state.mjs').Bucket} bucket
+ */
+export const awaitsDecision = (bucket) => bucket !== 'closed';
+
 /** @type {Record<import('../../../overrides/state.mjs').Bucket, string>} */
 export const BUCKET_LABEL = {
   open: 'Open',
@@ -63,17 +82,20 @@ export const BUCKET_MEANING = {
  * keeps that map small on purpose. Ticket 131 renamed the tones and split one of them, and
  * it added no meaning this strip could have used.
  *
- * **The Closed bucket does not wear the `closed` tone, and that is deliberate.** Ticket 32
- * spent the green here on preference, recorded above; ticket 131 then gave the palette a
- * tone named for this very bucket, and moving Closed onto it would be a pixel change —
- * green to blue — which that ticket explicitly does not make. The two agree about the
- * meaning and differ about the hue, and a later ticket that wants the blue back has the
- * one-word change ready.
+ * **The Closed bucket wears `closed`, and the green it used to wear was a defect.** Ticket
+ * 32 spent the green here on preference; ticket 131 then gave the palette a tone named for
+ * this very bucket and declined to move the pixel, leaving the one-word change ready. This
+ * is where it is spent, because `app.css` had already written the rule down twice: *`lost`
+ * and `added` are the only red and the only green in the interface, and no status uses them*
+ * — and blue and not green is what marks a finding in this bucket, because green is `added`
+ * and a reader who saw both would have one hue carrying two meanings. Work an editor closed
+ * is normal operation, and ADR 0019 keeps prominent success styling off it (the polish pass,
+ * ticket 04).
  *
  * @type {Record<import('../../../overrides/state.mjs').Bucket, import('./palette.mjs').Tone>}
  */
 export const BUCKET_TONE = {
   open: 'neutral',
   'needs-attention': 'caution',
-  closed: 'added',
+  closed: 'closed',
 };
