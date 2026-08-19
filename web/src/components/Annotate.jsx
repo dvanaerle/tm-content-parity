@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PriorityPill } from './Chips.jsx';
 import PressReport from './PressReport.jsx';
+import { OfPages, Selected } from './Selected.jsx';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { noteEventFor, priorityEventFor } from '../../../overrides/state.mjs';
@@ -194,14 +195,17 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
       )}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-        <p className="flex items-center gap-2 text-muted-foreground">
-          <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground tabular-nums">
-            {count}
-          </span>{' '}
+        {/* The same shape ticket 31's bar states its selection in, and off the same
+            component (ADR 0019). It read *2 pages selected*, which names an object and no
+            scope: the bar floats over a page list that can be four thousand rows long and
+            can be filtered down to eleven, and two of eleven is a different press from two
+            of four thousand. The denominator is the list the ticks were made in, which is
+            what `pages` is. */}
+        <Selected count={count}>
           <span>
-            <strong className="font-medium text-foreground">{noun}</strong> selected
+            <OfPages pages={pages.length} /> selected in this list.
           </span>
-        </p>
+        </Selected>
 
         {bulk.canWrite ? (
           <>

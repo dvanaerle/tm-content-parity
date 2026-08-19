@@ -175,11 +175,11 @@ describe('the content view opens on the differences', () => {
       (row) => !row.id.startsWith('run-'),
     );
     // The label and never the key: an editor reads what the class is, not what the
-    // contract stores it as.
-    expect(rows.map((row) => row.querySelector('td span')?.textContent)).toEqual([
-      'Copy changed',
-      'Text missing',
-    ]);
+    // contract stores it as. Read off the named cell and not off the first one in the row:
+    // the compared content leads now (ADR 0019), so the first cell holds a paragraph.
+    expect(
+      rows.map((row) => row.querySelector('[data-slot="status"] span')?.textContent),
+    ).toEqual(['Copy changed', 'Text missing']);
 
     // Two rows of two different classes, dressed the same. Nothing at row level reads
     // the class, so there is no tint to say nothing — and the assertion is written as
@@ -205,7 +205,131 @@ describe('the content view opens on the differences', () => {
     // The row is drawn, and its status cell says nothing rather than saying the wrong
     // thing: there is no class to put in a pill and the two sides do not agree.
     expect(rowIds(host)).toEqual(['p0']);
-    expect(host.querySelector('tbody tr[id="p0"] td').textContent.trim()).toBe('');
+    expect(
+      host.querySelector('tbody tr[id="p0"] [data-slot="status"]').textContent.trim(),
+    ).toBe('');
+  });
+
+  /**
+   * The compared content leads the row (ADR 0019).
+   *
+   * The status column sat first and held a pill, a score, a date and a control — four facts
+   * about the block, in front of the block. Nothing left the row; the order says which of it
+   * an editor came for.
+   */
+  it('leads each row with the two compared texts and puts the status after them', () => {
+    const host = mount();
+
+    const cells = [...host.querySelectorAll('tbody tr[id="p0"] > *')];
+    expect(cells[0].textContent).toContain('Verkrijgbaar in drie kleuren');
+    expect(cells[1].textContent).toContain('Beschikbare kleuren');
+    expect(cells[2].getAttribute('data-slot')).toBe('status');
+
+    // The heads say the same thing, in the same order, and both sides are still named.
+    expect([...host.querySelectorAll('thead th')].map((head) => head.textContent)).toEqual([
+      'Production',
+      'New site',
+      'Status',
+    ]);
+  });
+
+  /**
+   * The block count, at the head of the list of blocks (ADR 0019).
+   *
+   * It was two of five facts in the page header, beside a status code and a boundary, and a
+   * header reciting this tab's business competes with the page key for the one glance an
+   * editor has. It is a relocation and not a removal.
+   */
+  it('says how many blocks each side holds, above the blocks', () => {
+    const host = mount();
+
+    // Six against five: production holds the block the new site lost.
+    expect(host.textContent).toContain('Production 6 blocks');
+    expect(host.textContent).toContain('New site 5 blocks');
+  });
+
+  describe('a table with nothing in it says why', () => {
+    /** A page nothing was extracted from, which is not the same as a page that agrees. */
+    it('names an extraction that found nothing', () => {
+      const empty = report();
+      empty.rows = [];
+      empty.sides.production.elements = [];
+      empty.sides.new.elements = [];
+
+      const host = mount({ report: empty, findings: [] });
+
+      expect(host.textContent).toContain('Nothing was extracted from either side');
+      expect(host.textContent).toContain('Production 0 blocks');
+    });
+
+    /**
+     * The filter, which **can** empty this list even though every class it offers has a row.
+     *
+     * The pills are counted under the diagnostics control and the pick is held in this
+     * component; choose a diagnostic class and then switch the control off, and the rows go
+     * while the filter stays set. Naming the control there would say *every block on this page
+     * is a diagnostic* about a page holding five that are not.
+     */
+    it('names the filter where the filter is what emptied it', async () => {
+      const { host, render } = mounting({
+        report: (() => {
+          const one = report();
+          one.rows = [
+            { class: 'copy', prod: 0, new: 0, score: 0.7, finding: 'noise1' },
+            ...one.rows.slice(1),
+          ];
+          return one;
+        })(),
+        findings: [
+          {
+            id: 'noise1',
+            class: 'copy',
+            check: 'text',
+            visibility: 'diagnostic',
+            state: 'open',
+            occurrences: 1,
+          },
+        ],
+        showDiagnostics: true,
+      });
+
+      // Pick the one class on screen, which is the diagnostic one.
+      const pill = [...host.querySelectorAll('button')].find((one) =>
+        one.textContent.includes('Copy changed'),
+      );
+      await press(pill);
+
+      // Now switch the control off, from outside: it is the ledger's and it is a prop.
+      await render({ showDiagnostics: false });
+
+      // The list really is empty, or the sentence below would be asserted about nothing.
+      expect(rowIds(host)).toEqual([]);
+      expect(host.textContent).toContain('in the classes you filtered on');
+      expect(host.textContent).not.toContain('is a diagnostic');
+    });
+
+    /** A page whose every block the reader asked not to see, which is one press from undone. */
+    it('names the diagnostics control where that is what emptied it', () => {
+      const hidden = report();
+      hidden.rows = [{ class: 'copy', prod: 0, new: 0, score: 0.7, finding: 'noise1' }];
+
+      const host = mount({
+        report: hidden,
+        findings: [
+          {
+            id: 'noise1',
+            class: 'copy',
+            check: 'text',
+            visibility: 'diagnostic',
+            state: 'open',
+            occurrences: 1,
+          },
+        ],
+      });
+
+      expect(host.textContent).toContain('Every block on this page is a diagnostic');
+      expect(host.textContent).toContain('read the 1');
+    });
   });
 
   it('expands a marker on a press, and collapses it again', async () => {

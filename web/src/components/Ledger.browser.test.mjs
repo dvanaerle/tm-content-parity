@@ -50,9 +50,12 @@ const report = {
   comparable: true,
   skipReason: null,
   rows: [],
+  // `elements` is the side's own block list, which the content view counts at the head of
+  // the table it draws them in (ADR 0019). Empty here: these tests are about the finding
+  // tables, and the Text tab's rows are built from `rows` above.
   sides: {
-    production: { url: 'https://www.tuinmaximaal.nl/overkappingen', units: 4 },
-    new: { url: 'https://new.tuinmaximaal.nl/overkappingen', units: 4 },
+    production: { url: 'https://www.tuinmaximaal.nl/overkappingen', units: 4, elements: [] },
+    new: { url: 'https://new.tuinmaximaal.nl/overkappingen', units: 4, elements: [] },
   },
 };
 
@@ -295,6 +298,85 @@ describe('the sibling tab on the ledger', () => {
  * in the index gets no date is settled purely in `lib/run-log.test.mjs`; that the row it
  * lands on draws the words rather than an empty mark is only answerable here.
  */
+describe('a finding row leads with the compared content', () => {
+  /**
+   * The two texts first, the class after them (ADR 0019).
+   *
+   * The class column sat first, 224 pixels of pill, detail, date and control, in front of
+   * the pair of strings the row exists to be decided about. Nothing left the row: the order
+   * says which of it is the subject and which of it is about the subject.
+   */
+  it('draws the two sides before the class, and heads them in that order', async () => {
+    const unmount = mount();
+    await userEvent.click(button('Links'));
+
+    const cells = [...document.querySelectorAll('tbody tr[id="finding-a"] > *')];
+    expect(cells[0].textContent).toContain('/overkappingen/');
+    expect(cells[1].textContent).toContain('/overkapping/');
+    expect(cells[2].getAttribute('data-slot')).toBe('class');
+
+    expect([...document.querySelectorAll('thead th')].map((head) => head.textContent)).toEqual([
+      'Production',
+      'New site',
+      'Class',
+    ]);
+    unmount();
+  });
+
+  /**
+   * The row's own presses are quieter than the form's, and **not** hidden (ADR 0019).
+   *
+   * A page carries up to 168 of these. An outlined button on each drew a column of boxes down
+   * the one surface whose content is supposed to be the loudest thing on it — and moving them
+   * behind hover would have made a press an editor cannot find until the pointer is on it,
+   * which is not the same as available.
+   */
+  it('keeps the row press reachable and pressable with no hover first', async () => {
+    const unmount = mount();
+    await userEvent.click(button('Links'));
+
+    // Present, named and in the tab order before any pointer has been near it. **How quiet
+    // it looks is not asserted**: ADR 0019 leaves the devices that need taste to a reader,
+    // and a test reading utility classes off a button would go red on a rename that changed
+    // nothing an editor can see.
+    const dismiss = button('Dismiss…');
+    expect(dismiss).toBeDefined();
+    expect(dismiss.disabled).toBe(false);
+
+    // Pressed cold, it opens the form it is the way into.
+    await userEvent.click(dismiss);
+    expect(document.querySelector('[data-slot="input"]')).not.toBeNull();
+    unmount();
+  });
+});
+
+describe('an empty tab says why it is empty', () => {
+  /** Nothing found is the answer an editor is working towards, and it says so. */
+  it('names an absence when the page has no finding of that check', async () => {
+    const unmount = mount({ findings: [] });
+    await userEvent.click(button('Links'));
+
+    expect(document.body.textContent).toContain('Nothing was found for Links on this page');
+    unmount();
+  });
+
+  /**
+   * The other reason a tab is empty, and it is the opposite answer: the findings are there
+   * and the reader has switched them off. *No findings for Links* said the first about both,
+   * which is wrong exactly where a rule author is looking for what their rule saw.
+   */
+  it('names the diagnostics control where that is what emptied it', async () => {
+    const unmount = mount({
+      findings: [finding('a', 'open', { visibility: 'diagnostic' })],
+    });
+    await userEvent.click(button('Links'));
+
+    expect(document.body.textContent).toContain('Every Links finding on this page is a diagnostic');
+    expect(document.body.textContent).toContain('read the 1');
+    unmount();
+  });
+});
+
 describe('a finding says when it was first seen', () => {
   const rowOf = (id) => document.querySelector(`tr[id="finding-${id}"]`);
 

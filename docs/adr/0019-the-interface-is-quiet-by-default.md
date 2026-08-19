@@ -95,6 +95,42 @@ selector.
 - An **icon-only control** has an accessible name and a comfortable hit area. The glyph stays
   small; the target does not.
 
+## What earns the front of a row
+
+The **compared content leads**, and everything the tool made of it follows. A finding row and
+a content row each carried a 224-pixel first column holding a class pill, a detail, a score, a
+date, a history note and a decision control — six facts *about* a block, in front of the block.
+Every one of them stays; the order says which of them the reader came for.
+
+The one exception is a **row header**: a cell that names what the cells beside it hold heads
+them or it heads nothing, so the `<head>` panel keeps its field name first. That is structure
+and not emphasis, in the same way a `th` keeps its capitals.
+
+Built in ticket 05. The metadata cell publishes a `data-slot` naming the column it belongs to,
+for the reason every other stable name here exists: an assertion that read *the first cell of
+the row* would otherwise be reading the class off a paragraph of Dutch.
+
+## What a floating bar says
+
+A floating bar names its **object** and its **scope**, and **never its content**.
+
+The bulk bar drew the two compared texts in full, pinned over the very rows that were drawing
+them, so an editor read the same pair twice and the count they were about to press on was the
+smaller half of it. Its object is the pages and its scope is how many of the list they are, and
+which difference they are in is said by the **class**. Its sibling, the annotate bar, said *2
+pages selected* — an object with no scope at all — and gains the same shape off the same
+component, count bubble included.
+
+A **press that wrote everything says so**, once, in the place the same bar already reports a
+shortfall. No toast: the pass refuses the primitive, and for a single row the state flipping is
+the feedback. Silence is only ambiguous where a press covered pages the editor cannot all see,
+which means the bar has to outlive the selection the press spent.
+
+An **empty state says the reason it is empty**, not that it is. *No rows in this filter* names a
+cause that in this interface cannot even happen, while the two that can — nothing was
+extracted, and every block is a diagnostic the reader switched off — are opposite answers, and
+one of them is a press away from being undone.
+
 ## Numbers
 
 Every **repeated count is tabular**, so a column of them aligns. This is largely already
@@ -160,6 +196,13 @@ every icon-only control. The rules that need taste are enforced by a reader.
   being a `Badge` rather than joining the list. The four are values an editor scans a list
   for. The scope chip is a **control** — it holds a clear button, it is always the same one
   word, and it is on screen only while the reader themselves put it there.
+
+  A second, from ticket 05, and it is the same argument: the **count bubble** on the two
+  floating bars. It is round, it is filled with brand colour and it is badge-shaped, and it is
+  not a value from a closed vocabulary — it is a count of the reader's own ticks, on a bar that
+  exists only while they are ticked. It carries no `data-badge`, so the guard is satisfied by
+  construction, and it lives in one component (`Selected.jsx`) that both bars draw, because it
+  was written out verbatim in each of them.
 - **`CONTEXT.md` does not gain these rules.** It is a glossary and nothing else. The language
   rules the audit raised did go there — the two sides are one pair of words in sentence case,
   a class has a label, a *Clear* says what disappears — because those are vocabulary. Cards,
@@ -168,6 +211,12 @@ every icon-only control. The rules that need taste are enforced by a reader.
   state is reaching past this decision. `palette.test.mjs` asserts `warning` and `caution`
   render different pixels; it cannot assert that a normal state does not wear one, and that
   gap is knowingly left to a reader.
+- **A row's own secondary presses are quieter than the same words in a form.** A page carries
+  up to 168 of them, and an outlined button on each drew a column of boxes down the one surface
+  whose content is meant to be the loudest thing on it. They are ghosts in the interface's grey
+  and they are **not** behind hover: the interaction rule above already refuses revealing
+  something a reader needs, and a press nobody can find until the pointer is on it is not
+  available. The outline is left to the form, where there is one action and it is the point.
 - **The class pill survives and gains a label**, which makes the label a domain fact rather
   than a presentation one. It lives beside `meaning` in `compare/vocabulary.mjs`, and a class
   without one fails the test — so the thirty-second class cannot arrive unnamed.

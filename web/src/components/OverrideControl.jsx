@@ -7,6 +7,7 @@ import { Attribution } from './Attribution.jsx';
 import { Button } from './ui/button.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Input } from './ui/input.jsx';
+import { cn } from '../lib/utils.js';
 
 /**
  * The one action control. Spec 29: one control, one place in the code, three call
@@ -183,9 +184,9 @@ export default function OverrideControl({
       )}
 
       {reserved && (state === 'open' || contradicted) && (
-        <Action disabled={!canWrite} onClick={() => setAsking('dismiss')}>
+        <Quiet disabled={!canWrite} onClick={() => setAsking('dismiss')}>
           Dismiss…
-        </Action>
+        </Quiet>
       )}
 
       {/* `fixed` is not here: its own checkbox unticks it. A second control for the
@@ -196,9 +197,9 @@ export default function OverrideControl({
           same press to a whole difference; two copies of that rule would be two places
           for the next change to a key to land, and it would land in one of them. */}
       {reserved && state === 'dismissed' && (
-        <Action disabled={!canWrite} onClick={() => append(clearedEventFor(finding))}>
+        <Quiet disabled={!canWrite} onClick={() => append(clearedEventFor(finding))}>
           Clear the decision
-        </Action>
+        </Quiet>
       )}
     </div>
   );
@@ -274,6 +275,27 @@ const Repeat = ({ finding }) => {
 
 const Action = ({ children, ...props }) => (
   <Button variant="outline" size="xs" {...props}>
+    {children}
+  </Button>
+);
+
+/**
+ * A secondary action **on a row**, which is a different weight from the same word inside a
+ * form (ADR 0019).
+ *
+ * A page carries up to 168 of these, and an outlined button on each drew a column of boxes
+ * down the one surface whose content is supposed to be the loudest thing on it. So the row's
+ * two presses are ghosts in the interface's grey, and the outline is left to the form, where
+ * *Dismiss* is the action the panel exists for and there is one of it.
+ *
+ * **Quieter and never hidden.** Nothing here moves behind hover: the ADR permits hover to
+ * change a background and emphasise an action, and refuses it revealing anything a reader
+ * needs. A press an editor cannot find until the pointer is already on it is not available.
+ * It keeps the same box either way, which is also what holds the row's height while the
+ * override log reads (ticket 03).
+ */
+const Quiet = ({ children, className, ...props }) => (
+  <Button variant="ghost" size="xs" className={cn('text-muted-foreground', className)} {...props}>
     {children}
   </Button>
 );

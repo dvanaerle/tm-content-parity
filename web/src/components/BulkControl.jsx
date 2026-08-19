@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState } from 'react';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
-import { Comparison } from './Diff.jsx';
+import { Label } from './ui/label.jsx';
 import PressReport from './PressReport.jsx';
+import { OfPages, Selected } from './Selected.jsx';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
 import { crossesBlock } from '../lib/view.mjs';
 import { classInfo } from '../lib/classes.mjs';
@@ -67,6 +68,13 @@ import { cn } from '../lib/utils.js';
  *   selection was made.
  * @param {(ids: string[]) => void} props.onWritten  The findings a press got written, handed
  *   back so their ticks come off (ticket 139). What is left ticked is what is left to write.
+ * @param {null | import('../../../overrides/bulk.mjs').PressReport} props.report  The last
+ *   press's report. It is the caller's state and not this bar's, because a press that writes
+ *   everything unticks the whole selection and would otherwise unmount the bar holding its
+ *   own answer — `FlatSelection` says why.
+ * @param {(report: null | import('../../../overrides/bulk.mjs').PressReport) => void} props.onReport
+ *   Neither is optional. A default would let a caller mount this bar with no way to hold a
+ *   report, and the state that draws one would then be silently unreachable.
  */
 export default function BulkControl({
   entries,
@@ -75,6 +83,8 @@ export default function BulkControl({
   bulk,
   onClear,
   onWritten,
+  report,
+  onReport,
   holding,
   builtAt = null,
 }) {
@@ -86,10 +96,6 @@ export default function BulkControl({
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
   const [restated, setRestated] = useState('');
-  /** The last press's report. Held so a partial failure stays on screen to be read. */
-  const [report, setReport] = useState(
-    /** @type {null | import('../../../overrides/bulk.mjs').PressReport} */ (null),
-  );
   /**
    * How far the press in flight has got, and `null` when none is. It is the press's own
    * reading of itself: `appendEach()` is the only thing that knows, and a run of 329 pages
@@ -137,7 +143,7 @@ export default function BulkControl({
     });
     stopper.current = null;
     setRunning(null);
-    setReport(result);
+    onReport(result);
 
     // The clearing's gate is spent by the press it gated, whatever became of it. A run that
     // stopped leaves a **smaller** remainder, so the count on screen is no longer the count
@@ -154,25 +160,28 @@ export default function BulkControl({
     if (result.written === result.total && !result.error) close();
   };
 
-  return (
-    /* It **floats**, fixed to the bottom of the viewport and centred (round three).
-       Round two made it a strip under the difference, which is where a selection's
-       toolbar goes wrong twice: it pushed the rest of the queue down the instant a tick
-       was made, and it scrolled away with the difference it belonged to — so an editor
-       reading page forty of a repeat had the presses off screen while the pages they act
-       on were in front of them. Fixed, it is where the selection is, for as long as the
-       selection is.
+  /*
+   * A press that wrote everything, still on screen to say so (ticket 139, ADR 0019).
+   *
+   * Nothing is ticked any more — the press took the ticks of what it wrote — so there is no
+   * selection to name and no press to offer, and every sentence below would be about a
+   * selection of nothing. What is left is the one thing the editor needs: the report, and the
+   * way to put it down.
+   */
+  if (entries.length === 0)
+    return (
+      <Floating>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div role="status" aria-live="polite" data-slot="bulk-progress">
+            {report && <PressReport {...report} />}
+          </div>
+          <Dismiss onClear={onClear} />
+        </div>
+      </Floating>
+    );
 
-       `w-fit` with a max: the bar is as wide as its own words, up to the width of the
-       page, so a two-page selection does not draw a strip across an empty screen. It
-       stops at the viewport edge and wraps rather than being clipped. */
-    <div
-      data-slot="bulk-bar"
-      className={cn(
-        'fixed inset-x-4 bottom-4 z-50 mx-auto flex w-fit max-w-[min(64rem,calc(100vw-2rem))]',
-        'flex-col gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-lg',
-      )}
-    >
+  return (
+    <Floating>
       {/* One strip: what is selected on the left, what can be done with it on the right.
           Round one ran the count, the presses and three paragraphs of explanation down the
           page, and what an editor could *do* was buried in prose. It is not a
@@ -227,25 +236,7 @@ export default function BulkControl({
           {!bulk?.canWrite && <NotWriting reason={bulk?.notWritingReason} />}
         </div>
 
-        {/* Unticking ten rows one at a time is the work this control exists to remove, so
-            putting the selection down costs one press as well. It is offered whether or not
-            the log can be written to: it is not a decision.
-
-            It is the cross at the end of the bar, behind a rule, where a floating bar of
-            this kind puts it — and never a word among the presses, where *clear* sits one
-            tab stop from *dismiss* and reads like a third thing to decide. A glyph names
-            nothing, so the words it replaced are its label. */}
-        <span aria-hidden className="ml-auto h-4 w-px bg-border" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          onClick={onClear}
-          aria-label="Clear the selection"
-          title="Clear the selection"
-        >
-          <span aria-hidden>✕</span>
-        </Button>
+        <Dismiss onClear={onClear} />
       </div>
 
       {builtAt && <OverTheSnapshot builtAt={builtAt} />}
@@ -293,13 +284,22 @@ export default function BulkControl({
             press(dismissal.events);
           }}
         >
+          {/* One title, one task, one main action (ADR 0019). The task was stated in a
+              placeholder, which is not a title: it disappears the moment the editor types,
+              it is no element's accessible name, and it left the panel opening on an
+              unlabelled box above a sentence about page counts. As a label it stays on
+              screen while the sentence is written, and the input has a name a screen reader
+              can announce. */}
+          <Label htmlFor="bulk-dismissal-note" className="font-medium text-foreground">
+            Why is this not a defect?
+          </Label>
           <Covers dismissal={dismissal} oneDifference={Boolean(repeat)} />
           <div className="flex flex-wrap items-center gap-1">
             <Input
               autoFocus
+              id="bulk-dismissal-note"
               value={note}
               onChange={(change) => setNote(change.target.value)}
-              placeholder="Why is this not a defect?"
               className="w-64"
             />
             {/* One note, copied to all N rows. The SQL constraint refuses a dismissal
@@ -325,9 +325,66 @@ export default function BulkControl({
           </div>
         </form>
       )}
-    </div>
+    </Floating>
   );
 }
+
+/**
+ * The bar itself: fixed to the bottom of the viewport and centred (round three).
+ *
+ * Round two made it a strip under the difference, which is where a selection's toolbar goes
+ * wrong twice: it pushed the rest of the queue down the instant a tick was made, and it
+ * scrolled away with the difference it belonged to — so an editor reading page forty of a
+ * repeat had the presses off screen while the pages they act on were in front of them.
+ * Fixed, it is where the selection is, for as long as the selection is.
+ *
+ * `w-fit` with a max: the bar is as wide as its own words, up to the width of the page, so a
+ * two-page selection does not draw a strip across an empty screen. It stops at the viewport
+ * edge and wraps rather than being clipped.
+ *
+ * It is a component because the bar has **two** states now — a selection to press on, and a
+ * press that has just reported — and one shell drawn twice is one place for the two to drift
+ * apart.
+ */
+const Floating = ({ children }) => (
+  <div
+    data-slot="bulk-bar"
+    className={cn(
+      'fixed inset-x-4 bottom-4 z-50 mx-auto flex w-fit max-w-[min(64rem,calc(100vw-2rem))]',
+      'flex-col gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-lg',
+    )}
+  >
+    {children}
+  </div>
+);
+
+/**
+ * The way to put the selection — or the report that outlived it — down.
+ *
+ * Unticking ten rows one at a time is the work this control exists to remove, so putting the
+ * selection down costs one press as well. It is offered whether or not the log can be written
+ * to: it is not a decision.
+ *
+ * It is the cross at the end of the bar, behind a rule, where a floating bar of this kind
+ * puts it — and never a word among the presses, where *clear* sits one tab stop from
+ * *dismiss* and reads like a third thing to decide. A glyph names nothing, so the words it
+ * replaced are its label.
+ */
+const Dismiss = ({ onClear }) => (
+  <>
+    <span aria-hidden className="ml-auto h-4 w-px bg-border" />
+    <Button
+      type="button"
+      variant="ghost"
+      size="xs"
+      onClick={onClear}
+      aria-label="Clear the selection"
+      title="Clear the selection"
+    >
+      <span aria-hidden>✕</span>
+    </Button>
+  </>
+);
 
 /**
  * What is ticked, and **what it is ticked on** (ticket 110, ticket 138).
@@ -337,58 +394,43 @@ export default function BulkControl({
  * bottom of a queue of four thousand is a number with no subject.
  *
  * So there are two sentences and the selection picks which. Ticks inside one difference
- * name that difference, in the words the row states them in. Ticks spanning several name
- * the result — how many differences, out of how many pages — because there is no second
- * text to print and printing the first one's would say the press is narrower than it is.
+ * name that difference by its **class**. Ticks spanning several name the result — how many
+ * differences, out of how many pages — because there is no one class to print and printing
+ * the first one's would say the press is narrower than it is.
+ *
+ * **It names its object and its scope and never its content** (ADR 0019). The two texts
+ * were drawn here, in full, under a bar fixed over the rows that were already drawing
+ * them — so an editor read the same pair of strings twice and the count they were about to
+ * press on was the smaller half of it. What a bar has to say is which pages and which
+ * difference; what the difference *is* is on screen above it and is the reason the ticks
+ * are there at all.
  */
 const Selection = ({ repeat, differences, pages, count }) => (
-  <p className="flex items-center gap-2 text-xs text-muted-foreground">
-    {/* The count as a mark rather than as the first word of a sentence: the bar floats
-        over the page now, and what it is *about* has to be readable before the sentence
-        is. The sentence still carries the denominator — one page ticked of forty is a
-        different press from forty of forty. */}
-    <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground tabular-nums">
-      {count}
-    </span>
-    {/* An explicit space, so the count and the sentence are one string when read aloud —
-        *2of 3 pages* is what adjacent boxes concatenate to. A whitespace-only run is
-        not rendered as a flex item, so it costs nothing beside the gap. */}{' '}
+  <Selected count={count}>
     {repeat ? (
       <OnOneDifference repeat={repeat} />
     ) : (
       <OverTheResult differences={differences} pages={pages} />
     )}
-  </p>
+  </Selected>
 );
 
-/** The ticks of one difference, in the words its own row states. */
+/** The ticks of one difference, named by its class. */
 const OnOneDifference = ({ repeat }) => (
   <span>
-    <strong className="font-medium text-foreground tabular-nums">
-      of {repeat.on.length} {repeat.on.length === 1 ? 'page' : 'pages'}
-    </strong>{' '}
-    selected on <ClassWord class={repeat.class} />
-    {/* The same two labelled sides the row above draws, and no arrow (ADR 0019). The bar is
-        the narrowest place a comparison appears, which is what the container query is for:
-        it stacks here and sits side by side in the content view, off one component. */}
-    <Comparison prod={repeat.prod} new={repeat.new} className="mt-1 text-foreground" />
+    <OfPages pages={repeat.on.length} /> selected on <ClassWord class={repeat.class} />.
   </span>
 );
 
 /**
  * The ticks of a selection that spans differences (ticket 138).
  *
- * The denominator is every page under the selection and not the ticked differences' pages:
- * *12 of 472* answers *how much of what I searched for*, which is the question a wide
- * selection is a step in. The count of differences is beside it because it is the number the
- * editor chose in — they ticked rows, and the pages followed.
+ * The count of differences is beside the pages because it is the number the editor chose
+ * in — they ticked rows, and the pages followed.
  */
 const OverTheResult = ({ differences, pages }) => (
   <span>
-    <strong className="font-medium text-foreground tabular-nums">
-      of {pages} {pages === 1 ? 'page' : 'pages'}
-    </strong>{' '}
-    selected over{' '}
+    <OfPages pages={pages} /> selected over{' '}
     <strong className="font-medium text-foreground tabular-nums">
       {differences} {differences === 1 ? 'difference' : 'differences'}
     </strong>

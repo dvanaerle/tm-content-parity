@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { barOf } from '../../../overrides/state.mjs';
 import { Detail, Occurrences, onePageTitle } from './Annotations.jsx';
 import BulkControl from './BulkControl.jsx';
@@ -102,24 +102,53 @@ export default function Repeats({
 function FlatSelection({ repeats, byFinding, bulk, builtAt = null, children }) {
   const [ticked, setTicked] = useState(/** @type {Set<string>} */ (NOTHING));
 
+  /**
+   * The last press's report, held **here** and not in the bar (ADR 0019).
+   *
+   * A press that writes everything takes its own bar off the screen: the ticks of what was
+   * written come off, nothing is left ticked, and the bar unmounts with the sentence saying
+   * it worked still inside it. That is the exact silence the pass set out to fix — forty
+   * pages decided and no word about it — so the report outlives the selection, and the bar
+   * stays for as long as it has something to say.
+   *
+   * It is cleared by the editor and never by the press: a new tick is a new question, and a
+   * press that unticks what it wrote must not wipe its own answer.
+   */
+  const [reported, setReported] = useState(
+    /** @type {null | import('../../../overrides/bulk.mjs').PressReport} */ (null),
+  );
+
+  // Ids in or out of the set, with no opinion about the report. Both the editor's controls
+  // and the press's own untick go through it, so the set has one arithmetic.
+  const move = useCallback(
+    (/** @type {string[]} */ ids, /** @type {boolean} */ on) =>
+      setTicked((last) => {
+        const next = new Set(last);
+        for (const id of ids) {
+          if (on) next.add(id);
+          else next.delete(id);
+        }
+        return next;
+      }),
+    [],
+  );
+
   const selection = useMemo(
     () => ({
       ticked,
       // One call for one page, for a whole difference and for a whole result: a tick is a
       // set of ids going in or coming out, and the three controls differ only in how many
       // ids they hand over.
-      tick: (ids, on) =>
-        setTicked((last) => {
-          const next = new Set(last);
-          for (const id of ids) {
-            if (on) next.add(id);
-            else next.delete(id);
-          }
-          return next;
-        }),
-      clear: () => setTicked(NOTHING),
+      tick: (ids, on) => {
+        setReported(null);
+        move(ids, on);
+      },
+      clear: () => {
+        setReported(null);
+        setTicked(NOTHING);
+      },
     }),
-    [ticked],
+    [ticked, move],
   );
 
   // Every page the selection could reach, flattened once. It is the denominator the bar
@@ -165,14 +194,16 @@ function FlatSelection({ repeats, byFinding, bulk, builtAt = null, children }) {
           across as many differences as they were ticked in (ticket 138). It is drawn only
           when something is ticked: a bar carrying buttons that would write nothing is worse
           than no bar. */}
-      {ticked.size > 0 && (
+      {(ticked.size > 0 || reported) && (
         <BulkControl
           entries={chosen}
           pages={entries.length}
           byFinding={byFinding}
           bulk={bulk}
           onClear={selection.clear}
-          onWritten={(ids) => selection.tick(ids, false)}
+          onWritten={(ids) => move(ids, false)}
+          report={reported}
+          onReport={setReported}
           holding={holding}
           builtAt={wide ? builtAt : null}
         />

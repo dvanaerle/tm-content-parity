@@ -10,7 +10,7 @@ import {
 } from './Annotations.jsx';
 import { locationUrl, unitLocation } from '../../../compare/locate.mjs';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
-import { DiffCells, DiffHeads } from './Diff.jsx';
+import { DiffCells, DiffHeads, SIDES } from './Diff.jsx';
 import { Marker, MarkerToggle } from './Marker.jsx';
 import { Empty, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
@@ -19,6 +19,7 @@ import { CHROME } from '../lib/palette.mjs';
 import { landedRowProps, landingRow, useLandOn } from '../lib/landing.mjs';
 import {
   NO_FILTER,
+  allDiagnostic,
   collapseRuns,
   collapseState,
   collapsedKeys,
@@ -87,6 +88,11 @@ export default function ContentView({ report, findings, showDiagnostics, control
    */
   const landed = useMemo(() => landingRow(rows, landing?.focus ?? null), [rows, landing]);
   const narrowed = isNarrowed(filter);
+
+  // How many rows the diagnostics control is holding back, which is the difference between a
+  // page nothing was extracted from and a page whose every block the reader asked not to
+  // see. `total` is what the control left; `report.rows` is what the page has.
+  const withheld = report.rows.length - total;
 
   /*
    * The collapse set, taken **when the page opens** (ticket 48).
@@ -199,10 +205,31 @@ export default function ContentView({ report, findings, showDiagnostics, control
           </FilterBanner>
         )}
 
+        <BlockCounts production={production.elements.length} next={next.elements.length} />
+
         {rows.length === 0 ? (
           <Empty className="py-6">
             <EmptyHeader>
-              <EmptyDescription>No rows in this filter.</EmptyDescription>
+              {/* The reason it is empty, and not the fact (ADR 0019). *No rows in this
+                  filter* was the only thing it said, and there are three causes: a filter, a
+                  page whose every block is a diagnostic the reader switched off, and a page
+                  nothing was extracted from. They are opposite answers, and only the first
+                  two are one press from being undone.
+
+                  **The filter comes first**, and it takes more reaching than it looks. The
+                  class pills are built from the rows on screen, so a class an editor can pick
+                  always has one — but the pills are read under the diagnostics control while
+                  the pick is held in this component's own state, so choosing a diagnostic
+                  class and then switching diagnostics off empties the list with the filter
+                  still set. Naming the control there would be a false sentence about a page
+                  that has plenty of blocks. */}
+              <EmptyDescription>
+                {narrowed
+                  ? `No row on this page is in the classes you filtered on. The page has ${total}.`
+                  : withheld > 0
+                    ? allDiagnostic({ count: withheld, noun: 'block' })
+                    : 'Nothing was extracted from either side of this page, so there is nothing to compare.'}
+              </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
@@ -296,6 +323,30 @@ function Controls({
 }
 
 const slug = (page) => page.replaceAll('/', '-');
+
+/**
+ * How many blocks each side holds, **where the blocks are** (ADR 0019).
+ *
+ * It was two of the five facts in the page header, beside a status code and a boundary, and
+ * a header reciting the content view's business is the header competing with the page key
+ * for the one glance an editor has. The rows of this table **are** the blocks, so the count
+ * belongs at the head of the list it counts — the same relocation the dashboard's one-sided
+ * and not-checked counters made to the lists they describe.
+ *
+ * It is a **relocation and not a removal**: the fact is one tab away from every screen it
+ * was on before, and this pass's standing rule is that a fact is never silently absent.
+ *
+ * The two sides are named in the pair `Diff.jsx` holds, and not in a third copy of the
+ * words. They are two counts and **not a comparison** — a side having fewer blocks is not a
+ * finding, and the rows below are where the difference between them is drawn — so this takes
+ * no tint, no diff hue and no `Comparison`.
+ */
+const BlockCounts = ({ production, next }) => (
+  <p className="mb-3 text-xs text-muted-foreground">
+    {SIDES.production} <span className="tabular-nums">{production}</span> blocks ·{' '}
+    {SIDES.new} <span className="tabular-nums">{next}</span> blocks
+  </p>
+);
 
 /**
  * Markdown, demoted from a tab to a download. It is the reading and export
@@ -394,10 +445,13 @@ function Rows({ items, control, sides, landed, onToggleRun }) {
         {/* *— source of truth* went with the pair moving into `DiffHeads`. It said what
             `CONTEXT.md` already says of Production, in a head that had to undo its own
             capitals with a `normal-case` span to fit it. */}
+        {/* The compared content leads and the status follows it (ADR 0019). This table is
+            the page in document order and every row of it is a block an editor reads; the
+            status column holds a pill, a score, a date and a control, and it held all four
+            in front of the text they are about. */}
         <TableRow>
-          <DiffHeads>
-            <TableHead className="w-56">Status</TableHead>
-          </DiffHeads>
+          <DiffHeads />
+          <TableHead className="w-56">Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -435,7 +489,41 @@ function Row({ row, control, sides, landed }) {
 
   return (
     <TableRow id={row.key} {...mark} className={cn('scroll-mt-4 align-top', className)}>
-      <TableCell className="px-2 py-3 align-top whitespace-normal">
+      {regrouped ? (
+        <RunCells row={row} sides={sides} />
+      ) : (
+        <DiffCells
+          prod={row.prod?.norm ?? null}
+          new={row.new?.norm ?? null}
+          prodRaw={row.prod?.raw ?? null}
+          newRaw={row.new?.raw ?? null}
+          prodPrefix={
+            <>
+              <Tag unit={row.prod} />
+              <Locate
+                href={locationUrl(sides.production.url, unitLocation(row.prod))}
+                side="production"
+              />
+            </>
+          }
+          newPrefix={
+            <>
+              <Tag unit={row.new} />
+              <Locate
+                href={locationUrl(sides.new.url, unitLocation(row.new))}
+                side="the new site"
+              />
+            </>
+          }
+          strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
+          equal={row.equal}
+        />
+      )}
+      {/* `data-slot` is a stable name for the cell the *Status* head names, in the manner of
+          `data-side` and `data-bucket`: it now comes after the two comparison cells, and a
+          test reading *the first cell of the row* would have been reading the class off a
+          paragraph of Dutch. */}
+      <TableCell data-slot="status" className="px-2 py-3 align-top whitespace-normal">
         {/*
          * The pill on a row that carries a class, and the word on a row whose two sides
          * agree. They are two questions and not one: this used to say *equal* whenever
@@ -476,36 +564,6 @@ function Row({ row, control, sides, landed }) {
          */}
         {row.decidable && <div className="mt-1">{control(row.finding)}</div>}
       </TableCell>
-      {regrouped ? (
-        <RunCells row={row} sides={sides} />
-      ) : (
-        <DiffCells
-          prod={row.prod?.norm ?? null}
-          new={row.new?.norm ?? null}
-          prodRaw={row.prod?.raw ?? null}
-          newRaw={row.new?.raw ?? null}
-          prodPrefix={
-            <>
-              <Tag unit={row.prod} />
-              <Locate
-                href={locationUrl(sides.production.url, unitLocation(row.prod))}
-                side="production"
-              />
-            </>
-          }
-          newPrefix={
-            <>
-              <Tag unit={row.new} />
-              <Locate
-                href={locationUrl(sides.new.url, unitLocation(row.new))}
-                side="the new site"
-              />
-            </>
-          }
-          strong={row.prod?.kind === 'heading' || row.new?.kind === 'heading'}
-          equal={row.equal}
-        />
-      )}
     </TableRow>
   );
 }

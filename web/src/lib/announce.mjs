@@ -124,8 +124,10 @@ export function savedMessage({ action, priority = null, note = '' }) {
  * What one bulk press is announced as.
  *
  * It says the **count that was written** first, whether or not anything failed, because
- * that is the number an editor needs either way — and a press that wrote everything says
- * so, which is the thing the screen only implies by the report not appearing.
+ * that is the number an editor needs either way — and a press that wrote everything says so.
+ * The screen used to imply that only by the report not appearing; since ui-polish 05 it says
+ * it too, and it says it by drawing **this** sentence, so the heard and the seen outcome are
+ * one string rather than two that agree today.
  *
  * The shortfall half is `PressReport.jsx`'s sentence said shorter: a live region is heard
  * once and cannot be re-read, so what is left out is the part a reader can go and look at.

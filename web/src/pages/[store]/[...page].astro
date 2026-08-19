@@ -110,17 +110,22 @@ const { production, new: next } = report.sides;
 
     {/* The two count chips are gone: the bar in the island replaces them, because
         a count that ignores the overrides contradicts the one beside it. */}
-    {/* Text and no longer three badges (ADR 0019). A status code, a block count and a
-        boundary are facts about the fetch, not categories an editor scans a list for — and
-        the boundary was amber, which is now spent only where something is wrong. Each side
-        is named in `CONTEXT.md`'s own two words, which is the same pair the tables below
-        head their two columns with. */}
+    {/* Text and no longer three badges (ADR 0019). A status code and a boundary are facts
+        about the fetch, not categories an editor scans a list for — and the boundary was
+        amber, which is now spent only where something is wrong. Each side is named in
+        `CONTEXT.md`'s own two words, which is the same pair the tables below head their two
+        columns with.
+
+        **The block count left this header** and is drawn at the head of the content view,
+        where the blocks are. It is a relocation and not a removal: the header was reciting
+        the Text tab's business at the page key, and a fact at the head of the list it counts
+        is a fact a reader can act on. */}
     <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
       <span>
-        Production <strong class="tabular-nums">{production.status}</strong> · <span class="tabular-nums">{production.elements.length}</span> blocks
+        Production <strong class="tabular-nums">{production.status}</strong>
       </span>
       <span>
-        New site <strong class="tabular-nums">{next.status}</strong> · <span class="tabular-nums">{next.elements.length}</span> blocks
+        New site <strong class="tabular-nums">{next.status}</strong>
       </span>
       {
         (production.boundary !== 'main' || next.boundary !== 'main') && (

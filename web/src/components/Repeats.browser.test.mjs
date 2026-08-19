@@ -277,6 +277,14 @@ describe('the selection on a difference', () => {
     unmount();
   });
 
+  /**
+   * The bar names its **object** and its **scope**, and never its content (ADR 0019).
+   *
+   * It drew the two compared texts in full until the polish pass, pinned over the rows that
+   * were already drawing them — so an editor read the same pair twice and the number they
+   * were about to press on was the smaller half of it. What replaces the texts is the
+   * class, which says which difference the ticks are in without repeating a word of it.
+   */
   it('raises a bar that counts the ticks and names the difference they belong to', () => {
     const { unmount } = mount();
 
@@ -285,11 +293,14 @@ describe('the selection on a difference', () => {
     press(pageTicks()[1]);
 
     // Two open differences with ticks in both must never produce one count that does not
-    // say what it counts, so the bar carries the words of its own difference.
+    // say what it counts, so the bar names its own difference.
     const bar = document.querySelector('[data-slot="bulk-bar"]');
     expect(bar.textContent).toContain('2 of 3 pages');
-    expect(bar.textContent).toContain('oud');
-    expect(bar.textContent).toContain('nieuw');
+    expect(bar.textContent).toContain('Copy changed');
+    expect(bar.textContent).not.toContain('oud');
+    expect(bar.textContent).not.toContain('nieuw');
+    // And no comparison at all: the labelled sides are the row's to draw, not the bar's.
+    expect(bar.querySelectorAll('[data-side]')).toHaveLength(0);
 
     // The press states the **selected** count and not the repeat's size.
     expect(button('Dismiss on 2 pages')).toBeDefined();
@@ -314,6 +325,67 @@ describe('the selection on a difference', () => {
     expect(bulk.calls).toHaveLength(1);
     expect(bulk.calls[0].map((event) => event.page)).toEqual(['overkapping', 'carport']);
     expect(bulk.calls[0].every((event) => event.action === 'dismissed')).toBe(true);
+    unmount();
+  });
+
+  /**
+   * A press that wrote everything says so, and the bar stays to say it (ADR 0019).
+   *
+   * This is the one place silence is genuinely ambiguous: the press takes the ticks of what
+   * it wrote, which empties the selection and used to unmount the bar with its own answer
+   * inside it — forty pages decided and not a word. For a single row the state flipping is
+   * the feedback, which is why no row draws this, and there is no toast either.
+   */
+  it('says the whole press was saved, and keeps the bar until it is put down', async () => {
+    const { unmount } = mount();
+
+    press(differenceRow());
+    press(pageTicks()[0]);
+    press(pageTicks()[1]);
+    press(button('Dismiss on 2 pages'));
+    await type('afgesproken met de redactie');
+    await pressAndWait(button('Dismiss on 2 pages'));
+
+    // The selection is spent, so the bar names none: what is left is the outcome and the
+    // way to put it down.
+    expect(barText()).toContain('Saved on 2 pages');
+    expect(barText()).not.toContain('selected');
+    expect(button('Dismiss')).toBeUndefined();
+
+    // And it is in the live region, because a bulk write's result is an outcome a screen
+    // reader has to hear (ticket 03).
+    const said = document.querySelector('[data-slot="bulk-progress"]');
+    expect(said.getAttribute('aria-live')).toBe('polite');
+    expect(said.textContent).toContain('Saved on 2 pages');
+
+    press(document.querySelector('[aria-label="Clear the selection"]'));
+    expect(barText()).toBeNull();
+    unmount();
+  });
+
+  /** A shortfall is the louder half and keeps its own sentence. */
+  it('says how far a press got when it did not get all the way', async () => {
+    const bulk = bulkBag({
+      appendMany: async (events) => ({
+        stored: events.slice(0, 1).map((event) => ({ findingId: event.findingId })),
+        written: 1,
+        total: events.length,
+        stoppedOn: 'veranda',
+        aborted: false,
+        error: null,
+      }),
+    });
+    const { unmount } = mount({ bulk });
+
+    press(differenceRow());
+    press(pageTicks()[0]);
+    press(pageTicks()[1]);
+    press(button('Dismiss on 2 pages'));
+    await type('afgesproken met de redactie');
+    await pressAndWait(button('Dismiss on 2 pages'));
+
+    expect(barText()).toContain('1 of 2 saved');
+    expect(barText()).not.toContain('Saved on');
     unmount();
   });
 

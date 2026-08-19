@@ -51,19 +51,30 @@ import { TableCell, TableHead } from './ui/table.jsx';
  *
  * The keys are the ones the data uses (`report.sides`, `DiffCells`' own props), so a caller
  * holding one never has to translate.
+ *
+ * It is exported for the one surface that names the two sides without comparing them: the
+ * content view's block counts, which are a fact about each side rather than a pair of texts.
+ * Everything that draws a comparison takes the words through `DiffHeads` or `Comparison` and
+ * cannot choose to name one side only.
  */
-const SIDES = { production: 'Production', new: 'New site' };
+export const SIDES = { production: 'Production', new: 'New site' };
 
 /**
  * The two column heads a table drawing `DiffCells` puts above them.
  *
- * This is where the contract lives for the table form: a caller supplies the row header its
- * own first column needs and gets the pair for the other two, so a table cannot draw a
- * comparison with one side labelled or with neither.
+ * This is where the contract lives for the table form: whatever a caller puts around it, it
+ * gets both names or it gets neither, so a table cannot draw a comparison with one side
+ * labelled.
+ *
+ * **Where the caller's own column goes is the caller's** and it is not the same answer
+ * everywhere. A finding table leads with the compared content (ADR 0019), so its class head
+ * comes *after* this and it passes no child at all. The meta panel's leading cell is a row
+ * **header** naming what the two cells beside it hold, and a row header comes first or it
+ * heads nothing — so that one passes its head as a child.
  *
  * @param {object} props
- * @param {import('react').ReactNode} [props.children] The head of the caller's own leading
- *   column, where it has one. The meta panel's is a row header and has none.
+ * @param {import('react').ReactNode} [props.children] The head of a leading column, for the
+ *   one caller that has one.
  */
 export function DiffHeads({ children = null }) {
   return (
@@ -83,6 +94,11 @@ export function DiffHeads({ children = null }) {
  * retires *Changed* because the tool cannot know that one text became another, and an arrow
  * asserts exactly that. Neither surface labelled its sides either, so a reader had to know
  * by convention which half of the line was production.
+ *
+ * One of the two is left: the bulk bar stopped drawing a comparison at all, because a bar
+ * names its object and its scope and never its content (ADR 0019), and the rows it floats
+ * over are already drawing the pair. The container query survives that, and it is not
+ * theoretical — a repeat row narrows with the list it is in.
  *
  * **A container size query and not a viewport breakpoint** (ADR 0015 permits the size
  * query and refuses the style query; they share a syntax and not a Baseline row). What

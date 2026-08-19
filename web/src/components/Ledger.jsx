@@ -32,6 +32,9 @@ import { CHROME } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { bucketOf, bucketsOf } from '../../../overrides/state.mjs';
 import { BUCKETS, BUCKET_LABEL } from '../lib/buckets.mjs';
+// The sentence the content view says about the same control, written once (ticket 05): the
+// noun differs and the meaning does not.
+import { allDiagnostic } from '../lib/view.mjs';
 
 /**
  * The column heads of both tables here and of the content view are the same small
@@ -186,6 +189,19 @@ export default function Ledger({
   // What the toggle would reveal, which is the `diagnostic` findings and nothing else.
   // The label must count what it uncovers: an `information` finding is on screen already.
   const diagnosticCount = derived.filter((f) => f.visibility === 'diagnostic').length;
+
+  /**
+   * How many findings of one check the diagnostics control is holding back — which is the
+   * difference between *this page has nothing here* and *this page has three things you
+   * asked not to see*. An empty tab could say only the first, and it was the wrong one
+   * exactly where a rule author was looking for what their rule saw.
+   *
+   * Zero while the control is on, because then it is hiding nothing.
+   */
+  const withheld = (check) =>
+    diagnostics
+      ? 0
+      : derived.filter((one) => one.check === check && one.visibility === 'diagnostic').length;
 
   // Every badge counts **findings**, including Text's. The content view is a list
   // of rows and a grouped finding covers several of them, so a row count here would
@@ -361,6 +377,7 @@ export default function Ledger({
             <FindingTable
               findings={findings}
               check="links"
+              withheld={withheld('links')}
               control={control}
               sides={report.sides}
               landing={landing}
@@ -370,6 +387,7 @@ export default function Ledger({
             <FindingTable
               findings={findings}
               check="images"
+              withheld={withheld('images')}
               control={control}
               sides={report.sides}
               landing={landing}
@@ -413,7 +431,7 @@ const BucketStrip = ({ buckets }) => (
   </section>
 );
 
-function FindingTable({ findings, check, control, sides, landing }) {
+function FindingTable({ findings, check, withheld = 0, control, sides, landing }) {
   const all = findings.filter((finding) => finding.check === check);
 
   /**
@@ -453,7 +471,17 @@ function FindingTable({ findings, check, control, sides, landing }) {
     focus && rows.some((finding) => finding.id === focus) ? findingAnchor(focus) : null;
   useLandOn(landed, landing?.settled);
 
-  if (!all.length) return <Empty>No findings for {CHECK_LABEL[check]}.</Empty>;
+  // Why it is empty, and not that it is (ADR 0019). *No findings for Links* is true of a
+  // page whose links agree and of a page whose every link finding is a diagnostic the
+  // reader has switched off, and those are opposite answers to the question they came with.
+  if (!all.length)
+    return (
+      <Empty>
+        {withheld > 0
+          ? allDiagnostic({ count: withheld, noun: `${CHECK_LABEL[check]} finding` })
+          : `Nothing was found for ${CHECK_LABEL[check]} on this page.`}
+      </Empty>
+    );
 
   return (
     /* `table-fixed` survives the swap. shadcn's Table is auto-layout and wraps itself
@@ -470,10 +498,14 @@ function FindingTable({ findings, check, control, sides, landing }) {
        floor lets the container do the job it was already wrapped in. */
     <Table className="min-w-3xl table-fixed">
       <TableHeader className={HEAD_TONE}>
+        {/* The compared content leads and the class follows it (ADR 0019). A row of this
+            table is a difference an editor is deciding about, and what they decide *on* is
+            the two texts — which sat third and fourth, behind a 224-pixel column of a pill,
+            a detail, a date and a control. Nothing left the row; the order says which of it
+            is the subject. */}
         <TableRow>
-          <DiffHeads>
-            <TableHead className="w-56">Class</TableHead>
-          </DiffHeads>
+          <DiffHeads />
+          <TableHead className="w-56">Class</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -551,7 +583,12 @@ const FindingRow = ({ finding, focus, control, sides }) => {
       {...mark}
       className={cn('scroll-mt-4 align-top', className)}
     >
-      <TableCell className="px-2 py-2 align-top whitespace-normal">
+      {/* The same component the content rows use. A link finding word-diffs
+          two target keys, which makes a changed path segment jump out. */}
+      <DiffCells prod={finding.prod} new={finding.new} mono />
+      {/* Named for the head above it, for the reason the content view's cell is: it follows
+          the compared content now, and *the first cell of the row* is no longer the class. */}
+      <TableCell data-slot="class" className="px-2 py-2 align-top whitespace-normal">
         <ClassPill class={finding.class} />
         <Detail detail={finding.detail} />
         <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
@@ -572,9 +609,6 @@ const FindingRow = ({ finding, focus, control, sides }) => {
             not replace what an editor decided about one finding. */}
         <div className="mt-1">{control(finding)}</div>
       </TableCell>
-      {/* The same component the content rows use. A link finding word-diffs
-          two target keys, which makes a changed path segment jump out. */}
-      <DiffCells prod={finding.prod} new={finding.new} mono />
     </TableRow>
   );
 };

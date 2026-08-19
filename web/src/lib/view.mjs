@@ -105,6 +105,28 @@ export function toggleClass(filter, cls) {
  */
 
 /**
+ * What a surface says when the **diagnostics control** is the whole reason it is empty.
+ *
+ * Two surfaces reach this: the content view, where what is withheld is a block, and a
+ * finding table, where it is a finding of one check. They were about to say it in two
+ * near-identical sentences, which is one sentence's worth of meaning and two places for a
+ * rewording to land in one of them. So the noun is the argument and the sentence is not.
+ *
+ * It names the **control** and not an absence, which is the whole point: *nothing found* is
+ * the answer an editor is working towards, and *you switched it off* is one press from being
+ * undone. Saying the first about the second is the bug this replaces.
+ *
+ * @param {object} said
+ * @param {number} said.count  How many the control is holding back. Never zero: a caller with
+ *   nothing withheld has a different sentence to say.
+ * @param {string} said.noun  What one of them is, as the surface's own reader would name it —
+ *   `block` in the content view, `Links finding` on a finding tab.
+ * @returns {string}
+ */
+export const allDiagnostic = ({ count, noun }) =>
+  `Every ${noun} on this page is a diagnostic. Show diagnostics to read the ${count}.`;
+
+/**
  * @param {object} input
  * @param {import('../../../compare/contract.mjs').DiffRow[]} input.rows
  * @param {object[]} input.findings   Derived findings, from `derivePageState()`.

@@ -898,6 +898,49 @@ describe('the pages table puts the page first', () => {
  * module, which the standards refuse. What is left is the rule itself, which is the whole of
  * what the defect was about — a list draws a mark, and never the note.
  */
+describe('the annotate bar names what was ticked', () => {
+  /** The pages table, which is the list the ticks are made in. The view is in the address. */
+  const mountList = () => {
+    history.replaceState(null, '', '?view=pages');
+    return mount();
+  };
+
+  /**
+   * *2 pages selected* names an object and no scope (ADR 0019).
+   *
+   * The bar floats over a page list that can be four thousand rows long and can be narrowed
+   * to eleven, and two of eleven is a different press from two of four thousand. It gains the
+   * shape ticket 31's bar states its selection in — the same count bubble, off one component,
+   * and a denominator that is the list the ticks were made in.
+   */
+  it('says how many of the list are ticked, not merely that pages are', () => {
+    const unmount = mountList();
+
+    const ticks = [...document.querySelectorAll('tbody [data-slot="checkbox"]')];
+    act(() => ticks[0].click());
+
+    const bar = document.querySelector('[data-slot="annotate-bar"]');
+    expect(bar).not.toBeNull();
+    expect(bar.textContent).toContain('1');
+    expect(bar.textContent).toContain('of 2 pages selected in this list');
+    unmount();
+  });
+
+  /** Two ticks, one denominator, and the singular is gone. */
+  it('counts the whole list as the denominator whatever is ticked', () => {
+    const unmount = mountList();
+
+    const ticks = [...document.querySelectorAll('tbody [data-slot="checkbox"]')];
+    act(() => ticks[0].click());
+    act(() => ticks[1].click());
+
+    expect(document.querySelector('[data-slot="annotate-bar"]').textContent).toContain(
+      'of 2 pages selected in this list',
+    );
+    unmount();
+  });
+});
+
 describe('a page note in a list', () => {
   const LONG =
     'Production still shows the 2024 delivery promise here and legal have asked for the ' +
