@@ -420,3 +420,86 @@ describe('a closed finding leaves a history note', () => {
     noted();
   });
 });
+
+/**
+ * The 273 pixels, at the seam they came from.
+ *
+ * A row grew when the override log answered: the log arrives a beat after the first paint,
+ * `canWrite` turns true with it, and every open row sprouted a *Dismiss…* the pending
+ * render had not drawn. An editor about to tick *Fixed* had the row jump out from under
+ * the cursor — measured at 273 pixels down the page on `nl/carport`, and written into
+ * `landing.mjs` where the scroll delay works around the symptom.
+ *
+ * The scroll delay is a different question — *when* to scroll — and it never prevented the
+ * shift. This is the shift.
+ *
+ * The measurement is real and not a class name: no stylesheet is mounted in this project,
+ * so a reserved height written as a Tailwind utility would measure the same either way and
+ * this test would pass over the defect. What holds the space is the control itself, drawn
+ * in its full shape and taking no press until the log answers, so the row is the same
+ * height because it holds the same elements.
+ */
+describe('a row while the override log is still reading', () => {
+  /** The Links tab, mounted once so the two renders share a root and a layout. */
+  async function open(props) {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const draw = (extra) =>
+      act(() =>
+        root.render(
+          createElement(Ledger, {
+            report,
+            findings: FOUR,
+            append: async () => true,
+            observationId: '2026-08-14T10:00:00.000Z-aaaaaaaa',
+            ...props,
+            ...extra,
+          }),
+        ),
+      );
+    draw({});
+    await userEvent.click(button('Links'));
+    return { draw, unmount: () => act(() => root.unmount()) };
+  }
+
+  /** The heights of every finding row on screen, which is what must not move. */
+  const heights = () =>
+    [...document.querySelectorAll('tbody tr[id^="finding-"]')].map((row) =>
+      Math.round(row.getBoundingClientRect().height),
+    );
+
+  it('does not change height when the log resolves', async () => {
+    // The pending state exactly: the log is connected and has not answered, so nothing is
+    // writable yet and no event has been read — every finding derives as open.
+    const { draw, unmount } = await open({ pending: true, canWrite: false, settled: false });
+
+    const before = heights();
+    expect(before.length).toBeGreaterThan(0);
+
+    draw({ pending: false, canWrite: true, settled: true });
+
+    expect(heights()).toEqual(before);
+    unmount();
+  });
+
+  // The control is reserved space and not a live control: a press before the log has
+  // answered would be a write against a state nobody has read.
+  it('offers the control and refuses the press', async () => {
+    const { unmount } = await open({ pending: true, canWrite: false, settled: false });
+
+    expect(button('Dismiss')).toBeDefined();
+    expect(button('Dismiss').disabled).toBe(true);
+    unmount();
+  });
+
+  // A log that will never answer is not a log that has not answered yet. Reserving the
+  // space there would leave a permanently dead button on every row, which ADR 0019 refuses
+  // — the banner says the page is read-only and the row simply offers nothing.
+  it('reserves nothing when the log is not coming', async () => {
+    const { unmount } = await open({ pending: false, canWrite: false, settled: true });
+
+    expect(button('Dismiss')).toBeUndefined();
+    unmount();
+  });
+});

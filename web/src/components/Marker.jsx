@@ -49,7 +49,9 @@ export function Marker({ marker, columns, onToggle }) {
           type="button"
           onClick={onToggle}
           aria-expanded={marker.open}
-          className={`flex items-center gap-1 text-xs hover:underline ${CHROME.link}`}
+          // `min-h-6` and the padding under it: the glyph and the words stay the size
+          // they are, and the press becomes something a finger can land on (ticket 03).
+          className={`flex min-h-6 items-center gap-1 py-1 text-xs hover:underline ${CHROME.link}`}
         >
           <Chevron className="size-3.5" aria-hidden="true" />
           {marker.agrees

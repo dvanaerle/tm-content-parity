@@ -1,8 +1,11 @@
 /**
  * How a finding class looks. The vocabulary itself is the contract's, never
- * restated here — this file only names the **tone** of each class and the Dutch
- * label an editor reads. The tone's pixels come from `app.css`, which is the
- * one place a colour is defined; this file hands over the word and nothing else.
+ * restated here — this file only names the **tone** of each class, and passes the
+ * contract's own label through `classInfo()` without holding a word of its own. It
+ * said it held "the Dutch label an editor reads" until ticket 03 of the polish pass;
+ * it has held no label since the vocabulary took them, and nothing here is Dutch —
+ * ADR 0014 says the interface speaks English. The tone's pixels come from `app.css`,
+ * which is the one place a colour is defined.
  *
  * The tone rule is one rule: a class that is not `work` is grey. Ticket 09 gives it
  * no place in the bar either, so nothing coloured is ever something the editor was

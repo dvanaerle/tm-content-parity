@@ -179,9 +179,11 @@ describe('useLandOn', () => {
     unmount();
   });
 
-  // The page is still changing shape until the override log answers: a decided row grows a
-  // control, and a landing taken before that is measured against a layout about to move.
-  // Measured on `nl/carport`: the row ended up 273 pixels below where it was put.
+  // Until the override log answers, a decided row is drawn as an open one, so a landing
+  // taken before it lands on a row whose neighbours are about to say something else. The
+  // 273 pixels of movement this used to be about are gone — the control's space is
+  // reserved in `OverrideControl.jsx` since ticket 03 of the polish pass — and this
+  // answers the other question the delay always answered: *when* to scroll.
   it('waits until the page has stopped changing shape', () => {
     pageWithTargetBelowTheFold();
 

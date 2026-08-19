@@ -5,6 +5,7 @@ import { EditorPrompt, LogBanner, PageBar, ReviewControl } from './Progress.jsx'
 import { Alert, AlertDescription } from './ui/alert.jsx';
 import { Button } from './ui/button.jsx';
 import { CHROME } from '../lib/palette.mjs';
+import { logState } from '../lib/log-read.mjs';
 import { NO_EDITOR, useEditor, useOverrides } from '../lib/overrides.mjs';
 import { usePageReport, useRecheck, useRecheckAvailable } from '../lib/recheck.mjs';
 import { moment } from '../lib/dates.mjs';
@@ -128,6 +129,12 @@ export default function PageView({
         settled={log.ready || !log.connected}
         append={append}
         canWrite={canWrite}
+        /* *Not yet*, and never *not ever*: the override log is connected and has not
+           answered. It is what lets a row reserve the space its control will need, and it
+           is deliberately narrower than `!canWrite` — a log that will never answer must
+           not leave a dead button on every row. `logState()` is the one reading of the
+           log's four states, so this cannot come to disagree with the banner above. */
+        pending={logState(log).state === 'reading'}
         observationId={report.observationId}
         /* The sibling page and its production blocks, matched and read at build time
            (ticket 04). `null` where this store is in no language block, or where the

@@ -70,7 +70,23 @@ export const STATE = {
 export const attributionTone = (state) =>
   state === 'contradicted' ? STATE.contradicted.tone : null;
 
-export default function OverrideControl({ finding, observationId, append, canWrite }) {
+/**
+ * @param {object} props
+ * @param {object} props.finding
+ * @param {string} props.observationId
+ * @param {(event: object) => Promise<boolean>} props.append
+ * @param {boolean} props.canWrite
+ * @param {boolean} [props.pending]  Whether the override log is still reading — *not yet*,
+ *   which is a different answer from the *not ever* the other three reasons `canWrite` is
+ *   false give. It is what reserves this control's space; see `reserved` below.
+ */
+export default function OverrideControl({
+  finding,
+  observationId,
+  append,
+  canWrite,
+  pending = false,
+}) {
   /** @type {['dismiss' | null, Function]} */
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
@@ -79,6 +95,28 @@ export default function OverrideControl({ finding, observationId, append, canWri
   // Whether the *controls* below are offered, which is a different question from how the
   // attribution is drawn: a contradicted claim can still be dismissed.
   const contradicted = state === 'contradicted';
+
+  /**
+   * Whether a press below occupies its space — live where the log has answered, and drawn
+   * but dead while it is still reading.
+   *
+   * The override log answers a beat after the first paint, and `canWrite` turns true with
+   * it. Until ticket 03 of the polish pass every open row therefore grew a *Dismiss…* it
+   * had not drawn a moment earlier — 273 pixels of accumulated growth down `nl/carport`,
+   * with an editor's cursor already over the tick they were about to press. The scroll
+   * delay in `landing.mjs` answers *when* to scroll and never prevented the movement.
+   *
+   * So the space is **reserved by the control itself**, which is deliberately not a
+   * reserved blank height in CSS: a height guessed at in a utility class is a second
+   * statement of what the control measures, and the two would drift the first time a word
+   * in it changed.
+   *
+   * It reads `pending` and never `!canWrite`. The other three reasons a row cannot be
+   * written to — no connection, no name, a failed read — are not *not yet*, and a
+   * permanently dead button on every row is weight ADR 0019 refuses. The banner at the top
+   * of the page says which of them it is.
+   */
+  const reserved = canWrite || pending;
 
   const act = (partial) => append({ scope: 'finding', findingId: finding.id, ...partial });
 
@@ -144,8 +182,10 @@ export default function OverrideControl({ finding, observationId, append, canWri
         />
       )}
 
-      {canWrite && (state === 'open' || contradicted) && (
-        <Action onClick={() => setAsking('dismiss')}>Dismiss…</Action>
+      {reserved && (state === 'open' || contradicted) && (
+        <Action disabled={!canWrite} onClick={() => setAsking('dismiss')}>
+          Dismiss…
+        </Action>
       )}
 
       {/* `fixed` is not here: its own checkbox unticks it. A second control for the
@@ -155,8 +195,10 @@ export default function OverrideControl({ finding, observationId, append, canWri
           there is one shape to return. It was written out here until ticket 110 gave the
           same press to a whole difference; two copies of that rule would be two places
           for the next change to a key to land, and it would land in one of them. */}
-      {canWrite && state === 'dismissed' && (
-        <Action onClick={() => append(clearedEventFor(finding))}>Clear the decision</Action>
+      {reserved && state === 'dismissed' && (
+        <Action disabled={!canWrite} onClick={() => append(clearedEventFor(finding))}>
+          Clear the decision
+        </Action>
       )}
     </div>
   );

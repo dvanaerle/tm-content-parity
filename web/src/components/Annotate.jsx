@@ -132,6 +132,19 @@ export function PageAnnotations({ annotations, append, canWrite, busy = false })
           </Button>
         )}
       </form>
+
+      {/* The **stored** note, beside the box that changes it.
+
+          The page showed the note or let you change it and never both: an editor who can
+          write got a 224-pixel input and nothing else, so a note longer than that was
+          only readable by somebody who could not edit it. A note has no length limit —
+          `PageNoteMark` says why the list draws a mark instead — and this is the surface
+          that draws it in full.
+
+          It is the stored value and not what is typed. `typed` is already on screen in
+          the box, and echoing it under itself would say the sentence twice while telling
+          a reader nothing about what the log holds. */}
+      <PageNote note={note} className="basis-full" />
     </div>
   );
 }

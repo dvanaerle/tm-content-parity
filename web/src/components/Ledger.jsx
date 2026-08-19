@@ -104,6 +104,7 @@ export default function Ledger({
   findings: derived,
   append,
   canWrite,
+  pending,
   observationId,
   settled,
   sibling,
@@ -170,6 +171,7 @@ export default function Ledger({
         observationId={observationId}
         append={append}
         canWrite={canWrite}
+        pending={pending}
       />
     ) : null;
 
@@ -497,14 +499,20 @@ function FindingTable({ findings, check, control, sides, landing }) {
                 onClick={() => setOpened(!showClosed)}
                 className={cn(
                   'text-xs font-medium text-muted-foreground hover:underline',
-                  'flex items-center gap-1',
+                  // A comfortable target under a small glyph (ticket 03). `text-xs` alone
+                  // gave the press a 16-pixel line box; the words do not grow, the row it
+                  // can be hit in does.
+                  'flex min-h-6 items-center gap-1 py-1',
                 )}
               >
                 {/* The count is in the label, so the section says how much it is holding
                     while it is shut. A disclosure that only says "Closed" hides an amount
                     as well as a list. */}
                 {BUCKET_LABEL.closed} (<span className="tabular-nums">{closed.length}</span>){' '}
-                {showClosed ? '▾' : '▸'}
+                {/* `aria-hidden`, as every other disclosure glyph in this interface is:
+                    `aria-expanded` above already says which way it points, and a screen
+                    reader that also read the triangle would say it twice. */}
+                <span aria-hidden>{showClosed ? '▾' : '▸'}</span>
               </button>
             </TableCell>
           </TableRow>

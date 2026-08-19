@@ -186,10 +186,14 @@ export function landingRow(rows, focus) {
  * would fight the first.
  *
  * **The wait is the hook's, not the caller's.** Both callers have the same reason to
- * wait: a decided row grows an override control when the log answers, so a landing taken
- * before that is measured against a layout about to move — 273 pixels of it, measured on
- * `nl/carport`. Two callers carrying the same three-line comment was one rule written
- * twice.
+ * wait: until the log answers, a decided row is drawn as an open one, and what a landing
+ * scrolls to is then a row whose neighbours are about to say something else. Two callers
+ * carrying the same three-line comment was one rule written twice.
+ *
+ * It is **not** what stops the row moving, and it never was. The 273 pixels this comment
+ * used to cite — measured on `nl/carport` — were the override control appearing into space
+ * nothing had reserved, and `OverrideControl.jsx` reserves it since ticket 03 of the polish
+ * pass. This answers the other question, *when* to scroll, and it stays for that.
  *
  * @param {string | null} anchor  An element id, or null for "the reader asked for
  *                                nothing", which is the ordinary case.

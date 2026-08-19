@@ -16,6 +16,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { announce } from './announce.mjs';
 import { chooseReport } from './recheck-choice.mjs';
 import { recheckPath } from './page-url.mjs';
 
@@ -145,8 +146,15 @@ export function useRecheck(onReport) {
       setError(null);
       try {
         onReport(await recheckPage(store, page));
+        announce('The re-check ran. This page is measured again.');
       } catch (failure) {
-        setError(/** @type {Error} */ (failure).message);
+        const { message } = /** @type {Error} */ (failure);
+        setError(message);
+        // The banner beside the button says this too. A re-check is the one press here
+        // whose failure changes nothing on screen — the page is deliberately left exactly
+        // as it was — so without this a reader who cannot see the banner has no signal
+        // that the press happened at all.
+        announce(`The re-check did not run. ${message} The page is unchanged.`);
       } finally {
         setRunning(false);
       }

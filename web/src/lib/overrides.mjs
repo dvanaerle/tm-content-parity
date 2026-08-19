@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { appendEach } from '../../../overrides/bulk.mjs';
 import { derivePageState, deriveStoreState, eventsOfStores } from '../../../overrides/state.mjs';
 import { createOverridesPort } from '../../../overrides/supabase.mjs';
+import { announce, pressMessage, savedMessage } from './announce.mjs';
 import { logState } from './log-read.mjs';
 
 const EDITOR_KEY = 'tm-content-parity.editor';
@@ -131,9 +132,15 @@ export function useOverrides({ report, editor, closedWith = NO_CLOSINGS }) {
         const stored = await port.appendEvent({ store, page, editor, ...partial });
         setEvents((held) => [...(held ?? []), stored]);
         setError(null);
+        // Announced from the seam every single decision passes through, and not from the
+        // six controls that make one: a control announcing its own success would be six
+        // vocabularies for one outcome, and the seventh control would be silent.
+        announce(savedMessage(partial));
         return true;
       } catch (failure) {
-        setError(/** @type {Error} */ (failure).message);
+        const { message } = /** @type {Error} */ (failure);
+        setError(message);
+        announce(`Not saved. ${message}`);
         return false;
       } finally {
         setBusy(false);
@@ -354,7 +361,7 @@ export function useStoreOverrides({ pages, siblingPages = [], editor = '' }) {
   const appendMany = useCallback(
     async (toWrite, watching) => {
       if (!port || !editor) {
-        return {
+        const refused = {
           stored: [],
           written: 0,
           total: toWrite.length,
@@ -362,6 +369,8 @@ export function useStoreOverrides({ pages, siblingPages = [], editor = '' }) {
           aborted: false,
           error: NO_EDITOR,
         };
+        announce(pressMessage(refused));
+        return refused;
       }
 
       setBusy(true);
@@ -376,6 +385,10 @@ export function useStoreOverrides({ pages, siblingPages = [], editor = '' }) {
         // writable and the remainder can be pressed again — clearing the error here would
         // also lose a **previous** press's, which no press of this one has repaired.
         if (!result.aborted) setError(result.error);
+        // Including the press that wrote everything. `PressReport` draws nothing on a
+        // whole success, so a reader who cannot see the rows update has no other way to
+        // learn that 40 pages were written.
+        announce(pressMessage(result));
         return result;
       } finally {
         setBusy(false);

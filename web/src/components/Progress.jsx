@@ -7,6 +7,8 @@
  * trust is the count, and the bar is the glance.
  */
 
+import { useEffect, useRef } from 'react';
+import { announce } from '../lib/announce.mjs';
 import { logState } from '../lib/log-read.mjs';
 import { CHROME } from '../lib/palette.mjs';
 import { Alert, AlertDescription } from './ui/alert.jsx';
@@ -142,6 +144,7 @@ export function EditorPrompt({ editor, save }) {
  */
 export function LogBanner(log) {
   const { state, ready, reason } = logState(log);
+  useLogFailureAnnounced(state, reason);
 
   if (state === 'failed') {
     // Amber, not red. An unreachable log is a status, however bad it is, and
@@ -172,6 +175,42 @@ export function LogBanner(log) {
   }
   if (state === 'reading') return <Banner tone="neutral">The override log is loading…</Banner>;
   return null;
+}
+
+/**
+ * The banner said out loud, once, when it starts saying it.
+ *
+ * A log that cannot be written to is the one state in this interface nobody presses their
+ * way into: it simply stops answering, or was never configured, and an editor who cannot
+ * see the banner goes on ticking rows that are not being written. So it is announced on
+ * the **transition**, which is what the ref holds — a render is not an event, and
+ * re-announcing on every one of them would leave a screen reader talking over the page.
+ *
+ * **Two states and not one.** The ticket asks for *read-only*, which is `failed`; an
+ * unconfigured project is `disconnected` and is just as unwritable. `LogBanner` above
+ * draws both and words them apart, because `log-read.mjs` insists they are two things —
+ * and this is that same pair, said out loud.
+ *
+ * `reading` is not announced. It is progress, and ADR 0019's live-region rule is that the
+ * region says outcomes; the loading banner is already on screen for anyone who can see it,
+ * and the outcome — read, or read-only — is a beat away either way.
+ *
+ * @param {ReturnType<typeof logState>['state']} state
+ * @param {string | null} reason
+ */
+function useLogFailureAnnounced(state, reason) {
+  const said = useRef(/** @type {string | null} */ (null));
+
+  useEffect(() => {
+    if (state === said.current) return;
+    said.current = state;
+    if (state === 'failed') {
+      announce(`The override log does not answer, so this page is read-only. ${reason ?? ''}`.trim());
+    }
+    if (state === 'disconnected') {
+      announce('There is no connection to the override log, so no decision can be made here.');
+    }
+  }, [state, reason]);
 }
 
 /*

@@ -56,11 +56,23 @@ function TabsTrigger({ className, ...props }) {
   );
 }
 
+/**
+ * A panel is focusable — Base UI gives it a tab stop, so Tab out of the strip lands in the
+ * content the strip switched to — and shadcn ships it with the browser's outline deleted
+ * and nothing in its place. A keyboard reader therefore arrived somewhere invisible.
+ *
+ * ADR 0019's rule for ticket 03 is that an outline may be replaced and never deleted, so
+ * the ring the rest of this interface wears is put back on it. The deletion itself stays,
+ * because the replacement has to be the one that wins.
+ */
 function TabsContent({ className, ...props }) {
   return (
     <TabsPrimitive.Panel
       data-slot="tabs-content"
-      className={cn('flex-1 text-sm outline-none', className)}
+      className={cn(
+        'flex-1 rounded-sm text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+        className,
+      )}
       {...props}
     />
   );

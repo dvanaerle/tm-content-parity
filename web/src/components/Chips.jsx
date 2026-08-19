@@ -335,7 +335,11 @@ export function ScopeChip({ scope, onClear }) {
         // carries a *Clear filter* that clears more than this one does.
         title="Clear the page scope"
         aria-label="Clear the page scope"
-        className="size-4 rounded-sm hover:bg-transparent hover:opacity-70"
+        // The glyph stays 16 pixels so the chip keeps its shape, and the **target** is
+        // grown past it with a pseudo-element — the trick `ui/checkbox.jsx` has used for its
+        // own tick since it came in, borrowed here by ticket 03. Growing the button itself
+        // would make the chip a different size from the pills it sits beside.
+        className="relative size-4 rounded-sm after:absolute after:-inset-1.5 hover:bg-transparent hover:opacity-70"
       >
         <XIcon />
       </Button>

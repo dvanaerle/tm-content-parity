@@ -16,6 +16,22 @@ import { siblingOf } from '../lib/language-blocks.mjs';
 import { pagesWithClasses } from '../lib/view.mjs';
 
 /**
+ * *on 1 page*, and *on 2 pages*.
+ *
+ * The plural was unconditional in both of the templates that count a search result, so a
+ * difference confined to a single page read *on 1 pages*. It is a function and not two
+ * inline conditionals because both ask the same question about the same number, and one
+ * of them would have been fixed alone.
+ *
+ * It stays in this file. The interface writes this conditional inline in a dozen other
+ * places and unifying all of them is a change of its own; what this closes is the one
+ * place where the plural was not conditional at all.
+ *
+ * @param {number} pages
+ */
+const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
+
+/**
  * What an editor gets for typing words: every finding in this store that holds them,
  * across every page, with the pages they are on (ticket 82).
  *
@@ -211,8 +227,8 @@ export default function Search({
               says what its own row says: how many pages. */}
           <strong className="font-medium">
             {result.repeats.length === 1
-              ? `1 difference on ${result.pages} pages`
-              : `${result.total} findings on ${result.pages} pages`}
+              ? `1 difference ${onPages(result.pages)}`
+              : `${result.total} findings ${onPages(result.pages)}`}
           </strong>
           <span className="text-muted-foreground">
             {result.repeats.length > 1 && ` in ${result.repeats.length} differences`}. From the

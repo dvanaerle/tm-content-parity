@@ -207,10 +207,18 @@ export function Locate({ href, side }) {
       href={href}
       target="_blank"
       rel="noreferrer"
+      // The name, and not only the `title`. An arrow is not a word, so a title was the
+      // whole of what this link said — and a title reaches neither a keyboard reader nor
+      // a touch one. It is the same rule `PageNoteMark` below states, and the title stays
+      // beside it as the pointer convenience ADR 0019 permits.
+      aria-label={`Open on ${side}, at this text`}
       title={`Open on ${side}, at this text`}
-      className="mr-2 text-xs text-muted-foreground no-underline hover:text-foreground"
+      // The glyph is a small target and the hit area is not: `inline-flex` with a floor of
+      // 24 pixels gives a finger something to land on without making the arrow bigger.
+      className="mr-2 inline-flex size-6 items-center justify-center align-middle text-xs text-muted-foreground no-underline hover:text-foreground"
     >
-      ↗
+      {/* Hidden from the name it now has, or a screen reader reads the arrow after it. */}
+      <span aria-hidden>↗</span>
     </a>
   );
 }
