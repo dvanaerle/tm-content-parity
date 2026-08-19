@@ -85,10 +85,11 @@ Over the 28 rendered album pages, 235 production photos and 131 new-site photos 
 nothing at all. That is the residue after both names and bytes have been tried, and it is
 real content difference rather than a naming artefact.
 
-## The open question this cannot settle: the re-curated album
+## The re-curated album: measured here, decided by the owner
 
-The ticket asks for the `tuinkamer` case to be recorded and not answered. **Recorded, and
-the measurement shrinks it rather than settling it.**
+The ticket asks for the `tuinkamer` case to be recorded and not answered. **Recorded, and the
+measurement shrinks it. The judgement it was waiting on was made on 2026-08-19: the check
+reports both directions.**
 
 | page | production | new site | pair by content | production unpaired | new unpaired |
 | --- | --- | --- | --- | --- | --- |
@@ -101,10 +102,15 @@ the measurement shrinks it rather than settling it.**
 
 `be` `tuinkamer` pairs 0 by filename and 18 by content, so it is not a wholly re-curated
 album — most of it is the same photographs renamed. What is left is a dozen production photos
-gone and eight new ones added. Whether that is a defect to repair or an editorial decision to
-accept is still a content judgement, and it still decides whether the check reports one
-direction or both. This measurement only says the judgement is about a dozen photos per album
-and not about thirty.
+gone and eight new ones added, and the measurement's contribution is that the judgement was
+about a dozen photos per album and never about thirty.
+
+**Both of those are reported.** Production is the reference and each difference from it is a
+defect on the new site, so a photo the new site has lost and a photo it has gained are both
+differences and neither is assumed to be an editor's choice. On `be` `tuinkamer` that is 20
+findings, not 12. This is what the images check already does with `image-missing` and
+`image-added`, so the content check inherits the behaviour rather than choosing it, and the
+re-curated album needs no case of its own.
 
 ## Two corrections to issue 03, found on the way
 
