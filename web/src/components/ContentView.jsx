@@ -10,7 +10,7 @@ import {
 } from './Annotations.jsx';
 import { locationUrl, unitLocation } from '../../../compare/locate.mjs';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
-import { DiffCells } from './Diff.jsx';
+import { DiffCells, DiffHeads } from './Diff.jsx';
 import { Marker, MarkerToggle } from './Marker.jsx';
 import { Empty, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
@@ -342,7 +342,9 @@ function Outline({ entries }) {
       aria-label="Headings on this page"
       className="max-h-64 w-full overflow-auto lg:sticky lg:top-4 lg:max-h-[80vh] lg:w-56 lg:shrink-0 lg:self-start"
     >
-      <h3 className="mb-1 text-xs tracking-wide text-muted-foreground uppercase">Headings</h3>
+      {/* Sentence case: this is a section heading and not a table's heading row, and ADR
+          0019 spends small capitals on the second only. */}
+      <h3 className="mb-1 text-xs font-semibold text-muted-foreground">Headings</h3>
       <ol className="space-y-0.5 text-sm">
         {entries.map((entry) => (
           <li key={entry.id} style={{ paddingLeft: `${(entry.level - 1) * 10}px` }}>
@@ -389,12 +391,13 @@ function Rows({ items, control, sides, landed, onToggleRun }) {
        columns keep the proportions they have on a desktop. */
     <Table className="min-w-3xl table-fixed">
       <TableHeader className="[&_th]:text-xs [&_th]:tracking-wide [&_th]:text-muted-foreground [&_th]:uppercase">
+        {/* *— source of truth* went with the pair moving into `DiffHeads`. It said what
+            `CONTEXT.md` already says of Production, in a head that had to undo its own
+            capitals with a `normal-case` span to fit it. */}
         <TableRow>
-          <TableHead className="w-56">Status</TableHead>
-          <TableHead>
-            Production <span className="normal-case opacity-70">— source of truth</span>
-          </TableHead>
-          <TableHead>New site</TableHead>
+          <DiffHeads>
+            <TableHead className="w-56">Status</TableHead>
+          </DiffHeads>
         </TableRow>
       </TableHeader>
       <TableBody>

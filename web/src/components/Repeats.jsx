@@ -3,8 +3,9 @@ import { barOf } from '../../../overrides/state.mjs';
 import { Detail, Occurrences, onePageTitle } from './Annotations.jsx';
 import BulkControl from './BulkControl.jsx';
 import { ClassPill } from './Chips.jsx';
-import { STATE } from './OverrideControl.jsx';
-import { Badge } from './ui/badge.jsx';
+import { Comparison } from './Diff.jsx';
+import { STATE, attributionTone } from './OverrideControl.jsx';
+import { Attribution } from './Attribution.jsx';
 import { Button } from './ui/button.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible.jsx';
@@ -517,11 +518,7 @@ function Row({ repeat, byFinding, link, searched }) {
               <MatchedFields fields={repeat.fields} />
             </span>
 
-            <span className="min-w-48 flex-1 break-words">
-              {repeat.prod ?? '—'}
-              <span className="mx-1 text-muted-foreground">→</span>
-              {repeat.new ?? '—'}
-            </span>
+            <Comparison prod={repeat.prod} new={repeat.new} className="min-w-48 flex-1" />
 
             <span className="shrink-0 text-right text-xs">
               {/* The page count is the size of the difference. There is no separate
@@ -714,7 +711,14 @@ const FIELD_LABEL = {
  */
 const FindingState = ({ finding }) =>
   finding && finding.state !== 'open' ? (
-    <Badge variant={null} data-wears="pill" data-tone={STATE[finding.state].tone}>
-      {STATE[finding.state].label}
-    </Badge>
+    /* The same attribution the ledger draws, and not a badge (ADR 0019). `fixed` and
+       `dismissed` are closed states the surrounding table already accounts for, and
+       *claimed fixed, still differs* names a person — a pill cannot hold a name, and the
+       name is the part an editor needs before overturning the claim. */
+    <Attribution
+      action={STATE[finding.state].label}
+      editor={finding.override.editor}
+      at={finding.override.at}
+      tone={attributionTone(finding.state)}
+    />
   ) : null;

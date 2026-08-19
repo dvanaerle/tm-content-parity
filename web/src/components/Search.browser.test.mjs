@@ -163,7 +163,7 @@ async function mount(props = {}) {
   return { cleared, rerender: render, unmount: () => act(() => root.unmount()) };
 }
 
-/** The amber strip, found by the one action only it carries. */
+/** The filter strip, found by the one action only it carries. */
 const strip = () =>
   [...document.querySelectorAll('[data-slot="alert"]')].find((element) =>
     element.textContent.includes('Clear filter'),
@@ -366,7 +366,7 @@ describe('a search over the language block (ticket 05)', () => {
 });
 
 describe('a search under the class pills', () => {
-  it('keeps the amber strip up, in the words it uses everywhere else', async () => {
+  it('keeps the filter strip up, in the words it uses everywhere else', async () => {
     // The defect this ticket names: the strip was behind a `!searching` guard, so an
     // editor who typed got a narrowed answer with nothing on screen saying it was
     // narrowed — and a narrowed list that looks whole is read as whole.
@@ -813,7 +813,7 @@ describe('the notes half, under a page scope', () => {
 /**
  * Ticket 104 part C. A page scope is a narrowing of what is on screen that moves no bar, no
  * denominator and no count, which is `CONTEXT.md`'s definition of a **filter** word for
- * word — so it says so in the amber strip, beside the classes and in one sentence with
+ * word — so it says so in the filter strip, beside the classes and in one sentence with
  * them. A strip that enumerates the small narrowings and omits the largest one is worse
  * than no strip.
  *
@@ -821,7 +821,7 @@ describe('the notes half, under a page scope', () => {
  * clearing does to the search box belong to the dashboard, which owns the box, and are
  * asked for there.
  */
-describe('the amber strip over a scoped search', () => {
+describe('the filter strip over a scoped search', () => {
   it('names the scope while it is on, with no pill pressed at all', async () => {
     // The strip used to need a pill to exist. A scope alone narrows the screen more than
     // any pill does, so it raises the strip on its own.

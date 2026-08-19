@@ -56,15 +56,24 @@ const acrossBlock = repeatsInStore([
   on('be', 'afhalen', finding('f2', 'oud', 'nieuw')),
 ])[0];
 
-const derived = (id, extra = {}) => ({
-  id,
-  state: 'open',
-  visibility: 'work',
-  class: 'copy',
-  anchorHeading: 'Afmetingen',
-  occurrences: 1,
-  ...extra,
-});
+const derived = (id, extra = {}) => {
+  const { state = 'open', ...rest } = extra;
+  return {
+    id,
+    state,
+    visibility: 'work',
+    class: 'copy',
+    anchorHeading: 'Afmetingen',
+    occurrences: 1,
+    // A decided finding carries the event that decided it, the way `derivePageState()`
+    // hands one over — the row draws the editor and the day, not the bare word.
+    override:
+      state === 'open'
+        ? null
+        : { action: state, editor: 'Danielle', at: '2026-08-14T12:00:00.000Z', note: null },
+    ...rest,
+  };
+};
 
 const byFinding = (overrides = {}) =>
   new Map(repeat.on.map((entry) => [entry.id, derived(entry.id, overrides[entry.id] ?? {})]));

@@ -1,4 +1,5 @@
 import { SearchIcon, XIcon } from 'lucide-react';
+import { BUCKET_LABEL, BUCKET_TONE } from '../lib/buckets.mjs';
 import { classInfo } from '../lib/classes.mjs';
 import { PRIORITIES } from '../../../shared/priorities.mjs';
 import { cn } from '../lib/utils.js';
@@ -28,22 +29,92 @@ import { severityTone } from '../lib/palette.mjs';
  */
 
 /**
- * The count row from the won prototype: a number in bold, its label beside it.
+ * A number and what it counts: the number in bold, its label beside it.
+ *
  * Ticket 09 requires absolute counts everywhere, because the denominator moves: a
  * corrected difference leaves the snapshot, and a class switched off leaves the count.
+ *
+ * **Text, and no longer a filled chip** (ADR 0019). A quantity is not a category, so it is
+ * not what a badge is for — and a row of eight filled chips is the wall this ticket set
+ * out to remove, in which the one an editor needed was no louder than the seven they did
+ * not. The tone survives as ink where the tone shape has one; `neutral` prints none, which
+ * is what carrying no judgement looks like.
  */
-export function Chip({ value, label, tone = 'neutral', title, ...props }) {
+export function Count({ value, label, tone = 'neutral', title, className = '', ...props }) {
   return (
-    <Badge
-      variant={null}
-      data-wears="pill"
-      data-tone={tone}
-      className="h-auto gap-1.5 px-2 py-1"
+    <span
+      className={cn('flex items-baseline gap-1.5 text-sm', className)}
       title={title}
       {...props}
     >
-      <strong className="font-semibold">{value}</strong>
-      <span>{label}</span>
+      <Reading value={value} label={label} tone={tone} />
+    </span>
+  );
+}
+
+/**
+ * The number and its word, in the one order both strips read them in.
+ *
+ * It is a component and not two lines repeated because the badge below draws the same pair
+ * and the two must not drift: a strip reading *2 Open* beside a badge reading *Needs
+ * attention 1* is the one thing `BucketCount` exists to prevent.
+ *
+ * The space between the two is **written** and not left to the flex gap. A gap draws a
+ * space and does not put one in the text, so a screen reader and a test both read *2Open*.
+ */
+function Reading({ value, label, tone = null }) {
+  return (
+    <>
+      <strong
+        data-wears={tone ? 'ink' : null}
+        data-tone={tone}
+        className="font-semibold tabular-nums"
+      >
+        {value}
+      </strong>{' '}
+      <span className={tone ? '' : 'text-muted-foreground'}>{label}</span>
+    </>
+  );
+}
+
+/**
+ * One of the three buckets, wherever they are read together.
+ *
+ * **Only the middle one is a badge**, and that is ADR 0019's list rather than this
+ * component's taste: *Needs attention* is the one an editor scans for, and `Open` and
+ * `Closed` are already said by the strip they sit in — a badge on each was a second copy
+ * of the surrounding structure. Written once because the dashboard and the ledger both
+ * draw all three, and two copies of *which one is loud* is one copy too many.
+ *
+ * @param {object} props
+ * @param {import('../../../overrides/state.mjs').Bucket} props.bucket
+ * @param {number} props.value
+ * @param {string} [props.title]
+ * @param {string} [props.className]
+ */
+export function BucketCount({ bucket, value, title, className = '' }) {
+  if (bucket !== 'needs-attention') {
+    return (
+      <Count
+        value={value}
+        label={BUCKET_LABEL[bucket]}
+        tone={BUCKET_TONE[bucket]}
+        title={title}
+        data-bucket={bucket}
+      />
+    );
+  }
+  return (
+    <Badge
+      data-bucket={bucket}
+      data-badge="needs-attention"
+      variant={null}
+      data-wears="pill"
+      data-tone={BUCKET_TONE[bucket]}
+      className={cn('h-auto gap-1.5 px-2 py-1 tabular-nums', className)}
+      title={title}
+    >
+      <strong className="font-semibold">{value}</strong> <span>{BUCKET_LABEL[bucket]}</span>
     </Badge>
   );
 }
@@ -59,6 +130,7 @@ export function ClassPill({ class: cls }) {
   const info = classInfo(cls);
   return (
     <Badge
+      data-badge="class"
       variant={null}
       data-wears="pill"
       data-tone={info.tone}
@@ -141,18 +213,31 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
  */
 const PRIORITY_TONE = { high: 'caution', medium: 'info', low: 'neutral' };
 
+/**
+ * The three, in sentence case (ADR 0019).
+ *
+ * A map and not a `capitalise()` call, for the reason the class labels are a map: what a
+ * word looks like on screen is a decision somebody made, and a function would let the next
+ * word arrive without one being made.
+ *
+ * The lower-case words survive in the filter strip's sentence, where *priority high* is
+ * mid-sentence and a capital would be the shout this pill just stopped.
+ */
+const PRIORITY_LABEL = { high: 'High', medium: 'Medium', low: 'Low' };
+
 /** One page priority, worn wherever the page is named. */
 export function PriorityPill({ priority, className = '' }) {
   if (!priority) return null;
   return (
     <Badge
+      data-badge="priority"
       variant={null}
       data-wears="pill"
       data-tone={PRIORITY_TONE[priority]}
-      className={cn('h-auto px-1.5 py-0.5 text-xs tracking-wide uppercase', className)}
+      className={cn('h-auto px-1.5 py-0.5 text-xs', className)}
       title={`An editor set the priority of this page to ${priority}.`}
     >
-      {priority}
+      {PRIORITY_LABEL[priority]}
     </Badge>
   );
 }
@@ -222,17 +307,23 @@ export function PriorityFilterPills({ selected, onToggle, counts = {} }) {
  * to get it again, and a chip reading `overkap` over a box reading `/overkap` is one thing
  * spelled two ways.
  *
- * `caution` is the palette tone of the amber strip that names it, and the pairing is the
- * point: the chip is the control and the strip is the sentence about it.
+ * **Neutral, ringed in the primary, and not a badge** (ADR 0019). It was amber to pair with
+ * the amber strip that names it, and both ends of that pairing move: amber is left to the
+ * three states that are genuinely wrong, and a narrowing an editor chose is not one of them.
+ * The ring is the same `ring-primary` a pressed class pill wears, which is the pairing this
+ * strip has now — one colour for *a filter is on*, on every control that turns one on.
+ *
+ * It is a `span` and not a `Badge` because it is a **control** and not a value to be
+ * scanned: it holds a button, it is always the same one word, and ADR 0019's four badges
+ * are the four things an editor reads off a list. Its shape is the pill's, spelled out.
  */
 export function ScopeChip({ scope, onClear }) {
   return (
-    <Badge
+    <span
       data-scope-chip={scope}
-      variant={null}
       data-wears="pill"
-      data-tone="caution"
-      className="h-auto gap-1 py-0.5 pr-0.5 pl-1.5 text-xs"
+      data-tone="neutral"
+      className="inline-flex h-auto w-fit shrink-0 items-center gap-1 rounded-4xl py-0.5 pr-0.5 pl-1.5 text-xs font-medium ring-2 ring-primary"
       // The slash is on here too. The chip draws `/overkap` and a tooltip explaining
       // `overkap` is the one thing spelled two ways this component exists to avoid.
       title={`The search is narrowed to /${scope} — the pages whose key holds ${scope}. The counts above do not change.`}
@@ -251,7 +342,7 @@ export function ScopeChip({ scope, onClear }) {
       >
         <XIcon />
       </Button>
-    </Badge>
+    </span>
   );
 }
 
@@ -295,28 +386,35 @@ export function ScopeRowButton({ page, onScope, className = '' }) {
 
 /**
  * A filter says so for as long as it is on. A narrowed view that looks like the whole
- * thing is read as the whole thing, and the editor stops early — so the strip is amber
- * and it carries the one action that clears it.
+ * thing is read as the whole thing, and the editor stops early — so the strip stays up
+ * for as long as the filter is, and it carries the one action that clears it.
+ *
+ * **Neutral, and the only colour in it is the primary** (ADR 0019). It was amber, which
+ * spent the warning colour on a normal state an editor chose — so by the time something
+ * was genuinely wrong, amber had stopped meaning it. Amber is now left to the three that
+ * are: **Needs attention**, a failed **re-check**, and **read-only**.
+ *
+ * The primary on *Clear filter* is the same one a pressed class pill and the scope chip
+ * wear. The strip and the controls that raise it say one thing in one colour, which is
+ * what the amber was reaching for and could not do while it also meant a failure.
+ *
+ * The sentence does not change. `CONTEXT.md` requires all three kinds of narrowing in one
+ * sentence under one *Clear filter*, because what an editor must never misread is an empty
+ * list — and that was always the sentence's job rather than the colour's.
  */
 export function FilterBanner({ onClear, className = '', children }) {
   return (
-    /* `Alert` for the shape and the `caution` tone worn as a banner. Alert's
-       `destructive` variant is refused for the reason above: a live filter is a status,
-       and status never wears a diff hue. `border-current` on the button keeps the outline
-       in the banner's own ink rather than the interface's border grey. */
+    /* `Alert` for the shape and the `neutral` tone worn as a banner. Alert's `destructive`
+       variant is refused: a live filter is a status, and `--destructive` is the amber this
+       strip has just given up. */
     <Alert
       variant={null}
       data-wears="banner"
-      data-tone="caution"
+      data-tone="neutral"
       className={cn('flex flex-wrap items-center gap-2 text-sm', className)}
     >
       {children}
-      <Button
-        variant="outline"
-        size="xs"
-        onClick={onClear}
-        className="border-current bg-transparent"
-      >
+      <Button variant="outline" size="xs" onClick={onClear} className="border-primary text-primary">
         Clear filter
       </Button>
     </Alert>

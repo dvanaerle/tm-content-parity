@@ -8,14 +8,12 @@ import {
   Section,
   onePageTitle,
 } from './Annotations.jsx';
-import { ClassPill } from './Chips.jsx';
+import { BucketCount, ClassPill } from './Chips.jsx';
 import ContentView from './ContentView.jsx';
-import { DiffCells } from './Diff.jsx';
+import { DiffCells, DiffHeads } from './Diff.jsx';
 import OverrideControl from './OverrideControl.jsx';
 import SiblingView from './SiblingView.jsx';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert.jsx';
-import { Badge } from './ui/badge.jsx';
-import { Card, CardContent } from './ui/card.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Empty as EmptyState, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
 import { Label } from './ui/label.jsx';
@@ -33,7 +31,7 @@ import { findingInSearch } from '../lib/page-url.mjs';
 import { CHROME } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
 import { bucketOf, bucketsOf } from '../../../overrides/state.mjs';
-import { BUCKETS, BUCKET_LABEL, BUCKET_TONE } from '../lib/buckets.mjs';
+import { BUCKETS, BUCKET_LABEL } from '../lib/buckets.mjs';
 
 /**
  * The column heads of both tables here and of the content view are the same small
@@ -258,20 +256,15 @@ export default function Ledger({
       )}
 
       {/*
-        `py-0 gap-0` because this Card's first child is a tab strip that has to sit
-        flush against the top edge and draw its own bottom rule. Card's default vertical
-        padding would float the strip inside the card, which is the one place the strip
-        must not be.
-
-        `overflow-visible` is not cosmetic. Card ships `overflow-hidden` to clip an image
-        to its corners, and an `overflow` other than `visible` on any ancestor silently
-        stops `position: sticky` working in the descendant. The Text panel's outline
-        nav is `lg:sticky lg:top-4` and it navigates a table up to 288 rows long, so
-        clipping this card would have cost the one piece of furniture that makes a long
-        page usable — and cost it quietly, with nothing on screen to show for it.
+        No `Card` (ADR 0019). A card says *this is a thing*, and a thing has an outside;
+        a tab strip over the panel it switches is one control and its own output, which a
+        reader already reads as one from the strip. What the card carried was a ring and a
+        radius, and two of its three classes existed only to undo its own defaults — the
+        vertical padding that floated the strip off the top edge it has to sit flush
+        against, and the `overflow-hidden` that silently stopped the Text panel's
+        `lg:sticky` outline nav from sticking. That trap goes with the box.
       */}
-      <Card className="gap-0 overflow-visible py-0">
-        {/*
+      {/*
           The tab strip is shadcn on Base UI since ticket 74, and it is the only
           thing in this component the library touches. What it buys is the roving
           tabindex: one Tab stop reaches the strip, the arrow keys move between the
@@ -293,9 +286,9 @@ export default function Ledger({
           declared on a child to win — which is the concrete shape of "where a shadcn
           variable and a palette token disagree, the palette wins".
         */}
-        <Tabs value={tab} onValueChange={chooseTab} className="gap-0">
-          <div className="flex flex-wrap items-center gap-1 border-b px-2">
-            {/*
+      <Tabs value={tab} onValueChange={chooseTab} className="gap-0">
+        <div className="flex flex-wrap items-center gap-1 border-b px-2">
+          {/*
               `group-data-horizontal/tabs:h-auto` and not a plain `h-auto`, and this is
               the fourth instance of the trap in the ADR: `tabsListVariants` writes the
               height as `group-data-horizontal/tabs:h-8`, `tailwind-merge` does not dedupe
@@ -315,83 +308,83 @@ export default function Ledger({
               Matching the prefix lets the two collapse to one class, and the list is
               finally as tall as what it contains.
             */}
-            <TabsList
-              variant="line"
-              className="flex-wrap gap-1 p-0 group-data-horizontal/tabs:h-auto"
-            >
-              {tabs.map((name) => (
-                <TabsTrigger
-                  key={name}
-                  value={name}
-                  className={`h-auto flex-none gap-2 rounded-none px-3 py-2 text-sm after:hidden ${
-                    name === tab
-                      ? `-mb-px border-x-0 border-t-0 border-b-2 font-semibold ${CHROME.tabActive}`
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  <span className={name === tab ? CHROME.tabActive : undefined}>{name}</span>
-                  {badges[name] !== undefined && (
-                    <Badge variant="neutral" className="tabular-nums">
-                      {badges[name]}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+          <TabsList
+            variant="line"
+            className="flex-wrap gap-1 p-0 group-data-horizontal/tabs:h-auto"
+          >
+            {tabs.map((name) => (
+              <TabsTrigger
+                key={name}
+                value={name}
+                className={`h-auto flex-none gap-2 rounded-none px-3 py-2 text-sm after:hidden ${
+                  name === tab
+                    ? `-mb-px border-x-0 border-t-0 border-b-2 font-semibold ${CHROME.tabActive}`
+                    : 'text-muted-foreground'
+                }`}
+              >
+                <span className={name === tab ? CHROME.tabActive : undefined}>{name}</span>
+                {/* A count beside the tab name, as text: a quantity is not a category
+                    (ADR 0019), and a filled chip on every tab made the four of them one
+                    block of colour with no way to tell which held the work. */}
+                {badges[name] !== undefined && (
+                  <span className="text-muted-foreground tabular-nums">{badges[name]}</span>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-            {/* Base UI's Checkbox is not an `<input>`, so the state arrives as the
+          {/* Base UI's Checkbox is not an `<input>`, so the state arrives as the
                 value rather than as an event: `onCheckedChange` and not
                 `event.target.checked`. */}
-            <Label className="ml-auto py-2 font-normal text-muted-foreground">
-              <Checkbox checked={diagnostics} onCheckedChange={chooseDiagnostics} />
-              Show diagnostics ({diagnosticCount})
-            </Label>
-          </div>
+          <Label className="ml-auto py-2 font-normal text-muted-foreground">
+            <Checkbox checked={diagnostics} onCheckedChange={chooseDiagnostics} />
+            Show diagnostics (<span className="tabular-nums">{diagnosticCount}</span>)
+          </Label>
+        </div>
 
-          {/* The padding is on the wrapper and not on each panel: exactly one panel
+        {/* The padding is on the wrapper and not on each panel: exactly one panel
               is mounted at a time, so four copies of `p-4` would be four chances to
               let one tab sit differently from the other three. */}
-          <CardContent className="p-4">
-            <TabsContent value="Text">
-              <ContentView
-                report={report}
-                findings={derived}
-                showDiagnostics={diagnostics}
-                control={control}
-                landing={landing}
-              />
-            </TabsContent>
-            <TabsContent value="Links">
-              <FindingTable
-                findings={findings}
-                check="links"
-                control={control}
-                sides={report.sides}
-                landing={landing}
-              />
-            </TabsContent>
-            <TabsContent value="Images">
-              <FindingTable
-                findings={findings}
-                check="images"
-                control={control}
-                sides={report.sides}
-                landing={landing}
-              />
-            </TabsContent>
-            <TabsContent value="Meta">
-              <MetaTable production={production} next={next} />
-            </TabsContent>
-            {/* Mounted only while it is the selected tab, which is what makes the
+        <div className="p-4">
+          <TabsContent value="Text">
+            <ContentView
+              report={report}
+              findings={derived}
+              showDiagnostics={diagnostics}
+              control={control}
+              landing={landing}
+            />
+          </TabsContent>
+          <TabsContent value="Links">
+            <FindingTable
+              findings={findings}
+              check="links"
+              control={control}
+              sides={report.sides}
+              landing={landing}
+            />
+          </TabsContent>
+          <TabsContent value="Images">
+            <FindingTable
+              findings={findings}
+              check="images"
+              control={control}
+              sides={report.sides}
+              landing={landing}
+            />
+          </TabsContent>
+          <TabsContent value="Meta">
+            <MetaTable production={production} next={next} />
+          </TabsContent>
+          {/* Mounted only while it is the selected tab, which is what makes the
                 alignment inside it cost nothing to a reader who never opens it. */}
-            {sibling && (
-              <TabsContent value={SIBLING_TAB}>
-                <SiblingView store={report.store} here={production.elements} sibling={sibling} />
-              </TabsContent>
-            )}
-          </CardContent>
-        </Tabs>
-      </Card>
+          {sibling && (
+            <TabsContent value={SIBLING_TAB}>
+              <SiblingView store={report.store} here={production.elements} sibling={sibling} />
+            </TabsContent>
+          )}
+        </div>
+      </Tabs>
     </>
   );
 }
@@ -405,21 +398,15 @@ export default function Ledger({
  *
  * `data-bucket` is what the browser test reads the strip back through. It is a stable
  * name for a thing the interface already draws, which is the point: the assertion then
- * does not depend on the class names or the element the badge happens to be.
+ * does not depend on the class names or the element each reading happens to be.
+ *
+ * Which of the three is loud is `BucketCount`'s and not this strip's, so the dashboard and
+ * the ledger cannot come to disagree about it.
  */
 const BucketStrip = ({ buckets }) => (
-  <section aria-label="Findings by bucket" className="mb-3 flex flex-wrap items-center gap-2">
+  <section aria-label="Findings by bucket" className="mb-3 flex flex-wrap items-center gap-3">
     {BUCKETS.map((bucket) => (
-      <Badge
-        key={bucket}
-        variant={null}
-        data-bucket={bucket}
-        data-wears="pill"
-        data-tone={BUCKET_TONE[bucket]}
-        className="tabular-nums"
-      >
-        {BUCKET_LABEL[bucket]} {buckets[bucket]}
-      </Badge>
+      <BucketCount key={bucket} bucket={bucket} value={buckets[bucket]} />
     ))}
   </section>
 );
@@ -482,9 +469,9 @@ function FindingTable({ findings, check, control, sides, landing }) {
     <Table className="min-w-3xl table-fixed">
       <TableHeader className={HEAD_TONE}>
         <TableRow>
-          <TableHead className="w-56">Class</TableHead>
-          <TableHead>Production</TableHead>
-          <TableHead>New site</TableHead>
+          <DiffHeads>
+            <TableHead className="w-56">Class</TableHead>
+          </DiffHeads>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -516,7 +503,8 @@ function FindingTable({ findings, check, control, sides, landing }) {
                 {/* The count is in the label, so the section says how much it is holding
                     while it is shut. A disclosure that only says "Closed" hides an amount
                     as well as a list. */}
-                {BUCKET_LABEL.closed} ({closed.length}) {showClosed ? '▾' : '▸'}
+                {BUCKET_LABEL.closed} (<span className="tabular-nums">{closed.length}</span>){' '}
+                {showClosed ? '▾' : '▸'}
               </button>
             </TableCell>
           </TableRow>
@@ -600,6 +588,17 @@ function MetaTable({ production, next }) {
 
   return (
     <Table className="min-w-2xl table-fixed">
+      {/* This panel drew its two cells with no heading row at all, so the only thing saying
+          which column was production was the order. A comparison names both of its sides
+          (ADR 0019), and the leading column here is a row header rather than a column, so
+          the head above it is empty. */}
+      <TableHeader className={HEAD_TONE}>
+        <TableRow>
+          <DiffHeads>
+            <TableHead className="w-40" />
+          </DiffHeads>
+        </TableRow>
+      </TableHeader>
       <TableBody>
         {rows.map((row) => (
           <TableRow key={row.field} className="align-top">

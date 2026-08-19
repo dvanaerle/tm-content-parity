@@ -4,7 +4,6 @@ import { classInfo } from '../lib/classes.mjs';
 import { storeHref } from '../lib/page-url.mjs';
 import { searchForRepeat } from '../lib/screen-url.mjs';
 import { Attribution } from './Attribution.jsx';
-import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Input } from './ui/input.jsx';
@@ -52,15 +51,33 @@ export const STATE = {
   contradicted: { label: 'claimed fixed, still differs', tone: 'caution' },
 };
 
+/**
+ * How loud an attribution of a decision is drawn, wherever one is drawn.
+ *
+ * `null` for every state but one. The contradiction is the only decision the interface
+ * reports **on**, because it names a person whose claim the next reader is about to
+ * overturn (ADR 0019); handing over each state's own tone instead would put a green
+ * sentence under every closed finding and take that emphasis straight back.
+ *
+ * It is a function here rather than the condition written at each of the two call sites,
+ * so the ledger and the repeat list cannot come to disagree about which decision is loud.
+ * The tone is **read from `STATE`** and not spelled again, because `palette.test.mjs`
+ * sweeps the source for tone words and that map is where it already finds this one.
+ *
+ * @param {string} state
+ * @returns {import('../lib/palette.mjs').Tone | null}
+ */
+export const attributionTone = (state) =>
+  state === 'contradicted' ? STATE.contradicted.tone : null;
+
 export default function OverrideControl({ finding, observationId, append, canWrite }) {
   /** @type {['dismiss' | null, Function]} */
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
   const { state, override } = finding;
 
-  // Named here rather than tested inside the attribution below, so the tone handed over is
-  // a tone and nothing else: `palette.test.mjs` sweeps the source for the words written
-  // into a `data-tone`, and a state name riding along in the condition reads as a ninth.
+  // Whether the *controls* below are offered, which is a different question from how the
+  // attribution is drawn: a contradicted claim can still be dismissed.
   const contradicted = state === 'contradicted';
 
   const act = (partial) => append({ scope: 'finding', findingId: finding.id, ...partial });
@@ -112,20 +129,18 @@ export default function OverrideControl({ finding, observationId, append, canWri
         }
       />
 
-      {/* An open finding has nothing to attribute: nobody has decided it. */}
+      {/* An open finding has nothing to attribute: nobody has decided it. It is a word and
+          not a badge (ADR 0019) — the bucket it sits under already says *open*, so the
+          badge was a second copy of the surrounding structure. */}
       {state === 'open' ? (
-        <Badge variant={null} data-wears="pill" data-tone={STATE[state].tone}>
-          {STATE[state].label}
-        </Badge>
+        <span className="text-xs text-muted-foreground">{STATE[state].label}</span>
       ) : (
         <Attribution
           action={STATE[state].label}
           editor={override.editor}
           at={override.at}
           reason={override.note}
-          // The contradiction is the one state that stays loud: it names a person whose
-          // claim the next reader is about to overturn (ADR 0019).
-          tone={contradicted ? 'caution' : null}
+          tone={attributionTone(state)}
         />
       )}
 

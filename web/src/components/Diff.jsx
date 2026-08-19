@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { isUncompared, spansFor, wordDiff } from '../../../compare/worddiff.mjs';
 import { cn } from '../lib/utils.js';
 import { Button } from './ui/button.jsx';
-import { TableCell } from './ui/table.jsx';
+import { TableCell, TableHead } from './ui/table.jsx';
 
 /**
  * One diff, four surfaces: content rows, link findings, image findings and the
@@ -40,6 +40,101 @@ import { TableCell } from './ui/table.jsx';
  * **`mono` is for a machine string, and not for prose.** A url, an image path and a
  * `<head>` value are set smaller than Dutch prose so they sit apart from a paragraph.
  */
+
+/**
+ * The two sides, named once (ADR 0019).
+ *
+ * `CONTEXT.md` fixes *Production* and *New site* as the **only** pair of words for the two
+ * sides, in sentence case, everywhere — so they are written here and read by every surface
+ * that draws a comparison, rather than typed into each table head. Four copies of a pair of
+ * words is four chances for one of them to say *New* or *Prod*.
+ *
+ * The keys are the ones the data uses (`report.sides`, `DiffCells`' own props), so a caller
+ * holding one never has to translate.
+ */
+const SIDES = { production: 'Production', new: 'New site' };
+
+/**
+ * The two column heads a table drawing `DiffCells` puts above them.
+ *
+ * This is where the contract lives for the table form: a caller supplies the row header its
+ * own first column needs and gets the pair for the other two, so a table cannot draw a
+ * comparison with one side labelled or with neither.
+ *
+ * @param {object} props
+ * @param {import('react').ReactNode} [props.children] The head of the caller's own leading
+ *   column, where it has one. The meta panel's is a row header and has none.
+ */
+export function DiffHeads({ children = null }) {
+  return (
+    <>
+      {children}
+      <TableHead>{SIDES.production}</TableHead>
+      <TableHead>{SIDES.new}</TableHead>
+    </>
+  );
+}
+
+/**
+ * A comparison outside a table: the same two labelled sides, stacked or side by side.
+ *
+ * It exists because two surfaces drew a comparison as `production → new site` — a repeat
+ * row and the floating bulk bar — and **the arrow is not a style choice**. `CONTEXT.md`
+ * retires *Changed* because the tool cannot know that one text became another, and an arrow
+ * asserts exactly that. Neither surface labelled its sides either, so a reader had to know
+ * by convention which half of the line was production.
+ *
+ * **A container size query and not a viewport breakpoint** (ADR 0015 permits the size
+ * query and refuses the style query; they share a syntax and not a Baseline row). What
+ * decides whether the two sides fit beside each other is the width of the box this is *in*
+ * — a floating bar 20rem wide on a 27-inch screen, or a full-width row — and a viewport
+ * breakpoint would stack the wide one and crush the narrow one. So the same component
+ * stacks inside a narrow group and sits side by side in the content view.
+ *
+ * Both sides wrap: Dutch paragraphs, German compound words, urls and filenames run long,
+ * and **nothing here truncates**, so no compared content is permanently hidden.
+ *
+ * @param {object} props
+ * @param {string | null} props.prod  Production's text.
+ * @param {string | null} props.new   The new site's text.
+ * @param {string} [props.className]
+ */
+export function Comparison({ prod, new: next, className = '' }) {
+  // **Spans and not divs, all the way down.** Both callers put this inside phrasing
+  // content — a `CollapsibleTrigger`, which is a `<button>`, and the bulk bar's `<p>` — and
+  // a `<div>` in either is invalid HTML the parser repairs by closing the ancestor early.
+  // These islands are server-rendered and hydrated (`client:load`), so that repair happens
+  // to the shipped markup and React then hydrates against a tree it did not write. Grid and
+  // block are asked for by class, which a span takes as readily as a div.
+  return (
+    <span className={cn('@container block', className)}>
+      <span className="grid gap-x-4 gap-y-1 @md:grid-cols-2">
+        <Side side="production" value={prod} />
+        <Side side="new" value={next} />
+      </span>
+    </span>
+  );
+}
+
+/**
+ * `data-side` is a stable name for a thing the interface already draws, in the manner of
+ * `data-bucket`: the test then reads the label back without depending on the element or on
+ * the class names it wears.
+ */
+function Side({ side, value }) {
+  return (
+    <span className="block min-w-0">
+      <span data-side={side} className="block text-xs text-muted-foreground">
+        {SIDES[side]}
+      </span>
+      {value === null || value === '' ? (
+        <span className="text-sm text-muted-foreground italic">not present</span>
+      ) : (
+        <span className="block text-sm break-words">{value}</span>
+      )}
+    </span>
+  );
+}
 
 /**
  * @param {object} props

@@ -1,5 +1,4 @@
 import { Attribution } from './Attribution.jsx';
-import { Badge } from './ui/badge.jsx';
 import { day } from '../lib/dates.mjs';
 import { locationUrl } from '../../../compare/locate.mjs';
 
@@ -82,21 +81,25 @@ export const Section = ({ anchorHeading, locations = null, sides = null }) => {
 };
 
 /**
- * One rename repeated six times is one finding, and the tick acts on all six. The
- * badge is on every one of those rows, so an editor who ticks the first and watches
- * the other five tick with it learns the rule from the interface (ticket 36).
+ * One rename repeated six times is one finding, and the tick acts on all six. The mark
+ * is on every one of those rows, so an editor who ticks the first and watches the other
+ * five tick with it learns the rule from the interface (ticket 36).
  *
  * It takes the count and the sentence, not the finding, because ticket 81 gives it a
  * second caller that counts a different thing: a repeat sums the occurrences over the
  * pages it is on. The mark is the same mark and the two sentences are not the same
  * sentence, and confusing the two counts is that ticket's named trap — so the caller
  * that knows which count it holds is the caller that writes the words.
+ *
+ * **Text, and no longer a badge** (ADR 0019). `×3` is a quantity and not a category, and
+ * this was the last badge left on the primitive's `default` variant — a solid brand-green
+ * ground, which made a repeat count the loudest thing on a row about something else.
  */
 export const Occurrences = ({ count, title }) =>
   count > 1 ? (
-    <Badge className="ml-2" title={title}>
+    <span className="ml-2 text-xs text-muted-foreground tabular-nums" title={title}>
       ×{count}
-    </Badge>
+    </span>
   ) : null;
 
 /**

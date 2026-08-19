@@ -175,10 +175,13 @@ describe('the three buckets on the ledger', () => {
 
     // The words are the ones `CONTEXT.md` defines, and the third is Closed — never the
     // retired "Resolved". A contradicted claim is the whole of Needs attention.
+    //
+    // The count leads, which is the dashboard strip's order: the two are one component
+    // since ADR 0019 took Open and Closed out of badges, and one of them had to give.
     expect(strip()).toEqual({
-      open: 'Open 2',
-      'needs-attention': 'Needs attention 1',
-      closed: 'Closed 1',
+      open: '2 Open',
+      'needs-attention': '1 Needs attention',
+      closed: '1 Closed',
     });
 
     unmount();

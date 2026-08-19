@@ -1,7 +1,7 @@
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
-import { DiffCells } from './Diff.jsx';
+import { Comparison, DiffCells } from './Diff.jsx';
 
 /**
  * The diff's two layers, as tones (ticket 132).
@@ -26,26 +26,28 @@ afterEach(() => {
   for (const undo of teardown.splice(0)) undo();
 });
 
-/** `DiffCells` returns two `<td>`, so it needs a row to be legal in. */
-function mount(props) {
+/** Renders one element into a host of its own and hands the host back. */
+function render(element) {
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
-  act(() =>
-    root.render(
-      createElement(
-        'table',
-        null,
-        createElement('tbody', null, createElement('tr', null, createElement(DiffCells, props))),
-      ),
-    ),
-  );
+  act(() => root.render(element));
   teardown.push(() => {
     act(() => root.unmount());
     host.remove();
   });
   return host;
 }
+
+/** `DiffCells` returns two `<td>`, so it needs a row to be legal in. */
+const mount = (props) =>
+  render(
+    createElement(
+      'table',
+      null,
+      createElement('tbody', null, createElement('tr', null, createElement(DiffCells, props))),
+    ),
+  );
 
 /** Every element in the document that has asked the stylesheet for a shape. */
 const worn = (host) =>
@@ -132,5 +134,47 @@ describe('the two tones a diff may carry', () => {
       expect(['cell', 'word'], `${wears}/${tone}`).toContain(wears);
       expect(['lost', 'added'], `${wears}/${tone}`).toContain(tone);
     }
+  });
+});
+
+/**
+ * The contract every surface that draws a comparison inherits (ADR 0019, ticket 02).
+ *
+ * The words are asserted here and not at each surface on purpose: `SIDES` is the one place
+ * they are written, so a test per surface would prove only that four files import the same
+ * constant. What is worth pinning is that the pair reaches the screen, and that the arrow
+ * the two flow surfaces used instead does not come back.
+ */
+describe('a comparison names its two sides', () => {
+  /** `Comparison` is ordinary flow content and needs no table around it. */
+  const flow = (props) => render(createElement(Comparison, props));
+
+  it('labels production and the new site, in the words CONTEXT.md fixes', () => {
+    const host = flow({ prod: 'Verkrijgbaar in drie kleuren', new: 'Beschikbare kleuren' });
+    expect([...host.querySelectorAll('[data-side]')].map((one) => one.textContent)).toEqual([
+      'Production',
+      'New site',
+    ]);
+  });
+
+  /**
+   * `CONTEXT.md` retires *Changed* because the tool cannot know that one text became
+   * another, and an arrow asserts exactly that. The caret and the word *to* are the same
+   * claim in another glyph, so all three are refused together.
+   */
+  it('joins them with no arrow, in any of its states', () => {
+    const drawn = [
+      { prod: 'Oud', new: 'Nieuw' },
+      { prod: 'Alleen op productie', new: null },
+      { prod: null, new: 'Alleen op de nieuwe site' },
+    ].map((state) => flow(state).textContent);
+
+    for (const text of drawn) {
+      expect(text, text).not.toMatch(/[→⟶➞>]|\bto\b/);
+    }
+  });
+
+  it('says which side is absent, rather than drawing a dash for it', () => {
+    expect(flow({ prod: 'Alleen op productie', new: null }).textContent).toContain('not present');
   });
 });

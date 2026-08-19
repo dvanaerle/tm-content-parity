@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
+import { Comparison } from './Diff.jsx';
 import PressReport from './PressReport.jsx';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
 import { crossesBlock } from '../lib/view.mjs';
@@ -251,7 +252,7 @@ export default function BulkControl({
 
       {/* One region and never two (ticket 139): the run's progress and the report of how it
           ended are two readings of the same press, and a screen reader given a live region
-          apiece would hear the press announce itself twice. The amber strip is not this
+          apiece would hear the press announce itself twice. The filter strip is not this
           either — it enumerates what narrows the list, and a press narrows nothing. */}
       <div role="status" aria-live="polite" data-slot="bulk-progress">
         {running ? (
@@ -366,10 +367,11 @@ const OnOneDifference = ({ repeat }) => (
     <strong className="font-medium text-foreground tabular-nums">
       of {repeat.on.length} {repeat.on.length === 1 ? 'page' : 'pages'}
     </strong>{' '}
-    selected on <ClassWord class={repeat.class} />{' '}
-    <span className="text-foreground">
-      {repeat.prod ?? '—'} → {repeat.new ?? '—'}
-    </span>
+    selected on <ClassWord class={repeat.class} />
+    {/* The same two labelled sides the row above draws, and no arrow (ADR 0019). The bar is
+        the narrowest place a comparison appears, which is what the container query is for:
+        it stacks here and sits side by side in the content view, off one component. */}
+    <Comparison prod={repeat.prod} new={repeat.new} className="mt-1 text-foreground" />
   </span>
 );
 

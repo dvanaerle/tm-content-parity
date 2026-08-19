@@ -147,6 +147,19 @@ every icon-only control. The rules that need taste are enforced by a reader.
 - **The badge list is a closed list, and it lives here.** A fifth badge is an amendment to
   this file, in the manner of ADR 0015's exception list. That is the cost that stops the
   count from drifting back up.
+
+  Built in ticket 02, and the mechanism is worth one sentence because the list is only as
+  closed as the thing checking it. Every badge carries a **`data-badge`** naming which of
+  the four it is, and `web/src/interface-weight.test.mjs` asserts that every `Badge` has
+  one and that the four names are exactly these four. A sweep could always find `<Badge`;
+  what it could not do is tell what a badge was a badge *of*, so the element says so — the
+  way `data-tone`, `data-wears` and `data-bucket` already have the interface publish a
+  stable name for something it draws.
+
+  One consequence that reads as a fifth badge and is not: the **page scope chip** stopped
+  being a `Badge` rather than joining the list. The four are values an editor scans a list
+  for. The scope chip is a **control** — it holds a clear button, it is always the same one
+  word, and it is on screen only while the reader themselves put it there.
 - **`CONTEXT.md` does not gain these rules.** It is a glossary and nothing else. The language
   rules the audit raised did go there — the two sides are one pair of words in sentence case,
   a class has a label, a *Clear* says what disappears — because those are vocabulary. Cards,

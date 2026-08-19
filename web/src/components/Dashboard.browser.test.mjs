@@ -188,7 +188,7 @@ describe('a scope over a one-sided page', () => {
 
 /**
  * Ticket 104 part C. A page scope stops being invisible punctuation inside a text box and
- * becomes a chip beside the class pills, named in the amber strip like every other
+ * becomes a chip beside the class pills, named in the filter strip like every other
  * narrowing and cleared by the clear-filter control.
  *
  * These live here and not in `Search.browser.test.mjs` because the **box** is the

@@ -2,7 +2,6 @@
 import PageBreadcrumb from '../../components/PageBreadcrumb.jsx';
 import PageView from '../../components/PageView.jsx';
 import Shell from '../../layouts/Shell.astro';
-import { Badge } from '../../components/ui/badge.jsx';
 import { loadProductionExtracts, loadReports, loadSeedRows } from '../../lib/reports.mjs';
 import { closingsFor, firstSeenOn, loadClosings, loadFirstSeen } from '../../lib/run-log.mjs';
 import { siblingPages } from '../../lib/blocks.mjs';
@@ -102,28 +101,27 @@ const { production, new: next } = report.sides;
 
     <div class="flex flex-wrap items-baseline gap-3">
       <h1 class="text-xl font-semibold">{report.page}</h1>
-      <a class={`text-sm hover:underline ${CHROME.link}`} href={production.url} rel="noreferrer">production ↗</a>
-      <a class={`text-sm hover:underline ${CHROME.link}`} href={next.url} rel="noreferrer">new ↗</a>
+      <a class={`text-sm hover:underline ${CHROME.link}`} href={production.url} rel="noreferrer">Production ↗</a>
+      <a class={`text-sm hover:underline ${CHROME.link}`} href={next.url} rel="noreferrer">New site ↗</a>
     </div>
 
     {/* The two count chips are gone: the bar in the island replaces them, because
         a count that ignores the overrides contradicts the one beside it. */}
-    {/* `Badge` with no `client:` directive. Astro renders a React component to static
-        HTML at build time unless one is given, so these three chips get the shadcn
-        shape and ship no JavaScript at all — which is what the rest of this header
-        already does. */}
-    <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
-      <Badge variant="outline" className="h-auto gap-1 px-2 py-1">
-        production <strong>{production.status}</strong> · {production.elements.length} blocks
-      </Badge>
-      <Badge variant="outline" className="h-auto gap-1 px-2 py-1">
-        new <strong>{next.status}</strong> · {next.elements.length} blocks
-      </Badge>
+    {/* Text and no longer three badges (ADR 0019). A status code, a block count and a
+        boundary are facts about the fetch, not categories an editor scans a list for — and
+        the boundary was amber, which is now spent only where something is wrong. Each side
+        is named in `CONTEXT.md`'s own two words, which is the same pair the tables below
+        head their two columns with. */}
+    <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+      <span>
+        Production <strong class="tabular-nums">{production.status}</strong> · <span class="tabular-nums">{production.elements.length}</span> blocks
+      </span>
+      <span>
+        New site <strong class="tabular-nums">{next.status}</strong> · <span class="tabular-nums">{next.elements.length}</span> blocks
+      </span>
       {
         (production.boundary !== 'main' || next.boundary !== 'main') && (
-          <Badge variant={null} data-wears="pill" data-tone="caution" className="h-auto px-2 py-1">
-            boundary: production {production.boundary}, new {next.boundary}
-          </Badge>
+          <span>boundary: Production {production.boundary}, New site {next.boundary}</span>
         )
       }
     </div>

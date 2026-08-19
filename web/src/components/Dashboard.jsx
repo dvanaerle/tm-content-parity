@@ -3,7 +3,8 @@ import { AnnotateBar, PageNote } from './Annotate.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import {
   Bar,
-  Chip,
+  BucketCount,
+  Count,
   ClassFilterBanner,
   ClassFilterPills,
   PriorityFilterPills,
@@ -255,7 +256,7 @@ export default function Dashboard({
   const shownRepeats = useMemo(() => repeatsWithClasses(repeats, classes), [repeats, classes]);
 
   /**
-   * What the amber strip counts, which is whichever list is under it.
+   * What the filter strip counts, which is whichever list is under it.
    *
    * Asked once rather than three times in the strip's own props: *how many, of how many,
    * of what* is one answer about one list, and three separate readings of `view` are
@@ -384,8 +385,8 @@ export default function Dashboard({
         </div>
       )}
 
-      <section className="flex flex-wrap items-center gap-2">
-        <Chip value={comparable.length} label="pages compared" />
+      <section className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <Count value={comparable.length} label="pages compared" />
 
         {/* The store's three totals (ticket 80), in the strip's own order and with the
             same three words the ledger uses. They are **absolute counts and no
@@ -397,18 +398,15 @@ export default function Dashboard({
             The old strip counted the contradicted claims twice on purpose and said so
             twice over — the bar's `open` includes them, because a claim that did not
             survive has closed nothing, and the fourth chip then named the same findings
-            again. Three buckets partition the same denominator exactly once. */}
+            again. Three buckets partition the same denominator exactly once.
+
+            Which of the three is a badge is `BucketCount`'s, so this strip and the
+            ledger's cannot come to disagree about which one an editor's eye is sent to. */}
         {BUCKETS.map((bucket) => (
-          <Chip
+          <BucketCount
             key={bucket}
-            data-bucket={bucket}
+            bucket={bucket}
             value={log.derived.buckets[bucket]}
-            /* The glossary's own capitals, and not lowercased to match the sentence-shaped
-               chips beside it. A bucket is a defined term: *Needs attention* reading as
-               "needs attention" here and "Needs attention" in the ledger is one thing
-               called two, which is the whole failure this ticket set out to end. */
-            label={BUCKET_LABEL[bucket]}
-            tone={BUCKET_TONE[bucket]}
             title={BUCKET_MEANING[bucket]}
           />
         ))}
@@ -418,25 +416,30 @@ export default function Dashboard({
             could only ever go up while the work went nowhere. The equal **rows** stay,
             behind the content view's context markers, because they answer *where does
             this text belong*; a tally of the pages holding them answers nothing. */}
-        <Chip
+        <Count
           value={log.derived.reviewedFresh}
           label="pages reviewed"
           title="A human looked at everything on this page, also at what the tool cannot see."
         />
-        <Chip value={totals.diagnostic} label="diagnostics" />
-        <Chip value={oneSided.length} label="one-sided" title="Only one site has this page." />
-        <Chip
+        <Count value={totals.diagnostic} label="diagnostics" />
+        <Count value={oneSided.length} label="one-sided" title="Only one site has this page." />
+        <Count
           value={notChecked.length}
           label="not checked"
           title="Found and visible, but there is nothing to compare. The bottom of this page says why, for each one."
         />
       </section>
 
-      <Card className="gap-0 py-0">
-        <CardHeader className="flex flex-wrap items-center justify-between gap-3 border-b py-3">
+      {/* A section and no longer a `Card` (ADR 0019). A card says *this is a thing*, and a
+          thing has an outside; a toolbar above the list it narrows is not a thing, it is a
+          toolbar above a list. What the card was actually doing was drawing the rule under
+          the toolbar, and the rule is still here — it just no longer implies a box around
+          everything below it. */}
+      <section>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b py-3">
           {/* The pills and the scope chip are **one group**, because they are one kind of
               thing: the narrowings that are on, each wearing its own control, all of them
-              named together in the amber strip below. The chip drawn over by the search
+              named together in the filter strip below. The chip drawn over by the search
               box instead would put the two halves of one sentence a header's width apart
               on a wide viewport, which is where it sat until the review of this part.
 
@@ -471,7 +474,7 @@ export default function Dashboard({
                 reads, so a scope that is not `null` is a box with something in it. */}
             {scope && <ScopeChip scope={scope} onClear={() => patch({ query: withoutScope })} />}
           </div>
-          {/* `flex-wrap` here and not only on the `CardHeader`: the header wrapped, but
+          {/* `flex-wrap` here and not only on the toolbar row: the row wrapped, but
               this inner group did not, so its three controls were measured as one
               indivisible 386 pixel run and hung 27 pixels past a 399 pixel viewport —
               taking the sort `Select`'s label off the side of the screen with them.
@@ -544,8 +547,8 @@ export default function Dashboard({
                 </Select>
               )}
           </div>
-        </CardHeader>
-        <CardContent className="px-0">
+        </div>
+        <div>
           {/* The classes go along (ticket 102). A search used to answer past the pills
               as well as past the two views, which threw away the editor's answer to
               *which kind of difference am I working on* the moment they asked a second
@@ -631,7 +634,11 @@ export default function Dashboard({
           {!searching && view === 'pages' && (
             <Table>
               <TableHeader>
-                <TableRow className="text-xs tracking-wide uppercase">
+                {/* The capitals are addressed to the `th` and not to the row, which is the
+                    one spelling ADR 0019 sanctions: a row that shouts shouts whatever a
+                    later edit puts in it, and a `th` selector cannot come to mean anything
+                    but a heading cell. */}
+                <TableRow className="[&_th]:text-xs [&_th]:tracking-wide [&_th]:uppercase">
                   {/* The header word is drawn for a screen reader and not for an eye, the
                     way `Repeats.jsx` draws its own: a header cell holding nothing but a
                     checkbox announces nothing. */}
@@ -683,7 +690,7 @@ export default function Dashboard({
                         className="ml-2"
                       />
                       <span className="ml-2 text-xs text-muted-foreground">
-                        {page.sides.production.units} blocks
+                        <span className="tabular-nums">{page.sides.production.units}</span> blocks
                       </span>
                       {/* The two annotations, beside the page they are about. The note is
                         quoted and never labelled as a reason — a dismissal's note is the
@@ -724,8 +731,8 @@ export default function Dashboard({
               onClear={() => setSelected(new Set())}
             />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* The id is what a scoped search points at when it explains that a page it matched
           is one-sided (ticket 104). The aside had those words first, so the search links

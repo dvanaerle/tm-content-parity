@@ -194,6 +194,7 @@ export default function SearchBox({ value, onChange, pages }) {
                   situation is how a vocabulary rots. */}
               {!one.comparable && (
                 <Badge
+                  data-badge="one-sided"
                   variant={null}
                   data-wears="pill"
                   data-tone="neutral"
