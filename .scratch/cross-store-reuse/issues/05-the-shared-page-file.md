@@ -1,7 +1,10 @@
 # 05 — The shared-page file says which store pages are one record
 
 Type: task
-Status: ready-for-agent
+Status: claimed 2026-08-19 — the seam, ADR 0025 and the guard are built on branch
+`ticket-104-search-page-scope`. The file is committed **empty and undated**, which makes
+nothing shared; its 29 `be` and 36 `be_fr` entries need the admin grid and are a human's to
+compile. See the answer.
 Blocked by: None — can start immediately.
 Parent: ../PRD.md
 
@@ -23,23 +26,23 @@ a crawl can produce.
 
 ## Criteria
 
-- [ ] ADR 0025 is written: why the fact cannot be derived, why the file states the **complement**,
+- [x] ADR 0025 is written: why the fact cannot be derived, why the file states the **complement**,
       why it is taken from the **new site** and not production, and what would make it obsolete.
 - [ ] One committed file listing store pages whose new-site record is **not** shared with its block
       sibling, each entry carrying its Magento record id and a reason — in the manner of the
       excluded-pages and drop-rule lists.
-- [ ] Everything else inside a block is **shared**. This complement is sound because sharing
+- [x] Everything else inside a block is **shared**. This complement is sound because sharing
       happens only inside the two blocks, so the only possible partner is the sibling store.
 - [ ] The file carries the **date it was taken**.
-- [ ] A store page whose first sighting in the run log is **later than that date** reads as **not
+- [x] A store page whose first sighting in the run log is **later than that date** reads as **not
       shared**, so an out-of-date file cannot grant a permission it never saw.
-- [ ] The only normalisation is **structural**: the `fr/` prefix on `be_fr` paths, which the
+- [x] The only normalisation is **structural**: the `fr/` prefix on `be_fr` paths, which the
       sibling pairing already strips as a host artefact.
-- [ ] Any remaining key that resolves to no store page **fails the build** and is named.
-- [ ] One new pure module answers *is this store page shared*, from the file and the corpus. It is
+- [x] Any remaining key that resolves to no store page **fails the build** and is named.
+- [x] One new pure module answers *is this store page shared*, from the file and the corpus. It is
       the only new seam in this effort.
-- [ ] The `CONTEXT.md` entry for **shared page**, and the note that it is not a *link*.
-- [ ] `npm test`.
+- [x] The `CONTEXT.md` entry for **shared page**, and the note that it is not a *link*.
+- [x] `npm test`.
 
 ## Traps
 
@@ -66,3 +69,59 @@ A grilling session, 2026-08-19, from the *link Belgium with the NL page* idea. T
 to be a fact rather than an editor's assertion. Two lists were compiled during the session: 29
 keys for `be` and 36 for `be_fr`. Measured against the corpus, they carry about 22 and 33 lines of
 information the tool does not already hold, over corpora of 131 and 122 pages.
+
+## Answer
+
+**Built, except the fact itself.** The seam, the guard, the record and the vocabulary landed;
+the 65 hand-compiled lines did not, because they exist nowhere in this repo and a fabricated
+record id writes a false claim into a store nobody looked at — which is trap 3 of this ticket.
+
+What is committed:
+
+- **ADR 0025** — `docs/adr/0025-the-shared-page-file-is-imported-and-states-the-complement.md`.
+- **`web/src/lib/not-shared-pages.mjs`** — the fact. `TAKEN_ON` and `NOT_SHARED_PAGES`, the
+  entry shape (`key`, `record`, `reason`), and the rules a hand edit has to obey. **Empty and
+  undated today.**
+- **`web/src/lib/shared-pages.mjs`** — the rule. `sharedPageIndex({ rows, runLog })` and
+  `isSharedPage(index, { store, page })`. It is the only new seam.
+- **`web/src/lib/shared-pages.test.mjs`** — 16 tests, including the committed-file guard.
+- **`CONTEXT.md`** — *Shared page*, in the language-blocks section, with the not-a-*link* note
+  and the second note that it is not the *shared* of a page both stores have.
+- `comparablePath()` is exported from `web/src/lib/blocks.mjs` rather than copied, so the
+  `fr/` prefix has one definition.
+
+**Two criteria are open and they are the same criterion:** the entries, and the date. They
+arrive together — the suite asserts exactly that, because a dated file with no entries is the
+most permissive sentence in the feature and an undated file with entries is a fact nobody can
+date.
+
+### Three decisions this ticket had to make
+
+1. **Sharing is a property of the pair, so one entry unshares both stores.** If `be`'s record
+   does not serve `nl`, then `nl`'s does not serve `be`. Without it, a list compiled from the
+   Belgian store would have granted `nl → be` travel on every page — which is why the grid
+   reading only had to be compiled from one side.
+2. **An undated file makes nothing shared.** The date rule at its limit. The ticket did not
+   ask for it; the complement made it necessary, because an empty *positive* list claims
+   nothing while an empty *complement* claims that every page of both blocks is shared. It is
+   argued in ADR 0025 rather than assumed.
+3. **`isSharedPage()` raises while any key resolves to nothing**, naming every one of them —
+   the PRD's *raises rather than returning false*, and the prototype's *names every key rather
+   than the first*, are the same rule seen from two sides. The build failure is the
+   committed-file test, in the manner of `shared/drop-rules.test.mjs`.
+
+Two corpus conditions come from the corpus and never from the file, and they are what keep the
+complement honest where the file is silent: a page with **no sibling page** is not shared
+whatever the file omits, and a store outside a block is not shared. Measured against
+`data/10-store-seeds.json`, 492 store pages are shared under an empty dated file — 126 `nl`,
+126 `be`, 120 `be_fr`, 120 `fr` — which is the complement's upper bound and the number the
+entries will cut into.
+
+`npm test`: 1204 passed, 53 files. `npm run typecheck` and `npm run lint` clean.
+
+### What a human does next
+
+Paste the two lists into `NOT_SHARED_PAGES` as `{ key, record, reason }` and set `TAKEN_ON`
+to the day the grid was read. `npm test` then names every key that resolves to no store page;
+the three known ones — two carrying `-n-v-t`, one French distributor page — are expected to
+fail and are records to disable, not keys to normalise.

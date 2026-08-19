@@ -784,6 +784,30 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   block to 120. **Which rule matched is carried on the sibling**, as a seed cell's
   `provenance` is — it is data, so a wrong pairing can be diagnosed without
   re-deriving it.
+- **Shared page** — a store page whose **new-site Magento record is the same record** as
+  its sibling page's, so that one edit corrects both stores. `bedrijfsinformatie` is record
+  543 and it serves `nl` and `be`. It is **imported and never derived**: two pages that
+  share a record and two pages that are separate records holding identical words are
+  indistinguishable to a crawler, and they behave oppositely the moment somebody fixes one.
+  So identical text is not evidence for it, in either direction.
+  The fact comes from a committed file compiled by hand from the new site's admin grid —
+  `web/src/lib/not-shared-pages.mjs` — which states the **complement**: the pages that are
+  *not* shared, each with its Magento record id and its reason. Everything else inside a
+  block is shared, which is sound because a record is shared inside a block or not at all,
+  so a store page has exactly one possible partner. Sharing is a property of the **pair**,
+  so one entry unshares both stores. The file carries **the day it was taken**, and a store
+  page whose first sighting in the run log is later than that day reads as **not shared** —
+  an out-of-date file cannot grant a permission it never saw. It states a fact about today
+  and never a plan: an entry leaves it the day the merge lands in Magento. **Nothing is
+  keyed on the record id.** `isSharedPage()` in `web/src/lib/shared-pages.mjs` decides it as
+  a value, and a key that resolves to no store page fails the suite and is named rather than
+  being normalised onto a live page. See
+  `docs/adr/0025-the-shared-page-file-is-imported-and-states-the-complement.md`.
+  A shared page is **not a *link***. `links` is a Check and this is not one; nobody links
+  anything here. The sibling is derived from what production declares and the sharing is
+  imported from Magento, and neither is an editor's assertion about two pages. It is also
+  not the *shared* of a **page both stores have**, which is what the block list's three
+  middle kinds are: that says each store has the page, and this says the two are one record.
 - **Agreement share** — of one store's production content units, the share whose
   **normalised text** appears exactly in the sibling's. It is what ranks the list,
   worst-first, and it is **not a score on a finding**. It is called *agreement* and
