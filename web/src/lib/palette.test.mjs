@@ -2,31 +2,20 @@ import { readdir, readFile } from 'node:fs/promises';
 import { extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import {
-  ACCENT,
-  BANNER,
-  FILL,
-  INK,
-  PILL,
-  SOLID,
-  SURFACE,
-  TOKEN,
-  TONES,
-  severityTone,
-} from './palette.mjs';
+import { TONES, severityTone } from './palette.mjs';
 
 /**
- * `palette.mjs` holds three rules with judgement in them, and the repo says a rule
- * with no test is not a rule. The thresholds are one. The second is the reservation
- * that makes the diff readable: red and green mean direction and never status. The
- * third is the vocabulary itself — ticket 131 settled which eight words the file may
- * use, and a ninth is a colour with no stated meaning.
+ * Three rules with judgement in them, and the repo says a rule with no test is not a
+ * rule. The thresholds are one. The second is the reservation that makes the diff
+ * readable: red and green mean direction and never status. The third is the vocabulary
+ * itself — ticket 131 settled which eight words this tool may use, and a ninth is a
+ * colour with no stated meaning.
  *
- * **Since ticket 132 those rules live in two places at once**, and this file guards both.
- * The maps below are the old form; `app.css` is the new one, where a tone is a selector
- * and a shape is a rule that consumes it. The stylesheet is the half that cannot check
- * itself: a map with two keys refuses a third, and a selector that does not match prints
- * nothing and throws nothing.
+ * **This is the one guard now (ticket 133 part C).** The rules lived in two places while
+ * the tone maps and the stylesheet were both live; the maps are deleted, so every
+ * assertion here reads `TONES`, `severityTone()` or `app.css`. The stylesheet is the half
+ * that cannot check itself, and it is the only half left: a map with two keys refused a
+ * third, and a selector that does not match prints nothing and throws nothing.
  */
 
 // ---- the stylesheet, read as rules
@@ -126,12 +115,13 @@ const grantedTo = (wears) => {
 };
 
 /**
- * Every map in the file that is **keyed by tone**. `CHROME` is the one that is not — its
- * keys are places in the interface, and it holds the brand colours a tone may never take —
- * so it is out of the guards below rather than missing from them.
+ * The list is here and the colours are not, so this block asserts *which eight words* and
+ * nothing about what they print. The other half of ticket 131's guard — that no **ninth**
+ * word is ever given a colour — is `the tones the stylesheet defines` at the foot of this
+ * file. It was a sweep over the maps' keys while the maps held the colours; the tone rules
+ * in `app.css` hold them now, and that block asserts the two lists are the same set in
+ * both directions.
  */
-const MAPS = { PILL, SOLID, FILL, BANNER, INK, SURFACE, TOKEN, ACCENT };
-
 describe('the tone vocabulary', () => {
   it('is these eight words and no others', () => {
     // Written out rather than counted, because the point of ticket 131 is *which*
@@ -149,25 +139,10 @@ describe('the tone vocabulary', () => {
       'total',
     ]);
   });
-
-  it('refuses a key that is not one of the eight', () => {
-    // The guard ticket 131 asked for. A ninth tone is a colour with no stated
-    // meaning, which is the drift this whole file exists to stop — and the maps are
-    // deliberately sparse, so a typo in a key is otherwise a silent `undefined` at
-    // the call site rather than a failure here.
-    for (const [name, map] of Object.entries(MAPS)) {
-      for (const key of Object.keys(map)) {
-        // `FILL.secondary` is the one exception in the file: a progress track's brand
-        // step, which is a fill and not a judgement about anything.
-        if (map === FILL && key === 'secondary') continue;
-        expect(TONES, `${name}.${key}`).toContain(key);
-      }
-    }
-  });
 });
 
 /**
- * The guard above reads the maps, which is only half of ticket 131's *a test fails if a
+ * The guard above reads one list, which is only half of ticket 131's *a test fails if a
  * tone outside the eight is used*: a tone is also **written at the call site**, and three
  * tables produce one without `palette.mjs` ever seeing the word — `BUCKET_TONE`,
  * `STATE` in `OverrideControl.jsx` and `PRIORITY_TONE` in `Chips.jsx`. A wrong word in any
@@ -190,21 +165,24 @@ describe('the tones written at a call site', () => {
   const DRAWN = ['.jsx', '.mjs', '.astro', '.js'];
 
   /**
-   * A tone reached off one of the maps by name, plus the three ways one is written at a
-   * call site: as a table entry, as a string prop, and — since ticket 132, where a tone
-   * became an attribute the stylesheet reads — inside a JSX expression. The last one needs
-   * a lookbehind rather than a leading `tone={`, so that a ternary handing over two of them
-   * is caught twice and not once.
+   * The three ways a tone is written at a call site: as a table entry, as a string prop,
+   * and — since ticket 132, where a tone became an attribute the stylesheet reads — inside
+   * a JSX expression. The last one needs a lookbehind rather than a leading `tone={`, so
+   * that a ternary handing over two of them is caught twice and not once.
+   *
+   * A fourth pattern read a tone off one of the maps by name, `PILL.dark` and its kind. It
+   * went with the maps in ticket 133 part C: there is no map to reach a tone off any more,
+   * so that spelling is a build error rather than a colour with no meaning. The exception
+   * the pattern carried went with it — `FILL.secondary` was a progress track's brand step
+   * and never a tone, and the track wears the class itself now.
    */
   const WRITTEN = [
-    /\b(?:PILL|SOLID|FILL|BANNER|INK|SURFACE|TOKEN|ACCENT)\.([A-Za-z_$][\w$]*)/g,
     /\btone:\s*'([^']*)'/g,
     /\btone="([^"]*)"/g,
     /(?<=\btone=\{[^}]*)'([^']*)'/g,
   ];
 
-  /** `FILL.secondary` is not a tone, and `palette.mjs` says why. */
-  const ALLOWED = new Set([...TONES, 'secondary']);
+  const ALLOWED = new Set(TONES);
 
   /** @returns {Promise<string[]>} */
   async function filesUnder(directory) {
@@ -280,8 +258,8 @@ describe('the tones written at a call site', () => {
     // every assertion above it. These are the shapes the interface wears today: the diff's
     // two, the four ticket 133 part A moved the dashboard's views onto, and the tick part B
     // moved the fix checkbox onto. `solid` is the one shape with no wearer, and it stays
-    // defined for the reason `palette.mjs` gives — a number that must be legible at a
-    // distance — so a component asking for it gets pixels rather than silence.
+    // defined for the reason `app.css` gives beside it — a number that must be legible at
+    // a distance — so a component asking for it gets pixels rather than silence.
     expect([...seen].sort()).toEqual(['banner', 'cell', 'fill', 'ink', 'pill', 'tick', 'word']);
   }, 30_000);
 
@@ -290,7 +268,6 @@ describe('the tones written at a call site', () => {
     const stale = [
       '<Banner tone="severe">',
       "  contradicted: { tone: 'attention' },",
-      'PILL.dark',
       "        tone={next === null ? 'severe' : null}",
     ];
     for (const line of stale) {
@@ -305,7 +282,6 @@ describe('the tones written at a call site', () => {
     const live = [
       '<Banner tone="caution">',
       "  open: { tone: 'neutral' },",
-      'FILL.secondary',
       "        tone={next === null ? 'lost' : null}",
     ];
     for (const line of live) {
@@ -340,64 +316,16 @@ describe('severityTone', () => {
   });
 });
 
-describe('the tone maps', () => {
-  /** The six that are not a direction. `lost` and `added` are the other two. */
-  const STATUS = ['warning', 'caution', 'closed', 'info', 'neutral', 'total'];
-
-  /** The maps that answer for every tone. `INK` and the three below it are sparse. */
-  const TOTAL = { PILL, SOLID, FILL, BANNER };
-
-  it('answers for every tone in the maps that are total over them', () => {
-    // Without this the guard above passes on an empty map, and so does the direction
-    // rule below it — `map[tone] ?? ''` matches nothing when the tone is not there,
-    // which is how a renamed key could go missing and still read as green.
-    //
-    // It is deliberately **not** a rule that every map is total. Ticket 131's trap says
-    // the sparse maps are sparse on purpose and are not a bug to tidy, so `INK`, `SURFACE`,
-    // `TOKEN` and `ACCENT` are outside this and stay the length their callers need.
-    for (const [name, map] of Object.entries(TOTAL)) {
-      expect(Object.keys(map).filter((key) => key !== 'secondary').sort(), name).toEqual(
-        [...TONES].sort(),
-      );
-    }
-  });
-
-  it('spends the diff colours on direction only', () => {
-    for (const map of [PILL, SOLID, FILL, BANNER, INK, ACCENT]) {
-      for (const tone of STATUS) {
-        expect(map[tone] ?? '').not.toMatch(/lost|added/);
-      }
-    }
-  });
-
-  it('gives warning and caution different pixels', () => {
-    // They were the same string, so an error banner and a not-connected banner
-    // printed the same shape and a reader could not tell which one they had.
-    expect(BANNER.warning).not.toBe(BANNER.caution);
-  });
-
-  it('gives the fix checkbox two ticked colours and no direction', () => {
-    // Ticket 36: ticked, and ticked-but-contradicted. A checkbox reports work, so
-    // neither of the two may be the red or the green of the diff.
-    expect(Object.keys(ACCENT)).toEqual(['closed', 'caution']);
-  });
-
-  it('tints a whole cell for the two directions and for nothing else', () => {
-    // `SURFACE` is the row layer of the diff. A tinted cell claims the content is
-    // missing on the other side, which only `lost` and `added` claim.
-    expect(Object.keys(SURFACE)).toEqual(['lost', 'added']);
-    expect(Object.keys(TOKEN)).toEqual(['lost', 'added']);
-  });
-});
-
 /**
- * The stylesheet, guarded (ticket 132).
+ * The stylesheet, guarded (ticket 132, and the only form left since ticket 133 part C).
  *
- * `app.css` is where a tone becomes a styleguide colour now, and the two rules with
- * judgement in them moved with it: direction is never spent on status, and the two ambers
- * must not print the same pixels. Neither is a rule CSS can enforce about itself, and the
- * failure mode is worse than the maps' — `SURFACE.warning` was `undefined` and a reader
- * saw it, whereas a selector that matches nothing draws nothing and reports nothing.
+ * `app.css` is where a tone becomes a styleguide colour, and the two rules with judgement
+ * in them moved with it: direction is never spent on status, and the two ambers must not
+ * print the same pixels. Neither is a rule CSS can enforce about itself, and the failure
+ * mode is worse than the maps' was — `SURFACE.warning` was `undefined` and a reader saw
+ * it, whereas a selector that matches nothing draws nothing and reports nothing. The
+ * assertions the two-key maps used to make are the ones below about which tones a shape
+ * is granted to.
  */
 describe('the tones the stylesheet defines', () => {
   /** The six that are not a direction. `lost` and `added` are the other two. */

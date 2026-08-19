@@ -46,8 +46,13 @@ paid for in nothing.
 
 So the line moves, and it moves once: **shadcn owns shape and structure; the palette
 owns tone.** Every table, button, input, select, badge, panel, banner, divider and
-empty state is a shadcn primitive. Every colour that carries meaning is still a token
-from `palette.mjs`, handed to the primitive through `className`.
+empty state is a shadcn primitive. ~~Every colour that carries meaning is still a token
+from `palette.mjs`, handed to the primitive through `className`.~~
+— **Struck 2026-08-19, ticket 133 part C** (ADR 0023). Half of it survives and is the
+half that is the decision: meaning is still ours and not the library's. The mechanism is
+not. A tone is a `data-tone` attribute the element publishes and `app.css` reads, the
+eight token maps in `palette.mjs` are deleted, and the primitive is handed a word rather
+than a class name. ADR 0023 records the move and answers the objection to it.
 
 This is not the rejected option below. The rejected option put shadcn's variables in
 charge of what a class tone means. Here they are in charge of what a border radius is,
@@ -55,20 +60,27 @@ which is a question they can answer, and the three palette rules are untouched.
 
 Two things follow from it and are worth writing down:
 
-- **`className` carries colour, and shadcn's own guidance says it must not.** The
+- ~~**`className` carries colour, and shadcn's own guidance says it must not.** The
   shadcn skill's first styling rule is that `className` is for layout and never for
   a component's colour, and that a status colour should be a variant. Here it is
   the opposite: `<Badge className={PILL[tone]}>` and `<Alert className={BANNER[tone]}>`
-  are the normal form. The rule exists to stop a design system fragmenting into
+  are the normal form.~~ Shadcn's rule exists to stop a design system fragmenting into
   one-off colours. This repo has the same goal and already has a stricter mechanism
   for it — a tested palette with three rules — so the rule is met by other means.
+  — **Struck 2026-08-19, ticket 133 part C**, with the sentence above it. The normal form
+  is `<Badge data-wears="pill" data-tone={tone}>`, so `className` stops carrying colour
+  and the tension with the library's own guidance stops existing. The two sentences that
+  survive the strike are the ones that mattered: the goal, and the stricter mechanism that
+  meets it — which is now a tested stylesheet rather than a tested map.
 - **A variant is refused wherever it would smuggle in a hue.** `Alert` and `Badge`
   both ship a `destructive` variant. Nothing here uses it. A parity tool has red and
   green already spent on *production has this* and *the new site added this*, and
-  palette rule 2 keeps them off status. Amber says look at this, and it comes from
-  `BANNER.caution` — `BANNER.attention` until **ticket 131 renamed it, 2026-08-14**,
-  because the old word had a second meaning as `CONTEXT.md`'s **Needs attention**. The
-  decision is untouched; only the name is.
+  palette rule 2 keeps them off status. Amber says look at this, and it comes from the
+  `caution` tone — `attention` until **ticket 131 renamed it, 2026-08-14**, because the old
+  word had a second meaning as `CONTEXT.md`'s **Needs attention**. The decision is
+  untouched; only the name is. It was `BANNER.caution` until **ticket 133 part C** deleted
+  the map, and it is a rule in `app.css` now; which file draws it was never this bullet's
+  point.
 
 ## Considered options
 

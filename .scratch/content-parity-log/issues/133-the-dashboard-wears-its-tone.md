@@ -1,7 +1,7 @@
 # 133 — Every surface wears its tone, and the maps are gone
 
 Type: task
-Status: ready-for-agent
+Status: ready-for-human
 Blocked by: 132 — the tones and shapes every surface here asks for.
 Parent: ../map.md
 
@@ -13,9 +13,9 @@ part is one commit and starts in a fresh context window.
 
 | part | what | state |
 |---|---|---|
-| **A** | The dashboard wears its tone | after 132 |
+| **A** | The dashboard wears its tone | **landed** |
 | **B** | The ledger wears its tone | **landed** |
-| **C** | The tone maps are gone | after B, and gated on it |
+| **C** | The tone maps are gone | **landed** |
 
 **C is a gate, not a step.** Part B's *no caller left* criterion is what lets C start. If A
 and B are landed and any map still has a caller, the sequence is not ready to contract,
@@ -360,27 +360,42 @@ different object from a second set of `--color-*` names: the styleguide names st
 colour names, and the tones are rules that reach them. If the ADR does not make that
 distinction, the next reader is entitled to read this as a regression.
 
-- [ ] The eight tone maps are deleted and no import of them remains.
-- [ ] `palette.mjs` holds `severityTone()`, `TONES`, the `Tone` type and `CHROME`, and its
-      docblock says what the file is now for.
-- [ ] An ADR records the move: what it buys — the literals constraint stops existing, and a
+- [x] The eight tone maps are deleted and no import of them remains. The gate was re-measured
+      first, 2026-08-19: nothing outside `palette.mjs` and its own guard named one of the eight.
+- [x] `palette.mjs` holds `severityTone()`, `TONES`, the `Tone` type and `CHROME`, and its
+      docblock says what the file is now for — the vocabulary, the threshold and the chrome,
+      and `app.css` for the colour. The tone-to-styleguide table went with the maps rather
+      than staying here as a second answer to where tone lives.
+- [x] An ADR records the move: what it buys — the literals constraint stops existing, and a
       state-dependent tone becomes an ordinary selector — and what it costs.
-- [ ] The ADR strikes ADR 0007's amendment sentence about `className` carrying meaning, in the
-      house style, dated, with the ticket number.
-- [ ] `app.css`'s sentence about where the mapping is written is struck the same way.
-- [ ] The ADR answers ticket 74 directly: why a selector over a styleguide variable is not a
+      `docs/adr/0023-a-tone-is-a-selector-and-not-a-class-name.md`.
+- [x] The ADR strikes ADR 0007's amendment sentence about `className` carrying meaning, in the
+      house style, dated, with the ticket number. **The bullet under it was struck too**: it
+      recorded that `className` carrying colour was in tension with shadcn's own guidance,
+      and it named `<Badge className={PILL[tone]}>` as the normal form, so leaving it would
+      have left the amendment's mechanism asserted one paragraph below the strike.
+- [x] `app.css`'s sentence about where the mapping is written is struck the same way. The
+      paragraph that explains *why this is CSS* moved to the past tense in the same pass —
+      it opens by saying what `palette.mjs` holds, and it held it until this commit.
+- [x] The ADR answers ticket 74 directly: why a selector over a styleguide variable is not a
       second colour vocabulary.
-- [ ] `palette.test.mjs` is the one guard, and it pins the vocabulary and the two rules with
+- [x] `palette.test.mjs` is the one guard, and it pins the vocabulary and the two rules with
       judgement in them — direction is never spent on status, and a cell tint is `lost` or
-      `added`.
+      `added`. Six map assertions were deleted and every rule they held has a counterpart
+      reading `app.css`, which is what ticket 132 built those counterparts as. **One is not
+      a like-for-like**: the checkbox's ticked pair was `closed` and `caution` in `ACCENT`
+      and the tick shape's is `added` and `caution`, so what the stylesheet guard pins is
+      the recorded exception rather than the rule the map's assertion stated. Part B's
+      unticked criterion is where that is argued out.
 - [ ] ~~Every screenshot baseline in the repo is unchanged from before 131. The whole sequence
       moves no pixel, and this is the part that can prove it end to end.~~ —
       **2026-08-17: there are no baselines, so nothing can prove this end to end; see the
       heading block.** The whole suite passes, `palette.test.mjs` pins the vocabulary, and a
       human walks the dashboard and the page's four tabs once more. **This is the criterion the
       missing infrastructure costs most**, and it is the argument for building visual regression
-      testing before this sequence rather than after.
-- [ ] The full suite passes and no count, bar, denominator or roll-up has moved.
+      testing before this sequence rather than after. **The suite passes; the human half is
+      still owed** — left unticked for whoever walks the dashboard and the four tabs.
+- [x] The full suite passes and no count, bar, denominator or roll-up has moved.
 
 ### Traps — C
 

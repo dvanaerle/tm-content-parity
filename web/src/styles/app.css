@@ -99,7 +99,11 @@
  *    The styleguide groups them for status, and here they are not: red means
  *    "production has this and the new site does not" and nothing else. If green also
  *    meant "this went well", one hue would carry two meanings eight pixels apart.
- *    Status is `warning` and `info`. `palette.mjs` is where that mapping is written.
+ *    Status is `warning` and `info`. ~~`palette.mjs` is where that mapping is written.~~
+ *    — **Struck 2026-08-19, ticket 133 part C** (ADR 0023). It is written here, in the tone
+ *    layer below: a tone is a selector over the variables above, and `palette.mjs` keeps
+ *    the eight words and spends no colour. Two files must not disagree about where tone
+ *    lives, and this is the one that draws.
  *
  * The third rule — "stock `slate-*` makes the table surface" — is retired. It existed
  * because the old source had five neutral steps and no step for a border or a quiet
@@ -328,8 +332,10 @@
    * does to what was already here. This is the base layer, so every explicit
    * `border-*` utility outranks it. The colourless `border` in the existing
    * components was checked one by one — `Ledger.jsx`, `ContentView.jsx`,
-   * `Dashboard.jsx`, `PageView.jsx` — and each arrives with a `BANNER` tone or a
-   * `border-current` beside it. Nothing on screen moves.
+   * `Dashboard.jsx`, `PageView.jsx` — and each arrives with a banner tone or a
+   * `border-current` beside it. Nothing on screen moves. (The check was made against
+   * `BANNER[tone]`, deleted in ticket 133 part C; the tone is `data-tone` now and the
+   * border it brings is the same one.)
    */
   * {
     @apply border-border outline-ring/50;
@@ -395,15 +401,21 @@
  *
  * ---- why this is CSS and not a table of class names
  *
- * `palette.mjs` holds eight maps of Tailwind class names under one constraint: *Tailwind
+ * ~~`palette.mjs` holds eight maps of Tailwind class names under one constraint: *Tailwind
  * finds class names in the source text, therefore each value is a literal and no value is
- * assembled from parts.* That constraint is not satisfied here — it stops existing,
- * because there is no class name for Tailwind to find. And it is what forced three
- * hand-written transcriptions elsewhere in the interface: a pressed tone carrying its own
- * variant prefix, a tick map carrying `data-checked:` prefixes, and a tab height behind a
- * group-data modifier. None of those is a palette problem. All three are the same
- * problem — **a tone that depends on a state cannot be a literal, and everything in the
- * palette has to be a literal.** As a selector it is ordinary.
+ * assembled from parts.*~~ — **Struck 2026-08-19, ticket 133 part C** (ADR 0023). The maps
+ * are deleted and this file is the only form; `palette.mjs` keeps the vocabulary, the
+ * share-to-tone threshold and the chrome. It held the eight until that commit, and the rest
+ * of this paragraph is *why* the move happened, so it is left standing whole — read **the
+ * palette** in it as the file that used to hold the colours.
+ *
+ * That constraint is not satisfied here — it stops existing, because there is no class name
+ * for Tailwind to find. And it is what forced three hand-written transcriptions elsewhere in
+ * the interface: a pressed tone carrying its own variant prefix, a tick map carrying
+ * `data-checked:` prefixes, and a tab height behind a group-data modifier. None of those is
+ * a palette problem. All three are the same problem — **a tone that depends on a state
+ * cannot be a literal, and everything in the palette has to be a literal.** As a selector it
+ * is ordinary.
  *
  * **These are selectors over styleguide variables, and not a second set of colour
  * names.** Ticket 74 removed a second `--color-*` vocabulary from this file and its

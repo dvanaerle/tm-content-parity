@@ -2348,7 +2348,12 @@ product signature` — a product page carries all six hreflang alternates, and
     that reviews as a decision rather than as a transcription. Shipped ahead of 128; a
     shape is `data-wears`, not `data-shape`. **133 is unblocked.**
   - [133 — Every surface wears its tone, and the maps are gone](issues/133-the-dashboard-wears-its-tone.md)
-    — `ready-for-agent`, **unblocked** — 132 is resolved. Absorbed **134 and 135** on
+    — **`ready-for-human` 2026-08-19**, in `72de39e` / `caf75b8` and this commit: A the
+    dashboard, B the ledger, C the deletion and **ADR 0023**. The eight maps are gone and
+    `palette.mjs` keeps the vocabulary, the share-to-tone threshold and the chrome. It is
+    not `resolved` because **the human half of the no-pixel-moved claim is owed on every
+    part** — this repo has no screenshot baselines, so somebody has to walk the dashboard's
+    two views and the page's four tabs. Absorbed **134 and 135** on
     2026-08-17. 133 and 134 were the same mechanical migration split by surface, and 135 was the **contract**
     phase, which its own last trap admits — *if any surface still reads a map when this
     ticket starts, stop and finish that migration first*. Three commits: A the dashboard,
