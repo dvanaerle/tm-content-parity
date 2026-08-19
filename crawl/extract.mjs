@@ -19,6 +19,7 @@ import {
   capFor,
   validateRegions,
 } from '../shared/excluded-regions.mjs';
+import { EXTRACT_VERSION } from '../shared/extract-version.mjs';
 import { imageKey, linkKey } from '../shared/keys.mjs';
 import { collapse, tier1 } from './normalise.mjs';
 
@@ -552,17 +553,26 @@ function imageRecord(img) {
  * @returns {import('../compare/contract.mjs').PageMeta}
  */
 function meta(root, scope) {
+  // `null` says the tag is absent and `''` says it is there with nothing in it.
+  // Ticket 92 found four page-sides that send an empty `keywords`, and folding those
+  // onto absence would report a field Magento holds as a field Magento lacks.
   const attribute = (selector, name) => {
     const value = root.querySelector(selector)?.getAttribute(name);
-    return value ? tier1(value) : null;
+    return value == null ? null : tier1(value);
   };
   const title = root.querySelector('title');
   const h1 = scope.querySelector('h1');
+  const robots = attribute('meta[name="robots"]', 'content');
   return {
     title: title ? tier1(textOf(title)) || null : null,
     description: attribute('meta[name="description"]', 'content'),
     canonical: root.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? null,
-    noindex: /noindex/i.test(attribute('meta[name="robots"]', 'content') ?? ''),
+    robots,
+    noindex: /noindex/i.test(robots ?? ''),
+    // Ticket 92 kept this field and refused `metaTitle`: `meta[name="title"]` is
+    // byte-identical to the page's own `<title>` on 1,539 of the 1,539 page-sides
+    // that carry it and differs on 0, so it could never be a second row.
+    keywords: attribute('meta[name="keywords"]', 'content'),
     h1: h1 ? tier1(textOf(h1)) || null : null,
   };
 }
@@ -626,6 +636,7 @@ export function extractPage(html, context) {
   const content = walk(scope, url, { prodHost, newHost });
 
   const extract = {
+    extractVersion: EXTRACT_VERSION,
     store,
     page,
     side,

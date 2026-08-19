@@ -70,20 +70,45 @@ In build order. **Criterion 1 is your first failing test.** Run
 `npm test -- crawl/extract.test.mjs` and show the red before you write the
 implementation. Then the next criterion. Do not plan across all five.
 
-- [ ] 1 `PageMeta` carries the raw `robots` content string. The derived `noindex`
+- [x] 1 `PageMeta` carries the raw `robots` content string. The derived `noindex`
       boolean stays beside it: the panel shows the string, the rule reads the boolean.
-- [ ] 2 The fields ticket 92 kept are captured — `keywords`, and ~~`metaTitle` from
+- [x] 2 The fields ticket 92 kept are captured — `keywords`, and ~~`metaTitle` from
       `meta[name="title"]`~~. A field 92 refused is skipped, and this line says which:
       **92 refused `metaTitle`**, on 1,539 of 1,539 page-sides byte-identical to
       `<title>` and 0 differing. `keywords` is the one field this slice adds.
-- [ ] 3 `PageExtract` carries `extractVersion`, and the extractor writes the current
+- [x] 3 `PageExtract` carries `extractVersion`, and the extractor writes the current
       value.
-- [ ] 4 The compare stage refuses an extract below the current version with a named
+- [x] 4 The compare stage refuses an extract below the current version with a named
       error that says what to do — re-crawl with `--force`.
-- [ ] 5 A test proves the refusal fires on a fixture missing the new fields. Without
+- [x] 5 A test proves the refusal fires on a fixture missing the new fields. Without
       it the guard is a line of code protecting against the failure of a line of code.
 
 ## Gate
 
 `npm test`. `node compare/measure.mjs nl` now **refuses**, because every extract on
 disk is stale. That is the ticket working, and it is why 95 comes next.
+
+**Measured 2026-08-19, and the gate line above is one command out.** `measure.mjs`
+reads `data/reports/` and recomputes nothing (ticket 28), so it still prints the last
+run's numbers and refuses nothing. The command that refuses is the one that reads an
+extract: `node compare/30-compare.mjs nl` stops on the first page —
+
+```
+ExtractTooOldError: nl/(home) production: extract version 1, and this build reads 2.
+The head fields it lacks would compare as equal and report the page as clean.
+Re-crawl it: node crawl/21-crawl-store.mjs <store> --force
+```
+
+The gate sits in `comparePage()`, so the re-check service refuses on the same rule
+rather than on a copy of it.
+
+**Two things this build left where the ticket put them.** `compare/meta.mjs` is
+untouched: `META_FIELDS` still lists four fields, so no row shows the robots string or
+the keywords yet. The reading list excludes that file and the verdict above hands the
+rows to 97 and 98, so the data is captured here and the panel is theirs. And an
+attribute now tells **absent** from **present and empty** — `null` against `''` — for
+every field `meta()` reads off a tag, `description` included. That is wider than the
+four empty `keywords` page-sides that asked for it, because one rule beats two; it is
+recorded in `PageMeta` and pinned by a test, and the panel folds `''` to `null` today,
+so no row changes on it until 98 decides whether one should. 1,313 tests pass, `tsc --noEmit` and `oxlint
+--deny-warnings` are clean.

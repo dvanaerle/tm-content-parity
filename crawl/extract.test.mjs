@@ -678,6 +678,7 @@ describe('meta', () => {
     const head = `<title>Overkappingen | Tuinmaximaal</title>
       <meta name="description" content="Alles over overkappingen">
       <meta name="robots" content="index, follow">
+      <meta name="keywords" content="overkapping, veranda">
       <link rel="canonical" href="https://www.tuinmaximaal.nl/overkappingen">`;
     const extract = extractPage(page('<h1>Overkappingen</h1>', { head }), CONTEXT);
 
@@ -685,7 +686,9 @@ describe('meta', () => {
       title: 'Overkappingen | Tuinmaximaal',
       description: 'Alles over overkappingen',
       canonical: 'https://www.tuinmaximaal.nl/overkappingen',
+      robots: 'index, follow',
       noindex: false,
+      keywords: 'overkapping, veranda',
       h1: 'Overkappingen',
     });
   });
@@ -698,15 +701,44 @@ describe('meta', () => {
     expect(extract.meta.noindex).toBe(true);
   });
 
+  it('keeps what the robots tag said beside the boolean it derives', () => {
+    // The boolean answers one question and the tag says more than one thing, so a
+    // head panel reading the boolean can only ever show a page's `nofollow` as
+    // `index`. Ticket 94: the string the page sent survives the derivation.
+    const extract = extractPage(
+      page('<h1>Kop</h1>', { head: '<meta name="robots" content="index, nofollow">' }),
+      CONTEXT,
+    );
+    expect(extract.meta.robots).toBe('index, nofollow');
+    expect(extract.meta.noindex).toBe(false);
+  });
+
   it('gives null where the page says nothing', () => {
     const extract = extractPage(page('<p>Geen kop</p>'), CONTEXT);
     expect(extract.meta).toEqual({
       title: null,
       description: null,
       canonical: null,
+      robots: null,
       noindex: false,
+      keywords: null,
       h1: null,
     });
+  });
+
+  it('tells a tag with no value apart from no tag at all', () => {
+    // Ticket 92 measured 4 page-sides that carry `keywords` empty, all of them one page
+    // in four stores. Folding those onto absence would say Magento holds no value where
+    // it holds an empty one. One rule for every attribute here, so `description` gains
+    // the same distinction — it is pinned because it is a change and not a side effect.
+    const extract = extractPage(
+      page('<h1>Kop</h1>', {
+        head: '<meta name="keywords" content=""><meta name="description" content=" ">',
+      }),
+      CONTEXT,
+    );
+    expect(extract.meta.keywords).toBe('');
+    expect(extract.meta.description).toBe('');
   });
 });
 

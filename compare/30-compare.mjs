@@ -14,6 +14,7 @@
 
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { assertExtractCurrent } from '../shared/extract-version.mjs';
 import { unanchoredStore } from '../shared/page-key.mjs';
 import {
   findingSetHash,
@@ -90,9 +91,18 @@ export function metadataFindings(scope, collector) {
  *                                        the whole build; the re-check service passes one
  *                                        per request.
  * @returns {import('./contract.mjs').PageReport}
+ * @throws {import('../shared/extract-version.mjs').ExtractTooOldError} On an extract
+ *   below the current version. Ticket 94: the fields such an extract lacks compare as
+ *   equal, so the alternative to refusing is a page reported clean. Every path into a
+ *   report goes through here — the batch below and the re-check service — so the gate
+ *   is here and not in either caller.
  */
 export function comparePage({ sides, newSitePaths, statuses, observationId = newObservationId() }) {
   const { production, new: next } = sides;
+  // Before the status gate, because an extract too old to compare is too old to skip
+  // on as well: a one-sided page would otherwise still write a report and say it is fine.
+  assertExtractCurrent(production);
+  assertExtractCurrent(next);
   const scope = { store: production.store, page: production.page };
   const reason = skipReason(production, next);
 

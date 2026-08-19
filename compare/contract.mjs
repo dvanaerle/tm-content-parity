@@ -96,11 +96,28 @@ export {
  */
 
 /**
+ * Ticket 94: `robots` is the tag's own words and `noindex` is the rule's reading of
+ * them. The tag says more than one thing — `index, nofollow` is a real value on this
+ * corpus — so a panel that had only the boolean could report that page as `index`
+ * and lose the half an editor needs. The boolean stays because the rules ask one
+ * question, and deriving it once here is what keeps a second reader from deriving it
+ * differently.
+ *
+ * A field read off an attribute tells **absent** from **present and empty**: `null` is
+ * no tag, `''` is a tag with nothing in it. Ticket 92 measured 4 page-sides that send an
+ * empty `keywords`, and folding those onto absence would report a field Magento holds as
+ * a field Magento lacks. It is one rule for every attribute here, so `description`
+ * carries the distinction too — before ticket 94 both were `null`. The head panel folds
+ * `''` back to `null` for display today (`meta.mjs`); whether a row should say *empty* is
+ * ticket 98's, and the data no longer decides it for them.
+ *
  * @typedef {object} PageMeta
  * @property {string | null} title
  * @property {string | null} description
  * @property {string | null} canonical
- * @property {boolean} noindex
+ * @property {string | null} robots  What `meta[name="robots"]` said, or `null` for no tag.
+ * @property {boolean} noindex       Derived from `robots`.
+ * @property {string | null} keywords
  * @property {string | null} h1
  */
 
@@ -141,6 +158,13 @@ export {
  * What `crawl/` gives for one URL. `compare/` reads nothing else.
  *
  * @typedef {object} PageExtract
+ * @property {number} [extractVersion]  Which reading of the head and the page produced
+ *                                  this, from `shared/extract-version.mjs`. **Optional
+ *                                  in the type and required in practice**: an extract
+ *                                  written before ticket 94 carries no version, and
+ *                                  that is exactly the file the compare stage has to
+ *                                  refuse rather than silently compare. Absent is read
+ *                                  as 1.
  * @property {Store} store
  * @property {string} page          The page key. It is the NL url key on a page that
  *                                  production declares in Dutch, and `(store)path` on

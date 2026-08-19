@@ -10,6 +10,7 @@ import { metaRows } from './meta.mjs';
 import { classifyPair, diffRows, textFindings } from './text.mjs';
 import { diffCost, isUncompared, spansFor, wordDiff } from './worddiff.mjs';
 import { extractPage } from '../crawl/extract.mjs';
+import { EXTRACT_VERSION } from '../shared/extract-version.mjs';
 
 let seq = 0;
 
@@ -41,6 +42,7 @@ function unit(raw, overrides = {}) {
 function extract(overrides) {
   seq = 0;
   return {
+    extractVersion: EXTRACT_VERSION,
     store: 'nl',
     page: 'overkappingen',
     side: 'production',
@@ -51,7 +53,15 @@ function extract(overrides) {
     elements: [],
     links: [],
     images: [],
-    meta: { title: null, description: null, canonical: null, noindex: false, h1: null },
+    meta: {
+      title: null,
+      description: null,
+      canonical: null,
+      robots: null,
+      noindex: false,
+      keywords: null,
+      h1: null,
+    },
     markdown: '',
     diagnostics: { imagesWithoutSrc: 0 },
     fetchedAt: '2026-08-06T00:00:00.000Z',
@@ -2343,6 +2353,61 @@ describe('skipReason', () => {
       /not been migrated/,
     );
     expect(skipReason(extract({}), extract({ side: 'new' }))).toBe(null);
+  });
+});
+
+describe('the extract version gate', () => {
+  /**
+   * An extract as the crawl wrote them before ticket 94: no version marker, and a head
+   * with neither `robots` nor `keywords` in it. This is the file on disk the gate exists
+   * for, so the test uses that shape rather than a current one with the marker taken off.
+   *
+   * @param {Partial<import('./contract.mjs').PageExtract>} [overrides]
+   */
+  function beforeTicket94(overrides = {}) {
+    const old = extract(overrides);
+    delete old.extractVersion;
+    old.meta = {
+      title: 'Overkappingen | Tuinmaximaal',
+      description: null,
+      canonical: null,
+      noindex: false,
+      h1: 'Overkappingen',
+    };
+    return old;
+  }
+
+  it('refuses an extract written before the current head reading, and says what to run', () => {
+    // Ticket 94. Without this the missing fields read as `undefined` on both sides, two
+    // absences compare as `same`, and the head panel is green on a page nothing has
+    // looked at since the fields existed.
+    expect(() =>
+      comparePage({ sides: { production: beforeTicket94(), new: extract({ side: 'new' }) } }),
+    ).toThrow(/--force/);
+  });
+
+  it('names the side it refused, because a build reads two extracts a page', () => {
+    const old = { ...beforeTicket94({ side: 'new' }), extractVersion: 1 };
+
+    expect(() => comparePage({ sides: { production: extract({}), new: old } })).toThrow(
+      /nl\/overkappingen new/,
+    );
+  });
+
+  it('accepts an extract the extractor just wrote', () => {
+    const html = '<html><body><main><h1>Kop</h1></main></body></html>';
+    const context = {
+      store: 'nl',
+      page: 'overkappingen',
+      url: 'https://www.tuinmaximaal.nl/overkappingen',
+      onWarn: () => {},
+    };
+    const sides = {
+      production: extractPage(html, { ...context, side: 'production' }),
+      new: extractPage(html, { ...context, side: 'new' }),
+    };
+
+    expect(comparePage({ sides }).comparable).toBe(true);
   });
 });
 
