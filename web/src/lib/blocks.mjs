@@ -38,13 +38,9 @@ import { languageOf, siblingOf } from './language-blocks.mjs';
  * and `carport` are one page seen from two stores. It comes off here, for the
  * comparison, and nowhere else — it is real in every URL.
  *
- * It is **exported** because `shared-pages.mjs` resolves the shared-page file's keys with
- * it, and the ticket that added it says the prefix is the only normalisation there is. Two
- * copies of the one structural rule is what that would have become.
- *
  * @param {string} path
  */
-export const comparablePath = (path) => (path.startsWith('fr/') ? path.slice(3) : path);
+const comparablePath = (path) => (path.startsWith('fr/') ? path.slice(3) : path);
 
 /**
  * Every page this store has, with its sibling in the other store of the block.

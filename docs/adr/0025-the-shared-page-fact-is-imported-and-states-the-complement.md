@@ -1,4 +1,12 @@
-# The shared-page file is imported, and it states the complement
+# The shared-page fact is imported, and it states the complement
+
+> **Amended 2026-08-19 by ticket 08.** The fact no longer lives in a committed file. It is
+> kept in the log's own append-only table, edited in the interface, because the person who
+> reads the grid is not the person with a clone. Everything below survives except where it
+> names the file — the struck sentences are marked, and *What ticket 08 overrules* at the
+> bottom says what replaced them and what it cost. The argument that the fact **cannot be
+> derived**, that the list states the **complement**, that it comes from the **new site**, and
+> that an out-of-date reading **grants nothing**, is unchanged.
 
 On the new site one Magento CMS record can be assigned to more than one store view.
 `bedrijfsinformatie` is record 543 and it serves `nl` and `be`, so one edit corrects both
@@ -111,25 +119,76 @@ views keeps its content and would expire every finding on it if the id were a te
 anything. The id is in the file so that a person can find the record in the grid again, and
 for no other reason.
 
-## Two files, and where they live
+## Where the fact and the rule live
 
-- `web/src/lib/not-shared-pages.mjs` — the **fact**: the entries and the date. Hand-edited,
-  by a person, on the grid's rhythm and not the code's.
-- `web/src/lib/shared-pages.mjs` — the **rule**: key resolution, the corpus conditions, the
-  date guard, and the list of unresolvable keys.
+~~`web/src/lib/not-shared-pages.mjs` — the **fact**: the entries and the date. Hand-edited, by
+a person, on the grid's rhythm and not the code's.~~ *Struck 2026-08-19, ticket 08. The fact is
+the `record_layout` table, derived by `overrides/record-layout.mjs`.*
 
-They are two files because they have two authors and two edit rhythms, and because the
-guard exists to catch a hand edit — the precedent is `data/10-store-seeds.json` against
-`crawl/seed-list.mjs`, and not `shared/drop-rules.mjs`, whose four entries change when its
-code does.
+- `web/src/lib/shared-pages.mjs` — the **rule**: the corpus conditions, the date guard, and
+  the entries that name a store page the corpus no longer holds.
 
-Both are in `web/` and **not** in `shared/`, which is the answer ADR 0001 gives: its third
+The **split** survives the strike, and it is what made ticket 08 a small change: the fact and
+the rule were already two things with two authors and two rhythms, so moving the fact left the
+rule alone — `sharedPageIndex()` never knew where the entries came from. The precedent for the
+split was `data/10-store-seeds.json` against `crawl/seed-list.mjs`, and it held.
+
+The rule is in `web/` and **not** in `shared/`, which is the answer ADR 0001 gives: its third
 question asks whether more than one stage needs the module, and only the web layer does. The
-readings and the presses that will consume this are `web/src/lib/blocks.mjs`,
-`web/src/lib/sibling.mjs` and `web/src/lib/bulk.mjs`. `shared/` is not a place for pure
-code; it is a place for pure code that two stages read. The stretch ADR 0001 allows — a
-resident that arrives before its second reader — does not apply, because the next reader is
-in `web/` too.
+readings and the presses that consume it are `web/src/lib/blocks.mjs`,
+`web/src/lib/sibling.mjs` and `web/src/lib/bulk.mjs`. `shared/` is not a place for pure code;
+it is a place for pure code that two stages read.
+
+## What ticket 08 overrules, 2026-08-19
+
+The fact moved out of git and into the log. The user's reason was one sentence — *others also
+needs to control it* — and it defeats the file: a committed module is a fine transcription
+surface for a maintainer with a clone and a useless one for a content manager with a browser,
+and the second is who keeps this fact.
+
+**What survives is every argument above about the fact itself.** It still cannot be derived, it
+is still the complement, it still comes from the new site's enabled records, it still states a
+fact about today and never a plan, and an out-of-date reading still grants nothing. Nothing is
+still keyed on the record id.
+
+**What changed, and what each change cost:**
+
+- **The file is deleted.** `record_layout` in Supabase is the only source. Two sources for one
+  fact was refused for the reason ADR 0001 keeps refusing it: the copy that wins is the one
+  nobody can read in a diff.
+- **It is a new table and not a scope on `overrides`.** A fact is not a judgement. In that
+  table it would have gained a bucket, a bar and a `cleared` verb, and a transcription of
+  Magento's configuration would have read as somebody's decision.
+- **Append-only, with no UPDATE and no DELETE policy**, exactly as `overrides` is. An entry is
+  withdrawn by a later `shared` event. Ticket 83 refused a schema editor because the policies
+  it needs are the ones this project deliberately does not have, and that reasoning is
+  untouched.
+- **The build guard is gone, and this is the real cost.** *An unresolvable key fails the build*
+  cannot survive data that is not in git. Two things replace it, and together they are better
+  than what they replace but not free: the interface **picks a store page out of the corpus**
+  instead of taking a typed key, so the typo the guard existed to catch cannot be made; and an
+  entry whose page has since left the corpus is named on the screen as housekeeping. What is
+  lost is that nobody is *forced* to look. That the failure list was worth more as housekeeping
+  than as a guard was already this record's finding; it is now only housekeeping.
+- **A stray entry no longer refuses to answer.** Under the file, asking the rule anything while
+  a key matched nothing raised. Live data edited by several people must not white-screen the log
+  over one stale row, and a stray grants nothing anyway: a store page the corpus does not hold
+  has no sibling pairing, so it was never in the complement. The dangerous case is a page
+  **renamed** rather than removed, where the entry names the old key and the new key is
+  unlisted — and the date guard closes that, because a new page key's first sighting is later
+  than the reading.
+- **Anyone who can open the site can now change a permission-granting fact.** There is no
+  login; an editor is a name in `localStorage` and the anon key identifies the project, not a
+  person. This widens the write from *whoever can push to git* to *whoever can open the site*.
+  It is the cost of the thing being asked for, it is not mitigated by an owner column — ticket
+  83 refused one, and a name anybody can type cannot carry an accountability reading — and it is
+  recorded here rather than discovered later. The bound that still holds is the one that always
+  did: **a fix claim loses to re-check**, so a wrong claim announces itself at the next crawl of
+  that store.
+- **The undated file's rule became the empty table's rule.** No reading event, nothing shared.
+  The test that held the date and the entries to arriving together is gone with the file; what
+  replaces it is that a reading is its own event, so a table with entries and no reading grants
+  nothing rather than being refused.
 
 ## It is not a link
 
@@ -168,3 +227,9 @@ second meaning — which is what `CONTEXT.md` exists to stop.
   a configuration that already exists.
 - **No date on the file.** Then an out-of-date reading grants permissions it never saw, and
   it does so more widely the longer it sits.
+- **Keeping the file as a baseline the table overlays** (considered 2026-08-19, ticket 08). It
+  would have kept the `npm test` guard over the committed half. Refused: two sources for one
+  fact, and a rule needed for what happens when they disagree.
+- **Generating the file back out of the table** (same). Git would keep the history and the guard
+  would still run. Refused as the most machinery of the three, and the file would go stale
+  between exports — a second copy that is usually wrong is worse than no copy.

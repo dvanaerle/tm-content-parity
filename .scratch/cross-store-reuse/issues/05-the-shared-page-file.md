@@ -78,7 +78,7 @@ record id writes a false claim into a store nobody looked at — which is trap 3
 
 What is committed:
 
-- **ADR 0025** — `docs/adr/0025-the-shared-page-file-is-imported-and-states-the-complement.md`.
+- **ADR 0025** — `docs/adr/0025-the-shared-page-fact-is-imported-and-states-the-complement.md`.
 - **`web/src/lib/not-shared-pages.mjs`** — the fact. `TAKEN_ON` and `NOT_SHARED_PAGES`, the
   entry shape (`key`, `record`, `reason`), and the rules a hand edit has to obey. **Empty and
   undated today.**

@@ -1,21 +1,22 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { NOT_SHARED_PAGES, TAKEN_ON } from './not-shared-pages.mjs';
+import { recordLayoutFrom } from '../../../overrides/record-layout.mjs';
 import { isSharedPage, sharedPageIndex } from './shared-pages.mjs';
 
 /**
- * A corpus of seed rows, in the shape `data/10-store-seeds.json` holds: a row per page and
- * a cell per store. Only the fields the pairing and the resolution read are here.
+ * A corpus of seed rows, in the shape `data/10-store-seeds.json` holds: a row per page and a
+ * cell per store. Only the fields the pairing and the corpus check read are here.
  *
- * It carries an empty run log, so that a test which says nothing about a page's age does not
- * have to spell one. `sharedPageIndex()` requires the argument, and the tests that are about
- * the date pass their own after this spread.
+ * It carries an empty run log and no entries, so that a test which says nothing about ages or
+ * about the layout does not have to spell them. `sharedPageIndex()` requires both, and the
+ * tests that are about them pass their own after this spread.
  *
  * @param {Record<string, Record<string, string>>} pages Page key to store to path.
  */
 const corpus = (pages) => ({
   runLog: [],
+  notShared: [],
   rows: Object.entries(pages).map(([page, paths]) => ({
     page,
     stores: Object.fromEntries(Object.entries(paths).map(([store, path]) => [store, { path }])),
@@ -27,27 +28,31 @@ const DUTCH_BLOCK = {
   'algemene-voorwaarden': { nl: 'algemene-voorwaarden', be: 'algemene-voorwaarden' },
 };
 
-const entry = (key, record = 1, reason = 'Own record.') => ({ key, record, reason });
+/** An entry as `recordLayoutFrom()` produces it. */
+const entry = (store, page, record = 412, reason = 'Belgian legal text.') => ({
+  store,
+  page,
+  record,
+  reason,
+  editor: 'd.aerle',
+  writtenAt: '2026-08-19T09:05:00Z',
+});
 
-describe('what the shared-page file says about one store page', () => {
+describe('what the record layout says about one store page', () => {
   it('reads an unlisted page with a sibling as shared', () => {
-    const index = sharedPageIndex({
-      ...corpus(DUTCH_BLOCK),
-      notShared: [],
-      takenOn: '2026-08-19',
-    });
+    const index = sharedPageIndex({ ...corpus(DUTCH_BLOCK), takenOn: '2026-08-19' });
 
     expect(isSharedPage(index, { store: 'be', page: 'bedrijfsinformatie' })).toBe(true);
     expect(isSharedPage(index, { store: 'nl', page: 'bedrijfsinformatie' })).toBe(true);
   });
 
-  // One entry unshares **both** sides. Sharing is a property of the pair: if `be`'s
-  // record does not serve `nl`, then `nl`'s does not serve `be` either. It is why the
-  // grid reading only had to be compiled from the Belgian store.
+  // One entry unshares **both** sides. Sharing is a property of the pair: if `be`'s record
+  // does not serve `nl`, then `nl`'s does not serve `be` either. It is why the grid only has
+  // to be read from one store of the block.
   it('reads a listed page as not shared on either store of its block', () => {
     const index = sharedPageIndex({
       ...corpus(DUTCH_BLOCK),
-      notShared: [entry('be/algemene-voorwaarden', 412, 'Belgian legal text.')],
+      notShared: [entry('be', 'algemene-voorwaarden')],
       takenOn: '2026-08-19',
     });
 
@@ -57,15 +62,13 @@ describe('what the shared-page file says about one store page', () => {
   });
 });
 
-describe('the date the file was taken', () => {
-  const listed = { notShared: [], takenOn: '2026-08-19' };
-
+describe('the day the grid was read', () => {
   const seen = (store, page, firstSeen) => ({ store, page, firstSeen });
 
-  it('reads a page the grid cannot have seen as not shared', () => {
+  it('reads a page the reading cannot have seen as not shared', () => {
     const index = sharedPageIndex({
       ...corpus(DUTCH_BLOCK),
-      ...listed,
+      takenOn: '2026-08-19',
       runLog: [
         seen('be', 'bedrijfsinformatie', '2026-03-02T05:00:00.000Z-abc'),
         seen('be', 'algemene-voorwaarden', '2026-08-25T05:00:00.000Z-abc'),
@@ -80,19 +83,19 @@ describe('the date the file was taken', () => {
   it('reads a page first seen on the day itself as shared', () => {
     const index = sharedPageIndex({
       ...corpus(DUTCH_BLOCK),
-      ...listed,
+      takenOn: '2026-08-19',
       runLog: [seen('be', 'bedrijfsinformatie', '2026-08-19T23:59:00.000Z-abc')],
     });
 
     expect(isSharedPage(index, { store: 'be', page: 'bedrijfsinformatie' })).toBe(true);
   });
 
-  // The earliest sighting and not the latest: a finding that arrived last week on a page
-  // the log has held since March must not withdraw the page's own age.
+  // The earliest sighting and not the latest: a finding that arrived last week on a page the
+  // log has held since March must not withdraw the page's own age.
   it('asks the earliest sighting of the page, over every row that names it', () => {
     const index = sharedPageIndex({
       ...corpus(DUTCH_BLOCK),
-      ...listed,
+      takenOn: '2026-08-19',
       runLog: [
         seen('be', 'bedrijfsinformatie', '2026-08-30T05:00:00.000Z-abc'),
         seen('be', 'bedrijfsinformatie', '2026-03-02T05:00:00.000Z-def'),
@@ -102,8 +105,10 @@ describe('the date the file was taken', () => {
     expect(isSharedPage(index, { store: 'be', page: 'bedrijfsinformatie' })).toBe(true);
   });
 
-  it('shares nothing at all while the file carries no date', () => {
-    const index = sharedPageIndex({ ...corpus(DUTCH_BLOCK), notShared: [], takenOn: null });
+  // An empty table must never mean *everything is shared*, and this is the half of that rule
+  // the rule itself holds: no reading, no sharing.
+  it('shares nothing at all until the grid has been read', () => {
+    const index = sharedPageIndex({ ...corpus(DUTCH_BLOCK), takenOn: null });
 
     expect(isSharedPage(index, { store: 'be', page: 'bedrijfsinformatie' })).toBe(false);
     expect(isSharedPage(index, { store: 'nl', page: 'bedrijfsinformatie' })).toBe(false);
@@ -114,18 +119,16 @@ describe('the pages sharing can never reach', () => {
   it('reads a store in no language block as not shared', () => {
     const index = sharedPageIndex({
       ...corpus({ terrassenueberdachung: { de: 'terrassenueberdachung' } }),
-      notShared: [],
       takenOn: '2026-08-19',
     });
 
     expect(isSharedPage(index, { store: 'de', page: 'terrassenueberdachung' })).toBe(false);
   });
 
-  // No partner, so nothing to share with, whatever the file omits.
+  // No partner, so nothing to share with, whatever the layout omits.
   it('reads a page with no sibling page as not shared', () => {
     const index = sharedPageIndex({
       ...corpus({ 'be-only': { be: 'be-only' }, ...DUTCH_BLOCK }),
-      notShared: [],
       takenOn: '2026-08-19',
     });
 
@@ -133,107 +136,98 @@ describe('the pages sharing can never reach', () => {
   });
 });
 
-describe('resolving a key onto a store page', () => {
-  const FRENCH_BLOCK = {
-    'conditions-generales': { be_fr: 'fr/conditions-generales', fr: 'conditions-generales' },
-    livraison: { be_fr: 'fr/livraison', fr: 'livraison' },
+describe('an entry the corpus no longer holds', () => {
+  const input = {
+    ...corpus(DUTCH_BLOCK),
+    notShared: [entry('be', 'algemene-voorwaarden'), entry('fr', 'distributeurs', 611)],
+    takenOn: '2026-08-19',
   };
 
-  // The `fr/` prefix is a host artefact, so both spellings of the key name one page. It is
-  // the **only** normalisation there is.
-  it.each(['be_fr/conditions-generales', 'be_fr/fr/conditions-generales'])(
-    'takes the fr/ prefix off a be_fr key, spelled %s',
-    (key) => {
-      const index = sharedPageIndex({
-        ...corpus(FRENCH_BLOCK),
-        notShared: [entry(key, 509)],
-        takenOn: '2026-08-19',
-      });
-
-      expect(index.unresolvable).toEqual([]);
-      expect(isSharedPage(index, { store: 'be_fr', page: 'conditions-generales' })).toBe(false);
-      expect(isSharedPage(index, { store: 'be_fr', page: 'livraison' })).toBe(true);
-    },
-  );
-
-  // A suffix is never stripped. Both unresolvable keys in the first grid reading carried
-  // `-n-v-t` and named records to be disabled; resolving one onto the live page would mark
-  // a genuinely shared page as unshared and withdraw a permission in silence.
-  it('names every key that resolves to no store page, and never the first alone', () => {
-    const index = sharedPageIndex({
-      ...corpus(FRENCH_BLOCK),
-      notShared: [entry('fr/distributeurs-n-v-t'), entry('fr/formulaire-retrait')],
-      takenOn: '2026-08-19',
-    });
-
-    expect(index.unresolvable).toEqual([
-      'fr/distributeurs-n-v-t: no store page in the corpus',
-      'fr/formulaire-retrait: no store page in the corpus',
-    ]);
+  // Housekeeping and not a failure: the screen names it. Under the committed file this was a
+  // typo and failed the build; entries are picked out of the corpus now, so it is a page that
+  // has since left it — and the record is one to disable in Magento.
+  it('is named as a stray, and every one of them', () => {
+    expect(sharedPageIndex(input).strays).toEqual([entry('fr', 'distributeurs', 611)]);
   });
 
-  it('raises when asked a question while a key resolves to nothing', () => {
-    const index = sharedPageIndex({
-      ...corpus(FRENCH_BLOCK),
-      notShared: [entry('fr/formulaire-retrait')],
-      takenOn: '2026-08-19',
-    });
+  it('does not stop the rule answering the pages it does hold', () => {
+    const index = sharedPageIndex(input);
 
-    expect(() => isSharedPage(index, { store: 'fr', page: 'livraison' })).toThrow(
-      /formulaire-retrait/,
-    );
+    expect(isSharedPage(index, { store: 'be', page: 'bedrijfsinformatie' })).toBe(true);
+    expect(isSharedPage(index, { store: 'be', page: 'algemene-voorwaarden' })).toBe(false);
+  });
+});
+
+// The two inputs with no safe default. `npm run typecheck` reads no `.mjs` here, so the
+// requirement is a check and not a type, and this is what says it still holds.
+describe('the bounds that may not be left out', () => {
+  it.each([
+    ['the run log', { rows: [], notShared: [], takenOn: '2026-08-19' }],
+    ['the record layout', { rows: [], runLog: [], takenOn: '2026-08-19' }],
+  ])('refuses to answer at all without %s', (_what, input) => {
+    expect(() => sharedPageIndex(input)).toThrow(/record layout and the run log/);
   });
 });
 
 /**
- * The committed file, against the corpus on disk. This is the half that **fails the
- * build**: `npm test` gates it, and the check needs data on disk, in the manner of
- * `shared/drop-rules.test.mjs`'s committed measurement.
+ * The rule against the corpus on disk, fed by the derivation the table will feed it. It is
+ * what says the two halves fit: `recordLayoutFrom()`'s output is `sharedPageIndex()`'s input,
+ * and nothing in between translates.
  */
-describe('the committed shared-page file', () => {
+describe('the derivation against the real corpus', () => {
   const seeds = JSON.parse(
     readFileSync(new URL('../../../data/10-store-seeds.json', import.meta.url), 'utf8'),
   );
 
-  it('resolves every key onto a store page in the corpus', () => {
-    expect(sharedPageIndex({ rows: seeds.rows, runLog: [] }).unresolvable).toEqual([]);
+  const eventsFor = (entries) => [
+    {
+      id: 'r1',
+      createdAt: '2026-08-19T09:00:00Z',
+      editor: 'd.aerle',
+      kind: 'reading',
+      store: null,
+      page: null,
+      recordId: null,
+      reason: null,
+      takenOn: '2026-08-19',
+    },
+    ...entries.map(([store, page, record], index) => ({
+      id: `e${index}`,
+      createdAt: `2026-08-19T09:0${index + 1}:00Z`,
+      editor: 'd.aerle',
+      kind: 'separate',
+      store,
+      page,
+      recordId: record,
+      reason: 'Own record.',
+      takenOn: null,
+    })),
+  ];
+
+  const indexFor = (entries) =>
+    sharedPageIndex({ rows: seeds.rows, runLog: [], ...recordLayoutFrom(eventsFor(entries)) });
+
+  // The complement's upper bound, and the number every entry cuts into. It is a **slice** of
+  // the corpus of 2026-08-19 and it moves when the seed list does.
+  it('shares 492 store pages under a reading with no entries', () => {
+    const index = indexFor([]);
+
+    expect(index.shared.size).toBe(492);
+    expect(index.strays).toEqual([]);
   });
 
-  // The three below are **guards and not slices**, in the manner `language-blocks.test.mjs`
-  // names: they pass over the empty list this ticket committed, and they are here for the
-  // hand edit that fills it — which is the one edit in this feature no code performs.
-  it('gives every entry a record id and a reason a reader can use', () => {
-    for (const entry of NOT_SHARED_PAGES) {
-      expect(Number.isInteger(entry.record)).toBe(true);
-      expect(entry.reason.length).toBeGreaterThan(10);
-    }
+  it('withdraws both sides of a pair the layout names', () => {
+    const index = indexFor([['be', 'bedrijfsinformatie', 543]]);
+
+    expect(isSharedPage(index, { store: 'be', page: 'bedrijfsinformatie' })).toBe(false);
+    expect(isSharedPage(index, { store: 'nl', page: 'bedrijfsinformatie' })).toBe(false);
+    expect(index.shared.size).toBe(490);
   });
 
-  it('names each store page once', () => {
-    const keys = NOT_SHARED_PAGES.map((entry) => entry.key);
-    expect(new Set(keys).size).toBe(keys.length);
-  });
+  it('names an entry the corpus does not hold and goes on answering', () => {
+    const index = indexFor([['be', 'a-page-magento-alone-knows', 999]]);
 
-  // The date and the entries arrive together, and this is why: a **dated** file with no
-  // entries is the most permissive sentence in the feature — all 492 store pages of both
-  // blocks are shared — and an **undated** file with entries is a fact nobody can date.
-  // Neither is a state a hand edit should reach by accident.
-  //
-  // A grid reading that genuinely finds **nothing** unshared is the one legitimate dated
-  // empty file, and it does not silently pass here: it edits this test and says which
-  // reading found that, which is where a claim over 492 store pages should be argued.
-  it('carries a date exactly when it carries entries', () => {
-    if (TAKEN_ON !== null) expect(TAKEN_ON).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(TAKEN_ON === null).toBe(NOT_SHARED_PAGES.length === 0);
-  });
-});
-
-// The one input with no safe default. `npm run typecheck` reads no `.mjs` here, so the
-// requirement is a check and not a type, and this is what says it still holds.
-describe('the run log the date is read against', () => {
-  it('refuses to answer at all when it is not given', () => {
-    expect(() => sharedPageIndex({ rows: [], takenOn: '2026-08-19', notShared: [] })).toThrow(
-      /run log/,
-    );
+    expect(index.strays.map((one) => one.page)).toEqual(['a-page-magento-alone-knows']);
+    expect(index.shared.size).toBe(492);
   });
 });

@@ -2,21 +2,21 @@
  * *Is this store page shared* — one Magento record on the new site serving both stores of
  * a language block, so that one edit corrects both (`CONTEXT.md` → *Shared page*).
  *
- * The fact is imported and never derived: `./not-shared-pages.mjs` holds it, this holds the
- * rule, and ADR 0025 says why a crawl cannot produce either. It is **not a link** — the
- * sibling is derived from what production declares, `links` is a Check, and nobody links
- * anything.
+ * The fact is imported and never derived. It comes from the log's own append-only table
+ * through `overrides/record-layout.mjs`, and ADR 0025 says why a crawl cannot produce it.
+ * It is **not a link** — the sibling is derived from what production declares, `links` is a
+ * Check, and nobody links anything.
  *
- * Everything here is decided as a value. It answers one question and offers one guard, and
- * it is the only new seam this effort adds.
+ * Everything here is decided as a value, and it takes the fact as an argument: this file
+ * never learns where the entries came from, which is what let ticket 08 move them out of a
+ * committed file without touching the rule.
  */
 
-import { comparablePath, siblingPages } from './blocks.mjs';
+import { siblingPages } from './blocks.mjs';
 import { LANGUAGE_BLOCKS, siblingOf } from './language-blocks.mjs';
-import { NOT_SHARED_PAGES, TAKEN_ON } from './not-shared-pages.mjs';
 
 /** @typedef {import('./blocks.mjs').SeedRow} SeedRow */
-/** @typedef {import('./not-shared-pages.mjs').NotSharedPage} NotSharedPage */
+/** @typedef {import('../../../overrides/record-layout.mjs').SeparateRecord} SeparateRecord */
 
 /**
  * One run-log row, read for its age alone. `firstSeen` is an observation id, which sorts
@@ -28,20 +28,19 @@ import { NOT_SHARED_PAGES, TAKEN_ON } from './not-shared-pages.mjs';
 /**
  * The answer for the whole corpus, built once and asked many times.
  *
- * `shared` is the **materialised complement** and not the file: 492 store pages over the two
- * blocks on the corpus of 2026-08-19 — 126 `nl`, 126 `be`, 120 `be_fr`, 120 `fr` — which is
- * cheaper to hold than to re-derive per question, and it is what makes the corpus conditions
- * part of the answer rather than a caller's to remember. That count is the complement's
- * **upper bound**, under a dated file with no entries; every entry cuts into it.
+ * `shared` is the **materialised complement** and not the entries: 492 store pages over the
+ * two blocks on the corpus of 2026-08-19 — 126 `nl`, 126 `be`, 120 `be_fr`, 120 `fr` — which
+ * is cheaper to hold than to re-derive per question, and it is what makes the corpus
+ * conditions part of the answer rather than a caller's to remember. That count is the
+ * complement's **upper bound**, under a dated layout with no entries; every entry cuts into
+ * it.
  *
  * @typedef {object} SharedPageIndex
- * @property {Set<string>} shared        Store pages that are shared, spelled by
- *                                       `storePage()`. Callers ask `isSharedPage()`.
- * @property {string[]} unresolvable     One sentence per key that resolves to no one store
- *                                       page. It is the build's failure list, and it is
- *                                       housekeeping: a key that names a record to be
- *                                       disabled belongs here, not silently normalised onto
- *                                       a live page.
+ * @property {Set<string>} shared      Store pages that are shared, spelled by `storePage()`.
+ *                                     Callers ask `isSharedPage()`.
+ * @property {SeparateRecord[]} strays Entries naming a store page the corpus does not hold.
+ *                                     **Housekeeping and not a failure**: see the note on
+ *                                     `sharedPageIndex()`.
  */
 
 /** @param {{ store: string, page: string }} at */
@@ -67,46 +66,26 @@ function firstSightings(rows) {
 }
 
 /**
- * Each store's paths against the page key they belong to, with the `fr/` prefix off.
- *
- * A path claimed by two rows is recorded and never answered: picking one would be the quiet
- * mapping this module refuses. The corpus of 2026-08-19 has no such path in any store, so
- * this is a guard and not a case.
+ * Every store page the corpus holds.
  *
  * @param {SeedRow[]} rows
+ * @returns {Set<string>}
  */
-function pagesByPath(rows) {
-  /** @type {Map<string, string>} */
-  const byPath = new Map();
+function storePagesIn(rows) {
   /** @type {Set<string>} */
-  const claimedTwice = new Set();
+  const held = new Set();
   for (const row of rows) {
     for (const [store, cell] of Object.entries(row.stores ?? {})) {
-      if (!cell) continue;
-      const key = storePage({ store, page: comparablePath(cell.path ?? '') });
-      if (byPath.has(key)) claimedTwice.add(key);
-      byPath.set(key, row.page);
+      if (cell) held.add(storePage({ store, page: row.page }));
     }
   }
-  return { byPath, claimedTwice };
+  return held;
 }
 
 /**
- * The store and path a file key names. The store is the part before the first slash, so a
- * path may hold slashes of its own.
+ * Whether the reading can have seen this store page at all.
  *
- * @param {string} key
- */
-function readKey(key) {
-  const cut = key.indexOf('/');
-  if (cut < 0) return null;
-  return { store: key.slice(0, cut), path: comparablePath(key.slice(cut + 1)) };
-}
-
-/**
- * Whether the file's reading can have seen this store page at all.
- *
- * An **absent** first sighting does not withdraw the file's claim: a page with no run-log
+ * An **absent** first sighting does not withdraw the layout's claim: a page with no run-log
  * row has no finding, and the log is the only clock there is — the corpus carries no date
  * per page. A page created after the reading announces itself through the first finding on
  * it, whose sighting is later than the date, which is the direction that matters.
@@ -120,55 +99,51 @@ function couldHaveSeen(takenOn, firstSeen) {
 }
 
 /**
- * Which store pages are shared, and which keys of the file resolve to none.
+ * Which store pages are shared, and which entries name a store page the corpus has not.
+ *
+ * **Nothing here is optional.** The entries, the day the grid was read and the run log are
+ * all required, because each one is a bound on what the answer may grant and a caller who
+ * omitted any of them would get the claim with a bound taken off it — quietly, which is the
+ * one failure shape this module exists to avoid. `npm run typecheck` reads no `.mjs` in this
+ * repo, so the requirement is checked here and not by a type.
+ *
+ * **A stray entry is housekeeping and never a refusal.** Under the committed file a key that
+ * matched nothing was a typo and failed the build; the entries are picked out of the corpus
+ * now, so a stray is a page that has since left it, and the screen names it. It grants
+ * nothing either way: a store page the corpus does not hold has no sibling pairing, so it
+ * was never in the complement. The case that *would* be dangerous is a page **renamed**
+ * rather than removed — the entry names the old key, the new key is unlisted, and the
+ * complement would call it shared. The date guard is what closes that: a new page key's
+ * first sighting is later than the reading, so it reads as not shared until somebody reads
+ * the grid again.
  *
  * @param {object} input
- * @param {SeedRow[]} input.rows The rows of `data/10-store-seeds.json`.
- * @param {NotSharedPage[]} [input.notShared] The file. Defaults to the committed one.
- * @param {string | null} [input.takenOn]     The day it was read. Defaults to the file's.
- * @param {Sighting[]} input.runLog The run log's
- *   rows. **Required, and refused rather than defaulted.** The date guard is the whole reason
- *   the file may be trusted, and a caller who omitted the argument would get the file's claim
- *   with the bound taken off it — quietly, which is the one failure shape this module exists
- *   to avoid. `npm run typecheck` reads no `.mjs` in this repo, so the requirement is checked
- *   here and not by a type. A fresh clone, where the index has not been written yet, passes
- *   `[]` and says so.
+ * @param {SeedRow[]} input.rows             The rows of `data/10-store-seeds.json`.
+ * @param {SeparateRecord[]} input.notShared The complement, from `recordLayoutFrom()`.
+ * @param {string | null} input.takenOn      The day the grid was read. `null` shares nothing.
+ * @param {Sighting[]} input.runLog          The run log's rows. `[]` on a fresh clone, said
+ *                                           aloud rather than defaulted.
  * @returns {SharedPageIndex}
  */
-export function sharedPageIndex({
-  rows,
-  runLog,
-  notShared = NOT_SHARED_PAGES,
-  takenOn = TAKEN_ON,
-}) {
-  if (!runLog) {
+export function sharedPageIndex({ rows, notShared, takenOn, runLog }) {
+  if (!runLog || !notShared) {
     throw new Error(
-      'sharedPageIndex() needs the run log rows: the date on the file is what bounds its ' +
-        'claim, and without them the bound comes off in silence. Pass [] where the index has ' +
-        'not been written yet.',
+      'sharedPageIndex() needs the record layout and the run log rows: the entries and the ' +
+        'day the grid was read are what bound its claim, and without them the bound comes ' +
+        'off in silence. Pass [] where there is nothing yet.',
     );
   }
 
-  const { byPath, claimedTwice } = pagesByPath(rows);
+  const held = storePagesIn(rows);
   const seenFirst = firstSightings(runLog);
 
   /** @type {Set<string>} */
   const separateRecords = new Set();
-  /** @type {string[]} */
-  const unresolvable = [];
-  for (const { key } of notShared) {
-    const named = readKey(key);
-    const where = named && storePage({ store: named.store, page: named.path });
-    const page = where ? byPath.get(where) : undefined;
-    if (!named || !page) {
-      unresolvable.push(`${key}: no store page in the corpus`);
-      continue;
-    }
-    if (where && claimedTwice.has(where)) {
-      unresolvable.push(`${key}: two store pages of ${named.store} hold this path`);
-      continue;
-    }
-    separateRecords.add(storePage({ store: named.store, page }));
+  /** @type {SeparateRecord[]} */
+  const strays = [];
+  for (const entry of notShared) {
+    if (held.has(storePage(entry))) separateRecords.add(storePage(entry));
+    else strays.push(entry);
   }
 
   /** @type {Set<string>} */
@@ -182,7 +157,7 @@ export function sharedPageIndex({
         const there = { store: other, page: match.sibling.page };
         if (separateRecords.has(storePage(here))) continue;
         // Sharing is a property of the **pair**, so the sibling's own entry unshares this
-        // side too. It is why the grid reading only had to be compiled from one store.
+        // side too. It is why the grid reading only has to be done from one store.
         if (separateRecords.has(storePage(there))) continue;
         if (!couldHaveSeen(takenOn, seenFirst.get(storePage(here)))) continue;
         shared.add(storePage(here));
@@ -190,33 +165,20 @@ export function sharedPageIndex({
     }
   }
 
-  return { shared, unresolvable };
+  return { shared, strays };
 }
 
 /**
  * Whether one edit on the new site corrects this store page and its sibling together.
  *
- * `false` is the answer to every question the file does not positively grant: a store
+ * `false` is the answer to every question the layout does not positively grant: a store
  * outside a block, a page with no sibling, a listed page, a page either store of the pair
- * has listed, a page first seen after the reading, and an undated file.
- *
- * **It raises while any key resolves to nothing**, and it names every one of them. A key
- * that has gone stale is a claim about a record nobody can find, and answering `false` to
- * an unrelated question would let the whole file go on being trusted around it. The suite
- * asks this of the committed file, so the failure lands at the build and not at an editor.
+ * has listed, a page first seen after the reading, and a layout with no reading in it.
  *
  * @param {SharedPageIndex} index
  * @param {{ store: string, page: string }} at
  * @returns {boolean}
- * @throws {Error} While `index.unresolvable` holds anything.
  */
 export function isSharedPage(index, at) {
-  if (index.unresolvable.length) {
-    throw new Error(
-      `the shared-page file holds ${index.unresolvable.length} key(s) that resolve to no ` +
-        `store page:\n  ${index.unresolvable.join('\n  ')}\n` +
-        'Fix the file, or disable the record. A stale key is not mapped onto a live page.',
-    );
-  }
   return index.shared.has(storePage(at));
 }
