@@ -8,9 +8,14 @@ import { isSharedPage, sharedPageIndex } from './shared-pages.mjs';
  * A corpus of seed rows, in the shape `data/10-store-seeds.json` holds: a row per page and
  * a cell per store. Only the fields the pairing and the resolution read are here.
  *
+ * It carries an empty run log, so that a test which says nothing about a page's age does not
+ * have to spell one. `sharedPageIndex()` requires the argument, and the tests that are about
+ * the date pass their own after this spread.
+ *
  * @param {Record<string, Record<string, string>>} pages Page key to store to path.
  */
 const corpus = (pages) => ({
+  runLog: [],
   rows: Object.entries(pages).map(([page, paths]) => ({
     page,
     stores: Object.fromEntries(Object.entries(paths).map(([store, path]) => [store, { path }])),
@@ -100,7 +105,8 @@ describe('the date the file was taken', () => {
   it('shares nothing at all while the file carries no date', () => {
     const index = sharedPageIndex({ ...corpus(DUTCH_BLOCK), notShared: [], takenOn: null });
 
-    expect(index.shared.size).toBe(0);
+    expect(isSharedPage(index, { store: 'be', page: 'bedrijfsinformatie' })).toBe(false);
+    expect(isSharedPage(index, { store: 'nl', page: 'bedrijfsinformatie' })).toBe(false);
   });
 });
 
@@ -190,9 +196,12 @@ describe('the committed shared-page file', () => {
   );
 
   it('resolves every key onto a store page in the corpus', () => {
-    expect(sharedPageIndex({ rows: seeds.rows }).unresolvable).toEqual([]);
+    expect(sharedPageIndex({ rows: seeds.rows, runLog: [] }).unresolvable).toEqual([]);
   });
 
+  // The three below are **guards and not slices**, in the manner `language-blocks.test.mjs`
+  // names: they pass over the empty list this ticket committed, and they are here for the
+  // hand edit that fills it — which is the one edit in this feature no code performs.
   it('gives every entry a record id and a reason a reader can use', () => {
     for (const entry of NOT_SHARED_PAGES) {
       expect(Number.isInteger(entry.record)).toBe(true);
@@ -206,11 +215,25 @@ describe('the committed shared-page file', () => {
   });
 
   // The date and the entries arrive together, and this is why: a **dated** file with no
-  // entries is the most permissive sentence in the feature — every page of both blocks is
-  // shared — and an **undated** file with entries is a fact nobody can date. Neither is a
-  // state a hand edit should be able to reach.
+  // entries is the most permissive sentence in the feature — all 492 store pages of both
+  // blocks are shared — and an **undated** file with entries is a fact nobody can date.
+  // Neither is a state a hand edit should reach by accident.
+  //
+  // A grid reading that genuinely finds **nothing** unshared is the one legitimate dated
+  // empty file, and it does not silently pass here: it edits this test and says which
+  // reading found that, which is where a claim over 492 store pages should be argued.
   it('carries a date exactly when it carries entries', () => {
     if (TAKEN_ON !== null) expect(TAKEN_ON).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(TAKEN_ON === null).toBe(NOT_SHARED_PAGES.length === 0);
+  });
+});
+
+// The one input with no safe default. `npm run typecheck` reads no `.mjs` here, so the
+// requirement is a check and not a type, and this is what says it still holds.
+describe('the run log the date is read against', () => {
+  it('refuses to answer at all when it is not given', () => {
+    expect(() => sharedPageIndex({ rows: [], takenOn: '2026-08-19', notShared: [] })).toThrow(
+      /run log/,
+    );
   });
 });

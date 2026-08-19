@@ -125,3 +125,42 @@ Paste the two lists into `NOT_SHARED_PAGES` as `{ key, record, reason }` and set
 to the day the grid was read. `npm test` then names every key that resolves to no store page;
 the three known ones — two carrying `-n-v-t`, one French distributor page — are expected to
 fail and are records to disable, not keys to normalise.
+
+### After review
+
+`/code-review` ran both axes. The Spec axis found no trap broken and no criterion wrongly
+ticked; both axes found real defects, and all of them are fixed in the follow-up commit.
+
+- **The run log is required and refused rather than defaulted.** It was `runLog = []`, and an
+  absent sighting is permissive, so a caller who forgot the argument got the file's claim with
+  the date bound taken off it — in silence. It now throws and says why.
+- **`npm run typecheck` reads no `.mjs` in this repo.** Its `include` is `oxlint.config.ts`
+  and `tools/oxlint/**/*.ts`, so every JSDoc type here is documentation and not enforcement.
+  That is why the requirement above is a check and not a type. Worth its own ticket; the gap
+  is older than this work and it is not touched here.
+- **The complement's size was wrong in a docblock** — *some 230* against the measured 492.
+  Fixed, and the number now carries its per-store split and the word *upper bound*.
+- **A vacuous test now says it is a guard**, in the manner `language-blocks.test.mjs` names:
+  the record-id, reason and uniqueness checks pass over the empty list and are here for the
+  hand edit that fills it.
+- **`index.shared.size` was asked of the field**; it asks `isSharedPage()` now.
+- Renames and one typedef: `separateRecords` for what the file listed, `where` for the string
+  spelling of a store page against `at` for the object, and one `Sighting` type for the
+  run-log row that was spelled inline twice.
+
+Two review findings were **kept and argued rather than fixed**, and both are recorded here
+because a later reader is entitled to disagree:
+
+- **The date-and-entries coupling is bidirectional**, which the spec did not ask for. A grid
+  reading that genuinely finds nothing unshared is a legitimate dated empty file, and it
+  cannot pass this guard. It is kept because the failure it catches — a date set without the
+  paste, claiming all 492 store pages shared — is a plausible hand edit with a high cost,
+  while the legitimate case is a claim over 492 pages that deserves to be argued in a test
+  edit rather than to pass quietly.
+- **The duplicate-path guard** is not asked for anywhere and no store has such a path today.
+  It is kept because the alternative is picking one of two pages, which is the quiet mapping
+  this ticket's first trap forbids.
+
+**Speculative Generality is flagged and expected:** the seam has no production caller. That
+is what tickets 06 and 07 are.
+

@@ -19,11 +19,20 @@ import { NOT_SHARED_PAGES, TAKEN_ON } from './not-shared-pages.mjs';
 /** @typedef {import('./not-shared-pages.mjs').NotSharedPage} NotSharedPage */
 
 /**
+ * One run-log row, read for its age alone. `firstSeen` is an observation id, which sorts
+ * chronologically by construction, so comparing two of them is a string comparison.
+ *
+ * @typedef {{ store: string, page: string, firstSeen: string }} Sighting
+ */
+
+/**
  * The answer for the whole corpus, built once and asked many times.
  *
- * `shared` is the **materialised complement** and not the file: some 230 store pages over
- * two blocks, which is cheaper to hold than to re-derive per question, and it is what makes
- * the corpus conditions part of the answer rather than a caller's to remember.
+ * `shared` is the **materialised complement** and not the file: 492 store pages over the two
+ * blocks on the corpus of 2026-08-19 — 126 `nl`, 126 `be`, 120 `be_fr`, 120 `fr` — which is
+ * cheaper to hold than to re-derive per question, and it is what makes the corpus conditions
+ * part of the answer rather than a caller's to remember. That count is the complement's
+ * **upper bound**, under a dated file with no entries; every entry cuts into it.
  *
  * @typedef {object} SharedPageIndex
  * @property {Set<string>} shared        Store pages that are shared, spelled by
@@ -43,16 +52,16 @@ const storePage = ({ store, page }) => `${store}|${page}`;
  * names it — retired rows included, because the question is when the log first saw the
  * page and not when it last did.
  *
- * @param {{ store: string, page: string, firstSeen: string }[]} rows
+ * @param {Sighting[]} rows
  * @returns {Map<string, string>}
  */
 function firstSightings(rows) {
   /** @type {Map<string, string>} */
   const earliest = new Map();
   for (const row of rows) {
-    const at = storePage(row);
-    const known = earliest.get(at);
-    if (!known || row.firstSeen < known) earliest.set(at, row.firstSeen);
+    const where = storePage(row);
+    const known = earliest.get(where);
+    if (!known || row.firstSeen < known) earliest.set(where, row.firstSeen);
   }
   return earliest;
 }
@@ -117,36 +126,49 @@ function couldHaveSeen(takenOn, firstSeen) {
  * @param {SeedRow[]} input.rows The rows of `data/10-store-seeds.json`.
  * @param {NotSharedPage[]} [input.notShared] The file. Defaults to the committed one.
  * @param {string | null} [input.takenOn]     The day it was read. Defaults to the file's.
- * @param {{ store: string, page: string, firstSeen: string }[]} [input.runLog] The run log's
- *   rows. Absent is the fresh clone, where the index has not been written yet.
+ * @param {Sighting[]} input.runLog The run log's
+ *   rows. **Required, and refused rather than defaulted.** The date guard is the whole reason
+ *   the file may be trusted, and a caller who omitted the argument would get the file's claim
+ *   with the bound taken off it — quietly, which is the one failure shape this module exists
+ *   to avoid. `npm run typecheck` reads no `.mjs` in this repo, so the requirement is checked
+ *   here and not by a type. A fresh clone, where the index has not been written yet, passes
+ *   `[]` and says so.
  * @returns {SharedPageIndex}
  */
 export function sharedPageIndex({
   rows,
+  runLog,
   notShared = NOT_SHARED_PAGES,
   takenOn = TAKEN_ON,
-  runLog = [],
 }) {
+  if (!runLog) {
+    throw new Error(
+      'sharedPageIndex() needs the run log rows: the date on the file is what bounds its ' +
+        'claim, and without them the bound comes off in silence. Pass [] where the index has ' +
+        'not been written yet.',
+    );
+  }
+
   const { byPath, claimedTwice } = pagesByPath(rows);
   const seenFirst = firstSightings(runLog);
 
   /** @type {Set<string>} */
-  const listed = new Set();
+  const separateRecords = new Set();
   /** @type {string[]} */
   const unresolvable = [];
   for (const { key } of notShared) {
     const named = readKey(key);
-    const at = named && storePage({ store: named.store, page: named.path });
-    const page = at ? byPath.get(at) : undefined;
+    const where = named && storePage({ store: named.store, page: named.path });
+    const page = where ? byPath.get(where) : undefined;
     if (!named || !page) {
       unresolvable.push(`${key}: no store page in the corpus`);
       continue;
     }
-    if (at && claimedTwice.has(at)) {
+    if (where && claimedTwice.has(where)) {
       unresolvable.push(`${key}: two store pages of ${named.store} hold this path`);
       continue;
     }
-    listed.add(storePage({ store: named.store, page }));
+    separateRecords.add(storePage({ store: named.store, page }));
   }
 
   /** @type {Set<string>} */
@@ -158,7 +180,10 @@ export function sharedPageIndex({
         if (!match.sibling) continue;
         const here = { store, page: match.page };
         const there = { store: other, page: match.sibling.page };
-        if (listed.has(storePage(here)) || listed.has(storePage(there))) continue;
+        if (separateRecords.has(storePage(here))) continue;
+        // Sharing is a property of the **pair**, so the sibling's own entry unshares this
+        // side too. It is why the grid reading only had to be compiled from one store.
+        if (separateRecords.has(storePage(there))) continue;
         if (!couldHaveSeen(takenOn, seenFirst.get(storePage(here)))) continue;
         shared.add(storePage(here));
       }
