@@ -38,4 +38,18 @@ const stores = await storesInLog();
       </section>
     )
   }
+  {/*
+    Above the stores, because one Magento record serves two of them. A per-store copy of
+    this list would be the same fact drawn twice.
+  */}
+  <section class="mt-8 border-t pt-4">
+    <h2 class="mb-1 text-sm font-semibold">Record layout</h2>
+    <p class="mb-2 max-w-prose text-sm text-muted-foreground">
+      Which store pages are their own Magento record on the new site, read off the admin grid
+      and kept here. It says where one edit corrects two stores.
+    </p>
+    <a class={`text-sm font-medium hover:underline ${CHROME.link}`} href="/record-layout/">
+      Open the record layout
+    </a>
+  </section>
 </Shell>

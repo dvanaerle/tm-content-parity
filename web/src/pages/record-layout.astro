@@ -1,0 +1,42 @@
+---
+import RecordLayout from '../components/RecordLayout.jsx';
+import Shell from '../layouts/Shell.astro';
+import { siblingPages } from '../lib/blocks.mjs';
+import { LANGUAGE_BLOCKS } from '../lib/language-blocks.mjs';
+import { loadSeedRows } from '../lib/reports.mjs';
+import { STORES } from '../../../shared/stores.mjs';
+
+// The screen is **above the stores** and not inside one, because a record serves two stores
+// and a per-store copy of this list would be the same fact drawn twice.
+//
+// The corpus is a build-time prop. The static build never reads Supabase — it is read in the
+// browser, by one hook — so the fact is live and the page list is as fresh as the last build.
+// That is the right way round: the page list moves when the seed list is regenerated, and the
+// fact moves when somebody reads the grid.
+const rows = await loadSeedRows();
+
+// Every store page, with its sibling where the pairing found one. A page with no sibling can
+// never be shared, so the picker does not offer it — `recordLayoutScreen()` is where that is
+// decided, and this only carries the `sibling` it decides on.
+const siblingOfPage = new Map();
+for (const block of LANGUAGE_BLOCKS) {
+  for (const store of block.stores) {
+    for (const match of siblingPages({ rows, store })) {
+      if (match.sibling) siblingOfPage.set(`${store}|${match.page}`, match.sibling.page);
+    }
+  }
+}
+
+const storePages = rows.flatMap((row) =>
+  STORES.filter((store) => row.stores?.[store]).map((store) => ({
+    store,
+    page: row.page,
+    sibling: siblingOfPage.get(`${store}|${row.page}`) ?? null,
+  })),
+);
+---
+
+<Shell title="Record layout">
+  <h1 class="mb-2 text-xl font-semibold">Record layout</h1>
+  <RecordLayout client:load storePages={storePages} />
+</Shell>
