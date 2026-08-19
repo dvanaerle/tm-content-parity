@@ -2,6 +2,23 @@
 
 Type: task
 Status: ready-for-agent
+Re-read before building — **2026-08-19**. This ticket was sequenced after
+`gallery-opening-links/02`, on the reasoning that if the gallery photos turn out to be the same
+bytes then a content digest pairs a renamed image **directly**, which is a stronger answer than
+this ticket's arity-and-position heuristic. **That probe has now reported**
+(`../../gallery-opening-links/BYTES.md`) and the answer is the strong one:
+- Pairing rises from **19.6% by filename to 70.3% by content** on the album pages the new site
+  renders.
+- **Not one pair matches by filename and differs by content — zero, across all 52 pages.** So a
+  digest match is exact, needs no threshold, and strictly contains what filename matching finds.
+- **402 of 557 content pairs on the album pages match by content but not by filename** — the
+  same photograph under a localised name. Those are exactly the *Image missing* + *Image added*
+  rows this ticket exists to fold into one.
+So the matcher below — *exactly one unclaimed `image-missing` and exactly one unclaimed
+`image-added` at the same index in document order* — is probably the wrong design now. A digest
+pairs without arity, without position and without an alt-text tiebreak. **Re-read the matcher
+against the digest before building**, and if the digest wins, this ticket's *Traps* about
+one-to-one pairing and document order lose their subject.
 Blocked by: None — can start immediately.
 Parent: ../PRD.md
 
@@ -18,12 +35,13 @@ worst.
 After this ticket, `max.svg → max-new.svg` is a single decidable finding that names both
 filenames, and both names are searchable.
 
-Write **ADR 0023** before starting. This is the first class in a closed vocabulary whose matcher
+Write **a new ADR** before starting — the next free number at the time. (0023 was reserved
+here and has since been taken by an unrelated decision; see `docs/adr/README.md`.) This is the first class in a closed vocabulary whose matcher
 is not textual equality, and that is the decision the ADR carries.
 
 ## Criteria
 
-- [ ] ADR 0023 is written: the class, its test, the alternatives refused, and why the run log's
+- [ ] The ADR is written: the class, its test, the alternatives refused, and why the run log's
       no-re-attachment rule is not implicated — the pairing is a rule over one page's data from
       one crawl, and never a match between finding ids over time.
 - [ ] One new class in `compare/vocabulary.mjs`, taking it from 32 to 33, with a key, a label in

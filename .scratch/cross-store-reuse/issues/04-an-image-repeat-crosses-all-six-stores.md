@@ -18,12 +18,14 @@ After this ticket the repeat corpus is decided by the **check**: `images` and `l
 stores, `text` and `meta` stay inside the block. `de` and `uk` are alone for the second group and
 join the first.
 
-Write **ADR 0024** before starting. This is the first thing in this repo to cross a language
+Write **a new ADR** before starting — the next free number at the time, not a number
+reserved here. (0024 was reserved by this ticket, never written, and is now vacant for good;
+see `docs/adr/README.md`.) This is the first thing in this repo to cross a language
 block, and the block boundary has an ADR of its own that this one must answer rather than ignore.
 
 ## Criteria
 
-- [ ] ADR 0024 is written: why the block's stated reason does not reach a filename, why the
+- [ ] The ADR is written: why the block's stated reason does not reach a filename, why the
       boundary still holds for `text` and `meta`, and why this is not parked ticket 45.
 - [ ] The repeat key's first term becomes a function of the **check**, not of the block.
 - [ ] An image finding present on six stores groups into **one** repeat; a text finding present on
@@ -53,6 +55,11 @@ block, and the block boundary has an ADR of its own that this one must answer ra
   already exist and are already identical.
 - **A wide press stays offered only over a narrowed result** — a term, a scope, a class pill —
   never over the bare *Repeats* list. ADR 0022's condition is unchanged by the corpus widening.
+  Note what ticket 09 does to that sentence: a class pill **alone** is now a narrowed result, so
+  the widest press this ticket can offer is a whole class over six stores — some 45 broken links
+  per store, and hundreds on a hidden class. Every existing rule still holds and the note stays
+  mandatory. Nothing here caps it; if a cap is ever wanted it is its own decision and its own
+  ticket.
 - **Do not let a store dropdown decide the repeat corpus.** Reading is a preference; pressing is a
   property of the check.
 

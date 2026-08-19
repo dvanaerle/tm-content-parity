@@ -1,10 +1,10 @@
 # 08 — The record layout is kept in the log, by whoever reads the grid
 
 Type: task
-Status: resolved 2026-08-19 — built on branch `ticket-104-search-page-scope` in `6f7d887`
-(the table, the derivation, the port, the rewired rule, the ADR amendment) and `HEAD` (the
-screen). One criterion shipped differently and one thing the ticket did not ask for is in;
-both are in the answer.
+Status: resolved — superseded 2026-08-19 by ticket 10. right about the surface, wrong about the polarity.
+It correctly found that the person who reads the grid has no clone, and it kept the complement
+that the committed file's shape had forced. The table it built was never applied to a project,
+so nothing it shipped holds data. Its `## Answer` stays as the record.
 Blocked by: 05 — the seam and ADR 0025 land first, and this moves where the fact comes from.
 Parent: ../PRD.md
 

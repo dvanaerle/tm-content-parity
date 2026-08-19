@@ -1,10 +1,11 @@
 # 05 — The shared-page file says which store pages are one record
 
 Type: task
-Status: claimed 2026-08-19 — the seam, ADR 0025 and the guard are built on branch
-`ticket-104-search-page-scope`. The file is committed **empty and undated**, which makes
-nothing shared; its 29 `be` and 36 `be_fr` entries need the admin grid and are a human's to
-compile. See the answer.
+Status: resolved — superseded 2026-08-19 by ticket 10. the fact is no longer imported and no longer
+states the complement. What this ticket built was removed there. Its `## Answer` stays as the
+record of what was tried: the seam and ADR 0025 were sound engineering on a model that a second
+grilling session reversed. Two of its criteria — the entries and the date — were never met, and
+under ticket 10 there is nothing to meet.
 Blocked by: None — can start immediately.
 Parent: ../PRD.md
 
