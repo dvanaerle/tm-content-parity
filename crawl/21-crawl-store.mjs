@@ -38,15 +38,32 @@ export function failuresFilename(store) {
 }
 
 /**
- * @param {string} store
- * @param {boolean} force Re-extract a page that already has an extract on disk.
+ * One store's crawl. Every boundary it crosses — the seed file, the network, and
+ * the two directories it writes — is an argument with a default, so a test can
+ * drive a whole run without a network or the committed corpus.
+ *
+ * @param {object} input
+ * @param {string} input.store
+ * @param {boolean} [input.force] Re-extract a page that already has an extract on disk.
+ * @param {{ rows: any[] } | null} [input.seeds] Defaults to `data/10-store-seeds.json`.
+ * @param {typeof extractStorePage} [input.extract]
+ * @param {URL} [input.extracts] Directory of one file per page, both sides.
+ * @param {URL} [input.failuresDir]
+ * @returns {Promise<{ aborted: MaintenanceError | null, jobs: number, written: number, failures: Array<{ page: string, error: string }> }>}
  */
-async function crawlStore(store, force) {
-  const seeds = JSON.parse(await readFile(SEEDS, 'utf8'));
+export async function crawlStore({
+  store,
+  force = false,
+  seeds,
+  extract = extractStorePage,
+  extracts = EXTRACTS,
+  failuresDir = DATA,
+}) {
+  const rows = (seeds ?? JSON.parse(await readFile(SEEDS, 'utf8'))).rows;
   const jobs = [];
   const skipped = [];
 
-  for (const row of seeds.rows) {
+  for (const row of rows) {
     const cell = cellWithBothSides(row, store);
     if (!cell) continue;
 
@@ -70,14 +87,14 @@ async function crawlStore(store, force) {
     while (cursor < jobs.length && !aborted) {
       const job = jobs[cursor];
       cursor += 1;
-      const out = new URL(`${store}/${job.page}.json`, EXTRACTS);
+      const out = new URL(`${store}/${job.page}.json`, extracts);
 
       try {
         if (!force && (await exists(out))) {
           done += 1;
           continue;
         }
-        const sides = await extractStorePage(job);
+        const sides = await extract(job);
         await mkdir(dirname(fileURLToPath(out)), { recursive: true });
         await writeFile(out, JSON.stringify(sides));
         written += 1;
@@ -95,17 +112,21 @@ async function crawlStore(store, force) {
 
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
-  if (aborted) {
-    console.error(`\nABORTED. ${aborted.message}`);
-    console.error('Production is in maintenance mode. Every page this run recorded is suspect.');
-    return { aborted };
-  }
-
-  const failuresFile = new URL(failuresFilename(store), DATA);
+  // Before the abort below. The log records the run that just happened, and an
+  // aborted run is one: leaving the previous run's file on disk makes it describe
+  // a run that is no longer the last (ticket 93).
+  const failuresFile = new URL(failuresFilename(store), failuresDir);
   await writeFile(
     failuresFile,
     JSON.stringify({ store, at: new Date().toISOString(), failures }, null, 2),
   );
+
+  if (aborted) {
+    console.error(`\nABORTED. ${aborted.message}`);
+    console.error('Production is in maintenance mode. Every page this run recorded is suspect.');
+    return { aborted, jobs: jobs.length, written, failures };
+  }
+
   console.log(
     `\n${written} written, ${jobs.length - failures.length} usable, ${failures.length} failed.`,
   );
@@ -132,6 +153,6 @@ if (process.argv[1]?.endsWith('21-crawl-store.mjs')) {
     console.error('usage: node crawl/21-crawl-store.mjs <store> [--force]');
     process.exit(2);
   }
-  const { aborted } = await crawlStore(store, flags.includes('--force'));
+  const { aborted } = await crawlStore({ store, force: flags.includes('--force') });
   if (aborted) process.exit(1);
 }

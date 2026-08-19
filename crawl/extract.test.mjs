@@ -772,6 +772,15 @@ describe('excluded pages', () => {
     expect(isExcludedPage('configurator-vergelijken')).toBe(false);
     expect(exclusionReason('configurator-vergelijken')).toBeNull();
   });
+
+  it('names no-route, and the reason says why the status gate cannot see it', () => {
+    // Ticket 93: production's 404 page against the new site's 404 page. Both
+    // sides answer 200, so `skipReason()` never fires and the page emitted 85
+    // findings over the six stores that no editor can act on.
+    expect(isExcludedPage('no-route')).toBe(true);
+    expect(exclusionReason('no-route')).toMatch(/404/);
+    expect(exclusionReason('no-route')).toMatch(/200/);
+  });
 });
 
 describe('excluded regions', () => {

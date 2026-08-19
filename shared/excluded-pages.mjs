@@ -5,6 +5,10 @@
  * application instead of content. It has no content unit, so there is nothing
  * to compare: its text is transient UI state, not something an editor writes.
  *
+ * A page also belongs here when `skipReason()` in `compare/30-compare.mjs`
+ * cannot reach it. That gate keeps an error page out of the log by its status,
+ * and the 404 page itself defeats it — see `no-route`'s reason below (ticket 93).
+ *
  * Exact page keys, never a pattern. A pattern such as `/configurator/` would
  * also swallow a future `configurator-vergelijken` content page. Every entry
  * carries the reason, because the next reader will ask.
@@ -18,6 +22,12 @@ export const EXCLUDED_PAGES = [
   {
     page: 'veranda-configurator',
     reason: 'Application page with no comparable editorial content.',
+  },
+  {
+    page: 'no-route',
+    reason:
+      'The 404 page itself. Both sides answer 200 with a 404 page, so the status gate ' +
+      'cannot see it, and comparing two error pages tells an editor nothing.',
   },
 ];
 
