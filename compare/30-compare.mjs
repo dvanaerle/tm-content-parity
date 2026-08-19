@@ -12,10 +12,15 @@
  * This is also the unit the re-check service calls (ticket 10).
  */
 
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { unanchoredStore } from '../shared/page-key.mjs';
-import { findingSetHash, newObservationId, reportFilename } from './contract.mjs';
+import {
+  findingSetHash,
+  newObservationId,
+  observationForRun,
+  reportFilename,
+} from './contract.mjs';
 import { FindingCollector, summarise } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
@@ -215,6 +220,21 @@ async function readJson(url) {
   }
 }
 
+/**
+ * The newest modification time among the files, as an ISO 8601 stamp, or `''` for none.
+ *
+ * A file is written after the fetch it records, so this is at or after the newest
+ * `fetchedAt` in the corpus — the upper bound `observationForRun()` asks for, and it costs
+ * one `stat()` per page instead of parsing 33 MB of extracts a second time for one date.
+ *
+ * @param {string[]} files
+ * @returns {Promise<string>}
+ */
+async function newestWrite(files) {
+  const times = await Promise.all(files.map(async (file) => (await stat(file)).mtimeMs));
+  return times.length ? new Date(Math.max(...times)).toISOString() : '';
+}
+
 if (process.argv[1]?.endsWith('30-compare.mjs')) {
   const only = process.argv[2];
   const seeds = await readJson(SEEDS);
@@ -233,10 +253,6 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
   const pathsByStore = new Map();
   await mkdir(fileURLToPath(REPORTS), { recursive: true });
 
-  // One build is one observation, so every report of this run carries the same id.
-  // A fix claim made against it is not contradicted by it — only by the next run.
-  const observationId = newObservationId();
-
   // Read before the write below overwrites it. This is the only copy of the
   // previous run's excluded-region coverage.
   const previous = await readJson(SNAPSHOT);
@@ -246,6 +262,16 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
   const previousLog = await readRunLog();
 
   const files = await jsonFiles(only ? new URL(`${only}/`, EXTRACTS) : EXTRACTS);
+
+  // One build is one observation, so every report of this run carries the same id — and a
+  // run that re-compares extracts nobody re-fetched carries the **previous** run's, so
+  // that changing a rule cannot contradict a fix claim. `observationForRun()` is the rule
+  // and says why the bound is a modification time rather than a `fetchedAt`.
+  const observationId = observationForRun({
+    previous: previousLog?.observationId ?? '',
+    crawledAt: await newestWrite(files),
+  });
+
   const coverage = new CoverageTally();
   /** @type {import('./contract.mjs').FindingRef[]} */
   const snapshot = [];
@@ -335,7 +361,12 @@ if (process.argv[1]?.endsWith('30-compare.mjs')) {
   // Ticket 64: an entry that stopped matching is one line, and it is here rather
   // than 2,600 rows down in the report.
   for (const line of coverageLines(regionsChanged)) console.log(`region coverage: ${line}`);
-  console.log(`observation ${observationId}`);
+  console.log(
+    `observation ${observationId}` +
+      (observationId === previousLog?.observationId
+        ? ' — carried over, nothing crawled since it, so no fix claim is contradicted'
+        : ''),
+  );
   console.log(
     `run log: ${runLog.rows.length} ids, ` +
       `${runLog.rows.filter((row) => !row.seen).length} no longer seen ` +

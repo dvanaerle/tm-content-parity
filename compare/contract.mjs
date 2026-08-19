@@ -335,8 +335,9 @@ export {
  */
 
 /**
- * An **observation** is one look at the two sites: a build of the log, or one
- * Recheck. Ticket 09 says a fix claim counts as closed until it is contradicted,
+ * An **observation** is one look at the two sites: a build of the log that crawled, or one
+ * Recheck. A build that re-compared extracts nobody re-fetched is not one and keeps the
+ * previous id — see `observationForRun()` below. Ticket 09 says a fix claim counts as closed until it is contradicted,
  * and that it is worth pressing on a frozen snapshot "where nothing can
  * contradict it". Those two sentences only agree if a claim knows what it was
  * claimed against — so a `fixed` event records its observation, and it is
@@ -370,6 +371,34 @@ export function observedAt(observationId) {
 
 /** The length of an ISO 8601 UTC stamp with milliseconds: `2026-08-18T09:36:17.824Z`. */
 const STAMP = 24;
+
+/**
+ * The observation a build should carry: the previous one when nothing was crawled since
+ * it, and a new one otherwise.
+ *
+ * A build is not an observation on its own. *Claimed fixed, still differs* means a later
+ * **look at the two sites** disagreed with a claim, so re-running the comparison over
+ * extracts nobody re-fetched must not contradict anything: the rules changed, the sites
+ * did not. Minting an id per run said the opposite, and it turned every pending claim on
+ * the frozen snapshot into a contradiction the moment a class was renamed.
+ *
+ * `crawledAt` is an upper bound and not the crawl's own stamp, because a page's
+ * `fetchedAt` is written **after** its fetch: an extract older than the previous
+ * observation therefore proves no fetch happened after it, which is the direction this
+ * gate needs. The other direction is undecidable from the bound, so it mints — a caller
+ * that cannot show the corpus is untouched gets the old behaviour and never a claim
+ * silently kept alive.
+ *
+ * @param {object} input
+ * @param {string} input.previous   The last run's observation, or `''` when there is none.
+ * @param {string} input.crawledAt  ISO 8601, at or after the newest fetch this run reads.
+ *                                  `''` when the run reads nothing.
+ * @returns {string}
+ */
+export function observationForRun({ previous, crawledAt }) {
+  if (!previous) return newObservationId();
+  return crawledAt > observedAt(previous) ? newObservationId() : previous;
+}
 
 /**
  * What one finding is, to an index keyed on the id alone: the id, and the three facts

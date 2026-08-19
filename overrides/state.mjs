@@ -179,8 +179,10 @@ const isLater = (/** @type {OverrideEvent} */ a, /** @type {OverrideEvent} */ b)
  * that the button is worth pressing on a frozen snapshot where nothing can
  * contradict it. Those agree only if a claim knows what it was claimed against:
  * a claim made against the very snapshot the reader is looking at has had nothing
- * new happen to it. A Recheck, or the next build, is a later observation — and
- * then the claim must prove itself.
+ * new happen to it. A Recheck, or a build that crawled, is a later observation — and
+ * then the claim must prove itself. A build that only re-compared the extracts of an
+ * earlier one carries that one's id (`observationForRun()`), because the rules moved and
+ * the sites did not: nothing has looked, so nothing can disagree.
  *
  * Observation ids sort chronologically by construction (`newObservationId()`), so
  * "later" is a string comparison and needs no clock. A claim carrying no

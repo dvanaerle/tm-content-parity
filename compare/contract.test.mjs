@@ -6,6 +6,7 @@ import {
   findingId,
   findingSetHash,
   newObservationId,
+  observationForRun,
   observedAt,
   reportFilename,
   storeOfFile,
@@ -62,6 +63,31 @@ describe('newObservationId', () => {
   it('gives back the moment it was made', () => {
     const id = newObservationId();
     expect(new Date(observedAt(id)).toISOString()).toBe(observedAt(id));
+  });
+});
+
+// A build is not an observation. These four cases are the whole of why: only a crawl
+// makes a claim prove itself, and *claimed fixed, still differs* is what gets it wrong.
+describe('observationForRun', () => {
+  const previous = '2026-08-14T10:00:00.000Z-aaaaaaaa';
+
+  it('carries the previous observation when the corpus is older than it', () => {
+    expect(observationForRun({ previous, crawledAt: '2026-08-14T09:59:59.999Z' })).toBe(previous);
+  });
+
+  it('carries it when nothing was read at all', () => {
+    expect(observationForRun({ previous, crawledAt: '' })).toBe(previous);
+  });
+
+  it('mints a later one when a page was fetched after it', () => {
+    const id = observationForRun({ previous, crawledAt: '2026-08-15T00:00:00.000Z' });
+    expect(id > previous).toBe(true);
+  });
+
+  // The very first run has nothing to carry, and `''` sorts before every id — so a claim
+  // could never be made against it in the first place.
+  it('mints one when there is no previous run', () => {
+    expect(observationForRun({ previous: '', crawledAt: '' })).not.toBe('');
   });
 });
 

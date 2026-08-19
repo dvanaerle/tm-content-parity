@@ -650,6 +650,13 @@ who wins against re-check.
   (~~*nog niet opgelost*~~, 2026-08-13), with the name of the person who claimed it. The
   Dutch said "not yet solved", which was never it: nobody is solving anything, a claim
   is contradicted. It is derived, never kept.
+  **Only a crawl can contradict.** A claim records the **observation** it was made
+  against, and *current snapshot* means a later one — a Re-check, or a build that
+  crawled. A build that only re-compared the extracts of an earlier one keeps that one's
+  observation (`observationForRun()`), so renaming a class or tightening a rule cannot
+  turn every pending claim into a contradiction: the rules moved and the sites did not.
+  A claim carrying no observation at all is from before the rule and still must prove
+  itself.
 - **Stale** — a page review made against a page whose findings changed after it.
   The interface says **"changed since review"** (~~*gewijzigd sinds controle*~~,
   2026-08-13), not "needs review", because a
@@ -898,7 +905,8 @@ The two axes have separate tabs and separate tasks. Do not mix them.
 
 ## Delivery
 
-- **Snapshot** — one build of the log, uploaded to the webhost as static files.
+- **Snapshot** — one build of the log, uploaded to the webhost as static files. A build
+  is not automatically an **observation**: see *Contradicted*.
 - **Re-check** — a live crawl of one store-page pair, on demand, by the local
   Node service. The hosted build senses that the service is not there and hides
   the button.
