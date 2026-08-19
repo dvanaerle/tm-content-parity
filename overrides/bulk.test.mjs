@@ -8,12 +8,13 @@ import { appendEach } from './bulk.mjs';
  * test that does not touch either, and `supabase.test.mjs` already draws that line for
  * the mapping half of this file.
  */
-function fakePort({ failOn = null, message = 'de kolom weigert' } = {}) {
+function fakePort({ failOn = null, message = 'de kolom weigert', onCall = null } = {}) {
   const calls = [];
   return {
     calls,
     async appendEvent(event) {
       calls.push(event);
+      onCall?.(calls.length);
       if (calls.length === failOn)
         throw new Error(`Could not save to the override log: ${message}`);
       return {
@@ -63,7 +64,7 @@ describe('appendEach', () => {
     const port = fakePort();
     const result = await appendEach(port, three);
 
-    expect(result).toMatchObject({ written: 3, total: 3, failedOn: null, error: null });
+    expect(result).toMatchObject({ written: 3, total: 3, stoppedOn: null, error: null });
     expect(result.stored).toHaveLength(3);
   });
 
@@ -76,13 +77,13 @@ describe('appendEach', () => {
     expect(result.stored.map((row) => row.id)).toEqual(['row-1', 'row-2', 'row-3']);
   });
 
-  it('says how many were written and which page failed', async () => {
+  it('says how many were written and which page it stopped on', async () => {
     const port = fakePort({ failOn: 2 });
     const result = await appendEach(port, three);
 
     expect(result.written).toBe(1);
     expect(result.total).toBe(3);
-    expect(result.failedOn).toBe('veranda');
+    expect(result.stoppedOn).toBe('veranda');
     expect(result.error).toMatch('de kolom weigert');
   });
 
@@ -110,6 +111,54 @@ describe('appendEach', () => {
     const result = await appendEach(port, []);
 
     expect(port.calls).toEqual([]);
-    expect(result).toMatchObject({ written: 0, total: 0, failedOn: null, error: null });
+    expect(result).toMatchObject({ written: 0, total: 0, stoppedOn: null, error: null });
+  });
+
+  it('says how far it has got while it is still going', async () => {
+    const port = fakePort();
+    /** @type {number[]} */
+    const seen = [];
+    await appendEach(port, three, { onProgress: ({ written }) => seen.push(written) });
+
+    // The press is the only thing that knows; an editor watching a run of 329 has
+    // nothing else to read.
+    expect(seen).toEqual([1, 2, 3]);
+  });
+
+  it('stops where it is asked to and writes nothing after', async () => {
+    const stopper = new AbortController();
+    const port = fakePort({ onCall: (calls) => calls === 2 && stopper.abort() });
+    const result = await appendEach(port, three, { signal: stopper.signal });
+
+    // The insert in flight is finished, and the next one is never begun: an aborted
+    // run leaves whole events behind it and no half-written one.
+    expect(port.calls.map((call) => call.page)).toEqual(['overkapping', 'veranda']);
+    expect(result.stored).toHaveLength(2);
+  });
+
+  it('reports an abort as a stop and never as a failure', async () => {
+    const stopper = new AbortController();
+    const port = fakePort({ onCall: (calls) => calls === 1 && stopper.abort() });
+    const result = await appendEach(port, three, { signal: stopper.signal });
+
+    // The log did not refuse, so there is no error to show and the interface must not
+    // go read-only over a stop the editor asked for.
+    expect(result).toMatchObject({
+      written: 1,
+      total: 3,
+      aborted: true,
+      stoppedOn: 'veranda',
+      error: null,
+    });
+  });
+
+  it('writes nothing at all when it is stopped before the first event', async () => {
+    const stopper = new AbortController();
+    stopper.abort();
+    const port = fakePort();
+    const result = await appendEach(port, three, { signal: stopper.signal });
+
+    expect(port.calls).toEqual([]);
+    expect(result).toMatchObject({ written: 0, aborted: true, stoppedOn: 'overkapping' });
   });
 });

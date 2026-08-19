@@ -149,7 +149,7 @@ async function mount(props = {}) {
           bulk: {
             canWrite: false,
             busy: false,
-            appendMany: async () => ({}),
+            appendMany: async () => ({ stored: [], written: 0, total: 0, error: null }),
             notWritingReason: 'no name',
           },
           link: (store, page) => `/${store}/${page}/`,
@@ -212,7 +212,12 @@ describe('a search over the language block (ticket 05)', () => {
     sibling = siblingIndex([entry({ id: 'x', store: 'be', page: 'pergola', class: 'copy' })]);
     const { unmount } = await mount({
       byFinding: byFindingOver(index.findings, sibling.findings),
-      bulk: { canWrite: true, busy: false, appendMany: async () => ({}), notWritingReason: null },
+      bulk: {
+        canWrite: true,
+        busy: false,
+        appendMany: async () => ({ stored: [], written: 0, total: 0, error: null }),
+        notWritingReason: null,
+      },
     });
 
     for (const row of document.querySelectorAll('[data-slot="collapsible-trigger"]')) {

@@ -100,9 +100,9 @@ export function bulkDismissal({ entries, byFinding, note }) {
 export function bulkAnnotation({ pages, selected, event }) {
   const chosen = pages.filter((page) => selected.has(`${page.store}/${page.page}`));
 
-  // Each event carries its own store and page: `appendEach()` reports `failedOn` as the
-  // event's page, and the hook adds the editor per event, so attribution and the failure
-  // report are both per row rather than per press.
+  // Each event carries its own store and page: `appendEach()` names the page it stopped
+  // on as the event's page, and the hook adds the editor per event, so attribution and the
+  // report of where it got to are both per row rather than per press.
   const events = chosen.map((page) => ({ store: page.store, page: page.page, ...event }));
 
   return { covers: chosen.length, events };

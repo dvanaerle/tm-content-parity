@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PriorityPill } from './Chips.jsx';
+import PressReport from './PressReport.jsx';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { noteEventFor, priorityEventFor } from '../../../overrides/state.mjs';
@@ -157,8 +158,7 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
   const [typed, setTyped] = useState('');
   /** The last press's report, held so a partial failure stays on screen to be read. */
   const [report, setReport] = useState(
-    /** @type {null | { written: number, total: number, failedOn: string | null, error: string | null }} */
-    (null),
+    /** @type {null | import('../../../overrides/bulk.mjs').PressReport} */ (null),
   );
 
   const press = async (event) => {
@@ -249,39 +249,8 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
         </Button>
       </div>
 
-      {report && <Report {...report} />}
+      {report && <PressReport {...report} />}
     </div>
-  );
-}
-
-/**
- * The honest report of a press that did not write everything — ticket 31's sentence, over
- * ticket 83's press.
- *
- * N inserts can fail after the third, and the rows that were written are in the log: the
- * table is append-only, so there is nothing to roll back and nothing to pretend.
- *
- * It is drawn on any shortfall and not only on a named page, because a press can write
- * nothing at all and name nothing — with no editor, for one.
- */
-function Report({ written, total, failedOn, error }) {
-  if (written === total && !error) return null;
-
-  return (
-    <p data-wears="ink" data-tone="caution" className="mb-2 text-xs">
-      <strong className="font-medium">
-        {written} of {total} saved.
-      </strong>{' '}
-      {failedOn ? (
-        <>
-          It stopped on <code>{failedOn}</code>, and the rest is not written.{' '}
-        </>
-      ) : (
-        'Nothing is written. '
-      )}
-      {written > 0 && 'What was saved is in the log and it is visible above. '}
-      {error}
-    </p>
   );
 }
 

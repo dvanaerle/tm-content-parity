@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
+import PressReport from './PressReport.jsx';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
 import { crossesBlock } from '../lib/view.mjs';
 import { classInfo } from '../lib/classes.mjs';
@@ -63,6 +64,8 @@ import { cn } from '../lib/utils.js';
  * @param {string | null} props.builtAt  The snapshot the ticks were made over, where that is
  *   worth saying. The caller decides that, because it is the caller that knows how the
  *   selection was made.
+ * @param {(ids: string[]) => void} props.onWritten  The findings a press got written, handed
+ *   back so their ticks come off (ticket 139). What is left ticked is what is left to write.
  */
 export default function BulkControl({
   entries,
@@ -70,6 +73,7 @@ export default function BulkControl({
   byFinding,
   bulk,
   onClear,
+  onWritten,
   holding,
   builtAt = null,
 }) {
@@ -77,13 +81,25 @@ export default function BulkControl({
   // which is what turns every sentence on this bar from one about a difference into one
   // about the result.
   const repeat = holding.length === 1 ? holding[0] : null;
-  /** @type {['dismiss' | null, Function]} */
+  /** @type {['dismiss' | 'clear' | null, Function]} */
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
+  const [restated, setRestated] = useState('');
   /** The last press's report. Held so a partial failure stays on screen to be read. */
   const [report, setReport] = useState(
-    /** @type {null | { written: number, total: number, failedOn: string | null }} */ (null),
+    /** @type {null | import('../../../overrides/bulk.mjs').PressReport} */ (null),
   );
+  /**
+   * How far the press in flight has got, and `null` when none is. It is the press's own
+   * reading of itself: `appendEach()` is the only thing that knows, and a run of 329 pages
+   * is otherwise a wait with nothing in it.
+   */
+  const [running, setRunning] = useState(
+    /** @type {null | { written: number, total: number }} */ (null),
+  );
+  /** The way out of the run in flight. A ref, because pressing *Stop* must not wait for a
+      render to reach the loop that is already going. */
+  const stopper = useRef(/** @type {AbortController | null} */ (null));
 
   const dismissal = useMemo(
     () => bulkDismissal({ entries, byFinding, note }),
@@ -100,18 +116,40 @@ export default function BulkControl({
   const close = () => {
     setAsking(null);
     setNote('');
+    setRestated('');
   };
 
   /**
    * Both presses report the same way, and the form closes only when **every** row was
-   * written. `failedOn` is not the test: a press with no name written stores nothing and
-   * names no page, and keying on `failedOn` alone would clear the form and report
+   * written. `stoppedOn` is not the test: a press with no name written stores nothing and
+   * names no page, and keying on `stoppedOn` alone would clear the form and report
    * nothing — the interface claiming a success that never happened.
    */
   const press = async (events) => {
     if (events.length === 0) return;
-    const result = await bulk.appendMany(events);
+
+    stopper.current = new AbortController();
+    setRunning({ written: 0, total: events.length });
+    const result = await bulk.appendMany(events, {
+      signal: stopper.current.signal,
+      onProgress: setRunning,
+    });
+    stopper.current = null;
+    setRunning(null);
     setReport(result);
+
+    // The clearing's gate is spent by the press it gated, whatever became of it. A run that
+    // stopped leaves a **smaller** remainder, so the count on screen is no longer the count
+    // that was typed — and below a handful there is nothing left to restate at all. Back to
+    // the button, which asks again only if the remainder still needs it.
+    setAsking((open) => (open === 'clear' ? null : open));
+    setRestated('');
+
+    // The ticks of the pages that were written come off, and the remainder stays: what is
+    // still ticked after a stopped run is exactly what is left to write, so pressing again
+    // carries on rather than starting over. Nothing is rolled back, so nothing goes back on.
+    onWritten(result.stored.map((row) => row.findingId));
+
     if (result.written === result.total && !result.error) close();
   };
 
@@ -160,22 +198,26 @@ export default function BulkControl({
                   Dismiss on {dismissal.covers === 1 ? 'this page' : `${dismissal.covers} pages`}…
                 </Button>
               )}
-              {/* No ellipsis, because there is nothing further to ask: this one writes on
-                  the first press, the way the single control's *Cleared* does. A
-                  `cleared` event carries no reason, so there is no note to type — and it
-                  is the one press here whose label has to carry *Saving…* itself, since it
-                  has no form to show it in. */}
+              {/* The ellipsis is the honest one: this press writes on the first click the
+                  way the single control's *Cleared* does — a `cleared` event carries no
+                  reason, so there is no note to type — and past a handful of pages it asks
+                  for the count instead (ticket 139). One label, and the three dots appear
+                  exactly where there is a second step. It is still the one press whose
+                  label carries *Saving…* itself, since it has no form of its own. */}
               {cleared.covers > 0 && (
                 <Button
                   variant="outline"
                   size="xs"
                   disabled={bulk.busy}
-                  onClick={() => press(cleared.events)}
+                  onClick={() =>
+                    needsRestating(cleared.covers) ? setAsking('clear') : press(cleared.events)
+                  }
                   title={clearTitle(cleared)}
                 >
                   {bulk.busy
                     ? 'Saving…'
                     : `Clear the decision on ${cleared.covers === 1 ? 'this page' : `${cleared.covers} pages`}`}
+                  {needsRestating(cleared.covers) && '…'}
                 </Button>
               )}
             </>
@@ -207,17 +249,40 @@ export default function BulkControl({
 
       {builtAt && <OverTheSnapshot builtAt={builtAt} />}
 
-      {report && <Report {...report} />}
+      {/* One region and never two (ticket 139): the run's progress and the report of how it
+          ended are two readings of the same press, and a screen reader given a live region
+          apiece would hear the press announce itself twice. The amber strip is not this
+          either — it enumerates what narrows the list, and a press narrows nothing. */}
+      <div role="status" aria-live="polite" data-slot="bulk-progress">
+        {running ? (
+          <Running {...running} onStop={() => stopper.current?.abort()} />
+        ) : (
+          report && <PressReport {...report} />
+        )}
+      </div>
 
       {/* The clearing's size and its stores, beneath the press that has no form to say them
-          in. It is under the `asking === null` gate the button itself is under: with the
-          dismissal's form open, `Covers` is saying the same thing about the other press and
-          two sentences naming two stores would read as two decisions crossing. */}
-      {bulk?.canWrite && asking === null && cleared.covers > 0 && crossesBlock(cleared) && (
+          in. It is withheld only while the **dismissal's** form is open: `Covers` is saying
+          the same thing about that press there, and two sentences naming two stores would
+          read as two decisions crossing. Over the clearing's own gate it is the opposite —
+          an editor typing the count back is exactly who has to be told the press leaves the
+          store. */}
+      {bulk?.canWrite && asking !== 'dismiss' && cleared.covers > 0 && crossesBlock(cleared) && (
         <ClearCrossesBlock cleared={cleared} oneDifference={Boolean(repeat)} />
       )}
 
       {bulk?.canWrite && asking === null && dismissal.covers === 0 && <NothingToDismiss />}
+
+      {bulk?.canWrite && cleared.covers > 0 && asking === 'clear' && (
+        <RestateTheCount
+          covers={cleared.covers}
+          typed={restated}
+          onType={setRestated}
+          busy={bulk.busy}
+          onConfirm={() => press(cleared.events)}
+          onCancel={close}
+        />
+      )}
 
       {bulk?.canWrite && dismissal.covers > 0 && asking === 'dismiss' && (
         <form
@@ -466,43 +531,90 @@ const ClearCrossesBlock = ({ cleared, oneDifference }) => (
 );
 
 /**
- * The honest report of a press that did not write everything.
+ * How far the press has got, and the way out of it (ticket 139).
  *
- * N inserts can fail after the third, and the rows that were written are in the log: the
- * table is append-only, so there is nothing to roll back and nothing to pretend.
- * *12 of 30 saved* is the sentence.
+ * A dismissal over 329 pages is 329 inserts one after another, and until this line existed
+ * the whole of it was a button reading *Saving…*: no way to tell a slow log from a stuck
+ * one, and no way to stop. It counts in **pages saved**, which is the unit every other
+ * sentence on this bar is in and the unit the report it turns into ends in.
  *
- * It is drawn on any shortfall and not only on a named page, because a press can also
- * write nothing at all and name nothing — with no editor, for one. Keying on the page
- * would have left that press silent, and a silent press is the failure the whole log is
- * built to prevent.
- *
- * It is deliberately **outside** the `canWrite` gate above. A failed write sets the log's
- * `error`, which turns `canWrite` false, so the forms unmount the moment this appears —
- * that is correct, since the remaining rows cannot be written to a log that just refused,
- * and this line is then the only thing left saying what happened. The banner at the top of
- * the dashboard says the log is read-only; this says how far the press got.
+ * *Stop* aborts between events and never inside one, so what it leaves behind is whole
+ * events and a remainder still ticked. It is not an undo and does not say it is: the table
+ * is append-only, and the rows already written stay written.
  */
-function Report({ written, total, failedOn, error }) {
-  if (written === total && !error) return null;
+const Running = ({ written, total, onStop }) => (
+  <p className="flex items-center gap-2 text-xs text-muted-foreground">
+    <strong className="font-medium text-foreground tabular-nums">
+      {/* The count that moves is **not** announced, and only it. The line is inside the
+          bar's live region, so it is read once when the press starts and once when it ends;
+          without this a run of 329 pages would queue 329 announcements of a number nobody
+          asked to hear again, and the *Stop* beside it would be buried under them. */}
+      Saving <span aria-live="off">{written}</span> of {total}…
+    </strong>
+    <Button type="button" variant="outline" size="xs" onClick={onStop}>
+      Stop
+    </Button>
+  </p>
+);
 
-  return (
-    <p data-wears="ink" data-tone="caution" className="mb-2 text-xs">
-      <strong className="font-medium">
-        {written} of {total} saved.
-      </strong>{' '}
-      {failedOn ? (
-        <>
-          It stopped on <code>{failedOn}</code>, and the rest is not written.{' '}
-        </>
-      ) : (
-        'Nothing is written. '
-      )}
-      {written > 0 && 'What was saved is in the log and it is visible above. '}
-      {error}
-    </p>
-  );
-}
+/**
+ * The clearing's gate: the count, typed back (ticket 139).
+ *
+ * The two presses are not symmetrical and this is where that shows. A dismissal already
+ * costs a form and a mandatory reason — an editor who types a sentence about why 300 pages
+ * are not a defect has restated the press by writing it. A clearing carries no reason, so
+ * over a wide selection it went from one click to 300 revoked decisions with nothing in
+ * between, and it is the press that throws work away.
+ *
+ * The gate is the **count** and not a yes/no: an *Are you sure?* is a reflex to click
+ * through, and the number is the one thing about a wide press an editor can actually check
+ * against the bar above it. Under a handful there is no gate at all, because a press an
+ * editor can see the whole of does not need to be spelled back.
+ */
+const RestateTheCount = ({ covers, typed, onType, busy, onConfirm, onCancel }) => (
+  <form
+    className="flex flex-wrap items-center gap-1"
+    onSubmit={(submit) => {
+      submit.preventDefault();
+      onConfirm();
+    }}
+  >
+    <label className="text-xs text-muted-foreground" htmlFor="restate-the-count">
+      Type <strong className="font-medium text-foreground tabular-nums">{covers}</strong> to clear
+      the decision on {covers} pages.
+    </label>
+    <Input
+      autoFocus
+      id="restate-the-count"
+      value={typed}
+      onChange={(change) => onType(change.target.value)}
+      inputMode="numeric"
+      className="w-20"
+    />
+    <Button
+      type="submit"
+      variant="outline"
+      size="xs"
+      disabled={busy || typed.trim() !== String(covers)}
+    >
+      {busy ? 'Saving…' : `Clear the decision on ${covers} pages`}
+    </Button>
+    {/* `type="button"`, for the reason the dismissal's cancel states: the default submits
+        the form this one is there to abandon. */}
+    <Button type="button" variant="outline" size="xs" onClick={onCancel}>
+      Cancel
+    </Button>
+  </form>
+);
+
+/**
+ * How many pages a press can cover before it has to be restated. *A handful* is what an
+ * editor can see the whole of on the bar above the button; past it the number is the only
+ * thing they have, so it is the thing they type.
+ */
+const HANDFUL = 5;
+
+const needsRestating = (covers) => covers > HANDFUL;
 
 /**
  * Why this press is on fewer pages than are ticked, said where the gap is (ticket 110).

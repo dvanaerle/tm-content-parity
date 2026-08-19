@@ -170,6 +170,7 @@ function FlatSelection({ repeats, byFinding, bulk, builtAt = null, children }) {
           byFinding={byFinding}
           bulk={bulk}
           onClear={selection.clear}
+          onWritten={(ids) => selection.tick(ids, false)}
           holding={holding}
           builtAt={wide ? builtAt : null}
         />

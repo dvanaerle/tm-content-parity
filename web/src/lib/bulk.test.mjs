@@ -540,7 +540,7 @@ describe('bulkAnnotation', () => {
   });
 
   it('aims each event at its own page, so the editor lands on every row', () => {
-    // `appendEach()` reports `failedOn` as the event's page, and the hook adds the editor
+    // `appendEach()` names the page it stopped on off the event, and the hook adds the editor
     // per event. Both need the page on the event rather than on the press.
     const { events } = bulkAnnotation({ pages, selected, event: noteEventFor('Campagne-update') });
     expect(events.map((one) => one.page)).toEqual(['overkapping', 'veranda']);

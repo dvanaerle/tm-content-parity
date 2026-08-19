@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { userEvent } from '@vitest/browser/context';
 import { afterEach, describe, expect, it } from 'vitest';
 import Repeats from './Repeats.jsx';
+import { appendEach } from '../../../overrides/bulk.mjs';
 import { repeatsInStore } from '../lib/view.mjs';
 
 /**
@@ -80,7 +81,16 @@ function bulkBag(over = {}) {
     busy: false,
     appendMany: async (events) => {
       calls.push(events);
-      return { written: events.length, total: events.length, failedOn: null, error: null };
+      // `stored` is what the log echoed back, the way the real port does: the bar reads
+      // it to take the ticks off the pages that were written.
+      return {
+        stored: events,
+        written: events.length,
+        total: events.length,
+        stoppedOn: null,
+        aborted: false,
+        error: null,
+      };
     },
     notWritingReason: null,
     ...over,
@@ -965,6 +975,221 @@ describe('a wide selection over a narrowed result', () => {
     press(differenceRow());
 
     expect(document.querySelectorAll('[data-slot="bulk-bar"]')).toHaveLength(1);
+    unmount();
+  });
+});
+
+/**
+ * A press long enough to watch, to stop and to carry on (ticket 139).
+ *
+ * A dismissal over 329 pages is 329 inserts one after another, and it used to be a button
+ * reading *Saving…* with no way to tell a slow log from a stuck one and no way out. The
+ * questions below are about that wait, so the write has to be **paused mid-run** — which is
+ * why this bag runs the real `appendEach()` over a log that answers one insert at a time,
+ * rather than a fake that invents a result.
+ */
+/**
+ * A press through the **real** sequential write, against a log that answers one insert at a
+ * time. The questions about a run in flight can only be asked of a run that can be paused,
+ * so this bag runs `appendEach()` itself rather than a fake that invents a result.
+ */
+function paced() {
+  /** @type {Function[]} */
+  const waiting = [];
+  const written = [];
+
+  const port = {
+    appendEvent: (event) =>
+      new Promise((resolve) => {
+        waiting.push(() => {
+          written.push(event);
+          resolve({ ...event, id: `row-${written.length}` });
+        });
+      }),
+  };
+
+  return {
+    written,
+    /** Lets the insert in flight answer, and the loop reach the next one. */
+    answer: () => act(async () => waiting.shift()?.()),
+    bulk: {
+      canWrite: true,
+      busy: false,
+      notWritingReason: null,
+      appendMany: (events, watching) => appendEach(port, events, watching),
+    },
+  };
+}
+
+describe('a long press', () => {
+  /** The three pages of the difference, ticked, with the note typed and the press made. */
+  const started = async (log) => {
+    const mounted = mount({ bulk: log.bulk });
+    press(differenceRow());
+    press(selectAll());
+    press(button('Dismiss on 3 pages'));
+    await type('afgesproken met de redactie');
+    press(button('Dismiss on 3 pages'));
+    return mounted;
+  };
+
+  it('says how far it has got while it is still going', async () => {
+    const log = paced();
+    const { unmount } = await started(log);
+
+    expect(barText()).toContain('Saving 0 of 3');
+
+    await log.answer();
+    expect(barText()).toContain('Saving 1 of 3');
+    unmount();
+  });
+
+  /**
+   * *Stop* is not an undo. It stops between events, so what it leaves behind is whole rows
+   * in an append-only table — and the report says how many, and where it got to.
+   */
+  it('stops between events and reports how far it got', async () => {
+    const log = paced();
+    const { unmount } = await started(log);
+
+    await log.answer();
+    press(button('Stop'));
+    await log.answer();
+
+    // The insert in flight finished; the third was never begun.
+    expect(log.written.map((event) => event.page)).toEqual(['overkapping', 'veranda']);
+    expect(barText()).toContain('2 of 3 saved');
+    expect(barText()).toContain('carport');
+    unmount();
+  });
+
+  it('leaves the unwritten remainder ticked and takes the ticks off what was written', async () => {
+    const log = paced();
+    const { unmount } = await started(log);
+
+    await log.answer();
+    press(button('Stop'));
+    await log.answer();
+
+    expect(pageTicks().map((tick) => tick.getAttribute('aria-checked'))).toEqual([
+      'false',
+      'false',
+      'true',
+    ]);
+    // The run is over, so the bar is a report and not a reading of a press in flight.
+    expect(barText()).not.toContain('Saving');
+    unmount();
+  });
+
+  /**
+   * Pressing again **resumes**: the remainder is what is still ticked, so the same press
+   * over the same selection is the rest of the run rather than the whole of it again.
+   */
+  it('carries on from where it stopped when it is pressed again', async () => {
+    const log = paced();
+    const { unmount } = await started(log);
+
+    await log.answer();
+    press(button('Stop'));
+    await log.answer();
+
+    press(button('Dismiss on 1 page'));
+    await log.answer();
+
+    expect(log.written.map((event) => event.page)).toEqual(['overkapping', 'veranda', 'carport']);
+    // Nothing was written twice, and the note the run began with is the note it ended with.
+    expect(new Set(log.written.map((event) => event.note)).size).toBe(1);
+    unmount();
+  });
+});
+
+/**
+ * The clearing's gate (ticket 139).
+ *
+ * The dismissal costs a form and a mandatory reason, so a wide one is already restated by
+ * being written out. The clearing carries no reason and throws decisions away, so past a
+ * handful of pages the count has to be typed back.
+ */
+describe('a clearing over many pages', () => {
+  const [long] = repeatsInStore(
+    Array.from({ length: 8 }, (draw, index) =>
+      on('nl', `pagina-${index}`, finding(`p${index}`, 'oud', 'nieuw')),
+    ),
+  );
+
+  const dismissed = new Map(
+    long.on.map((entry) => [
+      entry.id,
+      derived(entry.id, { state: 'dismissed', override: { action: 'dismissed' } }),
+    ]),
+  );
+
+  const eight = (props = {}) => {
+    const mounted = mount({ repeats: [long], byFinding: dismissed, ...props });
+    press(differenceRow());
+    press(selectAll());
+    return mounted;
+  };
+
+  it('writes nothing until the count is restated', async () => {
+    const { bulk, unmount } = eight();
+
+    press(button('Clear the decision on 8 pages'));
+
+    expect(bulk.calls).toHaveLength(0);
+    expect(barText()).toContain('to clear the decision on 8 pages');
+    unmount();
+  });
+
+  it('refuses a number that is not the count, and takes the one that is', async () => {
+    const { bulk, unmount } = eight();
+
+    press(button('Clear the decision on 8 pages'));
+    await type('7');
+    expect(button('Clear the decision on 8 pages').disabled).toBe(true);
+
+    await type('8');
+    await pressAndWait(button('Clear the decision on 8 pages'));
+
+    expect(bulk.calls[0].map((event) => event.page)).toEqual(long.on.map((entry) => entry.page));
+    unmount();
+  });
+
+  /**
+   * The dismissal needs no such gate over the same eight pages: its mandatory note is one,
+   * and a second thing to type would be the same press asked for twice.
+   */
+  it('asks the dismissal for no count, however wide it is', async () => {
+    const open = new Map(long.on.map((entry) => [entry.id, derived(entry.id)]));
+    const { bulk, unmount } = eight({ byFinding: open });
+
+    press(button('Dismiss on 8 pages'));
+    await type('de redactie wil het zo');
+    await pressAndWait(button('Dismiss on 8 pages'));
+
+    expect(bulk.calls[0]).toHaveLength(8);
+    unmount();
+  });
+  /**
+   * The gate is spent by the press it gated. A run that stopped leaves a **smaller**
+   * remainder, so the count that was typed is no longer the count on screen — and below a
+   * handful there is nothing left to restate at all.
+   */
+  it('drops the gate when a stopped run leaves less than a handful', async () => {
+    const log = paced();
+    const { unmount } = eight({ bulk: log.bulk });
+
+    press(button('Clear the decision on 8 pages'));
+    await type('8');
+    press(button('Clear the decision on 8 pages'));
+
+    for (let answered = 0; answered < 5; answered += 1) await log.answer();
+    press(button('Stop'));
+    await log.answer();
+
+    // Six written, two still ticked: one press again, and nothing to type.
+    expect(button('Clear the decision on 2 pages')).toBeDefined();
+    expect(barText()).not.toContain('to clear the decision on');
     unmount();
   });
 });

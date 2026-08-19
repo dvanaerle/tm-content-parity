@@ -352,13 +352,14 @@ export function useStoreOverrides({ pages, siblingPages = [], editor = '' }) {
   );
 
   const appendMany = useCallback(
-    async (toWrite) => {
+    async (toWrite, watching) => {
       if (!port || !editor) {
         return {
           stored: [],
           written: 0,
           total: toWrite.length,
-          failedOn: null,
+          stoppedOn: null,
+          aborted: false,
           error: NO_EDITOR,
         };
       }
@@ -368,9 +369,13 @@ export function useStoreOverrides({ pages, siblingPages = [], editor = '' }) {
         const result = await appendEach(
           port,
           toWrite.map((event) => ({ ...event, editor })),
+          watching,
         );
         if (result.stored.length > 0) setEvents((held) => [...(held ?? []), ...result.stored]);
-        setError(result.error);
+        // A stop is not a refusal. The log answered every row it was given, so it stays
+        // writable and the remainder can be pressed again — clearing the error here would
+        // also lose a **previous** press's, which no press of this one has repaired.
+        if (!result.aborted) setError(result.error);
         return result;
       } finally {
         setBusy(false);
