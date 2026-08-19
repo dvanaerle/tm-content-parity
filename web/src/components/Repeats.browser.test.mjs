@@ -129,11 +129,27 @@ const type = (value) => userEvent.fill(document.querySelector('[data-slot="input
 /** The row that opens the difference, which is the whole row again since round two. */
 const differenceRow = () => document.querySelector('[data-slot="collapsible-trigger"]');
 
-/** The tick in the selection column's header, which is where the select-all lives. */
+/** The tick in the selection column's header, which is one of the two a difference has. */
 const selectAll = () => document.querySelector('thead [data-slot="checkbox"]');
+
+/**
+ * The ticks on the difference rows themselves (ticket 138): every checkbox in the list
+ * that is not inside a page table, which is what makes a collapsed difference tickable.
+ */
+const rowTicks = () =>
+  [...document.querySelectorAll('li [data-slot="checkbox"]')].filter(
+    (tick) => !tick.closest('table'),
+  );
 
 /** The page checkboxes, which are the ones on the rows and not the one in the header. */
 const pageTicks = () => [...document.querySelectorAll('tbody [data-slot="checkbox"]')];
+
+/** The tick beside the result's count, which a search draws and *Repeats* does not. */
+const selectResult = () =>
+  document.querySelector('[data-slot="select-result"] [data-slot="checkbox"]');
+
+/** What the one bar says, or nothing at all when there is no bar. */
+const barText = () => document.querySelector('[data-slot="bulk-bar"]')?.textContent ?? null;
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -179,14 +195,14 @@ describe('the selection on a difference', () => {
   });
 
   /**
-   * One selection in the whole list, because there is one place for the bar to be.
+   * One selection over the whole list, and it is flat (ticket 138).
    *
-   * Two differences could each hold ticks while the bar was a strip under each of them, and
-   * each strip said which difference it belonged to. Fixed to the bottom of the screen,
-   * two of them are one bar on top of another — so ticking in a second difference takes the
-   * selection, and the first puts its ticks down.
+   * It was one difference's until then: ticking in a second silently took the ticks away
+   * from the first, so an editor who wanted one sentence over 259 differences paid 259
+   * presses for it. The ticks now coexist, and there is still exactly **one** bar —
+   * because the bar is the list's and not a difference's.
    */
-  it('holds one selection across the list, and the newest difference takes it', () => {
+  it('holds ticks in two differences at once, and one bar says so', () => {
     const map = new Map([...byFinding(), ['g1', derived('g1')]]);
     const { unmount } = mount({ repeats: [repeat, other], byFinding: map });
 
@@ -200,10 +216,45 @@ describe('the selection on a difference', () => {
     // The fourth tick is the other difference's only page: three above it, then this one.
     press(pageTicks()[3]);
 
-    const bars = document.querySelectorAll('[data-slot="bulk-bar"]');
-    expect(bars).toHaveLength(1);
-    expect(bars[0].textContent).toContain('links');
-    expect(pageTicks()[0].getAttribute('aria-checked')).toBe('false');
+    // Both ticks stand, and the one bar counts them over the whole list. There is no second
+    // text to print, so it names the result instead of one difference's words.
+    expect(document.querySelectorAll('[data-slot="bulk-bar"]')).toHaveLength(1);
+    expect(pageTicks()[0].getAttribute('aria-checked')).toBe('true');
+    expect(barText()).toContain('2');
+    expect(barText()).toContain('of 4 pages');
+    expect(barText()).toContain('2 differences');
+    expect(barText()).not.toContain('links');
+    unmount();
+  });
+
+  /**
+   * A dismissal over a selection that spans differences: one note, N ordinary events, one
+   * per page, and nothing new in the table. The whole of ticket 138 below the component
+   * line is that this is possible at all.
+   */
+  it('dismisses across differences with one note and one press', async () => {
+    const map = new Map([...byFinding(), ['g1', derived('g1')]]);
+    const { bulk, unmount } = mount({ repeats: [repeat, other], byFinding: map });
+
+    const rows = () => [...document.querySelectorAll('[data-slot="collapsible-trigger"]')];
+    press(rows()[0]);
+    press(rows()[1]);
+    press(pageTicks()[0]);
+    press(pageTicks()[3]);
+
+    press(button('Dismiss on 2 pages'));
+    await type('Links hebben geen ">" meer.');
+    await pressAndWait(button('Dismiss on 2 pages'));
+
+    expect(bulk.calls).toHaveLength(1);
+    expect(bulk.calls[0].map((event) => [event.page, event.findingId])).toEqual([
+      ['overkapping', 'f1'],
+      ['tuinhuis', 'g1'],
+    ]);
+    // No repeat scope and no new action: N ordinary events is what a bulk press has
+    // written since ticket 31, however many differences the selection reached.
+    expect(bulk.calls[0].every((event) => event.scope === 'finding')).toBe(true);
+    expect(bulk.calls[0].every((event) => event.note === 'Links hebben geen ">" meer.')).toBe(true);
     unmount();
   });
 
@@ -248,24 +299,65 @@ describe('the selection on a difference', () => {
   });
 
   /**
-   * Round one put the select-all on the difference row, so a closed difference could be
-   * ticked whole. It bought a checkbox inside a `CollapsibleTrigger` — a button inside a
-   * button, which is neither valid nor clickable — and a press an editor could arm over
-   * pages they had never seen. **A selection is made in the list of things being
-   * selected**, so the tick is the selection column's header and the row is a trigger
-   * from edge to edge again.
+   * The tick is on the difference row **and** in the table header, and they are one control
+   * (ticket 138).
+   *
+   * Round one of ticket 110 put a checkbox inside the `CollapsibleTrigger` — a button
+   * inside a button — and the fix was to move it into the table it selects. That left a
+   * collapsed difference untickable, which is 259 expansions for one sentence. It is back
+   * on the row as a **sibling** of the trigger, so it is clickable, and the two draw one
+   * tri-state rule read off one selection.
    */
-  it('carries the select-all in the table header and nothing on the difference row', () => {
+  it('ticks a collapsed difference whole from its own row, without opening it', () => {
     const { unmount } = mount();
 
-    // Closed, there is no tick anywhere: nothing to select until the list is on screen.
-    expect(document.querySelector('[data-slot="checkbox"]')).toBeNull();
+    // Closed, and tickable: one tick on the row and none anywhere else, because there is
+    // no page table on screen yet.
+    expect(rowTicks()).toHaveLength(1);
+    expect(document.querySelector('table')).toBeNull();
+
+    press(rowTicks()[0]);
+
+    // Every page of the difference is ticked, and the difference is still closed. The page
+    // table inside one is unbudgeted, and 259 opened differences is thousands of rows.
+    expect(barText()).toContain('3 of 3 pages');
+    expect(document.querySelector('table')).toBeNull();
+
+    // And the two ticks agree, because they read the same selection.
+    press(differenceRow());
+    expect(selectAll().getAttribute('aria-checked')).toBe('true');
+    expect(rowTicks()[0].getAttribute('aria-checked')).toBe('true');
+    unmount();
+  });
+
+  it('reads the row tick as mixed while some of the difference is ticked', () => {
+    const { unmount } = mount();
 
     press(differenceRow());
+    press(pageTicks()[0]);
 
-    expect(selectAll()).not.toBeNull();
-    press(selectAll());
-    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain('3 of 3 pages');
+    expect(rowTicks()[0].getAttribute('aria-checked')).toBe('mixed');
+
+    // From mixed a press clears, the same way the header's does: a control that cannot be
+    // pressed back is not a control.
+    press(rowTicks()[0]);
+    expect(barText()).toBeNull();
+    unmount();
+  });
+
+  /**
+   * A tick in another difference is not this one's *mixed*. The selection spans differences
+   * now, so a row asking "is any of me ticked" has to ask about its own pages — the old
+   * `selected.size > 0` would have drawn every row in the list as mixed.
+   */
+  it('leaves a difference unticked while the ticks are all in another one', () => {
+    const map = new Map([...byFinding(), ['g1', derived('g1')]]);
+    const { unmount } = mount({ repeats: [repeat, other], byFinding: map });
+
+    press(rowTicks()[1]);
+
+    expect(rowTicks()[1].getAttribute('aria-checked')).toBe('true');
+    expect(rowTicks()[0].getAttribute('aria-checked')).toBe('false');
     unmount();
   });
 
@@ -435,19 +527,26 @@ describe('the selection on a difference', () => {
     unmount();
   });
 
-  // It is a question about one press and not a state of the queue, so closing the
-  // difference puts it down.
-  it('forgets the selection when the difference is closed', () => {
+  /**
+   * Closing a difference no longer puts its ticks down (ticket 138).
+   *
+   * It did while the selection was one difference's: the ticks were that difference's
+   * state, so closing it was putting them down. They are the list's now, a collapsed
+   * difference can be ticked whole from its own row, and ticks that vanished on a close
+   * would be ticks an editor cannot keep — which is the whole complaint the ticket answers.
+   */
+  it('keeps the selection when the difference is closed', () => {
     const { unmount } = mount();
 
     press(differenceRow());
     press(pageTicks()[0]);
     press(differenceRow());
 
-    expect(document.querySelector('[data-slot="bulk-bar"]')).toBeNull();
+    expect(barText()).toContain('1 of 3 pages');
+    expect(rowTicks()[0].getAttribute('aria-checked')).toBe('mixed');
 
     press(differenceRow());
-    expect(pageTicks().every((tick) => tick.getAttribute('aria-checked') === 'false')).toBe(true);
+    expect(pageTicks()[0].getAttribute('aria-checked')).toBe('true');
     unmount();
   });
 
@@ -569,7 +668,9 @@ describe('a difference that spans a language block', () => {
     // Nothing new is stored: the scope is `finding` and the action is `dismissed`, which
     // is what a press has written since ticket 31.
     expect(bulk.calls).toHaveLength(1);
-    expect(bulk.calls[0].map((event) => [event.store, event.page, event.scope, event.action])).toEqual([
+    expect(
+      bulk.calls[0].map((event) => [event.store, event.page, event.scope, event.action]),
+    ).toEqual([
       ['nl', 'afhalen', 'finding', 'dismissed'],
       ['be', 'afhalen', 'finding', 'dismissed'],
     ]);
@@ -632,6 +733,238 @@ describe('a difference that spans a language block', () => {
     const bar = document.querySelector('[data-slot="bulk-bar"]').textContent;
     expect(bar).toContain('1 page');
     expect(bar).not.toContain('Written in');
+    unmount();
+  });
+});
+
+/**
+ * Ticket 138: a narrowed result ticked whole, and decided in one press.
+ *
+ * An editor searches, gets 472 findings in 259 differences, and every one of them wants
+ * the same sentence. Before this the ticks lived inside an expanded difference and belonged
+ * to one, so that was 259 expansions and 259 presses. Here it is one tick and one press,
+ * and the condition on offering it — that the list is an **answer to something** — is
+ * clicked at as well, because it is the restriction a later reader deletes as an oversight.
+ */
+describe('a wide selection over a narrowed result', () => {
+  /** A second and a third difference, so a result is a result and not one row. */
+  const [links] = repeatsInStore([on('nl', 'tuinhuis', finding('g1', 'links', 'rechts'))]);
+  const [prijs] = repeatsInStore([on('nl', 'prijzen', finding('h1', 'vanaf', 'va.'))]);
+
+  const result = [repeat, links, prijs];
+  const states = (overrides = {}) =>
+    new Map(
+      result
+        .flatMap((one) => one.on)
+        .map((entry) => [entry.id, derived(entry.id, overrides[entry.id] ?? {})]),
+    );
+
+  const found = (props = {}) =>
+    mount({
+      repeats: result,
+      byFinding: states(),
+      searched: true,
+      builtAt: '2026-08-18T09:14:00.000Z',
+      ...props,
+    });
+
+  it('ticks every page of every difference from one control', () => {
+    const { unmount } = found();
+
+    press(selectResult());
+
+    // Five pages over three differences, and not one difference was opened to do it.
+    expect(barText()).toContain('5');
+    expect(barText()).toContain('of 5 pages');
+    expect(barText()).toContain('3 differences');
+    expect(document.querySelector('table')).toBeNull();
+    expect(rowTicks().every((tick) => tick.getAttribute('aria-checked') === 'true')).toBe(true);
+    unmount();
+  });
+
+  /**
+   * The condition, clicked. A wide press needs a proposition to be about (ADR 0022): a term,
+   * a page scope or a class pill is one, and the bare *Repeats* list — every difference in
+   * the store, 25,657 of them — is not. The control is absent there, and the per-difference
+   * ticks are not.
+   */
+  it('offers no such control where no search narrowed the list', () => {
+    const { unmount } = mount({ repeats: result, byFinding: states() });
+
+    expect(document.querySelector('[data-slot="select-result"]')).toBeNull();
+    expect(rowTicks()).toHaveLength(3);
+    unmount();
+  });
+
+  it('reads as mixed while some of the result is ticked, and clears from there', () => {
+    const { unmount } = found();
+
+    expect(selectResult().getAttribute('aria-checked')).toBe('false');
+
+    press(rowTicks()[1]);
+    expect(selectResult().getAttribute('aria-checked')).toBe('mixed');
+
+    press(selectResult());
+    expect(barText()).toBeNull();
+    expect(selectResult().getAttribute('aria-checked')).toBe('false');
+    unmount();
+  });
+
+  /**
+   * The rows below the render budget are in the press too. The list draws a hundred at a
+   * time, and a select-all that reached only the drawn ones would be a control whose
+   * meaning changes with how far the editor scrolled.
+   */
+  it('reaches the differences the render budget has not drawn', () => {
+    const many = repeatsInStore(
+      Array.from({ length: 120 }, (draw, index) =>
+        on('nl', `pagina-${index}`, finding(`x${index}`, `oud-${index}`, `nieuw-${index}`)),
+      ),
+    );
+    const { unmount } = mount({
+      repeats: many,
+      byFinding: new Map(
+        many.flatMap((one) => one.on).map((entry) => [entry.id, derived(entry.id)]),
+      ),
+      searched: true,
+      builtAt: '2026-08-18T09:14:00.000Z',
+    });
+
+    // A hundred rows drawn of a hundred and twenty, and the tick takes all of them.
+    expect(rowTicks()).toHaveLength(100);
+    press(selectResult());
+
+    expect(barText()).toContain('of 120 pages');
+    expect(barText()).toContain('120 differences');
+    unmount();
+  });
+
+  /**
+   * The one press writes one event per **eligible** ticked finding and skips the page a
+   * colleague decided — the same rule the press has always had, over a longer list. The
+   * ticks say *these pages*; the press filters and reports what it did.
+   */
+  it('writes one event per eligible ticked finding and says what it left alone', async () => {
+    const { bulk, unmount } = found({ byFinding: states({ g1: { state: 'dismissed' } }) });
+
+    press(selectResult());
+    press(button('Dismiss on 4 pages'));
+
+    // Four of the five, and the fifth named as already decided.
+    expect(barText()).toContain('4 pages of the 5');
+    expect(barText()).toContain('the other 1 is decided already');
+
+    await type('Links hebben geen ">" meer.');
+    await pressAndWait(button('Dismiss on 4 pages'));
+
+    expect(bulk.calls).toHaveLength(1);
+    expect(bulk.calls[0].map((event) => event.page)).toEqual([
+      'overkapping',
+      'veranda',
+      'carport',
+      'prijzen',
+    ]);
+    unmount();
+  });
+
+  it('revokes only the dismissals when the whole result is cleared', async () => {
+    const { bulk, unmount } = found({
+      byFinding: states({
+        f1: { state: 'dismissed', override: { action: 'dismissed' } },
+        g1: { state: 'dismissed', override: { action: 'dismissed' } },
+        h1: { state: 'fixed', override: { action: 'fixed' } },
+      }),
+    });
+
+    press(selectResult());
+    await pressAndWait(button('Clear the decision on 2 pages'));
+
+    // The `fixed` claim is not this control's to take back, and the two open pages have
+    // nothing to revoke. Two events, both `cleared`.
+    expect(bulk.calls[0].map((event) => [event.page, event.action])).toEqual([
+      ['overkapping', 'cleared'],
+      ['tuinhuis', 'cleared'],
+    ]);
+    unmount();
+  });
+
+  /**
+   * The selection straddles two clocks: it is built over the build's snapshot, while
+   * eligibility and the *closed* count read the live log. At four rows nobody notices; at
+   * 472 it is the one place staleness can do damage, so the wide bar says the date out loud.
+   */
+  it('names the snapshot the ticks were made over, once, on a wide selection', () => {
+    const { unmount } = found();
+
+    press(selectResult());
+    expect(barText()).toContain('18 Aug 2026');
+
+    // And not on a selection inside one difference of a wider result, which is the narrow
+    // press ticket 110 shipped. The interface is quiet by default.
+    press(selectResult());
+    press(rowTicks()[0]);
+    expect(barText()).not.toContain('18 Aug 2026');
+    unmount();
+  });
+
+  /**
+   * A result holding **one** difference, ticked whole, is a wide press too.
+   *
+   * The gate is the shape of the selection and never a count of differences: a search that
+   * answers one difference on 472 pages is exactly the case the ticket opens with, and a
+   * date drawn only where the ticks span differences would have missed it.
+   */
+  it('names the snapshot on a one-difference result ticked whole', () => {
+    const { unmount } = mount({
+      repeats: [repeat],
+      byFinding: byFinding(),
+      searched: true,
+      builtAt: '2026-08-18T09:14:00.000Z',
+    });
+
+    press(selectResult());
+
+    expect(barText()).toContain('3 of 3 pages');
+    expect(barText()).toContain('18 Aug 2026');
+    unmount();
+  });
+
+  /**
+   * A wide press still says which stores it wrote in, and drops the clause explaining why.
+   *
+   * *The same words are one decision* is what makes a block-spanning row one row. Over a
+   * selection spanning differences the strings are not the same, so that clause would be a
+   * false reason for a true fact: the press does reach two stores, and it reaches them
+   * because the pages ticked are on both.
+   */
+  it('names the stores a wide press writes in, without the same-words reason', () => {
+    const wide = [acrossBlock, links];
+    const { unmount } = mount({
+      repeats: wide,
+      byFinding: new Map(
+        wide.flatMap((one) => one.on).map((entry) => [entry.id, derived(entry.id)]),
+      ),
+      searched: true,
+      builtAt: '2026-08-18T09:14:00.000Z',
+    });
+
+    press(selectResult());
+    press(button('Dismiss on 3 pages'));
+
+    expect(barText()).toContain('Written in be and nl');
+    expect(barText()).not.toContain('share a language');
+    unmount();
+  });
+
+  // Two surfaces must not claim the same ticks. There is one bar over the result, and no
+  // second one under the difference that happens to hold some of them.
+  it('draws one bar over the result and none under a difference', () => {
+    const { unmount } = found();
+
+    press(selectResult());
+    press(differenceRow());
+
+    expect(document.querySelectorAll('[data-slot="bulk-bar"]')).toHaveLength(1);
     unmount();
   });
 });

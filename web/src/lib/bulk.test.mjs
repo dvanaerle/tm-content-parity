@@ -1,28 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { bulkAnnotation, bulkClear, bulkDismissal } from './bulk.mjs';
 import { noteEventFor, priorityEventFor } from '../../../overrides/state.mjs';
-import { storesOf } from './view.mjs';
 
 /**
- * A repeat as `repeatsInStore()` returns it, narrowed to what this file reads.
+ * One page of a repeat, and the whole of what a press reads (ticket 138).
  *
- * `stores` is derived from the entries by **`storesOf()` itself** and not by a copy of it
- * here, which is the difference between a fixture that agrees with the derivation and one
- * that claims to: a fixture free to name a store its own entries are not on would let these
- * tests pass a shape the real function never produces.
+ * The fixtures here were **repeats** until then, carrying a key, a class and two texts none
+ * of these functions ever looked at. A press takes `RepeatEntry[]` now, already narrowed to
+ * the ticked pages by its caller — so a fixture is a plain array of these, and there is no
+ * repeat here to keep in step with the derivation.
+ *
+ * The store defaults to `nl`, so the store-scoped tests read as they did.
  */
-const repeat = (on) => ({
-  key: '["nl","copy","oud","nieuw",null]',
-  stores: storesOf(on),
-  class: 'copy',
-  prod: 'oud',
-  new: 'nieuw',
-  detail: null,
-  occurrences: on.length,
-  on,
-});
-
-/** One page of a repeat. The store defaults to `nl`, so the store-scoped tests read as they did. */
 const on = (page, id, store = 'nl') => ({ store, page, id, occurrences: 1 });
 
 /**
@@ -43,7 +32,7 @@ const byFinding = (states) =>
 describe('bulkDismissal', () => {
   it('writes one dismissal per page of the repeat, aimed at that page', () => {
     const { events } = bulkDismissal({
-      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
+      entries: [on('overkapping', 'f1'), on('veranda', 'f2')],
       byFinding: byFinding({ f1: 'open', f2: 'open' }),
       note: 'de footer is bewust anders',
     });
@@ -74,7 +63,7 @@ describe('bulkDismissal', () => {
     // spans `nl` and `be` has no single store to take it from — and reading one would
     // file `be`'s event under `nl`, where its finding id does not exist.
     const { events } = bulkDismissal({
-      repeat: repeat([on('afhalen', 'f1'), on('afhalen', 'f2', 'be')]),
+      entries: [on('afhalen', 'f1'), on('afhalen', 'f2', 'be')],
       byFinding: byFinding({ f1: 'open', f2: 'open' }),
       note: 'het telefoonnummer hoort te verschillen',
     });
@@ -87,7 +76,7 @@ describe('bulkDismissal', () => {
 
   it('says what the press covers before there is a note to press with', () => {
     const decision = bulkDismissal({
-      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
+      entries: [on('overkapping', 'f1'), on('veranda', 'f2')],
       byFinding: byFinding({ f1: 'open', f2: 'open' }),
       note: '   ',
     });
@@ -103,7 +92,7 @@ describe('bulkDismissal', () => {
 
   it('leaves a finding another editor already decided alone', () => {
     const decision = bulkDismissal({
-      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2'), on('carport', 'f3')]),
+      entries: [on('overkapping', 'f1'), on('veranda', 'f2'), on('carport', 'f3')],
       byFinding: byFinding({ f1: 'open', f2: 'fixed', f3: 'dismissed' }),
       note: 'de footer is bewust anders',
     });
@@ -122,39 +111,35 @@ describe('bulkDismissal', () => {
  * Ticket 110: the press covers the pages that were ticked, and the seam below the
  * component line is one narrowed list of pages.
  *
- * `selected` is a set of **finding ids** and not of page names. A page name is unique
- * within a repeat, but the id is what a row is keyed on and what an event is aimed at, so
- * keying the selection on it is one lookup fewer between the tick and the write.
- *
- * An absent `selected` still means every page of the repeat. That is not a fallback for
- * the interface — nothing there presses without a selection any more — it is what keeps
- * the twelve tests above about the same functions these are about.
+ * The narrowing is the **caller's** since ticket 138, and these functions no longer take a
+ * selection at all: the interface holds a flat set of finding ids over the whole list and
+ * filters its pages by it once, when a tick changes, rather than here on every keystroke of
+ * the note. What arrives is the pages the press is aimed at, and every test below hands over
+ * exactly the ones an editor ticked.
  */
 describe('a press narrowed to the ticked pages', () => {
-  const three = repeat([on('overkapping', 'f1'), on('veranda', 'f2'), on('carport', 'f3')]);
+  const three = [on('overkapping', 'f1'), on('veranda', 'f2'), on('carport', 'f3')];
   const open3 = byFinding({ f1: 'open', f2: 'open', f3: 'open' });
 
   it('dismisses the ticked pages and no others', () => {
     const decision = bulkDismissal({
-      repeat: three,
+      entries: [three[0], three[2]],
       byFinding: open3,
       note: 'geen defect',
-      selected: new Set(['f1', 'f3']),
     });
 
     expect(decision.covers).toBe(2);
     expect(decision.events.map((event) => event.page)).toEqual(['overkapping', 'carport']);
   });
 
-  // The second number is counted over the **selection** and not over the repeat: it says
+  // The second number is counted over the **selection** and not over the entries: it says
   // how many of the pages this press was aimed at are already decided, so it has to be
   // out of the same total the first number is.
   it('counts the already-decided against the selection, not against the repeat', () => {
     const decision = bulkDismissal({
-      repeat: three,
+      entries: [three[0], three[1]],
       byFinding: byFinding({ f1: 'open', f2: 'dismissed', f3: 'fixed' }),
       note: 'geen defect',
-      selected: new Set(['f1', 'f2']),
     });
 
     expect(decision.covers).toBe(1);
@@ -170,7 +155,7 @@ describe('a press narrowed to the ticked pages', () => {
   // override ADR 0011 withdrew, which is why it outlived it.
   it('presses on the two states it is offered on and on no others', () => {
     const decision = bulkDismissal({
-      repeat: repeat([on('a', 'f1'), on('b', 'f2'), on('c', 'f3'), on('d', 'f4')]),
+      entries: [on('a', 'f1'), on('b', 'f2'), on('c', 'f3'), on('d', 'f4')],
       byFinding: byFinding({
         f1: 'open',
         f2: 'contradicted',
@@ -188,7 +173,7 @@ describe('a press narrowed to the ticked pages', () => {
   // before the derivation has caught up with it.
   it('reads a finding it has never heard of as open', () => {
     const decision = bulkDismissal({
-      repeat: repeat([on('overkapping', 'f1')]),
+      entries: [on('overkapping', 'f1')],
       byFinding: new Map(),
       note: 'geen defect',
     });
@@ -196,27 +181,21 @@ describe('a press narrowed to the ticked pages', () => {
     expect(decision.covers).toBe(1);
   });
 
-  // An empty set is a selection and not a missing one, so it narrows to nothing. The bar
-  // above it is not drawn at all in that state, and this is what makes that safe rather
-  // than merely tidy: were it to read as *no selection given*, an editor unticking their
-  // last page would arm a press over the whole repeat.
+  // An empty selection narrows to no pages, and a press over no pages writes nothing and
+  // claims nothing. The bar above it is not drawn at all in that state; this is what makes
+  // that safe rather than merely tidy, because a press that read an empty list as *every
+  // page* would fire over the whole repeat the moment an editor unticked their last page.
   it('presses nothing at all on an empty selection', () => {
-    const empty = new Set();
-
-    expect(
-      bulkDismissal({
-        repeat: three,
-        byFinding: open3,
-        note: 'geen defect',
-        selected: empty,
-      }),
-    ).toMatchObject({ covers: 0, decided: 0, events: [] });
+    expect(bulkDismissal({ entries: [], byFinding: open3, note: 'geen defect' })).toMatchObject({
+      covers: 0,
+      decided: 0,
+      events: [],
+    });
 
     expect(
       bulkClear({
-        repeat: three,
+        entries: [],
         byFinding: byFinding({ f1: 'dismissed', f2: 'dismissed', f3: 'dismissed' }),
-        selected: empty,
       }),
     ).toMatchObject({ covers: 0, skipped: 0, events: [] });
   });
@@ -234,7 +213,7 @@ describe('a press narrowed to the ticked pages', () => {
 describe('bulkClear', () => {
   it('clears a dismissal on the finding it was made on', () => {
     const { events } = bulkClear({
-      repeat: repeat([on('overkapping', 'f1')]),
+      entries: [on('overkapping', 'f1')],
       byFinding: new Map([
         [
           'f1',
@@ -267,7 +246,7 @@ describe('bulkClear', () => {
    */
   it('aims at the finding and never at anything wider', () => {
     const { events } = bulkClear({
-      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
+      entries: [on('overkapping', 'f1'), on('veranda', 'f2')],
       byFinding: new Map([
         [
           'f1',
@@ -315,7 +294,7 @@ describe('bulkClear', () => {
    */
   it('counts the ticked pages it can act on, and leaves the rest alone', () => {
     const input = {
-      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2'), on('carport', 'f3')]),
+      entries: [on('overkapping', 'f1'), on('veranda', 'f2'), on('carport', 'f3')],
       byFinding: new Map([
         ['f1', { id: 'f1', state: 'dismissed', class: 'copy', override: { action: 'dismissed' } }],
         ['f2', { id: 'f2', state: 'open', class: 'copy', override: null }],
@@ -324,7 +303,7 @@ describe('bulkClear', () => {
     };
 
     expect(bulkClear(input).covers).toBe(1);
-    expect(bulkClear({ ...input, selected: new Set(['f2', 'f3']) })).toMatchObject({
+    expect(bulkClear({ ...input, entries: input.entries.slice(1) })).toMatchObject({
       covers: 0,
       events: [],
     });
@@ -335,7 +314,7 @@ describe('bulkClear', () => {
   // ten decisions back harder than taking one back.
   it('writes without a note, because a cleared event has none to carry', () => {
     const { events } = bulkClear({
-      repeat: repeat([on('overkapping', 'f1')]),
+      entries: [on('overkapping', 'f1')],
       byFinding: new Map([
         [
           'f1',
@@ -362,11 +341,7 @@ describe('bulkClear', () => {
 describe('the two eligibilities on one block-spanning selection', () => {
   // `nl/afhalen` and `be/afhalen` carry the same string; `be/pergola` carries it too, and
   // a colleague has already dismissed it.
-  const across = repeat([
-    on('afhalen', 'f1'),
-    on('afhalen', 'f2', 'be'),
-    on('pergola', 'f3', 'be'),
-  ]);
+  const across = [on('afhalen', 'f1'), on('afhalen', 'f2', 'be'), on('pergola', 'f3', 'be')];
 
   const states = new Map([
     ['f1', { id: 'f1', state: 'open', class: 'copy', visibility: 'work', override: null }],
@@ -384,7 +359,7 @@ describe('the two eligibilities on one block-spanning selection', () => {
   ]);
 
   it('dismisses across the block and skips the page a colleague decided', () => {
-    const decision = bulkDismissal({ repeat: across, byFinding: states, note: 'bewust anders' });
+    const decision = bulkDismissal({ entries: across, byFinding: states, note: 'bewust anders' });
 
     expect(decision.events.map((event) => `${event.store}/${event.page}`)).toEqual([
       'nl/afhalen',
@@ -397,15 +372,13 @@ describe('the two eligibilities on one block-spanning selection', () => {
   });
 
   it('clears across the block and touches nothing but the dismissal', () => {
-    const decision = bulkClear({ repeat: across, byFinding: states });
+    const decision = bulkClear({ entries: across, byFinding: states });
 
     // The mirror image of the press above on the very same selection: where the dismissal
     // acted, this one skips, and where the dismissal skipped, this one acts. That is what
     // "different eligibilities on one selection" has to mean, and the store still comes
     // off the entry.
-    expect(decision.events.map((event) => `${event.store}/${event.page}`)).toEqual([
-      'be/pergola',
-    ]);
+    expect(decision.events.map((event) => `${event.store}/${event.page}`)).toEqual(['be/pergola']);
     expect(decision.covers).toBe(1);
     expect(decision.skipped).toBe(2);
   });
@@ -414,21 +387,16 @@ describe('the two eligibilities on one block-spanning selection', () => {
     // The trap: 80% is not 100%. A press states the stores **its own events** are in, so a
     // selection whose sibling page is already decided says `nl` and does not imply the
     // block is being decided. Each press answers for itself, on the one selection.
-    expect(bulkDismissal({ repeat: across, byFinding: states, note: 'x' }).stores).toEqual([
+    expect(bulkDismissal({ entries: across, byFinding: states, note: 'x' }).stores).toEqual([
       'be',
       'nl',
     ]);
-    expect(bulkClear({ repeat: across, byFinding: states }).stores).toEqual(['be']);
+    expect(bulkClear({ entries: across, byFinding: states }).stores).toEqual(['be']);
 
     // And a selection narrowed to one store names one store, however wide the row is.
-    expect(
-      bulkDismissal({
-        repeat: across,
-        byFinding: states,
-        note: 'x',
-        selected: new Set(['f1']),
-      }).stores,
-    ).toEqual(['nl']);
+    expect(bulkDismissal({ entries: [across[0]], byFinding: states, note: 'x' }).stores).toEqual([
+      'nl',
+    ]);
   });
 
   it('is the judgement travelling and never a claim of fact', () => {
@@ -436,12 +404,53 @@ describe('the two eligibilities on one block-spanning selection', () => {
     // correct the other's. There is no bulk fix claim to test — the module exports two
     // presses — so what this pins is that neither of them can write one.
     const all = [
-      bulkDismissal({ repeat: across, byFinding: states, note: 'bewust anders' }),
-      bulkClear({ repeat: across, byFinding: states }),
+      bulkDismissal({ entries: across, byFinding: states, note: 'bewust anders' }),
+      bulkClear({ entries: across, byFinding: states }),
     ].flatMap((decision) => decision.events);
 
     expect(all.length).toBeGreaterThan(0);
     for (const event of all) expect(event.action).not.toBe('fixed');
+  });
+});
+
+/**
+ * Ticket 138: one press over a selection that spans differences.
+ *
+ * There is **one** test for it, and the reason is the finding itself. A press takes the
+ * pages it is aimed at; whether those came from one difference or from 259 is arithmetic
+ * done above this line, and nothing here can tell the two apart. So the eligibilities, the
+ * counts and the stores sentence are pinned once, above, and re-pinning them over a longer
+ * list would be the same assertions in a costume. What this pins is the shape the ticket
+ * asked for: one note, N ordinary events, one per page, across three differences and a
+ * language block — and the page a colleague decided still skipped.
+ *
+ * Which differences those pages belong to is drawn and pressed in
+ * `Repeats.browser.test.mjs`, where the selection that spans them actually exists.
+ */
+describe('a selection spanning differences', () => {
+  it('writes one event per eligible ticked page, whichever difference it came from', () => {
+    const decision = bulkDismissal({
+      // Four ticked pages of three differences, flattened the way the interface flattens
+      // them, one of them on the sibling store of the block.
+      entries: [
+        on('overkapping', 'f1'),
+        on('veranda', 'f2'),
+        on('tuinhuis', 'g1'),
+        on('afhalen', 'h1', 'be'),
+      ],
+      byFinding: byFinding({ f1: 'open', f2: 'dismissed', g1: 'open', h1: 'open' }),
+      note: 'Links hebben geen ">" meer.',
+    });
+
+    expect(decision.events.map((event) => `${event.store}/${event.page}`)).toEqual([
+      'nl/overkapping',
+      'nl/tuinhuis',
+      'be/afhalen',
+    ]);
+    expect(decision.covers).toBe(3);
+    expect(decision.decided).toBe(1);
+    expect(decision.stores).toEqual(['be', 'nl']);
+    expect(decision.events.every((event) => event.scope === 'finding')).toBe(true);
   });
 });
 
@@ -458,12 +467,12 @@ describe('the vocabulary a bulk press writes in', () => {
 
   const all = [
     bulkDismissal({
-      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
+      entries: [on('overkapping', 'f1'), on('veranda', 'f2')],
       byFinding: byFinding({ f1: 'open', f2: 'open' }),
       note: 'een reden',
     }),
     bulkClear({
-      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
+      entries: [on('overkapping', 'f1'), on('veranda', 'f2')],
       byFinding: byFinding({ f1: 'dismissed', f2: 'dismissed' }),
     }),
   ].flatMap((decision) => decision.events);
@@ -479,7 +488,7 @@ describe('the vocabulary a bulk press writes in', () => {
 
   it('uses only the finding scope and the dismissed action for a bulk dismissal', () => {
     const { events } = bulkDismissal({
-      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
+      entries: [on('overkapping', 'f1'), on('veranda', 'f2')],
       byFinding: byFinding({ f1: 'open', f2: 'open' }),
       note: 'een reden',
     });
@@ -490,7 +499,7 @@ describe('the vocabulary a bulk press writes in', () => {
 
   it('gives every row its own note, so attribution and reason are per row', () => {
     const { events } = bulkDismissal({
-      repeat: repeat([on('overkapping', 'f1'), on('veranda', 'f2')]),
+      entries: [on('overkapping', 'f1'), on('veranda', 'f2')],
       byFinding: byFinding({ f1: 'open', f2: 'open' }),
       note: '  een reden  ',
     });

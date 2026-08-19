@@ -141,7 +141,7 @@ export function PageAnnotations({ annotations, append, canWrite, busy = false })
  * It reuses ticket 31's shape rather than inventing a second one: the floating bar, the
  * sequential write through `appendEach()`, and the *N of M saved* report of a partial
  * failure. It is a **second bar and not a second selection mechanism** — the selection is
- * held by the list above it, the way `Repeats.jsx` holds the one for a difference.
+ * held by the list above it, the way `Repeats.jsx` holds the one over its own list.
  *
  * What it does not carry is an eligibility count. The two presses of ticket 31 skip a
  * finding a colleague decided and have to say how many they left alone; a page an editor

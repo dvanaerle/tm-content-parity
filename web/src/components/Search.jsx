@@ -235,16 +235,25 @@ export default function Search({
         <p className="px-4 py-6 text-sm text-muted-foreground">No difference with these words.</p>
       ) : (
         <Repeats
-          // The classes are in the key for the reason the term is: `OneSelection`
-          // holds ticks against rows, and a pill can take the ticked row out of the
-          // list. A selection that outlived the result it was made in would arm a
-          // press over rows the editor can no longer see.
+          // Remounting is how the selection is dropped, and the key is the whole of that
+          // rule: it holds ticks against rows, and a pill — or a scope, or *Include
+          // closed* — can take a ticked row out of the list. A selection that outlived the
+          // result it was made in would arm a press over rows the editor can no longer
+          // see, and at 472 rows that is not a press anybody could check.
+          //
+          // The scope is inside `term`: it is the leading `/…` of the same typed string,
+          // and `parseTerm()` is the only thing that splits them. So all four of the
+          // things that narrow this list are in this key.
           key={`${term}|${includeClosed}|${classes.join(',')}`}
           repeats={result.repeats}
           byFinding={byFinding}
           bulk={bulk}
           link={link}
           searched
+          // The snapshot the rows were built over, so a wide press can name it. The
+          // selection straddles two clocks — these rows are the build's, and what a press
+          // may act on is the live log's — and that is worth saying out loud once at 472.
+          builtAt={index.builtAt}
         />
       )}
 

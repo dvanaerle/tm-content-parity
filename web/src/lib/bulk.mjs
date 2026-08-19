@@ -2,11 +2,18 @@ import { clearedEventFor } from '../../../overrides/state.mjs';
 import { storesOf } from './view.mjs';
 
 /**
- * What one press on a repeat row would write, and what it covers (ticket 31).
+ * What one press on a selection would write, and what it covers (ticket 31).
  *
- * A repeat is a grouping and never a finding, so a decision on one is N decisions on N
+ * A repeat is a grouping and never a finding, so a decision over one is N decisions on N
  * findings. This file builds those N events and counts what they touch, so the sentence
  * above the button and the events behind it cannot drift apart.
+ *
+ * The presses take **the entries they are aimed at** and nothing else (ticket 138). They
+ * never read a repeat: its key, its class and its two texts are how a row is drawn, and what
+ * a press needs is the `(store, page, finding)` rows. Nor do they take the selection and
+ * narrow by it — the caller does that once, when a tick changes, rather than here on every
+ * keystroke of the note. What is left is the arithmetic these functions always did, over a
+ * list that may now come from 259 differences without them learning that differences exist.
  *
  * There were **three** presses here until ADR 0011. The second judgement, keyed on a class
  * in a section rather than on a finding, went with the action it wrote — and so did the rule
@@ -14,18 +21,17 @@ import { storesOf } from './view.mjs';
  */
 
 /**
- * The N dismissals of one repeat.
+ * The N dismissals of a selection.
  *
  * @param {object} input
- * @param {import('./view.mjs').Repeat} input.repeat
+ * @param {import('./view.mjs').RepeatEntry[]} input.entries  The pages this press is aimed
+ *   at: the ticked ones, narrowed by the caller. One difference's, or every difference's.
  * @param {Map<string, { state: string }>} input.byFinding  The derivation's answer per id.
  * @param {string} input.note  Mandatory: the SQL constraint refuses a dismissal without
  *   one, and one note copied to all N rows is the correct shape.
- * @param {Set<string>} [input.selected]  The ticked pages, as finding ids (ticket 110).
  */
-export function bulkDismissal({ repeat, byFinding, note, selected }) {
+export function bulkDismissal({ entries, byFinding, note }) {
   const reason = note.trim();
-  const chosen = ticked(repeat, selected);
 
   // The findings this press is allowed to touch: the two states the single control
   // offers *Negeren…* on, and no others. A finding a colleague dismissed or claimed
@@ -33,9 +39,9 @@ export function bulkDismissal({ repeat, byFinding, note, selected }) {
   // exactly the number dismissed and by nothing else, and overwriting a `fixed` claim
   // would turn a claim of fact into somebody else's judgement while moving no number at
   // all. That rule is the dismissal's own and never a comparison with anything wider.
-  const on = chosen.filter((entry) => offersDismissal(byFinding.get(entry.id)));
+  const on = entries.filter((entry) => offersDismissal(byFinding.get(entry.id)));
 
-  // Counted off the repeat and never off the events: the interface states the size
+  // Counted off the selection and never off the events: the interface states the size
   // **before** the press, and until a reason is typed there are no events to count.
   // The store comes off the **entry** and never off the repeat (ticket 03). A repeat may
   // span the two stores of one language block, so there is no single store to take it
@@ -55,7 +61,7 @@ export function bulkDismissal({ repeat, byFinding, note, selected }) {
     : [];
 
   // Both numbers over the **selection**: *4 pages of the 6* is a sentence about the
-  // press that is about to be made, and taking its total off the repeat would report a
+  // press that is about to be made, and taking its total off the whole list would report a
   // remainder the press was never aimed at.
   //
   // `stores` likewise: it is `view.mjs`'s one definition asked about `on` — the entries this
@@ -64,7 +70,12 @@ export function bulkDismissal({ repeat, byFinding, note, selected }) {
   // dismissed writes in one store, and a sentence naming two would imply the block is being
   // decided when a fifth of it is not. Like `covers`, it is over the eligible entries rather
   // than the events, so it is true before a reason has been typed.
-  return { covers: on.length, decided: chosen.length - on.length, stores: storesOf(on), events };
+  return {
+    covers: on.length,
+    decided: entries.length - on.length,
+    stores: storesOf(on),
+    events,
+  };
 }
 
 /**
@@ -98,22 +109,6 @@ export function bulkAnnotation({ pages, selected, event }) {
 }
 
 /**
- * The pages a press is aimed at: the ticked ones (ticket 110).
- *
- * The selection is a set of **finding ids** and not of page names. A page name is unique
- * within a repeat, so either would identify a row, but the id is what the row is keyed on
- * and what the event is aimed at — keying on it puts no lookup between the tick and the
- * write.
- *
- * No selection means every page. Nothing in the interface presses without one since
- * ticket 110, so this is not a fallback an editor can reach: it is what lets a caller
- * that has no selection to make — a test, a future caller with a whole repeat in hand —
- * ask the same question of the same function.
- */
-const ticked = (repeat, selected) =>
-  selected ? repeat.on.filter((entry) => selected.has(entry.id)) : repeat.on;
-
-/**
  * The states a dismissal is offered on, which are `OverrideControl.jsx`'s two. An
  * absent finding reads as `open`, the way a search result reads one the log has not
  * decided.
@@ -132,7 +127,7 @@ const OFFERED = new Set(['open', 'contradicted']);
 const offersDismissal = (finding) => OFFERED.has(finding?.state ?? 'open');
 
 /**
- * The N clearings of the pages one repeat is on (ticket 110, round two).
+ * The N clearings of the ticked pages (ticket 110, round two).
  *
  * The word is **cleared** and not *undo*: `CONTEXT.md` gives that one action the job of
  * revoking the last override on a key, and it says there are no `un-` words. The button an
@@ -144,13 +139,11 @@ const offersDismissal = (finding) => OFFERED.has(finding?.state ?? 'open');
  * control asks the same function, so the two cannot come to disagree.
  *
  * @param {object} input
- * @param {import('./view.mjs').Repeat} input.repeat
+ * @param {import('./view.mjs').RepeatEntry[]} input.entries  The pages this press is aimed at.
  * @param {Map<string, { state: string, class: string, override?: object }>} input.byFinding
- * @param {Set<string>} [input.selected]  The ticked pages, as finding ids.
  */
-export function bulkClear({ repeat, byFinding, selected }) {
-  const chosen = ticked(repeat, selected);
-  const on = chosen.filter((entry) => offersClear(byFinding.get(entry.id)));
+export function bulkClear({ entries, byFinding }) {
+  const on = entries.filter((entry) => offersClear(byFinding.get(entry.id)));
 
   // Per entry, for the reason the dismissal states: the selection is one, and a block-
   // spanning one has two stores in it. The clearing inherits the widening rather than
@@ -164,7 +157,12 @@ export function bulkClear({ repeat, byFinding, selected }) {
   // Both numbers over the **selection**, the way the dismissal states its two: a ticked
   // page this press leaves alone is a page the editor aimed at and did not hit, and the
   // gap between the count on the strip and the count on the button is not self-evident.
-  return { covers: on.length, skipped: chosen.length - on.length, stores: storesOf(on), events };
+  return {
+    covers: on.length,
+    skipped: entries.length - on.length,
+    stores: storesOf(on),
+    events,
+  };
 }
 
 /**

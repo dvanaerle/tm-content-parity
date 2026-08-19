@@ -680,6 +680,23 @@ export const storesOf = (on) => [...new Set(on.map((entry) => entry.store))].sor
 export const crossesBlock = (subject) => subject.stores.length > 1;
 
 /**
+ * One page of a repeat: the page, the store it is on, and the finding that is the
+ * difference there.
+ *
+ * It is named because it is a **seam** and not only a field. A press takes a list of these
+ * and nothing else (ticket 138): the entry carries everything an event needs — its own
+ * store, so a block-spanning press files each row where its finding id exists — and none
+ * of what a repeat carries for drawing a row. That is what lets one press cover a
+ * selection spanning 259 differences without learning that differences exist.
+ *
+ * @typedef {object} RepeatEntry
+ * @property {string} store
+ * @property {string} page
+ * @property {string} id           The finding on that page.
+ * @property {number} occurrences  How often the difference is on this one page.
+ */
+
+/**
  * A store's work listed as differences rather than as pages (ticket 81).
  *
  * A **repeat** is every finding in **one store** with the same class, the same two
@@ -726,7 +743,7 @@ export const crossesBlock = (subject) => subject.stores.length > 1;
  * @property {number} occurrences  Summed over the pages. **Not** the page count: a
  *                                 page can hold the same difference several times,
  *                                 and `on.length` is what counts pages.
- * @property {{ store: string, page: string, id: string, occurrences: number }[]} on
+ * @property {RepeatEntry[]} on
  *                             One entry is a page, its store and its finding. The store is
  *                             here and not only on the repeat because a press writes one
  *                             event per entry, and each event carries its own store.

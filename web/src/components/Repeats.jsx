@@ -45,67 +45,224 @@ import { crossesBlock, findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
  * decision on a repeat is still one decision per finding — every number here says how
  * much is *decided*, and none of them counts down to an empty list.
  */
-export default function Repeats({ repeats, byFinding, bulk, link, searched = false }) {
+export default function Repeats({
+  repeats,
+  byFinding,
+  bulk,
+  link,
+  searched = false,
+  builtAt = null,
+}) {
   if (repeats.length === 0) return <NoRepeats />;
 
   return (
-    <OneSelection>
-      <RowList
-        repeats={repeats}
-        byFinding={byFinding}
-        bulk={bulk}
-        link={link}
-        searched={searched}
-      />
+    <FlatSelection repeats={repeats} byFinding={byFinding} bulk={bulk} builtAt={builtAt}>
+      {/* The control that ticks the whole result, and the **only** place the condition for
+          offering it is stated (ticket 138, ADR 0022).
+
+          `searched` is that condition, spelled here rather than left to fall out of the
+          routing. It is nearly free — the flat list is what a search draws and nothing else
+          draws it — and that is exactly why it is written down: a rule that holds by accident
+          is a rule the next reader deletes as an oversight. A wide press needs a proposition
+          to be about. A term, a page scope or a class pill is one; the bare *Repeats* list is
+          every difference in the store and no proposition anyone made, so `ClassGroups` below
+          offers nothing of the kind. */}
+      {searched && <SelectResult repeats={repeats} />}
+      <RowList repeats={repeats} byFinding={byFinding} link={link} searched={searched} />
       <Total repeats={repeats} />
-    </OneSelection>
+    </FlatSelection>
   );
 }
 
 /**
- * The ticked pages, held for the whole list rather than per difference (ticket 110, round
- * three).
+ * The ticked pages: **one flat set of findings over the whole list** (ticket 138).
  *
- * Each difference kept its own set while the bar was a strip drawn under it: two
- * differences could carry ticks at once, and each strip said whose ticks it was drawing.
- * The bar floats now, fixed to one place at the bottom of the screen, and two of those are
- * one bar on top of another. So there is **one** selection, it knows which difference it
- * belongs to, and ticking in a second difference takes it — which is also the plainer rule
- * to hold in your head: what is ticked is what the bar at the bottom is about.
+ * It held `{ key, ids }` until this ticket — one difference's ids at a time — so ticking in
+ * a second difference silently took the selection away from the first. An editor whose
+ * search answered 472 findings in 259 differences, every one of them wanting the same
+ * sentence, paid 259 expansions and 259 presses for it.
  *
- * Emptying it is how the bar goes away, and it is emptied only by its **owner**: a
- * difference closing elsewhere in the list must not put down a selection that is not its
- * own.
+ * "Which difference" is no longer a term of the selection's identity, only of how the ticks
+ * are drawn and of what the bar can call itself. Nothing under it moves: a press is still N
+ * ordinary events, one per page, `scope: 'finding'` — the presses take the pages they are
+ * aimed at and cannot tell whether those came from one difference or from 259.
+ *
+ * It is **session-only** and never in the URL (ADR 0022): a copied link arriving with 472
+ * rows pre-ticked is a press somebody else armed. The caller drops it by remounting this
+ * component when the term, the scope, the pills or *Include closed* change, which is what
+ * the `key` on `Search.jsx`'s `<Repeats>` is for.
+ *
+ * The bar is rendered **here** and not by a difference, because the selection is no longer
+ * one difference's to own. There is one of it; it wears the words of the single difference
+ * holding the ticks where there is one and the words of the result where there are several,
+ * so two surfaces can never claim the same ticks.
  */
-function OneSelection({ children }) {
-  const [held, setHeld] = useState(/** @type {null | { key: string, ids: Set<string> }} */ (null));
+function FlatSelection({ repeats, byFinding, bulk, builtAt = null, children }) {
+  const [ticked, setTicked] = useState(/** @type {Set<string>} */ (NOTHING));
 
   const selection = useMemo(
     () => ({
-      of: (key) => (held?.key === key ? held.ids : NOTHING),
-      put: (key, ids) =>
-        setHeld((last) => {
-          if (ids.size > 0) return { key, ids };
-          return last?.key === key ? null : last;
+      ticked,
+      // One call for one page, for a whole difference and for a whole result: a tick is a
+      // set of ids going in or coming out, and the three controls differ only in how many
+      // ids they hand over.
+      tick: (ids, on) =>
+        setTicked((last) => {
+          const next = new Set(last);
+          for (const id of ids) {
+            if (on) next.add(id);
+            else next.delete(id);
+          }
+          return next;
         }),
+      clear: () => setTicked(NOTHING),
     }),
-    [held],
+    [ticked],
   );
 
-  return <SelectionContext.Provider value={selection}>{children}</SelectionContext.Provider>;
+  // Every page the selection could reach, flattened once. It is the denominator the bar
+  // states — *12 of 472 pages* — and the list the ticked ones are drawn from.
+  const entries = useMemo(() => repeats.flatMap((repeat) => repeat.on), [repeats]);
+
+  // The pages the presses are aimed at, narrowed **here** and once. This is the seam
+  // `bulk.mjs` takes: it never sees a repeat and never sees the selection either, so a press
+  // covering 259 differences is one short list of pages to it. Narrowing it there instead
+  // would re-filter every page on screen — 25,657 differences' worth on the unnarrowed
+  // list — on every keystroke of the note, because the note is what the press is memoised on.
+  const chosen = useMemo(
+    () => (ticked.size === 0 ? [] : entries.filter((entry) => ticked.has(entry.id))),
+    [entries, ticked],
+  );
+
+  // Which differences the ticks are in, which decides what the bar can call itself and
+  // nothing else. It is skipped while nothing is ticked, so an untouched list does not walk
+  // 25,657 rows on every render.
+  const holding = useMemo(
+    () =>
+      ticked.size === 0
+        ? []
+        : repeats.filter((repeat) => repeat.on.some((entry) => ticked.has(entry.id))),
+    [repeats, ticked],
+  );
+
+  /**
+   * Whether this is a **wide** press: one no editor built by eye.
+   *
+   * It is what the snapshot line is drawn on, and it is a shape rather than a size, because
+   * a size would be a number nobody could defend. Ticks spanning differences, or covering
+   * every page of the result, can only have come from a wide control — a select-all on a
+   * difference row, or the one beside the result's count. A handful of pages ticked inside
+   * one difference is the narrow press ticket 110 shipped, and it is left alone.
+   */
+  const wide = holding.length > 1 || (ticked.size > 0 && ticked.size === entries.length);
+
+  return (
+    <SelectionContext.Provider value={selection}>
+      {children}
+      {/* One reason, many findings (ticket 31), on the pages that were ticked (ticket 110),
+          across as many differences as they were ticked in (ticket 138). It is drawn only
+          when something is ticked: a bar carrying buttons that would write nothing is worse
+          than no bar. */}
+      {ticked.size > 0 && (
+        <BulkControl
+          entries={chosen}
+          pages={entries.length}
+          byFinding={byFinding}
+          bulk={bulk}
+          onClear={selection.clear}
+          holding={holding}
+          builtAt={wide ? builtAt : null}
+        />
+      )}
+    </SelectionContext.Provider>
+  );
 }
 
 const SelectionContext = createContext(
-  /** @type {null | { of: Function, put: Function }} */ (null),
+  /** @type {null | { ticked: Set<string>, tick: Function, clear: Function }} */ (null),
 );
 
 /**
- * One frozen empty set for every difference that is not holding the selection. A fresh
- * `new Set()` per read would be a new identity on every render, and the presses below are
- * memoised on exactly that value — every unticked difference in the list would recompute
- * its three seams each time anything on the screen moved.
+ * One frozen empty set, so an untouched list and a list an editor emptied are the same
+ * value. A fresh `new Set()` would be a new identity, and the seams below are memoised on
+ * exactly that value.
  */
 const NOTHING = new Set();
+
+/**
+ * A tick over a set of pages: ticked when every one of them is, unticked when none is,
+ * `aria-checked="mixed"` in between — and from mixed a press clears, because a control
+ * that cannot be pressed back is not a control.
+ *
+ * It is a **control before it is a summary**, and it is written once because three of them
+ * are drawn: on a difference's row, in the header of that difference's page table, and over
+ * a whole search result. Three copies of one tri-state rule would be three rules, and the
+ * one they would disagree about first is `some` — which is asked of the ids this tick is
+ * over and never of the size of the selection, because the selection spans differences and
+ * a tick in another one is not this control's *mixed*.
+ *
+ * `checked` and `indeterminate` are what Base UI draws; from the mixed state it would
+ * otherwise answer `true`, which would re-tick the same rows and leave the control stuck.
+ */
+function TriStateTick({ ids, label, title }) {
+  const selection = useContext(SelectionContext);
+
+  const all = ids.every((id) => selection.ticked.has(id));
+  const some = !all && ids.some((id) => selection.ticked.has(id));
+
+  return (
+    <Checkbox
+      checked={all}
+      indeterminate={some}
+      onCheckedChange={(ticked) => selection.tick(ids, some ? false : ticked)}
+      aria-label={label}
+      title={title}
+    />
+  );
+}
+
+/**
+ * The tick that takes the **whole result**, beside the count it is an answer to
+ * (ticket 138, ADR 0022).
+ *
+ * It reaches every page of every difference in the result, and that is the point rather than
+ * a side effect: a collapsed difference, and a difference below the render budget that is not
+ * on the screen at all, are both in the answer and both in the press.
+ *
+ * It is not in the amber strip and must not move there. That strip enumerates what narrows
+ * the list; a selection narrows nothing, and a strip enumerating *some* of what narrows is
+ * worse than none.
+ */
+function SelectResult({ repeats }) {
+  const ids = useMemo(
+    () => repeats.flatMap((repeat) => repeat.on.map((entry) => entry.id)),
+    [repeats],
+  );
+
+  return (
+    <div
+      data-slot="select-result"
+      className="flex items-center gap-2 border-b border-border px-4 py-2 text-sm"
+    >
+      <TriStateTick
+        ids={ids}
+        label={`Select all ${ids.length} pages of the ${repeats.length} differences found`}
+        title={SELECT_RESULT_TITLE}
+      />
+      {/* The sentence says what the tick reaches and states no second count: the size of the
+          result is on the line above this one already, and one figure in two wordings is two
+          figures as far as a reader is concerned. What is worth saying here is the part the
+          eye cannot check — that the rows below the budget are in it too. */}
+      <span className="text-muted-foreground">
+        Select every difference found, including the ones not drawn yet.
+      </span>
+    </div>
+  );
+}
+
+const SELECT_RESULT_TITLE =
+  'Selects every page of every difference in this result, including the ones not drawn' +
+  ' yet. A selection decides nothing.';
 
 /**
  * The same repeats, in a **class group** for each class (ticket 100).
@@ -156,7 +313,10 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
   if (repeats.length === 0) return <NoRepeats />;
 
   return (
-    <OneSelection>
+    // No `SelectResult` here — see the gate on it above, which is where that rule is
+    // written. The selection itself is the same flat one: ticks made in two groups are one
+    // selection, and one bar says so.
+    <FlatSelection repeats={repeats} byFinding={byFinding} bulk={bulk}>
       <ul>
         {groups.map((group) => (
           <ClassGroupRow
@@ -167,13 +327,12 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
             drawn={budget[group.class] ?? PAGE_SIZE}
             onDraw={(next) => setBudget({ ...budget, [group.class]: next })}
             byFinding={byFinding}
-            bulk={bulk}
             link={link}
           />
         ))}
       </ul>
       <Total repeats={repeats} />
-    </OneSelection>
+    </FlatSelection>
   );
 }
 
@@ -189,7 +348,7 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
  * makes that tail navigable; it does not get to decide the tail is not work. So no group is
  * left out for being small, and none of them hides its rows behind its count.
  */
-function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, link }) {
+function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, link }) {
   const count = group.repeats.length;
 
   return (
@@ -215,7 +374,6 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, 
           <RowList
             repeats={group.repeats}
             byFinding={byFinding}
-            bulk={bulk}
             link={link}
             drawn={drawn}
             onDraw={onDraw}
@@ -236,7 +394,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, bulk, 
  * which is the flat list a search draws. A list that is never taken off screen cannot lose
  * its paging, so there is nothing above it to hold.
  */
-function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw, searched = false }) {
+function RowList({ repeats, byFinding, link, drawn: given, onDraw, searched = false }) {
   const [held, setHeld] = useState(PAGE_SIZE);
   const drawn = given ?? held;
   const draw = (next) => (onDraw ? onDraw(next) : setHeld(next));
@@ -249,7 +407,6 @@ function RowList({ repeats, byFinding, bulk, link, drawn: given, onDraw, searche
             key={repeat.key}
             repeat={repeat}
             byFinding={byFinding}
-            bulk={bulk}
             link={link}
             searched={searched}
           />
@@ -301,39 +458,20 @@ const acrossPagesTitle = (repeat) =>
   `${repeat.occurrences} times in total, on ${repeat.on.length} ` +
   'pages. On some of those pages the difference is there more than once.';
 
-function Row({ repeat, byFinding, bulk, link, searched }) {
+function Row({ repeat, byFinding, link, searched }) {
   const [open, setOpen] = useState(false);
 
   /**
-   * The ticked pages of **this** difference, as finding ids (ticket 110).
+   * The list's selection, read for **this** difference's pages (ticket 110, ticket 138).
    *
    * A difference opens with nothing ticked: selection is something an editor does and
    * never something they arrive at, and a press pre-aimed at ten pages is the all-or-
    * nothing control this replaces.
    *
-   * The set is the list's since round three and not this row's — there is one floating bar
-   * and so there is one selection. A row that is not holding it reads an empty set, which
-   * is exactly what an unticked difference had before.
+   * The set is one flat set over the whole list since ticket 138, so ticks made here and
+   * ticks made in another difference coexist. This row does not own them and cannot put
+   * them down, and it does not broker them either: each tick reads the selection itself.
    */
-  const selection = useContext(SelectionContext);
-  const selected = selection.of(repeat.key);
-  const put = (ids) => selection.put(repeat.key, ids);
-
-  const tick = (id, on) => {
-    const next = new Set(selected);
-    if (on) next.add(id);
-    else next.delete(id);
-    put(next);
-  };
-
-  /**
-   * All of them or none of them. Round one ticked only the pages a dismissal could act on
-   * and left a decided one out — while that row stayed tickable by hand, so one control
-   * refused what the other allowed. The ticks say *these pages*; each press then filters
-   * to what it can act on and says what it did, which is the only place that rule belongs.
-   */
-  const tickAll = (on) => put(on ? new Set(repeat.on.map((entry) => entry.id)) : new Set());
-
   // The same rules the page bar obeys, over this difference's findings: nothing leaves
   // the denominator, a dismissal enters the numerator, and a contradicted claim reads
   // as open.
@@ -350,92 +488,67 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
 
   return (
     <li className="border-b border-border last:border-0">
-      {/* The trigger is the whole row, as it was before ticket 110 and is again since its
-          round two. Round one put the select-all here, which meant a checkbox inside a
-          `CollapsibleTrigger` — a button inside a button, which is neither valid nor
-          clickable — and it let an editor arm a press over pages they had never seen. The
-          tick moved to the header of the list it selects, and the trap moved with it.
+      {/* The tick is **beside** the trigger and never inside it (ticket 138). Round one of
+          ticket 110 put a checkbox in the `CollapsibleTrigger` — a button inside a button,
+          which is neither valid nor clickable — and the fix then was to move the tick into
+          the table it selects. That left a collapsed difference untickable, which is 259
+          expansions for one sentence. So the tick is back on the row and the row is two
+          siblings instead: a checkbox, and a trigger that is everything after it.
+
+          Ticking it does **not** open the difference. The page table inside one is
+          unbudgeted, and 259 expanded differences is thousands of rows.
 
           `Collapsible` is what writes the `aria-expanded` this markup used to carry by
-          hand — the state below decides, and the library draws it. */}
-      <Collapsible
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          // Closing the difference puts the selection down: it is a question about one
-          // press and not a state of the queue. `put` is keyed, so a difference closing
-          // over here cannot clear ticks made over there.
-          if (!next) put(new Set());
-        }}
-      >
-        <CollapsibleTrigger className="flex w-full flex-wrap items-start gap-2 px-4 py-2 text-left hover:bg-muted">
+          hand — the state below decides, and the library draws it. Closing a difference no
+          longer puts its ticks down: the selection is the list's, a collapsed difference can
+          be ticked whole from this very checkbox, and ticks that vanished on a close would
+          be ticks an editor could not keep. */}
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <div className="flex w-full items-start gap-2 px-4 py-2 hover:bg-muted">
           <span className="mt-0.5 shrink-0">
-            <ClassPill class={repeat.class} />
-            <Detail detail={repeat.detail} />
-            <MatchedFields fields={repeat.fields} />
+            <SelectAll repeat={repeat} />
           </span>
 
-          <span className="min-w-48 flex-1 break-words">
-            {repeat.prod ?? '—'}
-            <span className="mx-1 text-muted-foreground">→</span>
-            {repeat.new ?? '—'}
-          </span>
+          <CollapsibleTrigger className="flex flex-1 flex-wrap items-start gap-2 text-left">
+            <span className="mt-0.5 shrink-0">
+              <ClassPill class={repeat.class} />
+              <Detail detail={repeat.detail} />
+              <MatchedFields fields={repeat.fields} />
+            </span>
 
-          <span className="shrink-0 text-right text-xs">
-            {/* The page count is the size of the difference. There is no separate
+            <span className="min-w-48 flex-1 break-words">
+              {repeat.prod ?? '—'}
+              <span className="mx-1 text-muted-foreground">→</span>
+              {repeat.new ?? '—'}
+            </span>
+
+            <span className="shrink-0 text-right text-xs">
+              {/* The page count is the size of the difference. There is no separate
                 finding count beside it: the page is inside the finding id, so one page
                 carries one finding of this difference and the two numbers are one
                 number. `occurrences` is the number that genuinely differs — the same
                 difference several times on a single page — and it is named apart. */}
-            <span className="font-medium tabular-nums">on {repeat.on.length} pages</span>
-            {/* Drawn only when it exceeds the page count, so the mark appears exactly
+              <span className="font-medium tabular-nums">on {repeat.on.length} pages</span>
+              {/* Drawn only when it exceeds the page count, so the mark appears exactly
                 when it says something the page count does not. */}
-            {repeat.occurrences > repeat.on.length && (
-              <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
-            )}
-            <span
-              data-wears={closedTone ? 'ink' : null}
-              data-tone={closedTone}
-              className={cn('ml-2 tabular-nums', !closedTone && 'text-muted-foreground')}
-            >
-              {bar.closed} of {bar.denominator} closed
+              {repeat.occurrences > repeat.on.length && (
+                <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
+              )}
+              <span
+                data-wears={closedTone ? 'ink' : null}
+                data-tone={closedTone}
+                className={cn('ml-2 tabular-nums', !closedTone && 'text-muted-foreground')}
+              >
+                {bar.closed} of {bar.denominator} closed
+              </span>
             </span>
-          </span>
-        </CollapsibleTrigger>
+          </CollapsibleTrigger>
+        </div>
 
         <CollapsibleContent>
-          <PageTable
-            repeat={repeat}
-            byFinding={byFinding}
-            link={link}
-            selected={selected}
-            onTick={tick}
-            onTickAll={tickAll}
-            searched={searched}
-          />
+          <PageTable repeat={repeat} byFinding={byFinding} link={link} searched={searched} />
         </CollapsibleContent>
       </Collapsible>
-
-      {/* One reason, many findings (ticket 31), on the pages that were ticked (ticket
-          110). It is drawn **only** when something is ticked: an empty selection has
-          nothing for an action to act on, and a bar carrying buttons that would write
-          nothing is worse than no bar.
-
-          It **floats** since round three — fixed to the bottom of the screen, drawn over
-          the queue rather than in it, so the list it selects neither moves under the
-          editor nor scrolls the presses away. It is still rendered here, by the difference
-          that owns the selection, because that is what makes the bar's words its own; the
-          selection is the list's, so only one difference can be holding it. Closing the
-          difference clears it, so the bar cannot outlive the list it belongs to. */}
-      {selected.size > 0 && (
-        <BulkControl
-          repeat={repeat}
-          byFinding={byFinding}
-          bulk={bulk}
-          selected={selected}
-          onClear={() => put(new Set())}
-        />
-      )}
     </li>
   );
 }
@@ -443,41 +556,27 @@ function Row({ repeat, byFinding, bulk, link, searched }) {
 /**
  * The tick that belongs to the difference itself (ticket 110).
  *
- * It is **tri-state**, and it is a control before it is a summary: ticked when all its
- * pages are, unticked when none are, indeterminate in between — and the same click that
- * reports also changes. `aria-checked="mixed"` is what a screen reader is told, which is
- * the whole of the third state's meaning.
- *
  * It ticks **every** page of the difference, decided or not. Round one ticked only the
  * pages a dismissal was offered on, which refused by select-all what the row-level tick
  * allowed by hand — and a decided page is not a page with nothing left to do: since round
  * two an undo is live there.
  *
+ * It is drawn **twice** and is one control: on the difference's own row, where a collapsed
+ * difference is ticked whole without being opened (ticket 138), and in the header of the
+ * page table, where an open one is. Two copies of a tri-state rule would be two rules, so
+ * there is one component and it reads the selection itself.
+ *
  * Its label says **select** and never *closed*. The ledger already spends a checkbox on
  * the tri-state *Fixed* control, which genuinely is a decision (tickets 36 and 48), so
  * two checkboxes with two meanings share this screen and each has to say which it is.
  */
-function SelectAll({ repeat, selected, onTickAll }) {
-  // Over **every** page of the difference and not over the ones it ticks: it says
-  // *ticked* only when no row of the list is left out, because a reader who is told
-  // *ticked* while a row is unticked has been told the one thing this control exists to
-  // get right.
-  const all = repeat.on.every((entry) => selected.has(entry.id));
-  const some = selected.size > 0 && !all;
-
-  return (
-    <Checkbox
-      checked={all}
-      indeterminate={some}
-      // From the mixed state a press **clears**. Base UI would otherwise answer `true`
-      // there, which would re-tick the same rows and leave the control stuck at mixed —
-      // a control that cannot be pressed back is not a control.
-      onCheckedChange={(ticked) => onTickAll(some ? false : ticked)}
-      aria-label={`Select all ${repeat.on.length} pages of this difference`}
-      title="Selects each page of this difference. A selection decides nothing."
-    />
-  );
-}
+const SelectAll = ({ repeat }) => (
+  <TriStateTick
+    ids={repeat.on.map((entry) => entry.id)}
+    label={`Select all ${repeat.on.length} pages of this difference`}
+    title="Selects each page of this difference. A selection decides nothing."
+  />
+);
 
 /**
  * What one tick announces. It names the store only where the difference crosses a block,
@@ -510,7 +609,9 @@ const selectLabel = (repeat, entry) =>
  * which group was open — that is session state by the rule `groupRepeatsByClass()` states,
  * and a pill that is on re-opens its own group anyway.
  */
-function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searched }) {
+function PageTable({ repeat, byFinding, link, searched }) {
+  const selection = useContext(SelectionContext);
+
   return (
     <div className="border-t border-border bg-muted px-4 py-2 text-sm">
       <Table>
@@ -530,7 +631,7 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
                 cell holding nothing but a checkbox announces nothing, and *Select* beside
                 the tick would be a word repeated in every label under it. */}
             <TableHead className="w-8">
-              <SelectAll repeat={repeat} selected={selected} onTickAll={onTickAll} />
+              <SelectAll repeat={repeat} />
               <span className="sr-only">Select</span>
             </TableHead>
             <TableHead>Page</TableHead>
@@ -539,11 +640,14 @@ function PageTable({ repeat, byFinding, link, selected, onTick, onTickAll, searc
         </TableHeader>
         <TableBody>
           {repeat.on.map((entry) => (
-            <TableRow key={entry.id} data-state={selected.has(entry.id) ? 'selected' : undefined}>
+            <TableRow
+              key={entry.id}
+              data-state={selection.ticked.has(entry.id) ? 'selected' : undefined}
+            >
               <TableCell>
                 <Checkbox
-                  checked={selected.has(entry.id)}
-                  onCheckedChange={(ticked) => onTick(entry.id, ticked)}
+                  checked={selection.ticked.has(entry.id)}
+                  onCheckedChange={(ticked) => selection.tick([entry.id], ticked)}
                   aria-label={selectLabel(repeat, entry)}
                 />
               </TableCell>

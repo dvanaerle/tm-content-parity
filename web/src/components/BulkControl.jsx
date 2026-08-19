@@ -4,6 +4,7 @@ import { Input } from './ui/input.jsx';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
 import { crossesBlock } from '../lib/view.mjs';
 import { classInfo } from '../lib/classes.mjs';
+import { day } from '../lib/dates.mjs';
 import { cn } from '../lib/utils.js';
 
 /**
@@ -27,7 +28,14 @@ import { cn } from '../lib/utils.js';
  * flow under the difference, which moved the whole list down the moment a tick was made and
  * took the presses off screen as soon as the editor scrolled into a long page list. There
  * is one of it, because there is one place for it to be — `Repeats.jsx` holds the selection
- * for the whole list, and ticking in a second difference takes it.
+ * for the whole list and renders this beside it.
+ *
+ * **It is one bar over as many differences as were ticked** (ticket 138). The selection was
+ * one difference's until then, so this was rendered by that difference and said its words;
+ * now it is a flat set over the result, so it is rendered once by the list and says the
+ * difference's words only while the ticks are all in one. There is no second surface that
+ * could claim the same ticks — a per-difference bar and a result-wide bar would be two
+ * counts of one selection, and the editor would have to work out which press was theirs.
  *
  * **Two presses**, and the second is the way back: `OverrideControl.jsx` has offered
  * *Clear* on one decided finding since ticket 29, and this offered nothing at all
@@ -45,8 +53,30 @@ import { cn } from '../lib/utils.js';
  * counts, the sentence saying why the buttons are absent, and the one line saying why the
  * dismissal is spent where every page is already decided. The corpus statistics that
  * argued for the design went with the rest of the prose.
+ *
+ * @param {object} props
+ * @param {import('../lib/view.mjs').RepeatEntry[]} props.entries  The ticked pages, which
+ *   are the pages both presses are aimed at.
+ * @param {number} props.pages  Every page under the selection, which is the denominator.
+ * @param {import('../lib/view.mjs').Repeat[]} props.holding  The differences the ticks are
+ *   in. One of them is what lets this bar say that difference's own words.
+ * @param {string | null} props.builtAt  The snapshot the ticks were made over, where that is
+ *   worth saying. The caller decides that, because it is the caller that knows how the
+ *   selection was made.
  */
-export default function BulkControl({ repeat, byFinding, bulk, selected, onClear }) {
+export default function BulkControl({
+  entries,
+  pages,
+  byFinding,
+  bulk,
+  onClear,
+  holding,
+  builtAt = null,
+}) {
+  // The one difference the ticks are in, where there is one. `null` when they span several,
+  // which is what turns every sentence on this bar from one about a difference into one
+  // about the result.
+  const repeat = holding.length === 1 ? holding[0] : null;
   /** @type {['dismiss' | null, Function]} */
   const [asking, setAsking] = useState(null);
   const [note, setNote] = useState('');
@@ -56,8 +86,8 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
   );
 
   const dismissal = useMemo(
-    () => bulkDismissal({ repeat, byFinding, note, selected }),
-    [repeat, byFinding, note, selected],
+    () => bulkDismissal({ entries, byFinding, note }),
+    [entries, byFinding, note],
   );
 
   /**
@@ -65,10 +95,7 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
    * carries no reason, so there is no note to ask for and no form to open. It mirrors the
    * single control, which has taken one decision back with one press since ticket 29.
    */
-  const cleared = useMemo(
-    () => bulkClear({ repeat, byFinding, selected }),
-    [repeat, byFinding, selected],
-  );
+  const cleared = useMemo(() => bulkClear({ entries, byFinding }), [entries, byFinding]);
 
   const close = () => {
     setAsking(null);
@@ -113,7 +140,12 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
           `role="toolbar"`: that role promises arrow-key navigation between its controls,
           and these are ordinary tab stops in the order the selection was made. */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <Selection repeat={repeat} count={selected.size} />
+        <Selection
+          repeat={repeat}
+          differences={holding.length}
+          pages={pages}
+          count={entries.length}
+        />
 
         <div className="flex flex-wrap items-center gap-1">
           {/* Two buttons: the judgement and the way back out of it. They are offered
@@ -173,6 +205,8 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
         </Button>
       </div>
 
+      {builtAt && <OverTheSnapshot builtAt={builtAt} />}
+
       {report && <Report {...report} />}
 
       {/* The clearing's size and its stores, beneath the press that has no form to say them
@@ -180,7 +214,7 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
           dismissal's form open, `Covers` is saying the same thing about the other press and
           two sentences naming two stores would read as two decisions crossing. */}
       {bulk?.canWrite && asking === null && cleared.covers > 0 && crossesBlock(cleared) && (
-        <ClearCrossesBlock cleared={cleared} />
+        <ClearCrossesBlock cleared={cleared} oneDifference={Boolean(repeat)} />
       )}
 
       {bulk?.canWrite && asking === null && dismissal.covers === 0 && <NothingToDismiss />}
@@ -193,7 +227,7 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
             press(dismissal.events);
           }}
         >
-          <Covers dismissal={dismissal} />
+          <Covers dismissal={dismissal} oneDifference={Boolean(repeat)} />
           <div className="flex flex-wrap items-center gap-1">
             <Input
               autoFocus
@@ -230,14 +264,18 @@ export default function BulkControl({ repeat, byFinding, bulk, selected, onClear
 }
 
 /**
- * What is ticked, and **which difference** it is ticked on (ticket 110).
+ * What is ticked, and **what it is ticked on** (ticket 110, ticket 138).
  *
- * The second half is not decoration, and it matters more now that the bar floats: the
- * difference it belongs to can be scrolled off the screen entirely, and *2 selected*
- * pinned to the bottom of a queue of four thousand is a number with no subject. So it
- * repeats the words of its own difference, in one line, the way the row states them.
+ * The second half is not decoration, and it matters more now that the bar floats: what the
+ * ticks are in can be scrolled off the screen entirely, and *2 selected* pinned to the
+ * bottom of a queue of four thousand is a number with no subject.
+ *
+ * So there are two sentences and the selection picks which. Ticks inside one difference
+ * name that difference, in the words the row states them in. Ticks spanning several name
+ * the result — how many differences, out of how many pages — because there is no second
+ * text to print and printing the first one's would say the press is narrower than it is.
  */
-const Selection = ({ repeat, count }) => (
+const Selection = ({ repeat, differences, pages, count }) => (
   <p className="flex items-center gap-2 text-xs text-muted-foreground">
     {/* The count as a mark rather than as the first word of a sentence: the bar floats
         over the page now, and what it is *about* has to be readable before the sentence
@@ -249,15 +287,70 @@ const Selection = ({ repeat, count }) => (
     {/* An explicit space, so the count and the sentence are one string when read aloud —
         *2of 3 pages* is what adjacent boxes concatenate to. A whitespace-only run is
         not rendered as a flex item, so it costs nothing beside the gap. */}{' '}
-    <span>
-      <strong className="font-medium text-foreground tabular-nums">
-        of {repeat.on.length} {repeat.on.length === 1 ? 'page' : 'pages'}
-      </strong>{' '}
-      selected on <ClassWord class={repeat.class} />{' '}
-      <span className="text-foreground">
-        {repeat.prod ?? '—'} → {repeat.new ?? '—'}
-      </span>
+    {repeat ? (
+      <OnOneDifference repeat={repeat} />
+    ) : (
+      <OverTheResult differences={differences} pages={pages} />
+    )}
+  </p>
+);
+
+/** The ticks of one difference, in the words its own row states. */
+const OnOneDifference = ({ repeat }) => (
+  <span>
+    <strong className="font-medium text-foreground tabular-nums">
+      of {repeat.on.length} {repeat.on.length === 1 ? 'page' : 'pages'}
+    </strong>{' '}
+    selected on <ClassWord class={repeat.class} />{' '}
+    <span className="text-foreground">
+      {repeat.prod ?? '—'} → {repeat.new ?? '—'}
     </span>
+  </span>
+);
+
+/**
+ * The ticks of a selection that spans differences (ticket 138).
+ *
+ * The denominator is every page under the selection and not the ticked differences' pages:
+ * *12 of 472* answers *how much of what I searched for*, which is the question a wide
+ * selection is a step in. The count of differences is beside it because it is the number the
+ * editor chose in — they ticked rows, and the pages followed.
+ */
+const OverTheResult = ({ differences, pages }) => (
+  <span>
+    <strong className="font-medium text-foreground tabular-nums">
+      of {pages} {pages === 1 ? 'page' : 'pages'}
+    </strong>{' '}
+    selected over{' '}
+    <strong className="font-medium text-foreground tabular-nums">
+      {differences} {differences === 1 ? 'difference' : 'differences'}
+    </strong>
+    .
+  </span>
+);
+
+/**
+ * Which snapshot the ticks were made over, said once above a wide press (ticket 138).
+ *
+ * The selection is built over the file the last build wrote. Eligibility — what each press
+ * may act on — and the *closed* count beside every row are read from the live log. A finding
+ * a colleague fixed since that build is still tickable here; one created since is not on this
+ * screen at all.
+ *
+ * That straddle is not new and it is not a bug: it is what a build-time snapshot and an
+ * append-only log are. What is new is the size. At four rows nobody notices; at 472 it is
+ * the one place staleness can do damage, so the date is stated before the press rather than
+ * left to be worked out from the line above the list.
+ *
+ * **Whether it is worth saying is the caller's call** and not this bar's: a `builtAt` arrives
+ * only where the press is one no editor built by eye. So there is no size test here and no
+ * threshold to defend.
+ */
+const OverTheSnapshot = ({ builtAt }) => (
+  <p className="text-xs text-muted-foreground">
+    These ticks are over the snapshot of{' '}
+    <strong className="font-medium text-foreground">{day(builtAt)}</strong>. What each press may act
+    on is read from the log as it is now.
   </p>
 );
 
@@ -304,7 +397,7 @@ const NothingToDismiss = () => (
  * the one judgement does — and if it is ever wanted back it is a sentence of its own here,
  * not a resurrection of the choosing.
  */
-function Covers({ dismissal }) {
+function Covers({ dismissal, oneDifference }) {
   // The total is the seam's own two numbers added, and never the repeat's size or a second
   // reading of the selection: the sentence has to count the same pages the events do
   // (ticket 110), and one arithmetic in one place is how it cannot drift.
@@ -318,7 +411,9 @@ function Covers({ dismissal }) {
       {dismissal.decided > 0
         ? ` of the ${pages}: the other ${dismissal.decided} ${dismissal.decided === 1 ? 'is' : 'are'} decided already.`
         : '.'}
-      {crossesBlock(dismissal) && <InWhichStores stores={dismissal.stores} />}
+      {crossesBlock(dismissal) && (
+        <InWhichStores stores={dismissal.stores} oneDifference={oneDifference} />
+      )}
     </p>
   );
 }
@@ -330,12 +425,20 @@ function Covers({ dismissal }) {
  * written once for the two presses that say it. It used to exist twice in two wordings: this
  * one, and a shorter one inside the clearing's `title`. Two wordings of one fact is two facts
  * as far as an editor reading them is concerned.
+ *
+ * The clause explaining **why** is drawn only over one difference (ticket 138). *The same
+ * words are one decision* is what makes a block-spanning row one row: `nl/afhalen` and
+ * `be/afhalen` carry the same string. Over a selection spanning differences the strings are
+ * not the same and that sentence would be a false reason for a true fact — the press does
+ * reach two stores, and it reaches them because the pages ticked are on both.
  */
-const InWhichStores = ({ stores }) => (
+const InWhichStores = ({ stores, oneDifference }) => (
   <>
     {' '}
-    Written in <strong className="font-medium text-foreground">{stores.join(' and ')}</strong>:
-    these two stores share a language, so the same words are one decision.
+    Written in <strong className="font-medium text-foreground">{stores.join(' and ')}</strong>
+    {oneDifference
+      ? ': these two stores share a language, so the same words are one decision.'
+      : '.'}
   </>
 );
 
@@ -351,14 +454,14 @@ const InWhichStores = ({ stores }) => (
  * under every clearing on `de` and `uk`: the interface is quiet by default (ADR 0019), and
  * this sentence earns its place by saying that a decision is about to leave the store.
  */
-const ClearCrossesBlock = ({ cleared }) => (
+const ClearCrossesBlock = ({ cleared, oneDifference }) => (
   <p className="text-xs text-muted-foreground">
     Clearing on{' '}
     <strong className="font-medium text-foreground tabular-nums">
       {cleared.covers} {cleared.covers === 1 ? 'page' : 'pages'}
     </strong>
     .
-    <InWhichStores stores={cleared.stores} />
+    <InWhichStores stores={cleared.stores} oneDifference={oneDifference} />
   </p>
 );
 
