@@ -393,6 +393,139 @@ describe('links', () => {
   });
 });
 
+describe('opening links', () => {
+  // Production's gallery module writes both anchors for every photo: one to the
+  // image file, one to a page that displays it. The new site writes the first only.
+  const PHOTO_CARD = `
+    <div class="gallery-item">
+      <a href="/media/lof/gallery/album/c/a/carport-modern_1.jpg"><img
+        src="/media/lof/gallery/album/cache/300x200/c/a/carport-modern_1.jpg"
+        alt="Carport modern"></a>
+      <a href="/gallery/aluminium-carports/carport-met-plat-dak">Carport met plat dak</a>
+    </div>`;
+
+  it('makes no link record for either anchor of a production photo card', () => {
+    const extract = extractPage(page(PHOTO_CARD), CONTEXT);
+    expect(extract.links).toEqual([]);
+    expect(extract.images.map((image) => image.key)).toEqual(['carport-modern_1.jpg']);
+  });
+
+  it('carries the image anchor\u2019s target onto the image record as the full-size source', () => {
+    const extract = extractPage(page(PHOTO_CARD), CONTEXT);
+    expect(extract.images[0]).toMatchObject({
+      src: '/media/lof/gallery/album/cache/300x200/c/a/carport-modern_1.jpg',
+      fullSrc: '/media/lof/gallery/album/c/a/carport-modern_1.jpg',
+    });
+  });
+
+  it('makes no link record for the new site\u2019s lightbox wrapper', () => {
+    const extract = extractPage(
+      page(`<a href="/media/wysiwyg/General/special/album/c/a/carport-modern_1.jpg"
+        data-fancybox><img
+        src="/media/wysiwyg/General/special/album/c/a/carport-modern_1.jpg"
+        alt="Carport modern"></a>`),
+      CONTEXT,
+    );
+    expect(extract.links).toEqual([]);
+  });
+
+  it('is about the markup and not the page, so a showroom photo wrapper is quiet too', () => {
+    const extract = extractPage(
+      page(`<h2>Showroom Eindhoven</h2>
+      <a href="/media/wysiwyg/showroom/eindhoven-hal.jpg"><img
+        src="/media/wysiwyg/showroom/eindhoven-hal-800x600.jpg" alt="Hal"></a>`),
+      CONTEXT,
+    );
+    expect(extract.links).toEqual([]);
+    expect(extract.images.map((image) => image.fullSrc)).toEqual([
+      '/media/wysiwyg/showroom/eindhoven-hal.jpg',
+    ]);
+  });
+
+  it('leaves an album-page link alone in each localised form', () => {
+    const extract = extractPage(
+      page(`
+      <a href="/fotogalerij/carports">Carports</a>
+      <a href="/fotogalerie/carports">Carports</a>
+      <a href="/galerie/carports">Carports</a>
+      <a href="/gallery/carports">Carports</a>
+      <a href="/photo-gallery/carports">Carports</a>`),
+      CONTEXT,
+    );
+    expect(extract.links.map((link) => link.href)).toEqual([
+      '/fotogalerij/carports',
+      '/fotogalerie/carports',
+      '/galerie/carports',
+      '/gallery/carports',
+      '/photo-gallery/carports',
+    ]);
+  });
+
+  it('leaves a brochure link alone, because a document is not a photo', () => {
+    const extract = extractPage(
+      page('<a href="/media/brochure-carport.pdf"></a><p>Brochure</p>'),
+      CONTEXT,
+    );
+    expect(extract.links.map((link) => link.href)).toEqual(['/media/brochure-carport.pdf']);
+  });
+
+  it('leaves a captioned link to a photo alone, because an editor wrote the caption', () => {
+    const extract = extractPage(
+      page(`<img src="/media/lof/gallery/album/c/a/carport-modern_1.jpg" alt="Carport modern">
+      <a href="/media/lof/gallery/album/c/a/carport-modern_1.jpg">Bekijk op ware grootte</a>`),
+      CONTEXT,
+    );
+    expect(extract.links.map((link) => link.href)).toEqual([
+      '/media/lof/gallery/album/c/a/carport-modern_1.jpg',
+    ]);
+    expect(extract.images[0].fullSrc).toBeNull();
+  });
+
+  it('leaves an empty anchor to a photo the page does not show alone', () => {
+    const extract = extractPage(
+      page('<p>Fotoboek</p><a href="/media/lof/gallery/album/c/a/elders.jpg"></a>'),
+      CONTEXT,
+    );
+    expect(extract.links.map((link) => link.href)).toEqual([
+      '/media/lof/gallery/album/c/a/elders.jpg',
+    ]);
+  });
+
+  it('catches a be_fr detail route and not an fr album link of the same segment count', () => {
+    const extract = extractPage(
+      page(`
+      <a href="/fr/gallery/carports-aluminium/carport-toit-plat">Carport toit plat</a>
+      <a href="/galerie/carports/aluminium/toit-plat">Toit plat</a>`),
+      CONTEXT,
+    );
+    expect(extract.links.map((link) => link.href)).toEqual([
+      '/galerie/carports/aluminium/toit-plat',
+    ]);
+  });
+
+  // The rejected basename-only rule destroyed 28 of these, and it destroyed them in
+  // exactly this shape: the target's basename matches a photo on the same page, and
+  // the photo sits right beside the link, because that is how the page is built.
+  // Nothing here is a photo, so nothing here may be quiet.
+  it('leaves the editorial links that a basename rule destroyed alone', () => {
+    const extract = extractPage(
+      page(`
+      <p>Meer info over de <a href="/laagste-prijs-garantie">laagste prijs garantie</a></p>
+      <img src="/media/wysiwyg/laagste-prijs-garantie.jpg" alt="Laagste prijs garantie">
+      <img src="/media/wysiwyg/showroom-eindhoven.jpg" alt="Showroom Eindhoven">
+      <a href="/showroom-eindhoven">Showroom Eindhoven</a>
+      <img src="/media/wysiwyg/lowest-price-guarantee.png" alt="Lowest price guarantee">
+      <a href="/lowest-price-guarantee">here</a>`),
+      CONTEXT,
+    );
+    expect(extract.links.map((link) => link.href)).toEqual([
+      '/laagste-prijs-garantie',
+      '/showroom-eindhoven',
+      '/lowest-price-guarantee',
+    ]);
+  });
+});
+
 describe('one document-order walk', () => {
   it('puts text, images and links on one shared counter', () => {
     const extract = extractPage(
@@ -503,7 +636,7 @@ describe('images', () => {
       CONTEXT,
     );
     expect(extract.images).toEqual([
-      { index: 0, key: 'veranda.jpg', src: '/media/Veranda.jpg', alt: 'Veranda' },
+      { index: 0, key: 'veranda.jpg', src: '/media/Veranda.jpg', alt: 'Veranda', fullSrc: null },
     ]);
   });
 

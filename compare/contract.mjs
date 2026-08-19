@@ -87,6 +87,12 @@ export {
  * @property {string} src
  * @property {string | null} alt    `null` if the attribute is absent. An empty alt is
  *                                  compared for parity only.
+ * @property {string | null} fullSrc The target of the opening link that wraps this image,
+ *                                  as the page sends it. Production's `src` is a resized
+ *                                  variant and that anchor is the only place the original
+ *                                  url appears; the anchor makes no link record, so the
+ *                                  url is carried here or lost. `null` when no opening
+ *                                  link wraps the image.
  */
 
 /**

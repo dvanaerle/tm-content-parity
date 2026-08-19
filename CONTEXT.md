@@ -97,6 +97,13 @@ shouted, and a column heading is the one place capitals earn their keep.
 - **Non-editorial region** — a region inside the content boundary whose text the
   catalogue or an extension makes. Nobody writes it, so a difference in it is not
   editor work. A **product grid** is one.
+- **Opening link** — an `<a>` whose target is a photo the same page shows. The
+  gallery module writes two per photo, one to the image file and one to a page that
+  displays it. Nobody edits either. The editorial fact is which photo is on the
+  page, and the images check owns it, so an opening link never becomes a link
+  record. It is the element-level sibling of a **non-editorial region**: the same
+  idea, one `<a>` at a time, and nothing is removed from the DOM. See
+  `docs/adr/0026-an-opening-link-is-not-a-link.md`.
 - **Legacy-only region** — a region inside the content boundary that an editor
   wrote and that the new site will not get. It is a scope decision, in the same
   manner as a legacy-only page. The promo banner is one.

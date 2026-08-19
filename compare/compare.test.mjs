@@ -9,6 +9,7 @@ import { lcsPairs, mayPair, maskNumbers, similarity, tier2 } from './match.mjs';
 import { metaRows } from './meta.mjs';
 import { classifyPair, diffRows, textFindings } from './text.mjs';
 import { diffCost, isUncompared, spansFor, wordDiff } from './worddiff.mjs';
+import { extractPage } from '../crawl/extract.mjs';
 
 let seq = 0;
 
@@ -2570,5 +2571,48 @@ describe('newSitePathsFor', () => {
       ],
     };
     expect(newSitePathsFor(seeds, 'nl')).toEqual(new Set(['/garantie']));
+  });
+});
+
+describe('opening links and the images check', () => {
+  // The one claim extraction cannot make about itself: the anchors that stop
+  // becoming link records take no photo with them.
+  const gallery = (cards) =>
+    `<!doctype html><html><head><title>Fotogalerij</title></head>
+    <body class="cms-page-view"><main><h1>Fotogalerij</h1>${cards}</main></body></html>`;
+
+  const card = (base, path) =>
+    `<a href="${path}/${base}"><img src="${path}/cache/300x200/${base}" alt="${base}"></a>
+     <a href="/gallery/carports/${base.replace('.jpg', '')}">${base}</a>`;
+
+  const PROD = '/media/lof/gallery/album/c/a';
+  const NEXT = '/media/wysiwyg/General/special/album/c/a';
+
+  it('still reports a photo production shows and the new site has lost', () => {
+    const production = extractPage(
+      gallery(card('carport-a_1.jpg', PROD) + card('carport-b_2.jpg', PROD)),
+      {
+        store: 'nl',
+        page: 'fotogalerij',
+        side: 'production',
+        url: 'https://www.tuinmaximaal.nl/fotogalerij',
+        onWarn: () => {},
+      },
+    );
+    const next = extractPage(gallery(card('carport-a_1.jpg', NEXT)), {
+      store: 'nl',
+      page: 'fotogalerij',
+      side: 'new',
+      url: 'https://m2stagingnl.intern.systems/fotogalerij',
+      onWarn: () => {},
+    });
+
+    // The premise: every anchor on both galleries is an opening link and is gone.
+    expect([production.links, next.links]).toEqual([[], []]);
+
+    const findings = collect((collector) => compareImages(production, next, collector));
+    expect(findings.map((finding) => [finding.class, finding.prod])).toEqual([
+      ['image-missing', 'carport-b_2.jpg'],
+    ]);
   });
 });

@@ -89,6 +89,9 @@ const BODY_CLASS_TYPE = [
 /** Ticket 05: no other shapes exist on the site. */
 const NON_NAVIGATIONAL = /^(#|mailto:|tel:)/i;
 
+/** Rule A asks for an image file, so a brochure or a spec sheet is never one. */
+const IMAGE_FILE = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
+
 // node-html-parser concatenates child text with no separator, which glues a
 // button label onto the text above it. structuredText keeps the line breaks.
 const textOf = (node) => collapse((node.structuredText ?? node.text ?? '').replaceAll('\n', ' '));
@@ -308,6 +311,18 @@ function walk(scope, pageUrl, hosts) {
   const byKey = new Map();
   let imagesWithoutSrc = 0;
 
+  // An image anchor asks whether the page shows the photo it opens, and it comes
+  // first in document order because it wraps the `<img>`. So the photos are known
+  // before the walk starts, not as it goes.
+  const shownKeys = new Set(
+    scope
+      .querySelectorAll('img')
+      .map((img) => imageRecord(img)?.key)
+      .filter((key) => key != null),
+  );
+  /** The full-size url of each photo, taken off the anchor that is about to vanish. */
+  const fullSizeByKey = new Map();
+
   /** Nodes a unit above them already spoke for. Ticket 67 widened this past headings. */
   const swallowed = new Set();
   let position = 0;
@@ -338,7 +353,16 @@ function walk(scope, pageUrl, hosts) {
     // the swallow rule is about what a unit **says**, and ticket 05 counts
     // every anchor on the page. So a folded anchor makes no unit and still takes
     // its own position for its link record.
-    const link = tag === 'a' ? linkRecord(node, pageUrl, hosts) : null;
+    let link = tag === 'a' ? linkRecord(node, pageUrl, hosts) : null;
+    if (link) {
+      // An opening link stops here: it never becomes a record, so it never reaches a
+      // class. Production's `<img src>` is a resized variant and this anchor is the
+      // only place the original url appears, so the url is taken before it goes.
+      const url = new URL(link.url);
+      const opens = imageAnchorOpens(url, link.text, shownKeys);
+      if (opens) fullSizeByKey.set(opens, link.href);
+      if (opens || isPhotoDetailRoute(url)) link = null;
+    }
     if (!unit && !link) continue;
 
     if (unit) elements.push({ index: position, ...unit });
@@ -346,7 +370,14 @@ function walk(scope, pageUrl, hosts) {
     position += 1;
   }
 
-  return { elements, links, images: [...byKey.values()], imagesWithoutSrc };
+  // The full-size url is added here and not in the loop, because an opening link
+  // can sit either side of the `<img>` it opens.
+  const images = [...byKey.values()].map((image) => ({
+    ...image,
+    fullSrc: fullSizeByKey.get(image.key) ?? null,
+  }));
+
+  return { elements, links, images, imagesWithoutSrc };
 }
 
 /**
@@ -430,6 +461,47 @@ function isWhollyOneCta(node, tag, norm) {
   if (tag === 'a' || tag === 'button') return true;
   const inner = node.querySelectorAll(FOLDABLE);
   return inner.length === 1 && tier1(textOf(inner[0])) === norm;
+}
+
+/**
+ * The **image anchor**, the first of the two opening-link predicates: empty anchor
+ * text, and a target that is an image file whose basename matches an image the page
+ * shows. It answers with that image's key, because the anchor is the only place the
+ * full-size url appears.
+ *
+ * This is a construct and not a place. It catches the lightbox wrappers on the
+ * showroom and blog pages too, and it should.
+ *
+ * @param {URL} url
+ * @param {string} text  The anchor's tier-1 text.
+ * @param {Set<string>} shownKeys  Image keys the page shows.
+ * @returns {string | null}  The key of the image this anchor opens.
+ */
+function imageAnchorOpens(url, text, shownKeys) {
+  if (text || !IMAGE_FILE.test(url.pathname)) return null;
+  const key = imageKey(url.pathname);
+  return shownKeys.has(key) ? key : null;
+}
+
+/**
+ * The **photo-detail route**, the second predicate: the path by segment index and
+ * count. Deliberately not localised — the detail route is the literal English
+ * `gallery` in all six stores, and the album pages are the localised ones. `be_fr`
+ * carries a `/fr/` prefix and the `fr` store does not, which is the only reason
+ * there are two shapes.
+ *
+ * The index and the count are both load-bearing: the image hrefs carry `gallery` at
+ * segment index 2, so a path that merely *contains* the token catches them. Anchor
+ * text and the target's basename were measured and rejected as predicates here;
+ * `docs/adr/0026-an-opening-link-is-not-a-link.md` holds the numbers.
+ *
+ * @param {URL} url
+ * @returns {boolean}
+ */
+function isPhotoDetailRoute(url) {
+  const segments = url.pathname.toLowerCase().split('/').filter(Boolean);
+  if (segments[0] === 'gallery') return segments.length === 3;
+  return segments[0] === 'fr' && segments[1] === 'gallery' && segments.length === 4;
 }
 
 /**
