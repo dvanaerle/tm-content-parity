@@ -1,7 +1,9 @@
 # 09 — A class on its own is a query
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-20 — `searchStore()` in `web/src/lib/search.mjs`, on `main`. The
+selector is the search function only: the per-store screen reaches `Search` on a typed term, so
+the press that opens a class query is ticket 03’s row label onto the all-stores screen.
 Blocked by: None — can start immediately.
 Parent: ../PRD.md
 
@@ -23,23 +25,38 @@ uses, and it is the change ticket 03's all-stores screen then inherits for free.
 
 ## Criteria
 
-- [ ] **Three things can open a result**: words, a page scope, a class. Any one of them on its own
+- [x] **Three things can open a result**: words, a page scope, a class. Any one of them on its own
       returns what it selects.
-- [ ] **None of them on still draws nothing.** The empty box keeps meaning the empty box. The
+- [x] **None of them on still draws nothing.** The empty box keeps meaning the empty box. The
       refusal that ships today is narrowed and never removed.
-- [ ] A term and a class together narrow exactly as they do now. The term decides what matched,
+- [x] A term and a class together narrow exactly as they do now. The term decides what matched,
       the classes decide which of it is on screen.
-- [ ] A row selected by its class alone **reports no matched fields**. It matched no field, and
+- [x] A row selected by its class alone **reports no matched fields**. It matched no field, and
       what it matched on is the pill, which is on screen.
-- [ ] The narrowing derivation is untouched: the pills still apply after the grouping, through the
+- [x] The narrowing derivation is untouched: the pills still apply after the grouping, through the
       derivation the two views share. Only which entries reach the grouping changes.
-- [ ] An `information` class opens exactly as a `work` one does. Its rows are read and never
+- [x] An `information` class opens exactly as a `work` one does. Its rows are read and never
       decided, as they are everywhere else.
-- [ ] The result says how many findings on how many pages, counted off the list that is drawn.
+- [x] The result says how many findings on how many pages, counted off the list that is drawn.
       No bar, no denominator, no closed count.
-- [ ] The comment on the empty-box guard is **rewritten and not deleted**, so the next reader
+- [x] The comment on the empty-box guard is **rewritten and not deleted**, so the next reader
       learns what the guard still refuses rather than that it was once there.
-- [ ] `npm test`.
+- [x] `npm test`.
+
+## What is delivered, and where it stops
+
+The selector is in `searchStore()`, and every criterion above is met there. Two boundaries a
+reader should not have to rediscover:
+
+- **The per-store screen still reaches `Search` on a typed term only.** `Dashboard.jsx` gates it
+  on `query.trim()`, and a pill with an empty box keeps narrowing the pages table and the
+  differences list, which is what the PRD's *two presses, two verbs, one class* asks of it: the
+  pill in the strip toggles, and the label on a row **opens**. That press is ticket 03's, onto
+  the all-stores screen, and it is what this selector was built for.
+- **The index holds `work` only**, by `addPage()`'s decision. So an `information` class opens
+  exactly as a `work` one wherever the index carries one, and today it carries none — nothing
+  here asks what a class is *for*, which is the whole of what this ticket owed. Widening the
+  payload stays the decision `addPage()` says it is.
 
 ## Traps
 

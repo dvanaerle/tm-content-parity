@@ -879,6 +879,21 @@ export function repeatsByOpenWork(repeats, openOf) {
 }
 
 /**
+ * Whether the pills let this class through.
+ *
+ * The whole of what a class pill means, in one place: **empty means every class**, which is
+ * what an untouched filter says rather than a filter matching nothing. It is asked of a
+ * repeat here and of an index entry by `searchStore()`, which selects on the class before
+ * grouping when the search box is empty (ticket 09) — two callers over two shapes, and the
+ * same question. Written once so that the filter and the selector cannot come to disagree
+ * about what an editor pressed.
+ *
+ * @param {string[]} classes
+ * @param {string} cls
+ */
+export const classIsOn = (classes, cls) => classes.length === 0 || classes.includes(cls);
+
+/**
  * The class filter over the repeat list, and the same rule as everywhere: it narrows
  * what is on screen and it moves no count.
  *
@@ -892,7 +907,7 @@ export function repeatsByOpenWork(repeats, openOf) {
  */
 export function repeatsWithClasses(repeats, classes) {
   if (classes.length === 0) return repeats;
-  return repeats.filter((repeat) => classes.includes(repeat.class));
+  return repeats.filter((repeat) => classIsOn(classes, repeat.class));
 }
 
 /**

@@ -945,6 +945,142 @@ describe('searchStore, narrowed by the class pills (ticket 102)', () => {
 });
 
 /**
+ * Ticket 09. A class an editor can name is a list they can open, so the pills are a
+ * **selector** as well as a filter: with nothing typed and no scope, the classes on are the
+ * corpus. The refusal the empty box ships is narrowed here and never removed.
+ */
+describe('searchStore, opened by a class alone (ticket 09)', () => {
+  const index = (findings) => ({
+    store: 'nl',
+    pages: 4,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings,
+  });
+
+  /** Three classes over four pages, with no word any two of them share. */
+  const three = index([
+    entry({ id: 'a', page: 'afhalen', class: 'broken-link', prod: '/oude-pagina' }),
+    entry({ id: 'b', page: 'garantie', class: 'broken-link', prod: '/oude-pagina' }),
+    entry({ id: 'c', page: 'montage', class: 'copy', prod: 'Bekijk deals >' }),
+    entry({ id: 'd', page: 'levering', class: 'casing', prod: 'bekijk DEALS >' }),
+  ]);
+
+  it('returns the repeats of that class with nothing typed', () => {
+    // The gesture the whole ticket is about: an editor looking at a *Broken link* row wants
+    // the rest of them, and there is no word to type — the class is the thing they mean.
+    const result = searchStore({ index: three, term: '', classes: ['broken-link'] });
+
+    expect(result.repeats.map((one) => one.class)).toEqual(['broken-link']);
+    expect(result.repeats[0].on.map((one) => one.page)).toEqual(['afhalen', 'garantie']);
+  });
+
+  it('still draws nothing with no words, no scope and no class', () => {
+    // The refusal is narrowed and not removed. The empty box keeps meaning the empty box,
+    // and an untouched filter is still no filter rather than one matching everything.
+    const result = searchStore({ index: three, term: '', classes: [] });
+
+    expect(result.repeats).toEqual([]);
+    expect(result.total).toBe(0);
+    expect(result.pages).toBe(0);
+    expect(result.matchedRepeats).toBe(0);
+  });
+
+  it('reports no matched field on a row its class selected', () => {
+    // Inventing one would be a lie about why the row is on screen. It matched no field:
+    // what it matched on is the pill, which is on screen above it.
+    const result = searchStore({ index: three, term: '', classes: ['broken-link'] });
+
+    expect(result.repeats[0].fields).toEqual([]);
+  });
+
+  it('counts the findings and the pages off the list it draws', () => {
+    // A count of the result and nothing more, exactly as a typed term's is: no bar, no
+    // denominator of work and no closed count. A class query can be long and it is counted
+    // as any other result.
+    const result = searchStore({
+      index: index([
+        entry({ id: 'a', page: 'afhalen', class: 'broken-link' }),
+        entry({ id: 'b', page: 'afhalen', class: 'broken-link', prod: '/tweede' }),
+        entry({ id: 'c', page: 'garantie', class: 'broken-link' }),
+        entry({ id: 'd', page: 'montage', class: 'copy' }),
+      ]),
+      term: '',
+      classes: ['broken-link'],
+    });
+
+    expect(result.total).toBe(3);
+    expect(result.pages).toBe(2);
+  });
+
+  it('says the class cut nothing, because on a class query it selected', () => {
+    // `matchedRepeats` is the amber strip's denominator. On a class query the pill is what
+    // produced the result rather than what cut it, so the strip reads *n of n*: a
+    // denominator counting the whole store would say the editor's filter had thrown away
+    // rows no question of theirs ever found.
+    const result = searchStore({ index: three, term: '', classes: ['broken-link'] });
+
+    expect(result.matchedRepeats).toBe(result.repeats.length);
+    expect(result.matchedPages).toEqual([
+      { store: 'nl', page: 'afhalen' },
+      { store: 'nl', page: 'garantie' },
+    ]);
+  });
+
+  it('opens an `information` class exactly as a `work` one', () => {
+    // Visibility gates deciding and never reading. Nothing here asks what a class is for,
+    // which is why this needs no case of its own in the selector — and why the index's own
+    // `work`-only rule stays `addPage`'s decision and not this function's.
+    const result = searchStore({
+      index: index([entry({ id: 'a', page: 'afhalen', class: 'restructured' })]),
+      term: '',
+      classes: ['restructured'],
+    });
+
+    expect(result.repeats.map((one) => one.class)).toEqual(['restructured']);
+    expect(result.repeats[0].fields).toEqual([]);
+  });
+
+  it('leaves a closed row out until asked, as a typed term does', () => {
+    // A class query is a search and not a queue: *Include closed* means over it exactly
+    // what it means over a term, and nothing here records that the list was ever drawn.
+    const both = {
+      index: three,
+      term: '',
+      classes: ['broken-link'],
+      stateOf: (id) => (id === 'b' ? 'fixed' : 'open'),
+    };
+
+    expect(searchStore(both).total).toBe(1);
+    expect(searchStore({ ...both, includeClosed: true }).total).toBe(2);
+  });
+
+  it('narrows to the words once they are typed, and to the class after', () => {
+    // The second half of the same box: a term and a class together narrow exactly as they
+    // did before this ticket — the term decides what matched, the classes decide which of
+    // it is on screen — so a wide queue narrows without the editor starting again.
+    const wide = searchStore({ index: three, term: '', classes: ['broken-link'] });
+    const narrowed = searchStore({ index: three, term: 'garantie', classes: ['broken-link'] });
+
+    expect(wide.total).toBe(2);
+    expect(narrowed.repeats[0].on.map((one) => one.page)).toEqual(['garantie']);
+    expect(narrowed.repeats[0].fields).toEqual(['page']);
+  });
+
+  it('keeps a bare scope a hit on the page name, with a class on', () => {
+    // The guard this ticket narrows is load-bearing: it is what makes a bare scope a hit
+    // on the page it named. A scope is a selector too, so the classes go back to cutting
+    // what it found rather than selecting beside it.
+    const result = searchStore({ index: three, term: '/garantie', classes: ['broken-link'] });
+
+    expect(result.repeats[0].on.map((one) => one.page)).toEqual(['garantie']);
+    expect(result.repeats[0].fields).toEqual(['page']);
+    expect(
+      searchStore({ index: three, term: '/montage', classes: ['broken-link'] }).repeats,
+    ).toEqual([]);
+  });
+});
+
+/**
  * Ticket 104 part A. An editor scopes to a page, gets nothing back, and the screen says
  * **which** nothing it is. The kinds are decided here, as a value, and the component
  * renders one — it classifies nothing itself.
@@ -971,7 +1107,10 @@ describe('explainScope', () => {
   it('says a scope reached no page at all, which is what a typo looks like', () => {
     // The first of the four. `/dwonloads` matches no key, and the answer is to type it
     // again — which is a different answer from every other empty result on this screen.
-    const result = searchStore({ index: index([entry({ page: 'downloads' })]), term: '/dwonloads' });
+    const result = searchStore({
+      index: index([entry({ page: 'downloads' })]),
+      term: '/dwonloads',
+    });
 
     expect(explainScope({ pages: [page({ page: 'downloads' })], result })).toEqual({
       scope: 'dwonloads',
@@ -1001,7 +1140,10 @@ describe('explainScope', () => {
   it('says a page the result holds rows on matched, which is the not-nothing case', () => {
     // The kinds are told apart from each other and not only from silence: a page that
     // answered has to read differently from all four, or the answer says nothing.
-    const result = searchStore({ index: index([entry({ page: 'downloads' })]), term: '/downloads' });
+    const result = searchStore({
+      index: index([entry({ page: 'downloads' })]),
+      term: '/downloads',
+    });
 
     expect(explainScope({ pages: [page({ page: 'downloads' })], result }).pages).toEqual([
       { store: 'nl', page: 'downloads', kind: 'matched', skipReason: null },
@@ -1128,9 +1270,7 @@ describe('explainScope', () => {
       term: '/pergola',
     });
 
-    expect(
-      explainScope({ pages: [page({ store: 'be', page: 'pergola' })], result }),
-    ).toEqual({
+    expect(explainScope({ pages: [page({ store: 'be', page: 'pergola' })], result })).toEqual({
       scope: 'pergola',
       state: 'found',
       pages: [{ store: 'be', page: 'pergola', kind: 'matched', skipReason: null }],
@@ -1341,10 +1481,7 @@ describe('searchNotes', () => {
 describe('searchNotes, under a page scope', () => {
   it('narrows the notes to the pages the scope reached', () => {
     const result = searchNotes({
-      log: read([
-        event({}),
-        event({ page: 'garantie', findingId: 'b', note: 'deals ook hier' }),
-      ]),
+      log: read([event({}), event({ page: 'garantie', findingId: 'b', note: 'deals ook hier' })]),
       term: '/afhalen',
     });
 

@@ -32,7 +32,15 @@
  * **A search composes with the class filter** (ticket 102). The classes are the filter and
  * the term is a search, and the two narrow one result together: `searchStore()` takes the
  * pills and applies them through `repeatsWithClasses()`, the same derivation the two views
- * narrow by. There is no second answer here to what a class filter means.
+ * narrow by. There is no second answer here to what a class filter means: the selection ticket
+ * 09 adds below asks the same membership question, through the `classIsOn()` that derivation
+ * asks it with.
+ *
+ * **A class on its own is a query** (ticket 09). With nothing typed and no page scope, the
+ * classes on are the corpus and every finding they hold is a hit — a class an editor can
+ * name is a list they can open. It widens what reaches the grouping and nothing else: the
+ * pills still narrow after it, through the derivation above, and a row selected that way
+ * reports **no matched field**, because what it matched on is the pill and not a field.
  *
  * **A leading slash is a page scope** (ticket 103). `/downloads` is the repeats on that
  * page, and `/downloads knop` is the repeats on that page whose words hold *knop*. The
@@ -79,7 +87,7 @@
 import { latestByKey } from '../../../overrides/state.mjs';
 import { FINDING_CLASSES, isWork } from '../../../compare/vocabulary.mjs';
 import { logState } from './log-read.mjs';
-import { findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
+import { classIsOn, findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
 
 /**
  * One finding, cut to what a search reads.
@@ -506,6 +514,11 @@ export const inScope = (page, scope) => page.toLowerCase().includes(fold(scope))
  * scope answers with that page's repeats rather than with a reading of the page — the
  * ledger has one home and it is not here.
  *
+ * **Three things can open a result** (ticket 09): words, a page scope, a class. Any one of
+ * them on its own returns what it selects, and none of them on still returns nothing. So the
+ * classes are a selector as well as a filter — with the box empty, they are the corpus — and
+ * a class an editor can name is a list they can open.
+ *
  * @param {object} args
  * @param {SearchIndex} args.index
  * @param {string} args.term
@@ -516,7 +529,9 @@ export const inScope = (page, scope) => page.toLowerCase().includes(fold(scope))
  * @param {string[]} [args.classes] The class pills that are on (ticket 102). Empty means
  *   every class, which is what an untouched filter says — not a filter matching nothing.
  *   It is a second narrowing over the same result and not a second search: the term
- *   decides what matched, the classes decide which of it is on screen.
+ *   decides what matched, the classes decide which of it is on screen. With **nothing else
+ *   asked** they are also what asks (ticket 09): no words and no scope, and the classes on
+ *   are the corpus every finding of which is a hit.
  * @returns {{
  *   repeats: (import('./view.mjs').Repeat & { fields: string[] })[],
  *   total: number,
@@ -532,6 +547,10 @@ export const inScope = (page, scope) => page.toLowerCase().includes(fold(scope))
  *   a page whose open work is all `copy` would otherwise have the screen say *every
  *   difference on it is closed*, and CONTEXT.md gives a filter no power to make that
  *   sentence true.
+ *   On a **class query** they are the answer the classes produced, so `matchedRepeats` equals
+ *   the row count and the strip reads *n of n*: there the pill selected rather than cut, and a
+ *   denominator counting the whole store would tell the editor their filter threw away rows no
+ *   question of theirs ever found.
  *   `scope` is the page scope this term carried, or `null` for an ordinary one, and
  *   `text` is the words after it. The whole parse rides back here so a caller reads it off
  *   the answer rather than running it a second time over the same string. `text` joined
@@ -557,10 +576,29 @@ export function searchStore({
   // being empty here is not the empty box `matchedFields()` refuses.
   const { scope, text } = parseTerm(term);
 
+  // The third thing that can open a result (ticket 09). With no words and no scope, the
+  // classes on **are** the corpus: an editor looking at a *Broken link* row and wanting the
+  // rest of them has no word to type, because the class is the thing they mean.
+  //
+  // Only then, because a term or a scope decides what matched and the classes go back to
+  // cutting that answer through the narrowing ticket 102 put after the grouping.
+  //
+  // It selects through `classIsOn()`, which is what `repeatsWithClasses()` narrows by, so the
+  // selector and the filter are one answer to what a pressed pill means and not two. No
+  // visibility is asked, here or there: an `information` class opens as a `work` one does, and
+  // the index holding `work` only stays `addPage()`'s decision rather than a second one here.
+  const selectedByClass = !text && !scope && classes.length > 0;
+
   for (const entry of index.findings) {
     if (scope && !inScope(entry.page, scope)) continue;
     const fields = text ? matchedFields(entry, text) : scope ? SCOPE_FIELDS : [];
-    if (fields.length === 0) continue;
+    // What the empty box still refuses, since ticket 09 narrowed this guard: nothing asked at
+    // all. The empty box keeps meaning the empty box — an untouched filter is no filter and
+    // never one matching everything — and a row that gets past it with no field is a row its
+    // class selected, which is why the list stays empty rather than being filled with a field
+    // the row did not match.
+    if (fields.length === 0 && !selectedByClass) continue;
+    if (selectedByClass && !classIsOn(classes, entry.class)) continue;
     if (!includeClosed && !isActive(stateOf(entry.id))) continue;
     fieldsById.set(entry.id, fields);
     const key = storePage(entry);
