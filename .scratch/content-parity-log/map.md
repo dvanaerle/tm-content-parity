@@ -1585,7 +1585,7 @@ what a finding with no anchor heading offers instead. It offers the page.
   [82 search](issues/82-search-reaches-the-content.md),
   [83 priority and note](issues/83-a-page-carries-a-priority-and-a-note.md),
   [84 migration decisions](issues/.out-of-scope/84-a-one-sided-page-carries-a-migration-decision.md),
-  [85 the comparison scope](issues/85-the-comparison-scope-is-legible.md),
+  [85 the comparison scope](issues/.out-of-scope/85-the-comparison-scope-is-legible.md),
   [86 heading level](issues/86-heading-level-becomes-information.md) — **resolved
   2026-08-13. The first re-triage that moved the denominator on purpose: 2,846 findings,
   10.00% of the work findings, out of `work` and into `information`. 28,462 → 25,616, and
