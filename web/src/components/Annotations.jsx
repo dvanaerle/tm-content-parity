@@ -56,8 +56,15 @@ export const Detail = ({ detail }) =>
  *
  * A content row does not use this at all. Its own cells carry a link to the exact words
  * beside them, which is closer than anything a section could offer.
+ *
+ * **`inHead` is the fourth check's answer to the same question** (ticket 98). A head
+ * finding has no `anchorHeading` — the heading order is defined inside the content
+ * boundary and the `<head>` is outside it — so without this it would draw the one thing
+ * ticket 34 exists to refuse: a difference that does not say where it is. It names the
+ * place instead of a heading, and it takes the place of the heading rather than sitting
+ * beside it, because a finding is in one of the two and never in both.
  */
-export const Section = ({ anchorHeading, locations = null, sides = null }) => {
+export const Section = ({ anchorHeading, locations = null, sides = null, inHead = false }) => {
   // The **urls** and not the two elements. A `<Locate>` element is truthy whether or not
   // it goes on to render an anchor, so a guard written on the elements never fires — and
   // a report predating `locations` would ship an empty strip with no section and no
@@ -65,14 +72,18 @@ export const Section = ({ anchorHeading, locations = null, sides = null }) => {
   // that looks like an answer and is not one.
   const production = sides && locationUrl(sides.production.url, locations?.production);
   const next = sides && locationUrl(sides.new.url, locations?.new);
-  if (!anchorHeading && !production && !next) return null;
+  if (!anchorHeading && !inHead && !production && !next) return null;
 
   return (
     <div className="mt-1 flex items-baseline gap-1 text-xs text-muted-foreground">
-      {anchorHeading && (
-        <span className="truncate" title={anchorHeading}>
-          under “{anchorHeading}”
-        </span>
+      {inHead ? (
+        <span>in the &lt;head&gt;</span>
+      ) : (
+        anchorHeading && (
+          <span className="truncate" title={anchorHeading}>
+            under “{anchorHeading}”
+          </span>
+        )
       )}
       <Locate href={production} side="production" />
       <Locate href={next} side="the new site" />

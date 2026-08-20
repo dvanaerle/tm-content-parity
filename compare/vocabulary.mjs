@@ -296,16 +296,14 @@ export const FINDING_CLASSES = {
   // dropped it on purpose so 39 would still have one, and this ticket hands 39 a wider
   // table rather than an answer.
   //
-  // **Seven of them are `work`, and that contradicts `CONTEXT.md` as it stands.** The
-  // glossary says a display-only difference "has no id, no override and no place in a
-  // bar" and that "the `<head>` panel is made of these", and the Landing entry says
-  // *Meta is display only*. Ticket 21 decided the reverse and recorded the price: a head
-  // finding is not a body element, so a short page with two of them reads worse than the
-  // page bar's arithmetic deserves, and that distortion is accepted as the cost of one
-  // counter. The glossary is not edited here, because nothing emits these yet and a
-  // glossary that describes an unbuilt screen is worse than one a ticket is about to
-  // correct: ticket 98 rewrites both entries when the Meta tab lands. Stated here rather
-  // than left for a reader to find, per `docs/agents/domain.md`.
+  // **Seven of them are `work`, and the price of that is recorded in `CONTEXT.md`.** The
+  // glossary said a display-only difference "has no id, no override and no place in a bar"
+  // and that "the `<head>` panel is made of these", and its Landing entry said *Meta is
+  // display only*; ticket 98 shipped the panel and corrected both, so the display-only
+  // rows are now named — Meta Keywords and Canonical. Ticket 21 decided the reverse of the
+  // old glossary and recorded the price: a head finding is not a body element, so a short
+  // page with two of them reads worse than the page bar's arithmetic deserves, and that
+  // distortion is accepted as the cost of one counter.
   'meta-title-changed': {
     check: 'meta',
     visibility: 'work',

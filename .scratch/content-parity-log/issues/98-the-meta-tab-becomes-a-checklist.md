@@ -85,24 +85,24 @@ Read these and nothing else. If you need more, the ticket is wrong: say so and s
 In build order. **Criterion 1 is your first failing test.** Show the red before you
 write the implementation. Do not plan across all seven.
 
-- [ ] 1 Five rows in order — Meta Title, Meta Keywords, Meta Description, Robots,
+- [x] 1 Five rows in order — Meta Title, Meta Keywords, Meta Description, Robots,
       then a rule, then Canonical — with their labels read from the shared label
       module. That module's comment stops claiming it holds only Dutch labels.
-- [ ] 2 Rows 1, 3 and 4 carry override controls **inline after the label**. No row is
+- [x] 2 Rows 1, 3 and 4 carry override controls **inline after the label**. No row is
       added for them.
-- [ ] 3 The rule and the note above Canonical survive, and the note no longer
+- [x] 3 The rule and the note above Canonical survive, and the note no longer
       mentions ticket 21. An absent control is not a statement: without the note the
       display-only rows differ from a `same` row only by a missing control, which
       reads as "nothing to do here" rather than "this is not counted".
-- [ ] 4 The Meta tab carries a count badge. The content view is the body in document
+- [x] 4 The Meta tab carries a count badge. The content view is the body in document
       order, so the badge is the only place a head count can live.
-- [ ] 5 ~~A meta finding rendered in **Taken** says **in de `<head>`** where a text
+- [x] 5 ~~A meta finding rendered in **Taken** says **in de `<head>`** where a text
       finding says *onder «heading»*.~~ **Ticket 81 removed the Taken tab.** The want
       survives and it moves: a meta finding reached through the dashboard's
       *Verschillen* list says **in de `<head>`** where a text finding says
       *onder «heading»*. A silent blank would spend what ticket 34 bought.
-- [ ] 6 Meta findings do **not** appear in the content view.
-- [ ] 7 **The glossary describes the panel this ticket shipped** — two edits to
+- [x] 6 Meta findings do **not** appear in the content view.
+- [x] 7 **The glossary describes the panel this ticket shipped** — two edits to
       `CONTEXT.md`, absorbed from ticket 100 on 2026-08-17. The `Display-only
       difference` entry ends *"The `<head>` panel is made of these"*, which was true
       when every head row was display only; after slices 1 to 3 three of the five rows
@@ -123,3 +123,35 @@ denominator to fix it.
 
 `npm test`, then `node compare/measure.mjs nl`. **No finding count moves** — this
 ticket renders what ticket 97 already produced.
+
+**Built 2026-08-20.** `npm test`: 1,339 tests over 62 files, green. `node compare/measure.mjs nl`
+reads **6,434 findings and 3,116 work**, which is the figure the same command printed before the
+change — checked by running it on both sides of the diff, not by reasoning about it. The `meta`
+classes on `nl` are unmoved as well: 28 `meta-description-changed`, 16 `meta-title-changed`, 2
+`meta-casing`, 1 `robots-noindex-lost`. Adding the Meta Keywords row moves nothing because
+`headClassOf()` answers `null` for the field, so the row is drawn and never collected.
+
+Two things outside the seven slices, both because a slice made a written claim false:
+
+- **`landingFor()` reads the class as well as the check.** Slice 5 needs the Meta tab to answer
+  for a head finding, and `no-declared-alternate` is `check: 'meta'` without being a row of the
+  `<head>`. So `HEAD_CLASSES` in `compare/meta.mjs` is what places a meta finding, and
+  `unplaced` now means that class alone. The ledger's banner for it said *available on the Meta
+  tab but not counted as a finding*, which was the old panel's sentence; it now says what the
+  finding is.
+- **ADR 0010 and the `meta` comment in `compare/vocabulary.mjs`** both said the Meta tab is
+  display only. Amended in place, dated, with the old sentence struck rather than deleted.
+
+- **Meta Keywords sits second and only Canonical is under the rule**, which follows the
+  mockup and not the sentence *"two sit below a rule as display only"*. The two spec lines
+  disagree, and the order an editor meets the fields in the Magento admin is the one the
+  labels are for, so the mockup wins and the note **names both rows** instead of pointing
+  below itself. It names only the rows it drew: Canonical's row is absent on the 147 of 179
+  nl pages where production has none, and on those the note reads *Display only: Meta
+  Keywords is not counted.*
+- **The reading list was not enough**, and per the ticket's own instruction this is said out
+  loud rather than worked around. Slice 4's badge and slice 5's landing cannot be built
+  inside `Ledger.jsx`: the badge needs the row-to-finding pairing, which is
+  `compare/meta.mjs`'s to make, and the landing is `web/src/lib/landing.mjs`'s
+  `TAB_OF_CHECK`. Slice 5's words are `Annotations.jsx`'s `Section`, which is where every
+  other check says where a finding is. Nothing was read that those four did not require.

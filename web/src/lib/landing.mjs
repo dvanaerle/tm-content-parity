@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { HEAD_CLASSES } from '../../../compare/meta.mjs';
 import { CHROME } from './palette.mjs';
 
 /**
@@ -33,15 +34,29 @@ export const findingAnchor = (id) => `finding-${id}`;
 /**
  * The tab each check lives on. `Ledger.jsx` owns the strip; this owns which of its
  * tabs answers for a finding, because a landing has to choose one before the reader
- * sees anything — and two of the three checks are not in the content view at all.
+ * sees anything — and three of the four checks are not in the content view at all.
  *
- * **The fourth tab is not in here, and that is not an omission.** Meta is `metaRows()`,
- * which is display only and holds no findings — ticket 21 has not decided what a parity
- * defect in the `<head>` is. So the one `meta` rule, `no-declared-alternate`, is a
- * finding no tab draws, and `landingFor()` answers for it rather than pretending Meta
- * would show it.
+ * **The `meta` check is on the strip since ticket 98, and it is still not enough on its
+ * own.** The Meta tab draws the five `<head>` rows, and `no-declared-alternate` is a
+ * `meta` finding that is not one of them: it is metadata about the page, reaching the log
+ * through the page key rather than through the `<head>`. So the check answers for the tab
+ * and `HEAD_CLASSES` answers for the check — a landing that read the check alone would
+ * send a reader to a panel with no row for what they were sent to, which is the silent
+ * nothing-happens `unplaced` exists to say out loud.
  */
-const TAB_OF_CHECK = { text: 'Text', links: 'Links', images: 'Images' };
+const TAB_OF_CHECK = { text: 'Text', links: 'Links', images: 'Images', meta: 'Meta' };
+
+/**
+ * Whether the tab that answers for this finding's check would actually draw it.
+ *
+ * One check, and it is the head's: `HEAD_CLASSES` is the producer's own set, imported
+ * rather than restated, so a tenth head class cannot become a finding the panel draws and
+ * the landing calls unplaced.
+ *
+ * @param {{ check: string, class: string }} finding
+ */
+const drawnByItsTab = (finding) =>
+  finding.check === 'meta' ? HEAD_CLASSES.has(finding.class) : true;
 
 /**
  * What the page has to do about the finding a link named.
@@ -57,8 +72,9 @@ const TAB_OF_CHECK = { text: 'Text', links: 'Links', images: 'Images' };
  *                                or the page was measured again. The page says so
  *                                rather than landing nowhere in silence.
  * @property {boolean} unplaced   This snapshot **has** the finding and no tab draws it:
- *                                a `meta` finding, which the display-only Meta tab does
- *                                not list. The other half of the same courtesy — the
+ *                                `no-declared-alternate`, which is metadata about the page
+ *                                rather than a row of its `<head>`, so the Meta tab has no
+ *                                row for it. The other half of the same courtesy — the
  *                                link was good and there is still nothing to look at.
  *
  * @param {object} input
@@ -68,7 +84,7 @@ const TAB_OF_CHECK = { text: 'Text', links: 'Links', images: 'Images' };
  */
 export function landingFor({ findings, focus }) {
   const target = focus ? (findings.find((finding) => finding.id === focus) ?? null) : null;
-  const tab = target ? (TAB_OF_CHECK[target.check] ?? null) : null;
+  const tab = target && drawnByItsTab(target) ? (TAB_OF_CHECK[target.check] ?? null) : null;
 
   return {
     tab,

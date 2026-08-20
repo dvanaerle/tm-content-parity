@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { metaRows } from '../../../compare/meta.mjs';
+import { isCheckingField, metaFindingOf, metaRows } from '../../../compare/meta.mjs';
 import {
   Detail,
   FirstSeen,
@@ -19,7 +19,7 @@ import { Empty as EmptyState, EmptyDescription, EmptyHeader } from './ui/empty.j
 import { Label } from './ui/label.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs.jsx';
-import { CHECK_LABEL, canDecide } from '../lib/classes.mjs';
+import { CHECK_LABEL, META_LABEL, canDecide } from '../lib/classes.mjs';
 import {
   findingAnchor,
   landedRowProps,
@@ -186,6 +186,18 @@ export default function Ledger({
    */
   const buckets = useMemo(() => bucketsOf(derived), [derived]);
 
+  /**
+   * The `<head>` of this page: its five rows, each with the finding it carries or `null`.
+   *
+   * It is paired here and not inside the panel because the badge counts it too, and a
+   * badge counting one pairing over a panel drawing another is two answers to *how much
+   * work is in the head*.
+   */
+  const head = useMemo(
+    () => metaRows(production, next).map((row) => ({ row, finding: metaFindingOf(row, findings) })),
+    [production, next, findings],
+  );
+
   // What the toggle would reveal, which is the `diagnostic` findings and nothing else.
   // The label must count what it uncovers: an `information` finding is on screen already.
   const diagnosticCount = derived.filter((f) => f.visibility === 'diagnostic').length;
@@ -210,6 +222,12 @@ export default function Ledger({
     Text: findings.filter((finding) => finding.check === 'text').length,
     Links: findings.filter((finding) => finding.check === 'links').length,
     Images: findings.filter((finding) => finding.check === 'images').length,
+    // Meta counts the findings the **panel draws**, which is the head rows and not the
+    // check: `no-declared-alternate` is `check: 'meta'` and the panel has no row for it, so
+    // counting the check would put a number on a tab and no row under it. Ticket 98: the
+    // content view is the body in document order, so this badge is the only place a head
+    // count can live.
+    Meta: head.filter((one) => one.finding).length,
   };
 
   if (!report.comparable) {
@@ -247,8 +265,9 @@ export default function Ledger({
 
           The first is a link that outlived its finding: an id is a term of the text, so it
           expires the moment the text does, whether the difference was fixed or the page was
-          measured again. The second is a finding this page has and no tab draws — the one
-          `meta` rule, which the display-only Meta tab does not list.
+          measured again. The second is a finding this page has and no tab draws, and since
+          ticket 98 that is one class: `no-declared-alternate` is `check: 'meta'` and it is
+          not a row of the `<head>` — it says the log could not place the page at all.
 
           `caution` and not `warning` for both: a condition, not a loss. */}
       {(asked.missing || asked.unplaced) && (
@@ -266,7 +285,9 @@ export default function Ledger({
               </p>
             ) : (
               <p className="text-sm">
-                This item is available on the Meta tab but is not counted as a finding.
+                This one is about the page itself rather than about anything on it: production
+                declares no counterpart for this page, so there is no row to show you. The whole
+                page is still here.
               </p>
             )}
           </AlertDescription>
@@ -394,7 +415,7 @@ export default function Ledger({
             />
           </TabsContent>
           <TabsContent value="Meta">
-            <MetaTable production={production} next={next} />
+            <MetaTable head={head} control={control} landing={landing} />
           </TabsContent>
           {/* Mounted only while it is the selected tab, which is what makes the
                 alignment inside it cost nothing to a reader who never opens it. */}
@@ -614,19 +635,44 @@ const FindingRow = ({ finding, focus, control, sides }) => {
 };
 
 /**
- * Display only, and now with the diff colours (ticket 35). An editor reads a changed
- * `<title>` in the same way as changed body copy, because it is the same type of
- * change.
+ * The `<head>`, as a checklist of five named slots (ticket 98).
  *
- * It still makes **no** finding. Ticket 21 has not decided what a parity defect in
- * the head is. Thus nothing here goes into the contract, the bar or the count. For
- * the same reason the rows have no override control: the shared colours must not
- * show something an editor can complete.
+ * **It is not a `FindingTable`, and that is the design.** The head has five known slots
+ * and an editor reads it as a list of slots rather than a list of defects, so the field is
+ * the useful first column and every row is drawn whether or not it differs. There is no
+ * class pill either: with the field fixed and both values side by side, a `META-CASING`
+ * pill next to `…beschutting.` against `…beschutting` says nothing the two cells do not.
+ * The class still drives the dashboard filter and the store's repeat list, which keep
+ * theirs.
  *
- * Which rows exist at all is `compare/meta.mjs`'s decision, not this component's.
+ * Three of the five rows make a finding an editor can tick off or dismiss like any other,
+ * and the control sits **inline after the label**: the field row *is* the finding row —
+ * ticket 97 made each checking row hold at most one — so a row of its own would be a
+ * second row for one slot.
+ *
+ * The other two are display only, and the note under the rule — the border above it — says
+ * so in words. An absent control is not a statement: without the note an uncounted row
+ * differs from an agreeing row only by a missing control, which reads as *nothing to do
+ * here* rather than *this is not counted*.
+ *
+ * Which rows exist at all, and which of them make findings, is `compare/meta.mjs`'s
+ * decision and not this component's.
  */
-function MetaTable({ production, next }) {
-  const rows = useMemo(() => metaRows(production, next), [production, next]);
+function MetaTable({ head, control, landing }) {
+  const focus = landing?.focus ?? null;
+
+  // The row a link named, on the same terms the two finding tables land on theirs: the
+  // anchor is the finding's, because a head row has no document position to anchor on.
+  const landed =
+    focus && head.some((one) => one.finding?.id === focus) ? findingAnchor(focus) : null;
+  useLandOn(landed, landing?.settled);
+
+  const uncounted = head.filter(({ row }) => !isCheckingField(row.field));
+  const at = ruleAt(head);
+
+  const rows = ({ row, finding }) => (
+    <MetaRow key={row.field} row={row} finding={finding} focus={focus} control={control} />
+  );
 
   return (
     <Table className="min-w-2xl table-fixed">
@@ -642,31 +688,107 @@ function MetaTable({ production, next }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map((row) => (
-          <TableRow key={row.field} className="align-top">
-            {/* A `<th>` in the body, not a `<td>`: this row's first cell names what
-                the two cells beside it hold, which is what a row header is. */}
-            <TableHead className="w-40 py-3 align-top font-medium whitespace-normal text-muted-foreground">
-              {row.field}
-              {/* The one loud case. Production has no canonical on 147 of 179 nl
-                  pages and those rows are gone, so the 2 pages where the new
-                  site **lost** one must not read like the rest. */}
-              {row.field === 'canonical' && row.state === 'lost' && (
-                <span data-wears="ink" data-tone="lost" className="mt-1 block text-xs font-normal">
-                  the new site has none
-                </span>
-              )}
-            </TableHead>
-            {/* `state` is the tool's answer, and the cells must not contradict it:
-                a canonical that differs by hostname alone is `same`, and the
-                hostname on screen is not a difference an editor can act on. */}
-            <DiffCells prod={row.prod} new={row.new} mono equal={row.state === 'same'} />
-          </TableRow>
-        ))}
+        {head.slice(0, at).map(rows)}
+        <UncountedNote fields={uncounted.map(({ row }) => row.field)} />
+        {head.slice(at).map(rows)}
       </TableBody>
     </Table>
   );
 }
+
+/**
+ * The rule and the words under it: which of the rows on screen are not counted.
+ *
+ * It **names the rows** rather than pointing below itself, because the two it names are
+ * not adjacent: Meta Keywords sits second, where an editor meets the field in the Magento
+ * admin, and Canonical is last. The mockup in ticket 98 draws the rule above Canonical
+ * alone and calls both rows display only, and naming them is how those two are one
+ * statement.
+ *
+ * The fields are the ones **drawn**, not the two the panel knows about: Canonical's row is
+ * gone on the 147 of 179 nl pages where only the new site has one, and a note claiming a
+ * row that is not there is worse than no note. Nothing is drawn at all when nothing is
+ * uncounted.
+ */
+const UncountedNote = ({ fields }) => {
+  if (!fields.length) return null;
+  const names = fields.map((field) => META_LABEL[field]);
+
+  return (
+    <TableRow className="hover:bg-transparent">
+      {/* The rule is this row's own top border. */}
+      <TableCell colSpan={3} className="border-t px-2 pt-3 pb-1">
+        <p data-meta-note className="text-xs text-muted-foreground">
+          Display only: {names.join(' and ')} {names.length > 1 ? 'are' : 'is'} not counted.
+        </p>
+      </TableCell>
+    </TableRow>
+  );
+};
+
+/**
+ * Where the rule goes: above the run of display-only rows that ends the panel, and below
+ * every row when there is no such run.
+ *
+ * It is read off the rows rather than written between two named ones, because which rows
+ * there are is not fixed: Canonical is dropped where production has none, and then the
+ * last row is Robots — a row the note must not sit above, or the one field an editor is
+ * being asked about would read as uncounted.
+ *
+ * @param {{ row: import('../../../compare/meta.mjs').MetaRow }[]} head
+ * @returns {number}
+ */
+function ruleAt(head) {
+  let at = head.length;
+  while (at > 0 && !isCheckingField(head[at - 1].row.field)) at -= 1;
+  return at;
+}
+
+/**
+ * One slot of the head: what the field is called, what each side holds, and — on the three
+ * checking rows — what the editor has decided about it.
+ */
+const MetaRow = ({ row, finding, focus, control }) => {
+  const { className, ...mark } = landedRowProps(Boolean(finding) && finding.id === focus);
+
+  return (
+    <TableRow
+      id={finding ? findingAnchor(finding.id) : undefined}
+      data-meta-field={row.field}
+      {...mark}
+      className={cn('scroll-mt-4 align-top', className)}
+    >
+      {/* A `<th>` in the body, not a `<td>`: this row's first cell names what
+          the two cells beside it hold, which is what a row header is. */}
+      <TableHead className="w-40 py-3 align-top font-medium whitespace-normal text-muted-foreground">
+        <span data-meta-label>{META_LABEL[row.field]}</span>
+        {/* The one loud case. Production has no canonical on 147 of 179 nl
+            pages and those rows are gone, so the 2 pages where the new
+            site **lost** one must not read like the rest. */}
+        {row.field === 'canonical' && row.state === 'lost' && (
+          <span data-wears="ink" data-tone="lost" className="mt-1 block text-xs font-normal">
+            the new site has none
+          </span>
+        )}
+        {finding && (
+          <>
+            {/* Where the difference is, said in the words the other tables say it in. A
+                head finding has no heading above it, and a blank there would spend what
+                ticket 34 bought: every difference in this log says where it is. */}
+            <Section inHead />
+            <FirstSeen at={finding.firstSeen} />
+            <HistoryNote note={finding.historyNote} />
+            <div className="mt-1">{control(finding)}</div>
+          </>
+        )}
+      </TableHead>
+      {/* `state` is the tool's answer, and the cells must not contradict it:
+          a canonical that differs by hostname alone is `same`, and the
+          hostname on screen is not a difference an editor can act on. */}
+      <DiffCells prod={row.prod} new={row.new} mono equal={row.state === 'same'} />
+    </TableRow>
+  );
+};
 
 /**
  * shadcn's `Empty` with no media and no action. There is no icon because there is

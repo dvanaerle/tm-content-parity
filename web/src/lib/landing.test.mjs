@@ -48,17 +48,34 @@ describe('landingFor', () => {
    */
   it('cannot open the sibling tab, whatever a link names', () => {
     const tabs = CHECKS.map(
-      (check) => landingFor({ findings: [finding({ check })], focus: 'a1' }).tab,
+      (check) =>
+        landingFor({
+          findings: [finding({ check, class: check === 'meta' ? 'meta-title-changed' : undefined })],
+          focus: 'a1',
+        }).tab,
     );
 
     expect(tabs).not.toContain('Sibling');
-    // `meta` answers null and says so, rather than answering with a tab that happens to
-    // be next to it. Meta *does* draw a tab; what no tab draws is a meta **finding**, so
-    // there is nowhere for a landing to put one (`TAB_OF_CHECK`).
-    expect(tabs).toEqual(['Text', 'Links', 'Images', null]);
+    // All four checks answer with a tab since ticket 98: the Meta tab draws the five
+    // `<head>` rows, and three of them make findings.
+    expect(tabs).toEqual(['Text', 'Links', 'Images', 'Meta']);
   });
 
-  // The link can name a finding on any of the three checks, and two of them are not in
+  // The Meta tab is a checklist of five known slots and three of them are findings, so a
+  // link naming one lands on the panel like any other. Before ticket 98 there was nothing
+  // there to land on and this answered `unplaced` for every head finding.
+  it('opens the Meta tab for a finding the head panel draws', () => {
+    const findings = [finding({ id: 'm1', check: 'meta', class: 'robots-index-lost' })];
+
+    expect(landingFor({ findings, focus: 'm1' })).toEqual({
+      tab: 'Meta',
+      needsDiagnostics: false,
+      missing: false,
+      unplaced: false,
+    });
+  });
+
+  // The link can name a finding on any of the four checks, and three of them are not in
   // the content view at all. A landing that only ever opened Text would send an
   // editor to a tab that does not hold what they clicked.
   it('names the tab the finding lives on', () => {
@@ -95,9 +112,11 @@ describe('landingFor', () => {
     expect(landingFor({ findings, focus: 'e5' }).needsDiagnostics).toBe(true);
   });
 
-  // Not every finding of a page is drawn on one of the four tabs. `no-declared-alternate`
-  // is the one `meta` rule, and the Meta tab is `metaRows()` — display only, no findings
-  // in it at all. So a link naming it has nothing to land on, and the wrong answer is the
+  // Not every finding of a page is drawn on one of the four tabs, and since ticket 98 the
+  // gap is one class wide. `no-declared-alternate` is `check: 'meta'` and it is not a row
+  // of the `<head>`: it is metadata about the page, reaching the log through the page key,
+  // so the panel that draws the five head fields has no row for it. A link naming it has
+  // nothing to land on, and the wrong answer is the
   // one this had: a class behind the toggle made it ask for *Ruis tonen*, which floods the
   // page with diagnostic rows on the way to a row that is not there. Asking for the toggle only
   // makes sense when switching it on would draw the thing.

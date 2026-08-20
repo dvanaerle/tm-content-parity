@@ -16,13 +16,19 @@ import { tier2 } from './match.mjs';
 import { linkKey } from '../shared/keys.mjs';
 
 /**
- * The fields, in reading order.
+ * The fields, in reading order — which is the order the panel draws them in, because the
+ * panel iterates this list rather than naming its own rows.
+ *
+ * **Canonical is last for a reason.** The panel draws a rule above it and a note saying
+ * the rows below are not counted, so the two fields that make no finding are the two the
+ * note can cover: `keywords` names itself display-only in the note, and `canonical` sits
+ * under the rule.
  *
  * `h1` is **not** one of them. It is a unit inside the content boundary, and
  * the merged content view owns it. That view gives it a position, a level and a
  * finding id. The `h1` differs on 93 of 179 nl pages, and one report is enough.
  */
-export const META_FIELDS = ['title', 'description', 'canonical', 'noindex'];
+export const META_FIELDS = ['title', 'keywords', 'description', 'noindex', 'canonical'];
 
 /**
  * @typedef {object} MetaRow
@@ -118,6 +124,47 @@ export function metaRows(production, next) {
 }
 
 /**
+ * The classes a head row can produce, as the set the interface reads to place a head
+ * finding.
+ *
+ * It is not "every `meta` class": `no-declared-alternate` is also `check: 'meta'` and it
+ * reaches the log through the page key rather than through the `<head>`, so the panel has
+ * no row for it and a landing must not send a reader there. The set is what tells the two
+ * apart, and `meta.test.mjs` drives every one of the nine out of `compareMeta()` and asserts
+ * the two sets are equal — so a tenth class cannot be produced and left unplaceable.
+ *
+ * @type {ReadonlySet<string>}
+ */
+export const HEAD_CLASSES = new Set([
+  'meta-title-changed',
+  'meta-title-lost',
+  'meta-title-added',
+  'meta-description-changed',
+  'meta-description-lost',
+  'meta-description-added',
+  'meta-casing',
+  'robots-index-lost',
+  'robots-noindex-lost',
+]);
+
+/**
+ * Whether this field is one an editor can be asked about.
+ *
+ * Three of the five are: a title, a description and the robots directive are content the
+ * team writes and can put back. Keywords and Canonical are not — no class was named for
+ * keywords, and the content team cannot set a canonical — and they are display only for
+ * that reason and not because they never differ. Both of them differ plenty: ticket 92
+ * measured 54 pages losing the keywords field.
+ *
+ * The three names live here rather than in the panel, so the row that carries a control
+ * and the row that can make a finding are one answer.
+ *
+ * @param {string} field
+ */
+export const isCheckingField = (field) =>
+  field === 'title' || field === 'description' || field === 'noindex';
+
+/**
  * The class one head row produces, or `null` for a row no editor can act on.
  *
  * A row yields **at most one** class: the three title classes are mutually exclusive
@@ -126,8 +173,9 @@ export function metaRows(production, next) {
  * @param {MetaRow} row
  * @returns {string | null}
  */
-function classOf(row) {
+function headClassOf(row) {
   if (row.state === 'same') return null;
+  if (!isCheckingField(row.field)) return null;
   if (row.field === 'title' || row.field === 'description') {
     if (row.state === 'lost') return `meta-${row.field}-lost`;
     if (row.state === 'added') return `meta-${row.field}-added`;
@@ -139,12 +187,31 @@ function classOf(row) {
   // Off the derived boolean, which `display()` has already turned into the two words a
   // `<meta name="robots">` tag uses. The raw string stays display only: two spellings
   // of the same directive are not a difference an editor can act on.
-  if (row.field === 'noindex') {
-    return row.new === 'noindex' ? 'robots-index-lost' : 'robots-noindex-lost';
-  }
-  // The canonical, and nothing else reaches here. It keeps its row and makes no work:
-  // the content team cannot set one, and production has none on 147 of 179 nl pages.
-  return null;
+  return row.new === 'noindex' ? 'robots-index-lost' : 'robots-noindex-lost';
+}
+
+/**
+ * The finding a row carries, out of the page's own findings, or `null` for a row that
+ * makes none.
+ *
+ * It matches on the class **and both texts**, not on the class alone: `meta-casing` is
+ * the one class two rows can produce, so a page whose title and description each lost a
+ * full stop has two findings of it, and matching by class would hang the same one on both
+ * rows.
+ *
+ * @template {{ class: string, prod: string | null, new: string | null }} T
+ * @param {MetaRow} row
+ * @param {T[]} findings
+ * @returns {T | null}
+ */
+export function metaFindingOf(row, findings) {
+  const cls = headClassOf(row);
+  if (!cls) return null;
+  return (
+    findings.find(
+      (finding) => finding.class === cls && finding.prod === row.prod && finding.new === row.new,
+    ) ?? null
+  );
 }
 
 /**
@@ -167,7 +234,7 @@ function classOf(row) {
  */
 export function compareMeta(production, next, collector) {
   for (const row of metaRows(production, next)) {
-    const cls = classOf(row);
+    const cls = headClassOf(row);
     if (cls) collector.add({ class: cls, prod: row.prod, new: row.new });
   }
 }

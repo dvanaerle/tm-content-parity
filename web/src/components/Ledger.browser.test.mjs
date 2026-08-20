@@ -44,6 +44,58 @@ const FOUR = [
   finding('d', 'fixed'),
 ];
 
+/**
+ * The two heads the Meta panel is drawn from (ticket 98).
+ *
+ * They are on the shared fixture rather than passed in by the tests that open the tab,
+ * because `metaRows()` reads `sides.*.meta` unconditionally: a report without one is not
+ * a report with an empty head, it is a crash on the fourth tab.
+ *
+ * Between them they make one row of each kind the panel has to draw: a changed title, a
+ * lost keywords field, a description that dropped only its full stop, a page leaving the
+ * index, and a canonical that differs by hostname alone and is therefore no difference.
+ */
+const PROD_META = {
+  title: 'Bedrijfsinformatie',
+  description: 'Beschutting op maat.',
+  keywords: 'terrasoverkapping, veranda',
+  canonical: 'https://www.tuinmaximaal.nl/overkappingen',
+  robots: null,
+  noindex: false,
+  h1: null,
+};
+
+const NEW_META = {
+  ...PROD_META,
+  title: 'Bedrijfsinformatie | Tuinmaximaal',
+  description: 'Beschutting op maat',
+  keywords: null,
+  canonical: 'https://new.tuinmaximaal.nl/overkappingen',
+  noindex: true,
+};
+
+/** The three findings `compareMeta()` makes out of the two heads above. */
+const HEAD = [
+  finding('t', 'open', {
+    check: 'meta',
+    class: 'meta-title-changed',
+    prod: PROD_META.title,
+    new: NEW_META.title,
+  }),
+  finding('d', 'open', {
+    check: 'meta',
+    class: 'meta-casing',
+    prod: PROD_META.description,
+    new: NEW_META.description,
+  }),
+  finding('r', 'open', {
+    check: 'meta',
+    class: 'robots-index-lost',
+    prod: 'index',
+    new: 'noindex',
+  }),
+];
+
 const report = {
   store: 'nl',
   page: 'overkappingen',
@@ -54,8 +106,18 @@ const report = {
   // the table it draws them in (ADR 0019). Empty here: these tests are about the finding
   // tables, and the Text tab's rows are built from `rows` above.
   sides: {
-    production: { url: 'https://www.tuinmaximaal.nl/overkappingen', units: 4, elements: [] },
-    new: { url: 'https://new.tuinmaximaal.nl/overkappingen', units: 4, elements: [] },
+    production: {
+      url: 'https://www.tuinmaximaal.nl/overkappingen',
+      units: 4,
+      elements: [],
+      meta: PROD_META,
+    },
+    new: {
+      url: 'https://new.tuinmaximaal.nl/overkappingen',
+      units: 4,
+      elements: [],
+      meta: NEW_META,
+    },
   },
 };
 
@@ -264,7 +326,7 @@ describe('the sibling tab on the ledger', () => {
     // opens once per page to learn nothing. `de` and `uk` are in no block at all.
     const unmount = mount({ report: comparing, sibling: null });
 
-    expect(tabs()).toEqual(['Text0', 'Links4', 'Images0', 'Meta']);
+    expect(tabs()).toEqual(['Text0', 'Links4', 'Images0', 'Meta0']);
 
     unmount();
   });
@@ -275,7 +337,7 @@ describe('the sibling tab on the ledger', () => {
     // block, so `BE` here and `NL` over there would be two labels for one tab.
     const unmount = mount({ report: comparing, sibling });
 
-    expect(tabs()).toEqual(['Text0', 'Links4', 'Images0', 'Meta', 'Sibling']);
+    expect(tabs()).toEqual(['Text0', 'Links4', 'Images0', 'Meta0', 'Sibling']);
 
     unmount();
   });
@@ -582,6 +644,132 @@ describe('a row while the override log is still reading', () => {
     const { unmount } = await open({ pending: false, canWrite: false, settled: true });
 
     expect(button('Dismiss')).toBeUndefined();
+    unmount();
+  });
+});
+
+/**
+ * The Meta tab as a checklist an editor ticks (ticket 98).
+ *
+ * The panel keeps its five-row shape and does not become a `FindingTable`: the head has
+ * five known slots, so the field is the useful first column and a class pill beside a
+ * fixed field name would say nothing the two cells do not.
+ */
+describe('the Meta tab', () => {
+  const fields = () =>
+    [...document.querySelectorAll('[data-meta-field]')].map((row) => row.dataset.metaField);
+
+  /** The row header, which is the cell a control has to be inside. */
+  const label = (field) => document.querySelector(`[data-meta-field="${field}"] th`);
+
+  const openMeta = async () => {
+    const unmount = mount({ findings: [...FOUR, ...HEAD] });
+    await userEvent.click(button('Meta'));
+    return unmount;
+  };
+
+  it('reads as five named rows in the order of the Magento fields', async () => {
+    const unmount = await openMeta();
+
+    // English labels in an English interface (ADR 0014), and they would stay English if
+    // that ADR were reversed: each one names the admin field an editor opens to fix the
+    // value, which is an identifier in another system and not prose.
+    expect(fields()).toEqual(['title', 'keywords', 'description', 'noindex', 'canonical']);
+    expect(
+      [...document.querySelectorAll('[data-meta-label]')].map((one) => one.textContent),
+    ).toEqual(['Meta Title', 'Meta Keywords', 'Meta Description', 'Robots', 'Canonical']);
+
+    unmount();
+  });
+
+  it('carries the control inline after the label on the three checking rows', async () => {
+    const unmount = await openMeta();
+
+    // No row is added for the control: the field row **is** the finding row, which is what
+    // ticket 97 bought by making each checking row hold at most one finding.
+    for (const field of ['title', 'description', 'noindex']) {
+      expect(label(field).querySelector('[data-slot="checkbox"]')).not.toBeNull();
+    }
+    // And the two display-only rows have none. An absent control is not a statement, which
+    // is why the note below has to say the words as well.
+    for (const field of ['keywords', 'canonical']) {
+      expect(label(field).querySelector('[data-slot="checkbox"]')).toBeNull();
+    }
+
+    unmount();
+  });
+
+  it('says which two rows are not counted', async () => {
+    const unmount = await openMeta();
+
+    // Without this a display-only row differs from an agreeing row only by a missing
+    // control, which reads as "nothing to do here" rather than "this is not counted".
+    expect(document.querySelector('[data-meta-note]').textContent).toBe(
+      'Display only: Meta Keywords and Canonical are not counted.',
+    );
+
+    unmount();
+  });
+
+  it('names only the uncounted rows it drew', async () => {
+    // The Canonical row is gone on the 147 of 179 nl pages where production has none and
+    // the new site sets one, and Meta Keywords is still display only underneath it. A note
+    // that only appeared beside Canonical would leave those pages with an uncounted row and
+    // no words — which is a row differing from an agreeing one only by a missing control.
+    const noCanonical = {
+      ...report,
+      sides: {
+        production: { ...report.sides.production, meta: { ...PROD_META, canonical: null } },
+        new: report.sides.new,
+      },
+    };
+    const unmount = mount({ report: noCanonical, findings: [...FOUR, ...HEAD] });
+    await userEvent.click(button('Meta'));
+
+    expect(fields()).toEqual(['title', 'keywords', 'description', 'noindex']);
+    expect(document.querySelector('[data-meta-note]').textContent).toBe(
+      'Display only: Meta Keywords is not counted.',
+    );
+
+    unmount();
+  });
+
+  it('carries a count badge, because the content view has nowhere to put one', async () => {
+    const unmount = mount({ findings: [...FOUR, ...HEAD] });
+
+    // The content view is the body in document order and the head is not in it, so the
+    // badge is the only place a head count can live.
+    expect(tabs()).toEqual(['Text0', 'Links4', 'Images0', 'Meta3']);
+
+    unmount();
+  });
+
+  it('lands on the head row a link named, and says the difference is in the head', async () => {
+    history.replaceState(null, '', '?finding=r');
+    const unmount = mount({ findings: [...FOUR, ...HEAD] });
+
+    // Reached through the dashboard's list of differences, a meta finding has to say where
+    // it is, as a text finding says *under “…”* — a silent blank would spend what ticket 34
+    // bought. The tab is opened for the reader as well: the landing is the whole point.
+    expect(document.querySelector('[role="tab"][aria-selected="true"]').textContent).toContain(
+      'Meta',
+    );
+    expect(document.querySelector('tr#finding-r').textContent).toContain('in the <head>');
+    // And the page does not claim the link went nowhere.
+    expect(document.body.textContent).not.toContain('This difference is not on one of these tabs.');
+
+    unmount();
+  });
+
+  it('keeps head findings out of the content view', async () => {
+    const unmount = mount({ findings: HEAD });
+    await userEvent.click(button('Text'));
+
+    // The content view is built from the report's rows, which are units inside the content
+    // boundary. Three head findings on the page put no row in it.
+    expect(document.querySelectorAll('[data-meta-field]').length).toBe(0);
+    expect(document.querySelector('tr#finding-t')).toBeNull();
+
     unmount();
   });
 });

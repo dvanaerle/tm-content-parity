@@ -67,10 +67,14 @@ Five things a landing has to get right, each of which was wrong first:
   hand each other back: ticking the toggle threw a reader off Links, and switching tabs
   released the toggle that was the only reason the landed row was drawable, so the row
   vanished. Two controls, two flags — `useLanding()`.
-- **Not every finding has a tab.** The Meta tab is `metaRows()`, display only, so the one
-  `meta` rule is a finding no tab draws. Asking for the noise toggle on the way to a row
-  that does not exist buys a screenful of noise and no landing, so `landingFor()` reports
-  it the way it reports a stale link: `unplaced`, and the page says so.
+- **Not every finding has a tab.** ~~The Meta tab is `metaRows()`, display only, so the one
+  `meta` rule is a finding no tab draws.~~ **2026-08-20, ticket 98:** the Meta tab draws the
+  five `<head>` rows and three of them make findings, so a head finding lands there like any
+  other. What no tab draws is `no-declared-alternate`, which is `check: 'meta'` and is not a
+  row of the `<head>` — it is metadata about the page. The rule is unchanged and it now reads
+  the class as well as the check: asking for the noise toggle on the way to a row that does
+  not exist buys a screenful of noise and no landing, so `landingFor()` reports it the way it
+  reports a stale link: `unplaced`, and the page says so.
 
 ## Considered options
 

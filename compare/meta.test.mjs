@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { FindingCollector } from './findings.mjs';
-import { compareMeta, metaRows } from './meta.mjs';
+import { HEAD_CLASSES, compareMeta, metaRows } from './meta.mjs';
 import { EXTRACT_VERSION } from '../shared/extract-version.mjs';
 
 const newUrl = 'https://m2stagingnl.intern.systems/overkappingen';
@@ -83,12 +83,6 @@ describe('metaRows', () => {
     // inside the content boundary. Reporting it here as well would report the
     // same difference twice on two tabs.
     expect(row(rows({ h1: 'Overkappingen' }, { h1: 'Veranda' }), 'h1')).toBeUndefined();
-    expect(rows({}, {}).map((each) => each.field)).toEqual([
-      'title',
-      'description',
-      'canonical',
-      'noindex',
-    ]);
   });
 
   it('reads a changed title as changed and an equal one as equal', () => {
@@ -300,8 +294,33 @@ describe('compareMeta', () => {
     expect(findings({ h1: 'Overkappingen' }, { h1: 'Veranda' })).toEqual([]);
   });
 
-  it('makes no finding from keywords, until there is evidence a value exists', () => {
+  it('makes no finding from keywords, whichever way the field moved', () => {
+    // Ticket 92 named no class for it: on the 722 comparable pairs 54 pages lose the field,
+    // 12 change it and 4 gain it, and all 70 are shown and not counted.
     expect(findings({ keywords: 'overkapping' }, { keywords: null })).toEqual([]);
+    expect(findings({ keywords: 'overkapping' }, { keywords: 'veranda' })).toEqual([]);
+    expect(findings({ keywords: null }, { keywords: 'veranda' })).toEqual([]);
+  });
+
+  it('can emit exactly the nine classes HEAD_CLASSES names', () => {
+    // The set is what the interface reads to place a head finding: the Meta tab draws these
+    // and draws nothing else. So a class the producer emits and the set does not hold is a
+    // finding that lands nowhere, and a class in the set that nothing emits sends a reader
+    // to a row that cannot exist. Both directions are asserted at once, by driving all nine
+    // out of the producer — which two fields and three states between them reach.
+    const emitted = new Set([
+      ...classes(findings({ title: 'Overkappingen' }, { title: 'Veranda' })),
+      ...classes(findings({ title: 'Overkappingen' }, { title: null })),
+      ...classes(findings({ title: null }, { title: 'Veranda' })),
+      ...classes(findings({ title: 'Overkappingen.' }, { title: 'overkappingen' })),
+      ...classes(findings({ description: 'Op maat' }, { description: 'Op maat gemaakt' })),
+      ...classes(findings({ description: 'Op maat' }, { description: null })),
+      ...classes(findings({ description: null }, { description: 'Op maat' })),
+      ...classes(findings({ noindex: false }, { noindex: true })),
+      ...classes(findings({ noindex: true }, { noindex: false })),
+    ]);
+
+    expect(emitted).toEqual(HEAD_CLASSES);
   });
 
   it('carries no score and no anchor heading', () => {
@@ -310,5 +329,54 @@ describe('compareMeta', () => {
     const [finding] = findings({ title: 'Overkappingen' }, { title: 'Veranda' });
     expect(finding.score).toBeNull();
     expect(finding.anchorHeading).toBeNull();
+  });
+});
+
+/**
+ * The panel's five rows (ticket 98). The order is the order an editor reads them in, and
+ * `metaRows()` owns it — the panel iterates what it is given.
+ */
+describe('the five rows the panel draws', () => {
+  const meta = {
+    title: null,
+    description: null,
+    canonical: null,
+    robots: null,
+    noindex: false,
+    keywords: null,
+    h1: null,
+  };
+
+  /**
+   * @param {Partial<import('./contract.mjs').PageMeta>} prodMeta
+   * @param {Partial<import('./contract.mjs').PageMeta>} newMeta
+   */
+  const rows = (prodMeta = {}, newMeta = {}) =>
+    metaRows(
+      extract({ meta: { ...meta, ...prodMeta } }),
+      extract({ side: 'new', url: newUrl, meta: { ...meta, ...newMeta } }),
+    );
+
+  it('reads Meta Title, Meta Keywords, Meta Description, Robots, then Canonical', () => {
+    expect(rows().map((row) => row.field)).toEqual([
+      'title',
+      'keywords',
+      'description',
+      'noindex',
+      'canonical',
+    ]);
+  });
+
+  it('shows a lost keywords field on the row, in the state that says so', () => {
+    // Ticket 92: keywords is on 356 of 777 production page-sides and 291 of 764 new ones,
+    // and 54 pages lose it. The row carries the loss; `compareMeta` below is where it is
+    // established that nothing counts it.
+    const [, keywords] = rows({ keywords: 'terrasoverkapping' }, { keywords: null });
+    expect(keywords).toEqual({
+      field: 'keywords',
+      prod: 'terrasoverkapping',
+      new: null,
+      state: 'lost',
+    });
   });
 });

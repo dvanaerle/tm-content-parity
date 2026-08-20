@@ -1,11 +1,16 @@
 /**
- * How a finding class looks. The vocabulary itself is the contract's, never
- * restated here — this file only names the **tone** of each class, and passes the
- * contract's own label through `classInfo()` without holding a word of its own. It
- * said it held "the Dutch label an editor reads" until ticket 03 of the polish pass;
- * it has held no label since the vocabulary took them, and nothing here is Dutch —
- * ADR 0014 says the interface speaks English. The tone's pixels come from `app.css`,
- * which is the one place a colour is defined.
+ * How a finding class looks, and what the interface's own labels are.
+ *
+ * The class vocabulary itself is the contract's, never restated here — this file names the
+ * **tone** of each class and passes the contract's own label through `classInfo()` without
+ * holding a word of its own. It said it held "the Dutch label an editor reads" until ticket
+ * 03 of the polish pass; it has held no *class* label since the vocabulary took them, and
+ * nothing here is Dutch — ADR 0014 says the interface speaks English.
+ *
+ * What it does hold is the two label tables below, for the things that are not classes: the
+ * four checks, and since ticket 98 the five `<head>` fields. Both are here rather than in
+ * the surface that draws them because more than one surface says them. The tone's pixels
+ * come from `app.css`, which is the one place a colour is defined.
  *
  * The tone rule is one rule: a class that is not `work` is grey. Ticket 09 gives it
  * no place in the bar either, so nothing coloured is ever something the editor was
@@ -47,6 +52,28 @@ const TONE = {
   'alt-lost': 'caution',
   'alt-changed': 'caution',
   casing: 'info',
+};
+
+/**
+ * The five `<head>` fields, as an editor reads them (ticket 98).
+ *
+ * They are **not translated**, and that is not an exception to the interface's language.
+ * Each one names the Magento admin field an editor opens in order to fix the value, so it
+ * is an identifier in another system rather than prose — which is why these five would
+ * stay as they are even if a reader reversed ADR 0014.
+ *
+ * `noindex` is the data's name for the field and `Robots` is the tag's, because the tag is
+ * what the editor searches the page source for and what the two cells beside the label
+ * spell out.
+ *
+ * @type {Record<string, string>}
+ */
+export const META_LABEL = {
+  title: 'Meta Title',
+  keywords: 'Meta Keywords',
+  description: 'Meta Description',
+  noindex: 'Robots',
+  canonical: 'Canonical',
 };
 
 /** @type {Record<string, string>} */

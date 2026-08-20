@@ -212,12 +212,23 @@ element any more: it folds the links inside it. Both the word and the rule are g
   difference and never a finding.
 - **Display-only difference** — a difference the log renders but does not count.
   It has no id, no override and no place in a bar, and it is framed so that it
-  cannot be read as actionable. The `<head>` panel is made of these.
+  cannot be read as actionable. **Meta Keywords and Canonical** are made of these: the
+  `<head>` panel was display only whole until ticket 98, and three of its five rows now
+  make findings an editor ticks off. The two that do not are framed by the rule and the
+  note under it, because an absent control is not a statement — without the words, an
+  uncounted row differs from an agreeing row only by a missing control.
 - **Direction** — which side a one-sided difference is missing from. Content
   production has and the new site lost is a defect; content the new site invented
   is usually not. Every one-sided check names the two directions as two classes,
   and hides the invented side. It is a field on the class (`lost` or `added`), so
   the default and the colour both follow from it.
+- **Field name** — the label of a `<head>` row: *Meta Title*, *Meta Keywords*, *Meta
+  Description*, *Robots*, *Canonical*. The five are **not translated**, and not as an
+  exception to the interface's language: each one names the field in the Magento admin an
+  editor opens in order to fix the value, so it is an identifier in another system rather
+  than prose. They would stay as they are if a reader reversed ADR 0014 and the interface
+  spoke Dutch again. They live in `web/src/lib/classes.mjs` beside the check labels,
+  because more than one surface says them.
 - **Regrouped** — the same words on both sides, divided into blocks differently. One
   production block that the new site sends as several, or several that it sends as one.
   The test is **total coverage**, and not containment: one side's block is exactly the
@@ -437,7 +448,9 @@ element any more: it folds the links inside it. Both the word and the rule are g
   removes nothing: the rows around it stay in document order, which is the whole reason
   ADR 0006 keeps the content view whole. A finding id is a term of the text, so a link
   outlives the finding it names, and a page reached by a stale one says so — as does one
-  naming a finding no tab draws, which is the `meta` check: Meta is display only.
+  naming a finding no tab draws, which since ticket 98 is `no-declared-alternate` alone:
+  it is `check: 'meta'` and it is not a row of the `<head>`, so the Meta tab has no row
+  for it. Every head finding lands on that tab like any other.
   The tab and *Show diagnostics* are **borrowed**, each released on its own the
   moment the reader touches that control. Taking one back is not taking the other back:
   switching tabs must not switch off the toggle that was drawing the landed row.
