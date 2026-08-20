@@ -105,9 +105,26 @@ describe('a class label opens a queue over every store', () => {
     unmount();
   });
 
-  it('says which store every result line is on', async () => {
+  it('says which store every result line is on before it is opened', async () => {
     // Every store carries `afhalen`, so a merged list that did not say this would be
-    // ambiguous on every line of it.
+    // ambiguous on every line of it. **On the collapsed line**, which is the one an editor
+    // scans: a store named only inside an expanded difference is four expansions asked for
+    // one word, and the criterion says every result line.
+    const { unmount } = await mount('classes=broken-link');
+
+    // The four groupings the block keying produces, each naming its own stores. Read off the
+    // rows joined rather than in order, because which difference sorts first is not the
+    // question here.
+    const scanned = rows().join(' | ');
+    for (const stores of ['be, nl', 'be_fr, fr', 'de', 'uk']) {
+      expect(scanned).toContain(`on ${stores}`);
+    }
+    unmount();
+  });
+
+  it('says which store each page of an opened result is on', async () => {
+    // The page list inside a difference names them one by one, because a row grouping two
+    // stores says which two and a page says which of them it is.
     const { unmount } = await mount('classes=broken-link');
 
     for (const row of document.querySelectorAll('[data-row="difference"]')) {

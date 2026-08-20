@@ -494,8 +494,8 @@ describe('prepareRows', () => {
     const { classes } = prepareRows({ ...fixture(), filter, showDiagnostics: false });
 
     expect(classes).toEqual([
-      { class: 'copy', rows: 1 },
-      { class: 'text-missing', rows: 1 },
+      { class: 'copy', count: 1 },
+      { class: 'text-missing', count: 1 },
     ]);
   });
 

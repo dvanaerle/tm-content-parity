@@ -174,6 +174,22 @@ const rowOrder = () =>
     trigger.textContent.trim(),
   );
 
+/**
+ * A difference carrying a detail and a matched field, which is the row a search draws: the two
+ * words beside the class label. They are what ticket 03 took out of the trigger along with the
+ * label, and they belong back inside it.
+ */
+const detailed = {
+  ...repeatsInStore([
+    on('nl', 'afhalen', { ...finding('d1', 'oud', 'nieuw'), detail: 'IMAGE-MISSING' }),
+  ])[0],
+  fields: ['page'],
+};
+
+/** The words beside the class label, found by what they say rather than by a hook. */
+const beside = (words) =>
+  [...document.querySelectorAll('li span')].find((span) => span.textContent.trim() === words);
+
 /** The tick in the selection column's header, which is one of the two a difference has. */
 const selectAll = () => document.querySelector('thead [data-slot="checkbox"]');
 
@@ -198,6 +214,52 @@ const barText = () => document.querySelector('[data-slot="bulk-bar"]')?.textCont
 
 afterEach(() => {
   document.body.innerHTML = '';
+});
+
+describe('what opens a difference', () => {
+  /**
+   * The detail and the matched fields are **inside** the trigger (ticket 03, round two).
+   *
+   * Only the class label had to leave it, because only the label is a link. Round one moved
+   * all three out together and paid for one anchor with two dead words: on a searched list the
+   * matched fields are the row's own explanation of why it is there, and a click on them did
+   * nothing at all.
+   */
+  it('opens when the detail beside the class is pressed', () => {
+    const { unmount } = mount({ repeats: [detailed], byFinding: logOver([detailed]) });
+
+    press(beside('IMAGE-MISSING'));
+
+    expect(pageTicks()).toHaveLength(1);
+    unmount();
+  });
+
+  it('opens when the matched fields beside the class are pressed', () => {
+    const { unmount } = mount({ repeats: [detailed], byFinding: logOver([detailed]) });
+
+    press(beside('in the page name'));
+
+    expect(pageTicks()).toHaveLength(1);
+    unmount();
+  });
+
+  /**
+   * And the label itself still does not, because it is a link. An anchor that also toggled the
+   * row would be one press with two verbs, which is the distinction this ticket drew.
+   */
+  it('stays shut when the class label is pressed, because that is a link', () => {
+    const { unmount } = mount({
+      repeats: [detailed],
+      byFinding: logOver([detailed]),
+      classLink: (cls) => `/search/?classes=${cls}`,
+    });
+
+    const label = document.querySelector('a[data-badge="class"]');
+    expect(label.getAttribute('href')).toBe('/search/?classes=copy');
+    expect(label.closest('button')).toBeNull();
+    expect(pageTicks()).toHaveLength(0);
+    unmount();
+  });
 });
 
 describe('the selection on a difference', () => {

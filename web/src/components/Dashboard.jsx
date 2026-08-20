@@ -41,13 +41,14 @@ import { CHROME } from '../lib/palette.mjs';
 import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { cn } from '../lib/utils.js';
 import { NO_EDITOR, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
-import { pageHref, searchHref } from '../lib/page-url.mjs';
+import { pageHref } from '../lib/page-url.mjs';
 import { parseTerm, withScope } from '../lib/search.mjs';
-import { searchForClass, useScreen } from '../lib/screen-url.mjs';
+import { classHref, useScreen } from '../lib/screen-url.mjs';
 import { groupNotChecked } from '../lib/not-checked.mjs';
 import { CANONICAL_VIEWPORT } from '../../../shared/canonical-viewport.mjs';
 import { emptyBuckets } from '../../../overrides/state.mjs';
 import {
+  classCounts,
   pagesWithClasses,
   pagesWithPriorities,
   repeatsInStore,
@@ -154,25 +155,6 @@ export default function Dashboard({
     (linkStore, page, finding = null) => pageHref(linkStore, page, { finding, back: search }),
     [search],
   );
-
-  /**
-   * The class label on a row, as a link to every finding of that class (ticket 03).
-   *
-   * It goes to the screen **above** the stores, and that is the point of the press rather
-   * than a detail of it: *Broken link* is one queue and not six, and an editor pressing it
-   * on an `nl` row is asking about the string and not about `nl`. So no back-query rides
-   * with it — the screen it lands on is not a view of this store, and offering a way back
-   * *into* this dashboard's filters from a screen above it would be the store creeping
-   * upward.
-   *
-   * `searchForClass()` writes the screen and `searchHref()` says where it lives, which is
-   * the same pair `searchForRepeat()` and `storeHref()` are on the page view. A class the
-   * vocabulary does not hold gets no link, which cannot happen from a row.
-   */
-  const classLink = useCallback((cls) => {
-    const screen = searchForClass(cls);
-    return screen && searchHref(screen);
-  }, []);
 
   // One-sided pages are out of the bar from the first day: ticket 20 owns them,
   // and seventy-six undecidable rows would poison the roll-up.
@@ -526,9 +508,7 @@ export default function Dashboard({
               already here. */}
           <div className="flex flex-wrap items-center gap-2">
             <ClassFilterPills
-              counts={Object.entries(totals.byClass)
-                .sort((a, b) => b[1] - a[1])
-                .map(([cls, count]) => ({ class: cls, count }))}
+              counts={classCounts(totals.byClass)}
               selected={classes}
               onToggle={(cls) => patch({ classes: toggleIn(classes, cls) })}
               // The counts stay the store's own — a pill says how much of this kind there
@@ -672,7 +652,7 @@ export default function Dashboard({
               onIncludeClosed={(next) => patch({ includeClosed: next })}
               bulk={bulk}
               link={link}
-              classLink={classLink}
+              classLink={classHref}
             />
           )}
 
@@ -716,7 +696,7 @@ export default function Dashboard({
                 logRead={log.ready}
                 bulk={bulk}
                 link={link}
-                classLink={classLink}
+                classLink={classHref}
                 // What language the two quoted strings on a row are in (ticket 125). The
                 // rows have no store of their own, and a difference that crosses a block
                 // crosses into the other store of one language — so this store answers for

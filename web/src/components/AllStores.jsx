@@ -6,11 +6,11 @@ import SearchBox from './SearchBox.jsx';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx';
 import { classInfo } from '../lib/classes.mjs';
 import { useStoreOverrides } from '../lib/overrides.mjs';
-import { pageHref, searchHref } from '../lib/page-url.mjs';
+import { pageHref } from '../lib/page-url.mjs';
 import { pagesOfIndex } from '../lib/search.mjs';
 import { useSearchIndex } from '../lib/search-index.mjs';
-import { searchForClass, useScreen } from '../lib/screen-url.mjs';
-import { toggleIn } from '../lib/view.mjs';
+import { classHref, useScreen } from '../lib/screen-url.mjs';
+import { classCounts, toggleIn } from '../lib/view.mjs';
 
 /**
  * One search over every store (ticket 03).
@@ -106,9 +106,7 @@ export default function AllStores({ stores = [] }) {
     for (const entry of index?.findings ?? []) {
       byClass[entry.class] = (byClass[entry.class] ?? 0) + 1;
     }
-    return Object.entries(byClass)
-      .sort((a, b) => b[1] - a[1])
-      .map(([cls, count]) => ({ class: cls, count }));
+    return classCounts(byClass);
   }, [index]);
 
   // Nothing asked, nothing drawn. It is the same refusal `searchStore()` makes and it is
@@ -170,10 +168,7 @@ export default function AllStores({ stores = [] }) {
             // A class label on a row lands back on this screen, on that class alone. It is
             // the same gesture the dashboard offers and it is offered here too, because a
             // wide result narrowed to one class is the ordinary next question.
-            classLink={(cls) => {
-              const asks = searchForClass(cls);
-              return asks && searchHref(asks);
-            }}
+            classLink={classHref}
           />
         ) : (
           <Empty className="py-10">

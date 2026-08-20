@@ -181,12 +181,9 @@ describe('the link to a finding’s repeat', () => {
  * makes a class label on a row a list an editor can open.
  */
 describe('the link to a class', () => {
-  it('writes the class and nothing else', () => {
-    // No new parameter: `classes` is already in the contract and already survives a copy, so
-    // a class query is this screen with `classes` set and `query` empty.
-    expect(searchForClass('broken-link')).toBe('classes=broken-link');
-  });
-
+  // No new parameter: `classes` is already in the contract and already survives a copy, so a
+  // class query is this screen with `classes` set and `query` empty. Which is why this asks
+  // what `screenFromSearch()` reads back rather than what the string looks like.
   it('reads back as a class query — the class on, and nothing typed', () => {
     const screen = screenFromSearch(searchForClass('broken-link'));
 

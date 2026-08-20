@@ -644,11 +644,6 @@ const NoRepeats = () => (
 const PAGE_SIZE = 100;
 
 /**
- * What the `×N` mark means on a repeat, which is not what it means on a finding: it
- * counts over the pages, and the row already says how many pages there are. Confusing
- * the two is this ticket's named trap, so the two sentences are written apart.
- */
-/**
  * What language the two quoted strings on a row are in (ticket 125, widened by ticket 03).
  *
  * **The list's, where the list has one.** On a store dashboard the caller answers for every
@@ -667,6 +662,11 @@ const PAGE_SIZE = 100;
  */
 const rowLanguage = (repeat, language) => language ?? STORE_LANGUAGE[repeat.stores[0]] ?? null;
 
+/**
+ * What the `×N` mark means on a repeat, which is not what it means on a finding: it
+ * counts over the pages, and the row already says how many pages there are. Confusing
+ * the two is this ticket's named trap, so the two sentences are written apart.
+ */
 const acrossPagesTitle = (repeat) =>
   `${repeat.occurrences} times in total, on ${repeat.on.length} ` +
   'pages. On some of those pages the difference is there more than once.';
@@ -722,16 +722,17 @@ function Row({ repeat, byFinding, link, classLink, language, acrossStores, searc
 
           {/* **Outside the trigger, because it is a link** (ticket 03). An anchor inside a
               button is neither valid nor clickable — the same trap the tick hit in ticket 138,
-              from the other side — so the class label and the two readings beside it are a
-              sibling of the trigger rather than its first child. What it costs is that the
-              detail and the matched fields no longer expand the row on a click; what it buys
-              is *Broken link* opening every broken link there is.
+              from the other side — so the label is a sibling of the trigger rather than its
+              first child.
+
+              The **label alone** leaves, and the two readings beside it stay inside the
+              trigger below. Round one moved all three out together, which bought one anchor
+              and cost two dead words: on a searched list the matched fields are the row's own
+              account of why it is there, and a click on them did nothing.
 
               `classLink` may be absent, and then this is the plain statement it always was. */}
           <span className="mt-0.5 shrink-0">
             <ClassPill class={repeat.class} href={classLink?.(repeat.class) ?? null} />
-            <Detail detail={repeat.detail} />
-            <MatchedFields fields={repeat.fields} />
           </span>
 
           {/* `data-row` names what this trigger opens, because two kinds of trigger are in
@@ -743,6 +744,13 @@ function Row({ repeat, byFinding, link, classLink, language, acrossStores, searc
             data-row="difference"
             className="flex flex-1 flex-wrap items-start gap-2 text-left"
           >
+            {/* The two readings of the class, which are words and not a way in, so they open
+                the row like the rest of the trigger does. */}
+            <span className="mt-0.5 shrink-0">
+              <Detail detail={repeat.detail} />
+              <MatchedFields fields={repeat.fields} />
+            </span>
+
             {/* The language of the two quoted strings — `rowLanguage()` above holds where it
                 comes from, which is the list's on a store screen and the row's own above the
                 stores. */}
@@ -752,6 +760,18 @@ function Row({ repeat, byFinding, link, classLink, language, acrossStores, searc
               language={rowLanguage(repeat, language)}
               className="min-w-48 flex-1"
             />
+
+            {/* Which stores this difference is on, on the **collapsed** line. `namesStore()`
+                holds when it is said at all, and it is the same call the pages inside make,
+                so a row and its pages cannot disagree about whether the store is worth
+                naming. It says every store of the difference because the row is the whole
+                difference: which of them a single page is on is that page's own answer, in
+                the table below. */}
+            {namesStore(repeat, acrossStores) && (
+              <span className="shrink-0 text-xs text-muted-foreground">
+                on {repeat.stores.join(', ')}
+              </span>
+            )}
 
             <span className="shrink-0 text-right text-xs">
               {/* The page count is the size of the difference. There is no separate

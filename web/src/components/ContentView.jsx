@@ -306,7 +306,7 @@ function Controls({
   return (
     <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
       <ClassFilterPills
-        counts={classes.map(({ class: cls, rows }) => ({ class: cls, count: rows }))}
+        counts={classes}
         selected={filter.classes}
         onToggle={(cls) => setFilter(toggleClass(filter, cls))}
         hint={(_cls, count) => `${count} rows in this class. The counts above do not change.`}

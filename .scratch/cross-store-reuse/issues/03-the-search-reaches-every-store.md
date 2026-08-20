@@ -87,10 +87,19 @@ Four things a reader should not have to rediscover:
   pages hold the term in their name are the **page list's** answers, and a clean page is in no
   index. A scope still narrows above the stores; the four kinds of nothing are not classified
   there.
-- **The class label is a link and it left the trigger.** An anchor inside a button is neither
-  valid nor clickable — the trap ticket 138 hit from the other side — so the label and the two
-  readings beside it are now a sibling of the row's `CollapsibleTrigger`, which is marked
-  `data-row="difference"` so the two kinds of trigger in the list are told apart by name.
+- **The class label is a link and it left the trigger — and only the label.** An anchor inside
+  a button is neither valid nor clickable — the trap ticket 138 hit from the other side — so the
+  label is now a sibling of the row's `CollapsibleTrigger`, which is marked
+  `data-row="difference"` so the two kinds of trigger in the list are told apart by name. Round
+  one moved the detail and the matched fields out with it, which bought one anchor and cost two
+  dead words: on a searched list the matched fields are the row's own account of why it is
+  there, and a click on them opened nothing. They are back inside the trigger.
+
+- **The store is named on the collapsed row, not only inside it.** The store was on the pages of
+  an expanded difference and nowhere else, which made *every result line says which store it is
+  on* four expansions asked for one word. `namesStore()` now decides for the row as well as for
+  its pages, so the two cannot disagree, and the row names every store of the difference while a
+  page names its own.
 - **The screen presses nothing.** `bulk` is withheld rather than switched off: there is nothing
   there to press with, so `Repeats` draws no tick, no select-all and no bar. The scope
   suggestions are also absent, because a scope is a substring of a page key and the keys are a

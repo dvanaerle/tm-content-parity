@@ -133,7 +133,7 @@ export const allDiagnostic = ({ count, noun }) =>
  * @param {{ production: ContentUnit[], new: ContentUnit[] }} input.elements
  * @param {ContentFilter} input.filter
  * @param {boolean} input.showDiagnostics   The ledger's toggle: the classes it does not show.
- * @returns {{ rows: ContentRow[], total: number, classes: { class: string, rows: number }[] }}
+ * @returns {{ rows: ContentRow[], total: number, classes: { class: string, count: number }[] }}
  *   `total` counts the rows the page has under the diagnostics control, so the interface can
  *   say *42 of 310 rows*. It is a row count and never a finding count.
  */
@@ -191,7 +191,7 @@ export function prepareRows({ rows, findings, elements, filter, showDiagnostics 
     // nothing is narrowed, and it is not a count: `total` is still the only number.
     all: onThePage,
     total: onThePage.length,
-    classes: classCounts(onThePage),
+    classes: classesOnThePage(onThePage),
   };
 }
 
@@ -245,16 +245,38 @@ function matches(row, filter) {
   return filter.classes.length === 0 || filter.classes.includes(row.class);
 }
 
+/**
+ * A tally of classes, in the order the pills are drawn: the biggest first, and ties by name.
+ *
+ * The **tie-break is why this is one function** and was three. The content view sorted by
+ * count and then by name; the two dashboards sorted by count alone and left equal counts in
+ * whatever order the tally was built in — so two pills carrying the same number could swap
+ * places between one store and the next, and between one render and the next. A pill strip
+ * an editor cannot learn the shape of is a strip they read from scratch every time.
+ *
+ * It takes the **tally** and not the items, because what is being counted is genuinely
+ * different at each caller: a record already summed off the page summaries, the flat entries
+ * of a search index, the rows of one page. Counting those is three loops and no duplication;
+ * ordering them is one rule.
+ *
+ * @param {Record<string, number> | Map<string, number>} tally
+ * @returns {{ class: string, count: number }[]}
+ */
+export function classCounts(tally) {
+  const entries = tally instanceof Map ? [...tally] : Object.entries(tally);
+  return entries
+    .map(([cls, count]) => ({ class: cls, count }))
+    .sort((a, b) => b.count - a.count || a.class.localeCompare(b.class));
+}
+
 /** @param {ContentRow[]} rows */
-function classCounts(rows) {
+function classesOnThePage(rows) {
   /** @type {Map<string, number>} */
   const counts = new Map();
   for (const row of rows) {
     if (row.class) counts.set(row.class, (counts.get(row.class) ?? 0) + 1);
   }
-  return [...counts]
-    .map(([cls, count]) => ({ class: cls, rows: count }))
-    .sort((a, b) => b.rows - a.rows || a.class.localeCompare(b.class));
+  return classCounts(counts);
 }
 
 /**

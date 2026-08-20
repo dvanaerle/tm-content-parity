@@ -21,6 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // The closed vocabulary, to refuse a class name that is not in it. The import site is
 // `vocabulary.mjs` for the reason `classes.mjs` states.
 import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
+import { searchHref } from './page-url.mjs';
 // The other closed list, for the same reason: ticket 83's priority filter is a control on
 // this screen, and a link can name a word the list does not hold.
 import { isPriority } from '../../../shared/priorities.mjs';
@@ -173,6 +174,29 @@ export function searchForClass(cls) {
   if (!FINDING_CLASSES[cls]) return null;
 
   return searchFromScreen({ ...SCREEN, classes: [cls] });
+}
+
+/**
+ * Where a class label goes: the class's own screen, at the address that screen lives at.
+ *
+ * The pair was written out at both callers and it is one gesture, so it is one function. A
+ * class label on an `nl` dashboard row and the same label on the all-stores screen must land
+ * on the same URL — they are the same press — and two copies of `searchForClass()` handed to
+ * `searchHref()` are two places for that to stop being true.
+ *
+ * No back-query rides with it, and that is the point of the press rather than a detail of
+ * it: *Broken link* is one queue and not six, so an editor pressing it on an `nl` row is
+ * asking about the string and not about `nl`. A way back *into* a store's filters, from a
+ * screen above the stores, would be the store creeping upward.
+ *
+ * @param {string} cls
+ * @returns {string | null} `null` for a class the vocabulary does not hold, which is
+ *   `searchForClass()`'s rule and not a second one: a row cannot produce one.
+ */
+export function classHref(cls) {
+  const screen = searchForClass(cls);
+
+  return screen && searchHref(screen);
 }
 
 /**
