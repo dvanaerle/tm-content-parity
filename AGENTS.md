@@ -17,3 +17,7 @@ Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agent
 ## Coding standards
 
 Testing, interface design and **comments** — a comment answers what the code cannot, and Fowler's *Comments* smell applies. Read before writing or reviewing code: `docs/standards/CODING_STANDARDS.md`.
+
+## Skills
+
+When implementing or changing behavior, use the /tdd skill.
