@@ -111,6 +111,15 @@ a single page — and the row names it apart, only when it exceeds the page coun
 
 The list is worst-first **by pages**, which is worst-first by findings.
 
+**Superseded as an ordering rule — 2026-08-20, ticket
+141.** The proof above stands: a repeat's page count *is* its total finding count. What it
+does not reach is the log. Once some of those findings are closed, "worst" is what is
+**left** and not what a repeat holds — twenty closed pages and two open is still
+twenty-two. [141](141-a-difference-is-ordered-by-what-is-left.md) orders the list on the
+open count for that reason, keeping this order as the fallback where two rows have equally
+much left. The row still states its size in pages, and it still prints no second finding
+count.
+
 ### Measured — and ticket 76's table is superseded, not restated
 
 Ticket 76 was open at the time and its numbers describe **448 reports** — it has since

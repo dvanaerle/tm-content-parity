@@ -263,6 +263,10 @@ export default function Search({
           key={`${term}|${includeClosed}|${classes.join(',')}`}
           repeats={result.repeats}
           byFinding={byFinding}
+          // The rows are worst-first on what is left in each difference (ticket 141), and
+          // that reading waits for the log: until it has answered, `byFinding` says every
+          // finding is open. It is the same `read` the notes half below is drawn on.
+          logRead={read.ready}
           bulk={bulk}
           link={link}
           searched

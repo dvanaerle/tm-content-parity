@@ -12,6 +12,7 @@ import {
   pagesWithPriorities,
   groupRepeatsByClass,
   prepareRows,
+  repeatsByOpenWork,
   repeatsInStore,
   repeatsWithClasses,
   rowKeyFromHash,
@@ -1152,7 +1153,7 @@ describe('repeatsInStore', () => {
     ]);
   });
 
-  it('is worst-first by the number of pages', () => {
+  it('is largest-first by the number of pages, which is the order it can see', () => {
     const repeats = repeatsInStore([
       page('nl', 'a', [finding('a1', { prod: 'Zelden' }), finding('a2', { prod: 'Vaak' })]),
       page('nl', 'b', [finding('b1', { prod: 'Vaak' })]),
@@ -1226,6 +1227,61 @@ describe('repeatsWithClasses', () => {
 });
 
 /**
+ * Ticket 141. The list leads with the difference holding the most work **left**.
+ *
+ * Ticket 81 proved that a repeat's page count is its finding count, and ordered on pages
+ * for that reason. The proof is about **total** findings and stops holding the moment the
+ * log closes some of them: twenty closed pages and two open is still twenty-two. So the
+ * order is taken on the open count instead, which is user story 33 of ticket 29 — *the
+ * worst page is the worst remaining page* — applied to the list ticket 81 built.
+ */
+describe('repeatsByOpenWork', () => {
+  const repeat = (key, pages) => ({ key, on: Array(pages).fill({}) });
+
+  it('leads with the difference holding the most open findings, not the most pages', () => {
+    const footer = repeat('footer', 30);
+    const price = repeat('price', 5);
+    const open = new Map([
+      [footer, 2],
+      [price, 5],
+    ]);
+
+    expect(repeatsByOpenWork([footer, price], (row) => open.get(row))).toEqual([price, footer]);
+  });
+
+  it('sinks a difference with nothing left below every difference with work left', () => {
+    const settled = repeat('settled', 30);
+    const one = repeat('one', 1);
+    const open = new Map([
+      [settled, 0],
+      [one, 1],
+    ]);
+
+    expect(repeatsByOpenWork([settled, one], (row) => open.get(row))).toEqual([one, settled]);
+  });
+
+  it('falls back to the page count and then to the key, so two renders never disagree', () => {
+    // Equal open counts is the common case rather than the corner: a store where nothing is
+    // decided yet has every row equal on this term. The fallback is ticket 81's order, so
+    // an undecided list arrives exactly as it did before this ticket.
+    const wide = repeat('a-wide', 9);
+    const narrow = repeat('z-narrow', 2);
+    const twin = repeat('a-twin', 2);
+
+    expect(repeatsByOpenWork([narrow, twin, wide], () => 1)).toEqual([wide, twin, narrow]);
+  });
+
+  it('narrows nothing: a settled difference stays on the list it was given', () => {
+    // The backlog is not drained — ticket 81's own progress-language criterion. A
+    // difference settled on all thirty pages stays on screen reading *30 of 30 closed*;
+    // it only stops leading.
+    const repeats = [repeat('a', 3), repeat('b', 1)];
+
+    expect(repeatsByOpenWork(repeats, () => 0)).toHaveLength(2);
+  });
+});
+
+/**
  * Ticket 100. The repeat list arrives in a **class group** for each class, so an editor
  * meets six or so numbers instead of one undifferentiated column, and chooses which kind
  * of difference to work through.
@@ -1263,10 +1319,11 @@ describe('groupRepeatsByClass', () => {
     expect(order.indexOf('copy')).toBeLessThan(order.indexOf('casing'));
   });
 
-  it('keeps the worst-first order inside a group exactly as it was given', () => {
-    // The list is already sorted worst-first, so this ticket changes nothing about which
-    // work is on top — only how much of it arrives at once. A group is a slice of today's
-    // ungrouped list and never a second opinion about its order.
+  it('keeps the order inside a group exactly as it was given', () => {
+    // The list arrives sorted, so this ticket changes nothing about which work is on top —
+    // only how much of it arrives at once. A group is a slice of the ungrouped list and
+    // never a second opinion about its order, which since ticket 141 is worst-first on
+    // what is left and is taken where the log is in scope.
     const finding = (id, prod) => ({
       id,
       class: 'copy',

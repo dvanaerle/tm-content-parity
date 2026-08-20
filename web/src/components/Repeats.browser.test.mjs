@@ -2,7 +2,7 @@ import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { userEvent } from '@vitest/browser/context';
 import { afterEach, describe, expect, it } from 'vitest';
-import Repeats from './Repeats.jsx';
+import Repeats, { ClassGroups } from './Repeats.jsx';
 import { appendEach } from '../../../overrides/bulk.mjs';
 import { repeatsInStore } from '../lib/view.mjs';
 
@@ -78,6 +78,17 @@ const derived = (id, extra = {}) => {
 const byFinding = (overrides = {}) =>
   new Map(repeat.on.map((entry) => [entry.id, derived(entry.id, overrides[entry.id] ?? {})]));
 
+/** The same, over several differences: the log the dashboard hands a whole list. */
+const logOver = (repeats, overrides = {}) =>
+  new Map(
+    repeats.flatMap((one) =>
+      one.on.map((entry) => [entry.id, derived(entry.id, overrides[entry.id] ?? {})]),
+    ),
+  );
+
+/** Closed, in the words the bar counts in the numerator. */
+const closed = { state: 'dismissed' };
+
 /**
  * The `bulk` bag the dashboard hands down, with a spy where the log is. `written` is what
  * `appendMany()` answers, so the component's own report reads a success.
@@ -111,18 +122,24 @@ function mount(props = {}) {
   document.body.append(host);
   const root = createRoot(host);
   const bulk = props.bulk ?? bulkBag();
-  act(() =>
-    root.render(
-      createElement(Repeats, {
-        repeats: [repeat],
-        byFinding: byFinding(),
-        bulk,
-        link: (store, page) => `/${store}/${page}/`,
-        ...props,
-      }),
-    ),
-  );
-  return { bulk, unmount: () => act(() => root.unmount()) };
+  const render = (over = {}) =>
+    act(() =>
+      root.render(
+        createElement(props.component ?? Repeats, {
+          repeats: [repeat],
+          byFinding: byFinding(),
+          logRead: true,
+          bulk,
+          link: (store, page) => `/${store}/${page}/`,
+          ...props,
+          ...over,
+        }),
+      ),
+    );
+  render();
+  // `rerender` is a **decision landing under the editor**, which is the only way a mounted
+  // list's log changes: the dashboard rebuilds `byFinding` and hands the new one down.
+  return { bulk, rerender: render, unmount: () => act(() => root.unmount()) };
 }
 
 /** Every button whose words start with these, which is how the two presses are found. */
@@ -147,6 +164,14 @@ const type = (value) => userEvent.fill(document.querySelector('[data-slot="input
 
 /** The row that opens the difference, which is the whole row again since round two. */
 const differenceRow = () => document.querySelector('[data-slot="collapsible-trigger"]');
+
+/** Every difference row's words, top-down, which is the order an editor reads. */
+const rowOrder = () =>
+  [...document.querySelectorAll('[data-slot="collapsible-trigger"]')]
+    // A difference row is the trigger with the row's own tick beside it. A class group's
+    // trigger has no tick, and `ClassGroups` draws both kinds.
+    .filter((trigger) => trigger.previousElementSibling?.querySelector('[data-slot="checkbox"]'))
+    .map((trigger) => trigger.textContent.trim());
 
 /** The tick in the selection column's header, which is one of the two a difference has. */
 const selectAll = () => document.querySelector('thead [data-slot="checkbox"]');
@@ -709,6 +734,84 @@ describe('the selection on a difference', () => {
  * two presses read a field the derivation gained, and a shape that is right in a unit test
  * and wrong in a render is exactly the failure ticket 31 shipped.
  */
+/**
+ * Ticket 141. The list leads with the difference holding the most work **left**.
+ *
+ * It cannot be answered in `view.mjs`: `repeatsInStore()` is a pure derivation over the
+ * page summaries and never sees the override log, so the open count exists only here,
+ * where the row already reads its own bar. That is why this is a mounted test and not a
+ * second unit test beside `repeatsByOpenWork()`.
+ */
+describe('the order of the list', () => {
+  const both = [repeat, other];
+
+  it('leads with the difference holding the most open findings, not the most pages', () => {
+    const { unmount } = mount({
+      repeats: both,
+      byFinding: logOver(both, { f1: closed, f2: closed, f3: closed }),
+    });
+
+    // Three pages against one, and nothing left in the three: the one-page difference is
+    // the work, so it is on top. Nothing is removed — the settled row is still below it.
+    expect(rowOrder()[0]).toContain('links');
+    unmount();
+  });
+
+  it('leaves an undecided list in the order it was given', () => {
+    const { unmount } = mount({ repeats: both, byFinding: logOver(both) });
+
+    expect(rowOrder()[0]).toContain('oud');
+    unmount();
+  });
+
+  it('does not move a row under the editor working in it', () => {
+    // The order is taken when the list arrives and held. An editor who closes the three
+    // pages of the difference they are inside must not have it seat itself elsewhere while
+    // they are reading it — the row's own count is what says the work landed.
+    const { rerender, unmount } = mount({ repeats: both, byFinding: logOver(both) });
+
+    rerender({ byFinding: logOver(both, { f1: closed, f2: closed, f3: closed }) });
+
+    expect(rowOrder()[0]).toContain('oud');
+    expect(rowOrder()[0]).toContain('3 of 3 closed');
+    unmount();
+  });
+
+  it('takes the order when the log arrives, and not from the paint before it', () => {
+    // `byFinding` reports every finding **open** until the log has been read — the events
+    // start as `null` and the derivation runs over an empty list — and the dashboard mounts
+    // this list on that first paint. An order held from there is ticket 81's order for the
+    // life of the list, which is this ticket built and inert.
+    const { rerender, unmount } = mount({
+      repeats: both,
+      byFinding: logOver(both),
+      logRead: false,
+    });
+
+    rerender({
+      logRead: true,
+      byFinding: logOver(both, { f1: closed, f2: closed, f3: closed }),
+    });
+
+    expect(rowOrder()[0]).toContain('links');
+    unmount();
+  });
+
+  it('orders the rows inside a class group the same way', () => {
+    const { unmount } = mount({
+      component: ClassGroups,
+      repeats: both,
+      classes: [],
+      byFinding: logOver(both, { f1: closed, f2: closed, f3: closed }),
+    });
+
+    // The lone group opens on load, so its rows are on screen. The **groups** keep the
+    // vocabulary order they have; this is about the rows inside one.
+    expect(rowOrder()[0]).toContain('links');
+    unmount();
+  });
+});
+
 describe('a difference that spans a language block', () => {
   const across = () => ({
     repeats: [acrossBlock],

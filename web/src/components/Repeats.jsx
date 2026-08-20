@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { barOf } from '../../../overrides/state.mjs';
 import { Detail, Occurrences, onePageTitle } from './Annotations.jsx';
 import BulkControl from './BulkControl.jsx';
@@ -21,7 +21,7 @@ import {
 } from './ui/table.jsx';
 import { CHROME } from '../lib/palette.mjs';
 import { cn } from '../lib/utils.js';
-import { crossesBlock, findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
+import { crossesBlock, findingsIn, groupRepeatsByClass, repeatsByOpenWork } from '../lib/view.mjs';
 
 /**
  * A store's work listed as differences rather than as pages (ticket 81).
@@ -50,15 +50,18 @@ import { crossesBlock, findingsIn, groupRepeatsByClass } from '../lib/view.mjs';
 export default function Repeats({
   repeats,
   byFinding,
+  logRead,
   bulk,
   link,
   searched = false,
   builtAt = null,
 }) {
+  const worstFirst = useWorstFirst(repeats, byFinding, logRead);
+
   if (repeats.length === 0) return <NoRepeats />;
 
   return (
-    <FlatSelection repeats={repeats} byFinding={byFinding} bulk={bulk} builtAt={builtAt}>
+    <FlatSelection repeats={worstFirst} byFinding={byFinding} bulk={bulk} builtAt={builtAt}>
       {/* The control that ticks the whole result, and the **only** place the condition for
           offering it is stated (ticket 138, ADR 0022).
 
@@ -69,12 +72,87 @@ export default function Repeats({
           to be about. A term, a page scope or a class pill is one; the bare *Repeats* list is
           every difference in the store and no proposition anyone made, so `ClassGroups` below
           offers nothing of the kind. */}
-      {searched && <SelectResult repeats={repeats} />}
-      <RowList repeats={repeats} byFinding={byFinding} link={link} searched={searched} />
-      <Total repeats={repeats} />
+      {searched && <SelectResult repeats={worstFirst} />}
+      <RowList repeats={worstFirst} byFinding={byFinding} link={link} searched={searched} />
+      <Total repeats={worstFirst} />
     </FlatSelection>
   );
 }
+
+/**
+ * A difference's bar: the same rules the page bar obeys, over this difference's findings.
+ *
+ * Nothing leaves the denominator, a dismissal enters the numerator, and a contradicted
+ * claim reads as open. The lookup cannot miss — `byFinding` is derived from the same store
+ * summaries the repeats are — and it is **left to throw** rather than skipping a missing
+ * one: a skipped member would quietly lower the denominator, so the row would say *3 of 3
+ * closed* about four findings, and since ticket 141 it would quietly move the row as well.
+ */
+const barFor = (repeat, stateOf) => barOf(repeat.on.map((entry) => stateOf(entry.id)));
+
+/**
+ * The list **worst-first**, which is the difference with the most work left on top
+ * (ticket 141).
+ *
+ * The order is taken **here** and not in `repeatsInStore()`, because it is the log that
+ * decides it: that derivation is pure over the page summaries and the closed count is
+ * `barOf()` over the log, read one row down. This is the layer where both are in scope, so
+ * a row's position and the *N of N closed* it prints come off one reading of one bar.
+ *
+ * **A row does not move under the editor working in it.** The reading is taken when the
+ * list arrives and held, so closing findings inside an expanded difference re-counts that
+ * row's number and re-seats nothing — a held position, never a stale count. It is re-taken
+ * when the list itself changes: the pills on the dashboard, and the term, the scope, the
+ * pills or *Include closed* in a search, which each hand this component a different set of
+ * differences.
+ *
+ * **It waits for the log.** `byFinding` reports every finding open until the log has been
+ * read — the events start as `null` and the derivation runs over an empty list — and the
+ * dashboard mounts this list on that first paint. A reading held from there would be an
+ * all-open one, so the order would be ticket 81's for the life of the list and this would
+ * be a ticket built and inert.
+ *
+ * A finding the list did not hold when the reading was taken — a block sibling's pages land
+ * in a second fetch — is read from the log as it is now, because there is no earlier
+ * reading of it to hold.
+ *
+ * @param {import('../lib/view.mjs').Repeat[]} repeats
+ * @param {Map<string, object>} byFinding
+ * @param {boolean} logRead  Whether the log has answered. Until it has, there is no reading
+ *                           of it worth holding.
+ */
+function useWorstFirst(repeats, byFinding, logRead) {
+  const [held, setHeld] = useState(/** @type {null | { rows: object[], log: Map }} */ (null));
+
+  useEffect(() => {
+    if (logRead && !sameRows(held?.rows, repeats)) setHeld({ rows: repeats, log: byFinding });
+  }, [logRead, repeats, byFinding, held]);
+
+  const asArrived = held?.log ?? byFinding;
+
+  return useMemo(
+    // `byFinding` is deliberately out of the dependencies: it changes on every decision an
+    // editor makes, and re-taking the order on those is exactly the row moving out from
+    // under them. It is still read for a finding the held reading does not know.
+    () =>
+      repeatsByOpenWork(
+        repeats,
+        (repeat) => barFor(repeat, (id) => asArrived.get(id) ?? byFinding.get(id)).open,
+      ),
+    [repeats, asArrived],
+  );
+}
+
+/**
+ * Whether a new list holds the same differences as the one the order was taken over.
+ *
+ * The array's identity is not the question: a search re-derives its result on every
+ * decision, so it hands over a new array of the same rows, and re-taking the order on that
+ * is the row moving under the editor. What the rows **are** is the question, and the two
+ * lists arrive in the same derived order, so they are compared where they stand.
+ */
+const sameRows = (rows, repeats) =>
+  rows?.length === repeats.length && rows.every((row, at) => row.key === repeats[at].key);
 
 /**
  * The ticked pages: **one flat set of findings over the whole list** (ticket 138).
@@ -322,8 +400,9 @@ const SELECT_RESULT_TITLE =
  * (ticket 102) and grouped by the term: the term is the grouping the editor asked for, and
  * grouping it by class as well would be a second grouping over one answer.
  */
-export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
-  const groups = useMemo(() => groupRepeatsByClass(repeats, classes), [repeats, classes]);
+export function ClassGroups({ repeats, classes, byFinding, logRead, bulk, link }) {
+  const worstFirst = useWorstFirst(repeats, byFinding, logRead);
+  const groups = useMemo(() => groupRepeatsByClass(worstFirst, classes), [worstFirst, classes]);
 
   // Which groups are open. The initial state is the derivation's `opensOnLoad`: closed,
   // unless a group is the only one holding anything or the pills already chose it.
@@ -350,7 +429,7 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
     // No `SelectResult` here — see the gate on it above, which is where that rule is
     // written. The selection itself is the same flat one: ticks made in two groups are one
     // selection, and one bar says so.
-    <FlatSelection repeats={repeats} byFinding={byFinding} bulk={bulk}>
+    <FlatSelection repeats={worstFirst} byFinding={byFinding} bulk={bulk}>
       <ul>
         {groups.map((group) => (
           <ClassGroupRow
@@ -365,7 +444,7 @@ export function ClassGroups({ repeats, classes, byFinding, bulk, link }) {
           />
         ))}
       </ul>
-      <Total repeats={repeats} />
+      <Total repeats={worstFirst} />
     </FlatSelection>
   );
 }
@@ -506,15 +585,9 @@ function Row({ repeat, byFinding, link, searched }) {
    * ticks made in another difference coexist. This row does not own them and cannot put
    * them down, and it does not broker them either: each tick reads the selection itself.
    */
-  // The same rules the page bar obeys, over this difference's findings: nothing leaves
-  // the denominator, a dismissal enters the numerator, and a contradicted claim reads
-  // as open.
-  //
-  // The lookup cannot miss: `byFinding` is derived from the same store summaries the
-  // repeats are, so every id here is in it. It is left to throw rather than to skip a
-  // missing one, because a skipped member would quietly lower the denominator and the
-  // row would then say *3 of 3 closed* about four findings.
-  const bar = barOf(repeat.on.map((entry) => byFinding.get(entry.id)));
+  // Live, and the row's own number: the order above holds this row's **position** and
+  // never its count.
+  const bar = barFor(repeat, (id) => byFinding.get(id));
 
   // The tone is worn only when something is closed. A row with nothing done reads as a plain
   // muted number, so a zero carries no colour at all.

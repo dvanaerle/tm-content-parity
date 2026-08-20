@@ -567,6 +567,10 @@ export default function Dashboard({
                 // A native select works without JavaScript and this one does not. Nothing is
                 // lost: the control and its state already live inside a `client:load` island,
                 // so the sort was inert without JavaScript before this swap as well.
+                //
+                // It belongs to the **page list**, because it narrows pages, and there is no
+                // second one over *Repeats*: that list is worst-first on what is left in each
+                // difference and has no order to choose between (ticket 141).
                 <Select
                   value={sort}
                   onValueChange={(next) => patch({ sort: next })}
@@ -683,6 +687,11 @@ export default function Dashboard({
                 // An index built here off this store's pages would read the sibling's decided
                 // findings as `open` and offer a press that overwrites a colleague.
                 byFinding={log.byFinding}
+                // Whether the log has answered. The order of this list is worst-first on
+                // what is **left** in each difference (ticket 141), and until the events
+                // have arrived `byFinding` says every finding is open — so the order waits
+                // for this rather than holding a reading in which nothing is decided.
+                logRead={log.ready}
                 bulk={bulk}
                 link={link}
               />

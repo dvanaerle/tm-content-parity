@@ -816,9 +816,66 @@ export function repeatsInStore(pages) {
     stores: storesOf(repeat.on),
   }));
 
-  // Worst-first, which here is the repeat on the most pages. The tie-break is the
-  // key, so two repeats of equal size never swap places between two renders.
-  return repeats.sort((a, b) => b.on.length - a.on.length || a.key.localeCompare(b.key));
+  // It is **size** and not worst-first: this derivation never sees the override log, so it
+  // cannot know what is left in a row. `repeatsByOpenWork()` below takes the order an
+  // editor reads, off the same bar the row prints, and falls back to this one where two
+  // rows have equally much left (ticket 141).
+  return repeats.sort(bySize);
+}
+
+/**
+ * The largest difference first, with the key as the last word so two renders of one list
+ * never disagree. Ticket 81's whole order, and the fallback of ticket 141's.
+ *
+ * It lives in one place because two spellings of it could drift, and a list whose two
+ * orders disagree about a tie is a list that re-seats a row for no reason an editor can see.
+ *
+ * @param {Repeat} a
+ * @param {Repeat} b
+ */
+const bySize = (a, b) => b.on.length - a.on.length || a.key.localeCompare(b.key);
+
+/**
+ * The repeat list **worst-first**, which is the difference with the most work left in it
+ * (ticket 141).
+ *
+ * User story 33 of ticket 29 — *the worst page is the worst remaining page and not the
+ * worst page of last week* — over the list ticket 81 built. That story says *page* because
+ * it predates this list; 81 added the list afterwards and the rule never followed it across.
+ *
+ * It does not overturn 81's proof that a repeat's page count **is** its finding count: that
+ * proof is about the findings a repeat *holds*, `page` being a term of the finding id, and
+ * it holds. It says nothing about how many of them are still open, which is what an editor
+ * reading top-down is looking for — twenty closed pages and two open is still twenty-two.
+ *
+ * So the open count is asked for rather than derived here: this module never sees the
+ * override log, and the caller that draws a row already reads that row's bar. Handing the
+ * same reading in is what keeps a row's position and its *N of N closed* from being two
+ * counts of one thing.
+ *
+ * Nothing is removed and no number moves. A difference settled on all thirty pages stays
+ * on the list reading *30 of 30 closed*; it sinks below every difference with work left.
+ *
+ * This is about **rows**. `groupRepeatsByClass()` refuses a count-based order for the
+ * **groups** — a group that moves as the work is done is a group nobody can learn where to
+ * look for — and that refusal stands: a group is a place on the screen and a row is the
+ * work in it.
+ *
+ * @param {Repeat[]} repeats
+ * @param {(repeat: Repeat) => number} openOf  How many of the repeat's findings are still
+ *                                             open, off the bar the row prints.
+ * @returns {Repeat[]}
+ */
+export function repeatsByOpenWork(repeats, openOf) {
+  // Counted once per row and not inside the comparator, which would read the log O(n log n)
+  // times over a 25,657-row list.
+  const seats = repeats.map((repeat) => ({ repeat, open: openOf(repeat) }));
+
+  // The fallback is ticket 81's whole order, so a list where nothing is decided arrives
+  // exactly as it did before this ticket — and two renders of one list cannot disagree.
+  seats.sort((a, b) => b.open - a.open || bySize(a.repeat, b.repeat));
+
+  return seats.map((seat) => seat.repeat);
 }
 
 /**
@@ -859,8 +916,8 @@ export const findingsIn = (repeats) => repeats.reduce((sum, repeat) => sum + rep
  *
  * One wall of rows asks an editor to read it before it says anything. Six or so numbers,
  * one for each kind of difference, is a choice instead: *which kind do I work through*.
- * It changes nothing about which work is on top — the rows in a group are the rows
- * `repeatsInStore()` returned, in its worst-first order.
+ * It changes nothing about which work is on top — the rows in a group arrive in the order
+ * they were given, which is `repeatsByOpenWork()`'s worst-first since ticket 141.
  *
  * The word is **group** and never *section*: `CONTEXT.md` spends "section" on a run of one
  * page under an anchor heading, and one word with two meanings is what that glossary exists

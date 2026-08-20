@@ -201,6 +201,10 @@ element any more: it folds the links inside it. Both the word and the rule are g
   doubled figure this list exists to stop. **Occurrences** is the number that does
   differ, and it is a different question: the same difference more than once on a
   single page.
+  The order of the list is **not** taken on that number: since ticket 141 it is taken on
+  how many of the repeat's findings are still **open**, which is the one place the page
+  count and the finding count come apart — 81's proof is about the findings a repeat holds
+  and says nothing about how many are left.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
   `heading-level` or a `tag-changed` finding, `p + p → p` or `p → 4×p` on a `regrouped` one,
   and null on every other class. It is
@@ -459,7 +463,15 @@ element any more: it folds the links inside it. Both the word and the rule are g
   all-stores dashboard: a store is the unit an editor is responsible for.
   It holds **two views over one derivation**, and one filter serves both.
   **Repeats** (~~*Verschillen*~~, 2026-08-13) is the store's repeats in **class groups**,
-  worst-first by pages inside each one, and it answers *what do I decide next*; opening a
+  worst-first by **open findings** inside each one — ~~worst-first by pages~~, amended
+  2026-08-20, ticket 141: the two are the same number until the log closes some of them,
+  and a difference settled on thirty pages led the list over a price sentence open on
+  five. A difference with nothing left sinks below every difference with work left,
+  whatever its size, and nothing is removed: the settled row stays on screen reading
+  *30 of 30 closed*. Equal open counts fall back to the page count and then to the key,
+  and a row's **position is held** while the editor works in it — it is re-taken when the
+  list holds different differences, never when a decision lands, and it waits for the log to
+  have answered, because an unread log reports every finding open. It answers *what do I decide next*; opening a
   row lists its pages, and a page name opens the whole content view for that page and
   never a fragment of it. The Dutch label named the wider word: a **difference** is wider
   than a finding and the view lists **repeats**, so this is a correction and not a
@@ -485,7 +497,9 @@ element any more: it folds the links inside it. Both the word and the rule are g
 - **Class group** — the repeats of one class in *Repeats*, under a label carrying
   the class and how many repeats it holds. The groups are in the vocabulary's order
   and never in the counts' order, because a group that moves position as the work is
-  done is a group nobody can learn where to look for. A `work` class with no repeats is
+  done is a group nobody can learn where to look for. That refusal is about **groups**:
+  the **rows** inside one are worst-first by open findings like every other repeat row
+  (ticket 141), and they have moved as work is decided since the page list had a sort. A `work` class with no repeats is
   a group that says so: "nothing wrong here" and "this class does not exist" are two
   different answers. **Opening a group is not a filter**: it changes what is drawn and
   never what is included, so it is session state, it never enters the amber strip and

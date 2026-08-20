@@ -78,10 +78,9 @@ const pages = [
  */
 const byFindingOver = (...entries) =>
   new Map(
-    entries.flat().map((one) => [
-      one.id,
-      { id: one.id, state: 'open', visibility: 'work', class: one.class },
-    ]),
+    entries
+      .flat()
+      .map((one) => [one.id, { id: one.id, state: 'open', visibility: 'work', class: one.class }]),
   );
 
 const byFinding = byFindingOver(index.findings);
@@ -531,7 +530,9 @@ describe('what a scoped search says when it finds nothing', () => {
   it('says a scope that reaches no page at all is a typo, not an empty page', async () => {
     const { unmount } = await mount({ term: '/dwonloads', pages: store });
 
-    expect(document.body.textContent).toContain('No page the search reaches has dwonloads in its key');
+    expect(document.body.textContent).toContain(
+      'No page the search reaches has dwonloads in its key',
+    );
     unmount();
   });
 
@@ -585,6 +586,82 @@ describe('what a scoped search says when it finds nothing', () => {
  * screen* in a state nobody can reach by hand — `search.mjs` names the three states and
  * this is where the block that reads them lives.
  */
+/**
+ * Ticket 141. A search result is ordered by what is **left** in each difference, and in the
+ * default search that is the order it always had.
+ *
+ * `searchStore()` drops any finding that is not active unless *Include closed* is on, so a
+ * fully-closed difference is already absent from a result and a partly-closed one arrives
+ * smaller. Every surviving row is therefore open on every page, the open count equals the
+ * page count, and the new rule agrees with the old one row for row. That is the case worth
+ * pinning rather than working around: the two places the reorder bites are the unsearched
+ * repeat list and a search with *Include closed* on.
+ */
+describe('the order of a search result (ticket 141)', () => {
+  /** Three differences of three, two and one page, all of them found by *deals*. */
+  const threeSizes = {
+    store: 'nl',
+    pages: 6,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings: [
+      entry({ id: 'p1', page: 'afhalen' }),
+      entry({ id: 'p2', page: 'garantie' }),
+      entry({ id: 'p3', page: 'montage' }),
+      entry({ id: 'q1', page: 'levering', prod: 'Bekijk deals vandaag >' }),
+      entry({ id: 'q2', page: 'retour', prod: 'Bekijk deals vandaag >' }),
+      entry({ id: 'r1', page: 'contact', prod: 'Bekijk deals nu >' }),
+    ],
+  };
+
+  const log = (states) =>
+    new Map(
+      threeSizes.findings.map((one) => [
+        one.id,
+        { id: one.id, state: states[one.id] ?? 'open', visibility: 'work', class: one.class },
+      ]),
+    );
+
+  /** Every difference row's words, top-down. A row is the trigger with its own tick beside it. */
+  const rowOrder = () =>
+    [...document.querySelectorAll('[data-slot="collapsible-trigger"]')]
+      .filter((trigger) => trigger.previousElementSibling?.querySelector('[data-slot="checkbox"]'))
+      .map((trigger) => trigger.textContent.trim());
+
+  /** How big each drawn row says it is, which is the order ticket 81 put them in. */
+  const sizes = () => rowOrder().map((row) => row.match(/on (\d+) pages/)[1]);
+
+  beforeEach(() => {
+    globalThis.fetch = async (url) => ({
+      ok: true,
+      json: async () => (String(url).includes('/be.json') ? sibling : threeSizes),
+    });
+  });
+
+  it('is the order it always was in the searched default, because every row there is open', async () => {
+    const { unmount } = await mount({ byFinding: log({ p1: 'dismissed' }) });
+
+    // Largest first, which is ticket 81's order and no coincidence: `searchStore()` drops
+    // what is not active, so the dismissed page is not in the result at all and every row
+    // that survived is open on every page it states. The open count **is** the page count
+    // here, so the new rule cannot disagree with the old one.
+    expect(sizes()).toEqual(['2', '2', '1']);
+    expect(rowOrder().every((row) => row.includes('0 of'))).toBe(true);
+    unmount();
+  });
+
+  it('sinks a settled difference under the smaller open ones when closed rows are included', async () => {
+    const { unmount } = await mount({
+      includeClosed: true,
+      byFinding: log({ p1: 'dismissed', p2: 'dismissed', p3: 'dismissed' }),
+    });
+
+    // Two open, one open, and the three-page difference with nothing left of it below both.
+    expect(sizes()).toEqual(['2', '1', '3']);
+    expect(rowOrder().at(-1)).toContain('3 of 3 closed');
+    unmount();
+  });
+});
+
 describe('the notes half, before the log has answered', () => {
   it('says it is still reading, rather than drawing no notes at all', async () => {
     const { unmount } = await mount({ log: { events: null, ready: false, connected: true } });
