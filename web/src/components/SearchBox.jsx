@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Hint, Description } from './Hint.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Input } from './ui/input.jsx';
 import { cn } from '../lib/utils.js';
@@ -37,6 +38,7 @@ import { scopeSuggestions, withScope } from '../lib/search.mjs';
  */
 export default function SearchBox({ value, onChange, pages }) {
   const listId = useId();
+  const oneSidedId = useId();
   const [focused, setFocused] = useState(false);
   /**
    * The fragment Escape put down, so the list stays down while that fragment stands and
@@ -132,27 +134,28 @@ export default function SearchBox({ value, onChange, pages }) {
           could narrow. The page key is one of the six fields it now searches, so the old
           question is still asked — and there is one box on the screen rather than the two
           ticket 12 already cleaned up once. */}
-      <Input
-        type="search"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => {
-          setFocused(false);
-          setHeld(-1);
-        }}
-        onKeyDown={onKeyDown}
-        placeholder="Search the content"
-        title="Searches the text, the links, the headings and the page names of this store. A leading slash narrows it to one page: type / for the list."
-        role="combobox"
-        // A placeholder is not a name — it is gone the moment anything is typed — and every
-        // other control in this interface carries one.
-        aria-label="Search the content"
-        aria-expanded={open}
-        aria-controls={listId}
-        aria-autocomplete="list"
-        aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
-      />
+      <Hint text="Searches the text, the links, the headings and the page names of this store. A leading slash narrows it to one page: type / for the list.">
+        <Input
+          type="search"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            setFocused(false);
+            setHeld(-1);
+          }}
+          onKeyDown={onKeyDown}
+          placeholder="Search the content"
+          role="combobox"
+          // A placeholder is not a name — it is gone the moment anything is typed — and every
+          // other control in this interface carries one.
+          aria-label="Search the content"
+          aria-expanded={open}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
+        />
+      </Hint>
       {open && (
         <ul
           id={listId}
@@ -172,6 +175,13 @@ export default function SearchBox({ value, onChange, pages }) {
               data-suggestion={one.page}
               role="option"
               aria-selected={index === active}
+              // The row and not the badge carries the sentence, and it is a description with
+              // no tooltip on it — the one place in the interface that refuses the primitive
+              // (ticket 129). A tooltip trigger is a tab stop, and a tab stop inside a
+              // `role="listbox"` takes the arrow keys away from the combobox that owns the
+              // list. So the words reach the reader through the row they are about, which is
+              // the thing a reader arrows onto anyway.
+              aria-describedby={one.comparable ? undefined : oneSidedId}
               ref={index === active ? activeRow : null}
               // `mousedown` and not `click`: a click lands after the box has already lost
               // the focus, which closes the list from under the press. The default is
@@ -199,7 +209,6 @@ export default function SearchBox({ value, onChange, pages }) {
                   data-wears="pill"
                   data-tone="neutral"
                   className="h-auto shrink-0 px-1.5 py-0 text-xs"
-                  title="Only one site has this page."
                 >
                   one-sided
                 </Badge>
@@ -208,6 +217,9 @@ export default function SearchBox({ value, onChange, pages }) {
           ))}
         </ul>
       )}
+      {/* One sentence for however many one-sided rows the list is offering: they all say the
+          same thing, so they all point at the same words. */}
+      <Description id={oneSidedId} text="Only one site has this page." />
     </div>
   );
 }

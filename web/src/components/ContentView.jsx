@@ -309,7 +309,7 @@ function Controls({
         counts={classes.map(({ class: cls, rows }) => ({ class: cls, count: rows }))}
         selected={filter.classes}
         onToggle={(cls) => setFilter(toggleClass(filter, cls))}
-        title={(_cls, count) => `${count} rows in this class. The counts above do not change.`}
+        hint={(_cls, count) => `${count} rows in this class. The counts above do not change.`}
       />
 
       <MarkerToggle

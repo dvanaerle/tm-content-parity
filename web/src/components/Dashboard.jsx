@@ -12,6 +12,7 @@ import {
   ScopeChip,
   ScopeRowButton,
 } from './Chips.jsx';
+import { Hint } from './Hint.jsx';
 import { EditorPrompt, LogBanner } from './Progress.jsx';
 import { ClassGroups } from './Repeats.jsx';
 import Search from './Search.jsx';
@@ -454,7 +455,7 @@ export default function Dashboard({
               key={bucket}
               bucket={bucket}
               value={log.derived.buckets[bucket]}
-              title={BUCKET_MEANING[bucket]}
+              hint={BUCKET_MEANING[bucket]}
               className="text-base"
             />
           ))}
@@ -475,14 +476,14 @@ export default function Dashboard({
               key={bucket}
               bucket={bucket}
               value={log.derived.buckets[bucket]}
-              title={BUCKET_MEANING[bucket]}
+              hint={BUCKET_MEANING[bucket]}
               className="text-xs"
             />
           ))}
           <Count
             value={log.derived.reviewedFresh}
             label="pages reviewed"
-            title="A human looked at everything on this page, also at what the tool cannot see."
+            hint="A human looked at everything on this page, also at what the tool cannot see."
             className="text-xs"
           />
         </div>
@@ -513,8 +514,8 @@ export default function Dashboard({
               onToggle={(cls) => patch({ classes: toggleIn(classes, cls) })}
               // The counts stay the store's own — a pill says how much of this kind there
               // is, which is not a question about what is on screen. What a press *does*
-              // depends on which of the three lists is under it, so the tooltip does too.
-              title={(cls) => {
+              // depends on which of the three lists is under it, so the hint does too.
+              hint={(cls) => {
                 const { label } = classInfo(cls);
                 if (searching)
                   return `Search inside ${label} only. The counts above do not change.`;
@@ -954,8 +955,15 @@ const PageBuckets = ({ buckets }) => (
       return (
         <span key={bucket}>
           {index > 0 && <span className="mx-1 text-muted-foreground">·</span>}
+          {/* **No hint here, and that is the judgement** (ticket 129). Each of these three
+              carried the bucket's name and its glossary sentence as a `title`, once per row —
+              and the reach that would make it a real hint is a tab stop, three per row, in a
+              list that runs to thousands. The words are not lost: the column head above names
+              the three in the order the three numbers are in, and the store strip at the top
+              of the screen explains each of them in a hint that is reachable. A hint repeating
+              what the head already says is decoration, and decoration is what this clause of
+              the ticket asks to be removed rather than promoted into a component. */}
           <span
-            title={`${BUCKET_LABEL[bucket]} — ${BUCKET_MEANING[bucket]}`}
             className={cn(
               buckets[bucket] === 0 && 'text-muted-foreground',
               // Open carries the weight when there is work in it, and the other two carry
@@ -988,15 +996,20 @@ function SelectAllPages({ rows, selected, onTickAll }) {
   const some = selected.size > 0 && !all;
 
   return (
-    <Checkbox
-      checked={all}
-      indeterminate={some}
-      // From the mixed state a press **clears**. Base UI would answer `true` there, which
-      // would re-tick the same rows and leave the control stuck at mixed.
-      onCheckedChange={(ticked) => onTickAll(some ? false : ticked)}
-      aria-label={`Select all ${rows.length} pages on screen`}
-      title="Selects each page on screen. A selection decides nothing."
-    />
+    // The hint is beside the name and never instead of it: a reader who heard *A selection
+    // decides nothing* and not *Select all 11 pages on screen* would not know what the press
+    // is over. The trigger merges onto the checkbox, so the mixed press it answers by
+    // clearing is still the checkbox's own press.
+    <Hint text="Selects each page on screen. A selection decides nothing.">
+      <Checkbox
+        checked={all}
+        indeterminate={some}
+        // From the mixed state a press **clears**. Base UI would answer `true` there, which
+        // would re-tick the same rows and leave the control stuck at mixed.
+        onCheckedChange={(ticked) => onTickAll(some ? false : ticked)}
+        aria-label={`Select all ${rows.length} pages on screen`}
+      />
+    </Hint>
   );
 }
 
@@ -1008,16 +1021,12 @@ function ViewSwitch({ view, onChange }) {
       value={[view]}
       onValueChange={(next) => next.length > 0 && onChange(next[0])}
     >
-      {Object.entries(VIEW_LABEL).map(([name, { label, title }]) => (
-        <ToggleGroupItem
-          key={name}
-          value={name}
-          title={title}
-          data-chrome="switch"
-          className="text-muted-foreground"
-        >
-          {label}
-        </ToggleGroupItem>
+      {Object.entries(VIEW_LABEL).map(([name, { label, hint }]) => (
+        <Hint key={name} text={hint}>
+          <ToggleGroupItem value={name} data-chrome="switch" className="text-muted-foreground">
+            {label}
+          </ToggleGroupItem>
+        </Hint>
       ))}
     </ToggleGroup>
   );
@@ -1026,11 +1035,11 @@ function ViewSwitch({ view, onChange }) {
 const VIEW_LABEL = {
   repeats: {
     label: 'Repeats',
-    title: 'One row for each difference, with the pages it is on. What do I decide next?',
+    hint: 'One row for each difference, with the pages it is on. What do I decide next?',
   },
   pages: {
     label: 'Pages',
-    title: 'Each page of this store, most differences first. Which page do I open next?',
+    hint: 'Each page of this store, most differences first. Which page do I open next?',
   },
 };
 

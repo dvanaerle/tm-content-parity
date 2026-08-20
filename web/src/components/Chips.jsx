@@ -3,6 +3,7 @@ import { BUCKET_LABEL, BUCKET_TONE } from '../lib/buckets.mjs';
 import { classInfo } from '../lib/classes.mjs';
 import { PRIORITIES } from '../../../shared/priorities.mjs';
 import { cn } from '../lib/utils.js';
+import { Hint, TextHint } from './Hint.jsx';
 import { Alert } from './ui/alert.jsx';
 import { Badge } from './ui/badge.jsx';
 import { Button } from './ui/button.jsx';
@@ -40,11 +41,15 @@ import { severityTone } from '../lib/palette.mjs';
  * not. The tone survives as ink where the tone shape has one; `neutral` prints none, which
  * is what carrying no judgement looks like.
  */
-export function Count({ value, label, tone = 'neutral', title, className = '', ...props }) {
+export function Count({ value, label, tone = 'neutral', hint, className = '', ...props }) {
+  // A count with nothing to explain is left as text — no hint, and so no tab stop. A tab
+  // stop on every number would put a reader through the strip a press at a time.
   return (
-    <span className={cn('flex items-baseline gap-1.5 text-sm', className)} title={title} {...props}>
-      <Reading value={value} label={label} tone={tone} />
-    </span>
+    <TextHint text={hint}>
+      <span className={cn('flex items-baseline gap-1.5 text-sm', className)} {...props}>
+        <Reading value={value} label={label} tone={tone} />
+      </span>
+    </TextHint>
   );
 }
 
@@ -85,34 +90,36 @@ function Reading({ value, label, tone = null }) {
  * @param {object} props
  * @param {import('../../../overrides/state.mjs').Bucket} props.bucket
  * @param {number} props.value
- * @param {string} [props.title]
+ * @param {string} [props.hint]
  * @param {string} [props.className]
  */
-export function BucketCount({ bucket, value, title, className = '' }) {
+export function BucketCount({ bucket, value, hint, className = '' }) {
   if (bucket !== 'needs-attention') {
     return (
       <Count
         value={value}
         label={BUCKET_LABEL[bucket]}
         tone={BUCKET_TONE[bucket]}
-        title={title}
+        hint={hint}
         className={className}
         data-bucket={bucket}
       />
     );
   }
+
   return (
-    <Badge
-      data-bucket={bucket}
-      data-badge="needs-attention"
-      variant={null}
-      data-wears="pill"
-      data-tone={BUCKET_TONE[bucket]}
-      className={cn('h-auto gap-1.5 px-2 py-1 tabular-nums', className)}
-      title={title}
-    >
-      <strong className="font-semibold">{value}</strong> <span>{BUCKET_LABEL[bucket]}</span>
-    </Badge>
+    <TextHint text={hint}>
+      <Badge
+        data-bucket={bucket}
+        data-badge="needs-attention"
+        variant={null}
+        data-wears="pill"
+        data-tone={BUCKET_TONE[bucket]}
+        className={cn('h-auto gap-1.5 px-2 py-1 tabular-nums', className)}
+      >
+        <strong className="font-semibold">{value}</strong> <span>{BUCKET_LABEL[bucket]}</span>
+      </Badge>
+    </TextHint>
   );
 }
 
@@ -122,20 +129,31 @@ export function BucketCount({ bucket, value, title, className = '' }) {
  * It draws the **label** and never the key. The key is the contract's — it makes the
  * finding id, so it cannot change — and an editor reading `IMAGE-MISSING` was reading the
  * contract (ADR 0019).
+ *
+ * @param {object} props
+ * @param {string} props.class
+ * @param {boolean} [props.hinted] Off inside a control that carries a hint of its own. One
+ *   element gets one hint: a pill inside a filter button would be a second trigger inside the
+ *   group's own, and a second sentence for a reader who asked for none.
  */
-export function ClassPill({ class: cls }) {
+export function ClassPill({ class: cls, hinted = true }) {
   const info = classInfo(cls);
+
+  // A tab stop, which is the only reach there is: a description hung on a `span` with no role
+  // and no focus is read by nothing. It is worth a stop per row — the pill is the one thing on
+  // the row whose word an editor may not know, and the label is not the key (ADR 0019).
   return (
-    <Badge
-      data-badge="class"
-      variant={null}
-      data-wears="pill"
-      data-tone={info.tone}
-      className="h-auto px-1.5 py-0.5 text-xs"
-      title={info.meaning}
-    >
-      {info.label}
-    </Badge>
+    <TextHint text={hinted && info.meaning}>
+      <Badge
+        data-badge="class"
+        variant={null}
+        data-wears="pill"
+        data-tone={info.tone}
+        className="h-auto px-1.5 py-0.5 text-xs"
+      >
+        {info.label}
+      </Badge>
+    </TextHint>
   );
 }
 
@@ -147,9 +165,9 @@ export function ClassPill({ class: cls }) {
  * affordance by.
  *
  * The count beside each pill is whatever the caller counts — rows on a page, pages
- * on the dashboard — so the caller owns the tooltip that names the unit.
+ * on the dashboard — so the caller owns the hint that names the unit.
  */
-export function ClassFilterPills({ counts, selected, onToggle, title }) {
+export function ClassFilterPills({ counts, selected, onToggle, hint }) {
   return (
     /*
      * A `ToggleGroup` and not a row of buttons. The filter is a set — an editor may
@@ -174,23 +192,23 @@ export function ClassFilterPills({ counts, selected, onToggle, title }) {
       spacing={1}
     >
       {counts.map(({ class: cls, count }) => (
-        <ToggleGroupItem
-          key={cls}
-          value={cls}
-          title={title(cls, count)}
-          className={cn(
-            'h-auto gap-1 px-0.5 py-0',
-            // The ring is the brand's and stays a class: it is chrome, which says *this
-            // filter is on* and makes no claim about a finding, so it is outside the tone
-            // product this pill's colour comes from. Nothing is assembled here — the
-            // group already holds which classes are pressed, and the class name is a
-            // literal Tailwind can see.
-            selected.includes(cls) && 'ring-2 ring-primary',
-          )}
-        >
-          <ClassPill class={cls} />
-          <span className="pr-1 text-xs text-muted-foreground tabular-nums">{count}</span>
-        </ToggleGroupItem>
+        <Hint key={cls} text={hint(cls, count)}>
+          <ToggleGroupItem
+            value={cls}
+            className={cn(
+              'h-auto gap-1 px-0.5 py-0',
+              // The ring is the brand's and stays a class: it is chrome, which says *this
+              // filter is on* and makes no claim about a finding, so it is outside the tone
+              // product this pill's colour comes from. Nothing is assembled here — the
+              // group already holds which classes are pressed, and the class name is a
+              // literal Tailwind can see.
+              selected.includes(cls) && 'ring-2 ring-primary',
+            )}
+          >
+            <ClassPill class={cls} hinted={false} />
+            <span className="pr-1 text-xs text-muted-foreground tabular-nums">{count}</span>
+          </ToggleGroupItem>
+        </Hint>
       ))}
     </ToggleGroup>
   );
@@ -222,20 +240,30 @@ const PRIORITY_TONE = { high: 'caution', medium: 'info', low: 'neutral' };
  */
 const PRIORITY_LABEL = { high: 'High', medium: 'Medium', low: 'Low' };
 
-/** One page priority, worn wherever the page is named. */
-export function PriorityPill({ priority, className = '' }) {
+/**
+ * One page priority, worn wherever the page is named.
+ *
+ * @param {object} props
+ * @param {string|null} props.priority
+ * @param {string} [props.className]
+ * @param {boolean} [props.hinted] Off inside the filter, for `ClassPill`'s reason.
+ */
+export function PriorityPill({ priority, className = '', hinted = true }) {
   if (!priority) return null;
+
+  // A tab stop, per `ClassPill`'s reason.
   return (
-    <Badge
-      data-badge="priority"
-      variant={null}
-      data-wears="pill"
-      data-tone={PRIORITY_TONE[priority]}
-      className={cn('h-auto px-1.5 py-0.5 text-xs', className)}
-      title={`An editor set the priority of this page to ${priority}.`}
-    >
-      {PRIORITY_LABEL[priority]}
-    </Badge>
+    <TextHint text={hinted && `An editor set the priority of this page to ${priority}.`}>
+      <Badge
+        data-badge="priority"
+        variant={null}
+        data-wears="pill"
+        data-tone={PRIORITY_TONE[priority]}
+        className={cn('h-auto px-1.5 py-0.5 text-xs', className)}
+      >
+        {PRIORITY_LABEL[priority]}
+      </Badge>
+    </TextHint>
   );
 }
 
@@ -266,23 +294,26 @@ export function PriorityFilterPills({ selected, onToggle, counts = {} }) {
       spacing={1}
     >
       {PRIORITIES.map((priority) => (
-        <ToggleGroupItem
+        <Hint
           key={priority}
-          value={priority}
-          title={
+          text={
             `Show the pages an editor gave priority ${priority}. ` +
             'The counts above do not change.'
           }
-          className={cn(
-            'h-auto gap-1 px-0.5 py-0',
-            selected.includes(priority) && 'ring-2 ring-primary',
-          )}
         >
-          <PriorityPill priority={priority} />
-          <span className="pr-1 text-xs text-muted-foreground tabular-nums">
-            {counts[priority] ?? 0}
-          </span>
-        </ToggleGroupItem>
+          <ToggleGroupItem
+            value={priority}
+            className={cn(
+              'h-auto gap-1 px-0.5 py-0',
+              selected.includes(priority) && 'ring-2 ring-primary',
+            )}
+          >
+            <PriorityPill priority={priority} hinted={false} />
+            <span className="pr-1 text-xs text-muted-foreground tabular-nums">
+              {counts[priority] ?? 0}
+            </span>
+          </ToggleGroupItem>
+        </Hint>
       ))}
     </ToggleGroup>
   );
@@ -321,19 +352,38 @@ export function ScopeChip({ scope, onClear }) {
       data-wears="pill"
       data-tone="neutral"
       className="inline-flex h-auto w-fit shrink-0 items-center gap-1 rounded-4xl py-0.5 pr-0.5 pl-1.5 text-xs font-medium ring-2 ring-primary"
-      // The slash is on here too. The chip draws `/overkap` and a tooltip explaining
-      // `overkap` is the one thing spelled two ways this component exists to avoid.
-      title={`The search is narrowed to /${scope} — the pages whose key holds ${scope}. The counts above do not change.`}
     >
-      <span>/{scope}</span>
+      {/* The hint is on the **word** and not on the chip around it, which holds a button of
+          its own: a trigger wrapped around a trigger is two hints a reader walks into one
+          after the other, and a tab stop on a container is a stop on nothing.
+
+          The slash is on in the hint too. The chip draws `/overkap` and a hint explaining
+          `overkap` is the one thing spelled two ways this component exists to avoid. */}
+      <TextHint
+        text={`The search is narrowed to /${scope} — the pages whose key holds ${scope}. The counts above do not change.`}
+      >
+        <span>/{scope}</span>
+      </TextHint>
+      <ScopeClearButton onClear={onClear} />
+    </span>
+  );
+}
+
+/**
+ * The × that clears the scope, and the one hint in this file that is not a second sentence.
+ *
+ * The control is an icon and *×* is not a word, so its name **is** these words — it names the
+ * scope and not merely *clear*, because the strip below carries a *Clear filter* that clears
+ * more than this one does. So the hint draws that name for a reader who is looking rather than
+ * listening, and `announce` is off: a description repeating the name is the name said twice.
+ */
+function ScopeClearButton({ onClear }) {
+  return (
+    <Hint text="Clear the page scope" announce={false}>
       <Button
         variant="ghost"
         size="icon-xs"
         onClick={onClear}
-        // The title is the accessible name as well: the control is an icon, and *×* is
-        // not a word. It names the scope and not merely *clear*, because the strip below
-        // carries a *Clear filter* that clears more than this one does.
-        title="Clear the page scope"
         aria-label="Clear the page scope"
         // The glyph stays 16 pixels so the chip keeps its shape, and the **target** is
         // grown past it with a pseudo-element — the trick `ui/checkbox.jsx` has used for its
@@ -343,7 +393,7 @@ export function ScopeChip({ scope, onClear }) {
       >
         <XIcon />
       </Button>
-    </span>
+    </Hint>
   );
 }
 
@@ -360,8 +410,9 @@ export function ScopeChip({ scope, onClear }) {
  * row that scoped a search instead would take that away. So this sits beside the link as its
  * own button, wearing a name of its own — a row cannot come to mean two things.
  *
- * The key is the accessible name and not a tooltip over an icon: the icon says *search* and
- * the question an editor is answering is *inside which page*, which only the key answers.
+ * The key is the accessible name and not a hint over an icon: the icon says *search* and
+ * the question an editor is answering is *inside which page*, which only the key answers. The
+ * hint draws that same name, and announces nothing on top of it — `ScopeClearButton`'s rule.
  *
  * @param {object} props
  * @param {string} props.page   The key, exactly as the row draws it.
@@ -371,17 +422,18 @@ export function ScopeChip({ scope, onClear }) {
  */
 export function ScopeRowButton({ page, onScope, className = '' }) {
   return (
-    <Button
-      variant="ghost"
-      size="icon-xs"
-      data-scope-row={page}
-      onClick={onScope}
-      title={`Search inside ${page}`}
-      aria-label={`Search inside ${page}`}
-      className={cn('align-middle text-muted-foreground hover:text-foreground', className)}
-    >
-      <SearchIcon />
-    </Button>
+    <Hint text={`Search inside ${page}`} announce={false}>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        data-scope-row={page}
+        onClick={onScope}
+        aria-label={`Search inside ${page}`}
+        className={cn('align-middle text-muted-foreground hover:text-foreground', className)}
+      >
+        <SearchIcon />
+      </Button>
+    </Hint>
   );
 }
 

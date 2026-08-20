@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { barOf } from '../../../overrides/state.mjs';
 import { Detail, Occurrences, onePageTitle } from './Annotations.jsx';
+import { Hint } from './Hint.jsx';
 import BulkControl from './BulkControl.jsx';
 import { ClassPill } from './Chips.jsx';
 import { BUCKET_TONE } from '../lib/buckets.mjs';
@@ -323,20 +324,24 @@ const NOTHING = new Set();
  * `checked` and `indeterminate` are what Base UI draws; from the mixed state it would
  * otherwise answer `true`, which would re-tick the same rows and leave the control stuck.
  */
-function TriStateTick({ ids, label, title }) {
+function TriStateTick({ ids, label, hint }) {
   const selection = useContext(SelectionContext);
 
   const all = ids.every((id) => selection.ticked.has(id));
   const some = !all && ids.some((id) => selection.ticked.has(id));
 
+  // The hint is beside the tick's own name and never instead of it, and the trigger merges
+  // onto the checkbox rather than wrapping it: the mixed press this control answers by
+  // clearing has to stay the checkbox's own press (ticket 129).
   return (
-    <Checkbox
-      checked={all}
-      indeterminate={some}
-      onCheckedChange={(ticked) => selection.tick(ids, some ? false : ticked)}
-      aria-label={label}
-      title={title}
-    />
+    <Hint text={hint}>
+      <Checkbox
+        checked={all}
+        indeterminate={some}
+        onCheckedChange={(ticked) => selection.tick(ids, some ? false : ticked)}
+        aria-label={label}
+      />
+    </Hint>
   );
 }
 
@@ -366,7 +371,7 @@ function SelectResult({ repeats }) {
       <TriStateTick
         ids={ids}
         label={`Select all ${ids.length} pages of the ${repeats.length} differences found`}
-        title={SELECT_RESULT_TITLE}
+        hint={SELECT_RESULT_HINT}
       />
       {/* The sentence says what the tick reaches and states no second count: the size of the
           result is on the line above this one already, and one figure in two wordings is two
@@ -379,7 +384,7 @@ function SelectResult({ repeats }) {
   );
 }
 
-const SELECT_RESULT_TITLE =
+const SELECT_RESULT_HINT =
   'Selects every page of every difference in this result, including the ones not drawn' +
   ' yet. A selection decides nothing.';
 
@@ -700,7 +705,7 @@ const SelectAll = ({ repeat }) => (
   <TriStateTick
     ids={repeat.on.map((entry) => entry.id)}
     label={`Select all ${repeat.on.length} pages of this difference`}
-    title="Selects each page of this difference. A selection decides nothing."
+    hint="Selects each page of this difference. A selection decides nothing."
   />
 );
 

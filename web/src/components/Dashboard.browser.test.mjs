@@ -227,7 +227,9 @@ describe('a page scope worn as a chip', () => {
   const press = (root, label) =>
     act(async () =>
       [...root.querySelectorAll('button')]
-        .find((one) => one.textContent.trim() === label || one.getAttribute('title') === label)
+        // An icon control is found by its **name** and no longer by its `title`: ticket 129
+        // took the browser's own box off these, and the name is what a reader has always had.
+        .find((one) => one.textContent.trim() === label || one.getAttribute('aria-label') === label)
         .click(),
     );
 
@@ -689,7 +691,7 @@ describe('scoping the search from a page row', () => {
     expect(new URLSearchParams(location.search).get('view')).toBe('pages');
 
     await act(async () =>
-      document.querySelector('[data-scope-chip] button[title="Clear the page scope"]').click(),
+      document.querySelector('[data-scope-chip] button[aria-label="Clear the page scope"]').click(),
     );
     expect(document.querySelector('table')).not.toBe(null);
 
@@ -979,6 +981,77 @@ describe('a page note in a list', () => {
     const [host, unmount] = mountMark(null);
 
     expect(host.textContent).toBe('');
+
+    unmount();
+  });
+});
+
+/**
+ * Ticket 129 part A. Every hint on this screen was a native `title`, which a touch user
+ * cannot see, a keyboard user cannot reach and a screen reader announces when it feels like
+ * it. The reach is asserted and never the markup: what matters is that a reader who is not
+ * holding a mouse gets to the words, not which element the primitive chose to draw them in.
+ *
+ * Two things make a hint reachable, and both are read back here. A **tab stop**, because a
+ * hint on a count is a hint on text and text is not focusable; and a **description**, which
+ * is the sentence a screen reader reads after the control's own name. The description is
+ * resolved through `aria-describedby` the way an assistive technology resolves it, so the
+ * assertion is about what a reader is given rather than about an attribute being present.
+ */
+describe('a hint on the dashboard, reached without a mouse', () => {
+  /** What a reader is given after the element's own name, resolved as the accname spec does. */
+  const description = (element) =>
+    (element.getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+
+  it('gives the count that carries a hint a tab stop, because text has none', () => {
+    const unmount = mount();
+
+    expect(document.querySelector('[data-bucket="open"]').tabIndex).toBe(0);
+
+    unmount();
+  });
+
+  it('announces what the bucket means, in the glossary sentence it already had', () => {
+    const unmount = mount();
+
+    expect(description(document.querySelector('[data-bucket="open"]'))).toBe(
+      'Waits for a decision.',
+    );
+
+    unmount();
+  });
+
+  /**
+   * The tick's name is the thing it does and the hint is the extra sentence. A hint that
+   * became the name would leave a reader hearing *A selection decides nothing* and never
+   * hearing which pages the press is over.
+   */
+  it('leaves a control its own name and adds the hint beside it', () => {
+    history.replaceState(null, '', '?view=pages');
+    const unmount = mount();
+
+    const tick = document.querySelector('thead [data-slot="checkbox"]');
+    expect(tick.getAttribute('aria-label')).toBe('Select all 2 pages on screen');
+    expect(description(tick)).toBe('Selects each page on screen. A selection decides nothing.');
+
+    unmount();
+  });
+
+  /**
+   * The page list, which is the half of this screen part A owns end to end. The repeats list
+   * beside it draws `Diff`, `OverrideControl` and `Occurrences`, whose hints are part B's
+   * files and part B's commit — so this sweep says *the pages view*, and means it, rather
+   * than claiming a screen that is not converted yet.
+   */
+  it('leaves no title for the browser to draw its own box from, in the pages view', () => {
+    history.replaceState(null, '', '?view=pages');
+    const unmount = mount();
+
+    expect([...document.querySelectorAll('[title]')].map((element) => element.title)).toEqual([]);
 
     unmount();
   });
