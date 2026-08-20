@@ -98,6 +98,30 @@ function agreeingReport() {
 }
 
 /**
+ * A page on the one store whose content is neither Dutch nor the interface's language,
+ * with a heading so the jump list has something in it.
+ */
+function germanReport() {
+  const heading = (index) =>
+    unit('Farben und Formen', index, { tag: 'h2', kind: 'heading', level: 2 });
+  const production = [heading(0), unit('In drei Farben lieferbar', 1)];
+  const next = [heading(0), unit('Zwei Farben', 1)];
+
+  return {
+    store: 'de',
+    page: 'terrassenueberdachung',
+    sides: {
+      production: { url: 'https://prod.example/t', markdown: '#', elements: production },
+      new: { url: 'https://new.example/t', markdown: '#', elements: next },
+    },
+    rows: [
+      { class: null, prod: 0, new: 0, score: null, finding: null },
+      { class: 'copy', prod: 1, new: 1, score: 0.7, finding: 'copy1' },
+    ],
+  };
+}
+
+/**
  * A mounted view and a way to render it again — which is what a tick is from this
  * component's side: the log re-derives the findings and hands down new ones.
  */
@@ -513,5 +537,44 @@ describe('a content row says what closed as its finding appeared', () => {
 
   it('says nothing where no id closed as the difference appeared', () => {
     expect(mount().querySelector('[data-history-note]')).toBeNull();
+  });
+});
+
+/**
+ * What language the content is in (ticket 125).
+ *
+ * The shell says `en-GB` and every cell inherited it, so a German page was announced with
+ * English phonetics. The store decides, and the view draws the store — which is why these
+ * mount `de` rather than the `nl` every other test here uses.
+ */
+describe('the language of the content', () => {
+  /** The one finding the German page carries, so its row is drawn rather than withheld. */
+  const german = findings.filter((finding) => finding.id === 'copy1');
+
+  it('declares it on both texts of a row', () => {
+    const host = mount({ report: germanReport(), findings: german });
+
+    const declared = [...host.querySelectorAll('tbody [lang]')];
+    expect(declared.map((one) => [one.lang, one.textContent])).toEqual([
+      ['de', 'In drei Farben lieferbar'],
+      ['de', 'Zwei Farben'],
+    ]);
+  });
+
+  /** The jump list puts the whole heading in a `title`, and the link owns both. */
+  it('declares it on the heading in the jump list, which owns the tooltip', () => {
+    const host = mount({ report: germanReport(), findings: german });
+
+    const jump = host.querySelector('nav a');
+    expect(jump.lang).toBe('de');
+    expect(jump.title).toBe('Farben und Formen');
+  });
+
+  it("leaves the interface's own words out of it", () => {
+    const host = mount({ report: germanReport(), findings: german });
+
+    const pill = host.querySelector('[data-slot="status"] span');
+    expect(pill.textContent).toBe('Copy changed');
+    expect([...host.querySelectorAll('[lang]')].some((one) => one.contains(pill))).toBe(false);
   });
 });

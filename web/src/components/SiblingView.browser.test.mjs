@@ -210,3 +210,19 @@ describe('a page against its sibling', () => {
     expect(mount({ sibling: null }).textContent).toBe('');
   });
 });
+
+/**
+ * The one language two columns can share (ticket 125).
+ *
+ * A block is two stores of one language, which is why the tab exists at all — the words
+ * can be compared because they are in the same language. So one declaration covers both
+ * columns, and it is the store's rather than either cell's.
+ */
+describe('the language of the two stores', () => {
+  it('declares one language over both columns', () => {
+    const host = mount({ store: 'be_fr', sibling: sibling(THERE, { store: 'fr' }) });
+
+    const declared = new Set([...host.querySelectorAll('tbody [lang]')].map((one) => one.lang));
+    expect([...declared]).toEqual(['fr']);
+  });
+});

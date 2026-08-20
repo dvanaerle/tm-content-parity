@@ -29,6 +29,7 @@ import {
 } from '../lib/landing.mjs';
 import { findingInSearch } from '../lib/page-url.mjs';
 import { CHROME } from '../lib/palette.mjs';
+import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { cn } from '../lib/utils.js';
 import { bucketOf, bucketsOf } from '../../../overrides/state.mjs';
 import { BUCKETS, BUCKET_LABEL } from '../lib/buckets.mjs';
@@ -151,6 +152,18 @@ export default function Ledger({
   const landing = useMemo(() => ({ focus, settled }), [focus, settled]);
 
   const { production, new: next } = report.sides;
+
+  /*
+   * The language of every scraped string under these tabs (ticket 125), read once from the
+   * store rather than at each table.
+   *
+   * The two columns hold prose on three of the four checks — an anchor wording, a title, a
+   * meta description — so they declare a language for the same reason a content block does.
+   * A cell holding a bare url declares it too: it is the same component, and a link key is
+   * the one thing in it a reader hears as letters either way. The page key is the case that
+   * stays untagged, and it is drawn outside this island.
+   */
+  const language = STORE_LANGUAGE[report.store];
 
   // The toggle asks about the **class**: a `diagnostic` is what a rule saw, told to the
   // author of the rule. An `information` finding is drawn beside the work and counted
@@ -401,6 +414,7 @@ export default function Ledger({
               withheld={withheld('links')}
               control={control}
               sides={report.sides}
+              language={language}
               landing={landing}
             />
           </TabsContent>
@@ -411,11 +425,12 @@ export default function Ledger({
               withheld={withheld('images')}
               control={control}
               sides={report.sides}
+              language={language}
               landing={landing}
             />
           </TabsContent>
           <TabsContent value="Meta">
-            <MetaTable head={head} control={control} landing={landing} />
+            <MetaTable head={head} control={control} language={language} landing={landing} />
           </TabsContent>
           {/* Mounted only while it is the selected tab, which is what makes the
                 alignment inside it cost nothing to a reader who never opens it. */}
@@ -452,7 +467,7 @@ const BucketStrip = ({ buckets }) => (
   </section>
 );
 
-function FindingTable({ findings, check, withheld = 0, control, sides, landing }) {
+function FindingTable({ findings, check, withheld = 0, control, sides, language, landing }) {
   const all = findings.filter((finding) => finding.check === check);
 
   /**
@@ -537,6 +552,7 @@ function FindingTable({ findings, check, withheld = 0, control, sides, landing }
             focus={focus}
             control={control}
             sides={sides}
+            language={language}
           />
         ))}
 
@@ -602,7 +618,7 @@ function FindingTable({ findings, check, withheld = 0, control, sides, landing }
  * reasons: a bucket is a grouping, so a Closed row is the *same row* in a different place.
  * Two copies would be two chances for it to stop being the same row.
  */
-const FindingRow = ({ finding, focus, control, sides }) => {
+const FindingRow = ({ finding, focus, control, sides, language }) => {
   // The mark of a landed row is `landing.mjs`'s rule, and the class it carries is
   // merged with this table's own rather than replacing them.
   const { className, ...mark } = landedRowProps(finding.id === focus);
@@ -615,7 +631,7 @@ const FindingRow = ({ finding, focus, control, sides }) => {
     >
       {/* The same component the content rows use. A link finding word-diffs
           two target keys, which makes a changed path segment jump out. */}
-      <DiffCells prod={finding.prod} new={finding.new} mono />
+      <DiffCells prod={finding.prod} new={finding.new} language={language} mono />
       {/* Named for the head above it, for the reason the content view's cell is: it follows
           the compared content now, and *the first cell of the row* is no longer the class. */}
       <TableCell data-slot="class" className="px-2 py-2 align-top whitespace-normal">
@@ -630,6 +646,7 @@ const FindingRow = ({ finding, focus, control, sides }) => {
           anchorHeading={finding.anchorHeading}
           locations={finding.locations}
           sides={sides}
+          language={language}
         />
         <FirstSeen at={finding.firstSeen} />
         {/* Beside the date and above the control, which is where a fact about the row's
@@ -667,7 +684,7 @@ const FindingRow = ({ finding, focus, control, sides }) => {
  * Which rows exist at all, and which of them make findings, is `compare/meta.mjs`'s
  * decision and not this component's.
  */
-function MetaTable({ head, control, landing }) {
+function MetaTable({ head, control, language, landing }) {
   const focus = landing?.focus ?? null;
 
   // The row a link named, on the same terms the two finding tables land on theirs: the
@@ -680,7 +697,14 @@ function MetaTable({ head, control, landing }) {
   const at = ruleAt(head);
 
   const rows = ({ row, finding }) => (
-    <MetaRow key={row.field} row={row} finding={finding} focus={focus} control={control} />
+    <MetaRow
+      key={row.field}
+      row={row}
+      finding={finding}
+      focus={focus}
+      control={control}
+      language={language}
+    />
   );
 
   return (
@@ -757,7 +781,7 @@ function ruleAt(head) {
  * One slot of the head: what the field is called, what each side holds, and — on the three
  * checking rows — what the editor has decided about it.
  */
-const MetaRow = ({ row, finding, focus, control }) => {
+const MetaRow = ({ row, finding, focus, control, language }) => {
   const { className, ...mark } = landedRowProps(Boolean(finding) && finding.id === focus);
 
   return (
@@ -794,7 +818,13 @@ const MetaRow = ({ row, finding, focus, control }) => {
       {/* `state` is the tool's answer, and the cells must not contradict it:
           a canonical that differs by hostname alone is `same`, and the
           hostname on screen is not a difference an editor can act on. */}
-      <DiffCells prod={row.prod} new={row.new} mono equal={row.state === 'same'} />
+      <DiffCells
+        prod={row.prod}
+        new={row.new}
+        language={language}
+        mono
+        equal={row.state === 'same'}
+      />
     </TableRow>
   );
 };

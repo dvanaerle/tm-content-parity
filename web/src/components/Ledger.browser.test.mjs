@@ -773,3 +773,53 @@ describe('the Meta tab', () => {
     unmount();
   });
 });
+
+/**
+ * What language the compared text is in (ticket 125).
+ *
+ * The two columns of a finding hold scraped strings — an anchor wording, a title, a meta
+ * description — and they inherited `en-GB` from the shell on all six stores. The report
+ * carries the store, so the ledger reads the language off it and the cells declare it.
+ */
+describe('the language of the content', () => {
+  const german = { ...report, store: 'de' };
+
+  it('declares it on both compared texts and on the heading a finding sits under', async () => {
+    const unmount = mount({
+      report: german,
+      findings: [finding('a', 'open', { anchorHeading: 'Farben und Formen' })],
+    });
+    await userEvent.click(button('Links'));
+
+    const declared = [...document.querySelectorAll('tr#finding-a [lang]')];
+    expect(declared.map((one) => [one.lang, one.textContent])).toEqual([
+      ['de', '/overkappingen/'],
+      ['de', '/overkapping/'],
+      ['de', '“Farben und Formen”'],
+    ]);
+    unmount();
+  });
+
+  /** The tooltip and the language are on one element, for `Diff.jsx`'s reason. */
+  it('declares it on the element that owns the heading tooltip', async () => {
+    const unmount = mount({
+      report: german,
+      findings: [finding('a', 'open', { anchorHeading: 'Farben und Formen' })],
+    });
+    await userEvent.click(button('Links'));
+
+    const under = document.querySelector('tr#finding-a [lang="de"][title]');
+    expect(under.title).toBe('Farben und Formen');
+    unmount();
+  });
+
+  it('declares it in the head panel, where the title and the description are prose', async () => {
+    const unmount = mount({ report: german, findings: HEAD });
+    await userEvent.click(button('Meta'));
+
+    const declared = [...document.querySelectorAll('tbody [lang]')];
+    expect(declared.map((one) => one.lang)).not.toContain('en-GB');
+    expect(declared.map((one) => one.textContent)).toContain(PROD_META.title);
+    unmount();
+  });
+});

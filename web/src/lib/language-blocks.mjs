@@ -28,9 +28,14 @@ import { HREFLANG_STORE } from '../../../shared/stores.mjs';
  * One place, because the derivation below and `languageOf()` must never disagree
  * about where a code is cut.
  *
+ * **A code with no region is the whole language.** `slice(0, indexOf('-'))` answered `d`
+ * for `de`, silently — a missing separator is `-1` and that drops the last letter. Nothing
+ * in `HREFLANG_STORE` is region-less today, and since ticket 125 the answer is written on a
+ * cell as `lang`, where `d` is a language tag a screen reader would try to honour.
+ *
  * @param {string} code
  */
-const languageIn = (code) => code.slice(0, code.indexOf('-'));
+const languageIn = (code) => code.split('-')[0];
 
 /** @type {Map<string, Store[]>} */
 const BY_LANGUAGE = new Map();

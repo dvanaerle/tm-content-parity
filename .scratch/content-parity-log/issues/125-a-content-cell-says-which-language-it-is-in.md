@@ -1,7 +1,33 @@
 # 125 — A content cell says which language it is in
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-20 — **a content cell declares its language and the chrome does
+not**. `STORE_LANGUAGE` in `web/src/lib/stores.mjs` is the one derivation, and it is derived
+rather than written out: `languageOf()` already cuts the language out of the store's hreflang
+code, and a hand-written map beside it would be a second answer to *what does `be_fr` speak*.
+It carries the same build guard the store names do. Every element holding scraped text
+declares it — both cells of a diff, both quoted strings of a repeat row, each block of a run
+cell, the heading a finding sits under, the heading jump-list — and the two tooltips that
+repeat scraped text carry it on the element that owns them, which is why the copy button
+declares the content's language and its own label declares `en-GB`. The page key declares
+nothing in either of its two places. 1370 tests pass; no count, bar or derivation moved, and
+the build's 824 pages carry `lang="de"`, `lang="fr"` and `lang="en"` on content cells with
+`en-GB` on the shell.
+
+Three things beyond the checkboxes. A **source sweep**
+(`web/src/content-language.test.mjs`) holds the rule in the form it is actually stated: a
+declaration is *derived, or English by name* — a `lang={…}` binding is allowed and the only
+quoted language anywhere under `web/src` is `en-GB` — and `hreflang`, `xml:lang` and `locale`
+are refused outright, which is what keeps a note untagged and keeps this from becoming the
+seam i18n hangs on. The same sweep pins that **every** caller of the two components drawing
+compared text hands the language down: these are `.jsx`, `tsc` does not check a JSX prop
+here, and a caller that forgot it would have React omit the attribute and throw nothing.
+
+And one latent defect in the derivation it reads: `languageIn()` cut a code with
+`slice(0, indexOf('-'))`, which answers `d` for a region-less `de`. No code in
+`HREFLANG_STORE` is region-less today, so nothing was wrong on screen — but the answer is
+now written on a cell as `lang`, where `d` is a tag a screen reader would try to honour, so
+it cuts on the separator instead.
 Blocked by: 124
 Parent: ../map.md
 
@@ -59,16 +85,16 @@ reader — and it fixes a defect that predates the language decision entirely:
 
 ## Acceptance criteria
 
-- [ ] A language is derived from the store code, in one place, for all six stores.
-- [ ] Every element holding scraped production or new-site text carries that
+- [x] A language is derived from the store code, in one place, for all six stores.
+- [x] Every element holding scraped production or new-site text carries that
       language.
-- [ ] The chrome around it keeps `en-GB`, so the two are distinguishable to a
+- [x] The chrome around it keeps `en-GB`, so the two are distinguishable to a
       screen reader in the way ticket 124's accepted regression says they are not
       distinguishable by eye on `/uk/`.
-- [ ] The page key carries no `lang`, in the breadcrumb or the `<h1>`, on any
+- [x] The page key carries no `lang`, in the breadcrumb or the `<h1>`, on any
       store — and a test pins that the two agree.
-- [ ] No count, bar or derivation moves, and no visible layout changes.
-- [ ] `npm test` is green.
+- [x] No count, bar or derivation moves, and no visible layout changes.
+- [x] `npm test` is green.
 
 ## Traps
 
@@ -145,16 +171,16 @@ of claim on every store.
 
 **Acceptance criteria.**
 
-- [ ] One derivation, in one module, covering all six stores, guarded at build
+- [x] One derivation, in one module, covering all six stores, guarded at build
       time against an unmapped store.
-- [ ] Every element holding scraped production or new-site text declares that
+- [x] Every element holding scraped production or new-site text declares that
       language; the chrome around it remains `en-GB`.
-- [ ] The page key declares nothing, in the breadcrumb and in the `<h1>` alike,
+- [x] The page key declares nothing, in the breadcrumb and in the `<h1>` alike,
       with a test pinning that the two agree.
-- [ ] Editor notes declare nothing.
-- [ ] No count, bar, denominator or derivation moves, and no visible layout
+- [x] Editor notes declare nothing.
+- [x] No count, bar, denominator or derivation moves, and no visible layout
       change. The tests pinning that rule pass unchanged.
-- [ ] `npm test` is green, including 124's stopword guard.
+- [x] `npm test` is green, including 124's stopword guard.
 
 **Out of scope.**
 

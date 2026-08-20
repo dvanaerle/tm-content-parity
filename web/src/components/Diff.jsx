@@ -113,9 +113,11 @@ export function DiffHeads({ children = null }) {
  * @param {object} props
  * @param {string | null} props.prod  Production's text.
  * @param {string | null} props.new   The new site's text.
+ * @param {string} props.language  The language the two texts are in (ticket 125). It is the
+ *   store's and not the interface's: the two labels beside them stay English.
  * @param {string} [props.className]
  */
-export function Comparison({ prod, new: next, className = '' }) {
+export function Comparison({ prod, new: next, language, className = '' }) {
   // **Spans and not divs, all the way down.** Both callers put this inside phrasing
   // content — a `CollapsibleTrigger`, which is a `<button>`, and the bulk bar's `<p>` — and
   // a `<div>` in either is invalid HTML the parser repairs by closing the ancestor early.
@@ -125,8 +127,8 @@ export function Comparison({ prod, new: next, className = '' }) {
   return (
     <span className={cn('@container block', className)}>
       <span className="grid gap-x-4 gap-y-1 @md:grid-cols-2">
-        <Side side="production" value={prod} />
-        <Side side="new" value={next} />
+        <Side side="production" value={prod} language={language} />
+        <Side side="new" value={next} language={language} />
       </span>
     </span>
   );
@@ -137,7 +139,7 @@ export function Comparison({ prod, new: next, className = '' }) {
  * `data-bucket`: the test then reads the label back without depending on the element or on
  * the class names it wears.
  */
-function Side({ side, value }) {
+function Side({ side, value, language }) {
   return (
     <span className="block min-w-0">
       <span data-side={side} className="block text-xs text-muted-foreground">
@@ -146,7 +148,9 @@ function Side({ side, value }) {
       {value === null || value === '' ? (
         <span className="text-sm text-muted-foreground italic">not present</span>
       ) : (
-        <span className="block text-sm break-words">{value}</span>
+        <span lang={language} className="block text-sm break-words">
+          {value}
+        </span>
       )}
     </span>
   );
@@ -162,6 +166,9 @@ function Side({ side, value }) {
  * @param {string | null} [props.prodRaw]  The literal string, for the copy button. Absent
  *                                         where there is no raw — a link key has none.
  * @param {string | null} [props.newRaw]
+ * @param {string} props.language  The language the two texts are in (ticket 125), which is
+ *                                 the store's. The marks and the controls in the cell
+ *                                 beside them are the interface's and stay English.
  * @param {boolean} [props.mono]
  * @param {boolean} [props.strong]
  * @param {boolean} [props.equal]  The caller compared the two sides and got equal, on
@@ -182,6 +189,7 @@ function Side({ side, value }) {
 export function DiffCells({
   prod,
   new: next,
+  language,
   prodPrefix = null,
   newPrefix = null,
   prodRaw = null,
@@ -217,6 +225,7 @@ export function DiffCells({
       <Cell
         side="production"
         value={prod}
+        language={language}
         spans={uncompared ? null : spans}
         tone={tinted && !equal && next === null ? 'lost' : null}
         prefix={prodPrefix}
@@ -228,6 +237,7 @@ export function DiffCells({
       <Cell
         side="new"
         value={next}
+        language={language}
         spans={uncompared ? null : spans}
         tone={tinted && !equal && prod === null ? 'added' : null}
         prefix={newPrefix}
@@ -260,7 +270,7 @@ const UNCOMPARED = 'This block is too large for the word comparison. Nothing was
  *           status tone written here would print no colour and throw nothing —
  *           `Diff.browser.test.mjs` is what refuses the third word.
  */
-function Cell({ side, value, spans, tone, prefix, raw, mono, strong, note }) {
+function Cell({ side, value, language, spans, tone, prefix, raw, mono, strong, note }) {
   // `TableCell` defaults to `whitespace-nowrap align-middle`, which is right for a
   // dashboard row and wrong for every cell here: these hold a paragraph of Dutch
   // prose or a long url, and both must wrap and both must sit at the top of a row
@@ -284,10 +294,13 @@ function Cell({ side, value, spans, tone, prefix, raw, mono, strong, note }) {
     >
       {prefix}
       {note && <p className="mb-1 text-xs text-muted-foreground italic">{note}</p>}
-      <span className={strong ? 'font-semibold' : ''}>
+      {/* The language goes on the text and not on the cell: the prefix above holds the
+          unit's tag and a link into the live page, and the note holds a sentence of the
+          interface's own — three things that are English on every store. */}
+      <span lang={language} className={strong ? 'font-semibold' : ''}>
         {spans ? <Spans spans={spansFor(spans, side)} /> : value}
       </span>
-      {raw !== null && raw !== value && <CopyButton text={raw} />}
+      {raw !== null && raw !== value && <CopyButton text={raw} language={language} />}
     </TableCell>
   );
 }
@@ -329,13 +342,17 @@ function Spans({ spans }) {
  * The button is present only if `raw` and `norm` differ. In all other rows the text
  * on the screen is already the literal string, and the button has no use.
  */
-function CopyButton({ text }) {
+function CopyButton({ text, language }) {
   const [copied, setCopied] = useState(false);
 
   return (
     <Button
       variant="ghost"
       size="xs"
+      // The tooltip holds the scraped string, and a `title` is announced in **its own
+      // element's** language — so the attribute belongs here and not on the text beside
+      // it, and the label below declares the one thing in this button that is English.
+      lang={language}
       title={text}
       onClick={async () => {
         await navigator.clipboard.writeText(text);
@@ -344,7 +361,7 @@ function CopyButton({ text }) {
       }}
       className="ml-2 align-middle text-xs text-muted-foreground"
     >
-      {copied ? 'copied' : 'copy the literal text'}
+      <span lang="en-GB">{copied ? 'copied' : 'copy the literal text'}</span>
     </Button>
   );
 }

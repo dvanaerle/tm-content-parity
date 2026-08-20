@@ -64,7 +64,13 @@ export const Detail = ({ detail }) =>
  * place instead of a heading, and it takes the place of the heading rather than sitting
  * beside it, because a finding is in one of the two and never in both.
  */
-export const Section = ({ anchorHeading, locations = null, sides = null, inHead = false }) => {
+export const Section = ({
+  anchorHeading,
+  locations = null,
+  sides = null,
+  language,
+  inHead = false,
+}) => {
   // The **urls** and not the two elements. A `<Locate>` element is truthy whether or not
   // it goes on to render an anchor, so a guard written on the elements never fires — and
   // a report predating `locations` would ship an empty strip with no section and no
@@ -80,8 +86,14 @@ export const Section = ({ anchorHeading, locations = null, sides = null, inHead 
         <span>in the &lt;head&gt;</span>
       ) : (
         anchorHeading && (
-          <span className="truncate" title={anchorHeading}>
-            under “{anchorHeading}”
+          /* *under* is the interface's word and the heading is the page's, so the inner span
+             is what declares the language — and what carries the tooltip with it
+             (ticket 125; `Diff.jsx`'s copy button says why the two go together). */
+          <span className="truncate">
+            under{' '}
+            <span lang={language} title={anchorHeading}>
+              “{anchorHeading}”
+            </span>
           </span>
         )
       )}

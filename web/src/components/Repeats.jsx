@@ -53,6 +53,7 @@ export default function Repeats({
   logRead,
   bulk,
   link,
+  language,
   searched = false,
   builtAt = null,
 }) {
@@ -73,7 +74,13 @@ export default function Repeats({
           every difference in the store and no proposition anyone made, so `ClassGroups` below
           offers nothing of the kind. */}
       {searched && <SelectResult repeats={worstFirst} />}
-      <RowList repeats={worstFirst} byFinding={byFinding} link={link} searched={searched} />
+      <RowList
+        repeats={worstFirst}
+        byFinding={byFinding}
+        link={link}
+        language={language}
+        searched={searched}
+      />
       <Total repeats={worstFirst} />
     </FlatSelection>
   );
@@ -400,7 +407,7 @@ const SELECT_RESULT_TITLE =
  * (ticket 102) and grouped by the term: the term is the grouping the editor asked for, and
  * grouping it by class as well would be a second grouping over one answer.
  */
-export function ClassGroups({ repeats, classes, byFinding, logRead, bulk, link }) {
+export function ClassGroups({ repeats, classes, byFinding, logRead, bulk, link, language }) {
   const worstFirst = useWorstFirst(repeats, byFinding, logRead);
   const groups = useMemo(() => groupRepeatsByClass(worstFirst, classes), [worstFirst, classes]);
 
@@ -441,6 +448,7 @@ export function ClassGroups({ repeats, classes, byFinding, logRead, bulk, link }
             onDraw={(next) => setBudget({ ...budget, [group.class]: next })}
             byFinding={byFinding}
             link={link}
+            language={language}
           />
         ))}
       </ul>
@@ -461,7 +469,7 @@ export function ClassGroups({ repeats, classes, byFinding, logRead, bulk, link }
  * makes that tail navigable; it does not get to decide the tail is not work. So no group is
  * left out for being small, and none of them hides its rows behind its count.
  */
-function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, link }) {
+function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, link, language }) {
   const count = group.repeats.length;
 
   return (
@@ -488,6 +496,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, link }
             repeats={group.repeats}
             byFinding={byFinding}
             link={link}
+            language={language}
             drawn={drawn}
             onDraw={onDraw}
           />
@@ -507,7 +516,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, link }
  * which is the flat list a search draws. A list that is never taken off screen cannot lose
  * its paging, so there is nothing above it to hold.
  */
-function RowList({ repeats, byFinding, link, drawn: given, onDraw, searched = false }) {
+function RowList({ repeats, byFinding, link, language, drawn: given, onDraw, searched = false }) {
   const [held, setHeld] = useState(PAGE_SIZE);
   const drawn = given ?? held;
   const draw = (next) => (onDraw ? onDraw(next) : setHeld(next));
@@ -521,6 +530,7 @@ function RowList({ repeats, byFinding, link, drawn: given, onDraw, searched = fa
             repeat={repeat}
             byFinding={byFinding}
             link={link}
+            language={language}
             searched={searched}
           />
         ))}
@@ -571,7 +581,7 @@ const acrossPagesTitle = (repeat) =>
   `${repeat.occurrences} times in total, on ${repeat.on.length} ` +
   'pages. On some of those pages the difference is there more than once.';
 
-function Row({ repeat, byFinding, link, searched }) {
+function Row({ repeat, byFinding, link, language, searched }) {
   const [open, setOpen] = useState(false);
 
   /**
@@ -627,7 +637,16 @@ function Row({ repeat, byFinding, link, searched }) {
               <MatchedFields fields={repeat.fields} />
             </span>
 
-            <Comparison prod={repeat.prod} new={repeat.new} className="min-w-48 flex-1" />
+            {/* The language is the list's and not this row's to find: a difference has no
+                report and no store in scope, and reaching for a module-level store to get
+                one would make a fact about two strings into application state. Two stores
+                of a block share a language, so a repeat crossing one is still in one. */}
+            <Comparison
+              prod={repeat.prod}
+              new={repeat.new}
+              language={language}
+              className="min-w-48 flex-1"
+            />
 
             <span className="shrink-0 text-right text-xs">
               {/* The page count is the size of the difference. There is no separate

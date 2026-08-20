@@ -7,6 +7,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx
 import { Label } from './ui/label.jsx';
 import { Separator } from './ui/separator.jsx';
 import { CHROME } from '../lib/palette.mjs';
+import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { Attribution } from './Attribution.jsx';
 import { day } from '../lib/dates.mjs';
 import { cn } from '../lib/utils.js';
@@ -263,6 +264,9 @@ export default function Search({
           key={`${term}|${includeClosed}|${classes.join(',')}`}
           repeats={result.repeats}
           byFinding={byFinding}
+          // The language of the scraped strings on every row, which is this store's: a
+          // result reaches the sibling store and a block is two stores of one language.
+          language={STORE_LANGUAGE[store]}
           // The rows are worst-first on what is left in each difference (ticket 141), and
           // that reading waits for the log: until it has answered, `byFinding` says every
           // finding is open. It is the same `read` the notes half below is drawn on.

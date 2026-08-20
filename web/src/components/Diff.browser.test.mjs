@@ -138,6 +138,61 @@ describe('the two tones a diff may carry', () => {
 });
 
 /**
+ * What language the text in a cell is in (ticket 125).
+ *
+ * The shell declares `en-GB` and every cell used to inherit it, so a screen reader
+ * announced a German paragraph with English phonetics — WCAG 3.1.2. The store's language
+ * arrives as a prop, and what these assert is where it **lands**: on the text and on
+ * nothing else, because a cell also holds the interface's own words.
+ */
+describe('the language of the content', () => {
+  it('declares it on each side of the pair', () => {
+    const host = mount({
+      prod: 'Erhältlich in drei Farben',
+      new: 'Verfügbare Farben',
+      language: 'de',
+    });
+
+    expect([...host.querySelectorAll('[lang="de"]')].map((one) => one.textContent)).toEqual([
+      'Erhältlich in drei Farben',
+      'Verfügbare Farben',
+    ]);
+  });
+
+  /**
+   * A `title` is announced in **its own element's** language, and this one repeats the
+   * scraped string. Tagging the text span alone would leave the tooltip declaring English
+   * while the words beside it declare German, so the attribute goes on the button — and
+   * the button's own label is the interface's, which is why it says so.
+   */
+  it('declares it on the element that owns the repeated text as a tooltip', () => {
+    const host = mount({
+      prod: 'Erhältlich in drei Farben',
+      prodRaw: 'Erhältlich in\u00A0drei Farben',
+      new: null,
+      language: 'de',
+    });
+
+    const copy = host.querySelector('button');
+    expect(copy.lang).toBe('de');
+    expect(copy.title).toBe('Erhältlich in\u00A0drei Farben');
+    expect(copy.querySelector('[lang="en-GB"]').textContent).toContain('copy');
+  });
+
+  it("leaves the interface's own words out of it", () => {
+    const host = mount({ prod: long('eins'), new: long('zwei'), language: 'de' });
+
+    const note = [...host.querySelectorAll('p')].find((one) =>
+      one.textContent.includes('Nothing was compared'),
+    );
+    // Inside the host and not `closest()`: the test page's own `<html>` declares a
+    // language, so every element in the document has one above it somewhere.
+    const declared = [...host.querySelectorAll('[lang]')];
+    expect(declared.some((one) => one.contains(note))).toBe(false);
+  });
+});
+
+/**
  * The contract every surface that draws a comparison inherits (ADR 0019, ticket 02).
  *
  * The words are asserted here and not at each surface on purpose: `SIDES` is the one place
@@ -172,6 +227,19 @@ describe('a comparison names its two sides', () => {
     for (const text of drawn) {
       expect(text, text).not.toMatch(/[→⟶➞>]|\bto\b/);
     }
+  });
+
+  /**
+   * The repeat rows' two quoted strings (ticket 125). The two side labels are the
+   * interface's own words, so the attribute lands on the value and not on the pair.
+   */
+  it('declares the language of each side and not of the labels', () => {
+    const host = flow({ prod: 'Trois couleurs', new: 'Couleurs', language: 'fr' });
+
+    expect([...host.querySelectorAll('[lang="fr"]')].map((one) => one.textContent)).toEqual([
+      'Trois couleurs',
+      'Couleurs',
+    ]);
   });
 
   it('says which side is absent, rather than drawing a dash for it', () => {

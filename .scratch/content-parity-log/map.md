@@ -1480,8 +1480,22 @@ what a finding with no anchor heading offers instead. It offers the page.
     this ticket deliberately did not touch.
 
   - [125 — A content cell says which language it is in](issues/125-a-content-cell-says-which-language-it-is-in.md)
-    — `ready-for-agent`, blocked by 124. `lang="nl"` has been wrong on five of six
-    stores since the shell was written, so a German paragraph on `/de/` is
+    — **`resolved` 2026-08-20.** `STORE_LANGUAGE` in `web/src/lib/stores.mjs` derives the
+    language from the store's hreflang code — one derivation, guarded at build time like the
+    store names — and every element holding scraped text declares it: both cells of a diff,
+    both quoted strings of a repeat row, each block of a run cell, the heading a finding sits
+    under, and the heading jump-list. The chrome keeps `en-GB`. Two tooltips repeat scraped
+    text and the attribute lands on the element that owns each one, so the copy button and
+    the jump link declare the content's language while the copy button's own label declares
+    `en-GB`. The **page key declares nothing**, in the breadcrumb or the `<h1>`, and a test
+    pins that the two draw the same string. A source sweep holds the rule as *derived, or
+    English by name* — so a note cannot be tagged and no `hreflang` reaches an element — and
+    pins that every caller hands the language down, which `tsc` cannot see in a `.jsx` prop.
+    `languageIn()` stopped answering `d` for a region-less `de` on the way through. Tests
+    pass; no count, bar or denominator moved.
+
+    It was blocked by 124. `lang="nl"` had been wrong on five of six
+    stores since the shell was written, so a German paragraph on `/de/` was
     announced as Dutch. Triaged 2026-08-13: **the page key carries no language**,
     in the breadcrumb or the `<h1>`, because a url key is an identifier and not
     prose — it inherits the shell's `en-GB` and is announced in English. Tagging

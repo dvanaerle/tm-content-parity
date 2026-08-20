@@ -16,6 +16,7 @@ import { Empty, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { cn } from '../lib/utils.js';
 import { CHROME } from '../lib/palette.mjs';
+import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { landedRowProps, landingRow, useLandOn } from '../lib/landing.mjs';
 import {
   NO_FILTER,
@@ -177,9 +178,17 @@ export default function ContentView({ report, findings, showDiagnostics, control
    */
   useLandOn(jumped, landing?.settled ?? true);
 
+  /*
+   * What language the scraped text on this page is in (ticket 125), read once from the
+   * store this report is of and handed to the two surfaces that draw that text: the jump
+   * list and the rows. It is not the interface's language — everything else on this screen
+   * is English on every store (ADR 0014).
+   */
+  const language = STORE_LANGUAGE[report.store];
+
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
-      <Outline entries={outline} />
+      <Outline entries={outline} language={language} />
 
       <div className="min-w-0 flex-1">
         <Controls
@@ -255,6 +264,7 @@ export default function ContentView({ report, findings, showDiagnostics, control
               items={items}
               control={control}
               sides={report.sides}
+              language={language}
               landed={landed}
               onToggleRun={(key) => setOpenRuns((held) => toggleIn(held, key))}
             />
@@ -385,7 +395,7 @@ function Export({ markdown, name, children }) {
  * viewport and took the whole page sideways with it. `truncate` on each link was dead
  * in the same breath — there was no box to truncate against.
  */
-function Outline({ entries }) {
+function Outline({ entries, language }) {
   if (!entries.length) return null;
 
   return (
@@ -402,6 +412,9 @@ function Outline({ entries }) {
             <a
               href={`#${entry.anchor}`}
               className={`block truncate hover:underline ${CHROME.link}`}
+              // On the link and not on a span inside it: the link is the whole heading and
+              // it owns the tooltip repeating it (`Diff.jsx`'s copy button says why).
+              lang={language}
               title={entry.text}
             >
               {entry.text}
@@ -424,7 +437,7 @@ function Outline({ entries }) {
  * window onto its first change. A jump still lands on a row and marks it; there is no
  * longer anything to open.
  */
-function Rows({ items, control, sides, landed, onToggleRun }) {
+function Rows({ items, control, sides, language, landed, onToggleRun }) {
   // The **mark** is drawn at once, and it is all this table does about a landing: the
   // scroll is one call in the parent, over the one anchor a finding link and a hash link
   // agree on.
@@ -464,11 +477,25 @@ function Rows({ items, control, sides, landed, onToggleRun }) {
                   nothing of its own. */}
               {item.open &&
                 item.rows.map((row) => (
-                  <Row key={row.key} row={row} control={control} sides={sides} landed={landed} />
+                  <Row
+                    key={row.key}
+                    row={row}
+                    control={control}
+                    sides={sides}
+                    language={language}
+                    landed={landed}
+                  />
                 ))}
             </Fragment>
           ) : (
-            <Row key={item.key} row={item.row} control={control} sides={sides} landed={landed} />
+            <Row
+              key={item.key}
+              row={item.row}
+              control={control}
+              sides={sides}
+              language={language}
+              landed={landed}
+            />
           ),
         )}
       </TableBody>
@@ -477,7 +504,7 @@ function Rows({ items, control, sides, landed, onToggleRun }) {
 }
 
 /** One block, production beside the new site. */
-function Row({ row, control, sides, landed }) {
+function Row({ row, control, sides, language, landed }) {
   // What marks a landed row is `landing.mjs`'s rule and not this table's: the
   // finding table draws one too, and the outline, the Tab stop and the
   // announcement are one mark said three ways rather than three classes
@@ -490,9 +517,10 @@ function Row({ row, control, sides, landed }) {
   return (
     <TableRow id={row.key} {...mark} className={cn('scroll-mt-4 align-top', className)}>
       {regrouped ? (
-        <RunCells row={row} sides={sides} />
+        <RunCells row={row} sides={sides} language={language} />
       ) : (
         <DiffCells
+          language={language}
           prod={row.prod?.norm ?? null}
           new={row.new?.norm ?? null}
           prodRaw={row.prod?.raw ?? null}
@@ -590,15 +618,21 @@ function Row({ row, control, sides, landed }) {
  * has a defect this cell cannot draw around — but it is the one path on which the paragraph
  * above is not the whole truth.
  */
-function RunCells({ row, sides }) {
+function RunCells({ row, sides, language }) {
   return (
     <>
       <RunCell
         units={row.prodRun ?? asRun(row.prod)}
         url={sides.production.url}
         side="production"
+        language={language}
       />
-      <RunCell units={row.newRun ?? asRun(row.new)} url={sides.new.url} side="the new site" />
+      <RunCell
+        units={row.newRun ?? asRun(row.new)}
+        url={sides.new.url}
+        side="the new site"
+        language={language}
+      />
     </>
   );
 }
@@ -619,14 +653,16 @@ const asRun = (unit) => (unit ? [unit] : []);
  * hold one (ticket 121), and it should not stop looking like a heading because the other side
  * inlined it.
  */
-function RunCell({ units, url, side }) {
+function RunCell({ units, url, side, language }) {
   return (
     <TableCell className="px-2 py-3 align-top text-sm break-words whitespace-normal">
       {units.map((unit) => (
         <p key={unit.index} className="mt-3 first:mt-0">
           <Tag unit={unit} />
           <Locate href={locationUrl(url, unitLocation(unit))} side={side} />
-          <span className={unit.kind === 'heading' ? 'font-semibold' : ''}>{unit.norm}</span>
+          <span lang={language} className={unit.kind === 'heading' ? 'font-semibold' : ''}>
+            {unit.norm}
+          </span>
         </p>
       ))}
     </TableCell>

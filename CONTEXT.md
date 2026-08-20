@@ -815,6 +815,15 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   A block is **not a pair**. A **store-page pair** is production against the new
   site, for one store page; a block is two stores on **one** side. Two meanings for
   one word is what this list exists to stop.
+- **Content language** — the language of the **text a cell holds**, which is the store's and
+  not the interface's. `STORE_LANGUAGE` in `web/src/lib/stores.mjs` derives it from the same
+  `HREFLANG_STORE` the blocks come from, so `nl` and `be` are Dutch, `be_fr` and `fr` are
+  French, `de` is German and `uk` is English. Every element holding scraped text declares it
+  and the chrome around it stays `en-GB` (ADR 0014): they are two different facts, and a
+  screen reader can only tell them apart if the second one is written down. The **page key
+  declares nothing**, in the breadcrumb or the `<h1>` — a url key is an identifier and not
+  prose, so there is no language to claim. An editor's note declares nothing either: it is
+  free text in whatever language they typed. Decided 2026-08-13, built 2026-08-20.
 - **Sibling page** — the other store's page, inside one block. Two sibling pages are
   matched by the **hreflang alternate production declares** between them, which is
   production's own claim that they are the same page, and by path equality only where

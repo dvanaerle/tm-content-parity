@@ -51,6 +51,24 @@ describe('PageBreadcrumb', () => {
     unmount();
   });
 
+  /**
+   * The last rung declares **no** language (ticket 125).
+   *
+   * A url key is an identifier and not prose. Writing `lang="nl"` on it would make the one
+   * non-content element on a `/de/` page the loudest language claim on it, and writing
+   * `lang="en-GB"` would assert that a Dutch slug is English. Omission asserts nothing,
+   * which is the true state of affairs — and the `<h1>` below it, which draws the same
+   * string, omits it for the same reason.
+   */
+  it('declares no language on the page key', () => {
+    const unmount = mount();
+
+    const rung = document.querySelector('[data-slot="breadcrumb-page"]');
+    expect(rung.textContent).toBe('faq/productinformatie');
+    expect(rung.hasAttribute('lang')).toBe(false);
+    unmount();
+  });
+
   // The seam this file exists for. `back` is a query string that travelled through a link
   // and came back off the address bar, so anyone can put anything in it. What reaches the
   // href is only ever the keys this dashboard has.

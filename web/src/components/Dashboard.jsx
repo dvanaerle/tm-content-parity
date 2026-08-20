@@ -37,6 +37,7 @@ import {
   BUCKET_TONE,
 } from '../lib/buckets.mjs';
 import { CHROME } from '../lib/palette.mjs';
+import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { cn } from '../lib/utils.js';
 import { NO_EDITOR, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
@@ -694,6 +695,11 @@ export default function Dashboard({
                 logRead={log.ready}
                 bulk={bulk}
                 link={link}
+                // What language the two quoted strings on a row are in (ticket 125). The
+                // rows have no store of their own, and a difference that crosses a block
+                // crosses into the other store of one language — so this store answers for
+                // every row in the list.
+                language={STORE_LANGUAGE[store]}
               />
             )}
 

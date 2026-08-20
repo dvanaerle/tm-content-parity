@@ -1377,3 +1377,22 @@ describe('a clearing over many pages', () => {
     unmount();
   });
 });
+
+/**
+ * What language the two quoted strings are in (ticket 125).
+ *
+ * The rows are the one surface with no report and no store of its own, so the language
+ * arrives as a prop from the list that owns it. It is **not** read from a module-level
+ * store: a per-cell fact kept in application state is a fact that outlives the cell.
+ */
+describe('the language of a difference', () => {
+  it('declares it on both quoted strings of a row', () => {
+    mount({ language: 'de' });
+
+    const declared = [...document.querySelectorAll('[data-slot="collapsible-trigger"] [lang]')];
+    expect(declared.map((one) => [one.lang, one.textContent])).toEqual([
+      ['de', 'oud'],
+      ['de', 'nieuw'],
+    ]);
+  });
+});

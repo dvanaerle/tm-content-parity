@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { DiffCells } from './Diff.jsx';
 import { Marker, MarkerToggle } from './Marker.jsx';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from './ui/table.jsx';
-import { STORE_NAME } from '../lib/stores.mjs';
+import { STORE_LANGUAGE, STORE_NAME } from '../lib/stores.mjs';
 import { siblingReading } from '../lib/sibling.mjs';
 import { collapseRuns, collapseState, toggleIn } from '../lib/view.mjs';
 
@@ -141,6 +141,16 @@ export default function SiblingView({ store, here, sibling }) {
  * diff a reader cannot scan.
  */
 function Rows({ items, store, sibling, onToggleRun }) {
+  /*
+   * One language over two columns (ticket 125), and it is read from this store alone.
+   *
+   * A block **is** two stores of one language — that is what makes the words comparable and
+   * what this tab is for — so asking the sibling would be asking the same question twice.
+   * The region differs and the language does not, and `nl-NL` beside `nl-BE` would have one
+   * row claiming two languages for text that is in one.
+   */
+  const language = STORE_LANGUAGE[store];
+
   return (
     <Table className="min-w-3xl table-fixed">
       <TableHeader className="[&_th]:text-xs [&_th]:tracking-wide [&_th]:text-muted-foreground [&_th]:uppercase">
@@ -161,10 +171,11 @@ function Rows({ items, store, sibling, onToggleRun }) {
           item.kind === 'marker' ? (
             <Fragment key={item.key}>
               <Marker marker={item} columns={2} onToggle={() => onToggleRun(item.key)} />
-              {item.open && item.rows.map((row) => <Row key={row.key} row={row} />)}
+              {item.open &&
+                item.rows.map((row) => <Row key={row.key} row={row} language={language} />)}
             </Fragment>
           ) : (
-            <Row key={item.key} row={item.row} />
+            <Row key={item.key} row={item.row} language={language} />
           ),
         )}
       </TableBody>
@@ -194,10 +205,11 @@ function Rows({ items, store, sibling, onToggleRun }) {
  * the word comparison is **uncompared** here in the existing word and the existing
  * meaning: both sides in full, neither coloured, and a line saying nothing was compared.
  */
-function Row({ row }) {
+function Row({ row, language }) {
   return (
     <TableRow id={row.key} className="scroll-mt-4 align-top">
       <DiffCells
+        language={language}
         prod={row.here?.norm ?? null}
         new={row.there?.norm ?? null}
         prodRaw={row.here?.raw ?? null}
