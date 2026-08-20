@@ -6,7 +6,6 @@ import { compareImages, IMAGE_CAMPAIGN } from './images.mjs';
 import { compareLinks } from './links.mjs';
 import { locationUrl, textFragmentUrl, unitLocation } from './locate.mjs';
 import { lcsPairs, mayPair, maskNumbers, similarity, tier2 } from './match.mjs';
-import { metaRows } from './meta.mjs';
 import { classifyPair, diffRows, textFindings } from './text.mjs';
 import { diffCost, isUncompared, spansFor, wordDiff } from './worddiff.mjs';
 import { extractPage } from '../crawl/extract.mjs';
@@ -1439,148 +1438,6 @@ function untrimmedWordDiff(prod, next) {
 
 const newUrl = 'https://m2stagingnl.intern.systems/overkappingen';
 
-/**
- * The `<head>` panel (ticket 35, phase 6 of spec 32). It emits **no findings** —
- * ticket 21 has not decided what a parity defect in the head is — so these rules
- * exist only to decide what an editor is shown. That is why they live in a pure
- * module and are tested here rather than asserted through the panel.
- */
-describe('metaRows', () => {
-  /**
-   * @param {Partial<import('./contract.mjs').PageMeta>} prodMeta
-   * @param {Partial<import('./contract.mjs').PageMeta>} newMeta
-   */
-  const rows = (prodMeta, newMeta) =>
-    metaRows(
-      extract({
-        url: 'https://www.tuinmaximaal.nl/overkappingen',
-        meta: {
-          title: null,
-          description: null,
-          canonical: null,
-          noindex: false,
-          h1: null,
-          ...prodMeta,
-        },
-      }),
-      extract({
-        url: newUrl,
-        meta: {
-          title: null,
-          description: null,
-          canonical: null,
-          noindex: false,
-          h1: null,
-          ...newMeta,
-        },
-      }),
-    );
-
-  /** @param {string} field */
-  const row = (all, field) => all.find((candidate) => candidate.field === field);
-
-  it('does not carry h1 — the content view owns it', () => {
-    // Spec 32, decision 34: 93 pages differ on the `h1`, and it is a unit
-    // inside the content boundary. Reporting it here as well would report the
-    // same difference twice on two tabs.
-    expect(row(rows({ h1: 'Overkappingen' }, { h1: 'Veranda' }), 'h1')).toBeUndefined();
-    expect(rows({}, {}).map((each) => each.field)).toEqual([
-      'title',
-      'description',
-      'canonical',
-      'noindex',
-    ]);
-  });
-
-  it('reads a changed title as changed and an equal one as equal', () => {
-    expect(row(rows({ title: 'Overkappingen' }, { title: 'Veranda' }), 'title').state).toBe(
-      'changed',
-    );
-    expect(row(rows({ title: 'Overkappingen' }, { title: 'Overkappingen' }), 'title').state).toBe(
-      'same',
-    );
-  });
-
-  it('folds the two hosts before it compares a canonical', () => {
-    // 18 of 179 nl pages differ on the canonical by hostname alone, and the
-    // hostname is the environment rather than a content difference.
-    const canonical = row(
-      rows(
-        { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
-        { canonical: 'https://m2stagingnl.intern.systems/overkappingen/' },
-      ),
-      'canonical',
-    );
-    expect(canonical.state).toBe('same');
-    // It compares the folded pair and reports the raw one, so `state` is the only
-    // place the fold is readable. A panel that diffs `prod` against `new` paints
-    // the hostname on all 18 pages, which is why the cells key on `state` and not
-    // on the two strings they show.
-    expect(canonical.prod).toBe('https://www.tuinmaximaal.nl/overkappingen');
-    expect(canonical.new).toBe('https://m2stagingnl.intern.systems/overkappingen/');
-  });
-
-  it('still reports a canonical that points at another page', () => {
-    const canonical = row(
-      rows(
-        { canonical: 'https://www.tuinmaximaal.nl/overkappingen' },
-        { canonical: 'https://m2stagingnl.intern.systems/veranda' },
-      ),
-      'canonical',
-    );
-    expect(canonical.state).toBe('changed');
-  });
-
-  it('hides the canonical row when production has none and the new site has one', () => {
-    // 147 of 179 nl pages. The content team cannot set a canonical, so it was
-    // never a difference an editor could act on.
-    expect(
-      row(
-        rows(
-          { canonical: null },
-          { canonical: 'https://m2stagingnl.intern.systems/overkappingen' },
-        ),
-        'canonical',
-      ),
-    ).toBeUndefined();
-  });
-
-  it('keeps the canonical row when the new site lost one', () => {
-    // The other direction, on 2 pages. The suppression above must not bury it.
-    const canonical = row(
-      rows({ canonical: 'https://www.tuinmaximaal.nl/overkappingen' }, { canonical: null }),
-      'canonical',
-    );
-    expect(canonical.state).toBe('lost');
-  });
-
-  it('keeps a canonical row that neither side has', () => {
-    expect(row(rows({ canonical: null }, { canonical: null }), 'canonical').state).toBe('same');
-  });
-
-  it('keeps noindex visible', () => {
-    // Four pages differ, and a page indexable on production and noindex on the
-    // new site is a launch blocker.
-    const noindex = row(rows({ noindex: false }, { noindex: true }), 'noindex');
-    expect(noindex.state).toBe('changed');
-    expect(noindex.new).toBe('noindex');
-    expect(noindex.prod).toBe('index');
-  });
-
-  it('reads a description the new site never wrote as lost', () => {
-    expect(
-      row(rows({ description: 'Overkappingen op maat' }, { description: null }), 'description')
-        .state,
-    ).toBe('lost');
-  });
-
-  it('reads a description production never had as added', () => {
-    expect(
-      row(rows({ description: null }, { description: 'Veranda op maat' }), 'description').state,
-    ).toBe('added');
-  });
-});
-
 describe('compareLinks', () => {
   it('reports a live-domain link only when the path is a page on the new site', () => {
     const production = extract({ links: [] });
@@ -2447,6 +2304,16 @@ describe('comparePage', () => {
     });
     expect(report.comparable).toBe(false);
     expect(report.findings.map((one) => one.class)).toEqual(['no-declared-alternate']);
+  });
+
+  it('puts a changed head field in the report, beside text, links and images', () => {
+    const report = comparePage({
+      sides: {
+        production: extract({ meta: { ...extract({}).meta, title: 'Overkappingen' } }),
+        new: extract({ side: 'new', meta: { ...extract({}).meta, title: 'Veranda' } }),
+      },
+    });
+    expect(report.findings.map((one) => one.class)).toEqual(['meta-title-changed']);
   });
 
   it('says nothing about the alternate on a page production declares in Dutch', () => {

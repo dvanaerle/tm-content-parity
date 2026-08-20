@@ -25,6 +25,7 @@ import {
 import { FindingCollector, summarise } from './findings.mjs';
 import { compareImages } from './images.mjs';
 import { compareLinks } from './links.mjs';
+import { compareMeta } from './meta.mjs';
 import { CoverageTally, coverageDelta, coverageLines } from './region-coverage.mjs';
 import { nextRunLog, readRunLog, RUN_LOG, writeRunLog } from './run-log.mjs';
 import { diffRows, textFindings } from './text.mjs';
@@ -130,6 +131,7 @@ export function comparePage({ sides, newSitePaths, statuses, observationId = new
   textFindings(aligned, collector);
   compareLinks({ production, new: next, collector, newSitePaths, statuses });
   compareImages(production, next, collector);
+  compareMeta(production, next, collector);
 
   const findings = collector.all();
   // Ticket 34: a `DiffRow` holds the position in the `elements` array, and the

@@ -184,14 +184,14 @@ In build order. **Criterion 1 is your first failing test.** Run
 `npm test -- compare/meta.test.mjs` and show the red before you write the
 implementation. Then the next criterion. Do not plan across all six.
 
-- [ ] 1 `compare/meta.test.mjs` exists and the nine `metaRows` tests move into it
+- [x] 1 `compare/meta.test.mjs` exists and the nine `metaRows` tests move into it
       **unchanged**, green, out of `compare.test.mjs`.
-- [ ] 2 The producer takes the collector as a parameter, and the island build passes.
-- [ ] 3 Title: the three classes fire, mutually exclusively, at most one per row.
-- [ ] 4 Description: the two directions and `meta-casing`, tier 2 unfolded, at most
+- [x] 2 The producer takes the collector as a parameter, and the island build passes.
+- [x] 3 Title: the three classes fire, mutually exclusively, at most one per row.
+- [x] 4 Description: the two directions and `meta-casing`, tier 2 unfolded, at most
       one per row.
-- [ ] 5 Robots: both directions off the derived boolean, mutually exclusive.
-- [ ] 6 Every meta finding carries `score: null` and `anchorHeading: null`. `score`
+- [x] 5 Robots: both directions off the derived boolean, mutually exclusive.
+- [x] 6 Every meta finding carries `score: null` and `anchorHeading: null`. `score`
       is a `copy`-finding field and a head row has no similarity pairing;
       `anchorHeading` is defined by document order inside the content boundary, and
       the head is outside it.
@@ -239,26 +239,118 @@ against the baseline ticket 93 left behind. It reads `compare/measure.mjs`, tick
 recorded baseline and ticket 91's predicted table, and its tables go here and in the probe
 output — never into ticket 58.
 
-- [ ] Per store and totalled: findings added on `check: 'meta'`, and the share of shown they
+- [x] Per store and totalled: findings added on `check: 'meta'`, and the share of shown they
       represent. 21 put that share at **0.54%** over 373 comparable pages. The share, not
       the raw count, is the figure to compare — the corpus is 722 now.
-- [ ] Stated beside ticket 93's `no-route` drop, as two numbers on one line, so the net
+- [x] Stated beside ticket 93's `no-route` drop, as two numbers on one line, so the net
       movement never appears without both halves.
-- [ ] The four `lost`/`added` classes fire **zero** times, or the exceptions are named by
+- [x] The four `lost`/`added` classes fire **zero** times, or the exceptions are named by
       page. Both sides always send a title and a description. They ship anyway, because a
       one-sided check needs both directions and a title that disappears after a later
       content edit is the exact defect this log exists to catch.
-- [ ] `robots-index-lost` is counted by store. 91 measured it firing **twice**, on `be` and
+- [x] `robots-index-lost` is counted by store. 91 measured it firing **twice**, on `be` and
       on `de` — the severe direction, where the page leaves Google. This is the one claim
       that does not scale with the corpus: if it fires more often now, that is a finding
       about a head and it is named.
-- [ ] **Text, link and image finding counts are unmoved** against ticket 93's baseline, on
+- [x] **Text, link and image finding counts are unmoved** against ticket 93's baseline, on
       every store and not just `nl`. This work adds a check; it must not disturb the other
       three. A moved count here is a defect in the producer above, not a measurement.
-- [ ] The chips move as predicted: open differences up by most of the total, hidden noise by
+- [x] The chips move as predicted: open differences up by most of the total, hidden noise by
       the rest, pages-equal down.
 
 **Why this is not its own ticket.** It is `Type: measure` with no session, it is blocked by
 nothing but this ticket, and it measures exactly what this ticket produced. A build whose
 corpus-wide effect is booked in a separate tracker entry is a build that can land and sit
 unmeasured — and the runbook's rule batches freely up to a gate, which is what this is.
+
+## What landed, measured 2026-08-20
+
+Status: done. `compareMeta()` sits beside the other three checks in `comparePage()`, and
+it reads `metaRows()` rather than the two extracts — so a row an editor is not shown
+cannot become work behind their back, and canonical, `h1` and keywords make no finding
+without a second rule saying so.
+
+**The baseline tables above were stale for three of the four check rows.** They were read
+off `data/reports/` as they stood on 2026-08-14; rules have moved since, so a re-compare
+on unchanged code already prints different `text`, `links` and `images` counts. The `meta`
+row survived intact — 0/5/90/81/92/81 = 349 — so the gate's own column was still good.
+The before column below is a fresh run of **this** code with the `compareMeta()` call
+removed, which is the only baseline the unmoved-checks claim can be read against.
+
+| `measure.mjs` | before | after | delta |
+|---|---|---|---|
+| findings | 35,386 | 35,585 | **+199** |
+| work | 17,632 | 17,831 | **+199** |
+| pages with no finding at all | 47 | 45 | −2 |
+| `check: 'text'` | 23,266 | 23,266 | **0** |
+| `check: 'links'` | 3,738 | 3,738 | **0** |
+| `check: 'images'` | 8,033 | 8,033 | **0** |
+| `check: 'meta'` | 349 | 548 | +199 |
+
+`npm test` is green — 1,329 tests over 62 files, the nine moved `metaRows` tests among them
+— and `npm run build` builds all 824 pages, so the island still takes `compare/meta.mjs`
+with its new `./match.mjs` import. Those are slice 2's other half and the gate's first
+command.
+
+**The other three checks are unmoved on every store**, not only on `nl`: the three rows
+are identical store by store in the probe's `=== THE GATE BASELINE ===` before and after.
+
+### The gate, on `nl`
+
+| | predicted | after | why the difference |
+|---|---|---|---|
+| findings | 7,400 | 6,434 | the stale baseline; the delta is what the gate tests |
+| findings delta | +46 | **+47** | 125 comparable pages now, not 124 |
+| work delta | +46 | **+47** | all 47 are `work` |
+| `check: 'meta'` | 46 | **47** | 0 before, so the whole column is new |
+
+`casing` on `nl` reads 40, not the 46 the trap warns about, and it did not move across the
+two runs. The class counts are `meta-title-changed` 16, `meta-description-changed` 28,
+`meta-casing` 2, `robots-noindex-lost` 1.
+
+### Per store
+
+Ticket 91's predicted table is reproduced **exactly**, class by class and store by store,
+except that `nl` and `be` each carry one more `meta-description-changed` — 125 and 123
+comparable pages against the 124 and 122 the prediction was taken on. So the number to
+check against is **199 over 724**, not the 197 over 722 this ticket predicted: two
+comparable pages more, two findings more, and every other cell identical.
+
+| | nl | be | be_fr | de | fr | uk | total |
+|---|---|---|---|---|---|---|---|
+| meta findings added | 47 | 55 | 25 | 22 | 26 | 24 | **199** |
+| 91 predicted | 46 | 54 | 25 | 22 | 26 | 24 | 197 |
+| `robots-index-lost` | 0 | 1 | 0 | 1 | 0 | 0 | **2** |
+| pages compared | 125 | 123 | 115 | 123 | 117 | 121 | **724** |
+| share of `work` after | 1.51% | 1.94% | 0.84% | 0.72% | 0.90% | 0.81% | **1.12%** |
+
+**The share is 1.12%, against ticket 21's 0.54%** — and the numerator is not the reason on
+its own. Meta rose with the corpus while `work` fell by ticket 86's `heading-level` move,
+and both push the ratio the same way. The 1.10% ticket 91 predicted for the post-landing
+figure is what `measure.mjs` would print if the denominator had not moved with it; 199 over
+17,831 is 1.12% because numerator and denominator move together.
+
+### The two numbers, on one line
+
+`no-route` stays in the log (ticket 93's exclusion was reversed), so this ticket's net
+movement is the meta classes alone: **`no-route` removed 0 findings, and the head added
+199.** `no-route` contributes 3 of the 199 — `meta-title-changed` on `be_fr` and `fr`, and
+`meta-description-changed` on `fr` — exactly as measured.
+
+### The claims that had to survive
+
+- **The four `lost`/`added` classes fire zero times.** Both sides still always send a title
+  and a description. All four ship.
+- **All 4 `meta-casing` are a dropped trailing full stop on a description**, on
+  `aluminium-zijwand/productinformatie` and `showroom-berlijn`, each on `nl` and `be`. None
+  is on a title, and neither `changed` class is also claiming them.
+- **`robots-index-lost` fires twice**, on `be`/`bedrijfsinformatie` and
+  `de`/`(de)erfolg-probepaket` — the severe direction. `robots-noindex-lost` fires 4 times
+  on the same page in four stores.
+- **The chips:** all 199 are `work`, so open differences rise by the whole 199, hidden
+  noise does not move at all, and pages-equal falls by 2.
+
+**One thing the probe now prints wrongly.** Its `after ticket 97: meta check 349 + 199 =
+548` line adds its own prediction to a report count that already holds it, so on a
+re-run it reads `548 + 199 = 747`. The prediction and the reports have converged; the
+line is the last thing in the probe that has not noticed.

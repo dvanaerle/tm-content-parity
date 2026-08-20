@@ -1,21 +1,18 @@
 /**
- * What the `<head>` panel shows (ticket 35, phase 6 of spec 32).
+ * The `<head>`: which rows an editor is shown, and which of them are findings.
  *
- * **This makes no findings.** Ticket 21 has not decided what a parity defect in the
- * head is, and this ticket does not decide it. Nothing here goes into the contract,
- * the bar or the count. The panel uses the diff's colours, thus an editor reads a
- * changed `<title>` in the same way as changed body copy. The panel has no override
- * control, thus the shared colours cannot show something an editor can act on.
+ * The two answers are one file because they are one decision. `metaRows()` was
+ * display only until ticket 97; the producer below reads its rows rather than the two
+ * extracts, so a row an editor cannot act on cannot become work behind their back.
+ * **Each checking row holds at most one finding** — the title classes are mutually
+ * exclusive, and so are the two robots ones — which is what lets the panel stay a
+ * table of fields instead of a list of defects.
  *
- * Each rule in this file answers one question: *does an editor see this row?* Each
- * rule is about attention, and not about correctness. This is also why the rules
- * are here and not in a component. A rule that decides what a person never sees
- * needs a test.
- *
- * **Browser-safe and pure.** The panel is inside a React island, so this imports
- * only `shared/keys.mjs`, which imports nothing.
+ * **Browser-safe and pure.** The panel is inside a React island, so this imports only
+ * `./match.mjs` and `shared/keys.mjs`, neither of which imports anything.
  */
 
+import { tier2 } from './match.mjs';
 import { linkKey } from '../shared/keys.mjs';
 
 /**
@@ -118,4 +115,59 @@ export function metaRows(production, next) {
   }
 
   return rows;
+}
+
+/**
+ * The class one head row produces, or `null` for a row no editor can act on.
+ *
+ * A row yields **at most one** class: the three title classes are mutually exclusive
+ * and so are the two robots ones, which is what lets the field row be the finding row.
+ *
+ * @param {MetaRow} row
+ * @returns {string | null}
+ */
+function classOf(row) {
+  if (row.state === 'same') return null;
+  if (row.field === 'title' || row.field === 'description') {
+    if (row.state === 'lost') return `meta-${row.field}-lost`;
+    if (row.state === 'added') return `meta-${row.field}-added`;
+    // Tier 2 is **not** folded here. A dropped trailing full stop is `meta-casing`,
+    // because folding it would make the head the one place in the log where a lost
+    // full stop is invisible.
+    return tier2(row.prod) === tier2(row.new) ? 'meta-casing' : `meta-${row.field}-changed`;
+  }
+  // Off the derived boolean, which `display()` has already turned into the two words a
+  // `<meta name="robots">` tag uses. The raw string stays display only: two spellings
+  // of the same directive are not a difference an editor can act on.
+  if (row.field === 'noindex') {
+    return row.new === 'noindex' ? 'robots-index-lost' : 'robots-noindex-lost';
+  }
+  // The canonical, and nothing else reaches here. It keeps its row and makes no work:
+  // the content team cannot set one, and production has none on 147 of 179 nl pages.
+  return null;
+}
+
+/**
+ * The head as a check, alongside text, links and images (ticket 97). The rows an
+ * editor is shown are the rows a finding can come from, so this reads `metaRows()`
+ * rather than the two extracts: one decision about what the head holds, in one place.
+ *
+ * **The collector is a parameter and not an import.** This module is inside a React
+ * island, and `findings.mjs` reaches `node:crypto` through `contract.mjs`, so importing
+ * it would break the island build (ADR 0001). `compare/images.mjs` has the same shape.
+ *
+ * A meta finding carries no `score` — that is a `copy` field and a head row has no
+ * similarity pairing — and no `anchorHeading`, which is defined by document order
+ * inside the content boundary, where the head is not. Both are the collector's
+ * defaults.
+ *
+ * @param {import('./contract.mjs').PageExtract} production
+ * @param {import('./contract.mjs').PageExtract} next
+ * @param {import('./findings.mjs').FindingCollector} collector
+ */
+export function compareMeta(production, next, collector) {
+  for (const row of metaRows(production, next)) {
+    const cls = classOf(row);
+    if (cls) collector.add({ class: cls, prod: row.prod, new: row.new });
+  }
 }
