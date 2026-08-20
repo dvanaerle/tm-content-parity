@@ -2,13 +2,19 @@ import { useMemo, useRef, useState } from 'react';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { Label } from './ui/label.jsx';
+import { Dismiss, Floating } from './Floating.jsx';
 import PressReport from './PressReport.jsx';
 import { OfPages, Selected } from './Selected.jsx';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
 import { crossesBlock } from '../lib/view.mjs';
 import { classInfo } from '../lib/classes.mjs';
 import { day } from '../lib/dates.mjs';
-import { cn } from '../lib/utils.js';
+
+/**
+ * What this bar is called wherever it is reached for — the two states below draw the same
+ * shell, and a name spelled twice is a name half of the tests can stop finding.
+ */
+const BAR = 'bulk-bar';
 
 /**
  * One reason, many findings (ticket 31).
@@ -26,12 +32,10 @@ import { cn } from '../lib/utils.js';
  * thing, differing only in whether you ticked first, is the doubling this project keeps
  * deleting.
  *
- * So it is drawn only when something is ticked, and since round three it **floats**: fixed
- * to the bottom of the viewport, over the queue rather than in it. Round two put it in the
- * flow under the difference, which moved the whole list down the moment a tick was made and
- * took the presses off screen as soon as the editor scrolled into a long page list. There
- * is one of it, because there is one place for it to be — `Repeats.jsx` holds the selection
- * for the whole list and renders this beside it.
+ * So it is drawn only when something is ticked, and since round three it **floats** — over
+ * the queue rather than in it, in the panel `Floating.jsx` draws and says the reasons for.
+ * There is one of it, because there is one place for it to be: `Repeats.jsx` holds the
+ * selection for the whole list and renders this beside it.
  *
  * **It is one bar over as many differences as were ticked** (ticket 138). The selection was
  * one difference's until then, so this was rendered by that difference and said its words;
@@ -170,7 +174,7 @@ export default function BulkControl({
    */
   if (entries.length === 0)
     return (
-      <Floating>
+      <Floating slot={BAR}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <div role="status" aria-live="polite" data-slot="bulk-progress">
             {report && <PressReport {...report} />}
@@ -181,7 +185,7 @@ export default function BulkControl({
     );
 
   return (
-    <Floating>
+    <Floating slot={BAR}>
       {/* One strip: what is selected on the left, what can be done with it on the right.
           Round one ran the count, the presses and three paragraphs of explanation down the
           page, and what an editor could *do* was buried in prose. It is not a
@@ -328,63 +332,6 @@ export default function BulkControl({
     </Floating>
   );
 }
-
-/**
- * The bar itself: fixed to the bottom of the viewport and centred (round three).
- *
- * Round two made it a strip under the difference, which is where a selection's toolbar goes
- * wrong twice: it pushed the rest of the queue down the instant a tick was made, and it
- * scrolled away with the difference it belonged to — so an editor reading page forty of a
- * repeat had the presses off screen while the pages they act on were in front of them.
- * Fixed, it is where the selection is, for as long as the selection is.
- *
- * `w-fit` with a max: the bar is as wide as its own words, up to the width of the page, so a
- * two-page selection does not draw a strip across an empty screen. It stops at the viewport
- * edge and wraps rather than being clipped.
- *
- * It is a component because the bar has **two** states now — a selection to press on, and a
- * press that has just reported — and one shell drawn twice is one place for the two to drift
- * apart.
- */
-const Floating = ({ children }) => (
-  <div
-    data-slot="bulk-bar"
-    className={cn(
-      'fixed inset-x-4 bottom-4 z-50 mx-auto flex w-fit max-w-[min(64rem,calc(100vw-2rem))]',
-      'flex-col gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-lg',
-    )}
-  >
-    {children}
-  </div>
-);
-
-/**
- * The way to put the selection — or the report that outlived it — down.
- *
- * Unticking ten rows one at a time is the work this control exists to remove, so putting the
- * selection down costs one press as well. It is offered whether or not the log can be written
- * to: it is not a decision.
- *
- * It is the cross at the end of the bar, behind a rule, where a floating bar of this kind
- * puts it — and never a word among the presses, where *clear* sits one tab stop from
- * *dismiss* and reads like a third thing to decide. A glyph names nothing, so the words it
- * replaced are its label.
- */
-const Dismiss = ({ onClear }) => (
-  <>
-    <span aria-hidden className="ml-auto h-4 w-px bg-border" />
-    <Button
-      type="button"
-      variant="ghost"
-      size="xs"
-      onClick={onClear}
-      aria-label="Clear the selection"
-      title="Clear the selection"
-    >
-      <span aria-hidden>✕</span>
-    </Button>
-  </>
-);
 
 /**
  * What is ticked, and **what it is ticked on** (ticket 110, ticket 138).

@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { PriorityPill } from './Chips.jsx';
+import { Dismiss, Floating } from './Floating.jsx';
 import PressReport from './PressReport.jsx';
 import { OfPages, Selected } from './Selected.jsx';
 import { Button } from './ui/button.jsx';
@@ -242,7 +243,8 @@ export function PageDetailsDialog({
  *
  * It reuses ticket 31's shape rather than inventing a second one: the floating bar, the
  * sequential write through `appendEach()`, and the *N of M saved* report of a partial
- * failure. It is a **second bar and not a second selection mechanism** — the selection is
+ * failure. Since ticket 128 the reuse is literal: `Floating.jsx` draws the panel and the
+ * dismissal for both bars, and says why. It is a **second bar and not a second selection mechanism** — the selection is
  * held by the list above it, the way `Repeats.jsx` holds the one over its own list.
  *
  * What it does not carry is an eligibility count. The two presses of ticket 31 skip a
@@ -274,13 +276,7 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
   const noun = count === 1 ? 'page' : 'pages';
 
   return (
-    <div
-      data-slot="annotate-bar"
-      className={cn(
-        'fixed inset-x-4 bottom-4 z-50 mx-auto flex w-fit max-w-[min(64rem,calc(100vw-2rem))]',
-        'flex-col gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-lg',
-      )}
-    >
+    <Floating slot="annotate-bar">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         {/* The same shape ticket 31's bar states its selection in, and off the same
             component (ADR 0019). It read *2 pages selected*, which names an object and no
@@ -340,21 +336,11 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
           </p>
         )}
 
-        <span aria-hidden className="ml-auto h-4 w-px bg-border" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          onClick={onClear}
-          aria-label="Clear the selection"
-          title="Clear the selection"
-        >
-          <span aria-hidden>✕</span>
-        </Button>
+        <Dismiss onClear={onClear} />
       </div>
 
       {report && <PressReport {...report} />}
-    </div>
+    </Floating>
   );
 }
 

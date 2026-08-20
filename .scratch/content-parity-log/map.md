@@ -2327,15 +2327,26 @@ product signature` — a product page carries all six hreflang alternates, and
   the runbook batches freely up to a gate and this stream contains none.
 
   ```
-  127 (resolved) ──> 128 ──> 132 (resolved) ──> 133  A dashboard  B ledger  C the maps are gone
+  127 (resolved) ──> 128 (resolved) ──> 132 (resolved) ──> 133  A dashboard  B ledger  C the maps are gone
                               ↑
                        131 (resolved)
   129  A dashboard hints   B every other surface + the guard   (unblocked today)
   ```
 
   - [128 — The carve-out reaches for CSS and primitives first](issues/128-the-carve-out-reaches-for-css-and-primitives-first.md)
-    — `ready-for-agent`, blocked by 127. Records *primitive, CSS, JS last* as the second
-    amendment to ADR 0007.
+    — **`resolved` 2026-08-20.** *Primitive first, CSS second, JavaScript last* is the second
+    amendment to ADR 0007, beside the carve-out it governs. Three shapes stopped being
+    hand-rolled — the count mark is a `Badge`, the rule before each dismissal is a
+    `Separator`, and the two floating bars share one `Card` panel in `Floating.jsx` — which
+    **acts on ADR 0007's "second hand-rolled panel" clause** and leaves the suggestion list,
+    exempt for focus, as the only one. `Ledger.jsx` and
+    `Marker.jsx` now say why `Collapsible` cannot wrap sibling rows, and `Chips.jsx` stopped
+    claiming a prop ticket 80 added. **The six CSS conversions were never in it** — they
+    left on 2026-08-19 for
+    [143](issues/.out-of-scope/143-six-presentational-behaviours-move-to-css.md), so no new
+    CSS feature was reached for. Nothing on screen moved but the panel's own hairline and
+    corner, which are the theme's now: a `ring-1` outside the box instead of a border inside,
+    and 5.6 pixels of radius instead of 4.
   - [129 — A hint is reachable without a mouse, on every surface](issues/129-a-hint-is-reachable-without-a-mouse.md)
     — `ready-for-agent`, **blocked by nothing and buildable today.** Absorbed **130** on
     2026-08-17: one pattern, one primitive and one guard, and the guard cannot pass until

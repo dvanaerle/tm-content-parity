@@ -43,6 +43,11 @@ export function Marker({ marker, columns, onToggle }) {
   const noun = marker.blocks === 1 ? 'block' : 'blocks';
 
   return (
+    /* The disclosure is hand-rolled for the reason `Ledger.jsx`'s closed section spells out:
+       the trigger is in a cell and what it opens is the run of sibling rows this marker
+       stands in for, and a `CollapsibleContent` between a `tbody` and its rows is not a
+       table. So the state lives with the table that owns the rows and `aria-expanded` is
+       written here. */
     <TableRow id={marker.key} className="scroll-mt-4 border-dashed hover:bg-transparent">
       <TableCell colSpan={columns} className="px-2 py-1">
         <button

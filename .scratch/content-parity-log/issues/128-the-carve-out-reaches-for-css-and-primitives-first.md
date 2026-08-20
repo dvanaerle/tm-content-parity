@@ -1,7 +1,29 @@
 # 128 — The carve-out reaches for CSS and primitives first
 
 Type: task
-Status: ready-for-agent
+Status: resolved 2026-08-20 — **the rule is written down and the three shapes are
+primitives**. ADR 0007 carries a second amendment (*primitive first, CSS second, JavaScript
+last*, plus ADR 0023's clause) and a record of what it settled first time out. The count
+mark is a `Badge`, the rule before each dismissal is a `Separator`, and the two bars share
+one `Card` panel in `Floating.jsx` — which acts on ADR 0007's "second hand-rolled panel"
+clause and leaves the suggestion list as the only exemption. `Ledger.jsx` and `Marker.jsx`
+say why `Collapsible` cannot wrap sibling rows, and `Chips.jsx` no longer claims a prop that
+ticket 80 added. No new CSS feature was used, and the six CSS conversions were never in
+scope — they left for 143 on 2026-08-19.
+
+Two things beyond the checkboxes: the **bulk** bar's panel moved too, because a silent copy
+cannot be deduped from one side; and the rule-plus-cross pair went with it, so the
+`Separator` rationale is written once rather than twice. 1351 tests pass. The badge sweep is
+**stricter** than before, not widened: it now asserts the exact list of sites that wear a
+badge without being one, where it used to skip a whole file.
+
+Checked by eye at 1440×900 on the store dashboard, a page and the repeat list. One pixel
+budget spent and it is the primitive's: `Card`'s corner is 5.6px where the hand-rolled one
+was 4px, and its hairline is a `ring-1` outside the box where the old one was a border
+inside. Nothing else moved — every text-bearing element in both bars sets its own size, so
+`Card`'s inherited `text-sm` reaches nothing, and `Card`'s `overflow-hidden` is turned off
+rather than inherited, because a clip that earns nothing over a focus ring is how the sticky
+outline got caught the first time.
 Blocked by: 127 — the policy that says which CSS is allowed.
 Parent: ../map.md
 Narrowed: 2026-08-19. The six CSS conversions left this ticket and are now
@@ -40,19 +62,19 @@ rows, so a `CollapsibleContent` wrapper would break the table. That is almost ce
 they were written by hand — but nothing says so, and this repo documents every choice of
 this kind. The missing sentence *is* the defect.
 
-- [ ] ADR 0007 carries a second amendment with two sentences: inside the custom carve-out,
+- [x] ADR 0007 carries a second amendment with two sentences: inside the custom carve-out,
       reach for Widely Available CSS before JavaScript; and a tone that depends on a state
       is a selector and not a token.
-- [ ] The count badge, the vertical rule and the annotate bar's panel are primitives.
-- [ ] Both table-bound disclosures carry a comment saying why `Collapsible` cannot wrap
+- [x] The count badge, the vertical rule and the annotate bar's panel are primitives.
+- [x] Both table-bound disclosures carry a comment saying why `Collapsible` cannot wrap
       sibling rows, in the voice the rest of the file uses.
-- [ ] `Chips.jsx`'s docblock no longer claims that no prop reaches the progress indicator.
+- [x] `Chips.jsx`'s docblock no longer claims that no prop reaches the progress indicator.
       Ticket 80 made that false and struck it in the ADR; the code comment was never
       updated, and it is the stated justification for hand-rolling the sparkline. The
       surviving reason — a 24-pixel bar in a table cell is not a progress bar — stays.
-- [ ] Every feature used is Widely Available per 127. Attribute selectors, custom
+- [x] Every feature used is Widely Available per 127. Attribute selectors, custom
       properties, `calc()` and `animationend` are the whole toolkit, and none of them is new.
-- [ ] Screens are unchanged apart from the primitive swaps, checked by eye on the store
+- [x] Screens are unchanged apart from the primitive swaps, checked by eye on the store
       dashboard, a page and the repeat list. **There are no screenshot baselines** — ADR 0019
       refuses a screenshot suite, and no matcher exists anywhere in the tree. The three
       source-text tests (`web/src/interface-reach.test.mjs`, `interface-weight.test.mjs`,

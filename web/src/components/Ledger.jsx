@@ -542,7 +542,16 @@ function FindingTable({ findings, check, withheld = 0, control, sides, landing }
 
         {/* The section header, drawn only when there is closed work to reach. It is a row
             in the same table rather than a control beside it, so the closed findings open
-            where they belong — under the work, in the columns they share with it. */}
+            where they belong — under the work, in the columns they share with it.
+
+            **It is hand-rolled, and `Collapsible` is why.** `Repeats.jsx` credits the
+            primitive for writing its `aria-expanded` and this writes its own, which reads
+            like the older of the two until you try the swap: what opens here is a run of
+            **sibling `<tr>`s**, and `CollapsibleContent` is a `<div>` around its children.
+            A div between a `tbody` and its rows is not a table, so the browser hoists the
+            rows out of it and the three columns this section shares with the work above
+            stop being shared. The primitive is refused for the one case it cannot hold,
+            and nowhere else. */}
         {closed.length > 0 && (
           <TableRow className="hover:bg-transparent">
             <TableCell colSpan={3} className="px-2 py-2">

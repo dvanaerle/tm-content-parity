@@ -20,10 +20,20 @@ const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const DRAWN = ['.jsx', '.mjs', '.astro', '.js'];
 
 /**
- * The primitive is not a call site. `ui/badge.jsx` is shadcn's, it defines the thing
- * rather than spending it, and it is the one file that may name a badge without being one.
+ * The one `<Badge>` in the tree that spends the **shape** and not the meaning, named rather
+ * than exempted.
+ *
+ * `Selected.jsx`'s count mark is a pill in the brand step because a floating bar has to say
+ * what it is about before it says anything else, and ADR 0007's second amendment sends that
+ * shape to the primitive that already draws it rather than to nine utility classes. It is
+ * still not one of the four an editor scans a list for, so it carries no `data-badge`.
+ *
+ * It is a **listed site and not an allowed file**, which is the stricter of the two and the
+ * reason the swap did not cost the closure ADR 0019 paid for: a file-wide exemption would
+ * let a second unnamed badge into this file unnoticed, and this does not. `ui/badge.jsx`
+ * needs no entry — it declares `function Badge` and never draws a `<Badge>`.
  */
-const THE_BADGE_PRIMITIVE = 'components/ui/badge.jsx';
+const WEARING_A_BADGE_WITHOUT_BEING_ONE = ['components/Selected.jsx'];
 
 /**
  * Comments are stripped before the sweep, keeping the line count, because this repo
@@ -108,14 +118,12 @@ describe('nothing carries weight it has not earned', () => {
   }, 30_000);
 
   it('names every badge it draws', async () => {
-    const unnamed = (await drawnFiles())
-      .filter(([file]) => named(file) !== THE_BADGE_PRIMITIVE)
-      .flatMap(([file, text]) =>
-        badgeElements(text)
-          .filter((element) => !/\sdata-badge=/.test(element))
-          .map(() => named(file)),
-      );
-    expect(unnamed).toEqual([]);
+    const unnamed = (await drawnFiles()).flatMap(([file, text]) =>
+      badgeElements(text)
+        .filter((element) => !/\sdata-badge=/.test(element))
+        .map(() => named(file)),
+    );
+    expect(unnamed).toEqual(WEARING_A_BADGE_WITHOUT_BEING_ONE);
   }, 30_000);
 
   it('draws the four badges ADR 0019 holds, and no fifth', async () => {

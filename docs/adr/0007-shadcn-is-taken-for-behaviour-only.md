@@ -82,6 +82,61 @@ Two things follow from it and are worth writing down:
   the map, and it is a rule in `app.css` now; which file draws it was never this bullet's
   point.
 
+## Second amendment: inside the carve-out, primitive first, CSS second, JavaScript last
+
+The amendment above says what the library owns and what the palette owns, and the
+consequences below carve the content-parity concepts out as permanently custom — the diff,
+the page group, the repeat, the history note, the bulk selection. What none of it said is
+**what to reach for inside that carve-out**, and the silence had a cost: two disclosures
+that write `aria-expanded` by hand beside a third that credits `Collapsible` for writing
+it, and a count mark spelled in nine utility classes that `ui/badge.jsx` already draws
+almost class for class. A reader who has just learned that the diff stays custom is the
+reader who needs the order, so it goes here.
+
+Two sentences, and they are the whole of it:
+
+- **Inside the carve-out, reach for a primitive where one fits, Widely Available CSS where
+  none does, and JavaScript last.** Custom means *this repo decides what it looks like*; it
+  does not mean *this repo draws it by hand*. A shape shadcn owns is a primitive even when
+  the thing it is part of is ours, and a behaviour the platform has — a selector, a custom
+  property, `calc()` — is not worth a state hook and a re-render. Which CSS counts as
+  available is ADR 0015's question and not this one's.
+- **A tone that depends on a state is a selector and not a token.** ADR 0023 records the
+  move and the objection to it; the reason it belongs in the order above is that a tone
+  chosen in JavaScript and handed over as a class name is exactly the hand-drawing this
+  clause refuses, one property at a time.
+
+Neither sentence licenses anything new. Attribute selectors, custom properties, `calc()`
+and `animationend` are the whole toolkit the interface uses today, and every one of them
+was already here.
+
+### What it settled, first time out (ticket 128)
+
+- **Three shapes stopped being hand-rolled.** The count mark in both floating bars is a
+  `Badge`; the rule before each bar's dismissal is a `Separator`, which publishes the role
+  the hand-rolled span had to hide behind `aria-hidden`; and the bars' panel is a `Card`.
+  The count mark is **not** one of ADR 0019's four badges and does not become one — it
+  carries no `data-badge` and no tone. Spending a primitive's shape and spending its meaning
+  are different acts and only the second is that ADR's business, so
+  `interface-weight.test.mjs` names the one site that wears a badge without being one and
+  asserts the list of them exactly, which is stricter than the file exemption it replaced.
+- **The "second hand-rolled panel" clause below was acted on rather than argued with.** The
+  two floating bars spelled one border, corner, background and shadow in two files, with
+  nothing saying either was a copy — which is what that clause said to watch for. They are
+  one component on `Card` now. The suggestion list keeps its exemption for the reason
+  recorded there, focus, and it is the only hand-rolled panel this file still allows.
+- **Two disclosures stay hand-rolled and now say why.** `Ledger.jsx`'s closed section and
+  `Marker.jsx` both put a trigger in a table cell and open a run of sibling `<tr>`s.
+  `CollapsibleContent` is a `<div>` around its children, and a div between a `tbody` and its
+  rows is not a table: the browser hoists the rows out and the shared columns stop being
+  shared. The primitive is refused for the one case it cannot hold, in a comment, in both
+  files. The missing sentence was the defect; the code was already right.
+- **The sparkline's warrant is corrected and not overturned.** `Chips.jsx` went on claiming
+  in a comment that no prop reaches `Progress`'s indicator, which ticket 80 made false and
+  this file struck. The comment says the surviving reason now — a 24-pixel bar in a table
+  cell is not a progress bar — and says the other one is spent, so the next reader weighs a
+  swap that is unwanted rather than one that looks impossible.
+
 ## Considered options
 
 - **Full adoption, shadcn's theme as the source of truth.** Rejected. It would
@@ -173,6 +228,9 @@ Two things follow from it and are worth writing down:
   the surface is still the theme's and only the focus behaviour is local; and a **second**
   hand-rolled panel should be read as evidence that this repo wants a focus-free panel
   primitive of its own rather than as licence for a third.
+  — **2026-08-20, ticket 128.** The two floating bars were that second panel, drawn twice.
+  They are one `Card` now (see the second amendment above), so this exemption is the only one
+  left and the condition still binds the next panel that wants one.
 
 - **A second registry file is edited in place** (ticket 80). `ui/progress.jsx` builds its
   own track and indicator and exposes a `className` for the root only, so the page bar in

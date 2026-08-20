@@ -513,11 +513,13 @@ export function Bar({ shown, units }) {
   const share = Math.min(1, shown / scale);
   return (
     /*
-     * The one thing in this file that stays hand-rolled. shadcn's `Progress` composes its
-     * own track and indicator internally and paints the indicator `bg-primary`, and there
-     * is no prop that reaches the indicator — so the tone the share answers with could not
-     * get there. It is also not a progress bar: it is a 24-pixel sparkline sitting inline
-     * in a table cell, with no label and no value.
+     * The one thing in this file that stays hand-rolled, and it stays on one reason now.
+     * It is **not a progress bar**: it is a 24-pixel sparkline sitting inline in a table
+     * cell, with no label and no value.
+     *
+     * It used to say `Progress` had no prop that reached its indicator either, which ticket
+     * 80 made false and ADR 0007 struck. That left the swap reading as impossible when it is
+     * only unwanted — a weaker warrant, and the honest one.
      *
      * `severityTone()` stays in JavaScript because it is a threshold with judgement in it,
      * and `palette.test.mjs` pins it. What it answers with is now an attribute rather than
