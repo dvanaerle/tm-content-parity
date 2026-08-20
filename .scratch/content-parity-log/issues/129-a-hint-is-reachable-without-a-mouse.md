@@ -116,32 +116,45 @@ prop-passes are `Dashboard.jsx:357`, `:602`, `:615`, `:632`. Also prop-shaped an
 scope: `ContentView.jsx:268`, and `Shell title=` in `web/src/pages/index.astro:16`,
 `web/src/pages/[store]/index.astro:42` and `web/src/pages/[store]/[...page].astro:23`.
 
+> **Part A landed 2026-08-20**, as `acf1d50`. The pattern is `web/src/components/Hint.jsx`
+> — `Hint` for a control, `TextHint` for a reading — and part B applies it. Two rulings part
+> B has to know: a hint is **never** attached to a plain element (a description on a roleless
+> span is read by nothing and Base UI's hover is mouse-only, so text takes `TextHint` or takes
+> no hint at all), and a hint that repeats what a column head already says is decoration and
+> was removed rather than converted. `title` props on shared components are now named `hint`.
+> The dashboard's **repeats** view still holds `title` attributes, from `Diff`,
+> `OverrideControl` and `Occurrences` — B's files, and B's commit.
+
 ### What to build — A
 
 The dashboard is done first because it holds the largest share of the hints and the widest
 variety of them — a hint on a pill, on a column head, on a checkbox, on a count — so a
 pattern that survives the dashboard survives everywhere.
 
-- [ ] A hint on the dashboard is reachable by keyboard and announced, and it is drawn by the
+- [x] A hint on the dashboard is reachable by keyboard and announced, and it is drawn by the
       primitive rather than by the browser's own box.
-- [ ] The pattern is established once — how a hint is attached, what it does to the control's
+- [x] The pattern is established once — how a hint is attached, what it does to the control's
       accessible name, and how a hint on a disabled or read-only control behaves — so part B
       is an application of it and not a second design.
-- [ ] A hint never becomes the control's only accessible name. A control whose meaning lived
+- [x] A hint never becomes the control's only accessible name. A control whose meaning lived
       in its `title` gets a real label, and the hint says the extra thing.
-- [ ] Hints that are decoration rather than meaning are identified and left as they are, or
+- [x] Hints that are decoration rather than meaning are identified and left as they are, or
       removed. This does not promote a nicety into a component.
-- [ ] The words are unchanged. This is about reach, not copy, and ADR 0014 already fixed the
+- [x] The words are unchanged. This is about reach, not copy, and ADR 0014 already fixed the
       language.
-- [ ] Browser tests assert reach and not markup: a hint is available to a keyboard user and
+- [x] Browser tests assert reach and not markup: a hint is available to a keyboard user and
       carries its text. The assertion is about what a reader can get to.
 - [ ] ~~The dashboard's screenshot baselines are reviewed for layout movement.~~ —
       **2026-08-17: there are no baselines; see the heading block.** The claim survives:
       `Dashboard.browser.test.mjs` and `Repeats.browser.test.mjs` pass unchanged except where
       this part deliberately changed them, and a human confirms no row grew. A tooltip trigger
       inside a table cell can change a row's height, and that is a real change to look at
-      rather than accept.
+      rather than accept. **2026-08-20: the suites pass unchanged; the human look is still
+      owed.** Every trigger is merged onto an element that was already there, so no element
+      joined the document — but that is an argument and not a pair of eyes.
 - [ ] No `title` attribute is left on the dashboard carrying meaning an editor needs.
+      **2026-08-20: true of the pages view, and asserted there.** The repeats view still draws
+      `Diff`, `OverrideControl` and `Occurrences`, which are part B's files.
 
 ### Traps — A
 
