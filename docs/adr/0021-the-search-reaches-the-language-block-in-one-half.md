@@ -4,13 +4,23 @@ ADR 0018 ends with a paragraph called *The search stays per store, and the widen
 the hook*. Half of that is still true and half of it was an accident of where the data sat.
 This records which half moved.
 
+> **Amended 2026-08-20, ticket 03 of cross-store reuse.** The **notes** half crosses too, on
+> one screen. This ADR's reasoning stands and its scope narrows: what it settles is what a
+> **store's** search does, which is unchanged. Above the stores there is now a search screen
+> of its own, and both halves reach all six stores there — because the thing that decides it
+> is not a block at all but the split `CONTEXT.md` calls the **search corpus** and the
+> **repeat corpus**: reading may cross any store because reading moves no count, and pressing
+> may cross only where the check makes the two sides the same string. `indexOverBlock()` is
+> `mergeIndexes()` now and takes any list; nothing else here moved, and the grouping least of
+> all.
+
 ## What changed, in one sentence
 
 `searchStore()` scans the store's search index **and its sibling's**, merged by
-`indexOverBlock()`:
+`mergeIndexes()`:
 
 ```js
-indexOverBlock(own, sibling)   // one array, each entry carrying its own store
+mergeIndexes([own, sibling])   // one array, each entry carrying its own store
 ```
 
 Nothing about the grouping changed. `repeatsInStore()` has keyed on
@@ -29,8 +39,10 @@ untouched:
 
 > Handed both stores' events, `nl`'s search answered with notes written on `be` pages.
 
-`eventsOfStores()` still narrows the log before it leaves `useStoreOverrides()`, and
-`searchNotes()` still never sees a store it is not about. What was per store for a *reason*
+`eventsOfStores()` still narrows the log before it leaves `useStoreOverrides()` on a store
+dashboard, and `searchNotes()` there still never sees a store it is not about. The amendment
+above does not bend that either: the screen it applies to is not a store's, so there is no
+store it could answer about the wrong one of. What was per store for a *reason*
 stayed; what was per store because **the index file was** did not. The general rule 0018
 left — *what crosses a block is a press and a row; anything given the log itself must be
 narrowed first* — is what decides this rather than being bent by it. A searched row is a row.
@@ -151,7 +163,10 @@ map from a page to something inside the search is keyed on `store/page` for that
   of the hreflang codes.
 - **An all-stores index.** Ticket 38 settled that there is no all-stores surface. Nothing
   here takes a list of stores: `indexOverBlock()` takes one sibling, because `siblingOf()`
-  answers with one store or with nothing.
+  answers with one store or with nothing. *(Superseded by the amendment at the top: the
+  refusal was of an all-stores **surface**, and what arrived is a screen above the stores that
+  presses nothing. The merge takes a list now; there is still no all-stores index **file**,
+  and the six are still fetched as six.)*
 - **Ticket 06's wide press instead.** The per-finding control offering the same widening on
   the page is the other answer to the same want, and it does not depend on this one. Both
   were kept because they are reached from different places: this is for an editor who types,

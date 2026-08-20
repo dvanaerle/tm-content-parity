@@ -4,17 +4,19 @@ import {
   addPage,
   emptyIndex,
   explainScope,
-  indexOverBlock,
   indexStore,
   inScope,
   matchedFields,
+  mergeIndexes,
+  pagesOfIndex,
   parseTerm,
   scopeSuggestions,
   searchNotes,
   searchStore,
   withScope,
 } from './search.mjs';
-import { screenFromSearch, searchForRepeat } from './screen-url.mjs';
+import { screenFromSearch, searchForClass, searchForRepeat } from './screen-url.mjs';
+import { deriveStoreState } from '../../../overrides/state.mjs';
 
 /**
  * Ticket 82. An editor types the words and sees every finding that holds them, across
@@ -117,11 +119,23 @@ describe('indexStore', () => {
       'id',
       'linkText',
       'new',
+      'observationId',
       'occurrences',
       'page',
       'prod',
       'store',
     ]);
+  });
+
+  it('carries the observation the page was seen in, so a fix claim can be contradicted', () => {
+    // The eleventh field, argued here as the shape above demands. The all-stores screen
+    // (ticket 03) has no page summaries to ask — six stores of them is seven megabytes of
+    // HTML — so the log is derived over the index itself, and `derivePageState()` needs the
+    // page's observation to tell a `fixed` claim from a `contradicted` one. Without it a
+    // claim made against an older crawl reads as closed, and open work sits behind *Include
+    // closed* on the one screen that cannot look it up anywhere else.
+    const index = indexStore('nl', [report()]);
+    expect(index.findings[0].observationId).toBe('2026-08-11T00:00:00Z-1');
   });
 
   it('carries the page of every finding, because the result says which pages', () => {
@@ -255,10 +269,11 @@ const entry = (part) => ({
   anchorHeading: 'Montage',
   occurrences: 1,
   linkText: [],
+  observationId: '20260811-01',
   ...part,
 });
 
-describe('indexOverBlock', () => {
+describe('mergeIndexes', () => {
   /** An index as the build emitted it for one store. */
   const index = (store, findings, builtAt = '2026-08-11T00:00:00Z') => ({
     store,
@@ -267,13 +282,13 @@ describe('indexOverBlock', () => {
     findings,
   });
 
-  it('holds both stores’ entries, each still saying which store it is on', () => {
-    // The merge itself, and the reason step 1 came first: the entries land in one array
-    // and the only thing left telling them apart is the field each one carries.
-    const merged = indexOverBlock(
+  it('holds every store’s entries, each still saying which store it is on', () => {
+    // The merge itself, and the reason the entry carries a store at all: the entries land in
+    // one array and the only thing left telling them apart is the field each one carries.
+    const merged = mergeIndexes([
       index('nl', [entry({ id: 'a', store: 'nl' })]),
       index('be', [entry({ id: 'b', store: 'be' })]),
-    );
+    ]);
 
     expect(merged.findings.map((one) => [one.id, one.store])).toEqual([
       ['a', 'nl'],
@@ -281,42 +296,142 @@ describe('indexOverBlock', () => {
     ]);
   });
 
-  it('answers with the store’s own index where it has no sibling', () => {
-    // `de` and `uk` are each the only store of their language, so there is no second file to
-    // fetch and nothing to merge. A store out of a block pays nothing for this feature,
-    // which is the shape of ADR 0018's trade.
+  it('takes an arbitrary set, so six stores are one merge and not five (ticket 03)', () => {
+    // The whole of the generalisation. It used to take **one** sibling, because `siblingOf()`
+    // answers with one store or with nothing, and an all-stores screen has no sibling to name.
+    const merged = mergeIndexes(
+      ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'].map((store) =>
+        index(store, [entry({ id: store, store })]),
+      ),
+    );
+
+    expect(merged.findings.map((one) => one.store)).toEqual([
+      'nl',
+      'be',
+      'be_fr',
+      'de',
+      'fr',
+      'uk',
+    ]);
+  });
+
+  it('answers with the one index it was given, unmerged', () => {
+    // `de` and `uk` are each the only store of their language, so a per-store search there has
+    // no second file to fetch and nothing to merge. A store out of a block pays nothing for
+    // the block, which is the shape of ADR 0018's trade.
     const alone = index('de', [entry({ store: 'de' })]);
-    expect(indexOverBlock(alone, null)).toEqual(alone);
+    expect(mergeIndexes([alone])).toEqual(alone);
   });
 
   it('keeps the shape of an index, so nothing downstream can tell it was merged', () => {
-    const merged = indexOverBlock(index('nl', [entry({ store: 'nl' })]), index('be', []));
+    const merged = mergeIndexes([index('nl', [entry({ store: 'nl' })]), index('be', [])]);
     expect(Object.keys(merged).sort()).toEqual(['builtAt', 'findings', 'pages', 'store']);
   });
 
-  it('stays the dashboard’s store, which is what the merged index was assembled for', () => {
-    // `store` is the dashboard this index is held by and never a claim about its entries —
-    // which is exactly why an entry carries its own.
-    expect(indexOverBlock(index('nl', []), index('be', [])).store).toBe('nl');
+  it('names no store once it holds more than one, because a merge is of none', () => {
+    // It was the dashboard's store while the merge was a block's two files: a label on the
+    // index and never a claim about its entries, which is why an entry carries its own. Over
+    // six stores there is no such store to name, so the field says so instead of picking one.
+    expect(mergeIndexes([index('nl', []), index('be', [])]).store).toBeNull();
   });
 
-  it('counts the pages of both, because the number counts what was scanned', () => {
-    const merged = indexOverBlock(
+  it('is an empty index when there is nothing to merge', () => {
+    // A screen with no store to search draws its own empty answer. Throwing here would make
+    // *the log holds no store yet* a broken screen rather than an empty one.
+    expect(mergeIndexes([])).toEqual(emptyIndex(null));
+  });
+
+  it('counts the pages of all of them, because the number counts what was scanned', () => {
+    const merged = mergeIndexes([
       index('nl', [entry({ store: 'nl' })]),
       index('be', [entry({ store: 'be' }), entry({ store: 'be', page: 'garantie' })]),
-    );
+    ]);
     expect(merged.pages).toBe(3);
   });
 
-  it('carries the newer build, the rule `addPage()` already follows one level down', () => {
-    // One rule for *when was this snapshot taken* and not two. The two files are written
-    // by one build, so they carry the same moment in practice; where they do not, this
-    // answers as the accumulator below it answers over two reports.
-    const merged = indexOverBlock(
+  it('carries the newest build, the rule `addPage()` already follows one level down', () => {
+    // One rule for *when was this snapshot taken* and not two. The files are written by one
+    // build, so they carry the same moment in practice; where they do not, this answers as
+    // the accumulator below it answers over two reports.
+    const merged = mergeIndexes([
       index('nl', [], '2026-08-11T00:00:00Z'),
       index('be', [], '2026-08-12T00:00:00Z'),
-    );
+      index('uk', [], '2026-08-10T00:00:00Z'),
+    ]);
     expect(merged.builtAt).toBe('2026-08-12T00:00:00Z');
+  });
+});
+
+describe('pagesOfIndex', () => {
+  const index = (findings) => ({
+    store: null,
+    pages: findings.length,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings,
+  });
+
+  it('reads the flat entries back as the store pages they came off', () => {
+    // The index is the corpus of the all-stores screen and the summaries are not there to be
+    // read: six stores of them is seven megabytes of HTML, which is why the entries carry
+    // enough to be read back as pages.
+    const pages = pagesOfIndex(
+      index([
+        entry({ id: 'a', store: 'nl', page: 'afhalen' }),
+        entry({ id: 'b', store: 'nl', page: 'afhalen' }),
+        entry({ id: 'c', store: 'nl', page: 'garantie' }),
+      ]),
+    );
+
+    expect(pages.map((page) => [page.store, page.page, page.findings.length])).toEqual([
+      ['nl', 'afhalen', 2],
+      ['nl', 'garantie', 1],
+    ]);
+  });
+
+  it('keeps the same page key on two stores apart', () => {
+    // `afhalen` is a page of `nl` and a page of `be`, and one report holding both would put
+    // `be`'s findings behind `nl`'s events.
+    const pages = pagesOfIndex(
+      index([
+        entry({ id: 'a', store: 'nl', page: 'afhalen' }),
+        entry({ id: 'b', store: 'be', page: 'afhalen' }),
+      ]),
+    );
+
+    expect(pages.map((page) => page.store)).toEqual(['nl', 'be']);
+  });
+
+  it('carries the observation each page was seen in', () => {
+    // The eleventh field, and the reason it is there: a fix claim is *contradicted* when a
+    // later observation still gives the finding, and the observation is a fact about the page.
+    // Without it a claim made against an older crawl reads as `fixed`, so open work would sit
+    // behind *Include closed* on the one screen that has no summaries to ask instead.
+    const pages = pagesOfIndex(index([entry({ observationId: '20260811-01' })]));
+
+    expect(pages[0].observationId).toBe('20260811-01');
+  });
+
+  it('reads as a report the override derivation can take', () => {
+    // The whole point of the shape. A fix claimed against an earlier observation is
+    // contradicted, and it is `deriveStoreState()` that says so — not a second reading of the
+    // rule written out for this screen.
+    const { pages } = deriveStoreState({
+      reports: pagesOfIndex(index([entry({ id: 'a', observationId: '20260811-01' })])),
+      events: [
+        {
+          store: 'nl',
+          page: 'afhalen',
+          scope: 'finding',
+          findingId: 'a',
+          action: 'fixed',
+          editor: 'Ana',
+          createdAt: '2026-08-10T00:00:00Z',
+          observationId: '20260810-01',
+        },
+      ],
+    });
+
+    expect(pages[0].findings[0].state).toBe('contradicted');
   });
 });
 
@@ -333,10 +448,10 @@ describe('searchStore over a language block (ticket 05)', () => {
     // a key that already spanned the block, so a spanning row could never appear in it —
     // the sibling's findings were not in the array being grouped.
     const result = searchStore({
-      index: indexOverBlock(
+      index: mergeIndexes([
         index('nl', [entry({ id: 'a', store: 'nl', page: 'afhalen' })]),
         index('be', [entry({ id: 'b', store: 'be', page: 'pergola' })]),
-      ),
+      ]),
       term: 'deals',
     });
 
@@ -353,10 +468,10 @@ describe('searchStore over a language block (ticket 05)', () => {
     // two pages of one repeat. Bucketed by the key alone they would be one, wearing
     // whichever store's name arrived first.
     const result = searchStore({
-      index: indexOverBlock(
+      index: mergeIndexes([
         index('nl', [entry({ id: 'a', store: 'nl', page: 'afhalen' })]),
         index('be', [entry({ id: 'b', store: 'be', page: 'afhalen' })]),
-      ),
+      ]),
       term: 'deals',
     });
 
@@ -369,7 +484,7 @@ describe('searchStore over a language block (ticket 05)', () => {
     // `de` is the only store of its language. Its index is its own, its rows are its own,
     // and this ticket is invisible there — which is the test the ticket asks for by name.
     const alone = index('de', [entry({ id: 'a', store: 'de', page: 'afhalen' })]);
-    expect(searchStore({ index: indexOverBlock(alone, null), term: 'deals' })).toEqual(
+    expect(searchStore({ index: mergeIndexes([alone]), term: 'deals' })).toEqual(
       searchStore({ index: alone, term: 'deals' }),
     );
   });
@@ -379,10 +494,10 @@ describe('searchStore over a language block (ticket 05)', () => {
     // `nl` are not a block, so identical words there are two rows — and a merge that
     // reached past the sibling would be a cross-store search, which ticket 38 refuses.
     const result = searchStore({
-      index: indexOverBlock(
+      index: mergeIndexes([
         index('nl', [entry({ id: 'a', store: 'nl' })]),
         index('de', [entry({ id: 'b', store: 'de' })]),
-      ),
+      ]),
       term: 'deals',
     });
 
@@ -396,10 +511,10 @@ describe('searchStore over a language block (ticket 05)', () => {
     // reads the same on both dashboards of the block — which is the mirroring ADR 0018
     // says is the point.
     const result = searchStore({
-      index: indexOverBlock(
+      index: mergeIndexes([
         index('nl', [entry({ id: 'a', store: 'nl', page: 'afhalen' })]),
         index('be', [entry({ id: 'b', store: 'be', page: 'pergola' })]),
-      ),
+      ]),
       term: 'deals',
       stateOf: (id) => (id === 'b' ? 'dismissed' : 'open'),
     });
@@ -1699,5 +1814,104 @@ describe('the link a page makes to a repeat', () => {
       'zonwering/prijzen',
       'zonwering/plisse',
     ]);
+  });
+});
+
+/**
+ * The all-stores screen, as the two halves the ticket separates: the corpus is six indexes
+ * merged, and the press that opens it is a class label writing a class with nothing typed
+ * (ticket 03).
+ *
+ * It is here and not in a component test because none of it is drawing: the widening is a
+ * merge and a query string, and both are values.
+ */
+describe('the search corpus over every store', () => {
+  const index = (store, findings) => ({
+    store,
+    pages: findings.length,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings,
+  });
+
+  /** One broken link on each of the six stores, with the same target on all of them. */
+  const everywhere = ['nl', 'be', 'be_fr', 'de', 'fr', 'uk'].map((store) =>
+    index(store, [
+      entry({ id: store, store, class: 'broken-link', prod: '/max.svg', new: null, linkText: [] }),
+    ]),
+  );
+
+  it('opens a class over every store from the label on a row', () => {
+    // The gesture end to end: *Broken link* on an `nl` row is a class and an empty query,
+    // read back as a screen, run over the merged corpus. Six stores, one queue.
+    const screen = screenFromSearch(searchForClass('broken-link'));
+    const result = searchStore({
+      index: mergeIndexes(everywhere),
+      term: screen.query,
+      classes: screen.classes,
+    });
+
+    expect(result.total).toBe(6);
+    expect(result.repeats.flatMap((one) => one.stores).sort()).toEqual([
+      'be',
+      'be_fr',
+      'de',
+      'fr',
+      'nl',
+      'uk',
+    ]);
+  });
+
+  it('leaves the repeat corpus where it is: four rows for one string on six stores', () => {
+    // Reading crosses any store; pressing crosses only a language block. So the widening is
+    // visible in the corpus and **not** in the grouping — `{nl, be}` and `{be_fr, fr}` are
+    // one row each, and `de` and `uk` are alone. Ticket 04 is what moves this number.
+    const result = searchStore({
+      index: mergeIndexes(everywhere),
+      term: '',
+      classes: ['broken-link'],
+    });
+
+    expect(result.repeats).toHaveLength(4);
+  });
+
+  it('says which store every page of a result is on', () => {
+    // A merged list with no store on a page is ambiguous the moment two stores carry the
+    // same key, and every store carries `afhalen`.
+    const result = searchStore({
+      index: mergeIndexes([
+        index('nl', [entry({ id: 'a', store: 'nl', page: 'afhalen' })]),
+        index('de', [entry({ id: 'b', store: 'de', page: 'afhalen' })]),
+      ]),
+      term: 'deals',
+    });
+
+    expect(result.matchedPages).toEqual([
+      { store: 'nl', page: 'afhalen' },
+      { store: 'de', page: 'afhalen' },
+    ]);
+  });
+
+  it('finds a note written on any store, because reading moves no count', () => {
+    // The amendment this ticket writes into `CONTEXT.md`. `eventsOfStores()` narrowed the log
+    // to the store whose screen it was, on the reasoning that a cross-store search is the back
+    // door to a cross-store surface. A screen that is **above** the stores is not that door:
+    // it reads, and reading moves no count.
+    const note = (store) => ({
+      store,
+      page: 'afhalen',
+      scope: 'page',
+      action: 'noted',
+      note: `max.svg is on the ${store} banner`,
+      editor: 'Ana',
+      createdAt: '2026-08-12T00:00:00Z',
+    });
+
+    const answer = searchNotes({
+      log: { events: [note('nl'), note('uk')], ready: true, connected: true },
+      term: 'max.svg',
+    });
+
+    expect(answer.state).toBe('answered');
+    expect(answer.notes.map((one) => one.store).sort()).toEqual(['nl', 'uk']);
   });
 });

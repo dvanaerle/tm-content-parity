@@ -1,27 +1,35 @@
 /**
- * Search over one store's content (ticket 82).
+ * Search over the content of a **set of stores** (ticket 82, widened by ticket 03).
  *
  * An editor types `Bekijk deals >` and sees every finding that holds those words,
- * across every page of the store, with the pages they are on. Before this, the only
+ * across every page, with the pages they are on. Before this, the only
  * search was a box that matched a page name.
  *
  * **One index per store, emitted at build time, scanned linearly.** No search library.
  * A store holds a few thousand work findings, and a linear pass over that many
  * objects is fast enough that a dependency would be paid for nothing. `web/probes/
  * probe-search-index.mjs` is the measurement that says so, and it is what a later
- * reader re-runs before adding one. A block store scans **two** indexes since ticket 05,
- * which doubles the pass and does not change that answer — ADR 0021 holds the numbers.
+ * reader re-runs before adding one. A block store scans **two** indexes since ticket 05
+ * and the all-stores screen scans **six**, which multiplies the pass and does not change
+ * that answer — ADR 0021 holds the numbers for two.
  *
- * **The findings half reaches the language block; the notes half does not** (ticket 05).
- * `searchStore()` scans the store's index and its sibling's, merged by `indexOverBlock()`,
- * so a searched row is grouped over the block exactly as the untouched *Repeats* list has
- * been since ticket 03 — the key already spanned, and only the array being grouped did not.
- * `searchNotes()` stays where ADR 0018 put it: it is handed a log already narrowed to this
- * store, and a search on `nl` never answers with a note written on a `be` page.
+ * **The corpus is the caller's, and it may be any set of stores** (ticket 03).
+ * `mergeIndexes()` takes a list, so the same function answers the per-store screen — this
+ * store and its sibling, unchanged — and the screen above the stores, which names all six.
+ * Nothing here knows which of the two it is answering; a store is a term of an entry and
+ * never a bound of this module.
  *
- * **A block is still not an all-stores surface.** Ticket 38 settled that there is none, and
- * nothing here takes a list of stores: `indexOverBlock()` takes one sibling, because
- * `siblingOf()` answers with one store or with nothing.
+ * **A search corpus is not a repeat corpus.** Reading may cross any store, because reading
+ * moves no count; pressing may not. So the widening lands here and stops: the grouping is
+ * still `repeatsInStore()`'s, whose key is the **language block**, and one string on six
+ * stores is four rows and not one. `CONTEXT.md` holds the two words and ticket 04 is what
+ * moves the second of them.
+ *
+ * **The notes half crosses too, and stays its own block.** It was narrowed to one store by
+ * `eventsOfStores()`, on the reasoning that a cross-store search is the back door to a
+ * cross-store surface. A screen **above** the stores is not that door — it reads — so the
+ * caller decides which stores' events reach `searchNotes()`, exactly as it decides which
+ * indexes reach `searchStore()`. The per-store screen still hands over one store's.
  * See `docs/adr/0021-the-search-reaches-the-language-block-in-one-half.md`.
  *
  * **Two sources, two freshnesses.** The index is as old as the last build; the notes
@@ -94,8 +102,9 @@ import { classIsOn, findingsIn, repeatsInStore, repeatsWithClasses } from './vie
  *
  * The named trap: **the index must not become the report.** A `PageReport` holds both
  * extracts — 54 MB across the corpus — and shipping it twice is not a search index.
- * These ten fields are the searchable text plus the two halves of the finding's address,
- * and an eleventh has to be argued for in `search.test.mjs` before it is added.
+ * These eleven fields are the searchable text, the two halves of the finding's address and
+ * the observation it was seen in, and a twelfth has to be argued for in `search.test.mjs`
+ * before it is added.
  *
  * @typedef {object} IndexEntry
  * @property {string} id            The finding. A repeat has none, so this is the only
@@ -103,11 +112,17 @@ import { classIsOn, findingsIn, repeatsInStore, repeatsWithClasses } from './vie
  * @property {string} store         The store this finding is on (ticket 05). Redundant
  *                                 inside one file, where it is `index.store` on every
  *                                 entry — and load-bearing the moment two files are
- *                                 merged, which is what a block search does. Without it
- *                                 the store lives only on the index, and a merge
- *                                 then files the sibling's findings under this store's
- *                                 name.
+ *                                 merged, which a block search does with two and the
+ *                                 all-stores screen does with six. Without it the store
+ *                                 lives only on the index, and a merge then files every
+ *                                 other store's findings under the first one's name.
  * @property {string} page          The page key. Opaque, and it can hold a slash.
+ * @property {string} observationId The run that saw this page, carried so the index can be
+ *                                 read back as the store pages it came off — see
+ *                                 `pagesOfIndex()`. It is a fact about the **page** and it
+ *                                 rides on the entry for the reason the store does: the
+ *                                 entries are a flat array, and a merge of six files has
+ *                                 nowhere else to keep a per-page fact.
  * @property {keyof FINDING_CLASSES} class
  * @property {string | null} prod
  * @property {string | null} new
@@ -120,7 +135,9 @@ import { classIsOn, findingsIn, repeatsInStore, repeatsWithClasses } from './vie
  *                                 `null`, so every reader scans one shape.
  *
  * @typedef {object} SearchIndex
- * @property {string} store
+ * @property {string | null} store The one store this index is of, or `null` where it is a
+ *                                 merge of several — see `mergeIndexes()`. Nothing reads it
+ *                                 to decide where a finding is; the entries say that.
  * @property {number} pages
  * @property {string} builtAt       The newest report in the store. The finding half of
  *                                 a result is this old, and the note half is live.
@@ -130,9 +147,10 @@ import { classIsOn, findingsIn, repeatsInStore, repeatsWithClasses } from './vie
 /**
  * One page of one store, as the key every map inside this module is built on.
  *
- * Written once because the two stores of a language block carry the **same page keys**:
- * `nl/afhalen` and `be/afhalen` are two pages, and a map keyed on the bare key would merge
- * them into one. Four maps here answer that question and a fifth would be a fifth chance to
+ * Written once because the stores carry the **same page keys**: `nl/afhalen` and `be/afhalen`
+ * are two pages, and a map keyed on the bare key would merge them into one. It was the two
+ * stores of a language block that made this necessary; it is all six that make it
+ * unavoidable. Five maps here answer that question and a sixth would be a sixth chance to
  * ask it with the store left off.
  *
  * @param {{ store: string, page: string }} one
@@ -160,37 +178,94 @@ export function indexStore(store, reports) {
 }
 
 /**
- * The store's index and its sibling's, as the one index a block search scans (ticket 05).
+ * An arbitrary set of indexes, as the one index a search scans (ticket 05, ticket 03).
  *
- * Which half of a search crosses a block and why the other does not is ADR 0021; the module
- * header above says it in a paragraph. What is here is the one thing this function decides:
- * it takes **one** sibling and never a list, because `siblingOf()` answers with one store or
- * with nothing, and there is no all-stores index and no route that would serve one.
+ * It took **one** sibling until ticket 03, because `siblingOf()` answers with one store or
+ * with nothing, and there was no screen above the stores for a wider set to be about. There
+ * is one now, so this takes a list: two files on a block store, six on the all-stores
+ * screen, one on `de` and `uk`. Which half of a search crosses a block and why is ADR 0021;
+ * what a set of stores may and may not do is the module header above.
  *
- * Nothing here knows what a block *is*. The caller names the sibling, through the same
- * `siblingOf()` the dashboard's page list already goes through, so no second reading of the
- * hreflang codes is added — which is the trap this ticket names.
+ * Nothing here knows what a block *is*, and nothing here knows what *all* is either. The
+ * caller names the stores — through `siblingOf()` on a store dashboard, and off the log's
+ * own store list on the screen above them — so no second reading of the hreflang codes is
+ * added, which is the trap ticket 05 named and this one inherits.
  *
- * @param {SearchIndex} index The dashboard's own.
- * @param {SearchIndex | null} sibling The other store of its block, or `null` where it is
- *   in none. `de` and `uk` are each the only store of their language, so they pass `null`
- *   and get their own index straight back — a store pays for a block only if it is in one.
+ * @param {SearchIndex[]} indexes In the order the result should scan them, which is the
+ *   order a caller names its stores in. One index comes back untouched, so a store out of a
+ *   block pays nothing for the block — the shape of ADR 0018's trade.
  * @returns {SearchIndex}
  */
-export function indexOverBlock(index, sibling) {
-  if (!sibling) return index;
+export function mergeIndexes(indexes) {
+  // A screen with no store to search draws its own empty answer. Throwing would make *the
+  // log holds no store yet* a broken screen rather than an empty one.
+  if (indexes.length === 0) return emptyIndex(null);
+  if (indexes.length === 1) return indexes[0];
+
   return {
-    // The **dashboard's** store, which is what this index was assembled for. It is not a
-    // claim about the entries, and it stopped being one the moment an entry carried its
-    // own: nothing downstream reads this to decide where a finding is.
-    store: index.store,
-    pages: index.pages + sibling.pages,
-    // The newer of the two, which is the rule `addPage()` follows one level down over two
-    // reports. One answer to *when was this snapshot taken* and not two. In practice the
-    // two files are written by one build and carry the same moment.
-    builtAt: sibling.builtAt > index.builtAt ? sibling.builtAt : index.builtAt,
-    findings: [...index.findings, ...sibling.findings],
+    // **No store**, because a merge of several is of none. It was the dashboard's store
+    // while the merge was a block's two files — a label on the index and never a claim
+    // about its entries, which is precisely why an entry carries its own — and over six
+    // stores there is no such store to name. Nothing downstream reads this to decide
+    // where a finding is, and the null is what keeps it that way.
+    store: null,
+    pages: indexes.reduce((sum, one) => sum + one.pages, 0),
+    // The newest, which is the rule `addPage()` follows one level down over two reports.
+    // One answer to *when was this snapshot taken* and not six. In practice one build
+    // writes every file and they carry the same moment.
+    builtAt: indexes.reduce((newest, one) => (one.builtAt > newest ? one.builtAt : newest), ''),
+    findings: indexes.flatMap((one) => one.findings),
   };
+}
+
+/**
+ * The index read back as the store pages it came off, which is what the override
+ * derivation takes (ticket 03).
+ *
+ * The all-stores screen has **no page summaries**: six stores of them is seven megabytes of
+ * HTML in one island, against a corpus that is already in six static files. So the index is
+ * the corpus *and* the list of pages a decision can be about, and this is the one place the
+ * flat entries are read as the pages they belong to.
+ *
+ * The shape is deliberately a `PageReport`'s as far as `derivePageState()` reads one: the
+ * store, the page, the observation and the findings. It is a **second reading of one array**
+ * and never a second derivation — `deriveStoreState()` decides what is dismissed, what is
+ * fixed and what a later observation has contradicted, exactly as it does over the
+ * summaries a store dashboard loads.
+ *
+ * `findingSetHash` is `null` and says so. It is read by the **review** mark alone, which is
+ * a fact about a page an editor looked at and is drawn on no search result; a hash invented
+ * here would make an unreviewed page claim a fresh review.
+ *
+ * Keyed on `store/page`, because the stores share page keys: `afhalen` is a page of all six,
+ * and one report holding two stores' findings would put `be`'s behind `nl`'s events.
+ *
+ * @param {SearchIndex} index
+ * @returns {{ store: string, page: string, observationId: string, findingSetHash: null,
+ *   findings: IndexEntry[] }[]} In the order the pages first appear in the index, which is
+ *   the order the build wrote them.
+ */
+export function pagesOfIndex(index) {
+  /** @type {Map<string, { store: string, page: string, observationId: string,
+   *   findingSetHash: null, findings: IndexEntry[] }>} */
+  const byPage = new Map();
+
+  for (const entry of index.findings) {
+    const key = storePage(entry);
+    const held = byPage.get(key);
+    if (held) held.findings.push(entry);
+    else {
+      byPage.set(key, {
+        store: entry.store,
+        page: entry.page,
+        observationId: entry.observationId,
+        findingSetHash: null,
+        findings: [entry],
+      });
+    }
+  }
+
+  return [...byPage.values()];
 }
 
 /**
@@ -202,7 +277,8 @@ export function indexOverBlock(index, sibling) {
  * array, and one test pins the two paths equal so the streaming one cannot grow a second,
  * divergent merge.
  *
- * @param {string} store
+ * @param {string | null} store `null` where there is no one store this index is of, which
+ *   is what `mergeIndexes()` answers with over a set of them and over none.
  * @returns {SearchIndex}
  */
 export const emptyIndex = (store) => ({ store, pages: 0, builtAt: '', findings: [] });
@@ -236,11 +312,16 @@ export function addPage(index, report) {
       id: finding.id,
       // The **report's** store and never `index.store`. They are the same string while an
       // index is built out of one store's reports, and they are not while two indexes are
-      // merged through this accumulator — which is what `indexOverBlock()` does. Reading
+      // merged through this accumulator — which is what `mergeIndexes()` does. Reading
       // the accumulator's here is ticket 05's first trap, and it files `be`'s findings
       // under `nl`, where a press would write an event against an id that does not exist.
       store: report.store,
       page: report.page,
+      // The **page's** observation, for the same reason and one step further on: it is what
+      // `pagesOfIndex()` reads the entries back as pages by, and a page re-checked on its own
+      // carries a later one than the store's last full run. Read off the accumulator there
+      // would be no accumulator to read it off — this is the only place it is known.
+      observationId: report.observationId,
       class: finding.class,
       prod: finding.prod ?? null,
       new: finding.new ?? null,
@@ -497,7 +578,7 @@ export function withScope(term, page) {
 export const inScope = (page, scope) => page.toLowerCase().includes(fold(scope));
 
 /**
- * What one store's index answers about a term.
+ * What the index answers about a term.
  *
  * The rows are **repeats** and not findings, which is this ticket's second trap: a term
  * matching one difference that is on 329 pages must not read as 329 unrelated results.
@@ -792,8 +873,14 @@ function kindOf(page, answered, text) {
  *
  * A note is not in the index and cannot be: it is written in the log after the build, so
  * indexing it would be indexing a moment that has already passed. It is filtered from the
- * events the store page has already loaded, which makes this half as new as the last read
+ * events the screen has already loaded, which makes this half as new as the last read
  * while the finding half is as old as the last build.
+ *
+ * **Which stores' events those are is the caller's** (ticket 03). This function narrows on
+ * the words and on the page scope and never on a store, so a store screen hands over its own
+ * store's log and the screen above the stores hands over all six. That the second one is
+ * allowed at all is the corpus split `CONTEXT.md` records: reading may cross any store,
+ * because reading moves no count.
  *
  * That is why it is a second function and not a merged list. `live` is on the result so a
  * caller drawing both halves has to say which is which — presenting them as one moment is

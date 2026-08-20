@@ -82,6 +82,26 @@ export const backInSearch = (search) => new URLSearchParams(search).get(BACK_PAR
 export const storeHref = (store, back = null) => `/${store}/${back ? `?${back}` : ''}`;
 
 /**
+ * The search screen **above** the stores (ticket 03).
+ *
+ * It is not under a store route, and that is the whole of what this one line records: a
+ * result that can return a `uk` row has stopped being a view of `nl`, so a URL saying it is
+ * one would be a lie a Back button then repeats. It is also not in the page keys' space,
+ * for the reason `search-index/` is not: the store route's catch-all is a rest parameter
+ * and a page key can hold a slash.
+ *
+ * The screen it carries is `searchFromScreen()`'s — the same query string the store
+ * dashboard writes, read by the same `screenFromSearch()`. There is no second contract, so
+ * a class query is that screen with `classes` set and `query` empty.
+ *
+ * @param {string | null} [screen]  A query string, already narrowed to the keys a screen
+ *                                  knows. Pass what `searchFromScreen()` or
+ *                                  `searchForClass()` wrote.
+ * @returns {string}
+ */
+export const searchHref = (screen = null) => `/search/${screen ? `?${screen}` : ''}`;
+
+/**
  * The re-check endpoint for one page. `api/server.mjs` decodes it.
  *
  * @param {string} store

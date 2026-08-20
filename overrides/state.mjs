@@ -552,13 +552,21 @@ export function deriveStoreState({ reports, events, observationId }) {
  * The **log itself** is the exception, and it has one reader: searching the notes. A note is
  * a sentence an editor wrote, and that half filters on the words and on the page scope and
  * never on a store, so handing it both stores' events answers `nl`'s search with notes
- * written on `be` pages. `search.mjs` opens by refusing exactly that — *per store only* — and
- * a cross-store search is the back door to a cross-store surface.
+ * written on `be` pages.
  *
  * So this narrows the log back to the store whose screen it is, and it lives here, beside the
  * derivations, because it is the same question they ask of the same field: **which store is
  * this event about**. `null` is passed through rather than coerced. A read in flight is not an
  * empty log, which is this module's first rule and the one its one bug was about.
+ *
+ * **It is a narrowing for a screen and never a rule about searching** (ticket 03 of
+ * cross-store reuse). It used to say that a cross-store search is the back door to a
+ * cross-store surface, which the search screen **above** the stores makes false: reading may
+ * cross any store, because reading moves no count, and the corpus a press may cross is a
+ * different set — `CONTEXT.md` holds the two words. That screen derives its log over every
+ * store it searches and does not call this at all. What is still true, and is the whole of
+ * what this function is for, is that a screen **of** a store must not answer with another
+ * store's writing.
  *
  * @param {object} input
  * @param {OverrideEvent[] | null} input.events

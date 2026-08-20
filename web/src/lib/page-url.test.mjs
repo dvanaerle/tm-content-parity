@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { backInSearch, findingInSearch, pageHref, recheckPath, storeHref } from './page-url.mjs';
+import {
+  backInSearch,
+  findingInSearch,
+  pageHref,
+  recheckPath,
+  searchHref,
+  storeHref,
+} from './page-url.mjs';
 
 describe('pageHref', () => {
   // The Astro route is a rest parameter, so a slash in the key is a route
@@ -92,5 +99,21 @@ describe('recheckPath', () => {
     expect(recheckPath('fr', '(fr)heavy-duty-veranda')).toBe(
       '/api/recheck/fr/(fr)heavy-duty-veranda',
     );
+  });
+});
+
+/**
+ * The screen above the stores (ticket 03). It is not under a store route on purpose: a
+ * result that can return a `uk` row has stopped being a view of `nl`.
+ */
+describe('searchHref', () => {
+  it('is above the stores and never inside one', () => {
+    expect(searchHref()).toBe('/search/');
+  });
+
+  it('carries a screen, so a class query is a link', () => {
+    expect(searchHref('classes=broken-link')).toBe('/search/?classes=broken-link');
+    expect(searchHref('')).toBe('/search/');
+    expect(searchHref(null)).toBe('/search/');
   });
 });

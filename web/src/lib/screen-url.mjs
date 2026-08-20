@@ -107,9 +107,14 @@ export function searchFromScreen(screen) {
   if (screen.view === 'pages' && screen.priorities.length > 0) {
     written.set(PARAM.priorities, screen.priorities.join(','));
   }
-  // *Include closed* belongs to the search, and there is no search without a
-  // term, so it goes the same way the sort does.
-  if (screen.query.trim() && screen.includeClosed) written.set(PARAM.includeClosed, '1');
+  // *Include closed* belongs to the search, so it is written only where there is a search to
+  // belong to. A **term or a class** is one since ticket 09: a class on its own is a whole
+  // query, so a link to a class query with closed work shown has to be able to say so. The
+  // guard is not dropped — with neither on, nothing is searched and this would be a parameter
+  // narrowing nothing, in a link promising it did.
+  if ((screen.query.trim() || screen.classes.length > 0) && screen.includeClosed) {
+    written.set(PARAM.includeClosed, '1');
+  }
 
   return written.toString();
 }
@@ -141,6 +146,33 @@ export function searchForRepeat(finding) {
     // which is the one thing it exists to save them.
     classes: [finding.class],
   });
+}
+
+/**
+ * The screen a **class** opens: that class on, and nothing typed (ticket 03).
+ *
+ * It is `searchForRepeat()` above with the words left out, and that is the gesture it is
+ * for: an editor looking straight at a *Broken link* row has no word to type, because the
+ * class is the thing they mean. `searchStore()` has answered a bare class since ticket 09,
+ * so what this adds is only the press.
+ *
+ * **No new parameter.** `classes` is already in the contract and already survives a copy, so
+ * a class query is this screen with `classes` set and `query` empty — which the contract can
+ * write and read today.
+ *
+ * It is handed to `searchHref()` and not to `storeHref()`, and that is the half of the
+ * gesture that makes it worth having: a class is a queue over **every** store, and six
+ * per-store queues is what an editor was opening by hand.
+ *
+ * @param {string} cls
+ * @returns {string | null} `null` for a word the vocabulary does not hold. A row cannot
+ *   produce one — the label is drawn off the vocabulary — and a link landing on the
+ *   unnarrowed queue would be worse than no link, which is the rule above.
+ */
+export function searchForClass(cls) {
+  if (!FINDING_CLASSES[cls]) return null;
+
+  return searchFromScreen({ ...SCREEN, classes: [cls] });
 }
 
 /**

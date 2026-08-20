@@ -205,6 +205,22 @@ element any more: it folds the links inside it. Both the word and the rule are g
   how many of the repeat's findings are still **open**, which is the one place the page
   count and the finding count come apart — 81's proof is about the findings a repeat holds
   and says nothing about how many are left.
+- **Search corpus** and **repeat corpus** — the stores a question reaches, and they are two
+  different sets. **Reading may cross any store; pressing may not.** A search runs over
+  whatever set of stores its screen is about, because reading moves no count: nothing it
+  answers changes a bar, a denominator or a roll-up, so widening it costs nothing and saves an
+  editor four searches. A **repeat** is the unit of a decision, so its corpus is the one above
+  — the language block, where the two stores do not translate the text between them. The same
+  string on six stores is therefore **one search result of four differences**, and that is not
+  a compromise: the search found it once, and the four are four decisions because the four
+  texts are four texts.
+  The two were one set until ticket 03 and the split is what that ticket is: the search
+  screen **above the stores** reaches all six, and no press on it does. So `mergeIndexes()`
+  takes any list of indexes, `searchNotes()` is handed whatever log its screen opened, and
+  `repeatsInStore()` is untouched. A store dropdown that narrowed the repeat corpus is
+  refused: a control may narrow what is **read**, and what may be **pressed** is a property of
+  the check and never a preference.
+  See `docs/adr/0021-the-search-reaches-the-language-block-in-one-half.md`.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
   `heading-level` or a `tag-changed` finding, `p + p → p` or `p → 4×p` on a `regrouped` one,
   and null on every other class. It is
@@ -488,9 +504,18 @@ element any more: it folds the links inside it. Both the word and the rule are g
   The **search** is half of one and half of the other since ticket 05. Its **findings** half
   reaches the block — it scans this store's search index and the sibling's, so a searched row
   is the same row the untouched list holds, and a press armed off one writes in both stores.
-  Its **notes** half stays per store: the log reaching a search is narrowed before it leaves
-  the hook, and a search on `nl` never answers with a note written on a `be` page. That split
-  is ADR 0018's and ADR 0021 is where it is written down. Neither half moves a number.
+  Its **notes** half stays per store on a store's own screen: the log reaching a search is
+  narrowed before it leaves the hook, so a search on `nl` never answers with a note written on
+  a `be` page. That split is ADR 0018's and ADR 0021 is where it is written down. Neither half
+  moves a number.
+  ~~There is no all-stores search.~~ **Amended 2026-08-20, ticket 03 of cross-store reuse.**
+  There is one, and it is a screen of its own **above** the stores, with its own URL — a
+  result that can return a `uk` row has stopped being a view of `nl`. Both halves cross there,
+  by the **search corpus** rule above: six static index files fetched together, a partial read
+  an error, and the notes of all six searched beside them. The rows are the same repeats, each
+  line saying which store it is on, and **nothing on it can be pressed**. The store screens
+  are unchanged — this store and its sibling, as before — and the two page-list blocks a
+  scope draws are a store's own answers and stay there.
   **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first, and it answers
   *which page do I open next*. There is no all-stores repeat view, for the reason
   there is no all-stores dashboard.

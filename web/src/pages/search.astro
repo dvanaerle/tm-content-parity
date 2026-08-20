@@ -1,0 +1,34 @@
+---
+import AllStores from '../components/AllStores.jsx';
+import Shell from '../layouts/Shell.astro';
+import { storesInLog } from '../lib/reports.mjs';
+
+// One search over every store, on its own route (ticket 03).
+//
+// It is **above** the stores and not under `/[store]/`, and the route is where that is
+// enforced rather than merely stated: a result that can return a `uk` row has stopped being
+// a view of `nl`, so a URL saying it is one would be a lie that Back then repeats. It is
+// also out of the page keys' space, for the reason `/search-index/` is — the store route's
+// catch-all is a rest parameter and a page key can hold a slash.
+//
+// Nothing is read here. The corpus is the six static index files the build already writes,
+// fetched in the browser by the island, so this page ships the store **names** and no
+// content units at all. That is what keeps the widest reading in the log the cheapest page
+// in it: a store dashboard carries its own summaries and this carries none.
+const stores = await storesInLog();
+---
+
+<Shell title="Search every store">
+  <header slot="banner">
+    <h1 class="text-xl font-semibold">Search every store</h1>
+    <p class="max-w-prose text-sm text-muted-foreground">
+      One search over all {stores.length} stores, so a string found once is found everywhere. The
+      results are the same differences a dashboard lists, and each one says which store it is on.
+    </p>
+    <p class="max-w-prose text-sm text-muted-foreground">
+      This screen <strong>reads</strong>. A decision is still made on the store it belongs to,
+      because the stores translate their text — so a row here opens a page and decides nothing.
+    </p>
+  </header>
+  <AllStores client:load stores={stores} />
+</Shell>

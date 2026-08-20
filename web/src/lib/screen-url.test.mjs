@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { parseTerm } from './search.mjs';
-import { SCREEN, screenFromSearch, searchForRepeat, searchFromScreen } from './screen-url.mjs';
+import {
+  SCREEN,
+  screenFromSearch,
+  searchForClass,
+  searchForRepeat,
+  searchFromScreen,
+} from './screen-url.mjs';
 
 /**
  * The dashboard screen, written in the URL (ticket 109).
@@ -126,6 +132,15 @@ describe('a control that belongs to one view', () => {
     );
     expect(screenFromSearch('query=deals&closed=1').includeClosed).toBe(true);
   });
+
+  // A class on its own **is** a search since ticket 09, so the option that says what counts
+  // as a result has something to belong to with nothing typed. Without this a link to a class
+  // query showing closed work arrived showing none of it.
+  it('writes include closed over a class query, which has no term', () => {
+    expect(
+      searchFromScreen({ ...SCREEN, classes: ['broken-link'], includeClosed: true }),
+    ).toBe('classes=broken-link&closed=1');
+  });
 });
 
 /**
@@ -157,5 +172,32 @@ describe('the link to a finding’s repeat', () => {
     expect(searchForRepeat({ store: 'nl', class: 'image-missing', prod: null, new: null })).toBe(
       null,
     );
+  });
+});
+
+/**
+ * The other half of the same gesture (ticket 03). `searchForRepeat()` writes a repeat's
+ * words **and** its class; this writes the class with the words left out, which is what
+ * makes a class label on a row a list an editor can open.
+ */
+describe('the link to a class', () => {
+  it('writes the class and nothing else', () => {
+    // No new parameter: `classes` is already in the contract and already survives a copy, so
+    // a class query is this screen with `classes` set and `query` empty.
+    expect(searchForClass('broken-link')).toBe('classes=broken-link');
+  });
+
+  it('reads back as a class query — the class on, and nothing typed', () => {
+    const screen = screenFromSearch(searchForClass('broken-link'));
+
+    expect(screen.classes).toEqual(['broken-link']);
+    expect(screen.query).toBe('');
+  });
+
+  it('offers nothing for a word the vocabulary does not hold', () => {
+    // The label is drawn off the vocabulary, so this cannot happen from a row — and a link
+    // that would land on the unnarrowed queue is worse than no link, which is the rule
+    // `searchForRepeat()` keeps for a finding with no words.
+    expect(searchForClass('type')).toBe(null);
   });
 });

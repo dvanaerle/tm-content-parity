@@ -21,6 +21,7 @@ import {
   TableRow,
 } from './ui/table.jsx';
 import { CHROME } from '../lib/palette.mjs';
+import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { cn } from '../lib/utils.js';
 import { crossesBlock, findingsIn, groupRepeatsByClass, repeatsByOpenWork } from '../lib/view.mjs';
 
@@ -52,15 +53,45 @@ export default function Repeats({
   repeats,
   byFinding,
   logRead,
-  bulk,
+  bulk = null,
   link,
-  language,
+  classLink = null,
+  language = null,
+  acrossStores = false,
   searched = false,
   builtAt = null,
 }) {
   const worstFirst = useWorstFirst(repeats, byFinding, logRead);
 
   if (repeats.length === 0) return <NoRepeats />;
+
+  const rows = (
+    <>
+      <RowList
+        repeats={worstFirst}
+        byFinding={byFinding}
+        link={link}
+        classLink={classLink}
+        language={language}
+        acrossStores={acrossStores}
+        searched={searched}
+      />
+      <Total repeats={worstFirst} />
+    </>
+  );
+
+  /*
+   * **No `bulk`, no press** (ticket 03). The all-stores screen widens what may be *read* and
+   * nothing about what may be *pressed*: until the repeat corpus moves, a press there would
+   * be offered over a list spanning six stores and act on two of them, which is a control
+   * lying about its own reach. So the caller withholds the seam and this list draws no tick,
+   * no select-all and no bar — the selection context is `null`, and the three controls that
+   * read it return nothing rather than each testing a flag of their own.
+   *
+   * It is the caller's decision and not this component's, said in the one shape a component
+   * cannot get wrong: there is nothing here to press *with*.
+   */
+  if (!bulk) return rows;
 
   return (
     <FlatSelection repeats={worstFirst} byFinding={byFinding} bulk={bulk} builtAt={builtAt}>
@@ -75,14 +106,7 @@ export default function Repeats({
           every difference in the store and no proposition anyone made, so `ClassGroups` below
           offers nothing of the kind. */}
       {searched && <SelectResult repeats={worstFirst} />}
-      <RowList
-        repeats={worstFirst}
-        byFinding={byFinding}
-        link={link}
-        language={language}
-        searched={searched}
-      />
-      <Total repeats={worstFirst} />
+      {rows}
     </FlatSelection>
   );
 }
@@ -327,6 +351,11 @@ const NOTHING = new Set();
 function TriStateTick({ ids, label, hint }) {
   const selection = useContext(SelectionContext);
 
+  // No selection to be part of, so no tick. It is read off the context and never off a prop
+  // threaded down beside it: the list that offers no press does not provide one, and a tick
+  // drawn without one would be a control whose press goes nowhere. See `Repeats` above.
+  if (!selection) return null;
+
   const all = ids.every((id) => selection.ticked.has(id));
   const some = !all && ids.some((id) => selection.ticked.has(id));
 
@@ -412,7 +441,16 @@ const SELECT_RESULT_HINT =
  * (ticket 102) and grouped by the term: the term is the grouping the editor asked for, and
  * grouping it by class as well would be a second grouping over one answer.
  */
-export function ClassGroups({ repeats, classes, byFinding, logRead, bulk, link, language }) {
+export function ClassGroups({
+  repeats,
+  classes,
+  byFinding,
+  logRead,
+  bulk,
+  link,
+  classLink = null,
+  language,
+}) {
   const worstFirst = useWorstFirst(repeats, byFinding, logRead);
   const groups = useMemo(() => groupRepeatsByClass(worstFirst, classes), [worstFirst, classes]);
 
@@ -453,6 +491,7 @@ export function ClassGroups({ repeats, classes, byFinding, logRead, bulk, link, 
             onDraw={(next) => setBudget({ ...budget, [group.class]: next })}
             byFinding={byFinding}
             link={link}
+            classLink={classLink}
             language={language}
           />
         ))}
@@ -474,7 +513,17 @@ export function ClassGroups({ repeats, classes, byFinding, logRead, bulk, link, 
  * makes that tail navigable; it does not get to decide the tail is not work. So no group is
  * left out for being small, and none of them hides its rows behind its count.
  */
-function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, link, language }) {
+function ClassGroupRow({
+  group,
+  open,
+  onToggle,
+  drawn,
+  onDraw,
+  byFinding,
+  link,
+  classLink,
+  language,
+}) {
   const count = group.repeats.length;
 
   return (
@@ -484,6 +533,10 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, link, 
           <span aria-hidden className="w-3 text-muted-foreground">
             {open ? '▾' : '▸'}
           </span>
+          {/* The group heading is **not** a link, and that is the same rule the row's own
+              label follows from the other side: the heading is inside a `CollapsibleTrigger`,
+              whose press already means *show me these*, and a second press with a second verb
+              inside it is what ticket 03 forbids. The row below it is where a class opens. */}
           <ClassPill class={group.class} />
           {/* The count is this group's own rows and nothing summed from elsewhere.
               Opening it moves no count, no bar and no denominator: the repeat total
@@ -501,6 +554,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, link, 
             repeats={group.repeats}
             byFinding={byFinding}
             link={link}
+            classLink={classLink}
             language={language}
             drawn={drawn}
             onDraw={onDraw}
@@ -521,7 +575,17 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, byFinding, link, 
  * which is the flat list a search draws. A list that is never taken off screen cannot lose
  * its paging, so there is nothing above it to hold.
  */
-function RowList({ repeats, byFinding, link, language, drawn: given, onDraw, searched = false }) {
+function RowList({
+  repeats,
+  byFinding,
+  link,
+  classLink = null,
+  language,
+  acrossStores = false,
+  drawn: given,
+  onDraw,
+  searched = false,
+}) {
   const [held, setHeld] = useState(PAGE_SIZE);
   const drawn = given ?? held;
   const draw = (next) => (onDraw ? onDraw(next) : setHeld(next));
@@ -535,7 +599,9 @@ function RowList({ repeats, byFinding, link, language, drawn: given, onDraw, sea
             repeat={repeat}
             byFinding={byFinding}
             link={link}
+            classLink={classLink}
             language={language}
+            acrossStores={acrossStores}
             searched={searched}
           />
         ))}
@@ -582,11 +648,30 @@ const PAGE_SIZE = 100;
  * counts over the pages, and the row already says how many pages there are. Confusing
  * the two is this ticket's named trap, so the two sentences are written apart.
  */
+/**
+ * What language the two quoted strings on a row are in (ticket 125, widened by ticket 03).
+ *
+ * **The list's, where the list has one.** On a store dashboard the caller answers for every
+ * row: a difference has no report and no store in scope, and reaching for a module-level
+ * store to get one would make a fact about two strings into application state. Two stores of
+ * a block share a language, so a repeat crossing one is still in one.
+ *
+ * **The row's own, where the list has none.** The all-stores screen is one list of six
+ * stores' rows in four languages, so there is no answer for the caller to give — and a list
+ * declaring one language over all of them would tell a screen reader that German content is
+ * Dutch. The repeat itself can answer, and only because the grouping is a language block: its
+ * stores share a language, so the first of them speaks for all of them.
+ *
+ * @param {import('../lib/view.mjs').Repeat} repeat
+ * @param {string | null} language  The list's, or `null` where the list spans languages.
+ */
+const rowLanguage = (repeat, language) => language ?? STORE_LANGUAGE[repeat.stores[0]] ?? null;
+
 const acrossPagesTitle = (repeat) =>
   `${repeat.occurrences} times in total, on ${repeat.on.length} ` +
   'pages. On some of those pages the difference is there more than once.';
 
-function Row({ repeat, byFinding, link, language, searched }) {
+function Row({ repeat, byFinding, link, classLink, language, acrossStores, searched }) {
   const [open, setOpen] = useState(false);
 
   /**
@@ -635,21 +720,36 @@ function Row({ repeat, byFinding, link, language, searched }) {
             <SelectAll repeat={repeat} />
           </span>
 
-          <CollapsibleTrigger className="flex flex-1 flex-wrap items-start gap-2 text-left">
-            <span className="mt-0.5 shrink-0">
-              <ClassPill class={repeat.class} />
-              <Detail detail={repeat.detail} />
-              <MatchedFields fields={repeat.fields} />
-            </span>
+          {/* **Outside the trigger, because it is a link** (ticket 03). An anchor inside a
+              button is neither valid nor clickable — the same trap the tick hit in ticket 138,
+              from the other side — so the class label and the two readings beside it are a
+              sibling of the trigger rather than its first child. What it costs is that the
+              detail and the matched fields no longer expand the row on a click; what it buys
+              is *Broken link* opening every broken link there is.
 
-            {/* The language is the list's and not this row's to find: a difference has no
-                report and no store in scope, and reaching for a module-level store to get
-                one would make a fact about two strings into application state. Two stores
-                of a block share a language, so a repeat crossing one is still in one. */}
+              `classLink` may be absent, and then this is the plain statement it always was. */}
+          <span className="mt-0.5 shrink-0">
+            <ClassPill class={repeat.class} href={classLink?.(repeat.class) ?? null} />
+            <Detail detail={repeat.detail} />
+            <MatchedFields fields={repeat.fields} />
+          </span>
+
+          {/* `data-row` names what this trigger opens, because two kinds of trigger are in
+              this list: a difference's own row, and a class group's heading. They used to be
+              told apart by what sat beside them, which stopped working the moment the class
+              label moved out of this button. A reader — and a test — asks the markup what a
+              thing is rather than inferring it from a sibling. */}
+          <CollapsibleTrigger
+            data-row="difference"
+            className="flex flex-1 flex-wrap items-start gap-2 text-left"
+          >
+            {/* The language of the two quoted strings — `rowLanguage()` above holds where it
+                comes from, which is the list's on a store screen and the row's own above the
+                stores. */}
             <Comparison
               prod={repeat.prod}
               new={repeat.new}
-              language={language}
+              language={rowLanguage(repeat, language)}
               className="min-w-48 flex-1"
             />
 
@@ -677,7 +777,13 @@ function Row({ repeat, byFinding, link, language, searched }) {
         </div>
 
         <CollapsibleContent>
-          <PageTable repeat={repeat} byFinding={byFinding} link={link} searched={searched} />
+          <PageTable
+            repeat={repeat}
+            byFinding={byFinding}
+            link={link}
+            acrossStores={acrossStores}
+            searched={searched}
+          />
         </CollapsibleContent>
       </Collapsible>
     </li>
@@ -716,8 +822,23 @@ const SelectAll = ({ repeat }) => (
  * Two pages of one difference can otherwise carry the same name: `afhalen` on `nl` and
  * `afhalen` on `be` are two ticks a screen reader could not tell apart (ticket 03).
  */
-const selectLabel = (repeat, entry) =>
-  crossesBlock(repeat) ? `Select ${entry.page} on ${entry.store}` : `Select ${entry.page}`;
+const selectLabel = (repeat, entry, acrossStores) =>
+  namesStore(repeat, acrossStores)
+    ? `Select ${entry.page} on ${entry.store}`
+    : `Select ${entry.page}`;
+
+/**
+ * Whether a page of this difference says which store it is on.
+ *
+ * Two reasons and one answer, which is why it is a function: the difference **crosses a
+ * language block**, so two of its pages can carry the same key; or the **list** spans stores,
+ * which is the all-stores screen (ticket 03), where a single-store row is still one row among
+ * six stores' worth and *afhalen* names nothing on its own.
+ *
+ * Where neither holds it stays off. On a row inside one store it would be the store whose
+ * dashboard this is, printed once per page for no reader.
+ */
+const namesStore = (repeat, acrossStores) => acrossStores || crossesBlock(repeat);
 
 /**
  * The pages of one difference, with a tick each (ticket 110).
@@ -740,7 +861,7 @@ const selectLabel = (repeat, entry) =>
  * which group was open — that is session state by the rule `groupRepeatsByClass()` states,
  * and a pill that is on re-opens its own group anyway.
  */
-function PageTable({ repeat, byFinding, link, searched }) {
+function PageTable({ repeat, byFinding, link, acrossStores = false, searched }) {
   const selection = useContext(SelectionContext);
 
   return (
@@ -761,10 +882,14 @@ function PageTable({ repeat, byFinding, link, searched }) {
             {/* The header word is drawn for a screen reader and not for an eye. A header
                 cell holding nothing but a checkbox announces nothing, and *Select* beside
                 the tick would be a word repeated in every label under it. */}
-            <TableHead className="w-8">
-              <SelectAll repeat={repeat} />
-              <span className="sr-only">Select</span>
-            </TableHead>
+            {/* Both halves of the column go together, or neither does. A header word over no
+                cells is a column an editor is told about and cannot use. */}
+            {selection && (
+              <TableHead className="w-8">
+                <SelectAll repeat={repeat} />
+                <span className="sr-only">Select</span>
+              </TableHead>
+            )}
             <TableHead>Page</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
@@ -773,15 +898,17 @@ function PageTable({ repeat, byFinding, link, searched }) {
           {repeat.on.map((entry) => (
             <TableRow
               key={entry.id}
-              data-state={selection.ticked.has(entry.id) ? 'selected' : undefined}
+              data-state={selection?.ticked.has(entry.id) ? 'selected' : undefined}
             >
-              <TableCell>
-                <Checkbox
-                  checked={selection.ticked.has(entry.id)}
-                  onCheckedChange={(ticked) => selection.tick([entry.id], ticked)}
-                  aria-label={selectLabel(repeat, entry)}
-                />
-              </TableCell>
+              {selection && (
+                <TableCell>
+                  <Checkbox
+                    checked={selection.ticked.has(entry.id)}
+                    onCheckedChange={(ticked) => selection.tick([entry.id], ticked)}
+                    aria-label={selectLabel(repeat, entry, acrossStores)}
+                  />
+                </TableCell>
+              )}
               <TableCell className="whitespace-normal">
                 <a
                   className={cn('hover:underline', CHROME.link)}
@@ -789,10 +916,9 @@ function PageTable({ repeat, byFinding, link, searched }) {
                 >
                   {entry.page}
                 </a>
-                {/* Which store this page is on, and **only** where the difference crosses a
-                    block. On a row inside a single store it would be the store whose
-                    dashboard this is, printed once per page for no reader. */}
-                {crossesBlock(repeat) && (
+                {/* Which store this page is on. `namesStore()` holds the two reasons there
+                    are for saying so and the one for staying quiet. */}
+                {namesStore(repeat, acrossStores) && (
                   <span className="ml-2 text-xs text-muted-foreground">on {entry.store}</span>
                 )}
                 <Occurrences count={entry.occurrences} title={onePageTitle(entry.occurrences)} />

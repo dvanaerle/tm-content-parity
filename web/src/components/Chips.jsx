@@ -130,18 +130,33 @@ export function BucketCount({ bucket, value, hint, className = '' }) {
  * finding id, so it cannot change — and an editor reading `IMAGE-MISSING` was reading the
  * contract (ADR 0019).
  *
+ * **Two presses, two verbs, one class** (ticket 03). Given an `href` this label is a
+ * **link** that opens every finding of the class; the pill in the filter strip stays a
+ * control that toggles. That difference is drawn here, in the one place a class is written
+ * on screen, because it is the difference an editor reads the affordance by: a press that
+ * navigates must never look like a press that filters. The anchor is what says so — it has
+ * a URL, it can be opened in a new tab, and the browser draws it as a place to go.
+ *
  * @param {object} props
  * @param {string} props.class
  * @param {boolean} [props.hinted] Off inside a control that carries a hint of its own. One
  *   element gets one hint: a pill inside a filter button would be a second trigger inside the
  *   group's own, and a second sentence for a reader who asked for none.
+ * @param {string | null} [props.href] Where the label goes, or nothing. It is `null`
+ *   everywhere the class is a **statement** rather than a way in — and it must stay `null`
+ *   inside a button, where an anchor is neither valid nor clickable.
  */
-export function ClassPill({ class: cls, hinted = true }) {
+export function ClassPill({ class: cls, hinted = true, href = null }) {
   const info = classInfo(cls);
 
   // A tab stop, which is the only reach there is: a description hung on a `span` with no role
   // and no focus is read by nothing. It is worth a stop per row — the pill is the one thing on
   // the row whose word an editor may not know, and the label is not the key (ADR 0019).
+  //
+  // A linked pill has that stop already, from the anchor, so `render` hands the badge's shape
+  // to the anchor rather than nesting one inside the other. The hint stays the class's
+  // meaning: what the word means is the same sentence whether or not it opens anything, and
+  // where it opens something the link's own words say so.
   return (
     <TextHint text={hinted && info.meaning}>
       <Badge
@@ -149,7 +164,8 @@ export function ClassPill({ class: cls, hinted = true }) {
         variant={null}
         data-wears="pill"
         data-tone={info.tone}
-        className="h-auto px-1.5 py-0.5 text-xs"
+        className={cn('h-auto px-1.5 py-0.5 text-xs', href && 'hover:underline')}
+        render={href ? <a href={href} aria-label={`Every ${info.label} finding`} /> : undefined}
       >
         {info.label}
       </Badge>

@@ -163,15 +163,16 @@ const pressAndWait = (element) =>
 const type = (value) => userEvent.fill(document.querySelector('[data-slot="input"]'), value);
 
 /** The row that opens the difference, which is the whole row again since round two. */
-const differenceRow = () => document.querySelector('[data-slot="collapsible-trigger"]');
+const differenceRow = () => document.querySelector('[data-row="difference"]');
 
 /** Every difference row's words, top-down, which is the order an editor reads. */
 const rowOrder = () =>
-  [...document.querySelectorAll('[data-slot="collapsible-trigger"]')]
-    // A difference row is the trigger with the row's own tick beside it. A class group's
-    // trigger has no tick, and `ClassGroups` draws both kinds.
-    .filter((trigger) => trigger.previousElementSibling?.querySelector('[data-slot="checkbox"]'))
-    .map((trigger) => trigger.textContent.trim());
+  // A difference's own row, by the name the markup gives it. `ClassGroups` draws a second kind
+  // of trigger for its headings, and the two were told apart by the tick beside one of them
+  // until ticket 03 moved the class label out of the button and in between.
+  [...document.querySelectorAll('[data-row="difference"]')].map((trigger) =>
+    trigger.textContent.trim(),
+  );
 
 /** The tick in the selection column's header, which is one of the two a difference has. */
 const selectAll = () => document.querySelector('thead [data-slot="checkbox"]');

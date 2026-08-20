@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Repeats from './Repeats.jsx';
 import { PageNote } from './Annotate.jsx';
 import { ClassFilterBanner } from './Chips.jsx';
@@ -12,7 +12,8 @@ import { Attribution } from './Attribution.jsx';
 import { day } from '../lib/dates.mjs';
 import { cn } from '../lib/utils.js';
 import { logState } from '../lib/log-read.mjs';
-import { explainScope, inScope, indexOverBlock, searchNotes, searchStore } from '../lib/search.mjs';
+import { explainScope, inScope, searchNotes, searchStore } from '../lib/search.mjs';
+import { useSearchIndex } from '../lib/search-index.mjs';
 import { siblingOf } from '../lib/language-blocks.mjs';
 import { pagesWithClasses } from '../lib/view.mjs';
 
@@ -33,8 +34,8 @@ import { pagesWithClasses } from '../lib/view.mjs';
 const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
 
 /**
- * What an editor gets for typing words: every finding in this store that holds them,
- * across every page, with the pages they are on (ticket 82).
+ * What an editor gets for typing words: every finding in the corpus that holds them, across
+ * every page, with the pages they are on (ticket 82).
  *
  * **Two sources, two freshnesses**, and the whole of this component's care goes there. The
  * findings come from a file the build wrote, so they are as old as the last build. The
@@ -43,9 +44,9 @@ const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
  * as one, and an editor would read the note half as being as stale as the other.
  *
  * The two halves also **arrive** at different moments, and each one says where it is
- * (ticket 123). The findings wait on a file this component fetches; the notes wait on the
- * log the store page opened. Neither holds up the other, and neither draws an empty answer
- * about a source it has not read yet.
+ * (ticket 123). The findings wait on the index the screen above fetches; the notes wait on
+ * the log it opened. Neither holds up the other, and neither draws an empty answer about a
+ * source it has not read yet.
  *
  * The rows are **repeats**, drawn by the component the *Repeats* view draws, so a
  * search row and a repeats row are the same row with the same marks and the same bar. It
@@ -71,10 +72,34 @@ const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
  * which pages it matched, because a substring scope often holds several and a merged list
  * with no header reads as one page's work. It is a narrowing of the corpus and not a way
  * into a page: a page name still opens the whole content view (ADR 0006).
+ *
+ * **It draws two screens and is one component** (ticket 03). A store's search — this store
+ * and its sibling, unchanged — and the search above the stores, which reaches all six. The
+ * corpus arrives as `index`, already merged, so nothing here knows how many files it came
+ * out of. What it does know is `store`: the store this screen is *of*, `null` above them, and
+ * the whole of what turns on it is written where it is read:
+ *
+ * - The **corpus** is this store's block, or the stores the caller names.
+ * - Every row **says which store it is on**, because a merged list of six stores' rows is
+ *   ambiguous the moment two of them carry `afhalen`, which all six do.
+ * - The two **page-list** blocks — which pages a scope reached, and which pages hold the term
+ *   in their name — are a store's own answers and are not drawn above the stores. They need
+ *   the whole page list, and six stores of page summaries is seven megabytes of island prop
+ *   against a corpus that is already in six static files.
+ * - There is **no press** above the stores: the caller withholds `bulk`, and `Repeats` then
+ *   draws no tick. Reading is what widened here; ticket 04 is what widens the press.
+ *
+ * **The index is a prop and the fetch is the caller's** since that ticket. Both screens need
+ * it before this component runs — the store's to keep it out of the hands of a visitor who
+ * never types, the all-stores screen's because the log it derives has nowhere else to come
+ * from — so `useSearchIndex()` sits with each of them and this draws whatever it is handed.
+ * `StoreSearch` below is that wrapper for the store screen.
  */
 export default function Search({
-  store,
-  pages,
+  store = null,
+  index,
+  indexError = null,
+  pages = [],
   siblingPages = [],
   term,
   classes = [],
@@ -83,10 +108,17 @@ export default function Search({
   log,
   includeClosed,
   onIncludeClosed,
-  bulk,
+  bulk = null,
   link,
+  classLink = null,
 }) {
-  const { index, error } = useSearchIndex(store);
+  /*
+   * Whether this list spans stores, which is the one question the two screens answer
+   * differently. It is *no store of its own* and not *more than one store in the index*: a
+   * block store's search reaches two stores and is still `nl`'s screen, drawing `nl`'s page
+   * list and speaking Dutch.
+   */
+  const acrossStores = !store;
 
   const result = useMemo(
     () =>
@@ -148,10 +180,15 @@ export default function Search({
   // store has that in its key* about a page that exists and holds rows in the list below it.
   // The lists are concatenated rather than merged — each entry carries its own store, and
   // the two stores share page keys, so `store/page` is what tells them apart.
+  // Above the stores there is no page list at all, so the four kinds are unanswerable and
+  // nothing is drawn: a scope still narrows the corpus there — `searchStore()` does that off
+  // the term — and what is missing is only the sentence about a page that answered nothing.
+  // Answering it would mean shipping six stores' page summaries, which is the trade the
+  // component docblock states.
   const blockPages = useMemo(() => [...pages, ...siblingPages], [pages, siblingPages]);
   const answer = useMemo(
-    () => (result ? explainScope({ pages: blockPages, result }) : null),
-    [blockPages, result],
+    () => (result && !acrossStores ? explainScope({ pages: blockPages, result }) : null),
+    [acrossStores, blockPages, result],
   );
 
   // The pages whose **name** holds the term, which the removed box used to narrow the
@@ -160,6 +197,10 @@ export default function Search({
   // this ticket and not after it. That is a capability the search had to keep, not a
   // second answer: it is the by-page reading of the same term.
   const named = useMemo(() => {
+    // Nothing above the stores: the block is the **page list's** answer and there is no page
+    // list there. It is skipped and not merely undrawn, so six stores' worth of filtering is
+    // not run on every keystroke to be thrown away.
+    if (acrossStores) return [];
     // `inScope()` and not a second `includes` written out here: it is the same substring
     // rule over the same page key, and two copies of it would drift the day one of them
     // learns to fold diacritics. The block is not drawn under a scope at all — the header
@@ -180,12 +221,12 @@ export default function Search({
     // is the whole reason the block exists, and a version of it that read the log would
     // hide the pages it is here to keep reachable.
     return pagesWithClasses(found, classes);
-  }, [pages, term, classes]);
+  }, [acrossStores, pages, term, classes]);
 
-  if (error) {
+  if (indexError) {
     return (
       <p className="px-4 py-6 text-sm text-muted-foreground">
-        A search index was not read ({error}). Search works again after a new build.
+        A search index was not read ({indexError}). Search works again after a new build.
       </p>
     );
   }
@@ -266,7 +307,13 @@ export default function Search({
           byFinding={byFinding}
           // The language of the scraped strings on every row, which is this store's: a
           // result reaches the sibling store and a block is two stores of one language.
-          language={STORE_LANGUAGE[store]}
+          // Above the stores there is no such answer — six stores speak four languages — so
+          // the list gives none and each row answers for itself. See `rowLanguage()`.
+          language={store ? STORE_LANGUAGE[store] : null}
+          // Every row says which store it is on, and the tick in it names one too.
+          acrossStores={acrossStores}
+          // *Broken link* on a row opens every broken link there is (ticket 03).
+          classLink={classLink}
           // The rows are worst-first on what is left in each difference (ticket 141), and
           // that reading waits for the log: until it has answered, `byFinding` says every
           // finding is open. It is the same `read` the notes half below is drawn on.
@@ -283,8 +330,8 @@ export default function Search({
 
       {/* Under a scope the header above is the by-page reading of the same typing, so
           this block would list the same pages a second time. */}
-      {scope ? null : <Named store={store} pages={named} link={link} />}
-      <Notes result={notes} link={link} />
+      {scope || acrossStores ? null : <Named store={store} pages={named} link={link} />}
+      <Notes result={notes} link={link} acrossStores={acrossStores} />
     </>
   );
 }
@@ -466,7 +513,7 @@ function Named({ store, pages, link }) {
  * findings half above is untouched by all of it: a slow log holds up nothing that is
  * already in memory.
  */
-function Notes({ result, link }) {
+function Notes({ result, link, acrossStores = false }) {
   if (result.state === 'reading') return <NotesAside>The override log is loading…</NotesAside>;
 
   if (result.state === 'failed')
@@ -507,6 +554,14 @@ function Notes({ result, link }) {
               <a className={cn('hover:underline', CHROME.link)} href={link(note.store, note.page)}>
                 {note.page}
               </a>
+              {/* Which store the note was written on, above the stores. The page keys are
+                  shared, so a note on `afhalen` names nothing on its own in a list holding
+                  six stores' — and the notes half crosses them all since ticket 03. On a
+                  store's own screen every note is that store's, and printing it once per line
+                  would be a word for no reader. */}
+              {acrossStores && (
+                <span className="ml-2 text-xs text-muted-foreground">on {note.store}</span>
+              )}
               {/* A page note is quoted and italic, the way it is drawn on the page and in
                   the store list. A dismissal note is the plain sentence it has always
                   been, and it sits inside the decision it explains. */}
@@ -566,49 +621,27 @@ const NotesAside = ({ children }) => (
 );
 
 /**
- * The index a search scans: this store's, and its sibling's where it has one (ticket 05).
+ * The store screen's search: this store's index and its sibling's, fetched, and the answer
+ * drawn over them (ticket 05, lifted out of `Search` by ticket 03).
  *
- * Not an island prop: the index is over a megabyte and every visitor to the dashboard
- * would pay for it, including the ones who never type. It is a static file the build
- * wrote, so one fetch answers every query afterwards and no service is involved.
+ * It is a wrapper of four lines and it exists for two reasons. The fetch has to happen
+ * **only while an editor is searching** — the index is nearly a megabyte per store, and an
+ * island prop or a hook in the dashboard would charge every visitor for it — so it belongs in
+ * a component the dashboard mounts on a typed term. And it must not happen in `Search`
+ * itself, because the screen above the stores derives its whole log from the same index and
+ * so has to hold it first.
  *
- * **Two files on a block store and one everywhere else.** The sibling comes from
- * `siblingOf()`, the same derivation the dashboard's page list goes through, and it is
- * `null` on `de` and `uk` — each is the only store of its language, so they fetch what they
- * always fetched. A store pays for a block only if it is in one, which is ADR 0018's trade
- * in its own shape; ADR 0021 holds what the second file costs.
- *
- * There is still **no version of this that takes a list** — ticket 38 settled that there is
- * no all-stores surface, and a block is two stores rather than a step toward six.
- *
- * **A sibling that did not answer is an error and not a narrower search.** Both fetches are
- * one promise, so a missing sibling index says so instead of quietly answering over one
- * store — which is the bug this ticket exists to close, and it would be worse for arriving
- * without a message.
+ * The sibling comes from `siblingOf()`, the same derivation the dashboard's page list goes
+ * through, and it is nothing on `de` and `uk` — each is the only store of its language, so
+ * they fetch what they always fetched. A store pays for a block only if it is in one, which
+ * is ADR 0018's trade in its own shape; ADR 0021 holds what the second file costs.
  */
-function useSearchIndex(store) {
-  const [state, setState] = useState({ index: null, error: null });
-  const sibling = siblingOf(store);
+export function StoreSearch({ store, ...rest }) {
+  // The two stores, and never a wider set. The all-stores corpus is a screen of its own and
+  // not a dropdown on this one: a control may narrow what is read, and what may be *pressed*
+  // is a property of the check.
+  const corpus = useMemo(() => [store, siblingOf(store)].filter(Boolean), [store]);
+  const { index, error } = useSearchIndex(corpus);
 
-  useEffect(() => {
-    let live = true;
-    setState({ index: null, error: null });
-    const read = (one) =>
-      fetch(`/search-index/${one}.json`).then((response) =>
-        response.ok ? response.json() : Promise.reject(new Error(`${one}: HTTP ${response.status}`)),
-      );
-
-    Promise.all([read(store), sibling ? read(sibling) : Promise.resolve(null)])
-      .then(([own, other]) => {
-        if (live) setState({ index: indexOverBlock(own, other), error: null });
-      })
-      .catch((failure) => {
-        if (live) setState({ index: null, error: failure.message });
-      });
-    return () => {
-      live = false;
-    };
-  }, [store, sibling]);
-
-  return state;
+  return <Search store={store} index={index} indexError={error} {...rest} />;
 }

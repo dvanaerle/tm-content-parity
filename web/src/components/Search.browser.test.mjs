@@ -2,6 +2,7 @@ import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import Search from './Search.jsx';
+import { mergeIndexes } from '../lib/search.mjs';
 
 /**
  * A term and the class pills, composed (ticket 102).
@@ -11,8 +12,10 @@ import Search from './Search.jsx';
  * defect was that nothing handed them to it and the strip that says a filter is on sat
  * behind a `!searching` guard. A node test over `search.mjs` can see neither half.
  *
- * The index is fetched — it is a static file the build writes, over a megabyte, and
- * deliberately not an island prop — so `fetch` is the one seam this test stubs.
+ * The index arrives as a **prop** since ticket 03: it is fetched by whichever screen is
+ * drawing this one — the store dashboard for a store's block, the all-stores screen for all
+ * six — and `search-index.browser.test.mjs` is where the fetching itself is tested. So
+ * nothing here stubs `fetch`; `sibling` is merged in exactly as `useSearchIndex()` merges it.
  */
 
 /** One entry of the store's search index, as `indexStore()` emits it. */
@@ -27,6 +30,7 @@ const entry = (part) => ({
   anchorHeading: 'Montage',
   occurrences: 1,
   linkText: [],
+  observationId: '20260811-01',
   ...part,
 });
 
@@ -98,30 +102,21 @@ const siblingIndex = (findings = []) => ({
   findings,
 });
 
-let fetched;
-/** What `/search-index/be.json` answers with, per test. */
+/** The sibling's half of the corpus, per test. */
 let sibling;
 
 beforeEach(() => {
-  fetched = globalThis.fetch;
   sibling = siblingIndex();
-  // Answered **by URL**. One index for both files would merge `nl`'s entries with a copy of
-  // themselves, which is a store that cannot exist and a doubled count in every assertion
-  // below — the fixture has to know that two files are fetched, because the component does.
-  globalThis.fetch = async (url) => ({
-    ok: true,
-    json: async () => (String(url).includes('/be.json') ? sibling : index),
-  });
 });
 
 afterEach(() => {
-  globalThis.fetch = fetched;
   document.body.innerHTML = '';
 });
 
 /**
- * Mounted and awaited: the index arrives in a promise, so the first paint is *Zoekindex
- * wordt geladen…* and every question here is about the one after it.
+ * Mounted and awaited. The corpus is `mergeIndexes()`' — the same merge the loader performs,
+ * so a fixture cannot describe a corpus the app could not assemble, and a test that set
+ * `sibling` gets `nl`'s entries and `be`'s in one index rather than two.
  */
 async function mount(props = {}) {
   const host = document.createElement('div');
@@ -134,6 +129,7 @@ async function mount(props = {}) {
       root.render(
         createElement(Search, {
           store: 'nl',
+          index: mergeIndexes([index, sibling]),
           pages,
           term: 'deals',
           classes: [],
@@ -279,48 +275,6 @@ describe('a search over the language block (ticket 05)', () => {
 
     expect(document.body.textContent).toContain('2 pages in /afhalen');
     expect(document.body.textContent).toContain('Only one site has this page (new site: 404)');
-    unmount();
-  });
-
-  it('fetches the sibling index and nothing wider than it', async () => {
-    // A block is two stores. There is no all-stores index, no route that serves one, and
-    // this is the assertion that keeps a later reader from adding a third fetch here.
-    const asked = [];
-    globalThis.fetch = async (url) => {
-      asked.push(String(url));
-      return { ok: true, json: async () => (String(url).includes('/be.json') ? sibling : index) };
-    };
-    const { unmount } = await mount();
-
-    expect(asked).toEqual(['/search-index/nl.json', '/search-index/be.json']);
-    unmount();
-  });
-
-  it('fetches one file on a store that is in no block', async () => {
-    // `de` is the only store of its language, so it pays nothing for this feature — the
-    // shape of ADR 0018's trade, and the half of the acceptance criteria that says `de` and
-    // `uk` are unchanged.
-    const asked = [];
-    globalThis.fetch = async (url) => {
-      asked.push(String(url));
-      return { ok: true, json: async () => ({ ...index, store: 'de', findings: [] }) };
-    };
-    const { unmount } = await mount({ store: 'de', pages: [] });
-
-    expect(asked).toEqual(['/search-index/de.json']);
-    unmount();
-  });
-
-  it('says the index was not read when the sibling’s file is missing', async () => {
-    // A narrower answer with nothing on screen saying it is narrower is the bug this
-    // ticket closes, so a half-read block does not quietly become a per-store search.
-    globalThis.fetch = async (url) =>
-      String(url).includes('/be.json')
-        ? { ok: false, status: 404 }
-        : { ok: true, json: async () => index };
-    const { unmount } = await mount();
-
-    expect(document.body.textContent).toContain('be: HTTP 404');
     unmount();
   });
 
@@ -623,22 +577,17 @@ describe('the order of a search result (ticket 141)', () => {
 
   /** Every difference row's words, top-down. A row is the trigger with its own tick beside it. */
   const rowOrder = () =>
-    [...document.querySelectorAll('[data-slot="collapsible-trigger"]')]
-      .filter((trigger) => trigger.previousElementSibling?.querySelector('[data-slot="checkbox"]'))
-      .map((trigger) => trigger.textContent.trim());
+    // A difference's own row, by the name the markup gives it (ticket 03). It was the tick
+    // beside the trigger until the class label moved in between the two.
+    [...document.querySelectorAll('[data-row="difference"]')].map((trigger) =>
+      trigger.textContent.trim(),
+    );
 
   /** How big each drawn row says it is, which is the order ticket 81 put them in. */
   const sizes = () => rowOrder().map((row) => row.match(/on (\d+) pages/)[1]);
 
-  beforeEach(() => {
-    globalThis.fetch = async (url) => ({
-      ok: true,
-      json: async () => (String(url).includes('/be.json') ? sibling : threeSizes),
-    });
-  });
-
   it('is the order it always was in the searched default, because every row there is open', async () => {
-    const { unmount } = await mount({ byFinding: log({ p1: 'dismissed' }) });
+    const { unmount } = await mount({ index: threeSizes, byFinding: log({ p1: 'dismissed' }) });
 
     // Largest first, which is ticket 81's order and no coincidence: `searchStore()` drops
     // what is not active, so the dismissed page is not in the result at all and every row
@@ -651,6 +600,7 @@ describe('the order of a search result (ticket 141)', () => {
 
   it('sinks a settled difference under the smaller open ones when closed rows are included', async () => {
     const { unmount } = await mount({
+      index: threeSizes,
       includeClosed: true,
       byFinding: log({ p1: 'dismissed', p2: 'dismissed', p3: 'dismissed' }),
     });
