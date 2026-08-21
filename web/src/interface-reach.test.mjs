@@ -176,19 +176,15 @@ describe('every control an editor can reach says what it is', () => {
 
 /**
  * The second half of *reach*: a control an editor can find still has to be one they can
- * hit. The floor is **24 × 24 CSS pixels** — WCAG 2.2 SC 2.5.8 *Target Size (Minimum)*,
- * Level AA — and ADR 0019 carries the decision, including why the vocabulary's smallest
- * pressable size clears the floor rather than sitting on it.
+ * hit. ADR 0019's *target floor* carries the number and the success criterion it answers.
  *
- * What is greppable is the **size a call site names**. `xs` and `icon-xs` were 24 pixels
- * tall at best and narrower than that around a glyph, and they were on the override
- * controls, which are the most-pressed controls in the log. They are gone from the
- * vocabulary, so this guard has two halves: no call site asks for one, and the primitive
- * does not offer one back.
+ * What is greppable is the **size a call site names**, so the guard has two halves: no call
+ * site asks for a size below the floor, and the primitive that decides what a size means
+ * does not offer one back. Neither half sees a rendered pixel — the ADR says so, and says
+ * what that leaves to a reader.
  */
 const BELOW_THE_FLOOR = [/size="(icon-)?xs"/];
 
-/** The one file that decides what a size means. */
 const BUTTON = 'components/ui/button.jsx';
 
 /**

@@ -4,18 +4,10 @@ import { cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 /**
- * `sm` is the smallest press this interface has, and shadcn's `xs` and `icon-xs` are gone
- * from the block below (ticket 13).
- *
- * The floor is **24 × 24 CSS pixels** — WCAG 2.2 SC 2.5.8 *Target Size (Minimum)*, Level
- * AA — and `xs` was `h-6`, which is the floor exactly, with a width that came from whatever
- * the label happened to be: `px-2` around a glyph is under it. A size whose compliance has
- * to be measured per call site is a size that will be wrong at one of them, and it was on
- * the override controls, which an editor presses more than anything else in the log. `sm`
- * is 28 pixels in both directions and clears the floor without depending on its label.
- *
- * Deleted rather than left unused, because the next person picks from this list. ADR 0019
- * carries the decision.
+ * `sm` is the smallest press this interface has. shadcn's `xs` and `icon-xs` sat on ADR
+ * 0019's target floor rather than clearing it, and they are deleted from the block below
+ * rather than left unused, because the next person picks from this list. The floor, the
+ * success criterion it answers and why 28 pixels is the smallest are in the ADR.
  */
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",

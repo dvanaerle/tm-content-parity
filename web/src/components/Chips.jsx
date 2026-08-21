@@ -187,6 +187,17 @@ export function ClassPill({ class: cls, hinted = true, href = null }) {
 }
 
 /**
+ * The box a filter press lands in, worn by both filters below.
+ *
+ * `h-auto` collapsed the toggle item onto the 20-pixel pill inside it, which is under the
+ * target floor ADR 0019 sets. `min-h-7` is the same 28 pixels the button vocabulary's
+ * smallest press is, and it is space rather than weight: the toggle draws no ground until it
+ * is pressed. Width needs no floor here — the item always holds a labelled pill and a count,
+ * so it is never the narrow-around-a-glyph case that took `xs` out of the vocabulary.
+ */
+const FILTER_PILL = 'min-h-7 gap-1 px-0.5 py-0';
+
+/**
  * The class filter, wherever it is. The content view narrows a page to a class and
  * the dashboard narrows the page list to the same class, and ticket 36 asks for the
  * **same semantics** in both — so it is one component. Two copies of *narrow to this
@@ -225,10 +236,7 @@ export function ClassFilterPills({ counts, selected, onToggle, hint }) {
           <ToggleGroupItem
             value={cls}
             className={cn(
-              // The item is what the press lands on, and `h-auto` collapsed it onto the
-              // 20-pixel pill inside it. `min-h-6` is ADR 0019's floor, and it is space
-              // rather than weight: the toggle draws no ground until it is pressed.
-              'min-h-6 gap-1 px-0.5 py-0',
+              FILTER_PILL,
               // The ring is the brand's and stays a class: it is chrome, which says *this
               // filter is on* and makes no claim about a finding, so it is outside the tone
               // product this pill's colour comes from. Nothing is assembled here — the
@@ -335,13 +343,7 @@ export function PriorityFilterPills({ selected, onToggle, counts = {} }) {
         >
           <ToggleGroupItem
             value={priority}
-            className={cn(
-              // The item is what the press lands on, and `h-auto` collapsed it onto the
-              // 20-pixel pill inside it. `min-h-6` is ADR 0019's floor, and it is space
-              // rather than weight: the toggle draws no ground until it is pressed.
-              'min-h-6 gap-1 px-0.5 py-0',
-              selected.includes(priority) && 'ring-2 ring-primary',
-            )}
+            className={cn(FILTER_PILL, selected.includes(priority) && 'ring-2 ring-primary')}
           >
             <PriorityPill priority={priority} hinted={false} />
             <span className="pr-1 text-xs text-muted-foreground tabular-nums">

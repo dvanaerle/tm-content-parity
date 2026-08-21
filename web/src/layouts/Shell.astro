@@ -39,7 +39,9 @@ const stores = await storesInLog();
       the switcher, the one control every other store is reached through. So the
       row wraps and the bar grows with it. Nothing above the wrap moves: at any
       width that fits the row on one line, `min-h-16` and `py-2` draw the same
-      64 pixels the fixed height did.
+      64 pixels the fixed height did, and `gap-x-4` is spent only at the width
+      where the logo and the switcher would otherwise touch — `ml-auto` is
+      still what holds them apart everywhere else.
     */}
     <header class={`min-h-16 ${CHROME.header}`}>
       <div

@@ -70,8 +70,10 @@ to 168 rows of controls.
   next person picks from that list. `xs` was `h-6` — the floor exactly — and under it on width
   around a glyph. All 20 call sites moved to `sm` / `icon-sm`, 28 pixels in both directions.
 - The **class filter pill** was `h-auto`, which collapsed the toggle item onto the 20-pixel
-  pill inside it. It is `min-h-6`, which is space and not weight: the toggle draws no ground
-  until it is pressed. The priority filter got the same fix off the same edit.
+  pill inside it. It is `min-h-7` — the same 28 as the button vocabulary, because a control
+  drawn at exactly 24 has nothing spared for the next edit, which is the argument that took
+  `xs` out — and it is space and not weight: the toggle draws no ground until it is pressed.
+  The priority filter wears the same `FILTER_PILL` box.
 - The **class pill as a link** grows its *target* and not its ink — a pseudo-element four
   pixels above and below the words, `ui/checkbox.jsx`'s device, because a taller tinted pill on
   168 rows is the weight ADR 0019 spent a pass removing. Vertical only: an overlapping target
@@ -95,3 +97,36 @@ can-fail case.
 **What is not tested**, and it is in the ADR: no test here measures a *rendered* pixel. The
 browser project runs components without the stylesheet, and ADR 0019 refuses the screenshot
 suite that would. A halo with the wrong inset is caught by a reader.
+
+## Reviewed, and what the review changed
+
+Two axes, `/code-review`, against the criteria above.
+
+Acted on:
+
+- The filter items were `min-h-6`, which is the floor **exactly** — the very thing this
+  ticket's own argument against `xs` rejects. They are `min-h-7`, and the ADR now says that a
+  size sitting on the floor is treated as under it.
+- Both filters carried the same four-line comment and the same class string. One
+  `FILTER_PILL` constant carries the box and the reason once.
+- The 24-pixel story was written out in the ADR, in `ui/button.jsx` and in the guard's header.
+  The ADR keeps it; the other two point at it.
+- The **unlinked** class pill and priority pill are still 20 pixels, and the ADR did not say
+  why. It does now, and the reason is `TextHint`'s own: the pill gains no role and a press on
+  it does nothing, so there is no pointer action to size a target for. It is a tab stop for a
+  keyboard reader, and SC 2.5.8 is about pointer targets.
+- `gap-x-4` on the header row was unexplained. The comment says what it is for.
+
+Held, with the reasoning:
+
+- **Moving 20 call sites off `xs` is more than "`size="xs"` leaves the override controls".**
+  It is: `sm` also carries `text-[0.8rem]` and a 14-pixel glyph. Deleting the variant rather
+  than editing one call site is deliberate — the criterion asks that *every* interactive
+  control meet the size, and a sub-floor size left in the vocabulary is the next call site's
+  default. `sm` adds no colour and no border, which is what the trap names.
+- **`table-fixed` was checked and nothing moved.** The status column is `w-56` on a
+  `table-fixed` table with `min-w-3xl`, so its width is declared rather than derived, and the
+  row's presses sit in a `flex flex-wrap` container inside it.
+- **The third Vitest project is more machinery than one criterion asked for.** The criterion
+  asks for a `.astro` component to be tested and no seam existed; the header's wrap needed the
+  same seam. Two criteria, one project, and the next `.astro` question has somewhere to go.

@@ -110,7 +110,9 @@ down all of them is the weight this ADR exists to remove.
 Two devices, and which one applies is decided by whether the control carries ink of its own:
 
 - **Grow the box** where the control draws no ground until it is pressed — a button, a toggle
-  in the class filter. `sm` is the smallest press in the vocabulary at 28 pixels, and `xs` and
+  in the class or priority filter. `sm` is the smallest press in the vocabulary at 28 pixels,
+  and the filter items take the same 28 rather than the floor's own 24, for the reason given
+  below: a size that sits exactly on the floor is one a later edit walks under. `xs` and
   `icon-xs` are **gone from `ui/button.jsx`**. `xs` was `h-6`, which is the floor exactly, and
   around a glyph it was under it on width; a size whose compliance has to be measured per call
   site is one that will be wrong at one of them. It was on the override controls, which an
@@ -120,6 +122,19 @@ Two devices, and which one applies is decided by whether the control carries ink
   so the target clears the floor and nothing gains weight, colour or a border. It grows
   **vertically only** where the element has siblings on the line: two overlapping targets are
   worse than one small one.
+
+**A pill that is only a reading is not a target, and it is not exempt so much as out of
+scope.** `Hint.jsx`'s `TextHint` already gives the reason where it draws one: the pill stays a
+`span`, gains no role, and *a press on it does nothing because there is nothing for a press to
+do*. It is a tab stop so a keyboard reader can hear the class's meaning, and SC 2.5.8 is about
+a region that accepts a **pointer action**. So the 20-pixel class pill and priority pill stay
+20 pixels wherever they are statements. The moment one of them gains an `href` or goes inside a
+toggle it is a target, and both of those cases are grown above.
+
+**A size that sits exactly on the floor is treated as under it.** 24 is the criterion, and a
+control drawn at 24 has nothing spared for the next edit to its padding, its font or its
+glyph — which is the whole argument that took `xs` out of the vocabulary, and it applies to
+anything else written here. Every target this interface draws deliberately is 28 or more.
 
 **An inline link in a sentence is exempt**, and SC 2.5.8 says so itself: a target whose size
 is constrained by the line height of the text around it is not in scope. *Production ↗* in the
