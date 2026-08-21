@@ -2,6 +2,7 @@ import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import Search from './Search.jsx';
+import { listReading } from '../lib/list-reading.mjs';
 import { mergeIndexes } from '../lib/search.mjs';
 
 /**
@@ -124,17 +125,25 @@ async function mount(props = {}) {
   const root = createRoot(host);
   const cleared = [];
 
-  const render = (over) =>
-    act(async () =>
+  const render = (over) => {
+    const { store = 'nl', byFinding: log = byFinding, ...rest } = { ...props, ...over };
+
+    return act(async () =>
       root.render(
         createElement(Search, {
-          store: 'nl',
+          // The screen this search is of, as one reading of it (ADR 0030): `nl` here, and
+          // `null` in the cases that are about the search above the stores.
+          reading: listReading({
+            store,
+            byFinding: log,
+            searched: true,
+            link: (linkStore, page) => `/${linkStore}/${page}/`,
+          }),
           index: mergeIndexes([index, sibling]),
           pages,
           term: 'deals',
           classes: [],
           onClearFilters: () => cleared.push(true),
-          byFinding,
           // A log that has been read and holds nothing, which is what every case about
           // the findings half wants: the notes half then draws exactly what it drew
           // before ticket 123, which is nothing.
@@ -147,12 +156,12 @@ async function mount(props = {}) {
             appendMany: async () => ({ stored: [], written: 0, total: 0, error: null }),
             notWritingReason: 'no name',
           },
-          link: (store, page) => `/${store}/${page}/`,
-          ...props,
-          ...over,
+          link: (linkStore, page) => `/${linkStore}/${page}/`,
+          ...rest,
         }),
       ),
     );
+  };
 
   await render({});
   return { cleared, rerender: render, unmount: () => act(() => root.unmount()) };

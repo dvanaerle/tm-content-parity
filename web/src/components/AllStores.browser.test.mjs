@@ -106,6 +106,9 @@ const selectLabels = () =>
     .map((tick) => tick.getAttribute('aria-label'))
     .filter((label) => label?.startsWith('Select'));
 
+/** The reasons drawn on the rows a press is refused on, one per refused row. */
+const refusals = () => [...document.querySelectorAll('[data-slot="no-press"]')];
+
 /** The class labels on the rows, which are links here and not controls. */
 const classLabels = () => [...document.querySelectorAll('a[data-badge="class"]')];
 
@@ -209,7 +212,10 @@ describe('a class label opens a queue over every store', () => {
     const { unmount } = await mount('classes=copy');
 
     expect(rows()).toHaveLength(4);
-    expect(document.body.textContent).toContain('The stores translate these words');
+    // That a reason is drawn, and not what it says: the sentence is the reading's and is
+    // asserted whole in `list-reading.test.mjs`, where a rewording fails loudly rather than
+    // slipping past a substring match here (ADR 0030).
+    expect(refusals()).toHaveLength(4);
     // No tick anywhere on the list, on the rows or in their pages, and no select-all either:
     // the refusal is one answer and not a per-control one.
     for (const row of document.querySelectorAll('[data-row="difference"]')) {
@@ -240,7 +246,8 @@ describe('a class label opens a queue over every store', () => {
     // rows is `afhalen` on the same six stores, so a tickable text row would double this
     // number rather than add an unrelated one.
     expect(selectLabels().filter((label) => label.startsWith('Select afhalen on'))).toHaveLength(6);
-    expect(document.body.textContent).toContain('The stores translate these words');
+    // The four text rows each say why, and the link row says nothing of the kind.
+    expect(refusals()).toHaveLength(4);
     unmount();
   });
 });

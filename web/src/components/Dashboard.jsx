@@ -39,7 +39,7 @@ import {
   BUCKET_TONE,
 } from '../lib/buckets.mjs';
 import { CHROME } from '../lib/palette.mjs';
-import { STORE_LANGUAGE } from '../lib/stores.mjs';
+import { listReading } from '../lib/list-reading.mjs';
 import { cn } from '../lib/utils.js';
 import { NO_EDITOR, useBulk, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
@@ -402,6 +402,33 @@ export default function Dashboard({
    */
   const bulk = useBulk(log);
 
+  /**
+   * The one fact this screen states about the two repeat lists it draws: **the store they
+   * are about** (ADR 0030). Everything that follows — that a press crosses nothing wider
+   * than this store, that the two quoted strings on a row are in this store's language,
+   * that a row does not repeat the store the editor is already looking at — is derived by
+   * the reading and no longer spelled out here in four answers.
+   *
+   * Two of them, because the two lists differ in exactly one thing: the search answers a
+   * question somebody typed, so its rows draw the fields the term matched, and the
+   * *Repeats* queue answers nothing and draws none.
+   */
+  const searchReading = useMemo(
+    () =>
+      listReading({
+        store,
+        byFinding: log.byFinding,
+        searched: true,
+        link,
+        classLink: classHref,
+      }),
+    [store, log.byFinding, link],
+  );
+  const repeatsReading = useMemo(
+    () => listReading({ store, byFinding: log.byFinding, link, classLink: classHref }),
+    [store, log.byFinding, link],
+  );
+
   const totals = useMemo(() => {
     const byClass = {};
     // The disclosure at the foot of this screen says *diagnostics*, so this counts what is
@@ -690,7 +717,7 @@ export default function Dashboard({
               component has it. */}
           {searching && (
             <StoreSearch
-              store={store}
+              reading={searchReading}
               // The **whole** list and not the comparable half (ticket 104). A scope onto
               // a one-sided page used to be silence, which is the search contradicting the
               // aside below on the same screen — and a one-sided page is exactly one of
@@ -713,7 +740,6 @@ export default function Dashboard({
               // silently surviving that is the more surprising outcome. The words after
               // the scope are a search and not a filter, so they stay.
               onClearFilters={() => patch({ classes: [], query: withoutScope })}
-              byFinding={log.byFinding}
               // The whole read and not the events alone (ticket 123). The readiness
               // flag has sat beside them here since the hook was written, and the
               // notes half never asked for it, so a log in flight drew as a log
@@ -723,7 +749,6 @@ export default function Dashboard({
               onIncludeClosed={(next) => patch({ includeClosed: next })}
               bulk={bulk}
               link={link}
-              classLink={classHref}
             />
           )}
 
@@ -755,11 +780,12 @@ export default function Dashboard({
                 key={`${classes.join(',')}|${includeClosed}`}
                 repeats={shownRepeats}
                 classes={classes}
-                // Off the hook and never rebuilt here (ticket 03): it has to cover the
+                // The screen, as one reading of it (ADR 0030). The log inside it comes off
+                // the hook and is never rebuilt here (ticket 03): it has to cover the
                 // sibling's findings too, and the hook is the one place holding both lists.
                 // An index built here off this store's pages would read the sibling's decided
                 // findings as `open` and offer a press that overwrites a colleague.
-                byFinding={log.byFinding}
+                reading={repeatsReading}
                 // Whether the log has answered. The order of this list is worst-first on
                 // what is **left** in each difference (ticket 141), and until the events
                 // have arrived `byFinding` says every finding is open — so the order waits
@@ -770,13 +796,6 @@ export default function Dashboard({
                 // *what is left*.
                 includeClosed={includeClosed}
                 bulk={bulk}
-                link={link}
-                classLink={classHref}
-                // What language the two quoted strings on a row are in (ticket 125). The
-                // rows have no store of their own, and a difference that crosses a block
-                // crosses into the other store of one language — so this store answers for
-                // every row in the list.
-                language={STORE_LANGUAGE[store]}
               />
             )}
 

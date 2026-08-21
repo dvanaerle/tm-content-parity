@@ -5,12 +5,13 @@ import Search from './Search.jsx';
 import SearchBox from './SearchBox.jsx';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx';
 import { classInfo } from '../lib/classes.mjs';
+import { listReading } from '../lib/list-reading.mjs';
 import { NO_EDITOR, useBulk, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { pagesOfIndex } from '../lib/search.mjs';
 import { useSearchIndex } from '../lib/search-index.mjs';
 import { classHref, useScreen } from '../lib/screen-url.mjs';
-import { classCounts, spansEveryStore, toggleIn } from '../lib/view.mjs';
+import { classCounts, toggleIn } from '../lib/view.mjs';
 
 /**
  * One search over every store (ticket 03).
@@ -37,10 +38,11 @@ import { classCounts, spansEveryStore, toggleIn } from '../lib/view.mjs';
  *   and it says so: those stores translate their text, and the row is decided on a store's
  *   own screen, where the same difference is the same row.
  *
- * The refusal is this screen's and not the row's, which is why the words are here: the same
- * `copy` difference is pressed on its dashboard and refused above the stores, and only the
- * caller knows which of the two it is. A per-row tick and a select-all cannot disagree about
- * it, because `Repeats` narrows the selection once, off this one function.
+ * The refusal is this screen's and not the row's, and this screen says so in one word: it
+ * names **no store**, and `listReading()` derives the refusal and its sentence from that
+ * (ADR 0030). The same `copy` difference is pressed on its dashboard and refused here, and
+ * only the screen knows which of the two it is. A per-row tick and a select-all cannot
+ * disagree about it, because `Repeats` narrows the selection once, off that one reading.
  *
  * **The index is the corpus and the page list both.** Six static files, fetched together, a
  * partial read an error. It is also what the log is derived over: six stores of page
@@ -110,6 +112,19 @@ export default function AllStores({ stores = [] }) {
   const link = (store, page, finding = null) => pageHref(store, page, { finding });
 
   /**
+   * This screen, as the one reading the list is drawn under (ADR 0030).
+   *
+   * **No store**, which is the whole of what this screen is: rows that name their store, a
+   * row that speaks its own language or none at all, a press over six stores where the check
+   * makes the two sides one string, and a row of translated words refused with the sentence
+   * saying where to decide it instead. One fact stated here, and the rest derived.
+   */
+  const reading = useMemo(
+    () => listReading({ byFinding: log.byFinding, searched: true, link, classLink: classHref }),
+    [log.byFinding],
+  );
+
+  /**
    * How many findings of each class the corpus holds, for the number beside each pill.
    *
    * Off the **snapshot** and not off the log, which is the rule every class pill follows: a
@@ -175,29 +190,21 @@ export default function AllStores({ stores = [] }) {
       <div className="rounded-lg border border-border">
         {asked ? (
           <Search
-            // No store. It is the whole of what this screen is, and everything that turns on
-            // it is inside the component: rows that name their store, a row that speaks its
-            // own language, and the two page-list blocks left undrawn.
-            store={null}
+            // The reading above, which names no store. That is the whole of what this screen
+            // is, and everything turning on it — rows that name their store, a row that
+            // speaks its own language, the press and the rows it may not reach — is derived
+            // there. The two page-list blocks are left undrawn on the same answer.
+            reading={reading}
             index={index}
             indexError={error}
             term={query}
             classes={classes}
             onClearFilters={() => patch({ classes: [], query: '' })}
-            byFinding={log.byFinding}
             log={log}
             includeClosed={includeClosed}
             onIncludeClosed={(next) => patch({ includeClosed: next })}
-            // The press, and the rows it may not reach (ticket 04). One judgement over six
-            // stores where the check makes the two sides one string, and a row of translated
-            // words drawn beside it saying where it is decided instead.
             bulk={bulk}
-            refusesPress={refusesPress}
             link={link}
-            // A class label on a row lands back on this screen, on that class alone. It is
-            // the same gesture the dashboard offers and it is offered here too, because a
-            // wide result narrowed to one class is the ordinary next question.
-            classLink={classHref}
           />
         ) : (
           <Empty className="py-10">
@@ -217,21 +224,3 @@ export default function AllStores({ stores = [] }) {
     </div>
   );
 }
-
-/**
- * Why a difference cannot be pressed on this screen, or `null` where it can (ticket 04).
- *
- * It asks `spansEveryStore()`, the same function `repeatsInStore()` keys the grouping on, so
- * the row an editor is offered a tick on and the row the grouping built are the same row. A
- * second reading of *which checks are one string* would be the one place a tick could appear
- * over a difference that is four differences.
- *
- * The sentence says **why** and **where instead**, because a refusal that only says no
- * leaves an editor with a row they cannot act on and no next move. It does not name the
- * stores: the row already names them, and this is a fact about the words rather than about
- * which two hold them.
- */
-const refusesPress = (repeat) =>
-  spansEveryStore(repeat.class)
-    ? null
-    : 'The stores translate these words — decide it on one of the stores named.';

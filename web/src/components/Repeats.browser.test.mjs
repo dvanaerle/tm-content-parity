@@ -4,6 +4,7 @@ import { userEvent } from '@vitest/browser/context';
 import { afterEach, describe, expect, it } from 'vitest';
 import Repeats, { ClassGroups } from './Repeats.jsx';
 import { appendEach } from '../../../overrides/bulk.mjs';
+import { listReading } from '../lib/list-reading.mjs';
 import { repeatsInStore } from '../lib/view.mjs';
 
 /**
@@ -16,6 +17,13 @@ import { repeatsInStore } from '../lib/view.mjs';
  * island down with it — because every decision lived in `.mjs` and nothing mounted the
  * `.jsx`. This ticket adds a control to that same component, so the path from a checkbox
  * to `appendMany()` is walked here by clicking it.
+ *
+ * **What is not here** since ADR 0030: the press rule, the language a row declares, whether
+ * it names its store and where its links land. Those are values now, decided by
+ * `listReading()` and proven in `list-reading.test.mjs` — a browser case duplicating a unit
+ * test is what makes the next reader distrust both. What stays is what needs a DOM: the
+ * ticks, the selection and its remounting, the drawn budget, and a refused row drawing no
+ * tick of its own.
  */
 
 /**
@@ -55,6 +63,15 @@ const acrossBlock = repeatsInStore([
   on('nl', 'afhalen', finding('f1', 'oud', 'nieuw')),
   on('be', 'afhalen', finding('f2', 'oud', 'nieuw')),
 ])[0];
+
+/**
+ * A filename, which is the same string on every store — so a press on it is offered above the
+ * stores where a `copy` row's is refused. The two of them on one list is what the count a
+ * press reports has to be able to tell apart.
+ */
+const [filename] = repeatsInStore([
+  on('nl', 'afhalen', { ...finding('i1', 'max.svg', null), class: 'image-missing' }),
+]);
 
 const derived = (id, extra = {}) => {
   const { state = 'open', ...rest } = extra;
@@ -117,25 +134,52 @@ function bulkBag(over = {}) {
   };
 }
 
+/**
+ * The screen the list is drawn on, as the one prop it arrives in (ADR 0030).
+ *
+ * A store by default, because that is the screen every case below is about: a press crosses
+ * nothing wider than one store, and a row does not repeat the store the editor is already
+ * looking at. The cases about a refused press pass `store: null` instead, which is the search
+ * above the stores.
+ */
+const reading = ({ store = 'nl', log, searched = false, classLink = null }) =>
+  listReading({
+    store,
+    byFinding: log,
+    searched,
+    classLink,
+    link: (linkStore, page) => `/${linkStore}/${page}/`,
+  });
+
 function mount(props = {}) {
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
   const bulk = props.bulk ?? bulkBag();
-  const render = (over = {}) =>
-    act(() =>
+  const render = (over = {}) => {
+    const {
+      component = Repeats,
+      repeats = [repeat],
+      byFinding: log = byFinding(),
+      store,
+      searched,
+      classLink,
+      logRead = true,
+      ...rest
+    } = { ...props, ...over };
+
+    return act(() =>
       root.render(
-        createElement(props.component ?? Repeats, {
-          repeats: [repeat],
-          byFinding: byFinding(),
-          logRead: true,
+        createElement(component, {
+          repeats,
+          logRead,
           bulk,
-          link: (store, page) => `/${store}/${page}/`,
-          ...props,
-          ...over,
+          reading: reading({ store, log, searched, classLink }),
+          ...rest,
         }),
       ),
     );
+  };
   render();
   // `rerender` is a **decision landing under the editor**, which is the only way a mounted
   // list's log changes: the dashboard rebuilds `byFinding` and hands the new one down.
@@ -881,23 +925,6 @@ describe('a difference that spans a language block', () => {
     byFinding: new Map(acrossBlock.on.map((entry) => [entry.id, derived(entry.id)])),
   });
 
-  it('says which store each page is on, because two of them share a name', () => {
-    const { unmount } = mount(across());
-
-    press(differenceRow());
-
-    // Both pages are called `afhalen`. Without the store they are two identical rows of
-    // one difference, and the editor cannot tell which tick is which.
-    const table = document.querySelector('table').textContent;
-    expect(table).toContain('on nl');
-    expect(table).toContain('on be');
-
-    // And the link goes to each page's **own** store, not to the store of the row.
-    const hrefs = [...document.querySelectorAll('tbody a')].map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['/nl/afhalen/', '/be/afhalen/']);
-    unmount();
-  });
-
   it('tells the editor how many events and in which stores, before the press', () => {
     const { unmount } = mount(across());
 
@@ -1442,25 +1469,6 @@ describe('a clearing over many pages', () => {
 });
 
 /**
- * What language the two quoted strings are in (ticket 125).
- *
- * The rows are the one surface with no report and no store of its own, so the language
- * arrives as a prop from the list that owns it. It is **not** read from a module-level
- * store: a per-cell fact kept in application state is a fact that outlives the cell.
- */
-describe('the language of a difference', () => {
-  it('declares it on both quoted strings of a row', () => {
-    mount({ language: 'de' });
-
-    const declared = [...document.querySelectorAll('[data-slot="collapsible-trigger"] [lang]')];
-    expect(declared.map((one) => [one.lang, one.textContent])).toEqual([
-      ['de', 'oud'],
-      ['de', 'nieuw'],
-    ]);
-  });
-});
-
-/**
  * Ticket 144. A difference with **nothing open left in it** is off the *Repeats* list, and so
  * are the settled pages inside one that stays.
  *
@@ -1677,5 +1685,68 @@ describe('a hint on the repeats list, reached without a mouse', () => {
 
     expect([...document.querySelectorAll('[title]')].map((one) => one.title)).toEqual([]);
     unmount();
+  });
+});
+
+/**
+ * A row the screen refuses the press on (ticket 04), which is the half of that rule needing a
+ * DOM. **What** is refused and in **what words** are values and are proven in
+ * `list-reading.test.mjs`; what only a render can say is that no tick is drawn over such a
+ * row and that a wide press does not count it.
+ */
+describe('a row the screen refuses the press on', () => {
+  const aboveTheStores = (over = {}) => ({ store: null, searched: true, ...over });
+
+  it('draws no tick of its own, on the row or in its pages', () => {
+    const { unmount } = mount(aboveTheStores());
+
+    // Nothing, and not a disabled checkbox: a control an editor cannot use is a control they
+    // have to work out the state of.
+    expect(rowTicks()).toHaveLength(0);
+    press(differenceRow());
+    expect(pageTicks()).toHaveLength(0);
+
+    // The reason is drawn beside it, because a row that simply had no tick would read as a
+    // bug in the tick. The words themselves are the reading's, asserted whole in its own test.
+    expect(document.querySelector('[data-slot="no-press"]')).toBeTruthy();
+    unmount();
+  });
+
+  it('is outside the count a wide press reports', () => {
+    const { unmount } = mount(
+      aboveTheStores({
+        repeats: [repeat, filename],
+        byFinding: logOver([repeat, filename]),
+      }),
+    );
+
+    // One tick over the whole result, and the difference of translated words — three pages of
+    // it — is not in the press. A denominator that counted them would arm a press over rows
+    // the list itself refuses.
+    press(selectResult());
+
+    expect(button('Dismiss on this page')).toBeTruthy();
+    expect(button('Dismiss on 4 pages')).toBeFalsy();
+    unmount();
+  });
+});
+
+/**
+ * A missing reading is a **crash** and never a default (ADR 0030).
+ *
+ * A neutral one would read as *above the stores with everything refused*, which is a real
+ * screen — so the bug would draw a plausible page, and an editor would meet a refusal nobody
+ * decided. The selection beside it may default because *nothing selected* is genuinely
+ * neutral.
+ */
+describe('a list mounted without a reading', () => {
+  it('throws rather than drawing a plausible page', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+
+    expect(() =>
+      act(() => root.render(createElement(Repeats, { repeats: [repeat], logRead: true }))),
+    ).toThrow(/list reading/);
   });
 });

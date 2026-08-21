@@ -246,6 +246,9 @@ element any more: it folds the links inside it. Both the word and the rule are g
   **refused, visibly and with its reason, on the second**: a row of translated words is drawn
   there and is decided on a store's own screen. `repeatsInStore()` is where the whole of it
   lives, and it is still the one grouping both screens use.
+  **Where the rule is stated: 2026-08-21.** Which of the two corpora a screen is in follows
+  from one fact — the store it is about — and the **list reading** is the one place that reads
+  it. A screen names its store; it does not carry the words of a refusal.
   See `docs/adr/0028-a-filename-is-outside-the-language-block.md`.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
   `heading-level` or a `tag-changed` finding, `p + p → p` or `p → 4×p` on a `regrouped` one,
@@ -519,6 +522,19 @@ element any more: it folds the links inside it. Both the word and the rule are g
   is not part of it**, for the reason **Class group** gives: that is session state, and
   a URL that pinned it would make *clear filter* and the address bar disagree about
   what a filter is.
+- **List reading** — everything one repeat list needs to know about the screen it is drawn
+  on. It is a **reading** and never a second copy of the screen: the screen states one fact,
+  **the store the list is about** — a store id on a dashboard, and **none** above the stores —
+  and the reading derives the rest of them from it. What a row may **press**, by the rule the
+  two corpora give; what **language** its two quoted strings are in, or no answer where the
+  row spans four; whether a row **names its store**; and where its class label and its page
+  link land. A refused press carries the words of its refusal and not a flag, so a list never
+  draws a refusal it has no sentence for. A list that answers a **typed question** says so,
+  because a searched row draws the fields the term matched and an unsearched one does not.
+  The store is the one fact because it *is* the half-and-whole distinction of ADR 0021: a
+  named store is a language block, and no store is all six. Five places derived that
+  separately until this reading, and the same rule moved twice in one month.
+  See `docs/adr/0030-the-list-reading-states-what-a-press-may-cross.md`.
 - **Landing** — arriving at one difference because a link named it. A page link from
   the dashboard carries the **finding id**, and the page opens the tab that finding
   lives on, opens its row, marks it and scrolls to it. A landing is **not** a filter and
@@ -590,6 +606,15 @@ element any more: it folds the links inside it. Both the word and the rule are g
   **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first, and it answers
   *which page do I open next*. There is no all-stores repeat view, for the reason
   there is no all-stores dashboard.
+- **Page queue** — the store's pages in the order an editor should open them: narrowed by the
+  class pills and the priority chips, then worst-first on the work that is **left** after the
+  log, or by name where an editor asked for that instead. It is what *Pages* draws.
+  **It counts before it narrows.** The priority chips say how many pages carry each priority
+  over the whole store, and never over the pages a chip has already cut — a chip that fell to
+  its own number when it was pressed would be a control that lies about what it holds. It is
+  the rule a class pill keeps above the repeat list, said about the other list.
+  A page the log has not answered for reads as **all open**: nothing is decided and nothing is
+  contradicted, which is what an empty log means and not a blank cell.
 - **Class group** — the repeats of one class in *Repeats*, under a label carrying
   the class and how many repeats it holds. The groups are in the vocabulary's order
   and never in the counts' order, because a group that moves position as the work is

@@ -7,7 +7,6 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx
 import { Label } from './ui/label.jsx';
 import { Separator } from './ui/separator.jsx';
 import { CHROME } from '../lib/palette.mjs';
-import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { Attribution } from './Attribution.jsx';
 import { day } from '../lib/dates.mjs';
 import { cn } from '../lib/utils.js';
@@ -86,9 +85,15 @@ const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
  *   in their name — are a store's own answers and are not drawn above the stores. They need
  *   the whole page list, and six stores of page summaries is seven megabytes of island prop
  *   against a corpus that is already in six static files.
- * - **Which rows may be pressed** is the caller's too (ticket 04). A store's search refuses
- *   nothing; above the stores an `images` or `links` row is pressed and a row of translated
- *   words is drawn with its reason instead, through `refusesPress`. Reading is what widened here; ticket 04 is what widens the press.
+ * - **Which rows may be pressed** follows from it as well (ticket 04, ADR 0030). A store's
+ *   search refuses nothing; above the stores an `images` or `links` row is pressed and a row
+ *   of translated words is drawn with its reason instead. Reading is what widened here;
+ *   ticket 04 is what widens the press.
+ *
+ * The store arrives **inside the reading** and not beside it, because a second copy of it
+ * here is the second spelling ADR 0030 exists to remove: the reading is built by the screen,
+ * off the one fact the screen states about itself, and this component reads that fact from
+ * it.
  *
  * **The index is a prop and the fetch is the caller's** since that ticket. Both screens need
  * it before this component runs — the store's to keep it out of the hands of a visitor who
@@ -97,7 +102,7 @@ const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
  * `StoreSearch` below is that wrapper for the store screen.
  */
 export default function Search({
-  store = null,
+  reading,
   index,
   indexError = null,
   pages = [],
@@ -105,15 +110,14 @@ export default function Search({
   term,
   classes = [],
   onClearFilters,
-  byFinding,
   log,
   includeClosed,
   onIncludeClosed,
   bulk = null,
-  refusesPress = null,
   link,
-  classLink = null,
 }) {
+  const { store, byFinding } = reading;
+
   /*
    * Whether this list spans stores, which is the one question the two screens answer
    * differently. It is *no store of its own* and not *more than one store in the index*: a
@@ -306,28 +310,16 @@ export default function Search({
           // things that narrow this list are in this key.
           key={`${term}|${includeClosed}|${classes.join(',')}`}
           repeats={result.repeats}
-          byFinding={byFinding}
-          // The language of the scraped strings on every row, which is this store's: a
-          // result reaches the sibling store and a block is two stores of one language.
-          // Above the stores there is no such answer — six stores speak four languages — so
-          // the list gives none and each row answers for itself. See `rowLanguage()`.
-          language={store ? STORE_LANGUAGE[store] : null}
-          // Every row says which store it is on, and the tick in it names one too.
-          acrossStores={acrossStores}
-          // *Broken link* on a row opens every broken link there is (ticket 03).
-          classLink={classLink}
+          // The screen, as one reading of it (ADR 0030). What a row may press and why the
+          // others may not, what language its two quoted strings are in, whether it names
+          // its store, and where its two links land — all of it derived from the store this
+          // screen is of, which is the one thing the screen states about itself.
+          reading={reading}
           // The rows are worst-first on what is left in each difference (ticket 141), and
           // that reading waits for the log: until it has answered, `byFinding` says every
           // finding is open. It is the same `read` the notes half below is drawn on.
           logRead={read.ready}
           bulk={bulk}
-          // Which rows this screen may be pressed on, and why the others may not (ticket
-          // 04). It is the caller's answer and not this component's: a store's search
-          // refuses nothing, and above the stores a difference made of translated words is
-          // read and decided elsewhere.
-          refusesPress={refusesPress}
-          link={link}
-          searched
           // The snapshot the rows were built over, so a wide press can name it. The
           // selection straddles two clocks — these rows are the build's, and what a press
           // may act on is the live log's — and that is worth saying out loud once at 472.
@@ -643,12 +635,14 @@ const NotesAside = ({ children }) => (
  * they fetch what they always fetched. A store pays for a block only if it is in one, which
  * is ADR 0018's trade in its own shape; ADR 0021 holds what the second file costs.
  */
-export function StoreSearch({ store, ...rest }) {
-  // The two stores, and never a wider set. The all-stores corpus is a screen of its own and
-  // not a dropdown on this one: a control may narrow what is read, and what may be *pressed*
-  // is a property of the check.
+export function StoreSearch({ reading, ...rest }) {
+  // The store off the reading, which is the one place this screen's store is written. The two
+  // stores of the block and never a wider set: the all-stores corpus is a screen of its own
+  // and not a dropdown on this one — a control may narrow what is read, and what may be
+  // *pressed* is a property of the check.
+  const { store } = reading;
   const corpus = useMemo(() => [store, siblingOf(store)].filter(Boolean), [store]);
   const { index, error } = useSearchIndex(corpus);
 
-  return <Search store={store} index={index} indexError={error} {...rest} />;
+  return <Search reading={reading} index={index} indexError={error} {...rest} />;
 }
