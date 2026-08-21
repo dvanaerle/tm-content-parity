@@ -414,6 +414,62 @@ describe('the two eligibilities on one block-spanning selection', () => {
 });
 
 /**
+ * Ticket 04: one press over a repeat that spans **all six stores**.
+ *
+ * There is **one** test, for the reason the block-spanning tests above and ticket 138's
+ * below both give: a press takes the pages it is aimed at, and six stores are a longer list
+ * to the same code. Re-pinning the eligibilities and the counts over that list would be the
+ * same assertions in a costume.
+ *
+ * What this one pins is the ticket's own trap — that the arithmetic **gained no case**. Six
+ * entries in, six events out, each under the store of its own page, and the colleague's
+ * decision still skipped. If this had needed a change in `bulk.mjs`, something would be
+ * keyed on the block that should not be.
+ */
+describe('a press over a six-store repeat', () => {
+  // `max.svg` is gone on all six stores, and a colleague has already dismissed `uk`.
+  const everywhere = ['nl', 'be', 'be_fr', 'fr', 'de', 'uk'].map((store, at) =>
+    on('afhalen', `f${at}`, store),
+  );
+
+  const states = byFinding({
+    f0: 'open',
+    f1: 'open',
+    f2: 'open',
+    f3: 'open',
+    f4: 'open',
+    f5: 'dismissed',
+  });
+
+  const press = () =>
+    bulkDismissal({ entries: everywhere, byFinding: states, note: 'renamed on purpose' });
+
+  it('writes one ordinary event per store, each off its own entry', () => {
+    // Ordinary: the same scope, action and note a single dismissal writes, five times over
+    // five stores. The table gains rows and never a column.
+    expect(press().events).toEqual(
+      ['nl', 'be', 'be_fr', 'fr', 'de'].map((store) => ({
+        scope: 'finding',
+        action: 'dismissed',
+        store,
+        page: 'afhalen',
+        findingId: expect.any(String),
+        note: 'renamed on purpose',
+      })),
+    );
+  });
+
+  it('states the five stores it wrote in and counts the sixth as decided', () => {
+    // The stores come off the **eligible** entries, so `uk` is absent from the sentence
+    // exactly as it is absent from the events — the *80% is not 100%* trap at six stores.
+    const decision = press();
+
+    expect(decision.stores).toEqual(['be', 'be_fr', 'de', 'fr', 'nl']);
+    expect([decision.covers, decision.decided]).toEqual([5, 1]);
+  });
+});
+
+/**
  * Ticket 138: one press over a selection that spans differences.
  *
  * There is **one** test for it, and the reason is the finding itself. A press takes the

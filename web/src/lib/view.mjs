@@ -707,13 +707,18 @@ export function pagesWithPriorities(pages, priorities, priorityOf) {
 export const storesOf = (on) => [...new Set(on.map((entry) => entry.store))].sort();
 
 /**
- * Whether a repeat — or a press on one — reaches past a single store (ticket 03).
+ * Whether a repeat — or a press on one — reaches past a single store (ticket 03, widened by
+ * ticket 04).
  *
- * More than one store is only ever the two of one language block, so this is the whole test.
+ * The test is *more than one store* and nothing narrower, which is why the name stopped
+ * saying *block*: more than one store was only ever the two of one language block until
+ * ticket 04, and on an `images` or `links` row it is now up to all six. Nothing about the
+ * question changed with that — only how wide the answer can be.
+ *
  * It is here rather than written out at each of the four places that ask it, because those
  * four have to agree: the row names its stores, each tick names one in its label, the
- * dismissal says where its events go, and the clearing says the same. A block-spanning row
- * that named its stores in three of the four is a row an editor cannot read.
+ * dismissal says where its events go, and the clearing says the same. A row spanning stores
+ * that named them in three of the four is a row an editor cannot read.
  *
  * It takes anything carrying `stores`, which is a repeat and both presses' results. The
  * *subject* differs — a whole row, or the entries one press can act on — and that is the
@@ -721,7 +726,7 @@ export const storesOf = (on) => [...new Set(on.map((entry) => entry.store))].sor
  *
  * @param {{ stores: string[] }} subject
  */
-export const crossesBlock = (subject) => subject.stores.length > 1;
+export const crossesStore = (subject) => subject.stores.length > 1;
 
 /**
  * One page of a repeat: the page, the store it is on, and the finding that is the
@@ -741,25 +746,95 @@ export const crossesBlock = (subject) => subject.stores.length > 1;
  */
 
 /**
+ * The checks whose two sides are **the same string on every store**.
+ *
+ * `images` compares basenames with the path stripped and `links` compares host-folded
+ * targets, so `max.svg` and `/nl/oud-pad` are the strings they are in every language. The
+ * asset convention keeps a filename English and semantic, which is what makes the basename
+ * key language-independent in the first place.
+ *
+ * `text` and `meta` are not here, and that is the whole of the distinction: those two are
+ * words an editor reads, the stores translate them, and the same defect in six stores is
+ * four differences because the four texts are four texts.
+ *
+ * It is a set of **checks** and not of classes, so a class added to either check inherits
+ * the answer rather than needing an entry — which is what stops the thirty-third class from
+ * arriving with a corpus nobody chose.
+ */
+const SAME_STRING_ON_EVERY_STORE = new Set(['images', 'links']);
+
+/**
+ * Whether a difference of this class is the same string on every store, and so whether one
+ * press on it may reach all six (ticket 04).
+ *
+ * It is exported because two surfaces ask it and must agree: this module keys the grouping
+ * on it, and the screen above the stores offers a tick on it. A row grouped over six stores
+ * that refused the press, or a tick offered on a row holding one block's words, are the two
+ * ways those could come apart.
+ *
+ * A class the vocabulary does not name answers **false**, which is the narrow answer: an
+ * unknown class stays inside its language block, where it decides no more than it did
+ * before.
+ *
+ * @param {string} cls
+ */
+export const spansEveryStore = (cls) =>
+  SAME_STRING_ON_EVERY_STORE.has(FINDING_CLASSES[cls]?.check);
+
+/**
+ * The first term of a repeat's key: **which stores this difference may group over**.
+ *
+ * It is a function of the **check** and no longer of the block (ticket 04). Three answers,
+ * and the middle one is the one ticket 03 wrote:
+ *
+ * - `images` and `links`: a constant, so every store groups together. One press decides
+ *   `max.svg` everywhere.
+ * - `text` and `meta` in a language block: the block's language, exactly as before.
+ * - `text` and `meta` outside one: the store. `de` and `uk` are each alone in their
+ *   language, so `blockOf()` gives them nothing and their text repeats are what they were.
+ *
+ * The term is a **key term** and nothing else. Nothing is keyed on it outside this
+ * function: no finding id, no scope, no column and no URL. The table gains rows and never a
+ * column, which has been true of a repeat since ticket 31.
+ *
+ * @param {string} store
+ * @param {string} cls
+ */
+const corpusOf = (store, cls) =>
+  spansEveryStore(cls) ? EVERY_STORE : (blockOf(store)?.language ?? store);
+
+/**
+ * The constant standing for *every store*, which is a name rather than a store list: the
+ * corpus is not six stores that happen to be in the data, it is the absence of a store term
+ * in the key. A literal list here would have to be kept in step with `STORES`.
+ */
+const EVERY_STORE = '*';
+
+/**
  * A store's work listed as differences rather than as pages (ticket 81).
  *
  * A **repeat** is every finding in **one store** with the same class, the same two
  * texts and the same detail. One footer line that is wrong on thirty pages is one row
  * here, and an editor meets it once instead of thirty times.
  *
- * A repeat crosses a store **only inside a language block**, and only where the two
- * stores carry the same string (ticket 03). Six stores, four languages: `{nl, be}` share
- * Dutch and `{be_fr, fr}` share French, so those two pairs do not translate the text
- * between them and the same defect on both is one repeat. The other four pairings do
- * translate it, and `de` and `uk` are each alone in their language, so a repeat there is
- * exactly what it was. There is nothing better to key on — an element carries no DOM path
- * (tickets 01 and 34), so a key on the literal text is the only key there is; what a block
- * buys is that it now multiplies by four rather than by six.
+ * **How far a repeat crosses a store is decided by the check** (ticket 04), and
+ * `corpusOf()` above is the whole of it. On `images` and `links` the two sides are basenames
+ * and host-folded targets — the same strings on every store, in every language — so a repeat
+ * spans all six and one press decides `max.svg` everywhere. On `text` and `meta` the two
+ * sides are words the stores translate, so a repeat stays inside a **language block**: six
+ * stores, four languages, and `{nl, be}` share Dutch while `{be_fr, fr}` share French. `de`
+ * and `uk` are each alone in their language, so they join the first group and stay alone in
+ * the second.
+ *
+ * That is the block's stated reason held to exactly what it covers. There is nothing better
+ * to key on either way — an element carries no DOM path (tickets 01 and 34), so a key on the
+ * literal string is the only key there is.
  *
  * The block is **derived** from the hreflang codes and never a hand-written list, which is
  * what stops `{de, uk}` from becoming a block because both are "the other ones". ADR 0018
- * records that boundary, and ADR 0017 records why a block is still not an axis: this widens
- * a **selection** over ordinary axis-A findings and promotes nothing to a finding.
+ * records that boundary and ADR 0028 records why a filename is outside it; ADR 0017 records
+ * why neither is an axis: this widens a **selection** over ordinary axis-A findings and
+ * promotes nothing to a finding.
  *
  * **A repeat is not a finding.** It has no id, no override and no history, and every
  * decision on it is still N decisions on N findings. `key` is the grouping made
@@ -777,9 +852,11 @@ export const crossesBlock = (subject) => subject.stores.length > 1;
  *
  * @typedef {object} Repeat
  * @property {string} key       The grouping, printable. Not an identity.
- * @property {string[]} stores  The stores its pages are on, sorted. One store on all but
- *                             a block-spanning row, and **never** more than two: it is
- *                             derived from `on`, and `on` is grouped under one block.
+ * @property {string[]} stores  The stores its pages are on, sorted. It is derived from
+ *                             `on`, so it can only be as wide as the key's first term lets
+ *                             the grouping be: one store or a language block's two on a
+ *                             `text` or `meta` row, and up to all six on an `images` or
+ *                             `links` one (ticket 04).
  * @property {string} class
  * @property {string | null} prod
  * @property {string | null} new
@@ -802,11 +879,7 @@ export function repeatsInStore(pages) {
   for (const page of pages) {
     for (const finding of page.findings) {
       const key = JSON.stringify([
-        // The block, where this store is in one, and the store where it is not. This is
-        // the **whole** of ticket 03's change to the grouping: `de` and `uk` are each
-        // alone in their language, so `blockOf()` gives them nothing and the term stays
-        // the store — their repeats are exactly the repeats they were.
-        blockOf(page.store)?.language ?? page.store,
+        corpusOf(page.store, finding.class),
         finding.class,
         finding.prod,
         finding.new,

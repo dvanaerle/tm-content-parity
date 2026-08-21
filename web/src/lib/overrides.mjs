@@ -241,6 +241,31 @@ export const NO_EDITOR = 'Give your name at the top to decide. Each decision car
  * @param {import('./reports.mjs').PageSummary[]} [input.siblingPages]
  * @param {string} [input.editor]
  */
+/**
+ * What a **bulk press** is built with, off a log this hook returned.
+ *
+ * Four of the hook's own fields and nothing derived: whether it may write, whether it is
+ * writing, the write itself, and the hook's one sentence about why it may not. It is a
+ * function here rather than the same `useMemo` on every screen that presses, because there are
+ * two of them now — a store dashboard and the search above the stores (ticket 04) — and a
+ * second copy is where a fifth field would arrive on one screen and not the other.
+ *
+ * @param {ReturnType<typeof useStoreOverrides>} log
+ */
+export function useBulk(log) {
+  return useMemo(
+    () => ({
+      canWrite: log.canWrite,
+      busy: log.busy,
+      appendMany: log.appendMany,
+      // The hook's own sentence about its own flag, not a second reading of the four
+      // conditions behind it.
+      notWritingReason: log.notWritingReason,
+    }),
+    [log.canWrite, log.busy, log.appendMany, log.notWritingReason],
+  );
+}
+
 export function useStoreOverrides({ pages, siblingPages = [], editor = '' }) {
   const { port, reason } = usePort();
   const [events, setEvents] = useState(/** @type {any[] | null} */ (null));

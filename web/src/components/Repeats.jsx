@@ -23,7 +23,7 @@ import {
 import { CHROME } from '../lib/palette.mjs';
 import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { cn } from '../lib/utils.js';
-import { crossesBlock, findingsIn, groupRepeatsByClass, repeatsByOpenWork } from '../lib/view.mjs';
+import { crossesStore, findingsIn, groupRepeatsByClass, repeatsByOpenWork } from '../lib/view.mjs';
 
 /**
  * A store's work listed as differences rather than as pages (ticket 81).
@@ -54,6 +54,7 @@ export default function Repeats({
   byFinding,
   logRead,
   bulk = null,
+  refusesPress = null,
   link,
   classLink = null,
   language = null,
@@ -62,6 +63,24 @@ export default function Repeats({
   builtAt = null,
 }) {
   const worstFirst = useWorstFirst(repeats, byFinding, logRead);
+
+  /**
+   * The rows a press on this screen may reach (ticket 04).
+   *
+   * The refusal is the **caller's**, because it is a property of the screen and not of the
+   * row: the same `copy` difference is pressed on its own dashboard and refused above the
+   * stores, and the row cannot tell which of the two it is in. What the caller hands over is
+   * the *reason*, not a flag, so the list cannot draw a refusal it has no words for.
+   *
+   * The selection is narrowed **here** and once, so every control under it agrees: the
+   * result-wide tick reaches only these rows, the bar counts only their pages as its
+   * denominator, and a refused row draws no tick of its own. A refusal enforced only at the
+   * row would leave a select-all quietly ticking what the rows would not.
+   */
+  const pressable = useMemo(
+    () => (refusesPress ? worstFirst.filter((repeat) => !refusesPress(repeat)) : worstFirst),
+    [worstFirst, refusesPress],
+  );
 
   if (repeats.length === 0) return <NoRepeats />;
 
@@ -75,26 +94,32 @@ export default function Repeats({
         language={language}
         acrossStores={acrossStores}
         searched={searched}
+        refusesPress={refusesPress}
       />
       <Total repeats={worstFirst} />
     </>
   );
 
   /*
-   * **No `bulk`, no press** (ticket 03). The all-stores screen widens what may be *read* and
-   * nothing about what may be *pressed*: until the repeat corpus moves, a press there would
-   * be offered over a list spanning six stores and act on two of them, which is a control
-   * lying about its own reach. So the caller withholds the seam and this list draws no tick,
-   * no select-all and no bar — the selection context is `null`, and the three controls that
-   * read it return nothing rather than each testing a flag of their own.
+   * **No `bulk`, no press.** The caller withholds the seam and this list draws no tick, no
+   * select-all and no bar — the selection context is `null`, and the three controls that read
+   * it return nothing rather than each testing a flag of their own.
    *
    * It is the caller's decision and not this component's, said in the one shape a component
-   * cannot get wrong: there is nothing here to press *with*.
+   * cannot get wrong: there is nothing here to press *with*. `refusesPress` above is the
+   * other, narrower shape of the same decision — the press exists and some rows are outside
+   * it — and the two are not alternatives: a screen with no editor and no log withholds
+   * `bulk`, and a screen with both refuses rows.
    */
   if (!bulk) return rows;
 
+  // Nothing on the list may be pressed, so there is nothing to press with — the same shape
+  // the caller uses when it withholds `bulk` altogether, and for the same reason: a bar and a
+  // select-all over an empty selection are controls that write nothing.
+  if (pressable.length === 0) return rows;
+
   return (
-    <FlatSelection repeats={worstFirst} byFinding={byFinding} bulk={bulk} builtAt={builtAt}>
+    <FlatSelection repeats={pressable} byFinding={byFinding} bulk={bulk} builtAt={builtAt}>
       {/* The control that ticks the whole result, and the **only** place the condition for
           offering it is stated (ticket 138, ADR 0022).
 
@@ -105,7 +130,7 @@ export default function Repeats({
           to be about. A term, a page scope or a class pill is one; the bare *Repeats* list is
           every difference in the store and no proposition anyone made, so `ClassGroups` below
           offers nothing of the kind. */}
-      {searched && <SelectResult repeats={worstFirst} />}
+      {searched && <SelectResult repeats={pressable} />}
       {rows}
     </FlatSelection>
   );
@@ -585,6 +610,7 @@ function RowList({
   drawn: given,
   onDraw,
   searched = false,
+  refusesPress = null,
 }) {
   const [held, setHeld] = useState(PAGE_SIZE);
   const drawn = given ?? held;
@@ -603,6 +629,7 @@ function RowList({
             language={language}
             acrossStores={acrossStores}
             searched={searched}
+            refusal={refusesPress?.(repeat) ?? null}
           />
         ))}
       </ul>
@@ -644,7 +671,8 @@ const NoRepeats = () => (
 const PAGE_SIZE = 100;
 
 /**
- * What language the two quoted strings on a row are in (ticket 125, widened by ticket 03).
+ * What language the two quoted strings on a row are in (ticket 125, widened by tickets 03
+ * and 04).
  *
  * **The list's, where the list has one.** On a store dashboard the caller answers for every
  * row: a difference has no report and no store in scope, and reaching for a module-level
@@ -654,13 +682,23 @@ const PAGE_SIZE = 100;
  * **The row's own, where the list has none.** The all-stores screen is one list of six
  * stores' rows in four languages, so there is no answer for the caller to give — and a list
  * declaring one language over all of them would tell a screen reader that German content is
- * Dutch. The repeat itself can answer, and only because the grouping is a language block: its
- * stores share a language, so the first of them speaks for all of them.
+ * Dutch.
+ *
+ * **And no answer at all, where the row spans languages.** Since ticket 04 an `images` or
+ * `links` row groups over all six stores, which is four languages, so the first store no
+ * longer speaks for the rest. It does not need to: the two strings on such a row are a
+ * basename and a link target, which are in no language. So the question is asked of the
+ * row's **stores** rather than assumed off the grouping — one language between them and it
+ * is theirs, more than one and there is none to declare.
  *
  * @param {import('../lib/view.mjs').Repeat} repeat
  * @param {string | null} language  The list's, or `null` where the list spans languages.
  */
-const rowLanguage = (repeat, language) => language ?? STORE_LANGUAGE[repeat.stores[0]] ?? null;
+const rowLanguage = (repeat, language) => {
+  if (language) return language;
+  const spoken = new Set(repeat.stores.map((store) => STORE_LANGUAGE[store]));
+  return spoken.size === 1 ? ([...spoken][0] ?? null) : null;
+};
 
 /**
  * What the `×N` mark means on a repeat, which is not what it means on a finding: it
@@ -671,7 +709,16 @@ const acrossPagesTitle = (repeat) =>
   `${repeat.occurrences} times in total, on ${repeat.on.length} ` +
   'pages. On some of those pages the difference is there more than once.';
 
-function Row({ repeat, byFinding, link, classLink, language, acrossStores, searched }) {
+function Row({
+  repeat,
+  byFinding,
+  link,
+  classLink,
+  language,
+  acrossStores,
+  searched,
+  refusal = null,
+}) {
   const [open, setOpen] = useState(false);
 
   /**
@@ -716,9 +763,11 @@ function Row({ repeat, byFinding, link, classLink, language, acrossStores, searc
           be ticks an editor could not keep. */}
       <Collapsible open={open} onOpenChange={setOpen}>
         <div className="flex w-full items-start gap-2 px-4 py-2 hover:bg-muted">
-          <span className="mt-0.5 shrink-0">
-            <SelectAll repeat={repeat} />
-          </span>
+          {/* The tick, or nothing where the screen refuses the press (ticket 04). Nothing,
+              and not a disabled checkbox: a control an editor cannot use is a control they
+              have to work out the state of, and the sentence at the end of this row says
+              what a disabled tick could only imply. */}
+          <span className="mt-0.5 shrink-0">{refusal ? null : <SelectAll repeat={repeat} />}</span>
 
           {/* **Outside the trigger, because it is a link** (ticket 03). An anchor inside a
               button is neither valid nor clickable — the same trap the tick hit in ticket 138,
@@ -773,6 +822,17 @@ function Row({ repeat, byFinding, link, classLink, language, acrossStores, searc
               </span>
             )}
 
+            {/* Why this row cannot be pressed here, in the caller's words (ticket 04). It is
+                drawn and not hidden: a difference an editor found is a difference they are
+                entitled to read, and a row that simply had no tick would read as a bug in
+                the tick. It sits inside the trigger, so it is announced with the row rather
+                than as a note beside it. */}
+            {refusal && (
+              <span data-slot="no-press" className="shrink-0 text-xs text-muted-foreground">
+                {refusal}
+              </span>
+            )}
+
             <span className="shrink-0 text-right text-xs">
               {/* The page count is the size of the difference. There is no separate
                 finding count beside it: the page is inside the finding id, so one page
@@ -803,6 +863,7 @@ function Row({ repeat, byFinding, link, classLink, language, acrossStores, searc
             link={link}
             acrossStores={acrossStores}
             searched={searched}
+            refused={Boolean(refusal)}
           />
         </CollapsibleContent>
       </Collapsible>
@@ -858,7 +919,7 @@ const selectLabel = (repeat, entry, acrossStores) =>
  * Where neither holds it stays off. On a row inside one store it would be the store whose
  * dashboard this is, printed once per page for no reader.
  */
-const namesStore = (repeat, acrossStores) => acrossStores || crossesBlock(repeat);
+const namesStore = (repeat, acrossStores) => acrossStores || crossesStore(repeat);
 
 /**
  * The pages of one difference, with a tick each (ticket 110).
@@ -881,8 +942,13 @@ const namesStore = (repeat, acrossStores) => acrossStores || crossesBlock(repeat
  * which group was open — that is session state by the rule `groupRepeatsByClass()` states,
  * and a pill that is on re-opens its own group anyway.
  */
-function PageTable({ repeat, byFinding, link, acrossStores = false, searched }) {
-  const selection = useContext(SelectionContext);
+function PageTable({ repeat, byFinding, link, acrossStores = false, searched, refused = false }) {
+  // The list's selection, and not this difference's share of it: a refused row is out of the
+  // selection entirely, so the column goes with the tick that would have been in it. The
+  // reason is on the row above, said once — a second copy of it in every page's cell would
+  // be the same sentence N times.
+  const list = useContext(SelectionContext);
+  const selection = refused ? null : list;
 
   return (
     <div className="border-t border-border bg-muted px-4 py-2 text-sm">

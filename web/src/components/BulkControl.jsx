@@ -6,7 +6,7 @@ import { Dismiss, Floating } from './Floating.jsx';
 import PressReport from './PressReport.jsx';
 import { OfPages, Selected } from './Selected.jsx';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
-import { crossesBlock } from '../lib/view.mjs';
+import { crossesStore, spansEveryStore } from '../lib/view.mjs';
 import { classInfo } from '../lib/classes.mjs';
 import { day } from '../lib/dates.mjs';
 
@@ -263,8 +263,8 @@ export default function BulkControl({
           read as two decisions crossing. Over the clearing's own gate it is the opposite —
           an editor typing the count back is exactly who has to be told the press leaves the
           store. */}
-      {bulk?.canWrite && asking !== 'dismiss' && cleared.covers > 0 && crossesBlock(cleared) && (
-        <ClearCrossesBlock cleared={cleared} oneDifference={Boolean(repeat)} />
+      {bulk?.canWrite && asking !== 'dismiss' && cleared.covers > 0 && crossesStore(cleared) && (
+        <ClearCrossesStore cleared={cleared} repeat={repeat} />
       )}
 
       {bulk?.canWrite && asking === null && dismissal.covers === 0 && <NothingToDismiss />}
@@ -297,7 +297,7 @@ export default function BulkControl({
           <Label htmlFor="bulk-dismissal-note" className="font-medium text-foreground">
             Why is this not a defect?
           </Label>
-          <Covers dismissal={dismissal} oneDifference={Boolean(repeat)} />
+          <Covers dismissal={dismissal} repeat={repeat} />
           <div className="flex flex-wrap items-center gap-1">
             <Input
               autoFocus
@@ -453,7 +453,7 @@ const NothingToDismiss = () => (
  * the one judgement does — and if it is ever wanted back it is a sentence of its own here,
  * not a resurrection of the choosing.
  */
-function Covers({ dismissal, oneDifference }) {
+function Covers({ dismissal, repeat }) {
   // The total is the seam's own two numbers added, and never the repeat's size or a second
   // reading of the selection: the sentence has to count the same pages the events do
   // (ticket 110), and one arithmetic in one place is how it cannot drift.
@@ -467,36 +467,57 @@ function Covers({ dismissal, oneDifference }) {
       {dismissal.decided > 0
         ? ` of the ${pages}: the other ${dismissal.decided} ${dismissal.decided === 1 ? 'is' : 'are'} decided already.`
         : '.'}
-      {crossesBlock(dismissal) && (
-        <InWhichStores stores={dismissal.stores} oneDifference={oneDifference} />
+      {crossesStore(dismissal) && (
+        <InWhichStores stores={dismissal.stores} repeat={repeat} />
       )}
     </p>
   );
 }
 
 /**
- * **In which stores**, said before the press (ticket 03).
+ * **In which stores**, said before the press (ticket 03, widened by ticket 04).
  *
- * The sentence itself and not the decision to draw it — `crossesBlock()` is that, and this is
+ * The sentence itself and not the decision to draw it — `crossesStore()` is that, and this is
  * written once for the two presses that say it. It used to exist twice in two wordings: this
  * one, and a shorter one inside the clearing's `title`. Two wordings of one fact is two facts
  * as far as an editor reading them is concerned.
  *
- * The clause explaining **why** is drawn only over one difference (ticket 138). *The same
- * words are one decision* is what makes a block-spanning row one row: `nl/afhalen` and
- * `be/afhalen` carry the same string. Over a selection spanning differences the strings are
- * not the same and that sentence would be a false reason for a true fact — the press does
- * reach two stores, and it reaches them because the pages ticked are on both.
+ * The clause explaining **why** is drawn only over one difference (ticket 138), and **which**
+ * reason it gives is the row's own: a `text` row reaches two stores because they share a
+ * language, and an `images` row reaches six because a basename is one string in every
+ * language. Two reasons, and the wrong one under the other row would be a false explanation
+ * of a true fact. Over a selection spanning differences there is no single reason to give —
+ * the press reaches those stores because the pages ticked are on them — so the clause is
+ * absent, as it has been since ticket 138.
  */
-const InWhichStores = ({ stores, oneDifference }) => (
+const InWhichStores = ({ stores, repeat }) => (
   <>
     {' '}
-    Written in <strong className="font-medium text-foreground">{stores.join(' and ')}</strong>
-    {oneDifference
-      ? ': these two stores share a language, so the same words are one decision.'
-      : '.'}
+    Written in <strong className="font-medium text-foreground">{storeList(stores)}</strong>
+    {repeat ? `: ${becauseOf(repeat)}` : '.'}
   </>
 );
+
+/**
+ * The stores as an English list, because there can now be six of them (ticket 04).
+ *
+ * `join(' and ')` was right while the widest press was a language block's two and reads as
+ * *be and be_fr and de and fr and nl* at six.
+ */
+const storeList = (stores) =>
+  stores.length < 3 ? stores.join(' and ') : `${stores.slice(0, -1).join(', ')} and ${stores.at(-1)}`;
+
+/**
+ * Why one press reaches those stores, in the row's own terms.
+ *
+ * It reads the **class** and asks the same question `repeatsInStore()` keyed the grouping
+ * on, through the same function, so the row an editor is pressing and the reason they are
+ * given cannot come apart.
+ */
+const becauseOf = (repeat) =>
+  spansEveryStore(repeat.class)
+    ? 'this difference is the same string on each of them, so it is one decision.'
+    : 'these two stores share a language, so the same words are one decision.';
 
 /**
  * The clearing's own **in which stores**, on screen (ticket 03).
@@ -510,14 +531,14 @@ const InWhichStores = ({ stores, oneDifference }) => (
  * under every clearing on `de` and `uk`: the interface is quiet by default (ADR 0019), and
  * this sentence earns its place by saying that a decision is about to leave the store.
  */
-const ClearCrossesBlock = ({ cleared, oneDifference }) => (
+const ClearCrossesStore = ({ cleared, repeat }) => (
   <p className="text-xs text-muted-foreground">
     Clearing on{' '}
     <strong className="font-medium text-foreground tabular-nums">
       {cleared.covers} {cleared.covers === 1 ? 'page' : 'pages'}
     </strong>
     .
-    <InWhichStores stores={cleared.stores} oneDifference={oneDifference} />
+    <InWhichStores stores={cleared.stores} repeat={repeat} />
   </p>
 );
 

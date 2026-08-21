@@ -1128,11 +1128,11 @@ describe('repeatsInStore', () => {
     ]);
   });
 
-  it('crosses one block and never a store outside one, and never all six', () => {
-    // The trap ticket 03 names: `de` and `uk` are in no block at all, and the mistake
-    // here would move counts on two stores this feature is not about. Each of the six
-    // pages below carries the same class, the same two texts and the same detail, so
-    // the **only** thing keeping them apart is the block.
+  it('keeps a text difference inside its language block, so six stores are four rows', () => {
+    // The boundary ticket 03 drew and ticket 04 leaves standing: these are **words**, the
+    // stores translate them, and `de` and `uk` are in no block at all. Each of the six
+    // pages below carries the same class, the same two texts and the same detail, so the
+    // **only** thing keeping them apart is the block.
     const repeats = repeatsInStore([
       page('nl', 'afhalen', [finding('a', {})]),
       page('be', 'afhalen', [finding('b', {})]),
@@ -1151,6 +1151,42 @@ describe('repeatsInStore', () => {
       ['de'],
       ['uk'],
     ]);
+  });
+
+  it('spans all six stores on an images check, where a basename is one string', () => {
+    // Ticket 04. The block's stated reason is that the stores translate the text, and that
+    // reason does not reach a filename: the images check compares basenames with the path
+    // stripped, so `max.svg` is the same string on every store, in every language. One
+    // press decides it everywhere.
+    const repeats = repeatsInStore([
+      page('nl', 'afhalen', [finding('a', { class: 'image-missing', prod: 'max.svg' })]),
+      page('be', 'afhalen', [finding('b', { class: 'image-missing', prod: 'max.svg' })]),
+      page('be_fr', 'afhalen', [finding('c', { class: 'image-missing', prod: 'max.svg' })]),
+      page('fr', 'afhalen', [finding('d', { class: 'image-missing', prod: 'max.svg' })]),
+      page('de', 'afhalen', [finding('e', { class: 'image-missing', prod: 'max.svg' })]),
+      page('uk', 'afhalen', [finding('f', { class: 'image-missing', prod: 'max.svg' })]),
+    ]);
+
+    expect(repeats).toHaveLength(1);
+    expect(repeats[0].stores).toEqual(['be', 'be_fr', 'de', 'fr', 'nl', 'uk']);
+    // `de` and `uk` are **in** it. Each is alone in its language, which is what keeps them
+    // out of a text repeat; a filename has no language for them to be alone in.
+    expect(repeats[0].on).toHaveLength(6);
+  });
+
+  it('spans all six stores on a links check too, because the corpus is the check', () => {
+    // The rule is a property of the **check** and not of one class, so `links` inherits it
+    // beside `images`: a link target is host-folded and is the same string on every store.
+    // Without this the rule would be a list of classes, and the next class added to either
+    // check would arrive with a corpus nobody chose.
+    const repeats = repeatsInStore([
+      page('nl', 'afhalen', [finding('a', { class: 'broken-link', prod: '/oud-pad' })]),
+      page('de', 'afhalen', [finding('b', { class: 'broken-link', prod: '/oud-pad' })]),
+      page('uk', 'afhalen', [finding('c', { class: 'broken-link', prod: '/oud-pad' })]),
+    ]);
+
+    expect(repeats).toHaveLength(1);
+    expect(repeats[0].stores).toEqual(['de', 'nl', 'uk']);
   });
 
   it('is largest-first by the number of pages, which is the order it can see', () => {

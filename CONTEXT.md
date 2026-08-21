@@ -183,8 +183,9 @@ element any more: it folds the links inside it. Both the word and the rule are g
   text, so the same defect in six stores is six repeats and not one.~~ **Amended
   2026-08-17, ticket 03.** The claim was right and its stated reason was not: inside a
   **language block** the two stores do not translate the text between them, because they
-  share a language. So a repeat crosses a store exactly there and nowhere else — `{nl, be}`
-  and `{be_fr, fr}` — and the same defect in six stores is **four** repeats and not six.
+  share a language. ~~So a repeat crosses a store exactly there and nowhere else —
+  `{nl, be}` and `{be_fr, fr}` — and the same defect in six stores is **four** repeats and
+  not six.~~
   `de` and `uk` are each alone in their language and a repeat on them is what it was.
   The block is **derived** from the hreflang codes, never a hand-written list, and it is
   still not an axis: what crosses is a judgement about an ordinary axis-A finding, and a
@@ -194,6 +195,21 @@ element any more: it folds the links inside it. Both the word and the rule are g
   the finding id. Measured: 11,162 of 22,048 work findings sit in a block-spanning repeat,
   and the distinct decisions over the six stores fall 16,881 → 12,722.
   See `docs/adr/0018-a-judgement-may-cross-a-language-block.md`.
+  **Amended 2026-08-21, ticket 04 of cross-store reuse**, striking the sentence above. The
+  claim was right on two of the four checks and its stated reason does not reach the other
+  two. *The stores translate the text* is true of `text` and `meta`; it is false of `images`
+  and `links`, whose two sides
+  are **basenames and link targets** — the images check compares a basename with the path
+  stripped and the links check a host-folded target, so both are the same string on every
+  store, in every language. So **how far a repeat crosses is decided by the check**: on
+  `images` and `links` it spans all six stores and one press decides `max.svg` everywhere,
+  and on `text` and `meta` it stays inside the block as above. `de` and `uk` join the first
+  group and stay alone in the second. The rule is a set of **checks** and not a list of
+  classes, so a class added to either check inherits the corpus. Nothing else moves: no
+  finding id, scope, column or URL changed, the write is still N ordinary events with the
+  store off each entry, the note is still mandatory however wide the press, and the table
+  still gains rows and never a column.
+  See `docs/adr/0028-a-filename-is-outside-the-language-block.md`.
   A repeat is measured in **pages**, and there is no second number beside it. The
   page is a term of the finding id, so one page carries at most one finding of one
   repeat — measured over the corpus, 25,657 repeats and no exception. "How many
@@ -210,17 +226,27 @@ element any more: it folds the links inside it. Both the word and the rule are g
   whatever set of stores its screen is about, because reading moves no count: nothing it
   answers changes a bar, a denominator or a roll-up, so widening it costs nothing and saves an
   editor four searches. A **repeat** is the unit of a decision, so its corpus is the one above
-  — the language block, where the two stores do not translate the text between them. The same
-  string on six stores is therefore **one search result of four differences**, and that is not
-  a compromise: the search found it once, and the four are four decisions because the four
-  texts are four texts.
+  — the language block, where the two stores do not translate the text between them. ~~The
+  same string on six stores is therefore **one search result of four differences**, and that is
+  not a compromise: the search found it once, and the four are four decisions because the four
+  texts are four texts.~~
   The two were one set until ticket 03 and the split is what that ticket is: the search
-  screen **above the stores** reaches all six, and no press on it does. So `mergeIndexes()`
-  takes any list of indexes, `searchNotes()` is handed whatever log its screen opened, and
-  `repeatsInStore()` is untouched. A store dropdown that narrowed the repeat corpus is
-  refused: a control may narrow what is **read**, and what may be **pressed** is a property of
-  the check and never a preference.
+  screen **above the stores** reaches all six, ~~and no press on it does~~. So `mergeIndexes()`
+  takes any list of indexes and `searchNotes()` is handed whatever log its screen opened. A
+  store dropdown that narrowed the repeat corpus is refused: a control may narrow what is
+  **read**, and what may be **pressed** is a property of the check and never a preference.
   See `docs/adr/0021-the-search-reaches-the-language-block-in-one-half.md`.
+  **Amended 2026-08-21, ticket 04 of cross-store reuse**, striking the sentence above and the
+  *no press on it* clause with it. The rule over the two corpora is unchanged — reading may
+  cross any store, pressing may cross only where the check makes the two sides the same string
+  — and what moved is how far that second clause reaches.
+  On `images` and `links` those two sides are one string on every store, so the same string
+  on six stores is **one** difference and one press. On `text` and `meta` it is four, because
+  the four texts are four texts. So a press above the stores is offered on the first pair and
+  **refused, visibly and with its reason, on the second**: a row of translated words is drawn
+  there and is decided on a store's own screen. `repeatsInStore()` is where the whole of it
+  lives, and it is still the one grouping both screens use.
+  See `docs/adr/0028-a-filename-is-outside-the-language-block.md`.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
   `heading-level` or a `tag-changed` finding, `p + p → p` or `p → 4×p` on a `regrouped` one,
   `max.svg → max-new.svg` on an `image-renamed` one, and null on every other class. It is
@@ -538,9 +564,14 @@ element any more: it folds the links inside it. Both the word and the rule are g
   result that can return a `uk` row has stopped being a view of `nl`. Both halves cross there,
   by the **search corpus** rule above: six static index files fetched together, a partial read
   an error, and the notes of all six searched beside them. The rows are the same repeats, each
-  line saying which store it is on, and **nothing on it can be pressed**. The store screens
-  are unchanged — this store and its sibling, as before — and the two page-list blocks a
-  scope draws are a store's own answers and stay there.
+  line saying which store it is on. ~~Nothing on it can be pressed.~~ **Amended 2026-08-21,
+  ticket 04 of cross-store reuse.** An `images` or `links` row can: it is one difference over
+  up to six stores, and one press on it is one judgement written as six ordinary events. A
+  `text` or `meta` row cannot, and it says so on the row — the stores translate those words,
+  and the difference is decided on a store's own screen. The name a press carries is asked for
+  on this screen too, because a decision made here is a decision in the same ledger. The store
+  screens are unchanged — this store and its sibling, as before — and the two page-list blocks
+  a scope draws are a store's own answers and stay there.
   **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first, and it answers
   *which page do I open next*. There is no all-stores repeat view, for the reason
   there is no all-stores dashboard.
@@ -693,8 +724,8 @@ who wins against re-check.
   narrowed result** — a term, a scope or a class pill — and never over the bare *Repeats*
   list, because a wide press needs a proposition to be about and only a narrowed list is one.
   Everything above still holds over the wider selection: the ticks say *these pages* and each
-  press filters to what it can act on, one selection may still span a language block and no
-  further, and the write is still N ordinary events. Two things are added by the size of it.
+  press filters to what it can act on, one selection reaches as far as the **check** lets a
+  repeat group and no further (ticket 04), and the write is still N ordinary events. Two things are added by the size of it.
   The **clearing** takes a typed-count confirmation above a threshold, because it revokes
   colleagues' judgements and the dismissal's mandatory note is a gate the clearing has none
   of. And the press **reports its progress and can be stopped**, because the write is

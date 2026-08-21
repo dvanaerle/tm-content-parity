@@ -7,9 +7,10 @@ import AllStores from './AllStores.jsx';
  * The search above the stores (ticket 03).
  *
  * A browser test because the ticket's criteria are a **composition**: the merge, the class
- * selector and the grouping each have their own node tests in `search.test.mjs`, and what is
- * only visible here is what the screen does with them — whose store a row says it is on, that
- * the class label is a link and not a control, and that nothing on it can be pressed.
+ * selector and the grouping each have their own node tests in `search.test.mjs` and
+ * `view.test.mjs`, and what is only visible here is what the screen does with them — whose
+ * store a row says it is on, that the class label is a link and not a control, and which rows
+ * carry a tick (ticket 04).
  *
  * The URL is the screen (`useScreen()`), so a case that is about a link arriving sets
  * `location.search` and mounts, which is what an editor pressing a class label produces.
@@ -34,16 +35,29 @@ const entry = (part) => ({
 });
 
 /**
- * The same broken link on all six stores, one page each.
+ * Two differences on all six stores, one page each: a **broken link** and a **copy** change.
  *
- * `/max.svg` is the ticket's own example: an image basename is the same string on every store,
- * so this is the search an editor was running six times.
+ * `/max.svg` is the ticket's own example — a link target and an image basename are the same
+ * string on every store, so this is the search an editor was running six times. The `copy`
+ * entry beside it carries the same two strings on all six as well, which is the fixture that
+ * can tell the two corpora apart: if the grouping keyed on the block for both, the link would
+ * be four rows; if it keyed on the check for both, the text would be one.
  */
 const index = (store) => ({
   store,
   pages: 1,
   builtAt: '2026-08-11T00:00:00Z',
-  findings: [entry({ id: store, store, page: 'afhalen' })],
+  findings: [
+    entry({ id: store, store, page: 'afhalen' }),
+    entry({
+      id: `${store}-copy`,
+      store,
+      page: 'afhalen',
+      class: 'copy',
+      prod: 'Bekijk deals >',
+      new: 'Bekijk de deals >',
+    }),
+  ],
 });
 
 let fetched;
@@ -81,6 +95,17 @@ async function mount(search = '') {
 const rows = () =>
   [...document.querySelectorAll('[data-row="difference"]')].map((row) => row.textContent.trim());
 
+/**
+ * Every tick that **selects**, by the name it announces.
+ *
+ * It reads the label rather than counting checkboxes, because *Include closed* is a checkbox
+ * too and is not a press: it says what counts as a result.
+ */
+const selectLabels = () =>
+  [...document.querySelectorAll('[data-slot="checkbox"]')]
+    .map((tick) => tick.getAttribute('aria-label'))
+    .filter((label) => label?.startsWith('Select'));
+
 /** The class labels on the rows, which are links here and not controls. */
 const classLabels = () => [...document.querySelectorAll('a[data-badge="class"]')];
 
@@ -90,18 +115,29 @@ describe('a class label opens a queue over every store', () => {
     // and no word typed: the class is the thing the editor means.
     const { unmount } = await mount('classes=broken-link');
 
-    expect(document.body.textContent).toContain('6 findings on 6 pages');
+    expect(document.body.textContent).toContain('on 6 pages');
     unmount();
   });
 
-  it('groups them as the repeat corpus does, and not as one row', async () => {
-    // The corpus split, on screen. Reading crosses every store; the **grouping** is still
-    // keyed on the language block, so one string on six stores is four differences —
-    // `{nl, be}`, `{be_fr, fr}`, `de` and `uk`. Ticket 04 is what makes this one.
+  it('groups a link target on six stores into one difference', async () => {
+    // The corpus split, on screen, and ticket 04's headline. Reading crosses every store and
+    // so does the **grouping**, because a link target is host-folded and an image basename has
+    // the path stripped: the same string on every store, in every language. It was four rows
+    // — `{nl, be}`, `{be_fr, fr}`, `de` and `uk` — while the key was the block's.
     const { unmount } = await mount('classes=broken-link');
 
-    expect(document.body.textContent).toContain('in 4 differences');
+    expect(rows()).toHaveLength(1);
+    expect(document.body.textContent).toContain('1 difference on 6 pages');
+    unmount();
+  });
+
+  it('keeps a text difference on six stores as four, one per language block', async () => {
+    // The other half of the same rule, and the boundary ADR 0018 drew still standing: these
+    // are words, the stores translate them, and `de` and `uk` are each alone in a language.
+    const { unmount } = await mount('classes=copy');
+
     expect(rows()).toHaveLength(4);
+    expect(document.body.textContent).toContain('in 4 differences');
     unmount();
   });
 
@@ -116,9 +152,7 @@ describe('a class label opens a queue over every store', () => {
     // rows joined rather than in order, because which difference sorts first is not the
     // question here.
     const scanned = rows().join(' | ');
-    for (const stores of ['be, nl', 'be_fr, fr', 'de', 'uk']) {
-      expect(scanned).toContain(`on ${stores}`);
-    }
+    expect(scanned).toContain('on be, be_fr, de, fr, nl, uk');
     unmount();
   });
 
@@ -149,25 +183,64 @@ describe('a class label opens a queue over every store', () => {
     unmount();
   });
 
-  it('has no press on it at all', async () => {
-    // The ticket widens reading only. A wide press here would be offered over a list spanning
-    // six stores and could act on two of them, which is a control lying about its reach — so
-    // the screen offers none until ticket 04 moves the repeat corpus.
+  it('offers a tick on a six-store difference, named page by page', async () => {
+    // One press decides `max.svg` everywhere (ticket 04). What a browser test can say is that
+    // the control is there and announced; how many events it writes is `bulk.test.mjs`'s, and
+    // the log is not connected here.
     const { unmount } = await mount('classes=broken-link');
 
     for (const row of document.querySelectorAll('[data-row="difference"]')) {
       await act(() => row.click());
     }
 
-    // No tick that **selects**. *Include closed* is a checkbox and stays one: it says what
-    // counts as a result, which is a reading and not a press, and the ticket keeps its
-    // present meaning by name.
-    const ticks = [...document.querySelectorAll('[data-slot="checkbox"]')].map((tick) =>
-      tick.getAttribute('aria-label'),
-    );
-    expect(ticks.filter((label) => label?.startsWith('Select'))).toHaveLength(0);
+    // Every page of the difference is tickable, and each tick names its own store: six pages
+    // called `afhalen` are six ticks a screen reader could not otherwise tell apart.
+    for (const store of STORES) {
+      expect(selectLabels()).toContain(`Select afhalen on ${store}`);
+    }
+    expect(document.body.textContent).toContain('Select every difference found');
+    unmount();
+  });
+
+  it('draws a text difference without a tick, and says why', async () => {
+    // Shown, not tickable, and it says why. The row is a difference an editor found and is
+    // entitled to read; what it is not is a press an editor makes from above the stores, where
+    // one gesture over this list would judge words in four languages.
+    const { unmount } = await mount('classes=copy');
+
+    expect(rows()).toHaveLength(4);
+    expect(document.body.textContent).toContain('The stores translate these words');
+    // No tick anywhere on the list, on the rows or in their pages, and no select-all either:
+    // the refusal is one answer and not a per-control one.
+    for (const row of document.querySelectorAll('[data-row="difference"]')) {
+      await act(() => row.click());
+    }
+    expect(selectLabels()).toHaveLength(0);
     expect(document.body.textContent).not.toContain('Select every difference found');
+
+    // *Include closed* is a checkbox and stays one: it says what counts as a result, which is
+    // a reading and not a press.
     expect(document.body.textContent).toContain('Include closed');
+    unmount();
+  });
+
+  it('ticks only what may be pressed, where the two kinds of row are on one list', async () => {
+    // Both classes at once, which is what a bare term answers. The select-all reaches the
+    // link difference's six pages and none of the text rows', because the selection is
+    // narrowed once for the whole list — a result-wide tick that reached further would arm a
+    // press the rows themselves refuse.
+    const { unmount } = await mount('query=afhalen');
+
+    for (const row of document.querySelectorAll('[data-row="difference"]')) {
+      await act(() => row.click());
+    }
+
+    expect(rows()).toHaveLength(5);
+    // The **page** ticks, which are the ones a store can be read off. Every one of the five
+    // rows is `afhalen` on the same six stores, so a tickable text row would double this
+    // number rather than add an unrelated one.
+    expect(selectLabels().filter((label) => label.startsWith('Select afhalen on'))).toHaveLength(6);
+    expect(document.body.textContent).toContain('The stores translate these words');
     unmount();
   });
 });
@@ -194,9 +267,13 @@ describe('the screen above the stores', () => {
   });
 
   it('answers a typed term over every store', async () => {
+    // One difference and not six findings, because `/max.svg` is a link target: the term
+    // reaches all six stores and the grouping now brings them together (ticket 04). A
+    // one-difference result says how many pages, for the reason the count itself gives — the
+    // page is a term of the finding id, so the two numbers are one number.
     const { unmount } = await mount('query=max.svg');
 
-    expect(document.body.textContent).toContain('6 findings on 6 pages');
+    expect(document.body.textContent).toContain('1 difference on 6 pages');
     unmount();
   });
 

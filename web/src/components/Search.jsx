@@ -86,8 +86,9 @@ const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
  *   in their name — are a store's own answers and are not drawn above the stores. They need
  *   the whole page list, and six stores of page summaries is seven megabytes of island prop
  *   against a corpus that is already in six static files.
- * - There is **no press** above the stores: the caller withholds `bulk`, and `Repeats` then
- *   draws no tick. Reading is what widened here; ticket 04 is what widens the press.
+ * - **Which rows may be pressed** is the caller's too (ticket 04). A store's search refuses
+ *   nothing; above the stores an `images` or `links` row is pressed and a row of translated
+ *   words is drawn with its reason instead, through `refusesPress`. Reading is what widened here; ticket 04 is what widens the press.
  *
  * **The index is a prop and the fetch is the caller's** since that ticket. Both screens need
  * it before this component runs — the store's to keep it out of the hands of a visitor who
@@ -109,6 +110,7 @@ export default function Search({
   includeClosed,
   onIncludeClosed,
   bulk = null,
+  refusesPress = null,
   link,
   classLink = null,
 }) {
@@ -319,6 +321,11 @@ export default function Search({
           // finding is open. It is the same `read` the notes half below is drawn on.
           logRead={read.ready}
           bulk={bulk}
+          // Which rows this screen may be pressed on, and why the others may not (ticket
+          // 04). It is the caller's answer and not this component's: a store's search
+          // refuses nothing, and above the stores a difference made of translated words is
+          // read and decided elsewhere.
+          refusesPress={refusesPress}
           link={link}
           searched
           // The snapshot the rows were built over, so a wide press can name it. The

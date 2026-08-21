@@ -1,16 +1,16 @@
 import { useMemo } from 'react';
 import { ClassFilterPills } from './Chips.jsx';
-import { LogBanner } from './Progress.jsx';
+import { EditorPrompt, LogBanner } from './Progress.jsx';
 import Search from './Search.jsx';
 import SearchBox from './SearchBox.jsx';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx';
 import { classInfo } from '../lib/classes.mjs';
-import { useStoreOverrides } from '../lib/overrides.mjs';
+import { NO_EDITOR, useBulk, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { pagesOfIndex } from '../lib/search.mjs';
 import { useSearchIndex } from '../lib/search-index.mjs';
 import { classHref, useScreen } from '../lib/screen-url.mjs';
-import { classCounts, toggleIn } from '../lib/view.mjs';
+import { classCounts, spansEveryStore, toggleIn } from '../lib/view.mjs';
 
 /**
  * One search over every store (ticket 03).
@@ -24,12 +24,23 @@ import { classCounts, toggleIn } from '../lib/view.mjs';
  * and there is no store dropdown — a control may narrow what is *read*, and this screen is
  * already the widest reading there is.
  *
- * **Reading only.** The corpus a search runs over and the corpus a press may cross are two
- * different things (`CONTEXT.md`): reading may cross any store because reading moves no
- * count, and pressing may cross only where the check makes the two sides the same string.
- * So `bulk` is withheld and `Repeats` draws no tick. The rows are the same repeats they are
- * on a dashboard — one string on six stores is **four** differences, because the grouping is
- * still keyed on the language block — and ticket 04 is what moves that.
+ * **It reads every store and presses on some of them** (ticket 04). The corpus a search runs
+ * over and the corpus a press may cross are two different things (`CONTEXT.md`): reading may
+ * cross any store because reading moves no count, and pressing may cross only where the
+ * **check** makes the two sides the same string. So the two corpora meet here and do not
+ * coincide:
+ *
+ * - An `images` or `links` row is one difference over up to six stores, and one press
+ *   dismisses `max.svg` everywhere. That is this screen's reason to exist as a surface an
+ *   editor decides on and not only reads.
+ * - A `text` or `meta` row is one language block's words. It is drawn, it is **not tickable**,
+ *   and it says so: those stores translate their text, and the row is decided on a store's
+ *   own screen, where the same difference is the same row.
+ *
+ * The refusal is this screen's and not the row's, which is why the words are here: the same
+ * `copy` difference is pressed on its dashboard and refused above the stores, and only the
+ * caller knows which of the two it is. A per-row tick and a select-all cannot disagree about
+ * it, because `Repeats` narrows the selection once, off this one function.
  *
  * **The index is the corpus and the page list both.** Six static files, fetched together, a
  * partial read an error. It is also what the log is derived over: six stores of page
@@ -76,10 +87,16 @@ export default function AllStores({ stores = [] }) {
 
   /*
    * The log of every store the corpus names. It is one read per store, as the dashboard's is
-   * — the hook takes its stores off the pages it is given — and there is no editor, because
-   * nothing here writes: a press is ticket 04's and a name is what a press carries.
+   * — the hook takes its stores off the pages it is given — and it carries the **editor**,
+   * because a press here writes six ordinary events and every one of them is signed.
    */
-  const log = useStoreOverrides({ pages });
+  const { editor, save } = useEditor();
+  const log = useStoreOverrides({ pages, editor });
+
+  // What a press writes with, built by the same function the dashboard's is: this screen is
+  // the second surface that presses, and two spellings of that bag is where a field arrives on
+  // one screen and not the other.
+  const bulk = useBulk(log);
 
   /**
    * A link into a page, and the one thing it deliberately does not carry: a way back.
@@ -123,6 +140,16 @@ export default function AllStores({ stores = [] }) {
         error={log.error}
       />
 
+      {/* A press here is signed, so the name is asked for here. It is the dashboard's own
+          control and its own sentence, because a decision made on this screen is a decision
+          in the same ledger — one written in up to six stores at a time. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <EditorPrompt editor={editor} save={save} />
+        <p className="text-sm text-muted-foreground">
+          {editor ? 'A decision made here is recorded under this name.' : NO_EDITOR}
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         {/* No page keys to offer: the scope suggestions are a store's own keys, and a scope
             is a substring that cannot name a store. Typing one still narrows — the slash rule
@@ -161,9 +188,11 @@ export default function AllStores({ stores = [] }) {
             log={log}
             includeClosed={includeClosed}
             onIncludeClosed={(next) => patch({ includeClosed: next })}
-            // **No press**, and it is withheld rather than switched off: there is nothing
-            // here to press with. See the docblock above and `Repeats`.
-            bulk={null}
+            // The press, and the rows it may not reach (ticket 04). One judgement over six
+            // stores where the check makes the two sides one string, and a row of translated
+            // words drawn beside it saying where it is decided instead.
+            bulk={bulk}
+            refusesPress={refusesPress}
             link={link}
             // A class label on a row lands back on this screen, on that class alone. It is
             // the same gesture the dashboard offers and it is offered here too, because a
@@ -188,3 +217,21 @@ export default function AllStores({ stores = [] }) {
     </div>
   );
 }
+
+/**
+ * Why a difference cannot be pressed on this screen, or `null` where it can (ticket 04).
+ *
+ * It asks `spansEveryStore()`, the same function `repeatsInStore()` keys the grouping on, so
+ * the row an editor is offered a tick on and the row the grouping built are the same row. A
+ * second reading of *which checks are one string* would be the one place a tick could appear
+ * over a difference that is four differences.
+ *
+ * The sentence says **why** and **where instead**, because a refusal that only says no
+ * leaves an editor with a row they cannot act on and no next move. It does not name the
+ * stores: the row already names them, and this is a fact about the words rather than about
+ * which two hold them.
+ */
+const refusesPress = (repeat) =>
+  spansEveryStore(repeat.class)
+    ? null
+    : 'The stores translate these words — decide it on one of the stores named.';

@@ -40,7 +40,7 @@ import {
 import { CHROME } from '../lib/palette.mjs';
 import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { cn } from '../lib/utils.js';
-import { NO_EDITOR, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
+import { NO_EDITOR, useBulk, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
 import { pageHref } from '../lib/page-url.mjs';
 import { parseTerm, withScope } from '../lib/search.mjs';
 import { classHref, useScreen } from '../lib/screen-url.mjs';
@@ -263,10 +263,17 @@ export default function Dashboard({
    * wire twice.
    *
    * Since ticket 03 the sibling's pages are in the input, and `repeatsInStore()` is what
-   * decides whether anything joins: it keys on the **block** where a store is in one, so a
-   * difference `nl` and `be` carry in the same words is one row on both dashboards, and a
-   * difference only one of them carries is a row of one store the way it always was. On
-   * `de` and `uk` the second array is empty and this is the call it always was.
+   * decides whether anything joins: on `text` and `meta` it keys on the **block** where a
+   * store is in one, so a difference `nl` and `be` carry in the same words is one row on both
+   * dashboards, and a difference only one of them carries is a row of one store the way it
+   * always was. On `de` and `uk` the second array is empty and this is the call it always was.
+   *
+   * Ticket 04 made the key's first term a function of the **check**, and this screen is where
+   * that is least visible: an `images` or `links` row may group over all six stores, and the
+   * two arrays below hold two. So the widest row a dashboard draws is the block-spanning row
+   * it drew before. The six-store grouping is on the search **above** the stores, which is the
+   * screen holding six stores' findings — six stores of page summaries as island props was
+   * priced and refused by ticket 03.
    *
    * So a block store's list holds **three** kinds of row, and the third is the one to say out
    * loud: rows spanning both stores, rows of this store alone, and rows of the **sibling
@@ -370,17 +377,7 @@ export default function Dashboard({
    * reach the row that uses it, and it says **why** it cannot write rather than merely
    * that it cannot: a control that vanishes without a reason reads as a missing feature.
    */
-  const bulk = useMemo(
-    () => ({
-      canWrite: log.canWrite,
-      busy: log.busy,
-      appendMany: log.appendMany,
-      // The hook's own sentence about its own flag, not a second reading of the four
-      // conditions behind it.
-      notWritingReason: log.notWritingReason,
-    }),
-    [log.canWrite, log.busy, log.appendMany, log.notWritingReason],
-  );
+  const bulk = useBulk(log);
 
   const totals = useMemo(() => {
     const byClass = {};

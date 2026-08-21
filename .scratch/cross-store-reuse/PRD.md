@@ -1,8 +1,8 @@
 # Cross-store reuse
 
 Type: spec
-Status: live — 2026-08-20: issues 01, 03 and 09 are resolved and 05 and 08 are superseded by
-10; 02 and 04 are the open work; 06, 07 and 10 are parked behind issue 11. A PRD carries no
+Status: live — 2026-08-21: issues 01, 03, 04 and 09 are resolved and 05 and 08 are superseded
+by 10; 02 is the open work; 06, 07 and 10 are parked behind issue 11. A PRD carries no
 triage label (see `docs/agents/triage-labels.md`).
 Parent: ../content-parity-log/map.md
 
