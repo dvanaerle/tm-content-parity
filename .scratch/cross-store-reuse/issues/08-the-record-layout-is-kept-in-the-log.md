@@ -2,6 +2,10 @@
 
 Type: task
 Status: resolved — superseded 2026-08-19 by ticket 10. right about the surface, wrong about the polarity.
+**Its code is deleted, 2026-08-21, commit `b7557d0`** — twelve files, 1,938 lines, 41 tests.
+Ticket 10 owned that removal and was refused with it parked, so the removal was taken on its
+own terms: nothing read `sharedPageIndex()`, the SQL was never applied, and the fact was never
+held. ADR 0025 is kept, not superseded.
 It correctly found that the person who reads the grid has no clone, and it kept the complement
 that the committed file's shape had forced. The table it built was never applied to a project,
 so nothing it shipped holds data. Its `## Answer` stays as the record.

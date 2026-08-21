@@ -6,8 +6,16 @@ Not refused on its merits and not disproven: parked because its payload is unmea
 PRD is candid that a dismissal already crosses the language block, so the repetition an editor
 still meets here is not in judging — it is in claiming a fix they only made once, and nobody
 has counted how often that happens. It also cannot be built before 10, which is parked with it.
-**Re-open trigger:** ticket [11](../11-measure-the-flattening-and-the-pairing.md) reports a
-meaningful count of fix claims written on a page whose sibling carries the same finding.
+**Re-open trigger: reported against, 2026-08-21.** Ticket
+[11](../11-measure-the-flattening-and-the-pairing.md) resolved and found the count
+**unmeasurable and 0 of the 10 that survive** — 94% of standing fix claims key on a finding id
+absent from the corpus, 7 of 10 survivors had the opportunity to be claimed twice, and 0 of 7
+were. `be` carries 8 standing fix claims to `nl`'s 185: nobody is working the second store, so
+nobody is paying the cost this ticket removes. **Ticket 10 is now refused outright**, so this
+one has no link to travel over either.
+**The new trigger, from ticket 11:** a fortnight of somebody actually working `be` or `fr`,
+**and** finding ids that survive long enough for a claim to be compared with its sibling's.
+Re-run probe 3 when both are true.
 Blocked by: 10 — nothing may travel until an editor can declare a link. 07 — the reading that says whether a link was right must exist before its claims go out.
 Parent: ../../PRD.md
 

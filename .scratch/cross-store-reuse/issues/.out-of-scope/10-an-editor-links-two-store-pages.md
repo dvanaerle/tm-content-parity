@@ -1,25 +1,22 @@
 # 10 — An editor links two store pages, and the log keeps it
 
 Type: task
-Status: wontfix — **parked 2026-08-19** by the audit of every open `ready-for-agent` ticket.
+Status: wontfix — **refused 2026-08-21**, and the refusal is now measured rather than priced.
+Parked 2026-08-19 by the audit of every open `ready-for-agent` ticket; the re-open trigger
+below fired and reported against it. See *## The decision* under the criteria.
+**Re-open trigger: spent.** Ticket [11](../11-measure-the-flattening-and-the-pairing.md)
+resolved 2026-08-21 and read it directly — *refuse 10*. A new trigger would have to be a new
+argument, not this one again.
 The design is good and it is the second design: the first made this an import from Magento,
 the user objected that the feature should be controllable in our interface tool, and the
 reversal is argued properly — with no record id and no reading date the imported claim carried
 no evidence, and ADR 0025's own central argument is that no crawl can see record sharing. None
-of that is in doubt. What is in doubt is the price. It buys nothing on its own — nothing
-consumes the rule yet — and its two readers, 06 and 07, rest on unmeasured assumptions. For
-that we would take on a new append-only Supabase table, new RLS policies, a new screen, a bulk
-press, an ADR, and an unpriced transcription pass through the page pairs of two language
-blocks. It also widens who can grant a permission: anyone who can open the site can write here,
-and this table is what authorises a claim to travel.
-**Re-open trigger:** ticket [11](../11-measure-the-flattening-and-the-pairing.md) reports a
-meaningful flattening count or a meaningful double-claim count. If it reports neither, 07
-reduces to the flattening reading and this ticket stays refused.
-**One consequence to carry:** this ticket's criteria include removing everything ticket 08
-built — the `record_layout` table and its SQL, the reading kind, the date guard, the record id,
-the complement's polarity. **That removal is parked with it**, so 08's code stays in the tree
-with no ticket owning it. Whoever un-parks this, or decides it stays refused, owes that code a
-decision of its own.
+of that is in doubt. What was in doubt was the price, and ticket 11 priced it.
+**The consequence is discharged.** This ticket's criteria included removing everything ticket
+08 built, and that removal was parked with it, leaving 08's code in the tree with no ticket
+owning it. It was removed on its own terms on 2026-08-21 in commit `b7557d0` — twelve files,
+1,938 lines, 41 tests, nothing migrated because nothing was ever held. ADR 0025 was **kept and
+not superseded**, so a rebuilder inherits its argument instead of making it again.
 Blocked by: None — can start immediately.
 Parent: ../../PRD.md
 Supersedes: 05, 08
@@ -106,6 +103,30 @@ Nothing consumes the rule yet. Tickets 07 and 06 are its first two readers.
   a permission, and the new ADR must record it rather than let it be discovered.
 - **A stray must not white-screen the log.** Live data edited by several people will carry stale
   rows, and a stray grants nothing anyway.
+
+## The decision
+
+**Refused, 2026-08-21, on ticket 11's measurement.** Three numbers settled it.
+
+- **The pairing is already derived.** The pairing this table would transcribe covers 126 of
+  `be`'s 131 pages and 120 of `fr`'s 123 with no table, no RLS policy and no screen. The
+  transcription pass is **246 pairs**, not the handful the ticket assumed.
+- **The bulk press has nothing sound to key on.** Only **113 of 246** measured pairs render
+  identical words. A bulk press taken off identity would transcribe a judgement it cannot
+  verify — which is this ticket's own trap, turned against its own affordance.
+- **Nothing downstream is paying the cost.** Ticket 06, this table's payload, is an editor
+  clicking *fixed* once instead of twice. That click has never been made twice in the
+  recorded history of the log: 0 of 7 measurable opportunities, on a second store carrying 8
+  fix claims to `nl`'s 185.
+
+And the permission cost stands as written here: anyone who can open the site could write to
+this table, and this table is what authorises a claim to travel. Refusing it means no write on
+a permission is widened beyond whoever can push to git.
+
+**What survives.** Ticket 07's flattening half — 111 units on 42 page pairs, 109 of them in
+work classes, including a warranty scope and a delivery-area promise that production varied per
+country and the new site made uniform — is the defect worth finding, and ticket 11 shows it
+needs **no link, no table and no editor input**. That is where this feature's value went.
 
 ## Where it came from
 
