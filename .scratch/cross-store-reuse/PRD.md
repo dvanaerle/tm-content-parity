@@ -1,11 +1,14 @@
 # Cross-store reuse
 
 Type: spec
-Status: live — 2026-08-21: issues 01, 03, 04, 09 and 11 are resolved and 05 and 08 are
-superseded by 10; 02 is the open work. Issue 11 has reported and it **refuses 06 and 10
-outright** and reduces 07 to its flattening half, which needs no link table — so the
-shared-page half of this spec is not built and its code is deleted (commit `b7557d0`). 07 is
-the open decision. A PRD carries no triage label (see `docs/agents/triage-labels.md`).
+Status: live — 2026-08-21: issues 01, 02, 03, 04, 09 and 11 are resolved, 05 and 08 are
+superseded by 10, and **06 and 10 are refused**. Issue 11 reported and it refused 06 and 10
+outright and reduced **07** to its flattening half, which needs no link table — so the
+shared-page half of this spec is not built and its code is deleted (commit `b7557d0`). **07 is
+now the open work**: 111 flattened units on 42 page pairs, built as a reason beside a finding
+the log already reports and an ordering that lifts those pairs, with no `store-scoped content`
+label. 12 is `needs-triage`, out of 02. A PRD carries no triage label (see
+`docs/agents/triage-labels.md`).
 Parent: ../content-parity-log/map.md
 
 Written in Simplified Technical English, spelled in UK English. The words are

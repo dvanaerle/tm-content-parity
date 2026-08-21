@@ -1,19 +1,23 @@
 # 93 — `no-route` leaves the log, and an aborted run writes its failures
 
 Type: build
-Status: two halves, two labels, both settled 2026-08-19.
-**The exclusion (slices 1–2) is `wontfix` — out of scope.** `no-route` is a CMS
-content page, so keeping it out of the parity log is not this project's work to do.
-Re-open trigger: the new site's 404 body stops being editable CMS content, or an
-editor says its copy is not theirs to write.
-**The failure log (slices 3–4) is `resolved`** in `feabe7c` on branch
-`ticket-104-search-page-scope`, and stands.
-Filed under `.out-of-scope/` so the issue list reads as work still to do. Half of
-this ticket shipped and is recorded here rather than in `issues/`: **the abort fix is
-in `feabe7c` and needs nothing further.** See the answer, then the correction under
-it.
+Status: wontfix — **the exclusion is refused, 2026-08-19**, and the file sits here for that
+half. `no-route` is a CMS content page, so keeping it out of the parity log is not this
+project's work to do. **Re-open trigger:** the new site's 404 body stops being editable CMS
+content, or an editor says its copy is not theirs to write.
+**The other half of this ticket is `resolved` and needs nothing further** — the failure log,
+slices 3–4, in `feabe7c`. That is why one file carries two fates: the ticket was written as one
+build and only the defect in it survived scrutiny. The label on the file is the label of the
+work that is *left*, which is none, and the folder's first rule holds. See the answer, then the
+correction under it.
+
+*Moved 2026-08-21* from `content-parity-log/.out-of-scope/` to `issues/.out-of-scope/`, which is
+the location `docs/agents/issue-tracker.md` states. The three inbound links moved with it: 91
+and 97 now say `.out-of-scope/…` rather than `../.out-of-scope/…`, and `map.md` says
+`issues/.out-of-scope/…`. The audit file of 2026-08-19 is a frozen snapshot and still names the
+old path.
 Blocked by: 91
-Parent: 58-axis-a-meta-check.md
+Parent: ../58-axis-a-meta-check.md
 
 **What to build:** `no-route` is production's 404 page compared against the new
 site's 404 page. Both sides answer 200, so the status gate never sees it, and it
@@ -90,7 +94,7 @@ The drop is smaller than ticket 58 budgeted for, and that matters to its arithme
 step 1 removes 85 findings, not ~150, while step 2 adds 197. `no-route` also carries
 **3 meta findings** of its own — two `meta-title-changed` and one
 `meta-description-changed`, on `be_fr` and `fr` — so if this ticket lands first, ticket
-[97](97-the-meta-producer-one-finding-per-row.md) should expect 194 meta findings over
+[97](../97-the-meta-producer-one-finding-per-row.md) should expect 194 meta findings over
 716 pages rather than 197 over 722.
 
 **Nothing here changes what this ticket builds.** `no-route` is still production's 404

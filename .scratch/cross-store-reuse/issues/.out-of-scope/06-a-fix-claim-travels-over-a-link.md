@@ -1,8 +1,9 @@
 # 06 — A fix claim travels over a link
 
 Type: task
-Status: wontfix — **parked 2026-08-19** by the audit of every open `ready-for-agent` ticket.
-Not refused on its merits and not disproven: parked because its payload is unmeasured. The
+Status: wontfix — **refused 2026-08-21**, and the refusal is measured rather than assumed. It
+was parked on 2026-08-19 by the audit of every open `ready-for-agent` ticket, on the grounds
+that its payload was unmeasured; ticket 11 has now measured it, and the payload is not there. The
 PRD is candid that a dismissal already crosses the language block, so the repetition an editor
 still meets here is not in judging — it is in claiming a fix they only made once, and nobody
 has counted how often that happens. It also cannot be built before 10, which is parked with it.

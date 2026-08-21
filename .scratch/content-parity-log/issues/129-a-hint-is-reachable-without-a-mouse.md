@@ -1,7 +1,11 @@
 # 129 — A hint is reachable without a mouse, on every surface
 
 Type: task
-Status: ready-for-agent
+Status: ready-for-agent — **part B only**. Part A landed 2026-08-20 as `acf1d50` on `main`:
+the pattern is `web/src/components/Hint.jsx` (`Hint` for a control, `TextHint` for a reading)
+and the dashboard has moved. What is left is part B — every other surface, and the guard that
+keeps `title` out. Re-price it first: the count is **11** hints over 9 files, not the 36 this
+ticket was written on, so part B is plausibly one sitting.
 Blocked by: None — can start immediately.
 Parent: ../map.md
 

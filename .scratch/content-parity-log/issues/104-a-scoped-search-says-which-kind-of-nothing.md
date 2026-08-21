@@ -1,7 +1,10 @@
 # 104 — The search takes a page scope
 
 Type: task
-Status: ready-for-human — all five parts landed.
+Status: resolved 2026-08-17 — all five parts landed and are on `main`; part A is `bc59495`.
+The five per-part sections below each carry their own **landed** note. This line read
+`ready-for-human` until 2026-08-21, which was a resolved ticket wearing a triage label: nothing
+was waiting on a human, and the audit of 2026-08-19 said so.
 Blocked by: None — 103, 102 and 123 are all resolved.
 Parent: ../map.md
 

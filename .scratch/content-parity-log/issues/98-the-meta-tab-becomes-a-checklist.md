@@ -1,7 +1,11 @@
 # 98 — The Meta tab becomes a checklist an editor can tick
 
 Type: build
-Status: ready-for-agent
+Status: resolved 2026-08-20 — `ca71025` on `main`. All seven slices landed: five rows in the
+Magento admin's order, override controls on three of them, a count badge, the Meta tab as the
+landing for a head finding, and the two `CONTEXT.md` edits. The gate holds — no finding count
+moves, because this renders what 97 already produced. Two written claims it had to correct
+(`landingFor()` reading the class, and ADR 0010's *display only*) are recorded below.
 Blocked by: 97
 Parent: 58-axis-a-meta-check.md
 

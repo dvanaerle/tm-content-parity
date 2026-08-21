@@ -1,7 +1,12 @@
 # 94 — The extract carries the head, and a stale one refuses to compare
 
 Type: build
-Status: ready-for-agent
+Status: resolved 2026-08-19 — `a3f5073` on `main`. All five slices landed and the gate
+below is measured: `PageMeta` carries the raw `robots` string beside the derived boolean and
+`keywords` beside it, `PageExtract` carries `extractVersion`, and `comparePage()` refuses an
+older extract with `ExtractTooOldError` naming the `--force` re-crawl. `metaTitle` was refused
+on ticket 92's numbers and the number that killed it is recorded below. The head *rows* were
+never this ticket's — 97 and 98 built them, and both are resolved.
 Blocked by: 92
 Parent: 58-axis-a-meta-check.md
 
