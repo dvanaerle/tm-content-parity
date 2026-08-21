@@ -57,7 +57,7 @@ export function PriorityPicker({ value, onPick, busy = false }) {
           key={priority}
           type="button"
           variant="outline"
-          size="xs"
+          size="sm"
           disabled={busy}
           aria-pressed={value === priority}
           onClick={() => onPick(value === priority ? null : priority)}
@@ -194,7 +194,13 @@ export function PageDetailsDialog({
               placeholder="A note about this page"
             />
             {changed && !refused && (
-              <Button type="submit" variant="outline" size="xs" className="self-start" disabled={busy}>
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className="self-start"
+                disabled={busy}
+              >
                 {busy ? 'Saving…' : typed.trim() ? 'Save note' : 'Clear note'}
               </Button>
             )}
@@ -215,7 +221,7 @@ export function PageDetailsDialog({
           <DialogFooter className="justify-start">
             <Button
               variant="outline"
-              size="xs"
+              size="sm"
               disabled={refused}
               onClick={() => writeAndClose({ scope: 'page', action: 'cleared' })}
             >
@@ -224,7 +230,7 @@ export function PageDetailsDialog({
             {actions.markAgain.state !== 'absent' && (
               <Button
                 variant="outline"
-                size="xs"
+                size="sm"
                 disabled={refused}
                 onClick={() => writeAndClose({ scope: 'page', action: 'reviewed', findingSetHash })}
               >
@@ -303,7 +309,7 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
             <Button
               type="button"
               variant="outline"
-              size="xs"
+              size="sm"
               disabled={bulk.busy}
               onClick={() => press(priorityEventFor(null))}
               title={`Take the priority off ${count} ${noun}.`}
@@ -325,7 +331,7 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
                 className="w-56"
                 aria-label={`A note on ${count} ${noun}`}
               />
-              <Button type="submit" variant="outline" size="xs" disabled={bulk.busy}>
+              <Button type="submit" variant="outline" size="sm" disabled={bulk.busy}>
                 {bulk.busy ? 'Saving…' : typed.trim() ? 'Save note' : 'Clear note'}
               </Button>
             </form>

@@ -274,7 +274,7 @@ const Repeat = ({ finding }) => {
 };
 
 const Action = ({ children, ...props }) => (
-  <Button variant="outline" size="xs" {...props}>
+  <Button variant="outline" size="sm" {...props}>
     {children}
   </Button>
 );
@@ -295,7 +295,7 @@ const Action = ({ children, ...props }) => (
  * override log reads (ticket 03).
  */
 const Quiet = ({ children, className, ...props }) => (
-  <Button variant="ghost" size="xs" className={cn('text-muted-foreground', className)} {...props}>
+  <Button variant="ghost" size="sm" className={cn('text-muted-foreground', className)} {...props}>
     {children}
   </Button>
 );

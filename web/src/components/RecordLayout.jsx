@@ -152,7 +152,7 @@ function Entry({ entry, append, canWrite, busy }) {
           <Button
             type="button"
             variant="outline"
-            size="xs"
+            size="sm"
             disabled={busy}
             onClick={() => setWithdrawing(true)}
             title="One record serves both stores again. The merge has landed in Magento."
@@ -170,7 +170,7 @@ function Entry({ entry, append, canWrite, busy }) {
             />
             <Button
               type="button"
-              size="xs"
+              size="sm"
               disabled={busy || !reason.trim()}
               onClick={async () => {
                 const event = sharedEventFor({ store: entry.store, page: entry.page, reason });
@@ -179,7 +179,7 @@ function Entry({ entry, append, canWrite, busy }) {
             >
               Withdraw
             </Button>
-            <Button type="button" variant="ghost" size="xs" onClick={() => setWithdrawing(false)}>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setWithdrawing(false)}>
               Cancel
             </Button>
           </span>

@@ -610,7 +610,7 @@ function RowList({
       {drawn < repeats.length && (
         <p className="border-t border-border px-4 py-3 text-sm text-muted-foreground">
           {drawn} of {repeats.length} differences drawn.{' '}
-          <Button variant="outline" size="xs" onClick={() => draw(drawn + PAGE_SIZE)}>
+          <Button variant="outline" size="sm" onClick={() => draw(drawn + PAGE_SIZE)}>
             Show the next {PAGE_SIZE}
           </Button>
         </p>

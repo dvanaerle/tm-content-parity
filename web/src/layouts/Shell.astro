@@ -30,15 +30,21 @@ const stores = await storesInLog();
     */}
     {/*
       Colour is full-bleed; the row is not. `container` is the one width the
-      chrome, the surface banner and the page share, so they line up. The bar
-      itself stays `h-16`, so it takes the same inset horizontally (`px-4
-      sm:px-6`) and none of the vertical padding the page uses. The inset still
-      gives way before the switcher does: six store pills and a logo are a
-      fixed cost in a fixed-height bar — nothing here can wrap without breaking
-      the `h-16`.
+      chrome, the surface banner and the page share, so they line up, and the
+      bar takes the same inset horizontally (`px-4 sm:px-6`).
+
+      Sixteen units is a **floor**, not a height (ticket 13). Six store pills
+      and a logo are a fixed cost, and against a fixed `h-16` the only thing the
+      row could do when it ran out of it was overflow — which costs the reader
+      the switcher, the one control every other store is reached through. So the
+      row wraps and the bar grows with it. Nothing above the wrap moves: at any
+      width that fits the row on one line, `min-h-16` and `py-2` draw the same
+      64 pixels the fixed height did.
     */}
-    <header class={`h-16 ${CHROME.header}`}>
-      <div class="container mx-auto flex h-16 items-center px-4 sm:px-6">
+    <header class={`min-h-16 ${CHROME.header}`}>
+      <div
+        class="container mx-auto flex min-h-16 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 sm:px-6"
+      >
         <a href={store ? `/${store}/` : '/'} aria-label="Content parity log" class="inline-block">
           <BrandLogo />
         </a>

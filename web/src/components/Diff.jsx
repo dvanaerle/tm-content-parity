@@ -348,7 +348,7 @@ function CopyButton({ text, language }) {
   return (
     <Button
       variant="ghost"
-      size="xs"
+      size="sm"
       // The tooltip holds the scraped string, and a `title` is announced in **its own
       // element's** language — so the attribute belongs here and not on the text beside
       // it, and the label below declares the one thing in this button that is English.

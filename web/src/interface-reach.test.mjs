@@ -173,3 +173,74 @@ describe('every control an editor can reach says what it is', () => {
     for (const drawn of kept) expect(unnamedControls(drawn), drawn).toHaveLength(0);
   });
 });
+
+/**
+ * The second half of *reach*: a control an editor can find still has to be one they can
+ * hit. The floor is **24 × 24 CSS pixels** — WCAG 2.2 SC 2.5.8 *Target Size (Minimum)*,
+ * Level AA — and ADR 0019 carries the decision, including why the vocabulary's smallest
+ * pressable size clears the floor rather than sitting on it.
+ *
+ * What is greppable is the **size a call site names**. `xs` and `icon-xs` were 24 pixels
+ * tall at best and narrower than that around a glyph, and they were on the override
+ * controls, which are the most-pressed controls in the log. They are gone from the
+ * vocabulary, so this guard has two halves: no call site asks for one, and the primitive
+ * does not offer one back.
+ */
+const BELOW_THE_FLOOR = [/size="(icon-)?xs"/];
+
+/** The one file that decides what a size means. */
+const BUTTON = 'components/ui/button.jsx';
+
+/**
+ * The keys of the `size` block, and only that block — `variant` is the same shape one
+ * level up and its names would otherwise read as sizes.
+ *
+ * @param {string} text
+ * @returns {string[]}
+ */
+const sizesDeclared = (text) => {
+  const inside = text.split(/^ {6}size: \{$/m)[1]?.split(/^ {6}\},$/m)[0] ?? '';
+  return [...inside.matchAll(/^ {8}'?([a-z-]+)'?:/gm)].map(([, name]) => name);
+};
+
+describe('every control an editor can reach is big enough to hit', () => {
+  it('asks for no size below the target floor', async () => {
+    const caught = (await drawnFiles(true)).flatMap(([file, text]) =>
+      text
+        .split('\n')
+        .map((line, index) => /** @type {[string, number]} */ ([line, index]))
+        .filter(([line]) => BELOW_THE_FLOOR.some((pattern) => pattern.test(line)))
+        .map(([line, index]) => `${named(file)}:${index + 1} — ${line.trim()}`),
+    );
+    expect(caught).toEqual([]);
+  }, 30_000);
+
+  it('offers no size below the target floor', async () => {
+    const button = await readFile(join(ROOT, ...BUTTON.split('/')), 'utf8');
+    expect(sizesDeclared(button)).toEqual(['default', 'sm', 'lg', 'icon', 'icon-sm', 'icon-lg']);
+  });
+
+  // The guard has to be able to fail.
+  it('catches the size a regression would name', () => {
+    const asked = ['  <Button variant="outline" size="xs" onClick={close}>', '  size="icon-xs"'];
+    for (const line of asked) {
+      expect(
+        BELOW_THE_FLOOR.some((pattern) => pattern.test(line)),
+        line,
+      ).toBe(true);
+    }
+  });
+
+  it('leaves a size that clears the floor alone', () => {
+    for (const line of [
+      '  <Button size="sm">Dismiss</Button>',
+      '  size="icon-sm"',
+      '  size="lg"',
+    ]) {
+      expect(
+        BELOW_THE_FLOOR.some((pattern) => pattern.test(line)),
+        line,
+      ).toBe(false);
+    }
+  });
+});

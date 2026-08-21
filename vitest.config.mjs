@@ -20,7 +20,7 @@ const WEB_SRC = fileURLToPath(new URL('./web/src', import.meta.url));
 const IGNORED = ['**/node_modules/**', 'dist/**', '**/.claude/**'];
 
 /**
- * Two projects, because this repo has two kinds of seam.
+ * Three projects, because this repo has three kinds of seam.
  *
  * Nearly everything here is a pure function and runs in Node: the compare rules, the
  * override derivation, the view filters. That is the `node` project, and it is the
@@ -31,9 +31,14 @@ const IGNORED = ['**/node_modules/**', 'dist/**', '**/.claude/**'];
  * pretending to be a browser, and a pretend browser is the wrong thing to test a
  * `history` or a `scrollIntoView` against: what we want to know is whether the real
  * one does it. So those run in a real Chromium under `vitest --browser`, and they are
- * named `*.browser.test.mjs` so the two projects never collect each other's files.
+ * named `*.browser.test.mjs` so the projects never collect each other's files.
  *
- * `npm test` runs both.
+ * The third is a `.astro` component's own HTML — a layout, the store switcher. Only
+ * Astro's compiler can render one, so that project brings Astro's Vite config with it and
+ * lives in `web/vitest.astro.config.mjs`, where `web/node_modules` resolves. Its files are
+ * named `*.astro.test.mjs`.
+ *
+ * `npm test` runs all three.
  */
 export default defineConfig({
   test: {
@@ -42,7 +47,7 @@ export default defineConfig({
         test: {
           name: 'node',
           include: ['**/*.test.mjs'],
-          exclude: [...IGNORED, '**/*.browser.test.mjs'],
+          exclude: [...IGNORED, '**/*.browser.test.mjs', '**/*.astro.test.mjs'],
         },
       },
       {
@@ -69,6 +74,7 @@ export default defineConfig({
           },
         },
       },
+      './web/vitest.astro.config.mjs',
     ],
   },
 });

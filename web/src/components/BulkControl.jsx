@@ -208,7 +208,7 @@ export default function BulkControl({
           {bulk?.canWrite && asking === null && (
             <>
               {dismissal.covers > 0 && (
-                <Button variant="outline" size="xs" onClick={() => setAsking('dismiss')}>
+                <Button variant="outline" size="sm" onClick={() => setAsking('dismiss')}>
                   Dismiss on {dismissal.covers === 1 ? 'this page' : `${dismissal.covers} pages`}…
                 </Button>
               )}
@@ -221,7 +221,7 @@ export default function BulkControl({
               {cleared.covers > 0 && (
                 <Button
                   variant="outline"
-                  size="xs"
+                  size="sm"
                   disabled={bulk.busy}
                   onClick={() =>
                     needsRestating(cleared.covers) ? setAsking('clear') : press(cleared.events)
@@ -311,7 +311,7 @@ export default function BulkControl({
             <Button
               type="submit"
               variant="outline"
-              size="xs"
+              size="sm"
               disabled={dismissal.events.length === 0 || bulk.busy}
               title={dismissal.events.length === 0 ? 'A decision needs a reason.' : undefined}
             >
@@ -323,7 +323,7 @@ export default function BulkControl({
                 without this the cancel *presses* the decision it is there to abandon:
                 `close()` runs, the submit fires behind it, and N rows land in an
                 append-only table that has nothing to undo them with. */}
-            <Button type="button" variant="outline" size="xs" onClick={close}>
+            <Button type="button" variant="outline" size="sm" onClick={close}>
               Cancel
             </Button>
           </div>
@@ -542,7 +542,7 @@ const Running = ({ written, total, onStop }) => (
           asked to hear again, and the *Stop* beside it would be buried under them. */}
       Saving <span aria-live="off">{written}</span> of {total}…
     </strong>
-    <Button type="button" variant="outline" size="xs" onClick={onStop}>
+    <Button type="button" variant="outline" size="sm" onClick={onStop}>
       Stop
     </Button>
   </p>
@@ -585,14 +585,14 @@ const RestateTheCount = ({ covers, typed, onType, busy, onConfirm, onCancel }) =
     <Button
       type="submit"
       variant="outline"
-      size="xs"
+      size="sm"
       disabled={busy || typed.trim() !== String(covers)}
     >
       {busy ? 'Saving…' : `Clear the decision on ${covers} pages`}
     </Button>
     {/* `type="button"`, for the reason the dismissal's cancel states: the default submits
         the form this one is there to abandon. */}
-    <Button type="button" variant="outline" size="xs" onClick={onCancel}>
+    <Button type="button" variant="outline" size="sm" onClick={onCancel}>
       Cancel
     </Button>
   </form>

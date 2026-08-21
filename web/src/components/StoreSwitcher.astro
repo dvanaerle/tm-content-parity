@@ -21,7 +21,7 @@ const { stores, store } = Astro.props;
 
 {
   stores.length > 1 && (
-    <nav aria-label="Store" class="ml-auto flex items-center gap-1 text-sm">
+    <nav aria-label="Store" class="ml-auto flex flex-wrap items-center justify-end gap-1 text-sm">
       {stores.map((id) => (
         <a
           href={`/${id}/`}

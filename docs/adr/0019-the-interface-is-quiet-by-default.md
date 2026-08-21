@@ -95,6 +95,48 @@ selector.
 - An **icon-only control** has an accessible name and a comfortable hit area. The glyph stays
   small; the target does not.
 
+### The target floor
+
+**Every target is at least 24 × 24 CSS pixels.** That is WCAG 2.2 SC 2.5.8 *Target Size
+(Minimum)*, Level AA, and it is the number this interface answers, written here so that the
+next person reaching for a size picks the same one. Amended in ticket 13.
+
+The reader it is for is not the phone this repo keeps being asked about. It is a mouse user
+with poor motor control at a desktop — a target size is not a width question, and ticket 87's
+three widths are a separate and parked programme. SC 2.5.5 *Target Size (Enhanced)* asks 44,
+and is **refused**: a content view carries up to 168 rows of controls, and 44-pixel presses
+down all of them is the weight this ADR exists to remove.
+
+Two devices, and which one applies is decided by whether the control carries ink of its own:
+
+- **Grow the box** where the control draws no ground until it is pressed — a button, a toggle
+  in the class filter. `sm` is the smallest press in the vocabulary at 28 pixels, and `xs` and
+  `icon-xs` are **gone from `ui/button.jsx`**. `xs` was `h-6`, which is the floor exactly, and
+  around a glyph it was under it on width; a size whose compliance has to be measured per call
+  site is one that will be wrong at one of them. It was on the override controls, which an
+  editor presses more than anything else in the log.
+- **Grow the target around the ink** where the box is the drawing — the checkbox's 16-pixel
+  tick, the class pill where it is a link. A pseudo-element takes the press outside the words,
+  so the target clears the floor and nothing gains weight, colour or a border. It grows
+  **vertically only** where the element has siblings on the line: two overlapping targets are
+  worse than one small one.
+
+**An inline link in a sentence is exempt**, and SC 2.5.8 says so itself: a target whose size
+is constrained by the line height of the text around it is not in scope. *Production ↗* in the
+page header and the store links on the landing page are prose, and padding them to 24 pixels
+would break the line they are read in. Nothing else claims the exception.
+
+Growing a target is never permission to add weight. A 20-pixel pill that becomes a 28-pixel
+pill has spent 8 pixels of tint on 168 rows; the same pill with a 28-pixel target has spent
+nothing.
+
+Half of this is guarded and half is not, which is worth stating. `interface-reach.test.mjs`
+asserts that no call site names a size below the floor and that `ui/button.jsx` offers none
+back — the same closed-list habit as the badge sweep. What no test here measures is a
+**rendered** pixel: the browser project runs components without the stylesheet, and the
+screenshot suite this ADR refuses is the only thing that would. So a halo whose inset is
+wrong is caught by a reader and not by the suite.
+
 ## What earns the front of a row
 
 The **compared content leads**, and everything the tool made of it follows. A finding row and

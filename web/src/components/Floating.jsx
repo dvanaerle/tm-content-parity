@@ -85,7 +85,7 @@ export const Dismiss = ({ onClear }) => (
     <Button
       type="button"
       variant="ghost"
-      size="xs"
+      size="sm"
       onClick={onClear}
       aria-label="Clear the selection"
       title="Clear the selection"

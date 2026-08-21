@@ -164,7 +164,20 @@ export function ClassPill({ class: cls, hinted = true, href = null }) {
         variant={null}
         data-wears="pill"
         data-tone={info.tone}
-        className={cn('h-auto px-1.5 py-0.5 text-xs', href && 'hover:underline')}
+        className={cn(
+          'h-auto px-1.5 py-0.5 text-xs',
+          // A linked pill is a target, and a 20-pixel one is under the floor ADR 0019
+          // sets. The **target** grows and the ink does not: the pseudo-element takes the
+          // press four pixels above and below the words, which is `ui/checkbox.jsx`'s
+          // device and the only one this ticket's own trap allows — a taller tinted pill
+          // on 168 rows is the weight ADR 0019 spent a pass removing. The badge clips its
+          // overflow by default, and a clipped target is not a target.
+          //
+          // Vertical only. Two pills side by side would fight over a horizontal halo, and
+          // an overlapping target is worse than a small one.
+          href &&
+            'relative overflow-visible after:absolute after:inset-x-0 after:-inset-y-1 hover:underline',
+        )}
         render={href ? <a href={href} aria-label={`Every ${info.label} finding`} /> : undefined}
       >
         {info.label}
@@ -212,7 +225,10 @@ export function ClassFilterPills({ counts, selected, onToggle, hint }) {
           <ToggleGroupItem
             value={cls}
             className={cn(
-              'h-auto gap-1 px-0.5 py-0',
+              // The item is what the press lands on, and `h-auto` collapsed it onto the
+              // 20-pixel pill inside it. `min-h-6` is ADR 0019's floor, and it is space
+              // rather than weight: the toggle draws no ground until it is pressed.
+              'min-h-6 gap-1 px-0.5 py-0',
               // The ring is the brand's and stays a class: it is chrome, which says *this
               // filter is on* and makes no claim about a finding, so it is outside the tone
               // product this pill's colour comes from. Nothing is assembled here — the
@@ -320,7 +336,10 @@ export function PriorityFilterPills({ selected, onToggle, counts = {} }) {
           <ToggleGroupItem
             value={priority}
             className={cn(
-              'h-auto gap-1 px-0.5 py-0',
+              // The item is what the press lands on, and `h-auto` collapsed it onto the
+              // 20-pixel pill inside it. `min-h-6` is ADR 0019's floor, and it is space
+              // rather than weight: the toggle draws no ground until it is pressed.
+              'min-h-6 gap-1 px-0.5 py-0',
               selected.includes(priority) && 'ring-2 ring-primary',
             )}
           >
@@ -398,7 +417,7 @@ function ScopeClearButton({ onClear }) {
     <Hint text="Clear the page scope" announce={false}>
       <Button
         variant="ghost"
-        size="icon-xs"
+        size="icon-sm"
         onClick={onClear}
         aria-label="Clear the page scope"
         // The glyph stays 16 pixels so the chip keeps its shape, and the **target** is
@@ -441,7 +460,7 @@ export function ScopeRowButton({ page, onScope, className = '' }) {
     <Hint text={`Search inside ${page}`} announce={false}>
       <Button
         variant="ghost"
-        size="icon-xs"
+        size="icon-sm"
         data-scope-row={page}
         onClick={onScope}
         aria-label={`Search inside ${page}`}
@@ -483,7 +502,7 @@ export function FilterBanner({ onClear, className = '', children }) {
       className={cn('flex flex-wrap items-center gap-2 text-sm', className)}
     >
       {children}
-      <Button variant="outline" size="xs" onClick={onClear} className="border-primary text-primary">
+      <Button variant="outline" size="sm" onClick={onClear} className="border-primary text-primary">
         Clear filter
       </Button>
     </Alert>

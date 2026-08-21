@@ -6,6 +6,11 @@ import { cn } from '@/lib/utils';
 import { CheckIcon, MinusIcon } from 'lucide-react';
 
 /**
+ * The box is 16 pixels and the **target** is not: `after:-inset-x-3 after:-inset-y-2` takes
+ * the press 32 pixels tall and 40 wide, which clears ADR 0019's floor of 24 × 24 (WCAG 2.2
+ * SC 2.5.8) with room. The tick an editor sees stays the size a tick should be — the floor
+ * is a floor and not a size to draw to.
+ *
  * `indeterminate` is Base UI's own prop and it already writes `aria-checked="mixed"`. What
  * it does not do is choose a glyph: the indicator renders for a mixed checkbox exactly as
  * it does for a ticked one, so *all of these pages* and *some of these pages* would draw
