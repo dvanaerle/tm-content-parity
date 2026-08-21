@@ -1,6 +1,6 @@
 // Independent measurement 3: own key rule (state.mjs:130-133), own sibling rule
 // (blocks.mjs:67-96), own repeat key (view.mjs:804-814). No imports from the repo.
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 const R='C:/Users/d.aerle/Desktop/github/tm-content-parity/';
 const ev=JSON.parse(readFileSync(R+'data/overrides-backup-2026-08-18T09-46-51-393Z.json','utf8'));
 const PAGE_KEY={prioritised:'priority',noted:'note'};

@@ -71,11 +71,19 @@ everything refused*, which is a real screen — so the bug would draw a plausibl
 failing. The selection can default because *nothing selected* is genuinely neutral; *nothing
 readable* is not.
 
+**And a missing store throws for the same reason.** `listReading()` requires the store to be
+stated, `null` included. Defaulting it to none would reinstate one level up exactly the bug the
+throwing provider prevents: a screen that forgot to name its store would build a valid wide
+reading and draw that plausible page. *No store* is a screen, not the absence of an answer.
+
 ## Consequences
 
 - **The store is the interface.** `store: string | null` is the whole of the corpus
   distinction, so the next move of the rule ADR 0021 and ADR 0028 govern lands in one function
-  with one test file, and not in five sites that must be found.
+  with one test file, and not in five sites that must be found. The reading answers **whether
+  the list spans stores** as well, so no screen reads that off the store a second time; and it
+  holds the screen's page link, so the header blocks above a list are handed it rather than
+  taking a builder of their own beside the reading that already has one.
 - **The press policy leaves the browser.** Whether a repeat may be pressed, what the refusal
   says, and which stores it names are decided as values, so they are proven in a plain Vitest
   file. The browser test keeps what needs a DOM — the ticks, the remounting, the drawn budget —

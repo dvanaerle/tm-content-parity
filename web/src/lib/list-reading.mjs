@@ -1,5 +1,5 @@
-import { STORE_LANGUAGE } from './stores.mjs';
-import { crossesStore, spansEveryStore } from './view.mjs';
+import { STORE_LANGUAGE } from "./stores.mjs";
+import { crossesStore, spansEveryStore } from "./view.mjs";
 
 /**
  * Why a difference cannot be pressed above the stores, or `null` where it can (ticket 04).
@@ -13,7 +13,7 @@ import { crossesStore, spansEveryStore } from './view.mjs';
  * reworded refusal is a change an editor meets, and it fails loudly here.
  */
 export const TRANSLATED_ELSEWHERE =
-  'The stores translate these words — decide it on one of the stores named.';
+  "The stores translate these words — decide it on one of the stores named.";
 
 /**
  * @typedef {object} RowReading
@@ -22,6 +22,8 @@ export const TRANSLATED_ELSEWHERE =
  * @property {string | null} language What the row's two quoted strings are in, or `null`
  *   where the row spans languages and there is nothing true to declare.
  * @property {boolean} namesStore Whether the row and its pages say which store they are on.
+ * @property {string[]} matchedFields Which fields the typed term was found in, and none where
+ *   nobody typed one — the row's own account of why a search put it on screen.
  * @property {string | null} classHref Where the row's class label lands, or `null` where the
  *   screen offers no way into a class.
  * @property {(entry: import('./view.mjs').RepeatEntry) => string} pageHref Where one page of
@@ -32,8 +34,13 @@ export const TRANSLATED_ELSEWHERE =
  * @typedef {object} ListReading
  * @property {string | null} store The store the list is about: an id on a store's screen,
  *   and `null` above the stores.
+ * @property {boolean} acrossStores Whether the list spans stores rather than being one
+ *   store's. Answered here so no screen reads it off `store` a second time.
  * @property {Map<string, object>} byFinding What the log says about each finding.
  * @property {boolean} searched Whether the list answers a question somebody typed.
+ * @property {(store: string, page: string) => string} hrefOfPage Where a page lands, at no
+ *   particular difference — what a header naming pages links to. A row asks
+ *   `of(repeat).pageHref()` instead, which lands at the difference as well.
  * @property {(repeat: import('./view.mjs').Repeat) => RowReading} of Everything one row
  *   needs, in one call.
  */
@@ -54,9 +61,10 @@ export const TRANSLATED_ELSEWHERE =
  * the sentence is written.
  *
  * @param {object} input
- * @param {string | null} [input.store] The store the list is about, and `null` above the
- *   stores. Defaulted to none because that is the wide reading, and a screen that forgets to
- *   name its store refuses presses rather than offering ones it should not.
+ * @param {string | null} input.store The store the list is about, and `null` above the
+ *   stores. **Stated and never defaulted**, for the reason the provider throws on a missing
+ *   reading: *no store* is not neutral but a real screen — the wide one — so a screen that
+ *   forgot to name its store would build a valid reading and draw a plausible page.
  * @param {Map<string, object>} input.byFinding The log, indexed by finding id.
  * @param {boolean} [input.searched] Whether a term was typed. It decides whether a row draws
  *   the fields the term matched, and it is the screen's own answer: only a search has one.
@@ -67,7 +75,15 @@ export const TRANSLATED_ELSEWHERE =
  *   plain statement it always was.
  * @returns {ListReading}
  */
-export function listReading({ store = null, byFinding, searched = false, link, classLink = null }) {
+export function listReading({
+  store,
+  byFinding,
+  searched = false,
+  link,
+  classLink = null,
+}) {
+  if (store === undefined) throw new Error(NO_STORE);
+
   /*
    * The list's own language, where it has one. On a store's screen it answers for every row:
    * a difference has no report and no store in scope of its own, and two stores of a block
@@ -78,17 +94,36 @@ export function listReading({ store = null, byFinding, searched = false, link, c
 
   return {
     store,
+    /*
+     * Whether the list spans stores. It is *no store of its own* and not *more than one store
+     * in the corpus*: a block store's search reaches two stores and is still `nl`'s screen,
+     * drawing `nl`'s page list and speaking Dutch. Answered here because a screen deriving it
+     * from `store` again is the fifth site this reading exists to remove.
+     */
+    acrossStores: !store,
     byFinding,
     searched,
+    hrefOfPage: (pageStore, page) => link(pageStore, page, null),
     of: (repeat) => ({
-      refusal: store || spansEveryStore(repeat.class) ? null : TRANSLATED_ELSEWHERE,
+      refusal:
+        store || spansEveryStore(repeat.class) ? null : TRANSLATED_ELSEWHERE,
       language: language ?? spokenOn(repeat),
       namesStore: !store || crossesStore(repeat),
+      /*
+       * The fields are the row's, and whether they are *drawn* is the screen's: on a list
+       * nobody asked a question of, *in the page name* is two dead words about a match that
+       * never happened. So the flag decides it here rather than at the cell.
+       */
+      matchedFields: searched ? (repeat.fields ?? []) : [],
       classHref: classLink?.(repeat.class) ?? null,
       pageHref: (entry) => link(entry.store, entry.page, entry.id),
     }),
   };
 }
+
+const NO_STORE =
+  "A list reading needs the store its list is about. Pass the store id, or null above the" +
+  " stores — no store is a screen and not a default.";
 
 /**
  * What language a row's two quoted strings are in when the list has no answer (ticket 125,

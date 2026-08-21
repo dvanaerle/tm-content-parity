@@ -532,7 +532,9 @@ element any more: it folds the links inside it. Both the word and the rule are g
   draws a refusal it has no sentence for. A list that answers a **typed question** says so,
   because a searched row draws the fields the term matched and an unsearched one does not.
   The store is the one fact because it *is* the half-and-whole distinction of ADR 0021: a
-  named store is a language block, and no store is all six. Five places derived that
+  named store is a language block, and no store is all six. It is **stated and never left
+  out**: *no store* is the wide screen and not a missing answer, so a reading built without one
+  is an error and not the widest reading by default. Five places derived that
   separately until this reading, and the same rule moved twice in one month.
   See `docs/adr/0030-the-list-reading-states-what-a-press-may-cross.md`.
 - **Landing** — arriving at one difference because a link named it. A page link from
@@ -606,15 +608,6 @@ element any more: it folds the links inside it. Both the word and the rule are g
   **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first, and it answers
   *which page do I open next*. There is no all-stores repeat view, for the reason
   there is no all-stores dashboard.
-- **Page queue** — the store's pages in the order an editor should open them: narrowed by the
-  class pills and the priority chips, then worst-first on the work that is **left** after the
-  log, or by name where an editor asked for that instead. It is what *Pages* draws.
-  **It counts before it narrows.** The priority chips say how many pages carry each priority
-  over the whole store, and never over the pages a chip has already cut — a chip that fell to
-  its own number when it was pressed would be a control that lies about what it holds. It is
-  the rule a class pill keeps above the repeat list, said about the other list.
-  A page the log has not answered for reads as **all open**: nothing is decided and nothing is
-  contradicted, which is what an empty log means and not a blank cell.
 - **Class group** — the repeats of one class in *Repeats*, under a label carrying
   the class and how many repeats it holds. The groups are in the vocabulary's order
   and never in the counts' order, because a group that moves position as the work is

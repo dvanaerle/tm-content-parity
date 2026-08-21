@@ -1,17 +1,27 @@
-import { useMemo } from 'react';
-import { ClassFilterPills } from './Chips.jsx';
-import { EditorPrompt, LogBanner } from './Progress.jsx';
-import Search from './Search.jsx';
-import SearchBox from './SearchBox.jsx';
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx';
-import { classInfo } from '../lib/classes.mjs';
-import { listReading } from '../lib/list-reading.mjs';
-import { NO_EDITOR, useBulk, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
-import { pageHref } from '../lib/page-url.mjs';
-import { pagesOfIndex } from '../lib/search.mjs';
-import { useSearchIndex } from '../lib/search-index.mjs';
-import { classHref, useScreen } from '../lib/screen-url.mjs';
-import { classCounts, toggleIn } from '../lib/view.mjs';
+import { useCallback, useMemo } from "react";
+import { ClassFilterPills } from "./Chips.jsx";
+import { EditorPrompt, LogBanner } from "./Progress.jsx";
+import Search from "./Search.jsx";
+import SearchBox from "./SearchBox.jsx";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "./ui/empty.jsx";
+import { classInfo } from "../lib/classes.mjs";
+import { listReading } from "../lib/list-reading.mjs";
+import {
+  NO_EDITOR,
+  useBulk,
+  useEditor,
+  useStoreOverrides,
+} from "../lib/overrides.mjs";
+import { pageHref } from "../lib/page-url.mjs";
+import { pagesOfIndex } from "../lib/search.mjs";
+import { useSearchIndex } from "../lib/search-index.mjs";
+import { classHref, useScreen } from "../lib/screen-url.mjs";
+import { classCounts, toggleIn } from "../lib/view.mjs";
 
 /**
  * One search over every store (ticket 03).
@@ -109,19 +119,30 @@ export default function AllStores({ stores = [] }) {
    * that nobody chose. Back is what returns here, and the browser already has it: the screen
    * is in the address bar.
    */
-  const link = (store, page, finding = null) => pageHref(store, page, { finding });
+  const link = useCallback(
+    (store, page, finding = null) => pageHref(store, page, { finding }),
+    [],
+  );
 
   /**
    * This screen, as the one reading the list is drawn under (ADR 0030).
    *
-   * **No store**, which is the whole of what this screen is: rows that name their store, a
-   * row that speaks its own language or none at all, a press over six stores where the check
-   * makes the two sides one string, and a row of translated words refused with the sentence
-   * saying where to decide it instead. One fact stated here, and the rest derived.
+   * **No store**, which is the whole of what this screen is, and it is said in the word
+   * `null` rather than by leaving the store out: rows that name their store, a row that speaks
+   * its own language or none at all, a press over six stores where the check makes the two
+   * sides one string, and a row of translated words refused with the sentence saying where to
+   * decide it instead. One fact stated here, and the rest derived.
    */
   const reading = useMemo(
-    () => listReading({ byFinding: log.byFinding, searched: true, link, classLink: classHref }),
-    [log.byFinding],
+    () =>
+      listReading({
+        store: null,
+        byFinding: log.byFinding,
+        searched: true,
+        link,
+        classLink: classHref,
+      }),
+    [log.byFinding, link],
   );
 
   /**
@@ -161,7 +182,9 @@ export default function AllStores({ stores = [] }) {
       <div className="flex flex-wrap items-center gap-2">
         <EditorPrompt editor={editor} save={save} />
         <p className="text-sm text-muted-foreground">
-          {editor ? 'A decision made here is recorded under this name.' : NO_EDITOR}
+          {editor
+            ? "A decision made here is recorded under this name."
+            : NO_EDITOR}
         </p>
       </div>
 
@@ -170,7 +193,11 @@ export default function AllStores({ stores = [] }) {
             is a substring that cannot name a store. Typing one still narrows — the slash rule
             is `parseTerm()`'s and it runs wherever a term does — and what is missing here is
             only the list of keys to choose from. */}
-        <SearchBox value={query} onChange={(next) => patch({ query: next })} pages={[]} />
+        <SearchBox
+          value={query}
+          onChange={(next) => patch({ query: next })}
+          pages={[]}
+        />
         <ClassFilterPills
           counts={counts}
           selected={classes}
@@ -199,28 +226,27 @@ export default function AllStores({ stores = [] }) {
             indexError={error}
             term={query}
             classes={classes}
-            onClearFilters={() => patch({ classes: [], query: '' })}
+            onClearFilters={() => patch({ classes: [], query: "" })}
             log={log}
             includeClosed={includeClosed}
             onIncludeClosed={(next) => patch({ includeClosed: next })}
             bulk={bulk}
-            link={link}
           />
         ) : (
           <Empty className="py-10">
             <EmptyHeader>
               <EmptyTitle>Search every store</EmptyTitle>
               <EmptyDescription>
-                Type the words an editor would read on the page — a filename, a link target, an
-                anchor's words, a heading or a page name — or press a class to open every finding
-                of that kind. {stores.length} stores are searched at once, and the notes in the log
-                are searched with them.
+                Type the words an editor would read on the page — a filename, a
+                link target, an anchor's words, a heading or a page name — or
+                press a class to open every finding of that kind.{" "}
+                {stores.length} stores are searched at once, and the notes in
+                the log are searched with them.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
         )}
       </div>
-
     </div>
   );
 }

@@ -1,19 +1,30 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 // `bucketOf()` for the one question *Include closed* asks of a page — is it in the Closed
 // bucket — read from the function that groups the four derived states rather than restated
 // here (ticket 80).
-import { barOf, bucketOf } from '../../../overrides/state.mjs';
-import { Detail, Occurrences, onePageHint } from './Annotations.jsx';
-import { Hint } from './Hint.jsx';
-import BulkControl from './BulkControl.jsx';
-import { ClassPill } from './Chips.jsx';
-import { BUCKET_TONE } from '../lib/buckets.mjs';
-import { Comparison } from './Diff.jsx';
-import { STATE, attributionTone } from './OverrideControl.jsx';
-import { Attribution } from './Attribution.jsx';
-import { Button } from './ui/button.jsx';
-import { Checkbox } from './ui/checkbox.jsx';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible.jsx';
+import { barOf, bucketOf } from "../../../overrides/state.mjs";
+import { Detail, Occurrences, onePageHint } from "./Annotations.jsx";
+import { Hint } from "./Hint.jsx";
+import BulkControl from "./BulkControl.jsx";
+import { ClassPill } from "./Chips.jsx";
+import { BUCKET_TONE } from "../lib/buckets.mjs";
+import { Comparison } from "./Diff.jsx";
+import { STATE, attributionTone } from "./OverrideControl.jsx";
+import { Attribution } from "./Attribution.jsx";
+import { Button } from "./ui/button.jsx";
+import { Checkbox } from "./ui/checkbox.jsx";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./ui/collapsible.jsx";
 import {
   Table,
   TableBody,
@@ -22,15 +33,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/table.jsx';
-import { CHROME } from '../lib/palette.mjs';
-import { cn } from '../lib/utils.js';
+} from "./ui/table.jsx";
+import { CHROME } from "../lib/palette.mjs";
+import { cn } from "../lib/utils.js";
 import {
   findingsIn,
   groupRepeatsByClass,
   repeatsByOpenWork,
   repeatsWithWorkLeft,
-} from '../lib/view.mjs';
+} from "../lib/view.mjs";
 
 /**
  * A store's work listed as differences rather than as pages (ticket 81).
@@ -64,11 +75,22 @@ import {
  * because the three levels below only passed it through and the selection beside it already
  * arrives this way.
  */
-export default function Repeats({ repeats, reading, logRead, bulk = null, builtAt = null }) {
+export default function Repeats({
+  repeats,
+  reading,
+  logRead,
+  bulk = null,
+  builtAt = null,
+}) {
   return (
-    <ListReadingContext.Provider value={readingGiven(reading)}>
-      <FlatList repeats={repeats} logRead={logRead} bulk={bulk} builtAt={builtAt} />
-    </ListReadingContext.Provider>
+    <UnderReading reading={reading}>
+      <FlatList
+        repeats={repeats}
+        logRead={logRead}
+        bulk={bulk}
+        builtAt={builtAt}
+      />
+    </UnderReading>
   );
 }
 
@@ -81,9 +103,14 @@ function FlatList({ repeats, logRead, bulk, builtAt }) {
   // (`searchStore()`, ticket 09), so there is nothing left to take away — and where the editor
   // did ask for closed work, these are the rows they asked for. Only the dashboard's *Repeats*
   // view hides one, and `ClassGroups` below is where the control reaches.
-  const { rows: worstFirst } = useWorstFirst(repeats, reading.byFinding, logRead, {
-    includeClosed: true,
-  });
+  const { rows: worstFirst } = useWorstFirst(
+    repeats,
+    reading.byFinding,
+    logRead,
+    {
+      includeClosed: true,
+    },
+  );
 
   /**
    * The rows a press on this screen may reach (ticket 04).
@@ -158,7 +185,8 @@ function FlatList({ repeats, logRead, bulk, builtAt }) {
  * one: a skipped member would quietly lower the denominator, so the row would say *3 of 3
  * closed* about four findings, and since ticket 141 it would quietly move the row as well.
  */
-const barFor = (repeat, stateOf) => barOf(repeat.on.map((entry) => stateOf(entry.id)));
+const barFor = (repeat, stateOf) =>
+  barOf(repeat.on.map((entry) => stateOf(entry.id)));
 
 /**
  * The list **worst-first and with the settled differences off it** — the difference with
@@ -208,10 +236,13 @@ const barFor = (repeat, stateOf) => barOf(repeat.on.map((entry) => stateOf(entry
  *   under the editor who just decided it.
  */
 function useWorstFirst(repeats, byFinding, logRead, { includeClosed }) {
-  const [held, setHeld] = useState(/** @type {null | { rows: object[], log: Map }} */ (null));
+  const [held, setHeld] = useState(
+    /** @type {null | { rows: object[], log: Map }} */ (null),
+  );
 
   useEffect(() => {
-    if (logRead && !sameRows(held?.rows, repeats)) setHeld({ rows: repeats, log: byFinding });
+    if (logRead && !sameRows(held?.rows, repeats))
+      setHeld({ rows: repeats, log: byFinding });
   }, [logRead, repeats, byFinding, held]);
 
   const asArrived = held?.log ?? byFinding;
@@ -221,7 +252,8 @@ function useWorstFirst(repeats, byFinding, logRead, { includeClosed }) {
     // editor makes, and re-taking this on those is exactly the row moving out from under
     // them. It is still read for a finding the held reading does not know.
     () => {
-      const stateOf = (/** @type {string} */ id) => asArrived.get(id) ?? byFinding.get(id);
+      const stateOf = (/** @type {string} */ id) =>
+        asArrived.get(id) ?? byFinding.get(id);
       const openIn = (/** @type {import('../lib/view.mjs').Repeat} */ repeat) =>
         barFor(repeat, stateOf).open;
       const left = repeatsWithWorkLeft(repeats, openIn, { includeClosed });
@@ -262,13 +294,15 @@ function useWorstFirst(repeats, byFinding, logRead, { includeClosed }) {
  * screen as well.
  */
 const drawnPagesOf = (repeat, closedPages) =>
-  closedPages ? repeat.on.filter((entry) => !closedPages.has(entry.id)) : repeat.on;
+  closedPages
+    ? repeat.on.filter((entry) => !closedPages.has(entry.id))
+    : repeat.on;
 
 const closedPagesIn = (repeats, stateOf) =>
   new Set(
     repeats.flatMap((repeat) =>
       repeat.on
-        .filter((entry) => bucketOf(stateOf(entry.id).state) === 'closed')
+        .filter((entry) => bucketOf(stateOf(entry.id).state) === "closed")
         .map((entry) => entry.id),
     ),
   );
@@ -281,7 +315,8 @@ const closedPagesIn = (repeats, stateOf) =>
  * bar and the rows under it counting another is the disagreement this ticket exists to end:
  * `Case or punctuation 40` over a group header saying *52 differences*.
  */
-export const openWorkIn = (repeat, byFinding) => barFor(repeat, (id) => byFinding.get(id)).open;
+export const openWorkIn = (repeat, byFinding) =>
+  barFor(repeat, (id) => byFinding.get(id)).open;
 
 /**
  * Whether a new list holds the same differences as the one the order was taken over.
@@ -292,7 +327,8 @@ export const openWorkIn = (repeat, byFinding) => barFor(repeat, (id) => byFindin
  * lists arrive in the same derived order, so they are compared where they stand.
  */
 const sameRows = (rows, repeats) =>
-  rows?.length === repeats.length && rows.every((row, at) => row.key === repeats[at].key);
+  rows?.length === repeats.length &&
+  rows.every((row, at) => row.key === repeats[at].key);
 
 /**
  * The ticked pages: **one flat set of findings over the whole list** (ticket 138).
@@ -317,7 +353,13 @@ const sameRows = (rows, repeats) =>
  * holding the ticks where there is one and the words of the result where there are several,
  * so two surfaces can never claim the same ticks.
  */
-function FlatSelection({ repeats, closedPages = null, bulk, builtAt = null, children }) {
+function FlatSelection({
+  repeats,
+  closedPages = null,
+  bulk,
+  builtAt = null,
+  children,
+}) {
   const { byFinding } = useListReading();
   const [ticked, setTicked] = useState(/** @type {Set<string>} */ (NOTHING));
 
@@ -334,7 +376,9 @@ function FlatSelection({ repeats, closedPages = null, bulk, builtAt = null, chil
    * press that unticks what it wrote must not wipe its own answer.
    */
   const [reported, setReported] = useState(
-    /** @type {null | import('../../../overrides/bulk.mjs').PressReport} */ (null),
+    /** @type {null | import('../../../overrides/bulk.mjs').PressReport} */ (
+      null
+    ),
   );
 
   // Ids in or out of the set, with no opinion about the report. Both the editor's controls
@@ -387,14 +431,20 @@ function FlatSelection({ repeats, closedPages = null, bulk, builtAt = null, chil
   const reachable = useMemo(
     () =>
       closedPages
-        ? repeats.map((repeat) => ({ ...repeat, on: drawnPagesOf(repeat, closedPages) }))
+        ? repeats.map((repeat) => ({
+            ...repeat,
+            on: drawnPagesOf(repeat, closedPages),
+          }))
         : repeats,
     [repeats, closedPages],
   );
 
   // Every page the selection could reach, flattened once. It is the denominator the bar
   // states — *12 of 472 pages* — and the list the ticked ones are drawn from.
-  const entries = useMemo(() => reachable.flatMap((repeat) => repeat.on), [reachable]);
+  const entries = useMemo(
+    () => reachable.flatMap((repeat) => repeat.on),
+    [reachable],
+  );
 
   // The pages the presses are aimed at, narrowed **here** and once. This is the seam
   // `bulk.mjs` takes: it never sees a repeat and never sees the selection either, so a press
@@ -402,7 +452,8 @@ function FlatSelection({ repeats, closedPages = null, bulk, builtAt = null, chil
   // would re-filter every page on screen — 25,657 differences' worth on the unnarrowed
   // list — on every keystroke of the note, because the note is what the press is memoised on.
   const chosen = useMemo(
-    () => (ticked.size === 0 ? [] : entries.filter((entry) => ticked.has(entry.id))),
+    () =>
+      ticked.size === 0 ? [] : entries.filter((entry) => ticked.has(entry.id)),
     [entries, ticked],
   );
 
@@ -413,7 +464,9 @@ function FlatSelection({ repeats, closedPages = null, bulk, builtAt = null, chil
     () =>
       ticked.size === 0
         ? []
-        : reachable.filter((repeat) => repeat.on.some((entry) => ticked.has(entry.id))),
+        : reachable.filter((repeat) =>
+            repeat.on.some((entry) => ticked.has(entry.id)),
+          ),
     [reachable, ticked],
   );
 
@@ -426,7 +479,8 @@ function FlatSelection({ repeats, closedPages = null, bulk, builtAt = null, chil
    * difference row, or the one beside the result's count. A handful of pages ticked inside
    * one difference is the narrow press ticket 110 shipped, and it is left alone.
    */
-  const wide = holding.length > 1 || (ticked.size > 0 && ticked.size === entries.length);
+  const wide =
+    holding.length > 1 || (ticked.size > 0 && ticked.size === entries.length);
 
   return (
     <SelectionContext.Provider value={selection}>
@@ -454,7 +508,9 @@ function FlatSelection({ repeats, closedPages = null, bulk, builtAt = null, chil
 }
 
 const SelectionContext = createContext(
-  /** @type {null | { ticked: Set<string>, tick: Function, clear: Function }} */ (null),
+  /** @type {null | { ticked: Set<string>, tick: Function, clear: Function }} */ (
+    null
+  ),
 );
 
 /**
@@ -477,16 +533,28 @@ const ListReadingContext = createContext(
  * beside it may default because *nothing selected* is genuinely neutral; *nothing readable*
  * is not.
  */
-const useListReading = () => readingGiven(useContext(ListReadingContext));
+const useListReading = () => requireReading(useContext(ListReadingContext));
 
-const readingGiven = (reading) => {
+const requireReading = (reading) => {
   if (!reading) throw new Error(NO_READING);
   return reading;
 };
 
+/**
+ * The one place a reading becomes a list's, written once for the two entry points.
+ *
+ * Both take the reading as a prop and provide it here, and neither adds anything of its own
+ * to the wrapping — so the wrapping is one component rather than the same three lines twice.
+ */
+const UnderReading = ({ reading, children }) => (
+  <ListReadingContext.Provider value={requireReading(reading)}>
+    {children}
+  </ListReadingContext.Provider>
+);
+
 const NO_READING =
-  'A repeat list needs a list reading. Build one with listReading() and give it to Repeats' +
-  ' or ClassGroups.';
+  "A repeat list needs a list reading. Build one with listReading() and give it to Repeats" +
+  " or ClassGroups.";
 
 /**
  * One frozen empty set, so an untouched list and a list an editor emptied are the same
@@ -576,8 +644,8 @@ function SelectResult({ repeats }) {
 }
 
 const SELECT_RESULT_HINT =
-  'Selects every page of every difference in this result, including the ones not drawn' +
-  ' yet. A selection decides nothing.';
+  "Selects every page of every difference in this result, including the ones not drawn" +
+  " yet. A selection decides nothing.";
 
 /**
  * The same repeats, in a **class group** for each class (ticket 100).
@@ -603,9 +671,16 @@ const SELECT_RESULT_HINT =
  * (ticket 102) and grouped by the term: the term is the grouping the editor asked for, and
  * grouping it by class as well would be a second grouping over one answer.
  */
-export function ClassGroups({ repeats, classes, reading, logRead, bulk, includeClosed = false }) {
+export function ClassGroups({
+  repeats,
+  classes,
+  reading,
+  logRead,
+  bulk,
+  includeClosed = false,
+}) {
   return (
-    <ListReadingContext.Provider value={readingGiven(reading)}>
+    <UnderReading reading={reading}>
       <GroupedList
         repeats={repeats}
         classes={classes}
@@ -613,7 +688,7 @@ export function ClassGroups({ repeats, classes, reading, logRead, bulk, includeC
         bulk={bulk}
         includeClosed={includeClosed}
       />
-    </ListReadingContext.Provider>
+    </UnderReading>
   );
 }
 
@@ -624,14 +699,22 @@ function GroupedList({ repeats, classes, logRead, bulk, includeClosed }) {
   // The one list on which a wholly decided difference is hidden (ticket 144). It is the queue
   // an editor lands on, so it answers *what is left*; the flat list a search draws answers a
   // question the editor typed and hides nothing of its own.
-  const { rows: worstFirst, closedPages } = useWorstFirst(repeats, byFinding, logRead, {
-    includeClosed,
-  });
+  const { rows: worstFirst, closedPages } = useWorstFirst(
+    repeats,
+    byFinding,
+    logRead,
+    {
+      includeClosed,
+    },
+  );
   // A group of a class with nothing left is not drawn, and its header counts the differences
   // **drawn** — both of which fall out of the row rule rather than being built: this is the
   // narrowed list, and `groupRepeatsByClass()` already draws only the classes that hold
   // something.
-  const groups = useMemo(() => groupRepeatsByClass(worstFirst, classes), [worstFirst, classes]);
+  const groups = useMemo(
+    () => groupRepeatsByClass(worstFirst, classes),
+    [worstFirst, classes],
+  );
 
   // Which groups are open. The initial state is the derivation's `opensOnLoad`: closed,
   // unless a group is the only one holding anything or the pills already chose it.
@@ -643,14 +726,17 @@ function GroupedList({ repeats, classes, logRead, bulk, includeClosed }) {
   // still open several at load, and that is their call to make — they are the control that
   // chose those classes. Clicking from there collapses the rest, and re-toggling a pill is
   // what brings the pair back.
-  const toggle = (cls) => setOpen(open.includes(cls) ? open.filter((held) => held !== cls) : [cls]);
+  const toggle = (cls) =>
+    setOpen(open.includes(cls) ? open.filter((held) => held !== cls) : [cls]);
 
   // How many rows each group draws, held **here** rather than inside the group. A closed
   // group unmounts its rows, so a budget living down there would reset every time: an
   // editor who paged `copy` to three hundred rows, looked at `casing` and came back would
   // find the paging gone. The budget is the group's, and the group keeps it for as long as
   // this list is on screen.
-  const [budget, setBudget] = useState(/** @type {Record<string, number>} */ ({}));
+  const [budget, setBudget] = useState(
+    /** @type {Record<string, number>} */ ({}),
+  );
 
   if (repeats.length === 0) return <NoRepeats />;
 
@@ -694,7 +780,14 @@ function GroupedList({ repeats, classes, logRead, bulk, includeClosed }) {
  * makes that tail navigable; it does not get to decide the tail is not work. So no group is
  * left out for being small, and none of them hides its rows behind its count.
  */
-function ClassGroupRow({ group, open, onToggle, drawn, onDraw, closedPages = null }) {
+function ClassGroupRow({
+  group,
+  open,
+  onToggle,
+  drawn,
+  onDraw,
+  closedPages = null,
+}) {
   const count = group.repeats.length;
 
   return (
@@ -702,7 +795,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, closedPages = nul
       <Collapsible open={open} onOpenChange={onToggle}>
         <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-muted">
           <span aria-hidden className="w-3 text-muted-foreground">
-            {open ? '▾' : '▸'}
+            {open ? "▾" : "▸"}
           </span>
           {/* The group heading is **not** a link, and that is the same rule the row's own
               label follows from the other side: the heading is inside a `CollapsibleTrigger`,
@@ -713,7 +806,7 @@ function ClassGroupRow({ group, open, onToggle, drawn, onDraw, closedPages = nul
               Opening it moves no count, no bar and no denominator: the repeat total
               across the groups is the total the footer states. */}
           <span className="text-muted-foreground tabular-nums">
-            {count} {count === 1 ? 'difference' : 'differences'}
+            {count} {count === 1 ? "difference" : "differences"}
           </span>
         </CollapsibleTrigger>
 
@@ -758,8 +851,12 @@ function RowList({ repeats, closedPages = null, drawn: given, onDraw }) {
 
       {drawn < repeats.length && (
         <p className="border-t border-border px-4 py-3 text-sm text-muted-foreground">
-          {drawn} of {repeats.length} differences drawn.{' '}
-          <Button variant="outline" size="sm" onClick={() => draw(drawn + PAGE_SIZE)}>
+          {drawn} of {repeats.length} differences drawn.{" "}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => draw(drawn + PAGE_SIZE)}
+          >
             Show the next {PAGE_SIZE}
           </Button>
         </p>
@@ -786,7 +883,9 @@ function Total({ repeats }) {
 
 /** Said by both readings, so it is said once. */
 const NoRepeats = () => (
-  <p className="px-4 py-6 text-sm text-muted-foreground">No difference found.</p>
+  <p className="px-4 py-6 text-sm text-muted-foreground">
+    No difference found.
+  </p>
 );
 
 /**
@@ -817,7 +916,7 @@ const PAGE_SIZE = 100;
  */
 const acrossPagesHint = (repeat) =>
   `${repeat.occurrences} times in total, on ${repeat.on.length} ` +
-  'pages. On some of those pages the difference is there more than once.';
+  "pages. On some of those pages the difference is there more than once.";
 
 function Row({ repeat, closedPages = null }) {
   const { byFinding, of } = useListReading();
@@ -842,7 +941,10 @@ function Row({ repeat, closedPages = null }) {
    * counts `repeat.on`**: nothing leaves a denominator, so a partly settled difference goes on
    * saying how many of it are closed while drawing only the rest.
    */
-  const pages = useMemo(() => drawnPagesOf(repeat, closedPages), [repeat, closedPages]);
+  const pages = useMemo(
+    () => drawnPagesOf(repeat, closedPages),
+    [repeat, closedPages],
+  );
 
   /**
    * The list's selection, read for **this** difference's pages (ticket 110, ticket 138).
@@ -923,7 +1025,7 @@ function Row({ repeat, closedPages = null }) {
                 the row like the rest of the trigger does. */}
             <span className="mt-0.5 shrink-0">
               <Detail detail={repeat.detail} />
-              <MatchedFields fields={repeat.fields} />
+              <MatchedFields fields={row.matchedFields} />
             </span>
 
             {/* The language of the two quoted strings — the reading holds where it comes
@@ -944,7 +1046,7 @@ function Row({ repeat, closedPages = null }) {
                 the table below. */}
             {row.namesStore && (
               <span className="shrink-0 text-xs text-muted-foreground">
-                on {repeat.stores.join(', ')}
+                on {repeat.stores.join(", ")}
               </span>
             )}
 
@@ -954,7 +1056,10 @@ function Row({ repeat, closedPages = null }) {
                 the tick. It sits inside the trigger, so it is announced with the row rather
                 than as a note beside it. */}
             {row.refusal && (
-              <span data-slot="no-press" className="shrink-0 text-xs text-muted-foreground">
+              <span
+                data-slot="no-press"
+                className="shrink-0 text-xs text-muted-foreground"
+              >
                 {row.refusal}
               </span>
             )}
@@ -965,16 +1070,24 @@ function Row({ repeat, closedPages = null }) {
                 carries one finding of this difference and the two numbers are one
                 number. `occurrences` is the number that genuinely differs — the same
                 difference several times on a single page — and it is named apart. */}
-              <span className="font-medium tabular-nums">on {repeat.on.length} pages</span>
+              <span className="font-medium tabular-nums">
+                on {repeat.on.length} pages
+              </span>
               {/* Drawn only when it exceeds the page count, so the mark appears exactly
                 when it says something the page count does not. */}
               {repeat.occurrences > repeat.on.length && (
-                <Occurrences count={repeat.occurrences} hint={acrossPagesHint(repeat)} />
+                <Occurrences
+                  count={repeat.occurrences}
+                  hint={acrossPagesHint(repeat)}
+                />
               )}
               <span
-                data-wears={closedTone ? 'ink' : null}
+                data-wears={closedTone ? "ink" : null}
                 data-tone={closedTone}
-                className={cn('ml-2 tabular-nums', !closedTone && 'text-muted-foreground')}
+                className={cn(
+                  "ml-2 tabular-nums",
+                  !closedTone && "text-muted-foreground",
+                )}
               >
                 {bar.closed} of {bar.denominator} closed
               </span>
@@ -1028,7 +1141,9 @@ const SelectAll = ({ pages }) => (
  * screen reader could not tell apart (ticket 03).
  */
 const selectLabel = (namesStore, entry) =>
-  namesStore ? `Select ${entry.page} on ${entry.store}` : `Select ${entry.page}`;
+  namesStore
+    ? `Select ${entry.page} on ${entry.store}`
+    : `Select ${entry.page}`;
 
 /**
  * The pages of one difference, with a tick each (ticket 110).
@@ -1079,8 +1194,9 @@ function PageTable({ repeat, pages }) {
             press on the matches, which is right — and unsayable if this line is missing. */}
         {searched && (
           <TableCaption className="mt-2 text-left text-xs">
-            These are the pages where the search term was found. This difference can be on more
-            pages; those are not here and they are not decided with these.
+            These are the pages where the search term was found. This difference
+            can be on more pages; those are not here and they are not decided
+            with these.
           </TableCaption>
         )}
         <TableHeader>
@@ -1104,20 +1220,24 @@ function PageTable({ repeat, pages }) {
           {pages.map((entry) => (
             <TableRow
               key={entry.id}
-              data-state={selection?.ticked.has(entry.id) ? 'selected' : undefined}
+              data-state={
+                selection?.ticked.has(entry.id) ? "selected" : undefined
+              }
             >
               {selection && (
                 <TableCell>
                   <Checkbox
                     checked={selection.ticked.has(entry.id)}
-                    onCheckedChange={(ticked) => selection.tick([entry.id], ticked)}
+                    onCheckedChange={(ticked) =>
+                      selection.tick([entry.id], ticked)
+                    }
                     aria-label={selectLabel(row.namesStore, entry)}
                   />
                 </TableCell>
               )}
               <TableCell className="whitespace-normal">
                 <a
-                  className={cn('hover:underline', CHROME.link)}
+                  className={cn("hover:underline", CHROME.link)}
                   href={row.pageHref(entry)}
                 >
                   {entry.page}
@@ -1125,9 +1245,14 @@ function PageTable({ repeat, pages }) {
                 {/* Which store this page is on. The reading holds the two reasons there are
                     for saying so and the one for staying quiet. */}
                 {row.namesStore && (
-                  <span className="ml-2 text-xs text-muted-foreground">on {entry.store}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    on {entry.store}
+                  </span>
                 )}
-                <Occurrences count={entry.occurrences} hint={onePageHint(entry.occurrences)} />
+                <Occurrences
+                  count={entry.occurrences}
+                  hint={onePageHint(entry.occurrences)}
+                />
               </TableCell>
               <TableCell>
                 <FindingState finding={byFinding.get(entry.id)} />
@@ -1148,24 +1273,25 @@ function PageTable({ repeat, pages }) {
  * hold the target instead. Without this the row shows words that do not contain what was
  * typed — because what was typed is in the link, the heading or the page name.
  *
- * Nothing here when there are no fields, which is the *Repeats* view: it lists every
- * difference and no term was typed, so there is nowhere a match could have been.
+ * Nothing here when there are none, which is the *Repeats* view: no term was typed, so
+ * there is nowhere a match could have been. Whether a list is one anybody asked a question
+ * of is the **reading's** answer and not this cell's (ADR 0030).
  */
 const MatchedFields = ({ fields }) =>
-  fields?.length ? (
+  fields.length ? (
     <span className="ml-2 text-xs text-muted-foreground">
-      in {fields.map((field) => FIELD_LABEL[field]).join(', ')}
+      in {fields.map((field) => FIELD_LABEL[field]).join(", ")}
     </span>
   ) : null;
 
 /** The six searchable fields, as the dashboard says them. */
 const FIELD_LABEL = {
-  page: 'the page name',
-  prodText: 'the text on production',
-  newText: 'the text on the new site',
-  linkTarget: 'the link target',
-  linkText: 'the link text',
-  anchorHeading: 'the heading',
+  page: "the page name",
+  prodText: "the text on production",
+  newText: "the text on the new site",
+  linkTarget: "the link target",
+  linkText: "the link text",
+  anchorHeading: "the heading",
 };
 
 /**
@@ -1175,7 +1301,7 @@ const FIELD_LABEL = {
  * harder to find rather than easier.
  */
 const FindingState = ({ finding }) =>
-  finding && finding.state !== 'open' ? (
+  finding && finding.state !== "open" ? (
     /* The same attribution the ledger draws, and not a badge (ADR 0019). `fixed` and
        `dismissed` are closed states the surrounding table already accounts for, and
        *claimed fixed, still differs* names a person — a pill cannot hold a name, and the
