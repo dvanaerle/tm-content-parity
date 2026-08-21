@@ -34,7 +34,7 @@ import { CHROME } from '../lib/palette.mjs';
  * place for *agreeing* to drift into *unchanged*.
  *
  * @param {object} props
- * @param {import('../lib/view.mjs').ContextMarker} props.marker
+ * @param {import('../lib/content-view.mjs').ContextMarker} props.marker
  * @param {number} props.columns  How many columns the marker spans, which is the one
  *                                thing its two tables disagree about.
  * @param {() => void} props.onToggle
@@ -83,7 +83,7 @@ export function Marker({ marker, columns, onToggle }) {
  * nothing, so the caller passes the markers and this decides whether to appear.
  *
  * @param {object} props
- * @param {import('../lib/view.mjs').ContextMarker[]} props.markers
+ * @param {import('../lib/content-view.mjs').ContextMarker[]} props.markers
  * @param {boolean} props.allOpen
  * @param {string} props.agreesWith  What the collapsed blocks agree with, named as the
  *                                   reader already reads it: `production` in the content

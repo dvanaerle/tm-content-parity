@@ -4,7 +4,8 @@ import { Marker, MarkerToggle } from './Marker.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
 import { STORE_LANGUAGE, STORE_NAME } from '../lib/stores.mjs';
 import { siblingReading } from '../lib/sibling.mjs';
-import { collapseRuns, collapseState, toggleIn } from '../lib/view.mjs';
+import { collapseRuns, collapseState } from '../lib/content-view.mjs';
+import { toggleIn } from '../lib/filter.mjs';
 
 /**
  * The **sibling tab**: this page against the same page in the other store of its

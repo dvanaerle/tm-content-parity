@@ -380,7 +380,7 @@ element any more: it folds the links inside it. Both the word and the rule are g
   retired *Diff* tab is what happens without the marker and without that rule.
   **Built on 2026-08-14 by ticket 79 and widened the same day by ticket 48**, which is
   what makes the three rules above the whole of it. The predicate is `collapses()` in
-  `web/src/lib/view.mjs`; 79 shipped its first term only, deliberately, because
+  `web/src/lib/content-view.mjs`; 79 shipped its first term only, deliberately, because
   narrowing collapses less and is the safe direction to be wrong in. The Closed term
   reads ticket 80's `bucketOf()` and never a second list of which states are closed.
   The **set is taken when the page opens** and held: a tick that collapsed its own row

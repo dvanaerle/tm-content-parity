@@ -21,7 +21,7 @@ import { pageHref } from "../lib/page-url.mjs";
 import { pagesOfIndex } from "../lib/search.mjs";
 import { useSearchIndex } from "../lib/search-index.mjs";
 import { classHref, useScreen } from "../lib/screen-url.mjs";
-import { classCounts, toggleIn } from "../lib/view.mjs";
+import { classCounts, toggleIn } from "../lib/filter.mjs";
 
 /**
  * One search over every store (ticket 03).

@@ -7,8 +7,8 @@ import { Dismiss, Floating } from './Floating.jsx';
 import PressReport from './PressReport.jsx';
 import { OfPages, Selected } from './Selected.jsx';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
-import { crossesStore, spansEveryStore } from '../lib/view.mjs';
-import { classInfo } from '../lib/classes.mjs';
+import { classInfo, spansEveryStore } from '../lib/classes.mjs';
+import { crossesStore } from '../lib/language-blocks.mjs';
 import { day } from '../lib/dates.mjs';
 
 /**
@@ -63,10 +63,10 @@ const BAR = 'bulk-bar';
  * argued for the design went with the rest of the prose.
  *
  * @param {object} props
- * @param {import('../lib/view.mjs').RepeatEntry[]} props.entries  The ticked pages, which
+ * @param {import('../lib/repeat-list.mjs').RepeatEntry[]} props.entries  The ticked pages, which
  *   are the pages both presses are aimed at.
  * @param {number} props.pages  Every page under the selection, which is the denominator.
- * @param {import('../lib/view.mjs').Repeat[]} props.holding  The differences the ticks are
+ * @param {import('../lib/repeat-list.mjs').Repeat[]} props.holding  The differences the ticks are
  *   in. One of them is what lets this bar say that difference's own words.
  * @param {string | null} props.builtAt  The snapshot the ticks were made over, where that is
  *   worth saying. The caller decides that, because it is the caller that knows how the

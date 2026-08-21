@@ -91,7 +91,9 @@ reading and draw that plausible page. *No store* is a screen, not the absence of
   a browser case duplicating a unit test is what makes the next reader distrust both.
 - **`spansEveryStore()` stays where it is.** It is a property of the **check** and not of the
   screen, so the reading imports it from `view.mjs` rather than absorbing it. That is the right
-  relationship and it survives the split of `view.mjs`, which is separate work.
+  relationship and it survives the split of `view.mjs`, which is separate work. It did: that
+  split has since landed and `spansEveryStore()` lives in `classes.mjs`, beside the check
+  vocabulary it reads, with the reading importing it from there unchanged.
 - **`openWorkIn` is untouched.** The dashboard goes on importing it from `Repeats.jsx`, which is
   a drawing module used as a library and is wrong for a different reason. Fixing it here would
   pull a third screen into this change for no reason of this change's.

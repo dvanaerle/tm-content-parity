@@ -35,7 +35,7 @@ import { bucketOf, bucketsOf } from '../../../overrides/state.mjs';
 import { BUCKETS, BUCKET_LABEL } from '../lib/buckets.mjs';
 // The sentence the content view says about the same control, written once (ticket 05): the
 // noun differs and the meaning does not.
-import { allDiagnostic } from '../lib/view.mjs';
+import { allDiagnostic } from '../lib/classes.mjs';
 
 /**
  * The column heads of both tables here and of the content view are the same small
@@ -179,7 +179,7 @@ export default function Ledger({
   // once. An `information` finding is one an editor can link to and cannot decide, so it
   // is drawn with no control at all — the same shape `MetaTable` has had since ticket 54,
   // for the same reason: the shared colours must not show something an editor can
-  // complete. Ticket 86, and `canDecide()` in `view.mjs` is the rule.
+  // complete. Ticket 86, and `canDecide()` in `classes.mjs` is the rule.
   const control = (finding) =>
     canDecide(finding) ? (
       <OverrideControl

@@ -19,20 +19,17 @@ import { cn } from '../lib/utils.js';
 import { CHROME } from '../lib/palette.mjs';
 import { STORE_LANGUAGE } from '../lib/stores.mjs';
 import { landedRowProps, landingRow, useLandOn } from '../lib/landing.mjs';
+import { allDiagnostic } from '../lib/classes.mjs';
 import {
-  NO_FILTER,
-  allDiagnostic,
   collapseRuns,
   collapseState,
   collapsedKeys,
-  isNarrowed,
   outlineFrom,
   prepareRows,
   rowKeyFromHash,
   runKeyHolding,
-  toggleClass,
-  toggleIn,
-} from '../lib/view.mjs';
+} from '../lib/content-view.mjs';
+import { NO_FILTER, isNarrowed, toggleClass, toggleIn } from '../lib/filter.mjs';
 
 /**
  * The content view: the whole page, filtered, tickable (ticket 36).
@@ -57,8 +54,9 @@ import {
  * order with a collapse in it. Nothing is reordered, nothing is filtered away, and the
  * heading outline still names the same places.
  *
- * What is on screen is `view.mjs`'s decision, not this component's. The filter is
- * the judgement in this feature and it is pure and tested; this file is the pixels.
+ * What is on screen is `content-view.mjs`'s decision, not this component's, and what an
+ * editor narrowed it to is `filter.mjs`'s. Both are pure and tested; this file is the
+ * pixels.
  */
 export default function ContentView({ report, findings, showDiagnostics, control, landing }) {
   const [filter, setFilter] = useState(NO_FILTER);
@@ -281,7 +279,7 @@ export default function ContentView({ report, findings, showDiagnostics, control
  *
  * The chips count **rows** and never findings. A grouped finding is one finding
  * over several rows, so the two numbers differ on purpose, and the word on the
- * tooltip is what keeps them apart. Nothing here moves a bar: `view.mjs` returns no
+ * tooltip is what keeps them apart. Nothing here moves a bar: `content-view.mjs` returns no
  * number a bar could be built from.
  *
  * *Differences only* stood here until ticket 79 and it is gone. It **narrowed** the
@@ -640,7 +638,7 @@ function RunCells({ row, sides, language }) {
 
 /**
  * The side that holds the words in one block, as a run of one — or of none, on the report that
- * names a block the page does not hold. `runOf()` in `view.mjs` drops a run whose members do
+ * names a block the page does not hold. `runOf()` in `content-view.mjs` drops a run whose members do
  * not resolve for the same reason: a cell here draws what is there and never a placeholder.
  */
 const asRun = (unit) => (unit ? [unit] : []);

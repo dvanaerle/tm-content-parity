@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { siblingReading } from './sibling.mjs';
-import { collapseRuns, collapses } from './view.mjs';
+import { collapseRuns, collapses } from './content-view.mjs';
 
 const unit = (raw, index, part = {}) => ({
   tag: 'p',

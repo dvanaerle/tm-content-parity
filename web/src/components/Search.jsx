@@ -24,7 +24,7 @@ import {
 } from "../lib/search.mjs";
 import { useSearchIndex } from "../lib/search-index.mjs";
 import { siblingOf } from "../lib/language-blocks.mjs";
-import { pagesWithClasses } from "../lib/view.mjs";
+import { pagesWithClasses } from "../lib/filter.mjs";
 
 /**
  * *on 1 page*, and *on 2 pages*.

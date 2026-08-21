@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import Repeats, { ClassGroups } from "./Repeats.jsx";
 import { appendEach } from "../../../overrides/bulk.mjs";
 import { listReading } from "../lib/list-reading.mjs";
-import { repeatsInStore } from "../lib/view.mjs";
+import { repeatsInStore } from "../lib/repeat-list.mjs";
 
 /**
  * The selection and the presses it arms, mounted and clicked (ticket 110). Two of them
@@ -925,7 +925,7 @@ describe("the selection on a difference", () => {
 /**
  * Ticket 141. The list leads with the difference holding the most work **left**.
  *
- * It cannot be answered in `view.mjs`: `repeatsInStore()` is a pure derivation over the
+ * It cannot be answered in `repeat-list.mjs`: `repeatsInStore()` is a pure derivation over the
  * page summaries and never sees the override log, so the open count exists only here,
  * where the row already reads its own bar. That is why this is a mounted test and not a
  * second unit test beside `repeatsByOpenWork()`.

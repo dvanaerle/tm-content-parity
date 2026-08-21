@@ -1,5 +1,6 @@
 import { STORE_LANGUAGE } from "./stores.mjs";
-import { crossesStore, spansEveryStore } from "./view.mjs";
+import { spansEveryStore } from "./classes.mjs";
+import { crossesStore } from "./language-blocks.mjs";
 
 /**
  * Why a difference cannot be pressed above the stores, or `null` where it can (ticket 04).
@@ -26,7 +27,7 @@ export const TRANSLATED_ELSEWHERE =
  *   nobody typed one — the row's own account of why a search put it on screen.
  * @property {string | null} classHref Where the row's class label lands, or `null` where the
  *   screen offers no way into a class.
- * @property {(entry: import('./view.mjs').RepeatEntry) => string} pageHref Where one page of
+ * @property {(entry: import('./repeat-list.mjs').RepeatEntry) => string} pageHref Where one page of
  *   the row lands, on that page's **own** store and at this difference.
  */
 
@@ -41,7 +42,7 @@ export const TRANSLATED_ELSEWHERE =
  * @property {(store: string, page: string) => string} hrefOfPage Where a page lands, at no
  *   particular difference — what a header naming pages links to. A row asks
  *   `of(repeat).pageHref()` instead, which lands at the difference as well.
- * @property {(repeat: import('./view.mjs').Repeat) => RowReading} of Everything one row
+ * @property {(repeat: import('./repeat-list.mjs').Repeat) => RowReading} of Everything one row
  *   needs, in one call.
  */
 
@@ -136,7 +137,7 @@ const NO_STORE =
  * is theirs; more than one and there is none to declare, because telling a screen reader that
  * German content is Dutch is worse than telling it nothing.
  *
- * @param {import('./view.mjs').Repeat} repeat
+ * @param {import('./repeat-list.mjs').Repeat} repeat
  */
 const spokenOn = (repeat) => {
   const spoken = new Set(repeat.stores.map((store) => STORE_LANGUAGE[store]));

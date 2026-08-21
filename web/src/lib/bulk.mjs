@@ -1,5 +1,5 @@
 import { clearedEventFor } from '../../../overrides/state.mjs';
-import { storesOf } from './view.mjs';
+import { storesOf } from './language-blocks.mjs';
 
 /**
  * What one press on a selection would write, and what it covers (ticket 31).
@@ -24,7 +24,7 @@ import { storesOf } from './view.mjs';
  * The N dismissals of a selection.
  *
  * @param {object} input
- * @param {import('./view.mjs').RepeatEntry[]} input.entries  The pages this press is aimed
+ * @param {import('./repeat-list.mjs').RepeatEntry[]} input.entries  The pages this press is aimed
  *   at: the ticked ones, narrowed by the caller. One difference's, or every difference's.
  * @param {Map<string, { state: string }>} input.byFinding  The derivation's answer per id.
  * @param {string} input.note  Mandatory: the SQL constraint refuses a dismissal without
@@ -64,7 +64,7 @@ export function bulkDismissal({ entries, byFinding, note }) {
   // press that is about to be made, and taking its total off the whole list would report a
   // remainder the press was never aimed at.
   //
-  // `stores` likewise: it is `view.mjs`'s one definition asked about `on` — the entries this
+  // `stores` likewise: it is `language-blocks.mjs`'s one definition asked about `on` — the entries this
   // press **can act on** — and never the repeat's own `stores`. That is the ticket's *80% is
   // not 100%* trap answered in one line: a selection whose sibling page a colleague already
   // dismissed writes in one store, and a sentence naming two would imply the block is being
@@ -139,7 +139,7 @@ const offersDismissal = (finding) => OFFERED.has(finding?.state ?? 'open');
  * control asks the same function, so the two cannot come to disagree.
  *
  * @param {object} input
- * @param {import('./view.mjs').RepeatEntry[]} input.entries  The pages this press is aimed at.
+ * @param {import('./repeat-list.mjs').RepeatEntry[]} input.entries  The pages this press is aimed at.
  * @param {Map<string, { state: string, class: string, override?: object }>} input.byFinding
  */
 export function bulkClear({ entries, byFinding }) {

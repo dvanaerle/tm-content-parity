@@ -845,7 +845,7 @@ describe('searchStore', () => {
   it('says how many findings on how many pages', () => {
     // A count *of the result* and nothing else. Search narrows; it moves no count, so
     // there is no bar here, no denominator and no closed count — the rule ticket 36
-    // pinned, which `view.mjs` obeys in the same words.
+    // pinned, which `filter.mjs` obeys in the same words.
     const result = searchStore({
       index: index([
         entry({ id: 'a', page: 'afhalen' }),

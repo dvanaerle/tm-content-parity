@@ -36,7 +36,7 @@
 
 import { readdir, readFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
-import { repeatsInStore } from '../src/lib/view.mjs';
+import { repeatsInStore } from '../src/lib/repeat-list.mjs';
 import { searchStore } from '../src/lib/search.mjs';
 
 const EMITTED = new URL('../../dist/search-index/', import.meta.url);

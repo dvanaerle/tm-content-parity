@@ -64,14 +64,8 @@ import { classHref, useScreen } from "../lib/screen-url.mjs";
 import { groupNotChecked } from "../lib/not-checked.mjs";
 import { CANONICAL_VIEWPORT } from "../../../shared/canonical-viewport.mjs";
 import { emptyBuckets } from "../../../overrides/state.mjs";
-import {
-  classCountsByOpenWork,
-  pagesWithClasses,
-  pagesWithPriorities,
-  repeatsInStore,
-  repeatsWithClasses,
-  toggleIn,
-} from "../lib/view.mjs";
+import { pagesWithClasses, pagesWithPriorities, toggleIn } from "../lib/filter.mjs";
+import { classCountsByOpenWork, repeatsInStore, repeatsWithClasses } from "../lib/repeat-list.mjs";
 
 const CHECKS = ["text", "links", "images"];
 
@@ -290,7 +284,7 @@ export default function Dashboard({
 
   const rows = useMemo(() => {
     // The two filters are **and**, not or: the high-priority `copy` pages is one question.
-    // Both narrow what is drawn and neither moves a count — the rule `view.mjs` states.
+    // Both narrow what is drawn and neither moves a count — the rule `filter.mjs` states.
     const found = pagesWithPriorities(
       pagesWithClasses(comparable, classes),
       priorities,

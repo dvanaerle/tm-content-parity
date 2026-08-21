@@ -9,7 +9,7 @@
  * colleague that showed what they were looking at.
  *
  * The screen is not a filter's meaning and it is not a count. It is **what is drawn**,
- * and the rules `view.mjs` states still hold: nothing here moves a bar, a denominator
+ * and the rules `filter.mjs` states still hold: nothing here moves a bar, a denominator
  * or a roll-up. This module only says where that state is kept.
  *
  * **Only what differs from the default is written.** A dashboard nobody has touched

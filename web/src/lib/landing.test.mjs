@@ -14,7 +14,7 @@ import { CHROME } from './palette.mjs';
 
 describe('findingAnchor', () => {
   // The content view anchors its rows on production's document position (`p12`), for
-  // the reason `view.mjs` gives. The Links and Images tables have no such
+  // the reason `content-view.mjs` gives. The Links and Images tables have no such
   // position — their rows are findings — so they anchor on the id, and the two schemes
   // share one document. The prefix is what keeps them apart, and it is also what makes
   // the id legal: a digest can begin with a digit.

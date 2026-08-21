@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { STORES } from "../../../compare/vocabulary.mjs";
 import { TRANSLATED_ELSEWHERE, listReading } from "./list-reading.mjs";
-import { repeatsInStore } from "./view.mjs";
+import { repeatsInStore } from "./repeat-list.mjs";
 
 /**
  * One reading of one screen, asked about one row (code health 05, ADR 0030).

@@ -49,14 +49,14 @@ hides inside eleven import edits and 1,619 moved test lines.
 `filter.test.mjs`. **Cases move verbatim.** One file importing three modules is refused: a test
 file is its module's witness, and a shared one hides which module a failure belongs to.
 
-- [ ] The four groups live in `content-view.mjs`, `repeat-list.mjs`, `filter.mjs`, and the two
+- [x] The four groups live in `content-view.mjs`, `repeat-list.mjs`, `filter.mjs`, and the two
       existing vocabulary modules named above.
-- [ ] `view.mjs` and `view.test.mjs` no longer exist.
-- [ ] All eleven importing modules import from the new homes. No re-export barrel is left behind
+- [x] `view.mjs` and `view.test.mjs` no longer exist.
+- [x] All eleven importing modules import from the new homes. No re-export barrel is left behind
       — at eleven call sites, expand–contract buys nothing.
-- [ ] `pagesWithClasses` and `pagesWithPriorities` are exported from `filter.mjs`, with their
+- [x] `pagesWithClasses` and `pagesWithPriorities` are exported from `filter.mjs`, with their
       bodies untouched and both importers updated.
-- [ ] No function body is edited. A diff of any moved function against its old form is empty but
+- [x] No function body is edited. A diff of any moved function against its old form is empty but
       for its import lines.
-- [ ] The three new test files together hold every case the old one did, unrewritten.
-- [ ] `oxlint` and the full test suite pass.
+- [x] The three new test files together hold every case the old one did, unrewritten.
+- [x] `oxlint` and the full test suite pass.

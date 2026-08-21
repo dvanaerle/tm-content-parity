@@ -41,7 +41,7 @@ import {
   groupRepeatsByClass,
   repeatsByOpenWork,
   repeatsWithWorkLeft,
-} from "../lib/view.mjs";
+} from "../lib/repeat-list.mjs";
 
 /**
  * A store's work listed as differences rather than as pages (ticket 81).
@@ -220,7 +220,7 @@ const barFor = (repeat, stateOf) =>
  * in a second fetch — is read from the log as it is now, because there is no earlier
  * reading of it to hold.
  *
- * @param {import('../lib/view.mjs').Repeat[]} repeats
+ * @param {import('../lib/repeat-list.mjs').Repeat[]} repeats
  * @param {Map<string, object>} byFinding
  * @param {boolean} logRead  Whether the log has answered. Until it has, there is no reading
  *                           of it worth holding.
@@ -229,7 +229,7 @@ const barFor = (repeat, stateOf) =>
  *   different screens, and a caller must say which it is drawing. One name and one polarity
  *   all the way down — a `hidesClosed` here inverted into an `includeClosed` one line below
  *   would be two names for one bit.
- * @returns {{ rows: import('../lib/view.mjs').Repeat[], closedPages: Set<string> | null }}
+ * @returns {{ rows: import('../lib/repeat-list.mjs').Repeat[], closedPages: Set<string> | null }}
  *   `closedPages` is the pages standing behind the same control, as finding ids off the
  *   **held** reading, and `null` where nothing is hidden. It is one set over the whole list
  *   rather than a question each page asks the live log, so a page cannot leave the table
@@ -254,7 +254,7 @@ function useWorstFirst(repeats, byFinding, logRead, { includeClosed }) {
     () => {
       const stateOf = (/** @type {string} */ id) =>
         asArrived.get(id) ?? byFinding.get(id);
-      const openIn = (/** @type {import('../lib/view.mjs').Repeat} */ repeat) =>
+      const openIn = (/** @type {import('../lib/repeat-list.mjs').Repeat} */ repeat) =>
         barFor(repeat, stateOf).open;
       const left = repeatsWithWorkLeft(repeats, openIn, { includeClosed });
 
@@ -278,7 +278,7 @@ function useWorstFirst(repeats, byFinding, logRead, { includeClosed }) {
  * `null` means the control is on and nothing is hidden, which is why the question is asked of
  * the **set** rather than of a boolean: a caller that has nothing to hide holds no set.
  *
- * @param {import('../lib/view.mjs').Repeat} repeat
+ * @param {import('../lib/repeat-list.mjs').Repeat} repeat
  * @param {Set<string> | null} closedPages
  */
 /**
