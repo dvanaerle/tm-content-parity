@@ -1459,3 +1459,160 @@ describe('the language of a difference', () => {
     ]);
   });
 });
+
+/**
+ * Ticket 144. A difference with **nothing open left in it** is off the *Repeats* list, and so
+ * are the settled pages inside one that stays.
+ *
+ * Ticket 141 sank such a row instead, deliberately — the safe direction to be wrong in — and
+ * the measurement since is that a sunk row is still a row an editor scrolls. That is what
+ * these tests overturn, for this list and for nothing else.
+ *
+ * `ClassGroups` and not the flat list: this is the queue an editor lands on, and it is the one
+ * reading that hides anything. A search hides nothing of its own — `searchStore()` has dropped
+ * an inactive finding before it groups since ticket 09.
+ */
+describe('a difference with nothing left in it', () => {
+  const both = [repeat, other];
+  const settled = { f1: closed, f2: closed, f3: closed };
+
+  const groups = (over = {}) => ({ component: ClassGroups, classes: [], repeats: both, ...over });
+
+  it('stays where it is while the editor is working in it, and re-counts itself', () => {
+    // **Numbers are readings and move; membership is a position and is held.** The row an
+    // editor has just finished must not leave under their hand — its own words are what say
+    // the work landed.
+    const { rerender, unmount } = mount(groups({ byFinding: logOver(both) }));
+
+    rerender({ byFinding: logOver(both, settled) });
+
+    expect(rowOrder()[0]).toContain('oud');
+    expect(rowOrder()[0]).toContain('3 of 3 closed');
+    unmount();
+  });
+
+  it('is gone the next time the list opens', () => {
+    const { unmount } = mount(groups({ byFinding: logOver(both, settled) }));
+
+    expect(rowOrder()).toHaveLength(1);
+    expect(rowOrder()[0]).toContain('links');
+    unmount();
+  });
+
+  it('comes back with include closed on', () => {
+    const { unmount } = mount(groups({ byFinding: logOver(both, settled), includeClosed: true }));
+
+    expect(rowOrder()).toHaveLength(2);
+    unmount();
+  });
+
+  it('stays while it is only partly closed, and says how much of it is', () => {
+    const { unmount } = mount(groups({ byFinding: logOver(both, { f1: closed }) }));
+
+    const settledRow = rowOrder().find((row) => row.includes('oud'));
+    // Nothing leaves the denominator: two of the three pages are left to do, and the row
+    // goes on counting all three.
+    expect(settledRow).toContain('1 of 3 closed');
+    unmount();
+  });
+
+  it('hides nothing until the log has been read, and hides it when the log arrives', () => {
+    // The named trap, from the direction it actually fails in. On the first paint the events
+    // are `null`, the derivation runs over an empty list, and `byFinding` reports **every**
+    // finding open — so nothing is hidden, which is the correct answer: an unread log means
+    // *nothing decided*, never *nothing left*. A reading held from there would be an all-open
+    // one for the life of the list, and this whole ticket would be built and inert.
+    //
+    // It would also be **silent**, because a pill showing its full count on an unread log is
+    // right — the pills would look correct while the hiding never engaged. So the guard is
+    // asserted by watching the hiding start.
+    const { rerender, unmount } = mount(groups({ byFinding: logOver(both), logRead: false }));
+
+    expect(rowOrder()).toHaveLength(2);
+
+    rerender({ logRead: true, byFinding: logOver(both, settled) });
+
+    expect(rowOrder()).toHaveLength(1);
+    expect(rowOrder()[0]).toContain('links');
+    unmount();
+  });
+
+  it('draws no group for a class the log has emptied, and counts what is drawn', () => {
+    // Asserted and not built: `groupRepeatsByClass()` already draws only the classes that hold
+    // something, over the list it is given — so this falls out of the row rule. The header's
+    // *N differences* counts the differences **drawn**, which is the same fall-out read from
+    // the other side.
+    const [linkRepeat] = repeatsInStore([
+      on('nl', 'tuinhuis', { ...finding('h1', 'oud', 'nieuw'), class: 'link-target' }),
+    ]);
+    const two = [repeat, linkRepeat];
+    const { unmount } = mount(groups({ repeats: two, byFinding: logOver(two, settled) }));
+
+    const headings = [...document.querySelectorAll('[data-slot="collapsible-trigger"]')]
+      .filter((trigger) => trigger.dataset.row !== 'difference')
+      .map((trigger) => trigger.textContent.trim());
+
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).toContain('Link target changed');
+    expect(headings[0]).toContain('1 difference');
+    unmount();
+  });
+
+  it('says there is no open work left, in the glossary’s own words for it', () => {
+    // Not *No difference found*: that sentence says the snapshot found nothing, and this one
+    // says an editor finished it. The words are `CONTEXT.md`'s own for the second — **no open
+    // work**, which a scoped search already says about a page holding differences it has
+    // closed every one of — and it names the control the rows are behind.
+    const { unmount } = mount(groups({ repeats: [repeat], byFinding: logOver([repeat], settled) }));
+
+    expect(document.body.textContent).toContain('No open work here');
+    expect(document.body.textContent).toContain('Include closed');
+    unmount();
+  });
+});
+
+describe('the pages inside a difference that is partly closed', () => {
+  const partly = { f1: closed };
+  const groups = (over = {}) => ({
+    component: ClassGroups,
+    classes: [],
+    repeats: [repeat],
+    byFinding: logOver([repeat], partly),
+    ...over,
+  });
+
+  /** The page names in the open difference's table, which is what an editor reads down. */
+  const pageNames = () =>
+    [...document.querySelectorAll('tbody a')].map((link) => link.textContent.trim());
+
+  it('draws only the pages with work left on them', () => {
+    const { unmount } = mount(groups());
+    press(differenceRow());
+
+    expect(pageNames()).toEqual(['veranda', 'carport']);
+    unmount();
+  });
+
+  it('draws all of them with include closed on', () => {
+    const { unmount } = mount(groups({ includeClosed: true }));
+    press(differenceRow());
+
+    expect(pageNames()).toEqual(['overkapping', 'veranda', 'carport']);
+    unmount();
+  });
+
+  /**
+   * The select-all reaches the pages that are **drawn** and its label counts the same ones. A
+   * tick that quietly armed a press on a page off the screen is the trap ADR 0022 states, and
+   * a label saying *3* over two rows is the same trap read out loud.
+   */
+  it('ticks the drawn pages and says how many that is', () => {
+    const { unmount } = mount(groups());
+    press(differenceRow());
+    press(selectAll());
+
+    expect(selectAll().getAttribute('aria-label')).toBe('Select all 2 pages of this difference');
+    expect(document.querySelector('[data-slot="bulk-bar"]').textContent).toContain('2 of 2 pages');
+    unmount();
+  });
+});

@@ -13,8 +13,9 @@ import {
   ScopeRowButton,
 } from './Chips.jsx';
 import { Hint } from './Hint.jsx';
+import { Label } from './ui/label.jsx';
 import { EditorPrompt, LogBanner } from './Progress.jsx';
-import { ClassGroups } from './Repeats.jsx';
+import { ClassGroups, openWorkIn } from './Repeats.jsx';
 import { StoreSearch } from './Search.jsx';
 import SearchBox from './SearchBox.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
@@ -48,7 +49,7 @@ import { groupNotChecked } from '../lib/not-checked.mjs';
 import { CANONICAL_VIEWPORT } from '../../../shared/canonical-viewport.mjs';
 import { emptyBuckets } from '../../../overrides/state.mjs';
 import {
-  classCounts,
+  classCountsByOpenWork,
   pagesWithClasses,
   pagesWithPriorities,
   repeatsInStore,
@@ -57,6 +58,19 @@ import {
 } from '../lib/view.mjs';
 
 const CHECKS = ['text', 'links', 'images'];
+
+/**
+ * What a class pill's number is, said the same way on every list it is drawn over (ticket
+ * 144).
+ *
+ * The pill counts the **open findings** of its class, read from the log over the language
+ * block's repeat list — the same list the rows below it come from. So it falls as work is
+ * decided and no filter ever moves it, which is the one sentence a reader needs and the exact
+ * opposite of the one this replaces.
+ */
+const PILL_COUNT =
+  'The number is the open work of this class in this language block. A filter never moves it;' +
+  ' a decision does.';
 
 /**
  * The header's two rows of buckets, split by the vocabulary's own predicate.
@@ -123,6 +137,14 @@ export default function Dashboard({
   notChecked = [],
   regions = [],
   regionsChanged = { store: null, reason: null, changes: [] },
+  /**
+   * The override port, for a caller that has one. `null` in the application: the hook below
+   * builds its own from the environment, which is the only thing the Astro page could hand it
+   * anyway. It is here so that a test can hand this screen a **log** — every rule about a pill
+   * falling and a row going is a rule about what the log answers — and it is the seam
+   * `createOverridesPort()` already opens one layer further down.
+   */
+  port = null,
 }) {
   /*
    * Every control on this screen, in the **address bar** since ticket 109.
@@ -184,6 +206,7 @@ export default function Dashboard({
     pages: comparable,
     siblingPages: comparableSiblings,
     editor,
+    port,
   });
 
   /** The open count **after** overrides, so the worst page is the worst remaining page. */
@@ -394,6 +417,35 @@ export default function Dashboard({
     return { diagnostic, byClass, ...log.derived.bar };
   }, [comparable, log.derived]);
 
+  /**
+   * What each class pill says: how much **open work of that class is left**, read live from
+   * the log over the list the rows come from (ticket 144).
+   *
+   * It counted `summary.byClass` until this ticket — a snapshot tally over this store's
+   * comparable pages — while the list under it is the block's repeats. `Case or punctuation
+   * 40` over a group header saying *52 differences* was the result: two units over two
+   * corpora, neither stale with respect to the other, and a second count made to agree with
+   * the first would drift again the next time either moved. So the pill reads **the same list**
+   * and the agreement is by construction. ADR 0029 argues the two decisions that span it.
+   *
+   * **It is not held.** Position and membership are a held reading in `useWorstFirst()`,
+   * because a row moving under the editor's hand is the thing that must not happen; a number
+   * is a reading and moves, so this recomputes on every decision and `log.byFinding` is in
+   * the dependencies on purpose. The bar and the chips above are untouched — they are the
+   * store's, snapshot-shaped, and they stay citable.
+   *
+   * `repeats` and not `shownRepeats`: a pill counts a class, and narrowing the list to one
+   * class would leave the other pills counting nothing.
+   */
+  const classPills = useMemo(
+    () =>
+      classCountsByOpenWork(repeats, (repeat) => openWorkIn(repeat, log.byFinding), {
+        tally: totals.byClass,
+        includeClosed,
+      }),
+    [repeats, log.byFinding, totals.byClass, includeClosed],
+  );
+
   return (
     <div className="space-y-6">
       <LogBanner
@@ -505,19 +557,23 @@ export default function Dashboard({
               already here. */}
           <div className="flex flex-wrap items-center gap-2">
             <ClassFilterPills
-              counts={classCounts(totals.byClass)}
+              counts={classPills}
               selected={classes}
               onToggle={(cls) => patch({ classes: toggleIn(classes, cls) })}
-              // The counts stay the store's own — a pill says how much of this kind there
-              // is, which is not a question about what is on screen. What a press *does*
-              // depends on which of the three lists is under it, so the hint does too.
+              // What a press *does* depends on which of the three lists is under it, so the
+              // first sentence does; the second is the same on all three, because the number
+              // is a property of the store's work and not of the view under it (ticket 144).
+              //
+              // It no longer says *the counts above do not change*. That was true and it was
+              // the wrong reassurance: the number on the pill **does** change — the log moves
+              // it — and what never moves it is a filter. Said the old way, an editor who
+              // watched a pill fall after a dismissal had to conclude the hint was lying.
               hint={(cls) => {
                 const { label } = classInfo(cls);
-                if (searching)
-                  return `Search inside ${label} only. The counts above do not change.`;
+                if (searching) return `Search inside ${label} only. ${PILL_COUNT}`;
                 return view === 'repeats'
-                  ? `Show the differences of class ${label} only. The counts above do not change.`
-                  : `Show the pages with ${label} only. The counts above do not change.`;
+                  ? `Show the differences of class ${label} only. ${PILL_COUNT}`
+                  : `Show the pages with ${label} only. ${PILL_COUNT}`;
               }}
             />
             {/* The scope, beside the pills because it is the same kind of thing (ticket 104
@@ -551,6 +607,24 @@ export default function Dashboard({
             {/* The switch belongs to the two views, and a search answers past both of
                 them, so it steps aside while one is on screen. */}
             {!searching && <ViewSwitch view={view} onChange={(next) => patch({ view: next })} />}
+            {/* *Include closed* over the differences list (ticket 144). It is drawn with the
+                list it narrows, the way the sort and the priorities are drawn with *Pages*,
+                and the search draws its own copy over its own result — two lists, two places
+                the control belongs, one screen parameter.
+
+                It is the **only way into a fully decided class's rows**, because a pill with
+                nothing open draws nothing and the Ledger is the home for *what did we decide*.
+                It moves no number: with it on, a class holding only closed work draws a pill
+                reading `0`, and every other pill says exactly what it said. */}
+            {!searching && view === 'repeats' && (
+              <Label className="gap-1 text-sm font-normal text-muted-foreground">
+                <Checkbox
+                  checked={includeClosed}
+                  onCheckedChange={(checked) => patch({ includeClosed: Boolean(checked) })}
+                />
+                Include closed
+              </Label>
+            )}
             {/* Ticket 83. It narrows pages, so it is drawn with the list of pages — the
                 same reason the sort is here and not over *Repeats*. */}
             {!searching && view === 'pages' && (
@@ -678,7 +752,7 @@ export default function Dashboard({
               // can draw the selected ones only — the same filter said once, to two things
               // that must agree about it.
               <ClassGroups
-                key={classes.join(',')}
+                key={`${classes.join(',')}|${includeClosed}`}
                 repeats={shownRepeats}
                 classes={classes}
                 // Off the hook and never rebuilt here (ticket 03): it has to cover the
@@ -691,6 +765,10 @@ export default function Dashboard({
                 // have arrived `byFinding` says every finding is open — so the order waits
                 // for this rather than holding a reading in which nothing is decided.
                 logRead={log.ready}
+                // Whether a wholly decided difference is on the list, and whether the pages
+                // it settled are inside it (ticket 144). Default off: the queue answers
+                // *what is left*.
+                includeClosed={includeClosed}
                 bulk={bulk}
                 link={link}
                 classLink={classHref}

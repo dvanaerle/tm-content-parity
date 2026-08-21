@@ -12,9 +12,11 @@ import {
   pagesWithPriorities,
   groupRepeatsByClass,
   prepareRows,
+  classCountsByOpenWork,
   repeatsByOpenWork,
   repeatsInStore,
   repeatsWithClasses,
+  repeatsWithWorkLeft,
   rowKeyFromHash,
   runKeyHolding,
   toggleClass,
@@ -1314,6 +1316,130 @@ describe('repeatsByOpenWork', () => {
     const repeats = [repeat('a', 3), repeat('b', 1)];
 
     expect(repeatsByOpenWork(repeats, () => 0)).toHaveLength(2);
+  });
+});
+
+/**
+ * Ticket 144. A pill says how much open work of its class is **left**, and a difference
+ * with nothing left is off the list.
+ *
+ * Both functions take the open count as an argument, in the manner `repeatsByOpenWork()`
+ * established: this module never sees the override log, and the component that draws a row
+ * already reads that row's bar. So these tests hand a reading in rather than building a log,
+ * which is also the whole of what makes them pure tests.
+ *
+ * **No figure is pinned.** A test asserting `32` teaches nothing about the rule and breaks
+ * when a fixture gains a page, so the claims below are relational: the tally is over findings
+ * and not rows, a class the log emptied is absent, and the order is `classCounts()`'s.
+ */
+describe('repeatsWithWorkLeft', () => {
+  const repeat = (key, pages) => ({ key, class: 'casing', on: Array(pages).fill({}) });
+
+  it('takes a difference with nothing open off the list', () => {
+    const settled = repeat('settled', 2);
+    const left = repeat('left', 1);
+    const open = new Map([
+      [settled, 0],
+      [left, 1],
+    ]);
+
+    expect(repeatsWithWorkLeft([settled, left], (row) => open.get(row))).toEqual([left]);
+  });
+
+  it('keeps a partly closed difference, however little is left of it', () => {
+    // One page of thirty is still work, and the row it draws still says *29 of 30 closed*.
+    const partly = repeat('partly', 30);
+
+    expect(repeatsWithWorkLeft([partly], () => 1)).toEqual([partly]);
+  });
+
+  it('brings every dropped difference back while include closed is on', () => {
+    const repeats = [repeat('a', 3), repeat('b', 1)];
+
+    expect(repeatsWithWorkLeft(repeats, () => 0, { includeClosed: true })).toEqual(repeats);
+  });
+});
+
+describe('classCountsByOpenWork', () => {
+  const repeat = (cls, key, pages) => ({ key, class: cls, on: Array(pages).fill({}) });
+
+  /** The open count of a row, read the way the component reads it: off the row's own bar. */
+  const openIn = (open) => (row) => open.get(row);
+
+  it('counts the open findings of a class and not its rows', () => {
+    // Two rows, four findings between them, three of them still open. A pill saying *2*
+    // would tell an editor they have less work than they have.
+    const one = repeat('casing', 'one', 2);
+    const two = repeat('casing', 'two', 2);
+
+    expect(
+      classCountsByOpenWork(
+        [one, two],
+        openIn(
+          new Map([
+            [one, 2],
+            [two, 1],
+          ]),
+        ),
+      ),
+    ).toEqual([{ class: 'casing', count: 3 }]);
+  });
+
+  it('draws no pill for a class with nothing open left', () => {
+    const settled = repeat('casing', 'settled', 2);
+    const left = repeat('copy', 'left', 1);
+
+    expect(
+      classCountsByOpenWork(
+        [settled, left],
+        openIn(
+          new Map([
+            [settled, 0],
+            [left, 1],
+          ]),
+        ),
+      ),
+    ).toEqual([{ class: 'copy', count: 1 }]);
+  });
+
+  it('draws a zero pill for a wholly closed class while include closed is on', () => {
+    // The only way into a fully decided class's rows. The **number** does not depend on the
+    // control — it is still the open count — only a zero pill's presence does.
+    const settled = repeat('casing', 'settled', 2);
+
+    expect(classCountsByOpenWork([settled], () => 0, { includeClosed: true })).toEqual([
+      { class: 'casing', count: 0 },
+    ]);
+  });
+
+  it('keeps a class the repeat list cannot hold, whatever the log says', () => {
+    // A repeat is built out of the `work` findings a summary carries, so `text-added` has no
+    // row here at all. It is a finding you can link to and cannot decide, so no decision can
+    // close it and the snapshot's figure is the live one.
+    expect(classCountsByOpenWork([], () => 0, { tally: { 'text-added': 4, casing: 40 } })).toEqual([
+      { class: 'text-added', count: 4 },
+    ]);
+  });
+
+  it('orders the pills the way every other pill row is ordered', () => {
+    // `classCounts()`'s own order — the biggest first, ties by name — so the strip does not
+    // resequence when it starts reading the log instead of the snapshot.
+    const wide = repeat('copy', 'wide', 5);
+    const twin = repeat('casing', 'twin', 1);
+    const other = repeat('leakage', 'other', 1);
+
+    expect(
+      classCountsByOpenWork(
+        [twin, wide, other],
+        openIn(
+          new Map([
+            [twin, 1],
+            [wide, 5],
+            [other, 1],
+          ]),
+        ),
+      ).map((pill) => pill.class),
+    ).toEqual(['copy', 'casing', 'leakage']);
   });
 });
 

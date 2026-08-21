@@ -63,8 +63,14 @@ export function useEditor() {
  * configured, and that is not an error the editor caused — it renders as
  * "the log is not connected", not as a failure.
  */
-function usePort() {
+function usePort(given = null) {
   return useMemo(() => {
+    // A port handed in is the port. It is the same seam `createOverridesPort()` opens one
+    // layer down for its own paging test, and for the same reason: *what the log answers* is
+    // the input to everything above this line, and a test cannot ask a real project. Nothing
+    // is mocked — a faithful implementation of the three methods is a real port to every
+    // reader here, and the lint rules forbid the alternative.
+    if (given) return { port: given, reason: null };
     try {
       return {
         port: createOverridesPort({
@@ -240,6 +246,10 @@ export const NO_EDITOR = 'Give your name at the top to decide. Each decision car
  * @param {import('./reports.mjs').PageSummary[]} input.pages
  * @param {import('./reports.mjs').PageSummary[]} [input.siblingPages]
  * @param {string} [input.editor]
+ * @param {object} [input.port]  A port to read and write through, instead of the one this
+ *   hook builds from the environment. It is `null` in the application and it is how a test
+ *   hands a log over: `createOverridesPort()` opens the same seam one layer down, for its
+ *   own paging test and for the same reason.
  */
 /**
  * What a **bulk press** is built with, off a log this hook returned.
@@ -266,8 +276,8 @@ export function useBulk(log) {
   );
 }
 
-export function useStoreOverrides({ pages, siblingPages = [], editor = '' }) {
-  const { port, reason } = usePort();
+export function useStoreOverrides({ pages, siblingPages = [], editor = '', port: given = null }) {
+  const { port, reason } = usePort(given);
   const [events, setEvents] = useState(/** @type {any[] | null} */ (null));
   const [error, setError] = useState(/** @type {string | null} */ (null));
   const [busy, setBusy] = useState(false);

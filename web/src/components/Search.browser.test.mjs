@@ -612,6 +612,71 @@ describe('the order of a search result (ticket 141)', () => {
   });
 });
 
+/**
+ * Ticket 144, and a **regression asserting no change**.
+ *
+ * That ticket takes a fully decided difference off the *Repeats* list and hides the settled
+ * pages inside one that stays. This surface already did the first half and does not want the
+ * second: `searchStore()` has dropped an inactive finding **before it groups** since ticket
+ * 09, so a fully closed difference is already absent from a result, and a result asked for
+ * with *Include closed* on is the editor asking for exactly the rows the other list hides.
+ *
+ * The value of this block is that a reader sees the surface was considered and deliberately
+ * left alone, rather than finding a third rule here and having to work out whether it was
+ * meant.
+ */
+describe('closed work in a search result (ticket 144)', () => {
+  const settled = {
+    store: 'nl',
+    pages: 4,
+    builtAt: '2026-08-11T00:00:00Z',
+    findings: [
+      entry({ id: 'p1', page: 'afhalen' }),
+      entry({ id: 'p2', page: 'garantie' }),
+      entry({ id: 'r1', page: 'contact', prod: 'Bekijk deals nu >' }),
+    ],
+  };
+
+  const log = (states) =>
+    new Map(
+      settled.findings.map((one) => [
+        one.id,
+        { id: one.id, state: states[one.id] ?? 'open', visibility: 'work', class: one.class },
+      ]),
+    );
+
+  const rows = () =>
+    [...document.querySelectorAll('[data-row="difference"]')].map((trigger) =>
+      trigger.textContent.trim(),
+    );
+
+  it('drops it before it groups, which is where it has always been dropped', async () => {
+    const { unmount } = await mount({
+      index: settled,
+      byFinding: log({ p1: 'dismissed', p2: 'dismissed' }),
+    });
+
+    // One row left, and not two with one of them hidden afterwards. The gap ticket 144 closes
+    // is on the third surface.
+    expect(rows()).toHaveLength(1);
+    unmount();
+  });
+
+  it('keeps it whole when the editor asked for closed work, pages and all', async () => {
+    const { unmount } = await mount({
+      index: settled,
+      includeClosed: true,
+      byFinding: log({ p1: 'dismissed', p2: 'dismissed' }),
+    });
+
+    const decided = rows().find((row) => row.includes('on 2 pages'));
+    // Present, and still counting both of its pages: *Include closed* here is the question
+    // the editor asked, so nothing narrows the answer to it.
+    expect(decided).toContain('2 of 2 closed');
+    unmount();
+  });
+});
+
 describe('the notes half, before the log has answered', () => {
   it('says it is still reading, rather than drawing no notes at all', async () => {
     const { unmount } = await mount({ log: { events: null, ready: false, connected: true } });

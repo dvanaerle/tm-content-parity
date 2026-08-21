@@ -176,6 +176,25 @@ refusal covers — groups keep the vocabulary order, rows move.
 derivation and the fallback of this one: two spellings could drift, and a list whose two
 orders disagree about a tie re-seats a row for no reason an editor can see.
 
+**Superseded for *Repeats* as a removal rule — 2026-08-21, ticket
+144.** *"Nothing is removed and no number moves"* no longer holds on the dashboard's *Repeats*
+list. A difference with nothing open left is **off** that list, and so are the settled pages
+inside one that stays; *Include closed* brings them back.
+
+Sinking was the right first move — it is the safe direction to be wrong in, the same way ticket
+79 shipped `collapses()`'s first term only — and the measurement since is that a sunk row is
+still a row an editor scrolls. A reader's report on 2026-08-21 arrived with fifteen `Case or
+punctuation` rows, every one of them reading *2 of 2 closed*, under a pill that had not moved.
+
+**The order in this answer survives intact.** Worst-first on open findings still decides where
+the surviving rows sit, and its fallbacks are untouched. What 144 changes is which rows there
+are, and it puts that question on the side this ticket already put position on: membership is
+held with the position, off one reading, so the row an editor has just finished stays where it
+is and re-counts itself. See
+[144](144-a-pill-counts-what-is-left.md) and
+`docs/adr/0029-a-pill-reads-the-log-and-counts-the-block.md`. The flat list a search draws is
+untouched — `searchStore()` was already dropping an inactive finding before it grouped.
+
 ### What was not built
 
 **No second sort control**, and the dashboard now says why where the existing one is drawn:

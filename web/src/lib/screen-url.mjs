@@ -30,6 +30,10 @@ import { isPriority } from '../../../shared/priorities.mjs';
  * The screen an untouched dashboard draws. *Repeats* lands first, worst-first,
  * nothing typed, no pill on, closed work out of the way.
  *
+ * `includeClosed` is `false`, and on *Repeats* that is now the default that **hides** the
+ * fully decided differences rather than merely leaving them out of a search result (ticket
+ * 144). An editor lands on what is left.
+ *
  * @typedef {object} Screen
  * @property {'repeats' | 'pages'} view
  * @property {'worst' | 'name'} sort
@@ -108,12 +112,16 @@ export function searchFromScreen(screen) {
   if (screen.view === 'pages' && screen.priorities.length > 0) {
     written.set(PARAM.priorities, screen.priorities.join(','));
   }
-  // *Include closed* belongs to the search, so it is written only where there is a search to
-  // belong to. A **term or a class** is one since ticket 09: a class on its own is a whole
-  // query, so a link to a class query with closed work shown has to be able to say so. The
-  // guard is not dropped — with neither on, nothing is searched and this would be a parameter
-  // narrowing nothing, in a link promising it did.
-  if ((screen.query.trim() || screen.classes.length > 0) && screen.includeClosed) {
+  // *Include closed* belongs to whatever it narrows, and since ticket 144 that is **two**
+  // surfaces. It has always belonged to the search — and a **term or a class** is one since
+  // ticket 09, because a class on its own is a whole query — and it is now the control that
+  // decides whether a fully decided difference is on the *Repeats* list as well.
+  //
+  // The guard is not dropped, only widened: with nothing searched and *Pages* the view, there
+  // is nothing for it to narrow, and this would be a parameter promising a narrowing it does
+  // not do. That is the same rule the sort and the priorities keep from the other side.
+  const narrows = screen.view === 'repeats' || screen.query.trim() || screen.classes.length > 0;
+  if (narrows && screen.includeClosed) {
     written.set(PARAM.includeClosed, '1');
   }
 

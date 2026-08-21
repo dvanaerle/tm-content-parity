@@ -19,7 +19,10 @@
 
 // The closed vocabulary, for the **order** of the class groups and nothing else. The
 // import site is `vocabulary.mjs` for the reason `classes.mjs` states.
-import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
+// `isWork` is the second thing read out of it, and only for the pill row: the repeat list
+// is built out of `work` findings alone, so a class that is not one can never appear in it
+// and its pill has to be counted off the snapshot instead (ticket 144).
+import { FINDING_CLASSES, isWork } from '../../../compare/vocabulary.mjs';
 // `canDecide()` is the interface's other rule derived from the visibility, and it lives
 // beside `toneOf()` rather than here: two of its three callers are the Links and
 // Images tabs, which have no rows at all (ticket 86).
@@ -778,8 +781,7 @@ const SAME_STRING_ON_EVERY_STORE = new Set(['images', 'links']);
  *
  * @param {string} cls
  */
-export const spansEveryStore = (cls) =>
-  SAME_STRING_ON_EVERY_STORE.has(FINDING_CLASSES[cls]?.check);
+export const spansEveryStore = (cls) => SAME_STRING_ON_EVERY_STORE.has(FINDING_CLASSES[cls]?.check);
 
 /**
  * The first term of a repeat's key: **which stores this difference may group over**.
@@ -971,6 +973,103 @@ export function repeatsByOpenWork(repeats, openOf) {
   seats.sort((a, b) => b.open - a.open || bySize(a.repeat, b.repeat));
 
   return seats.map((seat) => seat.repeat);
+}
+
+/**
+ * The repeat list with the **fully decided differences off it** (ticket 144).
+ *
+ * The name is *with work left* and not *by open work*: `repeatsByOpenWork()` above **orders**
+ * the list and this **narrows** it, `useWorstFirst()` calls the two on adjacent lines, and two
+ * names a preposition apart would be two things a reader has to keep straight.
+ *
+ * Ticket 141 sank such a row instead of removing it, deliberately — sinking is the safe
+ * direction to be wrong in, and the measurement since is that a sunk row is still a row an
+ * editor scrolls. Fifteen `casing` rows all reading *2 of 2 closed* is the list answering
+ * *what did this crawl find* to an editor asking *what is left*.
+ *
+ * It is the **same `openOf`** the order is taken with, and it is asked for rather than
+ * derived here for the same reason: this module never sees the override log, and the caller
+ * that draws a row already reads that row's bar. So a row's presence, its position and its
+ * printed *N of N closed* are three readings of **one** bar and can never disagree.
+ *
+ * A difference is dropped whole or kept whole. **A partly closed one stays and keeps its
+ * denominator** — its own row still says how many of it are closed, which is the sentence
+ * that tells an editor the work landed.
+ *
+ * `information` needs no case here. A repeat is built out of the `work` findings a summary
+ * carries (`loadSummaries()`), so a class that cannot be decided is not in this list to be
+ * removed from it. The pill row below is where that class has to be answered for.
+ *
+ * @param {Repeat[]} repeats
+ * @param {(repeat: Repeat) => number} openOf  How many of the repeat's findings are still
+ *                                             open, off the bar the row prints.
+ * @param {{ includeClosed?: boolean }} [options]  *Include closed*, which brings every
+ *   dropped row back. It is the one control that decides this, and it decides **membership
+ *   only**: no count below moves with it.
+ * @returns {Repeat[]}
+ */
+export function repeatsWithWorkLeft(repeats, openOf, { includeClosed = false } = {}) {
+  if (includeClosed) return repeats;
+  return repeats.filter((repeat) => openOf(repeat) > 0);
+}
+
+/**
+ * The class pills over a repeat list: how much **open work of that class is left** in it
+ * (ticket 144).
+ *
+ * The pill counted `summary.byClass` until this ticket, which is a snapshot tally over this
+ * store's comparable pages, and the list under it is `repeatsInStore()` over the language
+ * block. Neither number was stale with respect to the other — `Case or punctuation 40` over
+ * a group header saying *52 differences* is two units over two corpora — and a second count
+ * made to agree with the first would have drifted again the next time either moved. So the
+ * pill reads **the same list the rows come from** and the agreement is by construction. ADR
+ * 0029 argues the two decisions that span it.
+ *
+ * The unit is the **finding**, because that is the unit of a decision and it is what the row's
+ * *N of N closed* and the page bar already speak. 52 rows can hide 104 decisions, and *52*
+ * would tell an editor they have half the work they have.
+ *
+ * It returns `classCounts()`'s own shape and order, so the pill component takes no new prop
+ * and a class with nothing left is **absent** rather than a zero the component has to know
+ * to hide.
+ *
+ * @param {Repeat[]} repeats
+ * @param {(repeat: Repeat) => number} openOf  The same reading the rows are drawn from.
+ * @param {{ tally?: Record<string, number>, includeClosed?: boolean }} [options]
+ * @param {Record<string, number>} [options.tally] The snapshot's findings per class, for the
+ *   classes this list **cannot hold**: a repeat is built out of `work` findings, so an
+ *   `information` class has no row here and would silently lose its pill. Such a finding is
+ *   one you can link to and cannot decide, so no decision can close it and the snapshot's
+ *   figure is the live figure. Its `work` entries are ignored — those are what the list
+ *   answers for.
+ *
+ *   Those pills therefore count whatever **corpus the caller's tally is over**, which on the
+ *   dashboard is the store and not the block. It is a difference worth naming and not one
+ *   worth removing: a number nothing can move cannot come to disagree with a list, and the
+ *   store's own tally is the only one that screen holds — the sibling's summaries are there
+ *   for the press and for this list, and ADR 0021 keeps every other number the store's.
+ * @param {boolean} [options.includeClosed] Whether a class with nothing left still draws a
+ *   pill. It reads `0`, and that is the only way into a fully decided class's rows. **The
+ *   number never depends on this**; only a zero pill's presence does.
+ * @returns {{ class: string, count: number }[]}
+ */
+export function classCountsByOpenWork(repeats, openOf, { tally = {}, includeClosed = false } = {}) {
+  /** @type {Map<string, number>} */
+  const open = new Map();
+  for (const repeat of repeats) {
+    open.set(repeat.class, (open.get(repeat.class) ?? 0) + openOf(repeat));
+  }
+
+  // A class the log has emptied draws no pill, so pressing one can no longer answer *No
+  // difference found*. With *Include closed* on it stays, reading `0`.
+  const counted = [...open].filter(([, count]) => includeClosed || count > 0);
+
+  // The classes the repeat list cannot hold, off the snapshot. A `work` entry here is
+  // ignored on purpose: the list above is the answer for those, and taking the larger of two
+  // numbers is how the pill and the rows would come apart again.
+  const undecidable = Object.entries(tally).filter(([cls, count]) => count > 0 && !isWork(cls));
+
+  return classCounts(Object.fromEntries([...counted, ...undecidable]));
 }
 
 /**

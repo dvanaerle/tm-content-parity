@@ -431,6 +431,12 @@ element any more: it folds the links inside it. Both the word and the rule are g
   (ticket 109), so Back restores it and a copied link carries it. On a page it stays
   session-only: a page filter is a pass an editor is making, not a place to return to.
   Neither of them has ever moved a number and this does not change that.
+  A **class pill's own number does move**, and the distinction matters because the two are one
+  press apart: what moves it is the **log** — the count is the open work of that class, so it
+  falls as findings are decided and a class with nothing open draws no pill at all — and never
+  the filter. A filter says what is drawn; the log says how much is left.
+  See `docs/adr/0029-a-pill-reads-the-log-and-counts-the-block.md`, which also holds why the
+  pill counts the **language block** while the bar above it counts the **store**.
 - **Page scope** — a search narrowed to the pages whose key holds a word: `/downloads` is
   the repeats on that page, and `/downloads knop` is the repeats on that page whose words
   hold *knop*. The slash is a scope marker **in first position only**; anywhere else it is
@@ -534,8 +540,17 @@ element any more: it folds the links inside it. Both the word and the rule are g
   2026-08-20, ticket 141: the two are the same number until the log closes some of them,
   and a difference settled on thirty pages led the list over a price sentence open on
   five. A difference with nothing left sinks below every difference with work left,
-  whatever its size, and nothing is removed: the settled row stays on screen reading
-  *30 of 30 closed*. Equal open counts fall back to the page count and then to the key,
+  whatever its size. ~~Nothing is removed: the settled row stays on screen reading *30 of 30
+  closed*.~~ **Amended 2026-08-21, ticket 144.** A difference with **nothing open left is off
+  this list**, and so are the settled pages inside one that stays: a sunk row is still a row an
+  editor scrolls, and fifteen rows all reading *2 of 2 closed* is the list answering *what did
+  this crawl find* to an editor asking *what is left*. *Include closed* brings every one of
+  them back, and is the only way into a fully decided class's rows. A list the log has emptied
+  says **no open work** in the same words a scoped search says it about a page, and names the
+  control. The row that was just
+  finished **stays where it is** and re-counts itself — numbers are readings and move,
+  membership is a position and is held — and it is gone the next time the list opens.
+  Equal open counts fall back to the page count and then to the key,
   and a row's **position is held** while the editor works in it — it is re-taken when the
   list holds different differences, never when a decision lands, and it waits for the log to
   have answered, because an unread log reports every finding open. It answers *what do I decide next*; opening a
@@ -580,9 +595,12 @@ element any more: it folds the links inside it. Both the word and the rule are g
   and never in the counts' order, because a group that moves position as the work is
   done is a group nobody can learn where to look for. That refusal is about **groups**:
   the **rows** inside one are worst-first by open findings like every other repeat row
-  (ticket 141), and they have moved as work is decided since the page list had a sort. A `work` class with no repeats is
-  a group that says so: "nothing wrong here" and "this class does not exist" are two
-  different answers. **Opening a group is not a filter**: it changes what is drawn and
+  (ticket 141), and they have moved as work is decided since the page list had a sort.
+  A group is drawn for a class that **holds something**, and its *N differences* counts the
+  differences **drawn** — so a class the log has emptied has no group, in the manner it has no
+  pill (ticket 144). ~~A `work` class with no repeats is a group that says so.~~ Amended
+  2026-08-21: `groupRepeatsByClass()` stopped drawing one, because that answer costs a row
+  apiece in the list an editor reads to find work. **Opening a group is not a filter**: it changes what is drawn and
   never what is included, so it is session state, it never enters the amber strip and
   *clear filter* does not touch it. The class pills stay the one filter, and with a
   pill on only the selected groups exist, so the two controls cannot tell different

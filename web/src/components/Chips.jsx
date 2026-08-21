@@ -246,7 +246,16 @@ export function ClassFilterPills({ counts, selected, onToggle, hint }) {
             )}
           >
             <ClassPill class={cls} hinted={false} />
-            <span className="pr-1 text-xs text-muted-foreground tabular-nums">{count}</span>
+            {/* Named, because the number is the thing this pill claims and a reader — or a
+                test — asks the markup for it rather than slicing it off the end of a label
+                run together with it. Since ticket 144 it is the open work of the class,
+                which is a number that moves. */}
+            <span
+              data-slot="pill-count"
+              className="pr-1 text-xs text-muted-foreground tabular-nums"
+            >
+              {count}
+            </span>
           </ToggleGroupItem>
         </Hint>
       ))}
