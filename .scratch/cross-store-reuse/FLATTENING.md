@@ -12,7 +12,7 @@ production code changed. Scripts, all throwaway:
 |---|---|
 | reports | 816 in `data/reports`, all observation `2026-08-19T15:15:18.599Z-135ccd35`, built 2026-08-20 |
 | findings | **35,604** |
-| run log | `history/run-log.jsonl`, 41,317 rows |
+| run log | `history/run-log.jsonl`, 41,316 rows (41,317 lines; the first is the index header) |
 | extracts | `data/extract/<store>/<page>.json`, both sides, `extractVersion: 2` |
 | seed rows | 550 in `data/10-store-seeds.json` |
 | override log | `data/overrides-backup-2026-08-18T09-46-51-393Z.json`, 1,618 events, 1,294 standing after `latestByKey()` |
@@ -53,7 +53,7 @@ store difference.
 | cross-store unit pairs | 9,675 |
 | pairs diverging on production | **311** |
 | …with a counterpart on both new sites | 214 |
-| …**agreeing on the new site — the flattening** | **111** on **42 pages** |
+| …**agreeing on the new site — the flattening** | **111** on **42 page pairs** (40 distinct page keys) |
 | …one side's unit had no counterpart, so nothing is claimed | 97 |
 
 The class the log's own `classifyPair()` gives the production divergence: **copy 94,
@@ -66,13 +66,14 @@ on both stores.
 
 **109 of the 111 are already an ordinary axis-A finding today**, on the store that lost its
 words: 58 on `be`, 34 on `be_fr`, 28 on `fr`, 17 on `nl` (a unit can be a finding on both
-stores, which is what the 21 *neither* rows are). The two that are not are both a run the
+stores: 58+34+28+17 = 137 against 111 units, so 28 units are a finding on both, and all 21
+*neither* rows are among those 28). The two that are not are both a run the
 new site merged, where the finding exists with a `regrouped` shape and not with these two
 texts.
 
 ### Ranked, with the text
 
-The full 42 pages and 111 units are in `flattening.json`. The head of the ranking:
+The full 42 page pairs and 111 units are in `flattening.json`. The head of the ranking:
 
 | units | stores | page |
 |---|---|---|
@@ -111,10 +112,10 @@ store's own country and the new site does not:
 sentence restricting how an order may be collected that `fr` does not, and the new site
 drops it from `be_fr` — the shorter French text is now on both.
 
-**The largest page, `schuifpui`, `nl`/`be`.** 16 units, every one of them `be`'s own
-rewrite of the Dutch copy replaced by `nl`'s wording, headings included: `be` production
-"Meer genieten met een aluminium schuifpui" against `nl` "Veel meer genieten met een
-schuifpui", and the new site says `nl`'s on both.
+**The largest page, `schuifpui`, `nl`/`be`.** 16 units — 14 where the new site shows `nl`'s
+production wording and 2 where it shows neither store's. Headings are among them: `be`
+production "Meer genieten met een aluminium schuifpui" against `nl` "Veel meer genieten met
+een schuifpui", and the new site says `nl`'s on both.
 
 **Reported as a divergence and never as a cause.** A store-scoped variable renders no
 HTML, so a unit that differs may differ for a reason no crawl can name. None of the above
@@ -151,8 +152,8 @@ Distribution, and it is the point of the measurement:
 | 0.01–0.24 | 3 | 3 | 0 | 0 |
 | 0.00 | 0 | 0 | 0 | 0 |
 
-**246 page pairs exist** (126 Dutch + 120 French) and **113 of them render identical
-words** (66 + 47) — 46%. The shape is **not bimodal**: nothing at all sits at 0.00, and the
+**246 page pairs exist** (126 Dutch + 120 French), 245 of them measured, and **113 render
+identical words** (66 + 47) — 46% of the measured pairs. The shape is **not bimodal**: nothing at all sits at 0.00, and the
 0.75–0.99 band holds 49 of the 125 Dutch rows and **68 of the 120 French rows** — in the
 French block that band is larger than the identical one. Both directions of a block agree
 to within one row, so nothing here depends on which store the reading is taken from.

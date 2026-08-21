@@ -107,12 +107,14 @@ answer to it*, and these three numbers are what settle that.
 ## Answer
 
 **Measured 2026-08-21 at commit `cf50c63`.** Full working, with every source and code path
-cited, in [`../FLATTENING.md`](../FLATTENING.md). Scripts:
+cited, in [`../FLATTENING.md`](../FLATTENING.md). Independently verified at commit `ff263b8`
+in [`../VERIFY-11.md`](../VERIFY-11.md): every load-bearing number reproduces from a recount;
+the five presentation-level corrections it found are applied here and in `FLATTENING.md`. Scripts:
 `.scratch/cross-store-reuse/flatten-probe-1.mjs`, `-2.mjs`, `-3.mjs`; the 111 units with
 their text in `flattening.json`.
 
 **Corpus size.** 816 reports in `data/reports`, **35,604 findings**, all on observation
-`2026-08-19T15:15:18.599Z-135ccd35`, built 2026-08-20. `history/run-log.jsonl`: 41,317
+`2026-08-19T15:15:18.599Z-135ccd35`, built 2026-08-20. `history/run-log.jsonl`: 41,316
 rows. 550 seed rows. Override log `data/overrides-backup-2026-08-18T09-46-51-393Z.json`:
 1,618 events, 1,294 standing after `latestByKey()`. **This is not ticket 01's corpus** —
 that answer counted 40,824 findings and 132 detached dismissals two days ago; the same log
@@ -124,7 +126,7 @@ a probe must decode before `latestByKey()`. And nothing needed to be written for
 measurement 2: it **is** `blockReading()` in `web/src/lib/blocks.mjs`, whose `share` and
 `mutual` are this measurement already.
 
-### 1. The flattening — 111 units on 42 pages
+### 1. The flattening — 111 units on 42 page pairs
 
 Three alignments, all `diffRows()`: production `nl` against production `be` (which is
 `siblingReading()`'s own comparison), then production against the new site inside each
@@ -136,7 +138,7 @@ store (which is `comparePage()`'s).
 | cross-store unit pairs | 9,675 |
 | diverging on production | **311** |
 | …with a counterpart on both new sites | 214 |
-| …**agreeing on the new site — the flattening** | **111**, on **42 pages** |
+| …**agreeing on the new site — the flattening** | **111**, on **42 page pairs** (40 distinct page keys) |
 
 Divergence class by `classifyPair()`: copy 94, casing 15, price 1, campaign 1 — so 109 of
 111 are in **work** classes. Whose words the new site kept: `nl` 46, `fr` 24, `be_fr` 13,
@@ -164,7 +166,7 @@ Three of them, quoted:
 **The finding that matters most here is that 109 of the 111 are already an ordinary axis-A
 finding today** — 58 on `be`, 34 on `be_fr`, 28 on `fr`, 17 on `nl`. Nothing is hidden from
 an editor. What ticket 07 would add is a **reason** beside a difference the log already
-reports, and a ranking that puts these 42 pages first.
+reports, and a ranking that puts these 42 page pairs first.
 
 ### 2. The pairing — 246 pairs, 113 identical
 
@@ -182,8 +184,8 @@ reports, and a ranking that puts these 42 pages first.
 | 0.01–0.24 | 3 | 3 | 0 | 0 |
 | 0.00 | 0 | 0 | 0 | 0 |
 
-**246 page pairs, 113 of them identical word for word (46%).** The distribution is **not
-bimodal**: nothing at all sits at 0.00, and the 0.75–0.99 band holds 49 of the 125 Dutch
+**246 page pairs, 245 measured, 113 of them identical word for word (46% of the
+measured).** The distribution is **not bimodal**: nothing at all sits at 0.00, and the 0.75–0.99 band holds 49 of the 125 Dutch
 rows and 68 of the 120 French — in the French block that band is larger than the identical
 one. So ticket 10's *"the common case is that they are one page"* is **half true and
 half false**: the pairing is dense, but the pairs mostly nearly agree rather than agree,
@@ -219,12 +221,12 @@ working the second store yet, so nobody is paying the cost ticket 06 removes.
 
 **07, the flattening half, is worth building and needs no link table.** It is computable
 today from `data/extract/` with three calls to `diffRows()` and no new column: 111 units on
-42 pages, 109 of them in work classes, and among them a warranty scope and a delivery-area
+42 page pairs, 109 of them in work classes, and among them a warranty scope and a delivery-area
 promise that production varied per country and the new site made uniform. That is the
 customer-facing, hard-to-find migration defect this tool exists for, and a reader would
 never find it by opening one store at a time. Build it as a **reason on a finding the log
 already reports** — 109 of the 111 are open axis-A findings now — and as an ordering that
-lifts these 42 pages. Do **not** ship the `store-scoped content` label: a store-scoped
+lifts these 42 page pairs. Do **not** ship the `store-scoped content` label: a store-scoped
 variable renders no HTML, so the cause is unnameable and 21 of the 111 are a new-site
 rewrite rather than one store's words winning. The label the evidence supports is
 *production varied here and the new site does not*, which is a divergence and not a cause.
@@ -233,8 +235,8 @@ work.
 
 **Refuse 10.** Its premise is measured and it does not hold. The derived pairing already
 covers 126 of `be`'s 131 pages and 120 of `fr`'s 123 without a table, an RLS policy or a
-screen; the linking screen's pass is 246 pairs rather than ten; and only 46% of them
-render identical words, so a bulk press taken off identity would be transcribing a
+screen; the linking screen's pass is 246 pairs rather than ten; and only 46% of the
+measured pairs render identical words, so a bulk press taken off identity would be transcribing a
 judgement it cannot verify — two separate records holding one string are exactly what a
 pair looks like the day before it diverges. Add to that what the ticket itself concedes:
 that table widens who may grant a permission. The one thing 10 was needed for — knowing
