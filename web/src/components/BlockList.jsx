@@ -30,7 +30,8 @@ export default function BlockList({ reading }) {
 
   // Every grouping and the count arrive as values. This file re-derives none of them:
   // a second definition of *a page both stores have* is a second thing to keep true.
-  const { store, sibling, census, side, shared, absentThere, absentHere, identical } = reading;
+  const { store, sibling, census, side, shared, absentThere, absentHere, identical, flattening } =
+    reading;
 
   return (
     <Card id="language-block">
@@ -62,7 +63,12 @@ export default function BlockList({ reading }) {
         <section>
           <h3 className="font-medium">Pages both stores have ({shared.length})</h3>
           <p className="text-muted-foreground">
-            Worst first, by how much of this store's text appears in {sibling}'s.{' '}
+            {/* The order is stated where the list is, and only the part of it that
+                applies: a store with nothing flattened is ranked by the share alone and
+                must not be told about an ordering it does not have. */}
+            {flattening > 0
+              ? `The pages the migration flattened first, then worst first by how much of this store's text appears in ${sibling}'s. `
+              : `Worst first, by how much of this store's text appears in ${sibling}'s. `}
             {identical > 0 && `${identical} of them agree word for word.`}
           </p>
           {shared.length === 0 ? (
@@ -108,7 +114,9 @@ export default function BlockList({ reading }) {
  * looked.
  *
  * The share is a **ranking key** and it carries no tone: it is not a score on a
- * finding, and colouring it would make a display-only difference look like work.
+ * finding, and colouring it would make a display-only difference look like work. The
+ * flattened count beside it is the same: it lifts the row to the top of the list and it
+ * is not work either.
  */
 function SharedRow({ row }) {
   return (
@@ -126,6 +134,17 @@ function SharedRow({ row }) {
               stop. */}
           {row.found} of {row.units} content units appear in the sibling —{' '}
           {Math.round(row.share * 100)}%
+        </span>
+      )}
+      {/* Why this page is at the top. It is a **count of content units** and no kind of its
+          own: the page is still `identical` or `diverged` on production, and this is a
+          second fact about it. It says what was seen and never why — a store-scoped
+          mechanism renders no HTML — and it carries no tone, because where it produces a
+          defect that defect is an ordinary finding on the store that lost its words. */}
+      {row.flattening > 0 && (
+        <span className="text-muted-foreground">
+          — {row.flattening} {row.flattening === 1 ? 'content unit' : 'content units'} varied
+          between the two stores on production and say one thing on the new site
         </span>
       )}
       {row.kind === 'unmeasured' && (

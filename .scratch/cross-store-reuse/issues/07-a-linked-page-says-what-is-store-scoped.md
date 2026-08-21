@@ -1,7 +1,13 @@
 # 07 — A linked page says what is store-scoped
 
 Type: task
-Status: ready-for-agent — **re-triaged 2026-08-21, reduced to its flattening half.** Ticket
+Status: resolved 2026-08-21 — built on `ticket-13-target-floor-and-header-wrap`. The reading
+is `flattenedUnits()` and `flattenedPages()` in `web/src/lib/flattening.mjs`; the sibling tab draws **two readings** (`siblingReading()`,
+`SiblingView.jsx`) and the block list orders the flattened pairs first (`blockReading()`,
+`BlockList.jsx`). `CONTEXT.md` gains *Flattened store difference* and records that
+`store-scoped content` is refused. Read back off the build: **21 + 21 = 42 page pairs** and
+**63 + 48 = 111 units**, which is 11's measurement.
+Was **re-triaged 2026-08-21, reduced to its flattening half.** Ticket
 [11](11-measure-the-flattening-and-the-pairing.md) has reported and it decided in this ticket's
 favour on the half that needs no link table, and against the half that does. **The flattening
 reading survives and is unblocked; the `store-scoped content` label is refused.** See *What 11
@@ -68,24 +74,32 @@ a list of pairs worth linking belongs where the linking happens.
 
 ## Criteria
 
-- [ ] The sibling tab gains a **second reading**: production's two stores as today, and the new
+- [x] The sibling tab gains a **second reading**: production's two stores as today, and the new
       site's two stores beside it. It is a second reading and not a fifth comparison.
 - [ ] ~~A divergence on a **linked** page is named **`store-scoped content`**.~~ — **refused by
       11.** The cause is unnameable and 21 of the 111 are a new-site rewrite. What a row may say
       is *production varied here and the new site does not*, which is the divergence and not its
       cause.
-- [ ] The row where **production diverges and the new site does not** is the one that stands out,
+- [x] The row where **production diverges and the new site does not** is the one that stands out,
       because that is a store difference the migration lost. **This is the ticket now** — 111
       units on 42 page pairs, and the reason belongs beside the axis-A finding 109 of them
       already are.
-- [ ] Those 42 page pairs are ordered ahead of the rest, so the reading is met and not hunted for.
-- [ ] Where that produces a defect it is already an ordinary axis-A finding on the affected store,
+- [x] Those 42 page pairs are ordered ahead of the rest, so the reading is met and not hunted for.
+      The build reads back 21 pairs in each block, and the block list says why the order is what
+      it is only on a store that has one.
+- [x] Where that produces a defect it is already an ordinary axis-A finding on the affected store,
       and the decision stays there. This tab offers none.
-- [ ] Both readings carry **no id, no override, no class pill and no place in any bar**.
-- [ ] The tool never names the variable. Its value is server-side and appears in no HTML.
-- [ ] Both readings are decided **as values** by the existing reading functions and rendered dumbly.
-- [ ] The `CONTEXT.md` entry for **store-scoped content**.
-- [ ] `npm test`.
+- [x] Both readings carry **no id, no override, no class pill and no place in any bar**.
+- [x] The tool never names the variable. Its value is server-side and appears in no HTML. A
+      browser test reads the whole tab back for the words *variable*, *customVar* and
+      *store-scoped*, and finds none of them.
+- [x] Both readings are decided **as values** by the existing reading functions and rendered dumbly.
+- [x] The `CONTEXT.md` entry — for **flattened store difference**, and it records that
+      **`store-scoped content` is refused**, as a class, a label and a word. The entry 11's
+      decision leaves room for is the one the evidence supports; the refused word is listed so
+      that it reads as refused and not as unexplored.
+- [x] `npm test` — 1,421 tests, green. `npm run typecheck` and `npm run build` too; the lint
+      warning in `verify-11-double.mjs` is 11's own throwaway probe and is untouched.
 
 ## Traps
 

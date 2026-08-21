@@ -981,7 +981,10 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   divergence between two stores is never read as a defect on the new site.
 - The block has **two surfaces and one vocabulary**. The store dashboard's block list
   answers *which page* diverges; the **sibling tab** on a store page answers *where on
-  it*, drawing this page against its sibling page in document order. It is the fifth tab
+  it*, drawing this page against its sibling page in document order. The tab holds **two
+  readings and not a fifth comparison**: production's two stores, and the new site's two
+  stores beside them. The second is there to make the flattening checkable — the claim is
+  about both sides at once, so a reader who cannot see both cannot check it. It is the fifth tab
   and it is **not a fifth check**: `Check` stays the closed family
   `text | links | images | meta`, so no finding id can name a row on it and no landing can
   open one — `landingFor()` resolves a tab from a finding's check, and this tab is not
@@ -1002,6 +1005,29 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   **finding** and it belongs on the tab that shows that finding. A row is also **not
   tinted by direction**: `lost` and `added` are the tones of a class, a block difference
   has none, and neither store lost anything — they differ.
+- **Flattened store difference** — a content unit whose two stores **diverge on
+  production and agree on the new site**. Production said two things and the new site says
+  one, so one store now shows the other's words: the `nl` store states Belgium's warranty
+  scope, and the Belgian store lists the Netherlands first in the delivery area. It is
+  **111 units on 42 page pairs** over `{nl, be}` and `{be_fr, fr}`, measured 2026-08-21 —
+  the working is in `.scratch/cross-store-reuse/FLATTENING.md` and the code is
+  `flattenedUnits()` in `web/src/lib/flattening.mjs`, three `diffRows()` alignments over
+  the reports already on disk.
+  It is a **divergence and never a cause**. *Why* production varied is not a fact any crawl
+  holds: a store-scoped mechanism — a custom variable, a store-scoped block — renders no
+  HTML, and 21 of the 111 are a new-site rewrite rather than one store's words winning. So
+  the tool may say *production varied here and the new site does not* and may never name
+  the mechanism, guess the variable, or claim the words were store-scoped.
+  **`store-scoped content` is refused** as a class, a label and a word: ticket 07 proposed
+  it and ticket 11's measurement refused it, on the two grounds above. The word is listed
+  here so that it reads as *refused* and not as *somewhere I have not looked yet*.
+  It is **not work** and it becomes no finding — ADR 0017 holds, and a divergence on
+  production is never a defect. Where a flattening is a defect it already **is** an
+  ordinary axis-A finding on the store that lost its words: 109 of the 111 are one today,
+  58 on `be`, 34 on `be_fr`, 28 on `fr` and 17 on `nl`. What this adds is a **reason beside
+  a difference the log already reports**, and an **ordering** — the 42 page pairs sort
+  ahead of the agreement share on the block list, so the reading is met and not hunted
+  for. It carries no id, no override, no class pill and no place in any bar.
 - A block is **not an axis**, and there is no axis C. The axes are what an editor
   works; a block is what an editor reads. The word is refused on purpose, because an
   axis in this repo means a tab, a task and in the end a count — ticket 11 forbids

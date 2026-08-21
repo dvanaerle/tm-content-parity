@@ -436,7 +436,22 @@ export default function Ledger({
                 alignment inside it cost nothing to a reader who never opens it. */}
           {sibling && (
             <TabsContent value={SIBLING_TAB}>
-              <SiblingView store={report.store} here={production.elements} sibling={sibling} />
+              <SiblingView
+                store={report.store}
+                here={production.elements}
+                /* The new site's own units, so the tab can draw its second reading. They
+                   come off the report and therefore follow a re-check, which is the half
+                   of the comparison that can change while the page is open — the
+                   sibling's two extracts are another store's and arrive from the build.
+
+                   **Only where the new site answered 200.** A page it did not serve still
+                   carries an extract — the error page's own words — and handing those over
+                   would have the tab compare a 404 to the sibling's real page and call it
+                   measured. It is the same rule `loadExtracts()` applies to the sibling's
+                   side, said on this side too. */
+                hereNew={next.status === 200 ? next.elements : null}
+                sibling={sibling}
+              />
             </TabsContent>
           )}
         </div>

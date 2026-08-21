@@ -319,7 +319,14 @@ describe('the sibling tab on the ledger', () => {
     page: 'overkappingen',
     rule: 'alternate',
     units: [unit('Gelijk een', 0)],
+    newUnits: [unit('Gelijk een', 0)],
   };
+
+  /** The same page, with a new side the crawl got an answer for. */
+  const onNewSite = (status, elements) => ({
+    ...comparing,
+    sides: { ...comparing.sides, new: { ...comparing.sides.new, status, elements } },
+  });
 
   it('is absent, and not empty, on a page with no sibling', () => {
     // A tab that draws itself to say there is nothing to compare is a tab an editor
@@ -342,11 +349,40 @@ describe('the sibling tab on the ledger', () => {
     unmount();
   });
 
+  it('hands the new site over only where the new site answered 200', async () => {
+    // A page the new site did not serve still carries an extract — the error page's own
+    // words — and comparing those to the sibling's real page would be a measurement of
+    // nothing that called itself measured.
+    const unmount = mount({ report: onNewSite(404, [unit('Pagina niet gevonden', 0)]), sibling });
+    await userEvent.click(button('Sibling'));
+
+    expect(document.body.textContent).toContain(
+      'Not compared: the new site did not answer 200 on both sides',
+    );
+    expect(document.body.textContent).not.toContain('Pagina niet gevonden');
+
+    unmount();
+  });
+
+  it('compares the new site on both stores where it did', async () => {
+    const unmount = mount({ report: onNewSite(200, [unit('Gelijk een', 0)]), sibling });
+    await userEvent.click(button('Sibling'));
+
+    expect(document.body.textContent).toContain(
+      'The two stores say the same thing on the new site',
+    );
+
+    unmount();
+  });
+
   it('opens the sibling comparison when it is pressed', async () => {
     const unmount = mount({ report: comparing, sibling });
     await userEvent.click(button('Sibling'));
 
-    expect(document.body.textContent).toContain('It compares production on both sides');
+    // Both of the tab's readings, because the ledger's job here is to mount the tab and
+    // the tab's is to draw two of them.
+    expect(document.body.textContent).toContain('Production, on both stores');
+    expect(document.body.textContent).toContain('The new site, on both stores');
 
     unmount();
   });
