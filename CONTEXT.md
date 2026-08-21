@@ -917,45 +917,35 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   re-deriving it.
 - **Shared page** — a store page whose **new-site Magento record is the same record** as its
   sibling page's, so that one edit corrects both stores. `bedrijfsinformatie` is record 543 and
-  it serves `nl` and `be`. It is **imported and never derived**: two pages that share a record
-  and two pages that are separate records holding identical words are indistinguishable to a
-  crawler, and they behave oppositely the moment somebody fixes one. So identical text is not
-  evidence for it, in either direction.
-  Sharing is a property of the **pair**, so one entry unshares both stores — which is why the
-  grid only has to be read from one store of a block. Two conditions come from the corpus and
-  never from the layout: a page with **no sibling page** is not shared, because there is no
-  partner, and a store in no block is not shared. `isSharedPage()` in
-  `web/src/lib/shared-pages.mjs` decides it as a value, over 492 store pages at the
-  complement's upper bound. See
-  `docs/adr/0025-the-shared-page-fact-is-imported-and-states-the-complement.md`.
+  it serves `nl` and `be`. **Nothing in this repo knows which pages these are**, and no screen
+  asks: the fact was never held anywhere and the code that would have held it was removed on
+  2026-08-21. The term is kept because the **distinction** is real and a later feature will
+  meet it — and because it names a mistake that stays available.
+  That mistake is inferring it from text. Two pages that share a record and two pages that are
+  separate records holding identical words are indistinguishable to a crawler, and they behave
+  oppositely the moment somebody fixes one. So identical text is **not evidence** for sharing,
+  in either direction, and no count or claim in this repo may treat it as such.
   A shared page is **not a *link***. `links` is a Check and this is not one; nobody links
-  anything here. The sibling is derived from what production declares and the sharing is
+  anything here. The sibling is derived from what production declares and the sharing would be
   imported from Magento, and neither is an editor's assertion about two pages. It is also not
   the *shared* of a **page both stores have**, which is what the block list's three middle
   kinds are: that says each store has the page, and this says the two are one record.
-- **Record layout** — where the shared-page fact is kept: the `record_layout` table, read off
-  the new site's admin grid **by a person** and edited in the interface, because the person who
-  reads the grid is not the person with a clone. It states the **complement** — the store pages
-  that are **separate records**, each with its Magento record id and its reason — because that
-  is the short list, and everything else inside a block is shared.
-  It is a **fact and not a judgement**, which is why it is its own table and not a scope on
-  `overrides`: it carries a reason, sits in no bucket, moves no count, and a later crawl can
-  contradict it. It is **append-only** on the same terms — no UPDATE policy and no DELETE
-  policy, and the absence of the policy is the protection — so an entry is withdrawn by a later
-  event and never by an edit. **Nothing is keyed on the record id**: every id in this repo is
-  content-addressed and expires on purpose, and a record id is not one.
-  A **reading** is the third kind of event and it carries the day the grid was looked at, which
-  is not the day somebody typed. It is what bounds every permission the complement grants: a
-  store page whose first sighting in the run log is **later** than that day reads as **not
-  shared**, because the reading cannot have seen it. **With no reading, nothing is shared** — an
-  empty table must never mean *everything is shared*. The layout states a fact about today and
-  never a plan: an entry leaves it the day the merge lands in Magento.
-  An entry naming a store page the corpus no longer holds is a **stray**. It is housekeeping and
-  not a failure — it grants nothing, because such a page has no sibling pairing — and the screen
-  names it so the record can be disabled in Magento. `recordLayoutFrom()` in
-  `overrides/record-layout.mjs` derives the layout from the events; the entries are **picked out
-  of the corpus** and never typed, which is what removed the key resolution and the build guard
-  the committed file needed.
+  `docs/adr/0025-the-shared-page-fact-is-imported-and-states-the-complement.md` holds the whole
+  argument, including why it cannot be derived and what it would cost to keep — read it before
+  building anything on sharing.
+- **Record layout** — **removed 2026-08-21, and it held no data.** It was where the
+  shared-page fact was to be kept: a `record_layout` table, read off the new site's admin grid
+  by a person and edited in the interface. The table was never created, nothing ever read the
+  fact, and the ticket that superseded it was refused. The word is listed here so that it reads
+  as *gone* rather than as *somewhere I have not looked yet*.
+  Four of its rules are worth carrying into anything that replaces it, and ADR 0025 argues each
+  one. It stated the **complement** — the pages that are separate records — because that is the
+  short list. **With no reading, nothing is shared**: an empty list must never mean *everything
+  is shared*, which is the most permissive sentence the feature could utter and the one an
+  unfilled table would have asserted. A reading carried **the day the grid was looked at**, not
+  the day somebody typed, and a page first seen after that day read as not shared. And
+  **nothing was keyed on the Magento record id** — every id here is content-addressed and
+  expires on purpose, and a record id is not one.
 - **Agreement share** — of one store's production content units, the share whose
   **normalised text** appears exactly in the sibling's. It is what ranks the list,
   worst-first, and it is **not a score on a finding**. It is called *agreement* and
