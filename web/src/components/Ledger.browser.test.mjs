@@ -836,16 +836,22 @@ describe('the language of the content', () => {
     unmount();
   });
 
-  /** The tooltip and the language are on one element, for `Diff.jsx`'s reason. */
-  it('declares it on the element that owns the heading tooltip', async () => {
+  /**
+   * The hint and the language are on one element, for `Diff.jsx`'s reason — and since
+   * ticket 129 the hint is a described element and not a `title`, so the sentence a reader
+   * is given carries the German it is written in. The description is where that `lang`
+   * lives: it is drawn at the end of the document, out of the reach of the row's own.
+   */
+  it('declares it on the heading hint a reader is given', async () => {
     const unmount = mount({
       report: german,
       findings: [finding('a', 'open', { anchorHeading: 'Farben und Formen' })],
     });
     await userEvent.click(button('Links'));
 
-    const under = document.querySelector('tr#finding-a [lang="de"][title]');
-    expect(under.title).toBe('Farben und Formen');
+    const under = document.querySelector('tr#finding-a [lang="de"][aria-describedby]');
+    const said = document.getElementById(under.getAttribute('aria-describedby'));
+    expect([said.lang, said.textContent]).toEqual(['de', 'Farben und Formen']);
     unmount();
   });
 
@@ -856,6 +862,76 @@ describe('the language of the content', () => {
     const declared = [...document.querySelectorAll('tbody [lang]')];
     expect(declared.map((one) => one.lang)).not.toContain('en-GB');
     expect(declared.map((one) => one.textContent)).toContain(PROD_META.title);
+    unmount();
+  });
+});
+
+/**
+ * Ticket 129 part B. Every hint on the ledger was a native `title` — the fix tick's, the
+ * repeat count's, the date's, the copy button's — and a `title` is invisible on a touch
+ * screen, unreachable by keyboard and announced when a screen reader feels like it. What is
+ * asserted is the **reach** and never the markup: the sentence a reader who is not holding a
+ * mouse is given, resolved through `aria-describedby` the way an assistive technology
+ * resolves it.
+ */
+describe('a hint on the ledger, reached without a mouse', () => {
+  /** What a reader is given after the element's own name, resolved as the accname spec does. */
+  const description = (element) =>
+    (element.getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+
+  const tick = () => document.querySelector('tbody [data-wears="tick"]');
+
+  it('leaves the fix tick its own name and adds the hint beside it', async () => {
+    const unmount = mount();
+    await userEvent.click(button('Links'));
+
+    expect(tick().getAttribute('aria-label')).toBe('Fixed — Link target changed');
+    expect(description(tick())).toBe('I corrected this.');
+    unmount();
+  });
+
+  /**
+   * The one rule a caller has to remember, and the row it is about: a tick on a read-only log
+   * takes no focus and fires no pointer events, so *why is this off* would be the sentence
+   * nobody could reach. The hint moves to the element around it, which is a tab stop.
+   */
+  it('keeps the hint on a tick that is off, where the control cannot carry one', async () => {
+    const unmount = mount({ canWrite: false });
+    await userEvent.click(button('Links'));
+
+    // Base UI draws a disabled tick as a roleless-looking `span` with `aria-disabled`, which
+    // is the whole of the problem: it is not focusable and no hover reaches it.
+    expect(tick().getAttribute('aria-disabled')).toBe('true');
+    expect(tick().tabIndex).toBe(-1);
+    const around = tick().closest('[aria-describedby]');
+    expect(around.tabIndex).toBe(0);
+    expect(description(around)).toBe('I corrected this.');
+    unmount();
+  });
+
+  it('says how many times a repeated finding is on the page, to a reader who tabs to it', async () => {
+    const unmount = mount({ findings: [finding('a', 'open', { occurrences: 3 })] });
+    await userEvent.click(button('Links'));
+
+    const count = [...document.querySelectorAll('tbody span')].find(
+      (one) => one.textContent === '×3',
+    );
+    expect(count.tabIndex).toBe(0);
+    expect(description(count)).toBe('This finding is 3 times on the page. One tick closes all 3.');
+    unmount();
+  });
+
+  it('leaves no title for the browser to draw its own box from', async () => {
+    const unmount = mount({
+      findings: [finding('a', 'open', { occurrences: 3, anchorHeading: 'Kleuren en RAL' })],
+    });
+    await userEvent.click(button('Links'));
+
+    expect([...document.querySelectorAll('[title]')].map((one) => one.title)).toEqual([]);
     unmount();
   });
 });

@@ -4,6 +4,7 @@ import { classInfo } from '../lib/classes.mjs';
 import { storeHref } from '../lib/page-url.mjs';
 import { searchForRepeat } from '../lib/screen-url.mjs';
 import { Attribution } from './Attribution.jsx';
+import { Hint } from './Hint.jsx';
 import { Button } from './ui/button.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Input } from './ui/input.jsx';
@@ -236,20 +237,30 @@ function FixCheckbox({ finding, canWrite, onTick }) {
   // The editor is told so before the click, not after it.
   const grouped = occurrences > 1 ? ` One tick closes all ${occurrences} rows.` : '';
 
+  const off = !canWrite || closedByJudgement;
+
   return (
-    <Checkbox
-      data-wears="tick"
-      data-tone={contradicted ? 'caution' : 'added'}
-      checked={state === 'fixed' || contradicted}
-      disabled={!canWrite || closedByJudgement}
-      onCheckedChange={(ticked) => onTick(ticked)}
-      aria-label={`Fixed — ${classInfo(finding.class).label}`}
-      title={
+    // `disabled` and not a wrapper written here: a tick closed by a dismissal, or on a report
+    // nobody may write to, takes no focus and fires no pointer events — so the hint that
+    // explains *why it is off* is exactly the hint that would reach nobody. `Hint.jsx` owns
+    // that move, and the mixed press stays the tick's own press wherever the trigger lands.
+    <Hint
+      text={
         contradicted
           ? `You claimed this as fixed, but a later observation still sees the difference.${grouped}`
           : `I corrected this.${grouped}`
       }
-    />
+      disabled={off}
+    >
+      <Checkbox
+        data-wears="tick"
+        data-tone={contradicted ? 'caution' : 'added'}
+        checked={state === 'fixed' || contradicted}
+        disabled={off}
+        onCheckedChange={(ticked) => onTick(ticked)}
+        aria-label={`Fixed — ${classInfo(finding.class).label}`}
+      />
+    </Hint>
   );
 }
 

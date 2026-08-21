@@ -29,4 +29,17 @@ describe('the store switcher', () => {
   it('draws nothing when the log holds one store', async () => {
     expect(await render(['nl'])).toBe('');
   });
+
+  /**
+   * Ticket 129. The country name explained the id in a `title`, which a touch reader cannot
+   * see and a keyboard reader cannot reach. It is in the link's **name** now — the one hint
+   * in the interface that `Hint.jsx` does not draw, because a tooltip here is a React island
+   * in the header of every page of the site. The label is the id and the country both, so the
+   * word an editor learned is still the word on the screen.
+   */
+  it('explains each store id in the name of its link, and never in a title', async () => {
+    const html = await render(['nl', 'de']);
+    expect(html).toContain('aria-label="de — Germany"');
+    expect(html).not.toContain('title=');
+  });
 });

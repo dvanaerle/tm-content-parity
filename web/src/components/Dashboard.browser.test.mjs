@@ -1024,7 +1024,10 @@ describe('a page note in a list', () => {
     // The page it is about is where the note is drawn in full and where it is edited, so the
     // mark goes there rather than revealing the text in place.
     expect(mark.getAttribute('href')).toBe('/nl/overkappingen/');
-    expect(mark.title).toBe(LONG);
+    // The note is the mark's own name since ticket 129, and no longer a `title` beside it: a
+    // reader who is not holding a mouse is given the whole note and not the word *Note*.
+    expect(mark.getAttribute('aria-label')).toContain(LONG);
+    expect(mark.hasAttribute('title')).toBe(false);
 
     unmount();
   });
@@ -1094,19 +1097,22 @@ describe('a hint on the dashboard, reached without a mouse', () => {
   });
 
   /**
-   * The page list, which is the half of this screen part A owns end to end. The repeats list
-   * beside it draws `Diff`, `OverrideControl` and `Occurrences`, whose hints are part B's
-   * files and part B's commit — so this sweep says *the pages view*, and means it, rather
-   * than claiming a screen that is not converted yet.
+   * **Both views**, since part B. Part A swept the pages view alone and said so, because the
+   * repeats list beside it still drew `Diff`, `OverrideControl` and `Occurrences` with their
+   * attributes on. They are converted now, so the screen is swept whole — which is the
+   * assertion part A could not make and the one the guard in `interface-reach.test.mjs`
+   * generalises to every drawn file.
    */
-  it('leaves no title for the browser to draw its own box from, in the pages view', () => {
-    history.replaceState(null, '', '?view=pages');
-    const unmount = mount();
+  for (const view of ['pages', 'repeats']) {
+    it(`leaves no title for the browser to draw its own box from, in the ${view} view`, () => {
+      history.replaceState(null, '', `?view=${view}`);
+      const unmount = mount();
 
-    expect([...document.querySelectorAll('[title]')].map((element) => element.title)).toEqual([]);
+      expect([...document.querySelectorAll('[title]')].map((element) => element.title)).toEqual([]);
 
-    unmount();
-  });
+      unmount();
+    });
+  }
 });
 
 /**

@@ -67,7 +67,8 @@ const links = () =>
     return {
       url,
       text: fragment ? fragment.split(',').map(decodeURIComponent) : [],
-      title: anchor.title,
+      // The link's own name, which is what the arrow says now that no `title` says it.
+      name: anchor.getAttribute('aria-label'),
     };
   });
 
@@ -92,7 +93,7 @@ describe('the deep links on a finding row', () => {
       for (const words of link.text) {
         expect(
           RENDERED[link.url],
-          `“${words}” is not on ${link.url}, so ${link.title} scrolls nowhere`,
+          `“${words}” is not on ${link.url}, so ${link.name} scrolls nowhere`,
         ).toContain(words);
       }
     }
@@ -388,6 +389,70 @@ describe('the page details dialog', () => {
     // footer would be an empty strip.
     expect(dialog.button('Clear the review').disabled).toBe(true);
     expect(dialog.button('Mark again').disabled).toBe(true);
+    dialog.unmount();
+  });
+});
+
+/**
+ * Ticket 129 part B. The marks on a finding row and the controls in the details dialog kept
+ * their hints in native `title` attributes: the heading a difference sits under, the arrow
+ * that opens the live page, each priority a press would set. A `title` reaches an editor who
+ * is holding a mouse and nobody else, so what is asserted here is the reach — the sentence a
+ * reader is given, and the tab stop that gets a keyboard to it.
+ */
+describe('a hint on a finding row, reached without a mouse', () => {
+  /** Both sides located, so the row draws its two arrows. */
+  const LOCATED = {
+    production: { heading: 'Kleuren en RAL', text: 'Antraciet en creme' },
+    new: { heading: 'Kleuren en kleurkeuze', text: 'Antraciet en cremewit' },
+  };
+
+  /** What a reader is given after the element's own name, resolved as the accname spec does. */
+  const description = (element) =>
+    (element.getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+
+  it('gives the truncated heading a tab stop and says it whole', () => {
+    unmount = mount({
+      anchorHeading: 'Kleuren en RAL',
+      locations: { production: null, new: null },
+      language: 'nl',
+    });
+
+    const under = host.querySelector('[lang="nl"]');
+    expect(under.tabIndex).toBe(0);
+    expect(description(under)).toBe('Kleuren en RAL');
+  });
+
+  /**
+   * The arrow's hint is its own name made visible and nothing more, so it is drawn and not
+   * announced: a reader who hears *Open on production, at this text* must not hear it twice.
+   */
+  it('makes the arrow’s name visible without saying it twice', () => {
+    unmount = mount({ anchorHeading: 'Kleuren en RAL', locations: LOCATED });
+
+    const arrow = host.querySelector('a');
+    expect(arrow.getAttribute('aria-label')).toBe('Open on production, at this text');
+    expect(description(arrow)).toBe('');
+  });
+
+  it('leaves no title on the row for the browser to draw its own box from', () => {
+    unmount = mount({ anchorHeading: 'Kleuren en RAL', locations: LOCATED });
+
+    expect([...document.querySelectorAll('[title]')].map((one) => one.title)).toEqual([]);
+  });
+
+  it('explains each priority press in the details dialog, beside the word it sets', () => {
+    const dialog = openDialog();
+
+    const high = [...dialog.popup().querySelectorAll('button')].find(
+      (one) => one.textContent === 'High',
+    );
+    expect(description(high)).toBe('Set the priority of this page to high.');
+    expect(dialog.popup().querySelectorAll('[title]')).toHaveLength(0);
     dialog.unmount();
   });
 });

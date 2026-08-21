@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 // bucket — read from the function that groups the four derived states rather than restated
 // here (ticket 80).
 import { barOf, bucketOf } from '../../../overrides/state.mjs';
-import { Detail, Occurrences, onePageTitle } from './Annotations.jsx';
+import { Detail, Occurrences, onePageHint } from './Annotations.jsx';
 import { Hint } from './Hint.jsx';
 import BulkControl from './BulkControl.jsx';
 import { ClassPill } from './Chips.jsx';
@@ -851,7 +851,7 @@ const rowLanguage = (repeat, language) => {
  * counts over the pages, and the row already says how many pages there are. Confusing
  * the two is this ticket's named trap, so the two sentences are written apart.
  */
-const acrossPagesTitle = (repeat) =>
+const acrossPagesHint = (repeat) =>
   `${repeat.occurrences} times in total, on ${repeat.on.length} ` +
   'pages. On some of those pages the difference is there more than once.';
 
@@ -1005,7 +1005,7 @@ function Row({
               {/* Drawn only when it exceeds the page count, so the mark appears exactly
                 when it says something the page count does not. */}
               {repeat.occurrences > repeat.on.length && (
-                <Occurrences count={repeat.occurrences} title={acrossPagesTitle(repeat)} />
+                <Occurrences count={repeat.occurrences} hint={acrossPagesHint(repeat)} />
               )}
               <span
                 data-wears={closedTone ? 'ink' : null}
@@ -1189,7 +1189,7 @@ function PageTable({
                 {namesStore(repeat, acrossStores) && (
                   <span className="ml-2 text-xs text-muted-foreground">on {entry.store}</span>
                 )}
-                <Occurrences count={entry.occurrences} title={onePageTitle(entry.occurrences)} />
+                <Occurrences count={entry.occurrences} hint={onePageHint(entry.occurrences)} />
               </TableCell>
               <TableCell>
                 <FindingState finding={byFinding.get(entry.id)} />

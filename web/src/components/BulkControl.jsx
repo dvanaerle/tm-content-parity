@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { Hint } from './Hint.jsx';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { Label } from './ui/label.jsx';
@@ -219,20 +220,25 @@ export default function BulkControl({
                   exactly where there is a second step. It is still the one press whose
                   label carries *Saving…* itself, since it has no form of its own. */}
               {cleared.covers > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={bulk.busy}
-                  onClick={() =>
-                    needsRestating(cleared.covers) ? setAsking('clear') : press(cleared.events)
-                  }
-                  title={clearTitle(cleared)}
-                >
-                  {bulk.busy
-                    ? 'Saving…'
-                    : `Clear the decision on ${cleared.covers === 1 ? 'this page' : `${cleared.covers} pages`}`}
-                  {needsRestating(cleared.covers) && '…'}
-                </Button>
+                // The hint goes on the press itself and not on a wrapper, because `busy` is a
+                // moment and not a state: a control that is off for the length of a write has
+                // no *why is this off* to explain, and swapping its shape mid-save would move
+                // the bar under the finger that pressed it (`Hint.jsx` says which is which).
+                <Hint text={clearHint(cleared)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={bulk.busy}
+                    onClick={() =>
+                      needsRestating(cleared.covers) ? setAsking('clear') : press(cleared.events)
+                    }
+                  >
+                    {bulk.busy
+                      ? 'Saving…'
+                      : `Clear the decision on ${cleared.covers === 1 ? 'this page' : `${cleared.covers} pages`}`}
+                    {needsRestating(cleared.covers) && '…'}
+                  </Button>
+                </Hint>
               )}
             </>
           )}
@@ -308,17 +314,25 @@ export default function BulkControl({
             />
             {/* One note, copied to all N rows. The SQL constraint refuses a dismissal
                 without one anyway, so the button cannot be pressed without it. */}
-            <Button
-              type="submit"
-              variant="outline"
-              size="sm"
-              disabled={dismissal.events.length === 0 || bulk.busy}
-              title={dismissal.events.length === 0 ? 'A decision needs a reason.' : undefined}
+            {/* The hint exists only while the press is off, and the reason it is off is the
+                whole of what it says — so it is the case `Hint.jsx` puts on a wrapper: a
+                disabled button takes no focus and hovers nothing, and *a decision needs a
+                reason* is the sentence an editor most needs to be able to reach. */}
+            <Hint
+              text={dismissal.events.length === 0 && 'A decision needs a reason.'}
+              disabled={dismissal.events.length === 0}
             >
-              {bulk.busy
-                ? 'Saving…'
-                : `Dismiss on ${dismissal.covers} ${dismissal.covers === 1 ? 'page' : 'pages'}`}
-            </Button>
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                disabled={dismissal.events.length === 0 || bulk.busy}
+              >
+                {bulk.busy
+                  ? 'Saving…'
+                  : `Dismiss on ${dismissal.covers} ${dismissal.covers === 1 ? 'page' : 'pages'}`}
+              </Button>
+            </Hint>
             {/* `type="button"` and not the default. A button inside a form submits it, so
                 without this the cancel *presses* the decision it is there to abandon:
                 `close()` runs, the submit fires behind it, and N rows land in an
@@ -479,7 +493,7 @@ function Covers({ dismissal, repeat }) {
  *
  * The sentence itself and not the decision to draw it — `crossesStore()` is that, and this is
  * written once for the two presses that say it. It used to exist twice in two wordings: this
- * one, and a shorter one inside the clearing's `title`. Two wordings of one fact is two facts
+ * one, and a shorter one inside the clearing's hint. Two wordings of one fact is two facts
  * as far as an editor reading them is concerned.
  *
  * The clause explaining **why** is drawn only over one difference (ticket 138), and **which**
@@ -523,9 +537,9 @@ const becauseOf = (repeat) =>
  * The clearing's own **in which stores**, on screen (ticket 03).
  *
  * The dismissal has a form to state its size and its stores in; this press writes on the
- * first click and had only its `title`, so the sentence naming a second store was visible on
- * hover and nowhere else — absent on touch, and absent to anyone arriving at the button by
- * keyboard. *States, before the press, in which stores* is not a thing a tooltip can do.
+ * first click and had only its hint, so the sentence naming a second store was one an editor
+ * had to ask for — and until ticket 129 asking meant holding a mouse over it. *States, before
+ * the press, in which stores* is not a thing a tooltip can do, however it is drawn.
  *
  * It is drawn **only** where the press crosses, which is what keeps it from being a line
  * under every clearing on `de` and `uk`: the interface is quiet by default (ADR 0019), and
@@ -632,11 +646,11 @@ const needsRestating = (covers) => covers > HANDFUL;
  * Why this press is on fewer pages than are ticked, said where the gap is (ticket 110).
  *
  * The other two presses have a form to state their two numbers in; this one writes on the
- * first click and has only its own label. So the count it leaves alone lives in the
- * `title`, which is where round two put everything that explains a number already on
- * screen rather than changing what an editor presses.
+ * first click and has only its own label. So the count it leaves alone lives in the hint,
+ * which is where round two put everything that explains a number already on screen rather
+ * than changing what an editor presses — reachable without a mouse since ticket 129.
  */
-const clearTitle = ({ covers, skipped }) =>
+const clearHint = ({ covers, skipped }) =>
   'Removes the decision and puts the difference back to open.' +
   (skipped > 0
     ? ` ${skipped} of the ${covers + skipped} selected pages stays as it is: nothing is` +

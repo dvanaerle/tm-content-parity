@@ -561,13 +561,18 @@ describe('the language of the content', () => {
     ]);
   });
 
-  /** The jump list puts the whole heading in a `title`, and the link owns both. */
-  it('declares it on the heading in the jump list, which owns the tooltip', () => {
+  /**
+   * The jump list truncates a long heading and the hint gives it back, so the link owns the
+   * language and the hint is given the same one (ticket 129 replaced the `title` here; the
+   * hint is not announced, because the link's own name is already the whole heading).
+   */
+  it('declares it on the heading in the jump list, which owns the hint', () => {
     const host = mount({ report: germanReport(), findings: german });
 
     const jump = host.querySelector('nav a');
     expect(jump.lang).toBe('de');
-    expect(jump.title).toBe('Farben und Formen');
+    expect(jump.textContent).toBe('Farben und Formen');
+    expect(jump.hasAttribute('title')).toBe(false);
   });
 
   it("leaves the interface's own words out of it", () => {
@@ -576,5 +581,53 @@ describe('the language of the content', () => {
     const pill = host.querySelector('[data-slot="status"] span');
     expect(pill.textContent).toBe('Copy changed');
     expect([...host.querySelectorAll('[lang]')].some((one) => one.contains(pill))).toBe(false);
+  });
+});
+
+/**
+ * Ticket 129 part B. The content view's hints — the repeat count, the date a difference was
+ * first seen, the run that closed another one, the heading in the jump list, the control that
+ * gives every agreeing block back — were all native `title` attributes, which reach an editor
+ * only while a mouse is on them. The reach is asserted and not the markup: a reader who tabs
+ * gets to the words, and the browser has no box of its own left to draw.
+ */
+describe('a hint on the content view, reached without a mouse', () => {
+  /** What a reader is given after the element's own name, resolved as the accname spec does. */
+  const description = (element) =>
+    (element.getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+
+  it('gives the date a tab stop and the sentence a reader hears', () => {
+    const host = mount({ findings: [{ ...findings[0], firstSeen: '2026-08-01T09:00:00.000Z' }] });
+
+    const seen = [...host.querySelectorAll('span')].find((one) =>
+      one.textContent.startsWith('first seen'),
+    );
+    expect(seen.tabIndex).toBe(0);
+    expect(description(seen)).toBe('The first run that saw this difference');
+  });
+
+  /**
+   * The one control on this screen whose hint explains a tick, and the trap it comes with:
+   * the hint is on the tick and not on the label around it, so the press the label passes on
+   * is still the tick's own.
+   */
+  it('leaves the agreeing-blocks tick its own name and adds the hint beside it', () => {
+    const host = mount();
+
+    const tick = host.querySelector('[data-slot="checkbox"]');
+    expect(description(tick)).toContain('The blocks that agree with production.');
+  });
+
+  it('leaves no title for the browser to draw its own box from', () => {
+    // The German page, because it is the one with a heading in it — so the jump list is on
+    // screen and the sweep covers the hint that used to repeat a heading in a `title`.
+    const host = mount({ report: germanReport(), findings: [findings[0]] });
+
+    expect(host.querySelector('nav a')).not.toBeNull();
+    expect([...document.querySelectorAll('[title]')].map((one) => one.title)).toEqual([]);
   });
 });

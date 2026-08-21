@@ -6,11 +6,12 @@ import {
   Locate,
   Occurrences,
   Tag,
-  onePageTitle,
+  onePageHint,
 } from './Annotations.jsx';
 import { locationUrl, unitLocation } from '../../../compare/locate.mjs';
 import { ClassFilterPills, ClassPill, FilterBanner } from './Chips.jsx';
 import { DiffCells, DiffHeads, SIDES } from './Diff.jsx';
+import { Hint } from './Hint.jsx';
 import { Marker, MarkerToggle } from './Marker.jsx';
 import { Empty, EmptyDescription, EmptyHeader } from './ui/empty.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
@@ -409,16 +410,19 @@ function Outline({ entries, language }) {
       <ol className="space-y-0.5 text-sm">
         {entries.map((entry) => (
           <li key={entry.id} style={{ paddingLeft: `${(entry.level - 1) * 10}px` }}>
-            <a
-              href={`#${entry.anchor}`}
-              className={`block truncate hover:underline ${CHROME.link}`}
-              // On the link and not on a span inside it: the link is the whole heading and
-              // it owns the tooltip repeating it (`Diff.jsx`'s copy button says why).
-              lang={language}
-              title={entry.text}
-            >
-              {entry.text}
-            </a>
+            {/* On the link and not on a span inside it: the link is the whole heading and it
+                owns the hint repeating it (`Diff.jsx`'s copy button says why). Not announced,
+                because the hint is here for `truncate` — a listening reader is given the whole
+                heading as the link's own name already. */}
+            <Hint text={entry.text} lang={language} announce={false}>
+              <a
+                href={`#${entry.anchor}`}
+                className={`block truncate hover:underline ${CHROME.link}`}
+                lang={language}
+              >
+                {entry.text}
+              </a>
+            </Hint>
           </li>
         ))}
       </ol>
@@ -571,10 +575,7 @@ function Row({ row, control, sides, language, landed }) {
         {/* `p + p → p` or `p → 4×p`, on a run row and on no other. `Annotations.jsx` carries
             the reason. */}
         {regrouped && <Detail detail={row.finding?.detail} />}
-        <Occurrences
-          count={row.finding?.occurrences}
-          title={onePageTitle(row.finding?.occurrences)}
-        />
+        <Occurrences count={row.finding?.occurrences} hint={onePageHint(row.finding?.occurrences)} />
         <FirstSeen at={row.finding?.firstSeen} />
         <HistoryNote note={row.finding?.historyNote} />
         {/*

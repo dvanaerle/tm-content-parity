@@ -3,6 +3,7 @@ import { PriorityPill } from './Chips.jsx';
 import { Dismiss, Floating } from './Floating.jsx';
 import PressReport from './PressReport.jsx';
 import { OfPages, Selected } from './Selected.jsx';
+import { Hint, TextHint } from './Hint.jsx';
 import { Button } from './ui/button.jsx';
 import {
   Dialog,
@@ -53,23 +54,29 @@ export function PriorityPicker({ value, onPick, busy = false }) {
   return (
     <div className="flex flex-wrap items-center gap-1">
       {PRIORITIES.map((priority) => (
-        <Button
+        // The pill is the whole of what the press says, so the hint is the press explained
+        // and it is announced. `busy` is a moment and not a state, so the hint stays on the
+        // button through it (`Hint.jsx` says which controls take a wrapper instead).
+        <Hint
           key={priority}
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={busy}
-          aria-pressed={value === priority}
-          onClick={() => onPick(value === priority ? null : priority)}
-          className={cn('px-1.5', value === priority && 'ring-2 ring-primary')}
-          title={
+          text={
             value === priority
               ? `Take the ${priority} priority off this page.`
               : `Set the priority of this page to ${priority}.`
           }
         >
-          <PriorityPill priority={priority} />
-        </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            aria-pressed={value === priority}
+            onClick={() => onPick(value === priority ? null : priority)}
+            className={cn('px-1.5', value === priority && 'ring-2 ring-primary')}
+          >
+            <PriorityPill priority={priority} />
+          </Button>
+        </Hint>
       ))}
     </div>
   );
@@ -306,16 +313,17 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
               busy={bulk.busy}
               onPick={(next) => press(priorityEventFor(next))}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={bulk.busy}
-              onClick={() => press(priorityEventFor(null))}
-              title={`Take the priority off ${count} ${noun}.`}
-            >
-              No priority
-            </Button>
+            <Hint text={`Take the priority off ${count} ${noun}.`}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={bulk.busy}
+                onClick={() => press(priorityEventFor(null))}
+              >
+                No priority
+              </Button>
+            </Hint>
 
             <form
               className="flex flex-wrap items-center gap-1"
@@ -361,9 +369,9 @@ export function AnnotateBar({ pages, selected, bulk, onClear }) {
 export function PageNote({ note, className = '' }) {
   if (!note) return null;
   return (
-    <span className={cn('text-muted-foreground italic', className)} title="A note on this page">
-      “{note}”
-    </span>
+    <TextHint text="A note on this page">
+      <span className={cn('text-muted-foreground italic', className)}>“{note}”</span>
+    </TextHint>
   );
 }
 
@@ -380,12 +388,12 @@ export function PageNote({ note, className = '' }) {
  * glyph: *reachable* has to mean somewhere a reader can go, and the note's own page is the
  * place it already lives.
  *
- * **The note is in the accessible name and not only in the `title`.** ADR 0019 refuses hover
- * that reveals something a reader needs, so the text cannot be a tooltip's alone: a keyboard
- * or touch reader would be left with a row of identical marks reading *Note*. The name carries
+ * **The note is in the accessible name and not only in the hint.** ADR 0019 refuses hover that
+ * reveals something a reader needs, so the text cannot be a tooltip's alone: a keyboard or
+ * touch reader would be left with a row of identical marks reading *Note*. The name carries
  * the page as well, because a list of these is a list of links and *Note* twelve times over
- * tells a screen reader nothing about which page it is on. The `title` is then a convenience
- * for a pointer and the only thing that is hover-only, which is what the ADR permits.
+ * tells a screen reader nothing about which page it is on. The hint is then the same note made
+ * visible without leaving the list, and it is not announced a second time (ticket 129).
  *
  * @param {object} props
  * @param {string | null | undefined} props.note
@@ -396,13 +404,14 @@ export function PageNote({ note, className = '' }) {
 export function PageNoteMark({ note, page, href, className = '' }) {
   if (!note) return null;
   return (
-    <a
-      href={href}
-      title={note}
-      aria-label={`A note on ${page}: ${note}`}
-      className={cn('text-xs text-muted-foreground italic hover:underline', className)}
-    >
-      Note
-    </a>
+    <Hint text={note} announce={false}>
+      <a
+        href={href}
+        aria-label={`A note on ${page}: ${note}`}
+        className={cn('text-xs text-muted-foreground italic hover:underline', className)}
+      >
+        Note
+      </a>
+    </Hint>
   );
 }

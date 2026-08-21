@@ -1616,3 +1616,66 @@ describe('the pages inside a difference that is partly closed', () => {
     unmount();
   });
 });
+
+/**
+ * Ticket 129 part B. The repeats list and the bar over it kept their hints in native `title`
+ * attributes — the clearing's page count, the reason a dismissal cannot be pressed yet, the
+ * ×N beside a difference — and a `title` is a sentence for whoever is holding a mouse. What is
+ * asserted is the reach: the words a reader is given, and no box left for the browser to draw.
+ */
+describe('a hint on the repeats list, reached without a mouse', () => {
+  /** What a reader is given after the element's own name, resolved as the accname spec does. */
+  const description = (element) =>
+    (element.getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+
+  it('explains the clearing press beside its own words, and not instead of them', () => {
+    const { unmount } = mount({
+      repeats: [repeat],
+      byFinding: new Map(
+        repeat.on.map((entry) => [entry.id, derived(entry.id, { state: 'dismissed' })]),
+      ),
+    });
+
+    press(differenceRow());
+    press(selectAll());
+
+    const clear = button('Clear the decision');
+    expect(clear.textContent).toContain('Clear the decision on');
+    expect(description(clear)).toBe('Removes the decision and puts the difference back to open.');
+    unmount();
+  });
+
+  /**
+   * The one press whose hint is *why this is off*, on the one control that cannot carry it:
+   * a disabled button takes no focus and hovers nothing, so the hint sits on the element
+   * around it, which is a tab stop.
+   */
+  it('keeps the reason a dismissal cannot be pressed reachable while the press is off', () => {
+    const { unmount } = mount();
+
+    press(differenceRow());
+    press(selectAll());
+    press(button('Dismiss on'));
+
+    const submit = [...document.querySelectorAll('button[type="submit"]')][0];
+    expect(submit.disabled).toBe(true);
+    const around = submit.closest('[aria-describedby]');
+    expect(around.tabIndex).toBe(0);
+    expect(description(around)).toBe('A decision needs a reason.');
+    unmount();
+  });
+
+  it('leaves no title for the browser to draw its own box from', () => {
+    const { unmount } = mount();
+
+    press(differenceRow());
+    press(selectAll());
+
+    expect([...document.querySelectorAll('[title]')].map((one) => one.title)).toEqual([]);
+    unmount();
+  });
+});

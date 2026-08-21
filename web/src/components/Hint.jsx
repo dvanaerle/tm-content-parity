@@ -71,15 +71,16 @@ import { Tooltip, TooltipContent } from './ui/tooltip.jsx';
  * @param {object} props
  * @param {string} props.id       What the described element's `aria-describedby` points at.
  * @param {string} props.text
+ * @param {string} [props.lang]   The sentence's own language, where it is not the interface's.
  */
-export function Description({ id, text }) {
+export function Description({ id, text, lang }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   if (!mounted) return null;
 
   return createPortal(
-    <span hidden id={id}>
+    <span hidden id={id} lang={lang}>
       {text}
     </span>,
     document.body,
@@ -98,6 +99,12 @@ export function Description({ id, text }) {
  * @property {boolean} [announce] Off where the hint says what the element's own name already
  *   says — an icon button whose `aria-label` is these very words. There the popup is the
  *   name made visible, and a description would be the name said twice.
+ * @property {string} [lang] The language of the **sentence**, where it is not the interface's.
+ *   Half of part B's hints are scraped content — a Dutch heading, the literal string behind a
+ *   copy button — and a `title` was announced in its own element's language for free. The
+ *   description is portalled to the body and the popup is portalled too, so neither inherits
+ *   the `lang` the caller declares, and a Dutch sentence read by an English voice is a
+ *   sentence an editor has to decode. It is given to both halves, or to neither.
  */
 
 /**
@@ -112,11 +119,27 @@ export function Description({ id, text }) {
  * read by nothing, and Base UI's hover is mouse-only, so such a hint would reach neither a
  * keyboard nor a reader. Text takes `TextHint`, or it takes no hint at all.
  *
- * @param {HintProps} props
+ * **A control that is off is the one exception**, and `disabled` says so. A `disabled` element
+ * takes no focus and fires no pointer events, so a hint merged onto it reaches nobody — and
+ * *why is this off* is the hint an editor most needs. There, and only there, the hint goes on
+ * a `span` around the control, which is the tab stop the control refuses to be. It is the one
+ * place a hint adds an element to the document, and the caller says when: a control that is
+ * merely **busy** for a moment is not off, and swapping its shape mid-save would move a row
+ * for the length of a write.
+ *
+ * @param {HintProps & { disabled?: boolean }} props
  */
-export function Hint({ text, children, side = 'top', announce = true }) {
+export function Hint({ text, children, side = 'top', announce = true, lang, disabled = false }) {
+  if (disabled) {
+    return (
+      <TextHint text={text} side={side} announce={announce} lang={lang}>
+        <span className="inline-flex">{children}</span>
+      </TextHint>
+    );
+  }
+
   return (
-    <Attached text={text} side={side} announce={announce}>
+    <Attached text={text} side={side} announce={announce} lang={lang}>
       {children}
     </Attached>
   );
@@ -132,16 +155,16 @@ export function Hint({ text, children, side = 'top', announce = true }) {
  *
  * @param {HintProps} props
  */
-export function TextHint({ text, children, side = 'top', announce = true }) {
+export function TextHint({ text, children, side = 'top', announce = true, lang }) {
   return (
-    <Attached text={text} side={side} announce={announce} tabIndex={0}>
+    <Attached text={text} side={side} announce={announce} lang={lang} tabIndex={0}>
       {children}
     </Attached>
   );
 }
 
 /** @param {HintProps & { tabIndex?: number }} props */
-function Attached({ text, children, side, announce, tabIndex }) {
+function Attached({ text, children, side, announce, lang, tabIndex }) {
   const id = useId();
 
   // No sentence, no hint. A caller draws the same pill inside a filter that carries its own
@@ -160,10 +183,10 @@ function Attached({ text, children, side, announce, tabIndex }) {
         tabIndex={tabIndex}
         aria-describedby={announce ? id : undefined}
       />
-      <TooltipContent side={side} aria-hidden>
+      <TooltipContent side={side} lang={lang} aria-hidden>
         {text}
       </TooltipContent>
-      {announce && <Description id={id} text={text} />}
+      {announce && <Description id={id} text={text} lang={lang} />}
     </Tooltip>
   );
 }

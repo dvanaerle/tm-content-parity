@@ -6,7 +6,7 @@ import {
   HistoryNote,
   Occurrences,
   Section,
-  onePageTitle,
+  onePageHint,
 } from './Annotations.jsx';
 import { BucketCount, ClassPill } from './Chips.jsx';
 import ContentView from './ContentView.jsx';
@@ -652,7 +652,7 @@ const FindingRow = ({ finding, focus, control, sides, language }) => {
       <TableCell data-slot="class" className="px-2 py-2 align-top whitespace-normal">
         <ClassPill class={finding.class} />
         <Detail detail={finding.detail} />
-        <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
+        <Occurrences count={finding.occurrences} hint={onePageHint(finding.occurrences)} />
         {/* A link finding aims at its anchor wording, which a reader does see. An
             image key and an alt text are not words on the page, so an image finding
             falls back to the heading above it — and to the page itself where it has

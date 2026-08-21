@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
 import { isUncompared, spansFor, wordDiff } from '../../../compare/worddiff.mjs';
 import { cn } from '../lib/utils.js';
+import { Hint } from './Hint.jsx';
 import { Button } from './ui/button.jsx';
 import { TableCell, TableHead } from './ui/table.jsx';
 
@@ -346,22 +347,24 @@ function CopyButton({ text, language }) {
   const [copied, setCopied] = useState(false);
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      // The tooltip holds the scraped string, and a `title` is announced in **its own
-      // element's** language — so the attribute belongs here and not on the text beside
-      // it, and the label below declares the one thing in this button that is English.
-      lang={language}
-      title={text}
-      onClick={async () => {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1200);
-      }}
-      className="ml-2 align-middle text-xs text-muted-foreground"
-    >
-      <span lang="en-GB">{copied ? 'copied' : 'copy the literal text'}</span>
-    </Button>
+    <Hint text={text} lang={language}>
+      <Button
+        variant="ghost"
+        size="sm"
+        // The hint holds the scraped string, and it is announced in **its own** language —
+        // which is why the hint is given `lang` as well as the button: it is drawn and read
+        // from the end of the document, where this button's own language cannot reach it. The
+        // label below declares the one thing in this button that is English.
+        lang={language}
+        onClick={async () => {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1200);
+        }}
+        className="ml-2 align-middle text-xs text-muted-foreground"
+      >
+        <span lang="en-GB">{copied ? 'copied' : 'copy the literal text'}</span>
+      </Button>
+    </Hint>
   );
 }

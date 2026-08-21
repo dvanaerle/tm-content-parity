@@ -160,12 +160,15 @@ describe('the language of the content', () => {
   });
 
   /**
-   * A `title` is announced in **its own element's** language, and this one repeats the
-   * scraped string. Tagging the text span alone would leave the tooltip declaring English
-   * while the words beside it declare German, so the attribute goes on the button — and
-   * the button's own label is the interface's, which is why it says so.
+   * A hint is announced in **its own element's** language, and this one repeats the scraped
+   * string. Tagging the text span alone would leave the hint declaring English while the
+   * words beside it declare German, so the language goes on the button and on the hint the
+   * button carries — and the button's own label is the interface's, which is why it says so.
+   *
+   * Since ticket 129 the hint is a described element rather than a `title`, so the sentence
+   * is read off the description the way an assistive technology resolves it.
    */
-  it('declares it on the element that owns the repeated text as a tooltip', () => {
+  it('declares it on the element that owns the repeated text as a hint', () => {
     const host = mount({
       prod: 'Erhältlich in drei Farben',
       prodRaw: 'Erhältlich in\u00A0drei Farben',
@@ -175,7 +178,8 @@ describe('the language of the content', () => {
 
     const copy = host.querySelector('button');
     expect(copy.lang).toBe('de');
-    expect(copy.title).toBe('Erhältlich in\u00A0drei Farben');
+    const said = document.getElementById(copy.getAttribute('aria-describedby'));
+    expect([said.lang, said.textContent]).toEqual(['de', 'Erhältlich in\u00A0drei Farben']);
     expect(copy.querySelector('[lang="en-GB"]').textContent).toContain('copy');
   });
 

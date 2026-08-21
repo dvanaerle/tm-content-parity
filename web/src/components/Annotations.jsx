@@ -1,4 +1,5 @@
 import { Attribution } from './Attribution.jsx';
+import { Hint, TextHint } from './Hint.jsx';
 import { day } from '../lib/dates.mjs';
 import { locationUrl } from '../../../compare/locate.mjs';
 
@@ -87,13 +88,18 @@ export const Section = ({
       ) : (
         anchorHeading && (
           /* *under* is the interface's word and the heading is the page's, so the inner span
-             is what declares the language — and what carries the tooltip with it
-             (ticket 125; `Diff.jsx`'s copy button says why the two go together). */
+             is what declares the language — and what carries the hint with it (ticket 125;
+             `Diff.jsx`'s copy button says why the two go together). The hint is given the
+             language too: it is the same scraped heading, and it is drawn and announced from
+             outside this span, where the `lang` written here cannot reach it (ticket 129).
+             It **is** announced, unlike the jump list's copy of the same idea: this span is a
+             reading with no name of its own, so the description is the only thing a reader
+             who lands on it is given. */
           <span className="truncate">
             under{' '}
-            <span lang={language} title={anchorHeading}>
-              “{anchorHeading}”
-            </span>
+            <TextHint text={anchorHeading} lang={language}>
+              <span lang={language}>“{anchorHeading}”</span>
+            </TextHint>
           </span>
         )
       )}
@@ -118,11 +124,11 @@ export const Section = ({
  * this was the last badge left on the primitive's `default` variant — a solid brand-green
  * ground, which made a repeat count the loudest thing on a row about something else.
  */
-export const Occurrences = ({ count, title }) =>
+export const Occurrences = ({ count, hint }) =>
   count > 1 ? (
-    <span className="ml-2 text-xs text-muted-foreground tabular-nums" title={title}>
-      ×{count}
-    </span>
+    <TextHint text={hint}>
+      <span className="ml-2 text-xs text-muted-foreground tabular-nums">×{count}</span>
+    </TextHint>
   ) : null;
 
 /**
@@ -139,12 +145,9 @@ export const Occurrences = ({ count, title }) =>
  */
 export const FirstSeen = ({ at }) =>
   at ? (
-    <span
-      className="ml-2 text-xs text-muted-foreground"
-      title="The first run that saw this difference"
-    >
-      first seen {day(at)}
-    </span>
+    <TextHint text="The first run that saw this difference">
+      <span className="ml-2 text-xs text-muted-foreground">first seen {day(at)}</span>
+    </TextHint>
   ) : null;
 
 /**
@@ -167,7 +170,7 @@ export const FirstSeen = ({ at }) =>
  * contradict the text on screen. That is the point of showing it, and it is why the visible
  * line says whose difference the decision was — *about it*, not about the words above. The
  * row draws its own `Attribution` a few pixels below, so a lead-in that left the subject to
- * a `title` would put two decisions on one row with only a hover to tell them apart.
+ * the hint would put two decisions on one row with only a hover to tell them apart.
  *
  * @param {object} props
  * @param {{ count: number, decision: { action: string, editor: string, at: string,
@@ -177,33 +180,33 @@ export const HistoryNote = ({ note }) => {
   if (!note) return null;
 
   return (
-    <div
-      data-history-note
-      className="mt-1 text-xs text-muted-foreground"
-      title={
+    <TextHint
+      text={
         'The run that first saw this difference stopped seeing another one of this class ' +
         'here. It is a decision about that one, not about this one, and no count holds it.'
       }
     >
-      {note.decision
-        ? 'earlier on this page, a difference of this class closed. ' +
-          'What an editor decided about it:'
-        : `earlier on this page, ${note.count} differences of this class closed, ` +
-          'each with a decision of its own'}
-      {note.decision && (
-        <Attribution
-          action={note.decision.action}
-          editor={note.decision.editor}
-          at={note.decision.at}
-          reason={note.decision.note}
-        />
-      )}
-    </div>
+      <div data-history-note className="mt-1 text-xs text-muted-foreground">
+        {note.decision
+          ? 'earlier on this page, a difference of this class closed. ' +
+            'What an editor decided about it:'
+          : `earlier on this page, ${note.count} differences of this class closed, ` +
+            'each with a decision of its own'}
+        {note.decision && (
+          <Attribution
+            action={note.decision.action}
+            editor={note.decision.editor}
+            at={note.decision.at}
+            reason={note.decision.note}
+          />
+        )}
+      </div>
+    </TextHint>
   );
 };
 
-/** What the badge means on a finding: the same difference, several times on this page. */
-export const onePageTitle = (count) =>
+/** What the mark means on a finding: the same difference, several times on this page. */
+export const onePageHint = (count) =>
   `This finding is ${count} times on the page. ` + `One tick closes all ${count}.`;
 
 /**
@@ -226,22 +229,22 @@ export function Locate({ href, side }) {
   if (!href) return null;
 
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      // The name, and not only the `title`. An arrow is not a word, so a title was the
-      // whole of what this link said — and a title reaches neither a keyboard reader nor
-      // a touch one. It is the same rule `PageNoteMark` below states, and the title stays
-      // beside it as the pointer convenience ADR 0019 permits.
-      aria-label={`Open on ${side}, at this text`}
-      title={`Open on ${side}, at this text`}
-      // The glyph is a small target and the hit area is not: `inline-flex` with a floor of
-      // 24 pixels gives a finger something to land on without making the arrow bigger.
-      className="mr-2 inline-flex size-6 items-center justify-center align-middle text-xs text-muted-foreground no-underline hover:text-foreground"
-    >
-      {/* Hidden from the name it now has, or a screen reader reads the arrow after it. */}
-      <span aria-hidden>↗</span>
-    </a>
+    // The hint is the name made visible and says nothing more, so it is not announced a
+    // second time: an arrow is not a word, and this sentence is the whole of what the link
+    // says. `PageNoteMark` states the same rule from the other side.
+    <Hint text={`Open on ${side}, at this text`} announce={false}>
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`Open on ${side}, at this text`}
+        // The glyph is a small target and the hit area is not: `inline-flex` with a floor of
+        // 24 pixels gives a finger something to land on without making the arrow bigger.
+        className="mr-2 inline-flex size-6 items-center justify-center align-middle text-xs text-muted-foreground no-underline hover:text-foreground"
+      >
+        {/* Hidden from the name it now has, or a screen reader reads the arrow after it. */}
+        <span aria-hidden>↗</span>
+      </a>
+    </Hint>
   );
 }

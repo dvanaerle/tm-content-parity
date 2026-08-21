@@ -1,11 +1,13 @@
 # 129 — A hint is reachable without a mouse, on every surface
 
 Type: task
-Status: ready-for-agent — **part B only**. Part A landed 2026-08-20 as `acf1d50` on `main`:
-the pattern is `web/src/components/Hint.jsx` (`Hint` for a control, `TextHint` for a reading)
-and the dashboard has moved. What is left is part B — every other surface, and the guard that
-keeps `title` out. Re-price it first: the count is **11** hints over 9 files, not the 36 this
-ticket was written on, so part B is plausibly one sitting.
+Status: ready-for-human — **both parts have landed**. Part A landed 2026-08-20 as `acf1d50`;
+part B landed 2026-08-21 in one sitting, as the re-pricing said it would. The pattern is
+`web/src/components/Hint.jsx` (`Hint` for a control, `TextHint` for a reading, `disabled` for
+a control that is off), the guard is the third `describe` of `web/src/interface-reach.test.mjs`,
+and **no `title` attribute is left in any drawn file**. What is owed is the one thing an
+assertion cannot give: a human looking at the diff cells and the content view rows to confirm
+no row grew. See *What is left for a human* at the foot of this file.
 Blocked by: None — can start immediately.
 Parent: ../map.md
 
@@ -156,9 +158,10 @@ pattern that survives the dashboard survives everywhere.
       rather than accept. **2026-08-20: the suites pass unchanged; the human look is still
       owed.** Every trigger is merged onto an element that was already there, so no element
       joined the document — but that is an argument and not a pair of eyes.
-- [ ] No `title` attribute is left on the dashboard carrying meaning an editor needs.
-      **2026-08-20: true of the pages view, and asserted there.** The repeats view still draws
-      `Diff`, `OverrideControl` and `Occurrences`, which are part B's files.
+- [x] No `title` attribute is left on the dashboard carrying meaning an editor needs.
+      **2026-08-21: true of both views, and asserted in both.** Part B converted `Diff`,
+      `OverrideControl` and `Occurrences`, so `Dashboard.browser.test.mjs`'s sweep now runs
+      over `?view=pages` and `?view=repeats` alike.
 
 ### Traps — A
 
@@ -216,21 +219,39 @@ several browser suites do not fit one context window beside the work of establis
 pattern, and a refactor that runs out of room half-finished is worse than one that lands in
 two passes.
 
-- [ ] Every hint on the content view, the diff, the ledger, the override control, the annotate
+- [x] Every hint on the content view, the diff, the ledger, the override control, the annotate
       bar, the bulk control, the search result and the store switcher is reachable by keyboard
-      and announced.
-- [ ] The pattern is part A's, unchanged. If a surface cannot follow it, the reason is a
-      comment in that file and not a second pattern.
-- [ ] No `title` attribute carrying meaning is left anywhere in the interface.
-- [ ] A guard fails if a `title` attribute returns to a component. `interface-language.test.mjs`
-      is the shape to follow — a static sweep over the drawn extensions, `ui/` included,
-      because a primitive that starts writing a `title` is exactly the day a guard that
-      trusted `ui/` cannot see.
+      and announced. Read back per surface in `Annotations`, `ContentView`, `Diff`, `Ledger`,
+      `Repeats`, `Dashboard` and `StoreSwitcher.astro`'s suites.
+- [x] The pattern is part A's, unchanged. Two surfaces stated a reason in their own file
+      rather than inventing a second pattern: **`StoreSwitcher.astro`**, which is
+      server-rendered chrome in every page's header, so the country name went into the link's
+      `aria-label` rather than shipping a React island for a tooltip; and the **tri-state fix
+      tick**, which is `Hint.jsx`'s already-documented disabled rule finally having a caller.
+      `Hint` gained two props to carry part A's own rules to part B's surfaces — `lang`, so a
+      scraped Dutch or German sentence is announced in its own language now that the words are
+      drawn from the end of the document, and `disabled`, which is the wrapper `Hint.jsx`
+      already prescribed for a control that takes no focus.
+- [x] No `title` attribute carrying meaning is left anywhere in the interface. None is left at
+      all: the only `title=` in `web/src` are the `Aside`, `Absent` and `Shell` props, which
+      draw a heading on the screen.
+- [x] A guard fails if a `title` attribute returns to a component — the third `describe` of
+      `interface-reach.test.mjs`, which is where the two other greppable reach rules live. It
+      sweeps `ui/` too, it names the three components that legitimately take a `title` **prop**
+      rather than trusting the capital letter (`<Button title=` is a capital letter and a DOM
+      attribute), and it has the failing case beside it.
 - [ ] ~~Screenshot baselines are reviewed per surface, not accepted in bulk.~~ —
       **2026-08-17: there are no baselines; see the heading block.** The claim survives: the
       browser suites pass per surface, and a human looks at the diff cells and the content
       view rows, which are where a trigger is most likely to move a layout.
-- [ ] The words are unchanged, per part A.
+      **2026-08-21: the suites pass per surface; the human look is still owed.** Every trigger
+      is merged onto an element that was already there, with two exceptions that add a `span`
+      by design — the two disabled controls, where `Hint.jsx` says why — so those two are what
+      a human should look at first.
+- [x] The words are unchanged, per part A. Every sentence moved from a `title` to a hint
+      verbatim; three names changed and no copy did (`onePageTitle` → `onePageHint`,
+      `acrossPagesTitle` → `acrossPagesHint`, `clearTitle` → `clearHint`, and `Occurrences`'
+      `title` prop → `hint`, per part A's rule for shared components).
 
 ### Traps — B
 
@@ -256,3 +277,14 @@ two passes.
 - **Two commits, and two passes if the context asks for it.** Merging the tickets did not
   merge the work. If part B runs out of room, stop at a reviewed half rather than rushing to
   finish.
+
+---
+
+## What is left for a human — 2026-08-21
+
+Both parts have landed and the gate is green (`npm test`: 1468 passing; `npm run lint` clean
+over `web/`; `npm run typecheck`; `npm run build`: 824 pages). One thing is owed, and it is the
+one thing named twice above and struck twice: **a pair of eyes on a layout**. Look at the
+diff cells, the content view rows, and the two disabled controls that gained a wrapping `span`
+— the bulk dismissal's submit and the ledger's fix tick on a read-only log — and confirm no
+row grew. Everything else in this ticket is asserted.
