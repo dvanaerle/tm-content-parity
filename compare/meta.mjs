@@ -223,8 +223,9 @@ export function metaFindingOf(row, findings) {
  * island, and `findings.mjs` reaches `node:crypto` through `contract.mjs`, so importing
  * it would break the island build (ADR 0001). `compare/images.mjs` has the same shape.
  *
- * A meta finding carries no `score` — that is a `copy` field and a head row has no
- * similarity pairing — and no `anchorHeading`, which is defined by document order
+ * A meta finding carries no `score` — the two classes that use it, `copy` and
+ * `image-renamed`, both score a pairing, and a head row pairs with nothing — and no
+ * `anchorHeading`, which is defined by document order
  * inside the content boundary, where the head is not. Both are the collector's
  * defaults.
  *

@@ -298,7 +298,7 @@ describe('FINDING_CLASSES', () => {
     expect(VISIBILITIES).toEqual(['work', 'information', 'diagnostic']);
   });
 
-  it('is closed at 32 classes', () => {
+  it('is closed at 33 classes', () => {
     // Ticket 33 took it from 18 to 21: `structure` out, `text-missing`,
     // `text-added`, `heading-level` and `tag-changed` in. Ticket 54 added the
     // twenty-second, `no-declared-alternate`, and it is the first `meta` class:
@@ -306,7 +306,21 @@ describe('FINDING_CLASSES', () => {
     // Ticket 96 adds the nine the head check will emit. It says 21 → 30, which was
     // written before ticket 54 landed the twenty-second class; the nine are the nine,
     // so the pin was 31. Ticket 116 adds `regrouped`, and it is the thirty-second.
-    expect(Object.keys(FINDING_CLASSES).length).toBe(32);
+    // Cross-store-reuse ticket 02 adds `image-renamed`, the thirty-third and the first
+    // whose matcher is not textual equality (ADR 0027).
+    expect(Object.keys(FINDING_CLASSES).length).toBe(33);
+  });
+
+  it('gives a renamed image no direction, and makes it work all the same', () => {
+    // The `lost`/`added` rule has no subject here: nothing is lost and nothing is added,
+    // one image is under a new name. So `work` is a decision and not the fall-out of a
+    // direction — ADR 0027 — and it is the decision the search index depends on, because
+    // the index holds `work` and an unindexed rename is half the class thrown away.
+    expect(FINDING_CLASSES['image-renamed']).toMatchObject({
+      check: 'images',
+      visibility: 'work',
+    });
+    expect(FINDING_CLASSES['image-renamed']).not.toHaveProperty('direction');
   });
 
   it('has retired structure', () => {
@@ -408,6 +422,7 @@ describe('FINDING_CLASSES', () => {
       'copy',
       'cross-store-link',
       'image-missing',
+      'image-renamed',
       'leakage',
       'link-target',
       'meta-casing',
@@ -440,13 +455,19 @@ describe('FINDING_CLASSES', () => {
     ]);
   });
 
-  it('counts eighteen classes as work, seven of them the head check', () => {
+  it('counts nineteen classes as work, seven of them the head check', () => {
     // Twelve until 2026-08-13. Ticket 75 landed the enum count-neutral at twelve, and
     // ticket 86 is the first move that was **meant** to move the denominator: one class
     // out of `work`, on its own commit, so that one number never hides two movements.
     // Ticket 96 adds seven, and moves no number: nothing emits them yet.
+    //
+    // Cross-store-reuse ticket 02 is the nineteenth, and it is a move of the second kind:
+    // `image-renamed` emits from the day it ships, so the denominator grows. That is the
+    // whole argument of ADR 0027 against making it `information` — a rename an editor
+    // cannot decide and cannot find is not worth the row — and the growth is what this
+    // number says out loud.
     const work = Object.values(FINDING_CLASSES).filter((cls) => cls.visibility === 'work');
-    expect(work.length).toBe(18);
+    expect(work.length).toBe(19);
   });
 });
 

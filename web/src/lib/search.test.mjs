@@ -602,6 +602,22 @@ describe('matchedFields', () => {
     expect(matchedFields(entry({}), '  ')).toEqual([]);
   });
 
+  it('finds a renamed image under the new filename, which is the point of the class', () => {
+    // Cross-store-reuse ticket 02. The new basename used to be on an `image-added` only —
+    // `information`, and `addPage()` indexes `work` — so it was in no index at all and a
+    // search for it answered nothing in any store. `image-renamed` is `work` and carries
+    // both names in the two columns, so both halves of the arrow are findable. `detail` is
+    // on no searchable field, which is why the arrow alone would not have done it.
+    const renamed = entry({
+      class: 'image-renamed',
+      prod: 'max.svg',
+      new: 'max-new.svg',
+      detail: 'max.svg → max-new.svg',
+    });
+    expect(matchedFields(renamed, 'max-new.svg')).toEqual(['newText']);
+    expect(matchedFields(renamed, 'max.svg')).toEqual(['prodText']);
+  });
+
   it('names every field that matched, in the order the fields are listed', () => {
     // One word can hit the text and the heading at once. Naming both is how a result
     // explains itself; naming only the first would hide half the reason it is there.

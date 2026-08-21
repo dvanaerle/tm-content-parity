@@ -223,7 +223,7 @@ element any more: it folds the links inside it. Both the word and the rule are g
   See `docs/adr/0021-the-search-reaches-the-language-block-in-one-half.md`.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
   `heading-level` or a `tag-changed` finding, `p + p → p` or `p → 4×p` on a `regrouped` one,
-  and null on every other class. It is
+  `max.svg → max-new.svg` on an `image-renamed` one, and null on every other class. It is
   part of the finding id, because without it two different demotions of the same
   words are one finding.
 - **Difference** — any place the two sides do not agree. Wider than a finding:
@@ -273,7 +273,8 @@ element any more: it folds the links inside it. Both the word and the rule are g
   It is **built in both directions**, on 2026-08-18: ticket 116 landed the many-to-one half
   — several production blocks the new site sends as one — and ticket 120 the one-to-many, which
   is four times the volume and is mostly the new site rebuilding a paragraph as a heading and
-  a list. `compare/vocabulary.mjs` holds 32 classes and `regrouped` is the thirty-second.
+  a list. `compare/vocabulary.mjs` held 32 classes when it landed and `regrouped` was the
+  thirty-second.
   Within a page the **merge resolves first**, so a block the merge claimed is not on a split's
   row: no block is ever on two. The wording an editor reads is the same either way: the label is *Same
   text, divided differently*, which is the division and never the merge. `untranslated` is
@@ -285,6 +286,30 @@ element any more: it folds the links inside it. Both the word and the rule are g
   precedence is production's, as everywhere: where both sides hold a heading it is one landmark
   named twice. 29 of the corpus's 189 regrouped rows hold a heading, all of them promoted by
   the new site out of a production paragraph.
+- **Image renamed** — one image left a page and one arrived in its place, and it is **one**
+  finding rather than an *Image missing* an editor joins in their head to an *Image added*.
+  The label is *Image renamed*, the visibility is **work**, and the class carries **no
+  direction**: nothing is lost and nothing is added, one image is under a new name. The
+  detail is the arrow, in the manner of `heading-level`: `max.svg → max-new.svg`.
+  The test is **arity and position, both** — exactly one image on each side that the other
+  side has no basename for, at the same place in its own side's image order. One-to-one
+  only, never many-to-many, for `regrouped`'s reason: a reader can verify that the fourth
+  image on one side is the fourth on the other, and cannot verify which of three became
+  which of three. **Equal alt text raises the score and does not gate the pairing**, because
+  an empty alt on both sides is parity rather than a finding and most of the corpus is
+  exactly that.
+  The rename **resolves before the singles are emitted**, so no image record is on two rows.
+  It is `work` and not `information` **on purpose**: an `information` rename could not be
+  dismissed and would not be in the search index, and a search for the **new** filename
+  returning the finding is half of what the class is for. So the denominator grows the day
+  it ships, which is what absolute counts beside every percentage are for.
+  It never pairs across pages or across stores. The rule reads one page's two sides from one
+  crawl, and it is never a match between finding ids over time — let corroboration be what a
+  search shows. The stronger matcher is a **byte digest** of the original, measured at 70.3%
+  against filename matching's 19.6% on the gallery album pages with no false pair anywhere;
+  it is refused here because the comparison is pure and offline and no crawl stage fetches an
+  image, and it would replace this class's matcher and nothing else about it.
+  See `docs/adr/0027-a-renamed-image-is-paired-by-arity-and-position.md`.
 - **Anchor heading** — the nearest heading before an element in document order.
   It is how a finding says where it is on the page, and it is null for an element
   that precedes every heading. The code says `anchorHeading` in full, never

@@ -259,6 +259,22 @@ export const FINDING_CLASSES = {
     label: 'Image added',
     meaning: 'The new site has an image that production does not have.',
   },
+  // Cross-store-reuse ticket 02, and ADR 0027. The first class in this vocabulary whose
+  // matcher is **not** textual equality: it fires where exactly one unclaimed
+  // `image-missing` and exactly one unclaimed `image-added` sit at the same position in
+  // their own side's image order.
+  //
+  // It carries **no direction**, in the manner of `regrouped`: nothing is lost and nothing
+  // is added, one image is under a new name. So the `lost`/`added` visibility rule has no
+  // subject here, and `work` is the deliberate answer rather than the default one — an
+  // `information` rename could not be dismissed and would not be in the search index,
+  // which is both halves of the point. The denominator grows the day this ships.
+  'image-renamed': {
+    check: 'images',
+    visibility: 'work',
+    label: 'Image renamed',
+    meaning: 'The same image, under a different filename on the new site.',
+  },
   // Triaged by ticket 75, as `campaign`: it reports a pattern the rule matched.
   'image-campaign': {
     check: 'images',
