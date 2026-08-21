@@ -18,7 +18,7 @@ import { CHROME } from './palette.mjs';
  * The element id a finding is reachable by.
  *
  * The content view already anchors its rows on the **document position** (`p12`), for
- * the reason `view.mjs` gives: a position in a row list moves when a filter moves. So
+ * the reason `content-view.mjs` gives: a position in a row list moves when a filter moves. So
  * this is for the two tables that have no such position — Links and Images,
  * whose rows are findings and nothing else — and the content view lands on its own
  * anchor instead.

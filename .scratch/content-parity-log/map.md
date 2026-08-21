@@ -299,7 +299,7 @@ ADRs, and each one amends a resolved ticket rather than replacing it.
   denominator is the one `measure.mjs` prints and not `data/snapshot.json`'s 40,966. See
   [91](issues/91-measure-meta-classes-on-todays-corpus.md); the meta table and the gate
   baseline are pasted into [97](issues/97-the-meta-producer-one-finding-per-row.md) and
-  the `no-route` table into [93](.out-of-scope/93-no-route-leaves-the-log.md).
+  the `no-route` table into [93](issues/.out-of-scope/93-no-route-leaves-the-log.md).
 
 ### Resolved tickets
 
@@ -2139,22 +2139,31 @@ product signature` — a product page carries all six hreflang alternates, and
     85 findings, not about 150. Both tables are pasted into the tickets that
     waited on them.
   - [92 — Measure: does either side send `<meta name="title">` or keywords?](issues/92-measure-meta-title-and-keywords-presence.md)
-  - [93 — `no-route` leaves the log, and an aborted run writes its failures](.out-of-scope/93-no-route-leaves-the-log.md)
+  - [93 — `no-route` leaves the log, and an aborted run writes its failures](issues/.out-of-scope/93-no-route-leaves-the-log.md)
     — **the abort half landed (`feabe7c`); the prefactor half is out of scope.**
     `no-route` is a CMS content page and stays in the log, so nothing is removed
     here — not 150 findings, not 85. See the ticket's `## Correction`.
   - [94 — The extract carries the head, and a stale one refuses to compare](issues/94-the-extract-carries-the-head.md)
-    — `extractVersion`, so a new head field can never fold to `null` on both
-    sides and report `same`.
+    — **resolved 2026-08-19**, `a3f5073`. `extractVersion`, so a new head field can never fold
+    to `null` on both sides and report `same`; `comparePage()` refuses an older extract by name.
+    `keywords` is captured and `metaTitle` is refused, on ticket 92's 1,539-of-1,539.
   - [95 — Re-crawl all six stores with the new head](issues/95-recrawl-six-stores-with-the-new-head.md)
-    — the run itself. Blocked by 93 and 94, and it blocks the producer.
+    — **resolved 2026-08-19.** The run itself, over the extractor from `a3f5073`. It was blocked
+    by 93 and 94, and it unblocked the producer.
   - [96 — Nine meta classes enter the vocabulary](issues/96-nine-meta-classes-in-the-vocabulary.md)
     — 22 classes to 30 (the count was 21 when 21 wrote it; ticket 58's own
     arithmetic predates `no-declared-alternate`).
   - [97 — The producer: one finding per head row](issues/97-the-meta-producer-one-finding-per-row.md)
+    — **resolved 2026-08-20**, `1144ee0`. `compareMeta()` is the fourth check and reads
+    `metaRows()`, not the extracts, so a row an editor is not shown cannot become work behind
+    their back. `check: 'meta'` 349 → 548; `text`, `links` and `images` unmoved on every store.
+    Absorbed 99 as its whole-corpus measurement.
   - [98 — The Meta tab becomes a checklist an editor can tick](issues/98-the-meta-tab-becomes-a-checklist.md)
-    — this is what retires spec 32's decision 31, _the meta panel is display
-    only_. The panel is display-only **until 98 lands**, and not by principle.
+    — **resolved 2026-08-20**, `ca71025`. This is what retired spec 32's decision 31, _the meta
+    panel is display only_ — the panel was display-only until 98 landed, and not by principle.
+    Five rows in the Magento admin's order, override controls on three, a count badge, and the
+    Meta tab as the landing for a head finding. ADR 0010 and `vocabulary.mjs` are amended in
+    place. No finding count moves. **The whole 91→98 chain is now closed.**
   - ~~[99 — Measure: what the meta check added, beside what the prefactor removed](issues/99-measure-what-the-meta-check-added.md)
     — the second of the two numbers.~~ — **merged into 97 on 2026-08-17** as its
     whole-corpus measurement. It was `Type: measure` with no session, blocked by
@@ -2183,7 +2192,8 @@ product signature` — a product page carries all six hreflang alternates, and
   one search box — one scope value, one load-time page list, one component tree — and
   not one measured number between them, so there was no gate to batch across. 124 set
   the shape: a commit per area, not a ticket per area. **103, 102 and 123 are all
-  resolved, so 104 is unblocked and buildable today.**
+  resolved, so 104 is unblocked and buildable today.** **All five parts have since landed and
+  104 is `resolved`.**
 
   ```
   103, 102, 123 (all resolved)
@@ -2199,7 +2209,10 @@ product signature` — a product page carries all six hreflang alternates, and
     B narrows the notes; C makes the scope a chip in the filter strip and amends
     `CONTEXT.md`'s **Filter** entry; D offers the page keys on `/`; E hands a row's key
     to the search. **Read its opening note first:** all five parts were written before
-    124 and name Dutch labels that no longer exist.
+    124 and name Dutch labels that no longer exist. — **resolved 2026-08-17**; part A is
+    `bc59495` and all five are on `main`. Its status line read `ready-for-human` until
+    2026-08-21, which the audit of 2026-08-19 identified as a resolved ticket wearing a triage
+    label: nothing was waiting on a human.
   - ~~105, 106, 107, 108~~ — merged into 104. The files are kept as the record of
     where each part was written.
   - [123 — An unloaded log is not an empty one](issues/123-an-unloaded-log-is-not-an-empty-one.md)
@@ -2362,12 +2375,14 @@ product signature` — a product page carries all six hreflang alternates, and
     corner, which are the theme's now: a `ring-1` outside the box instead of a border inside,
     and 5.6 pixels of radius instead of 4.
   - [129 — A hint is reachable without a mouse, on every surface](issues/129-a-hint-is-reachable-without-a-mouse.md)
-    — `ready-for-agent`, **blocked by nothing and buildable today.** Absorbed **130** on
-    2026-08-17: one pattern, one primitive and one guard, and the guard cannot pass until
-    every surface has moved, so it had no ticket of its own to belong to — the same ruling
-    124 made about its stopword guard. 36 `title` attributes against a `Tooltip` primitive
-    with zero importers since 74. Part A is the dashboard and the pattern; part B is the
-    other six components and the guard, landed as its own pass.
+    — **part A landed 2026-08-20, `acf1d50`; part B is `ready-for-agent` and blocked by
+    nothing.** Absorbed **130** on 2026-08-17: one pattern, one primitive and one guard, and the
+    guard cannot pass until every surface has moved, so it had no ticket of its own to belong to
+    — the same ruling 124 made about its stopword guard. ~~36~~ **11** `title` attributes over 9
+    files (re-counted 2026-08-19) against a `Tooltip` primitive that had zero importers from
+    ticket 74 until part A. Part A is the dashboard and the pattern — `Hint` for a control,
+    `TextHint` for a reading; part B is the other surfaces and the guard, and it should be
+    re-priced against 11 rather than 36 before it starts.
   - [132 — A tone is a selector](issues/132-a-tone-is-a-selector.md)
     — **`resolved` 2026-08-18**, in `66145d9` / `d449b73` / `cbe3837`. The **expand** half:
     `app.css` defines the eight tones and eight shapes, and the diff surface moves onto

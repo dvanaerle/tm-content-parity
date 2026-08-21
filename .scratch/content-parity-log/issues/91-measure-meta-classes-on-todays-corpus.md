@@ -41,7 +41,7 @@ Two tables, pasted into the tickets that wait on them.
       shown. This is what excluding it removes.
 - [x] The meta table is pasted into ticket [97](97-the-meta-producer-one-finding-per-row.md)
       and the `no-route` table into ticket
-      [93](../.out-of-scope/93-no-route-leaves-the-log.md) — which is now out of scope,
+      [93](.out-of-scope/93-no-route-leaves-the-log.md) — which is now out of scope,
       so the `no-route` rows stay in the log.
 
 ## Reading list
@@ -62,7 +62,7 @@ and `data/reports/` copied beside a `read` lane. **816 extract files, 722 compar
 
 Both tables are pasted: the meta table into ticket
 [97](97-the-meta-producer-one-finding-per-row.md), the `no-route` table into ticket
-[93](../.out-of-scope/93-no-route-leaves-the-log.md). They are not repeated here.
+[93](.out-of-scope/93-no-route-leaves-the-log.md). They are not repeated here.
 
 **Four things moved, and only one of them is corpus drift.**
 

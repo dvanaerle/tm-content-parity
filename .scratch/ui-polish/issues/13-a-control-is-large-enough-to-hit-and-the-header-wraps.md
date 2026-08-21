@@ -1,7 +1,7 @@
 # 13 — A control is large enough to hit, and the header wraps
 
 Type: task
-Status: ready-for-agent
+Status: resolved — 2026-08-21, branch `ticket-13-target-floor-and-header-wrap`
 Blocked by: None — can start immediately.
 Parent: ../PRD.md
 
@@ -29,16 +29,16 @@ But two of its criteria were never about width:
 
 ## Acceptance criteria
 
-- [ ] Every interactive control meets a touch-target size — the override controls, the
+- [x] Every interactive control meets a touch-target size — the override controls, the
       checkboxes and the class pills included. `size="xs"` leaves the override controls.
-- [ ] The size chosen is stated once, with the WCAG success criterion it answers, so the next
+- [x] The size chosen is stated once, with the WCAG success criterion it answers, so the next
       person picks the same one.
-- [ ] The header wraps. The brand, the store switcher and the page title all stay reachable
+- [x] The header wraps. The brand, the store switcher and the page title all stay reachable
       when the line runs out of room, and the `h-16` either goes or is stated as a minimum.
-- [ ] The comment at `Shell.astro:35-41` is corrected or removed — it currently documents a
+- [x] The comment at `Shell.astro:35-41` is corrected or removed — it currently documents a
       constraint this ticket removes, and a comment that describes the old behaviour is worse
       than none.
-- [ ] The store switcher case is tested both ways: it renders only when more than one store is
+- [x] The store switcher case is tested both ways: it renders only when more than one store is
       in the log.
 
 ## Traps
@@ -58,3 +58,75 @@ The audit of every open `ready-for-agent` ticket, 2026-08-19
 (`.scratch/2026-08-19-ready-for-agent-audit.md`), and the grilling session over it. The audit's
 verdict on 87 was *split, and park the programme*: park the three widths, carve these two out,
 because they are worth doing and do not need a responsive programme around them.
+
+## What was built
+
+**The floor is 24 × 24 CSS pixels, WCAG 2.2 SC 2.5.8 *Target Size (Minimum)*, Level AA**, and
+it is stated in ADR 0019 under *The target floor*, which the button primitive and both pill
+sites point at. SC 2.5.5's 44 was considered and refused in the ADR: a content view carries up
+to 168 rows of controls.
+
+- `xs` and `icon-xs` are **deleted from `ui/button.jsx`** rather than left unused, because the
+  next person picks from that list. `xs` was `h-6` — the floor exactly — and under it on width
+  around a glyph. All 20 call sites moved to `sm` / `icon-sm`, 28 pixels in both directions.
+- The **class filter pill** was `h-auto`, which collapsed the toggle item onto the 20-pixel
+  pill inside it. It is `min-h-7` — the same 28 as the button vocabulary, because a control
+  drawn at exactly 24 has nothing spared for the next edit, which is the argument that took
+  `xs` out — and it is space and not weight: the toggle draws no ground until it is pressed.
+  The priority filter wears the same `FILTER_PILL` box.
+- The **class pill as a link** grows its *target* and not its ink — a pseudo-element four
+  pixels above and below the words, `ui/checkbox.jsx`'s device, because a taller tinted pill on
+  168 rows is the weight ADR 0019 spent a pass removing. Vertical only: an overlapping target
+  is worse than a small one.
+- The **checkbox** already cleared the floor at 32 × 40 through the same device. Unchanged, and
+  now it says so.
+- The **header wraps**. `h-16` became `min-h-16` on both the bar and the row, with `flex-wrap`,
+  `gap-y-2` and `py-2`; the switcher's own pills wrap too. At any width that fits the row on
+  one line the bar still draws the same 64 pixels. The **page title is not in the header** —
+  `Shell` takes `title` for the document title and the page draws its own heading in the banner
+  or the main column, so it was already outside the line that runs out of room.
+- The comment at `Shell.astro:35-41` said *nothing here can wrap without breaking the `h-16`*.
+  Rewritten to say what the row does now and why the floor is a floor.
+
+**Tests.** A third Vitest project, `astro`, renders a `.astro` component's own HTML through
+Astro's container — the seam a pure function and a browser both miss. It carries the switcher
+both ways and the header's wrap. `interface-reach.test.mjs` gains the greppable half of the
+floor: no call site names a size below it, and `ui/button.jsx` offers none back, each with a
+can-fail case.
+
+**What is not tested**, and it is in the ADR: no test here measures a *rendered* pixel. The
+browser project runs components without the stylesheet, and ADR 0019 refuses the screenshot
+suite that would. A halo with the wrong inset is caught by a reader.
+
+## Reviewed, and what the review changed
+
+Two axes, `/code-review`, against the criteria above.
+
+Acted on:
+
+- The filter items were `min-h-6`, which is the floor **exactly** — the very thing this
+  ticket's own argument against `xs` rejects. They are `min-h-7`, and the ADR now says that a
+  size sitting on the floor is treated as under it.
+- Both filters carried the same four-line comment and the same class string. One
+  `FILTER_PILL` constant carries the box and the reason once.
+- The 24-pixel story was written out in the ADR, in `ui/button.jsx` and in the guard's header.
+  The ADR keeps it; the other two point at it.
+- The **unlinked** class pill and priority pill are still 20 pixels, and the ADR did not say
+  why. It does now, and the reason is `TextHint`'s own: the pill gains no role and a press on
+  it does nothing, so there is no pointer action to size a target for. It is a tab stop for a
+  keyboard reader, and SC 2.5.8 is about pointer targets.
+- `gap-x-4` on the header row was unexplained. The comment says what it is for.
+
+Held, with the reasoning:
+
+- **Moving 20 call sites off `xs` is more than "`size="xs"` leaves the override controls".**
+  It is: `sm` also carries `text-[0.8rem]` and a 14-pixel glyph. Deleting the variant rather
+  than editing one call site is deliberate — the criterion asks that *every* interactive
+  control meet the size, and a sub-floor size left in the vocabulary is the next call site's
+  default. `sm` adds no colour and no border, which is what the trap names.
+- **`table-fixed` was checked and nothing moved.** The status column is `w-56` on a
+  `table-fixed` table with `min-w-3xl`, so its width is declared rather than derived, and the
+  row's presses sit in a `flex flex-wrap` container inside it.
+- **The third Vitest project is more machinery than one criterion asked for.** The criterion
+  asks for a `.astro` component to be tested and no seam existed; the header's wrap needed the
+  same seam. Two criteria, one project, and the next `.astro` question has somewhere to go.

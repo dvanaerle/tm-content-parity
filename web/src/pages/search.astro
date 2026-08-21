@@ -26,8 +26,9 @@ const stores = await storesInLog();
       results are the same differences a dashboard lists, and each one says which store it is on.
     </p>
     <p class="max-w-prose text-sm text-muted-foreground">
-      This screen <strong>reads</strong>. A decision is still made on the store it belongs to,
-      because the stores translate their text — so a row here opens a page and decides nothing.
+      A <strong>filename or a link target</strong> is the same string on every store, so a
+      difference in one is one row here and one decision. <strong>Text</strong> is translated, so
+      those rows are drawn and decided on the store they belong to — each one says so.
     </p>
   </header>
   <AllStores client:load stores={stores} />

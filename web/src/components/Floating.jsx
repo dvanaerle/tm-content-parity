@@ -1,3 +1,4 @@
+import { Hint } from './Hint.jsx';
 import { Button } from './ui/button.jsx';
 import { Card } from './ui/card.jsx';
 import { Separator } from './ui/separator.jsx';
@@ -82,15 +83,19 @@ export const Floating = ({ slot, children }) => (
 export const Dismiss = ({ onClear }) => (
   <>
     <Separator orientation="vertical" className="ml-auto h-4" />
-    <Button
-      type="button"
-      variant="ghost"
-      size="xs"
-      onClick={onClear}
-      aria-label="Clear the selection"
-      title="Clear the selection"
-    >
-      <span aria-hidden>✕</span>
-    </Button>
+    {/* The hint is this button's own name made visible, and nothing more, so it is not
+        announced a second time (ticket 129). A glyph needs the words on the screen for a
+        reader who can see one and not the other. */}
+    <Hint text="Clear the selection" announce={false}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onClear}
+        aria-label="Clear the selection"
+      >
+        <span aria-hidden>✕</span>
+      </Button>
+    </Hint>
   </>
 );

@@ -2,74 +2,37 @@
  * What is on screen in the content view, and nothing about what it adds up to
  * (ticket 36).
  *
- * The content view is the whole page in document order. An editor narrows it to do
- * a pass of one class, and that narrowing is the judgement in this feature, so it
- * lives here as a pure function rather than inside a component.
+ * The content view is the whole page in document order, with each run of rows holding no
+ * open work standing in one context marker. Which rows those are, where a run begins and
+ * ends, what a marker is called and which heading a jump reaches are the judgements in
+ * this feature, so they live here as pure functions rather than inside a component.
  *
- * **A filter never moves a count.** This module is given the derived findings and
- * it reads them. It returns rows, the classes the page carries, and how many rows
- * the page has. It returns no bar, no denominator and no closed count, because a
- * filterable denominator would make two people quoting "the number" mean different
- * things (spec 32, decision 25).
+ * This module is given the derived findings and it reads them. It returns rows, the
+ * classes the page carries, and how many rows the page has. It returns no bar, no
+ * denominator and no closed count, because a filterable denominator would make two people
+ * quoting "the number" mean different things (spec 32, decision 25) — `filter.mjs` states
+ * that rule for every surface that narrows, and this one obeys it.
  *
- * The diagnostics control is **not** part of the filter. It belongs to the whole ledger
- * and it survives a click on *clear filter*: an editor who asked to see what a rule
- * saw did not ask a question about classes.
+ * The **diagnostics control** is the one narrowing that is not a filter and is therefore
+ * here: `prepareRows()` reads it, it belongs to the whole ledger, and it survives a click
+ * on *clear filter* — an editor who asked to see what a rule saw did not ask a question
+ * about classes.
  */
 
-// The closed vocabulary, for the **order** of the class groups and nothing else. The
-// import site is `vocabulary.mjs` for the reason `classes.mjs` states.
-import { FINDING_CLASSES } from '../../../compare/vocabulary.mjs';
 // `canDecide()` is the interface's other rule derived from the visibility, and it lives
 // beside `toneOf()` rather than here: two of its three callers are the Links and
 // Images tabs, which have no rows at all (ticket 86).
 import { canDecide } from './classes.mjs';
-// The block a store is in, for the **first term of the repeat key** and nothing else
-// (ticket 03). It is derived from `HREFLANG_STORE` and never hand-written, which is what
-// keeps `{de, uk}` from ever becoming a block — see ADR 0018.
-import { blockOf } from './language-blocks.mjs';
 // The Closed bucket, from the one function that groups the four derived states (ticket
 // 80). Read and never restated: a second list of which states are closed is how the
 // content view would come to disagree with the counts above it.
 import { bucketOf } from '../../../overrides/state.mjs';
+// The narrowing itself, from the module that states it for every surface that narrows.
+// This one holds only what a narrowed content view *looks like*; what a filter is, and
+// the order its pills are drawn in, are the same questions on the dashboard.
+import { classCounts, isNarrowed } from './filter.mjs';
 
-/**
- * @typedef {object} ContentFilter
- * @property {string[]} classes  Empty means every class. The **only** narrowing left:
- *                               *Differences only* went out with ticket 79, whose
- *                               marker makes the default a differences view and keeps
- *                               the agreeing rows one click away instead of removing
- *                               them.
- */
-
-/** @type {ContentFilter} */
-export const NO_FILTER = Object.freeze({ classes: Object.freeze([]) });
-
-/** @param {ContentFilter} filter */
-export const isNarrowed = (filter) => filter.classes.length > 0;
-
-/**
- * Add or remove one item. The dashboard holds a bare class list and the content view
- * holds a whole filter, so the set operation is separate from the filter it lives in:
- * a caller with no wrapper to carry must not have to invent one.
- *
- * @template T
- * @param {readonly T[]} list
- * @param {T} item
- * @returns {T[]} A new list. The caller holds the old one in React state.
- */
-export function toggleIn(list, item) {
-  return list.includes(item) ? list.filter((held) => held !== item) : [...list, item];
-}
-
-/**
- * @param {ContentFilter} filter
- * @param {string} cls
- * @returns {ContentFilter} A new filter. The caller holds the old one in React state.
- */
-export function toggleClass(filter, cls) {
-  return { ...filter, classes: toggleIn(filter.classes, cls) };
-}
+/** @typedef {import('./filter.mjs').ContentFilter} ContentFilter */
 
 /**
  * One row of the content view: a `DiffRow` with both sides read into their unit
@@ -103,28 +66,6 @@ export function toggleClass(filter, cls) {
  *                                     `new` being its first member. A row holds one run or
  *                                     the other, never both.
  */
-
-/**
- * What a surface says when the **diagnostics control** is the whole reason it is empty.
- *
- * Two surfaces reach this: the content view, where what is withheld is a block, and a
- * finding table, where it is a finding of one check. They were about to say it in two
- * near-identical sentences, which is one sentence's worth of meaning and two places for a
- * rewording to land in one of them. So the noun is the argument and the sentence is not.
- *
- * It names the **control** and not an absence, which is the whole point: *nothing found* is
- * the answer an editor is working towards, and *you switched it off* is one press from being
- * undone. Saying the first about the second is the bug this replaces.
- *
- * @param {object} said
- * @param {number} said.count  How many the control is holding back. Never zero: a caller with
- *   nothing withheld has a different sentence to say.
- * @param {string} said.noun  What one of them is, as the surface's own reader would name it —
- *   `block` in the content view, `Links finding` on a finding tab.
- * @returns {string}
- */
-export const allDiagnostic = ({ count, noun }) =>
-  `Every ${noun} on this page is a diagnostic. Show diagnostics to read the ${count}.`;
 
 /**
  * @param {object} input
@@ -243,30 +184,6 @@ function anchorKey(prod, next) {
 function matches(row, filter) {
   if (!row.class) return false;
   return filter.classes.length === 0 || filter.classes.includes(row.class);
-}
-
-/**
- * A tally of classes, in the order the pills are drawn: the biggest first, and ties by name.
- *
- * The **tie-break is why this is one function** and was three. The content view sorted by
- * count and then by name; the two dashboards sorted by count alone and left equal counts in
- * whatever order the tally was built in — so two pills carrying the same number could swap
- * places between one store and the next, and between one render and the next. A pill strip
- * an editor cannot learn the shape of is a strip they read from scratch every time.
- *
- * It takes the **tally** and not the items, because what is being counted is genuinely
- * different at each caller: a record already summed off the page summaries, the flat entries
- * of a search index, the rows of one page. Counting those is three loops and no duplication;
- * ordering them is one rule.
- *
- * @param {Record<string, number> | Map<string, number>} tally
- * @returns {{ class: string, count: number }[]}
- */
-export function classCounts(tally) {
-  const entries = tally instanceof Map ? [...tally] : Object.entries(tally);
-  return entries
-    .map(([cls, count]) => ({ class: cls, count }))
-    .sort((a, b) => b.count - a.count || a.class.localeCompare(b.class));
 }
 
 /** @param {ContentRow[]} rows */
@@ -648,391 +565,4 @@ function headingsIn(row) {
   return held.length
     ? held.map((unit) => ({ side: 'p', unit }))
     : headings(row.newRun ?? [row.new]).map((unit) => ({ side: 'n', unit }));
-}
-
-/**
- * The dashboard's side of the same filter (spec 32, decision 26). Clicking a class
- * pill narrows the page list to the pages carrying it — and, exactly as on the page,
- * it moves no bar and no roll-up.
- *
- * @template {{ summary: { byClass: Record<string, number> } }} P
- * @param {P[]} pages
- * @param {string[]} classes
- * @returns {P[]}
- */
-export function pagesWithClasses(pages, classes) {
-  if (classes.length === 0) return pages;
-  return pages.filter((page) => classes.some((cls) => (page.summary.byClass[cls] ?? 0) > 0));
-}
-
-/**
- * The same narrowing for ticket 83's priority, and it **combines** with the class filter
- * rather than replacing it: two calls over one list, so an editor asking for the
- * high-priority `copy` pages gets the pages that satisfy both.
- *
- * The priority arrives as an **accessor** and not off the page, which is the one way this
- * differs from the filter above. A class count is a property of the snapshot and sits on
- * `summary`; a priority is an annotation an editor wrote afterwards, so it is derived from
- * the log and only the caller holding that derivation can answer for a page.
- *
- * An **unannotated page is never kept**. There is no `normal` in the list, so absence is
- * not a value that can be filtered for — selecting every priority still narrows the list
- * to the pages somebody has annotated, which is the honest reading of the question.
- *
- * @template P
- * @param {P[]} pages
- * @param {string[]} priorities
- * @param {(page: P) => string | null} priorityOf
- * @returns {P[]}
- */
-export function pagesWithPriorities(pages, priorities, priorityOf) {
-  if (priorities.length === 0) return pages;
-  return pages.filter((page) => priorities.includes(/** @type {string} */ (priorityOf(page))));
-}
-
-/**
- * The stores a set of repeat entries is on, sorted (ticket 03).
- *
- * One definition, because there are two readers and they must never disagree: the row's own
- * `stores` below, and the sentence `bulk.mjs` says above the button about **where the events
- * go**. The two ask the same question of different arrays — the whole repeat, and the entries
- * one press can act on — and a second implementation of *which stores* would be free to drift
- * from the first exactly where the ticket's *80% is not 100%* trap lives.
- *
- * Sorted, so a row's answer does not depend on which page was read first.
- *
- * @param {{ store: string }[]} on
- * @returns {string[]}
- */
-export const storesOf = (on) => [...new Set(on.map((entry) => entry.store))].sort();
-
-/**
- * Whether a repeat — or a press on one — reaches past a single store (ticket 03).
- *
- * More than one store is only ever the two of one language block, so this is the whole test.
- * It is here rather than written out at each of the four places that ask it, because those
- * four have to agree: the row names its stores, each tick names one in its label, the
- * dismissal says where its events go, and the clearing says the same. A block-spanning row
- * that named its stores in three of the four is a row an editor cannot read.
- *
- * It takes anything carrying `stores`, which is a repeat and both presses' results. The
- * *subject* differs — a whole row, or the entries one press can act on — and that is the
- * caller's to choose; the question does not change with it.
- *
- * @param {{ stores: string[] }} subject
- */
-export const crossesBlock = (subject) => subject.stores.length > 1;
-
-/**
- * One page of a repeat: the page, the store it is on, and the finding that is the
- * difference there.
- *
- * It is named because it is a **seam** and not only a field. A press takes a list of these
- * and nothing else (ticket 138): the entry carries everything an event needs — its own
- * store, so a block-spanning press files each row where its finding id exists — and none
- * of what a repeat carries for drawing a row. That is what lets one press cover a
- * selection spanning 259 differences without learning that differences exist.
- *
- * @typedef {object} RepeatEntry
- * @property {string} store
- * @property {string} page
- * @property {string} id           The finding on that page.
- * @property {number} occurrences  How often the difference is on this one page.
- */
-
-/**
- * A store's work listed as differences rather than as pages (ticket 81).
- *
- * A **repeat** is every finding in **one store** with the same class, the same two
- * texts and the same detail. One footer line that is wrong on thirty pages is one row
- * here, and an editor meets it once instead of thirty times.
- *
- * A repeat crosses a store **only inside a language block**, and only where the two
- * stores carry the same string (ticket 03). Six stores, four languages: `{nl, be}` share
- * Dutch and `{be_fr, fr}` share French, so those two pairs do not translate the text
- * between them and the same defect on both is one repeat. The other four pairings do
- * translate it, and `de` and `uk` are each alone in their language, so a repeat there is
- * exactly what it was. There is nothing better to key on — an element carries no DOM path
- * (tickets 01 and 34), so a key on the literal text is the only key there is; what a block
- * buys is that it now multiplies by four rather than by six.
- *
- * The block is **derived** from the hreflang codes and never a hand-written list, which is
- * what stops `{de, uk}` from becoming a block because both are "the other ones". ADR 0018
- * records that boundary, and ADR 0017 records why a block is still not an axis: this widens
- * a **selection** over ordinary axis-A findings and promotes nothing to a finding.
- *
- * **A repeat is not a finding.** It has no id, no override and no history, and every
- * decision on it is still N decisions on N findings. `key` is the grouping made
- * printable, for React and for the row an editor opened; it expires with the text in
- * the same way a finding id does.
- *
- * The row states **pages** and never a separate finding count. `page` is a term of
- * `sha256(store | page | check | rule | prodNorm | newNorm | detail)`, so one page can
- * hold at most one finding with this key — measured over the corpus, 25,657 repeats
- * and no exception. `on` says it in its shape: one entry is a page and its finding.
- *
- * The caller decides which findings reach here. `loadSummaries()` keeps the `work`
- * classes only, so a class that is not work is out of this list for the same reason
- * ticket 09 keeps it out of the bar.
- *
- * @typedef {object} Repeat
- * @property {string} key       The grouping, printable. Not an identity.
- * @property {string[]} stores  The stores its pages are on, sorted. One store on all but
- *                             a block-spanning row, and **never** more than two: it is
- *                             derived from `on`, and `on` is grouped under one block.
- * @property {string} class
- * @property {string | null} prod
- * @property {string | null} new
- * @property {string | null} detail
- * @property {number} occurrences  Summed over the pages. **Not** the page count: a
- *                                 page can hold the same difference several times,
- *                                 and `on.length` is what counts pages.
- * @property {RepeatEntry[]} on
- *                             One entry is a page, its store and its finding. The store is
- *                             here and not only on the repeat because a press writes one
- *                             event per entry, and each event carries its own store.
- *
- * @param {{ store: string, page: string, findings: { id: string, class: string, prod: string | null, new: string | null, detail: string | null, occurrences?: number }[] }[]} pages
- * @returns {Repeat[]}
- */
-export function repeatsInStore(pages) {
-  /** @type {Map<string, Repeat>} */
-  const groups = new Map();
-
-  for (const page of pages) {
-    for (const finding of page.findings) {
-      const key = JSON.stringify([
-        // The block, where this store is in one, and the store where it is not. This is
-        // the **whole** of ticket 03's change to the grouping: `de` and `uk` are each
-        // alone in their language, so `blockOf()` gives them nothing and the term stays
-        // the store — their repeats are exactly the repeats they were.
-        blockOf(page.store)?.language ?? page.store,
-        finding.class,
-        finding.prod,
-        finding.new,
-        finding.detail,
-      ]);
-      if (!groups.has(key)) {
-        groups.set(key, {
-          key,
-          class: finding.class,
-          prod: finding.prod,
-          new: finding.new,
-          detail: finding.detail,
-          occurrences: 0,
-          on: [],
-        });
-      }
-      const repeat = groups.get(key);
-      const occurrences = finding.occurrences ?? 1;
-      repeat.occurrences += occurrences;
-      repeat.on.push({ store: page.store, page: page.page, id: finding.id, occurrences });
-    }
-  }
-
-  // `stores` is **derived from the entries** and never accumulated beside them, so the
-  // row's answer to *in which stores* and the events a press writes cannot disagree. It
-  // is one store on all but the block-spanning rows.
-  const repeats = [...groups.values()].map((repeat) => ({
-    ...repeat,
-    stores: storesOf(repeat.on),
-  }));
-
-  // It is **size** and not worst-first: this derivation never sees the override log, so it
-  // cannot know what is left in a row. `repeatsByOpenWork()` below takes the order an
-  // editor reads, off the same bar the row prints, and falls back to this one where two
-  // rows have equally much left (ticket 141).
-  return repeats.sort(bySize);
-}
-
-/**
- * The largest difference first, with the key as the last word so two renders of one list
- * never disagree. Ticket 81's whole order, and the fallback of ticket 141's.
- *
- * It lives in one place because two spellings of it could drift, and a list whose two
- * orders disagree about a tie is a list that re-seats a row for no reason an editor can see.
- *
- * @param {Repeat} a
- * @param {Repeat} b
- */
-const bySize = (a, b) => b.on.length - a.on.length || a.key.localeCompare(b.key);
-
-/**
- * The repeat list **worst-first**, which is the difference with the most work left in it
- * (ticket 141).
- *
- * User story 33 of ticket 29 — *the worst page is the worst remaining page and not the
- * worst page of last week* — over the list ticket 81 built. That story says *page* because
- * it predates this list; 81 added the list afterwards and the rule never followed it across.
- *
- * It does not overturn 81's proof that a repeat's page count **is** its finding count: that
- * proof is about the findings a repeat *holds*, `page` being a term of the finding id, and
- * it holds. It says nothing about how many of them are still open, which is what an editor
- * reading top-down is looking for — twenty closed pages and two open is still twenty-two.
- *
- * So the open count is asked for rather than derived here: this module never sees the
- * override log, and the caller that draws a row already reads that row's bar. Handing the
- * same reading in is what keeps a row's position and its *N of N closed* from being two
- * counts of one thing.
- *
- * Nothing is removed and no number moves. A difference settled on all thirty pages stays
- * on the list reading *30 of 30 closed*; it sinks below every difference with work left.
- *
- * This is about **rows**. `groupRepeatsByClass()` refuses a count-based order for the
- * **groups** — a group that moves as the work is done is a group nobody can learn where to
- * look for — and that refusal stands: a group is a place on the screen and a row is the
- * work in it.
- *
- * @param {Repeat[]} repeats
- * @param {(repeat: Repeat) => number} openOf  How many of the repeat's findings are still
- *                                             open, off the bar the row prints.
- * @returns {Repeat[]}
- */
-export function repeatsByOpenWork(repeats, openOf) {
-  // Counted once per row and not inside the comparator, which would read the log O(n log n)
-  // times over a 25,657-row list.
-  const seats = repeats.map((repeat) => ({ repeat, open: openOf(repeat) }));
-
-  // The fallback is ticket 81's whole order, so a list where nothing is decided arrives
-  // exactly as it did before this ticket — and two renders of one list cannot disagree.
-  seats.sort((a, b) => b.open - a.open || bySize(a.repeat, b.repeat));
-
-  return seats.map((seat) => seat.repeat);
-}
-
-/**
- * Whether the pills let this class through.
- *
- * The whole of what a class pill means, in one place: **empty means every class**, which is
- * what an untouched filter says rather than a filter matching nothing. It is asked of a
- * repeat here and of an index entry by `searchStore()`, which selects on the class before
- * grouping when the search box is empty (ticket 09) — two callers over two shapes, and the
- * same question. Written once so that the filter and the selector cannot come to disagree
- * about what an editor pressed.
- *
- * @param {string[]} classes
- * @param {string} cls
- */
-export const classIsOn = (classes, cls) => classes.length === 0 || classes.includes(cls);
-
-/**
- * The class filter over the repeat list, and the same rule as everywhere: it narrows
- * what is on screen and it moves no count.
- *
- * This is where the quick-filter want lands. A class pill that lists its findings
- * directly **is** the repeat list with a class pre-selected, so no second surface is
- * added (ticket 81).
- *
- * @param {Repeat[]} repeats
- * @param {string[]} classes  Empty means every class.
- * @returns {Repeat[]}
- */
-export function repeatsWithClasses(repeats, classes) {
-  if (classes.length === 0) return repeats;
-  return repeats.filter((repeat) => classIsOn(classes, repeat.class));
-}
-
-/**
- * How many findings a list of repeats holds.
- *
- * Counted off the list it is given and never from elsewhere, so a number beside a list
- * cannot disagree with it — a filtered row count over an unfiltered finding count is
- * exactly the mismatched pair ticket 81 exists to stop. Two callers ask (the repeats
- * footer and a search result), and one of them asking differently is how they would drift.
- *
- * It is not a count of *work*: a repeat is a grouping, so this says how much the rows add
- * up to and never how much is left to do.
- *
- * @param {Repeat[]} repeats
- * @returns {number}
- */
-export const findingsIn = (repeats) => repeats.reduce((sum, repeat) => sum + repeat.on.length, 0);
-
-/**
- * The repeat list in a **class group** for each class (ticket 100).
- *
- * One wall of rows asks an editor to read it before it says anything. Six or so numbers,
- * one for each kind of difference, is a choice instead: *which kind do I work through*.
- * It changes nothing about which work is on top — the rows in a group arrive in the order
- * they were given, which is `repeatsByOpenWork()`'s worst-first since ticket 141.
- *
- * The word is **group** and never *section*: `CONTEXT.md` spends "section" on a run of one
- * page under an anchor heading, and one word with two meanings is what that glossary exists
- * to stop. That the override keyed on a section is withdrawn (ADR 0011) does not free the
- * word — the anchor heading is still how a difference says where it is. Ticket 100 asked
- * for "sections"; the concept it describes is this, and the name is refused.
- *
- * Opening a group is **not** a filter: it changes what is drawn and never what is
- * included, so it stays out of the amber strip and *clear filter* does not touch it. The
- * class pills stay the one filter, and this function reads them — with a pill on, only the
- * selected groups exist and they are open, so the two controls cannot tell different
- * stories.
- *
- * A class that holds nothing gets **no group**. It used to get an empty one saying so, to
- * keep *nothing wrong here* apart from *this class does not exist*; that is a row of
- * clutter apiece in the list an editor reads to find work, and a store where most rules
- * come back clean paid it on every line. Which rules ran is a property of the run and not
- * of this queue.
- *
- * @typedef {object} ClassGroup
- * @property {string} class
- * @property {Repeat[]} repeats
- * @property {boolean} opensOnLoad  The **initial** state, not the state. Which group is
- *                                  open is session state in the component.
- *
- * @param {Repeat[]} repeats
- * @param {string[]} classes  The pills that are on. Empty means every class.
- * @returns {ClassGroup[]}
- */
-export function groupRepeatsByClass(repeats, classes = []) {
-  /** @type {Map<string, Repeat[]>} */
-  const byClass = new Map();
-  for (const repeat of repeats) {
-    if (!byClass.has(repeat.class)) byClass.set(repeat.class, []);
-    byClass.get(repeat.class).push(repeat);
-  }
-
-  // Which classes are drawn: the ones that **hold something**. Every `work` class used to
-  // be drawn with no pill on, empty ones as well, saying *no difference of this class in
-  // this store* — *nothing wrong here* kept apart from *this class does not exist*. That
-  // answer costs a row apiece in the list an editor reads to find work, and a store where
-  // most rules come back clean pays it on every line. Which rules ran is a property of the
-  // run, and this queue is for what is there.
-  //
-  // With a pill on the selected classes narrow it further: opening a group is not a
-  // filter, so the two controls must not be able to tell different stories about what is
-  // included.
-  const isDrawn = (cls) => byClass.has(cls) && (classes.length === 0 || classes.includes(cls));
-
-  // A class the closed vocabulary does not name cannot be ordered by it, so it goes last
-  // rather than nowhere. Nothing reaches here today that is not in the vocabulary; the
-  // guard is for the failure being silent, because the row would leave the screen while
-  // the footer below kept counting it.
-  const unnamed = [...byClass.keys()].filter((cls) => !FINDING_CLASSES[cls]).sort();
-
-  // The vocabulary's order and never the counts. A group that changes position as the
-  // work is done is a group nobody can learn where to look for.
-  const groups = [...Object.keys(FINDING_CLASSES), ...unnamed]
-    .filter(isDrawn)
-    .map((cls) => ({ class: cls, repeats: byClass.get(cls) ?? [] }));
-
-  // Groups start closed, and two of them is the case this ticket exists for: the editor
-  // chooses. A lone group opens, because a closed single group is a click that asks
-  // nothing — and so does a selected one, because the pill was that choice already. There
-  // is no empty group to keep shut any more: every group here holds something.
-  //
-  // Two pills therefore open two groups, which the ticket also asks to be one at a time.
-  // The two rules meet only here, and the pills win: they are the control that chose those
-  // classes, so the queue must not answer a two-class filter with one class drawn open.
-  // One-at-a-time governs the **clicks** — the component collapses the rest on a click —
-  // and re-toggling a pill is what restores the pair.
-  //
-  // `opensOnLoad` is the **initial** state and not the state itself. Which group is open
-  // is session state in the component, it is not a filter, and it never enters the amber
-  // strip.
-  const chosen = classes.length > 0 ? groups.map((group) => group.class) : [];
-  const lone = groups.length === 1 ? [groups[0].class] : [];
-  const opening = new Set([...chosen, ...lone]);
-
-  return groups.map((group) => ({ ...group, opensOnLoad: opening.has(group.class) }));
 }

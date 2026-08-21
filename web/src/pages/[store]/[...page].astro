@@ -2,7 +2,7 @@
 import PageBreadcrumb from '../../components/PageBreadcrumb.jsx';
 import PageView from '../../components/PageView.jsx';
 import Shell from '../../layouts/Shell.astro';
-import { loadProductionExtracts, loadReports, loadSeedRows } from '../../lib/reports.mjs';
+import { loadExtracts, loadReports, loadSeedRows } from '../../lib/reports.mjs';
 import { closingsFor, firstSeenOn, loadClosings, loadFirstSeen } from '../../lib/run-log.mjs';
 import { siblingPages } from '../../lib/blocks.mjs';
 import { siblingOf } from '../../lib/language-blocks.mjs';
@@ -23,11 +23,12 @@ export async function getStaticPaths() {
    * Read **once per store** and not once per page: the match is over the whole seed list
    * either way, and a per-page read would parse the sibling store's reports 181 times.
    *
-   * `de` and `uk` are in no block, so nothing here runs for them and their pages carry
-   * no sibling at all. What a block store's page does carry is one more extract in its
-   * props — production's, from the other store. That is the price of comparing two pages
-   * on one screen and there is no cheaper form of it; only production is shipped, and
-   * only for the one sibling page.
+     * `de` and `uk` are in no block, so nothing here runs for them and their pages carry
+   * no sibling at all. What a block store's page does carry is the other store's page in
+   * its props — **both sides of it** since ticket 07, because the second reading is the
+   * new site's two stores and the flattening is a statement about both sides at once.
+   * That is the price of comparing two pages on one screen and there is no cheaper form
+   * of it; it is shipped for the one sibling page and for no other.
    */
   // The run log, read once for the whole build and narrowed per page. It is the one
   // artefact here that outlives a run: the reports say what the sites hold now, and this
@@ -41,7 +42,7 @@ export async function getStaticPaths() {
   const seeds = await loadSeedRows();
   /** @type {Map<string, Map<string, { page: string, rule: string }>>} */
   const matched = new Map();
-  /** @type {Map<string, Map<string, import('../../../compare/contract.mjs').ContentUnit[]>>} */
+  /** @type {Map<string, Map<string, import('../../lib/flattening.mjs').PageSides>>} */
   const extracts = new Map();
 
   for (const store of new Set(reports.map((report) => report.store))) {
@@ -56,8 +57,17 @@ export async function getStaticPaths() {
           .map((one) => [one.page, one.sibling]),
       ),
     );
-    if (!extracts.has(other)) extracts.set(other, await loadProductionExtracts(other));
+    if (!extracts.has(other)) extracts.set(other, await loadExtracts(other));
   }
+
+  /**
+   * One sibling page's two extracts, as the two props the reading takes. It is here so
+   * that the walk into the two maps happens once and the route hands over data.
+   */
+  const unitsFor = (store, page) => {
+    const sides = extracts.get(store)?.get(page);
+    return { units: sides?.production ?? null, newUnits: sides?.new ?? null };
+  };
 
   return reports.map((report) => {
     const other = siblingOf(report.store);
@@ -69,16 +79,12 @@ export async function getStaticPaths() {
         report,
         firstSeen: firstSeenOn(seenIndex, report.findings),
         closedWith: closingsFor(closings, report.findings),
-        // `units` is null where the sibling page has no production report. The reading
-        // calls that unmeasured, in the block list's own word: nothing was compared, and
-        // that is a different fact from finding nothing.
+        // `units` is null where the sibling page has no production report, and `newUnits`
+        // where the new site did not answer 200 for it. The reading calls each of those
+        // unmeasured, in the block list's own word: nothing was compared, and that is a
+        // different fact from finding nothing.
         sibling: match
-          ? {
-              store: other,
-              page: match.page,
-              rule: match.rule,
-              units: extracts.get(other)?.get(match.page) ?? null,
-            }
+          ? { store: other, page: match.page, rule: match.rule, ...unitsFor(other, match.page) }
           : null,
       },
     };

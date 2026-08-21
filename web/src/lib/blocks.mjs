@@ -114,6 +114,12 @@ export function siblingPages({ rows, store }) {
  *   the two must not share a number.
  * @property {number | null} found How many of them appear exactly in the sibling's,
  *   `null` on the same terms as `units`.
+ * @property {number} flattening How many content units of this page pair **diverge on
+ *   production and agree on the new site** — store differences the migration lost
+ *   (`CONTEXT.md` → *Flattened store difference*). It is what lifts a page pair to the
+ *   top of the list, and it is `0` and never `null`: a pair nobody could measure has no
+ *   flattening to report, and there is nothing here for an absent number to mean.
+ *   It counts content units and never findings, and it moves no bar.
  */
 
 /** The three kinds that are a page both stores have, which is what the list ranks. */
@@ -137,6 +143,7 @@ const unmeasuredRow = (page, kind, sibling) => ({
   share: null,
   units: null,
   found: null,
+  flattening: 0,
 });
 
 /**
@@ -192,6 +199,9 @@ function agreementOf(mine, theirs) {
  * @property {{ carriedOver: number }} census The evidence for *this list is not a
  *   census*.
  * @property {BlockRow[]} rows Every row, shared pages first and ranked.
+ * @property {number} flattening How many content units the migration flattened over the
+ *   whole block, on the pages this store has — the same count as a row's, one scope up.
+ *   `0` where nothing was read for it.
  * @property {BlockRow[]} shared The pages both stores have, worst-first.
  * @property {BlockRow[]} absentThere The pages this store has and the sibling has not.
  * @property {BlockRow[]} absentHere The pages the sibling has and this store has not.
@@ -213,10 +223,15 @@ function agreementOf(mine, theirs) {
  *   report covers. **Required**, and deliberately not defaulted: a default would answer
  *   `null` for every page, and the reading would then call the whole block unmeasured
  *   without anybody having asked it to.
+ * @param {(page: string) => number} [input.flatteningOn] How many content units of this
+ *   store's page were flattened — `flattenedUnits()`'s count, taken over the page pair.
+ *   It **is** defaulted, to none, and that is the safe direction: with no reading, no
+ *   page claims a flattening and the order is the share's alone. The opposite default
+ *   would be the list asserting a store difference was lost on every page in it.
  * @returns {BlockReading | null} `null` for a store in no block, which is `de` and
  *   `uk` — an empty reading is a panel that draws itself and says nothing.
  */
-export function blockReading({ rows, store, unitsOf }) {
+export function blockReading({ rows, store, unitsOf, flatteningOn = () => 0 }) {
   const other = siblingOf(store);
   if (!other) return null;
 
@@ -248,17 +263,35 @@ export function blockReading({ rows, store, unitsOf }) {
       units,
       found,
       share,
+      flattening: flatteningOn(one.page),
     };
   });
 
-  // Worst-first, so a page somebody rewrote sorts above a page whose phone number
-  // differs. An unmeasured row has no share and sorts after every measured one — it is
-  // not the worst page, it is the page nobody looked at.
-  //
-  // The tie-break is the page key, so two pages of equal share never swap places
-  // between two builds. The repeat list breaks its own tie the same way.
+  /*
+   * **Flattened pairs first**, and then worst-first (ticket 07).
+   *
+   * The 42 page pairs where production varied and the new site does not are the reading
+   * this list is now for, and a reading an editor has to hunt for is a reading that is
+   * not met. They sort ahead of the share for exactly that reason: a rewritten page with
+   * a low share is plainly worse *as a divergence between two stores*, and it is not the
+   * thing the migration lost.
+   *
+   * It reorders and it promotes nothing. A flattened pair carries no class, no id and no
+   * place in a bar, and where it produces a defect that defect is an ordinary axis-A
+   * finding on the store that lost its words.
+   *
+   * Worst-first under it, so a page somebody rewrote sorts above a page whose phone
+   * number differs. An unmeasured row has no share and sorts after every measured one —
+   * it is not the worst page, it is the page nobody looked at.
+   *
+   * The tie-break is the page key, so two pages of equal rank never swap places between
+   * two builds. The repeat list breaks its own tie the same way.
+   */
   mine.sort(
-    (a, b) => (a.share ?? 2) - (b.share ?? 2) || (a.page < b.page ? -1 : a.page > b.page ? 1 : 0),
+    (a, b) =>
+      b.flattening - a.flattening ||
+      (a.share ?? 2) - (b.share ?? 2) ||
+      (a.page < b.page ? -1 : a.page > b.page ? 1 : 0),
   );
 
   // The other direction of absence, and it is a different fact: a page **this** store
@@ -296,5 +329,8 @@ export function blockReading({ rows, store, unitsOf }) {
     absentThere: mine.filter((one) => one.kind === 'sibling-absent'),
     absentHere: theirs,
     identical: shared.filter((one) => one.kind === 'identical').length,
+    // The block's own total, so the panel can say what the ordering is for without
+    // summing a column in JSX.
+    flattening: mine.reduce((sum, one) => sum + one.flattening, 0),
   };
 }

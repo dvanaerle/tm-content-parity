@@ -265,54 +265,47 @@ export async function regionsChangedInLog() {
 }
 
 /**
- * Every page's **production** content units, in one store, whole.
+ * Every page's content units, in one store, **both sides**.
  *
- * What both block readings are measured over. It reads full reports because
- * `loadSummaries()` throws both extracts away, and it keeps **production's** extract
- * only — so the sibling store costs the parse and one side, and not the 11 MB of both.
+ * The one read every block reading is measured over — the dashboard's list, the page's
+ * sibling tab and the flattening between them — so *which pages are measurable* has one
+ * answer and not three. It reads full reports because `loadSummaries()` throws both
+ * extracts away, and it keeps both sides because the flattening is a statement about both
+ * at once: production varied and the new site does not.
+ *
+ * It costs a **peak**: two stores' extracts, whole, at build time. The earlier read kept
+ * production's side alone and could not answer the second question at all. Nothing of it
+ * is shipped — the dashboard's panel renders on the server, and a page ships the one
+ * sibling page it draws.
  *
  * Only pages whose **production** side answered 200. A page production did not serve
- * has no units to compare, and the reading then calls it unmeasured rather than
- * diverged. The new site's status is deliberately not consulted: the block compares
- * production, so a one-sided page is still measurable here.
+ * has no units to compare, and a reading then calls it unmeasured rather than diverged.
+ * The new site's status decides only whether `new` is there: the block compares
+ * production, so a one-sided page is still measurable, and a reading that wants the new
+ * site's words has to meet a `null` and say so.
  *
  * @param {string} store
- * @returns {Promise<Map<string, import('../../../compare/contract.mjs').ContentUnit[]>>}
- *   Page key to production's content units, in document order.
+ * @returns {Promise<Map<string, import('./flattening.mjs').PageSides>>} Page key to both
+ *   sides' content units, in document order. The type is the flattening's own — one shape
+ *   for *a page, both sides*, and not a second one here that has to be kept in step.
  */
-export async function loadProductionExtracts(store) {
-  /** @type {Map<string, import('../../../compare/contract.mjs').ContentUnit[]>} */
+export async function loadExtracts(store) {
+  /** @type {Map<string, import('./flattening.mjs').PageSides>} */
   const out = new Map();
   for (const name of await reportFiles(store)) {
     /** @type {PageReport} */
     const report = JSON.parse(await readFile(join(DIR, name), 'utf8'));
     const production = report.sides?.production;
     if (production?.status !== 200) continue;
-    out.set(report.page, production.elements);
+    const next = report.sides?.new;
+    out.set(report.page, {
+      production: production.elements,
+      new: next?.status === 200 ? next.elements : null,
+    });
   }
   return out;
 }
 
-/**
- * The normalised texts of the same units, which is all the dashboard's block reading
- * needs: it measures set membership over `norm` and never renders a block.
- *
- * It is the text column of `loadProductionExtracts()` and not a second read of the same
- * files, so *which pages have production units* has one answer and not two — the page's
- * sibling tab and the dashboard's block list must not disagree about which pages are
- * measurable.
- *
- * That one answer costs a **peak**: the whole extract is materialised and then projected,
- * where the earlier direct read never held a `raw` string it did not want. It is paid at
- * build time on one store and it buys the agreement above, which is the trade taken.
- *
- * @param {string} store
- * @returns {Promise<Map<string, string[]>>} Page key to unit texts.
- */
-export async function loadProductionUnits(store) {
-  const extracts = await loadProductionExtracts(store);
-  return new Map([...extracts].map(([page, units]) => [page, units.map((unit) => unit.norm)]));
-}
 
 /**
  * The seed list as it is on disk.

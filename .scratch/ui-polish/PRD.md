@@ -1,8 +1,11 @@
 # UI and copy polish — the interface is quiet by default
 
 Type: prd
-Status: live — 2026-08-19: issues 01 to 05 and 07 to 10 are resolved; 06 is `needs-triage`,
-11 and 12 are `needs-info`. A PRD carries no triage label (see `docs/agents/triage-labels.md`).
+Status: live — 2026-08-21: issues 01 to 05, 07 to 10 and **13** are resolved; 06 is
+`needs-triage` and duplicates `content-parity-log` 77, which is resolved, so it is probably
+closeable; 11 and 12 are `needs-info`. **Nothing under this PRD is `ready-for-agent`.** 13 came
+out of `content-parity-log` 87 on 2026-08-19 — the touch-target floor and the header wrap, the
+two criteria worth keeping when the three-widths programme was parked. A PRD carries no triage label (see `docs/agents/triage-labels.md`).
 Written: 2026-08-17
 Decided in: a grilling session against an outside audit, `UI and Copy Polish Blueprint`
 Records: `docs/adr/0019-the-interface-is-quiet-by-default.md`

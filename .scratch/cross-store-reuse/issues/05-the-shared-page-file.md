@@ -2,7 +2,8 @@
 
 Type: task
 Status: resolved — superseded 2026-08-19 by ticket 10. the fact is no longer imported and no longer
-states the complement. What this ticket built was removed there. Its `## Answer` stays as the
+states the complement. What this ticket built was removed in commit `b7557d0`, 2026-08-21,
+when ticket 10 was refused and the removal it had parked was taken on its own terms. Its `## Answer` stays as the
 record of what was tried: the seam and ADR 0025 were sound engineering on a model that a second
 grilling session reversed. Two of its criteria — the entries and the date — were never met, and
 under ticket 10 there is nothing to meet.

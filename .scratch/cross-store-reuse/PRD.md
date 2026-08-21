@@ -1,9 +1,14 @@
 # Cross-store reuse
 
 Type: spec
-Status: live — 2026-08-20: issues 01, 03 and 09 are resolved and 05 and 08 are superseded by
-10; 02 and 04 are the open work; 06, 07 and 10 are parked behind issue 11. A PRD carries no
-triage label (see `docs/agents/triage-labels.md`).
+Status: live — 2026-08-21: issues 01, 02, 03, 04, 09 and 11 are resolved, 05 and 08 are
+superseded by 10, and **06 and 10 are refused**. Issue 11 reported and it refused 06 and 10
+outright and reduced **07** to its flattening half, which needs no link table — so the
+shared-page half of this spec is not built and its code is deleted (commit `b7557d0`). **07 is
+now the open work**: 111 flattened units on 42 page pairs, built as a reason beside a finding
+the log already reports and an ordering that lifts those pairs, with no `store-scoped content`
+label. 12 is `needs-triage`, out of 02. A PRD carries no triage label (see
+`docs/agents/triage-labels.md`).
 Parent: ../content-parity-log/map.md
 
 Written in Simplified Technical English, spelled in UK English. The words are
@@ -15,7 +20,14 @@ proposes one.
 > Magento, it is stated **affirmatively** and not as a complement, and the word **link** is
 > un-refused for this one relation. *What the revision changed* at the bottom records what
 > the first session decided, why it was reversed, and what survives of its argument. Tickets
-> 05 and 08 are superseded by ticket 10; ADR 0025 is superseded by ADR 0026.
+> 05 and 08 are superseded by ticket 10.
+>
+> **Then refused, 2026-08-21, by issue 11's measurement.** Ticket 10 was never built and the
+> replacement ADR was never written, so **ADR 0025 stands** — it is kept, not superseded, and
+> number 0026 went to an unrelated record. The pairing is derived for 246 of 254 pages with no
+> table; only 113 of 246 pairs render identical words, so the bulk press had nothing sound to
+> key on; and the double claim ticket 06 removes has never once been made. Read the revision
+> below as the argument that was made and lost on price, not as work outstanding.
 
 ## Problem Statement
 

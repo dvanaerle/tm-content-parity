@@ -33,7 +33,7 @@ export class FindingCollector {
    * @param {string | null} [parts.anchorHeading]  The heading it sits under (ticket 34).
    * @param {import('./contract.mjs').FindingLocations} [parts.locations]  Where it is on
    *   each side, for aiming the two deep links.
-   * @param {number | null} [parts.score]  On `copy` findings only.
+   * @param {number | null} [parts.score]  On `copy` and `image-renamed` findings only.
    * @returns {string} The finding id this occurrence belongs to.
    *
    * The id comes back so a caller can keep the link from its own record to the

@@ -183,8 +183,9 @@ element any more: it folds the links inside it. Both the word and the rule are g
   text, so the same defect in six stores is six repeats and not one.~~ **Amended
   2026-08-17, ticket 03.** The claim was right and its stated reason was not: inside a
   **language block** the two stores do not translate the text between them, because they
-  share a language. So a repeat crosses a store exactly there and nowhere else — `{nl, be}`
-  and `{be_fr, fr}` — and the same defect in six stores is **four** repeats and not six.
+  share a language. ~~So a repeat crosses a store exactly there and nowhere else —
+  `{nl, be}` and `{be_fr, fr}` — and the same defect in six stores is **four** repeats and
+  not six.~~
   `de` and `uk` are each alone in their language and a repeat on them is what it was.
   The block is **derived** from the hreflang codes, never a hand-written list, and it is
   still not an axis: what crosses is a judgement about an ordinary axis-A finding, and a
@@ -194,6 +195,21 @@ element any more: it folds the links inside it. Both the word and the rule are g
   the finding id. Measured: 11,162 of 22,048 work findings sit in a block-spanning repeat,
   and the distinct decisions over the six stores fall 16,881 → 12,722.
   See `docs/adr/0018-a-judgement-may-cross-a-language-block.md`.
+  **Amended 2026-08-21, ticket 04 of cross-store reuse**, striking the sentence above. The
+  claim was right on two of the four checks and its stated reason does not reach the other
+  two. *The stores translate the text* is true of `text` and `meta`; it is false of `images`
+  and `links`, whose two sides
+  are **basenames and link targets** — the images check compares a basename with the path
+  stripped and the links check a host-folded target, so both are the same string on every
+  store, in every language. So **how far a repeat crosses is decided by the check**: on
+  `images` and `links` it spans all six stores and one press decides `max.svg` everywhere,
+  and on `text` and `meta` it stays inside the block as above. `de` and `uk` join the first
+  group and stay alone in the second. The rule is a set of **checks** and not a list of
+  classes, so a class added to either check inherits the corpus. Nothing else moves: no
+  finding id, scope, column or URL changed, the write is still N ordinary events with the
+  store off each entry, the note is still mandatory however wide the press, and the table
+  still gains rows and never a column.
+  See `docs/adr/0028-a-filename-is-outside-the-language-block.md`.
   A repeat is measured in **pages**, and there is no second number beside it. The
   page is a term of the finding id, so one page carries at most one finding of one
   repeat — measured over the corpus, 25,657 repeats and no exception. "How many
@@ -210,20 +226,33 @@ element any more: it folds the links inside it. Both the word and the rule are g
   whatever set of stores its screen is about, because reading moves no count: nothing it
   answers changes a bar, a denominator or a roll-up, so widening it costs nothing and saves an
   editor four searches. A **repeat** is the unit of a decision, so its corpus is the one above
-  — the language block, where the two stores do not translate the text between them. The same
-  string on six stores is therefore **one search result of four differences**, and that is not
-  a compromise: the search found it once, and the four are four decisions because the four
-  texts are four texts.
+  — the language block, where the two stores do not translate the text between them. ~~The
+  same string on six stores is therefore **one search result of four differences**, and that is
+  not a compromise: the search found it once, and the four are four decisions because the four
+  texts are four texts.~~
   The two were one set until ticket 03 and the split is what that ticket is: the search
-  screen **above the stores** reaches all six, and no press on it does. So `mergeIndexes()`
-  takes any list of indexes, `searchNotes()` is handed whatever log its screen opened, and
-  `repeatsInStore()` is untouched. A store dropdown that narrowed the repeat corpus is
-  refused: a control may narrow what is **read**, and what may be **pressed** is a property of
-  the check and never a preference.
+  screen **above the stores** reaches all six, ~~and no press on it does~~. So `mergeIndexes()`
+  takes any list of indexes and `searchNotes()` is handed whatever log its screen opened. A
+  store dropdown that narrowed the repeat corpus is refused: a control may narrow what is
+  **read**, and what may be **pressed** is a property of the check and never a preference.
   See `docs/adr/0021-the-search-reaches-the-language-block-in-one-half.md`.
+  **Amended 2026-08-21, ticket 04 of cross-store reuse**, striking the sentence above and the
+  *no press on it* clause with it. The rule over the two corpora is unchanged — reading may
+  cross any store, pressing may cross only where the check makes the two sides the same string
+  — and what moved is how far that second clause reaches.
+  On `images` and `links` those two sides are one string on every store, so the same string
+  on six stores is **one** difference and one press. On `text` and `meta` it is four, because
+  the four texts are four texts. So a press above the stores is offered on the first pair and
+  **refused, visibly and with its reason, on the second**: a row of translated words is drawn
+  there and is decided on a store's own screen. `repeatsInStore()` is where the whole of it
+  lives, and it is still the one grouping both screens use.
+  **Where the rule is stated: 2026-08-21.** Which of the two corpora a screen is in follows
+  from one fact — the store it is about — and the **list reading** is the one place that reads
+  it. A screen names its store; it does not carry the words of a refusal.
+  See `docs/adr/0028-a-filename-is-outside-the-language-block.md`.
 - **Detail** — what changed, when the two sides of text are equal. `h2 → h3` on a
   `heading-level` or a `tag-changed` finding, `p + p → p` or `p → 4×p` on a `regrouped` one,
-  and null on every other class. It is
+  `max.svg → max-new.svg` on an `image-renamed` one, and null on every other class. It is
   part of the finding id, because without it two different demotions of the same
   words are one finding.
 - **Difference** — any place the two sides do not agree. Wider than a finding:
@@ -273,7 +302,8 @@ element any more: it folds the links inside it. Both the word and the rule are g
   It is **built in both directions**, on 2026-08-18: ticket 116 landed the many-to-one half
   — several production blocks the new site sends as one — and ticket 120 the one-to-many, which
   is four times the volume and is mostly the new site rebuilding a paragraph as a heading and
-  a list. `compare/vocabulary.mjs` holds 32 classes and `regrouped` is the thirty-second.
+  a list. `compare/vocabulary.mjs` held 32 classes when it landed and `regrouped` was the
+  thirty-second.
   Within a page the **merge resolves first**, so a block the merge claimed is not on a split's
   row: no block is ever on two. The wording an editor reads is the same either way: the label is *Same
   text, divided differently*, which is the division and never the merge. `untranslated` is
@@ -285,6 +315,30 @@ element any more: it folds the links inside it. Both the word and the rule are g
   precedence is production's, as everywhere: where both sides hold a heading it is one landmark
   named twice. 29 of the corpus's 189 regrouped rows hold a heading, all of them promoted by
   the new site out of a production paragraph.
+- **Image renamed** — one image left a page and one arrived in its place, and it is **one**
+  finding rather than an *Image missing* an editor joins in their head to an *Image added*.
+  The label is *Image renamed*, the visibility is **work**, and the class carries **no
+  direction**: nothing is lost and nothing is added, one image is under a new name. The
+  detail is the arrow, in the manner of `heading-level`: `max.svg → max-new.svg`.
+  The test is **arity and position, both** — exactly one image on each side that the other
+  side has no basename for, at the same place in its own side's image order. One-to-one
+  only, never many-to-many, for `regrouped`'s reason: a reader can verify that the fourth
+  image on one side is the fourth on the other, and cannot verify which of three became
+  which of three. **Equal alt text raises the score and does not gate the pairing**, because
+  an empty alt on both sides is parity rather than a finding and most of the corpus is
+  exactly that.
+  The rename **resolves before the singles are emitted**, so no image record is on two rows.
+  It is `work` and not `information` **on purpose**: an `information` rename could not be
+  dismissed and would not be in the search index, and a search for the **new** filename
+  returning the finding is half of what the class is for. So the denominator grows the day
+  it ships, which is what absolute counts beside every percentage are for.
+  It never pairs across pages or across stores. The rule reads one page's two sides from one
+  crawl, and it is never a match between finding ids over time — let corroboration be what a
+  search shows. The stronger matcher is a **byte digest** of the original, measured at 70.3%
+  against filename matching's 19.6% on the gallery album pages with no false pair anywhere;
+  it is refused here because the comparison is pure and offline and no crawl stage fetches an
+  image, and it would replace this class's matcher and nothing else about it.
+  See `docs/adr/0027-a-renamed-image-is-paired-by-arity-and-position.md`.
 - **Anchor heading** — the nearest heading before an element in document order.
   It is how a finding says where it is on the page, and it is null for an element
   that precedes every heading. The code says `anchorHeading` in full, never
@@ -326,7 +380,7 @@ element any more: it folds the links inside it. Both the word and the rule are g
   retired *Diff* tab is what happens without the marker and without that rule.
   **Built on 2026-08-14 by ticket 79 and widened the same day by ticket 48**, which is
   what makes the three rules above the whole of it. The predicate is `collapses()` in
-  `web/src/lib/view.mjs`; 79 shipped its first term only, deliberately, because
+  `web/src/lib/content-view.mjs`; 79 shipped its first term only, deliberately, because
   narrowing collapses less and is the safe direction to be wrong in. The Closed term
   reads ticket 80's `bucketOf()` and never a second list of which states are closed.
   The **set is taken when the page opens** and held: a tick that collapsed its own row
@@ -380,6 +434,12 @@ element any more: it folds the links inside it. Both the word and the rule are g
   (ticket 109), so Back restores it and a copied link carries it. On a page it stays
   session-only: a page filter is a pass an editor is making, not a place to return to.
   Neither of them has ever moved a number and this does not change that.
+  A **class pill's own number does move**, and the distinction matters because the two are one
+  press apart: what moves it is the **log** — the count is the open work of that class, so it
+  falls as findings are decided and a class with nothing open draws no pill at all — and never
+  the filter. A filter says what is drawn; the log says how much is left.
+  See `docs/adr/0029-a-pill-reads-the-log-and-counts-the-block.md`, which also holds why the
+  pill counts the **language block** while the bar above it counts the **store**.
 - **Page scope** — a search narrowed to the pages whose key holds a word: `/downloads` is
   the repeats on that page, and `/downloads knop` is the repeats on that page whose words
   hold *knop*. The slash is a scope marker **in first position only**; anywhere else it is
@@ -462,6 +522,21 @@ element any more: it folds the links inside it. Both the word and the rule are g
   is not part of it**, for the reason **Class group** gives: that is session state, and
   a URL that pinned it would make *clear filter* and the address bar disagree about
   what a filter is.
+- **List reading** — everything one repeat list needs to know about the screen it is drawn
+  on. It is a **reading** and never a second copy of the screen: the screen states one fact,
+  **the store the list is about** — a store id on a dashboard, and **none** above the stores —
+  and the reading derives the rest of them from it. What a row may **press**, by the rule the
+  two corpora give; what **language** its two quoted strings are in, or no answer where the
+  row spans four; whether a row **names its store**; and where its class label and its page
+  link land. A refused press carries the words of its refusal and not a flag, so a list never
+  draws a refusal it has no sentence for. A list that answers a **typed question** says so,
+  because a searched row draws the fields the term matched and an unsearched one does not.
+  The store is the one fact because it *is* the half-and-whole distinction of ADR 0021: a
+  named store is a language block, and no store is all six. It is **stated and never left
+  out**: *no store* is the wide screen and not a missing answer, so a reading built without one
+  is an error and not the widest reading by default. Five places derived that
+  separately until this reading, and the same rule moved twice in one month.
+  See `docs/adr/0030-the-list-reading-states-what-a-press-may-cross.md`.
 - **Landing** — arriving at one difference because a link named it. A page link from
   the dashboard carries the **finding id**, and the page opens the tab that finding
   lives on, opens its row, marks it and scrolls to it. A landing is **not** a filter and
@@ -483,8 +558,17 @@ element any more: it folds the links inside it. Both the word and the rule are g
   2026-08-20, ticket 141: the two are the same number until the log closes some of them,
   and a difference settled on thirty pages led the list over a price sentence open on
   five. A difference with nothing left sinks below every difference with work left,
-  whatever its size, and nothing is removed: the settled row stays on screen reading
-  *30 of 30 closed*. Equal open counts fall back to the page count and then to the key,
+  whatever its size. ~~Nothing is removed: the settled row stays on screen reading *30 of 30
+  closed*.~~ **Amended 2026-08-21, ticket 144.** A difference with **nothing open left is off
+  this list**, and so are the settled pages inside one that stays: a sunk row is still a row an
+  editor scrolls, and fifteen rows all reading *2 of 2 closed* is the list answering *what did
+  this crawl find* to an editor asking *what is left*. *Include closed* brings every one of
+  them back, and is the only way into a fully decided class's rows. A list the log has emptied
+  says **no open work** in the same words a scoped search says it about a page, and names the
+  control. The row that was just
+  finished **stays where it is** and re-counts itself — numbers are readings and move,
+  membership is a position and is held — and it is gone the next time the list opens.
+  Equal open counts fall back to the page count and then to the key,
   and a row's **position is held** while the editor works in it — it is re-taken when the
   list holds different differences, never when a decision lands, and it waits for the log to
   have answered, because an unread log reports every finding open. It answers *what do I decide next*; opening a
@@ -513,9 +597,14 @@ element any more: it folds the links inside it. Both the word and the rule are g
   result that can return a `uk` row has stopped being a view of `nl`. Both halves cross there,
   by the **search corpus** rule above: six static index files fetched together, a partial read
   an error, and the notes of all six searched beside them. The rows are the same repeats, each
-  line saying which store it is on, and **nothing on it can be pressed**. The store screens
-  are unchanged — this store and its sibling, as before — and the two page-list blocks a
-  scope draws are a store's own answers and stay there.
+  line saying which store it is on. ~~Nothing on it can be pressed.~~ **Amended 2026-08-21,
+  ticket 04 of cross-store reuse.** An `images` or `links` row can: it is one difference over
+  up to six stores, and one press on it is one judgement written as six ordinary events. A
+  `text` or `meta` row cannot, and it says so on the row — the stores translate those words,
+  and the difference is decided on a store's own screen. The name a press carries is asked for
+  on this screen too, because a decision made here is a decision in the same ledger. The store
+  screens are unchanged — this store and its sibling, as before — and the two page-list blocks
+  a scope draws are a store's own answers and stay there.
   **Pages** (~~*Pagina's*~~, 2026-08-13) is the store's pages, worst-first, and it answers
   *which page do I open next*. There is no all-stores repeat view, for the reason
   there is no all-stores dashboard.
@@ -524,9 +613,12 @@ element any more: it folds the links inside it. Both the word and the rule are g
   and never in the counts' order, because a group that moves position as the work is
   done is a group nobody can learn where to look for. That refusal is about **groups**:
   the **rows** inside one are worst-first by open findings like every other repeat row
-  (ticket 141), and they have moved as work is decided since the page list had a sort. A `work` class with no repeats is
-  a group that says so: "nothing wrong here" and "this class does not exist" are two
-  different answers. **Opening a group is not a filter**: it changes what is drawn and
+  (ticket 141), and they have moved as work is decided since the page list had a sort.
+  A group is drawn for a class that **holds something**, and its *N differences* counts the
+  differences **drawn** — so a class the log has emptied has no group, in the manner it has no
+  pill (ticket 144). ~~A `work` class with no repeats is a group that says so.~~ Amended
+  2026-08-21: `groupRepeatsByClass()` stopped drawing one, because that answer costs a row
+  apiece in the list an editor reads to find work. **Opening a group is not a filter**: it changes what is drawn and
   never what is included, so it is session state, it never enters the amber strip and
   *clear filter* does not touch it. The class pills stay the one filter, and with a
   pill on only the selected groups exist, so the two controls cannot tell different
@@ -668,8 +760,8 @@ who wins against re-check.
   narrowed result** — a term, a scope or a class pill — and never over the bare *Repeats*
   list, because a wide press needs a proposition to be about and only a narrowed list is one.
   Everything above still holds over the wider selection: the ticks say *these pages* and each
-  press filters to what it can act on, one selection may still span a language block and no
-  further, and the write is still N ordinary events. Two things are added by the size of it.
+  press filters to what it can act on, one selection reaches as far as the **check** lets a
+  repeat group and no further (ticket 04), and the write is still N ordinary events. Two things are added by the size of it.
   The **clearing** takes a typed-count confirmation above a threshold, because it revokes
   colleagues' judgements and the dismissal's mandatory note is a gate the clearing has none
   of. And the press **reports its progress and can be stopped**, because the write is
@@ -861,45 +953,35 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   re-deriving it.
 - **Shared page** — a store page whose **new-site Magento record is the same record** as its
   sibling page's, so that one edit corrects both stores. `bedrijfsinformatie` is record 543 and
-  it serves `nl` and `be`. It is **imported and never derived**: two pages that share a record
-  and two pages that are separate records holding identical words are indistinguishable to a
-  crawler, and they behave oppositely the moment somebody fixes one. So identical text is not
-  evidence for it, in either direction.
-  Sharing is a property of the **pair**, so one entry unshares both stores — which is why the
-  grid only has to be read from one store of a block. Two conditions come from the corpus and
-  never from the layout: a page with **no sibling page** is not shared, because there is no
-  partner, and a store in no block is not shared. `isSharedPage()` in
-  `web/src/lib/shared-pages.mjs` decides it as a value, over 492 store pages at the
-  complement's upper bound. See
-  `docs/adr/0025-the-shared-page-fact-is-imported-and-states-the-complement.md`.
+  it serves `nl` and `be`. **Nothing in this repo knows which pages these are**, and no screen
+  asks: the fact was never held anywhere and the code that would have held it was removed on
+  2026-08-21. The term is kept because the **distinction** is real and a later feature will
+  meet it — and because it names a mistake that stays available.
+  That mistake is inferring it from text. Two pages that share a record and two pages that are
+  separate records holding identical words are indistinguishable to a crawler, and they behave
+  oppositely the moment somebody fixes one. So identical text is **not evidence** for sharing,
+  in either direction, and no count or claim in this repo may treat it as such.
   A shared page is **not a *link***. `links` is a Check and this is not one; nobody links
-  anything here. The sibling is derived from what production declares and the sharing is
+  anything here. The sibling is derived from what production declares and the sharing would be
   imported from Magento, and neither is an editor's assertion about two pages. It is also not
   the *shared* of a **page both stores have**, which is what the block list's three middle
   kinds are: that says each store has the page, and this says the two are one record.
-- **Record layout** — where the shared-page fact is kept: the `record_layout` table, read off
-  the new site's admin grid **by a person** and edited in the interface, because the person who
-  reads the grid is not the person with a clone. It states the **complement** — the store pages
-  that are **separate records**, each with its Magento record id and its reason — because that
-  is the short list, and everything else inside a block is shared.
-  It is a **fact and not a judgement**, which is why it is its own table and not a scope on
-  `overrides`: it carries a reason, sits in no bucket, moves no count, and a later crawl can
-  contradict it. It is **append-only** on the same terms — no UPDATE policy and no DELETE
-  policy, and the absence of the policy is the protection — so an entry is withdrawn by a later
-  event and never by an edit. **Nothing is keyed on the record id**: every id in this repo is
-  content-addressed and expires on purpose, and a record id is not one.
-  A **reading** is the third kind of event and it carries the day the grid was looked at, which
-  is not the day somebody typed. It is what bounds every permission the complement grants: a
-  store page whose first sighting in the run log is **later** than that day reads as **not
-  shared**, because the reading cannot have seen it. **With no reading, nothing is shared** — an
-  empty table must never mean *everything is shared*. The layout states a fact about today and
-  never a plan: an entry leaves it the day the merge lands in Magento.
-  An entry naming a store page the corpus no longer holds is a **stray**. It is housekeeping and
-  not a failure — it grants nothing, because such a page has no sibling pairing — and the screen
-  names it so the record can be disabled in Magento. `recordLayoutFrom()` in
-  `overrides/record-layout.mjs` derives the layout from the events; the entries are **picked out
-  of the corpus** and never typed, which is what removed the key resolution and the build guard
-  the committed file needed.
+  `docs/adr/0025-the-shared-page-fact-is-imported-and-states-the-complement.md` holds the whole
+  argument, including why it cannot be derived and what it would cost to keep — read it before
+  building anything on sharing.
+- **Record layout** — **removed 2026-08-21, and it held no data.** It was where the
+  shared-page fact was to be kept: a `record_layout` table, read off the new site's admin grid
+  by a person and edited in the interface. The table was never created, nothing ever read the
+  fact, and the ticket that superseded it was refused. The word is listed here so that it reads
+  as *gone* rather than as *somewhere I have not looked yet*.
+  Four of its rules are worth carrying into anything that replaces it, and ADR 0025 argues each
+  one. It stated the **complement** — the pages that are separate records — because that is the
+  short list. **With no reading, nothing is shared**: an empty list must never mean *everything
+  is shared*, which is the most permissive sentence the feature could utter and the one an
+  unfilled table would have asserted. A reading carried **the day the grid was looked at**, not
+  the day somebody typed, and a page first seen after that day read as not shared. And
+  **nothing was keyed on the Magento record id** — every id here is content-addressed and
+  expires on purpose, and a record id is not one.
 - **Agreement share** — of one store's production content units, the share whose
   **normalised text** appears exactly in the sibling's. It is what ranks the list,
   worst-first, and it is **not a score on a finding**. It is called *agreement* and
@@ -935,7 +1017,10 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   divergence between two stores is never read as a defect on the new site.
 - The block has **two surfaces and one vocabulary**. The store dashboard's block list
   answers *which page* diverges; the **sibling tab** on a store page answers *where on
-  it*, drawing this page against its sibling page in document order. It is the fifth tab
+  it*, drawing this page against its sibling page in document order. The tab holds **two
+  readings and not a fifth comparison**: production's two stores, and the new site's two
+  stores beside them. The second is there to make the flattening checkable — the claim is
+  about both sides at once, so a reader who cannot see both cannot check it. It is the fifth tab
   and it is **not a fifth check**: `Check` stays the closed family
   `text | links | images | meta`, so no finding id can name a row on it and no landing can
   open one — `landingFor()` resolves a tab from a finding's check, and this tab is not
@@ -956,6 +1041,29 @@ The two axes have separate tabs and separate tasks. Do not mix them.
   **finding** and it belongs on the tab that shows that finding. A row is also **not
   tinted by direction**: `lost` and `added` are the tones of a class, a block difference
   has none, and neither store lost anything — they differ.
+- **Flattened store difference** — a content unit whose two stores **diverge on
+  production and agree on the new site**. Production said two things and the new site says
+  one, so one store now shows the other's words: the `nl` store states Belgium's warranty
+  scope, and the Belgian store lists the Netherlands first in the delivery area. It is
+  **111 units on 42 page pairs** over `{nl, be}` and `{be_fr, fr}`, measured 2026-08-21 —
+  the working is in `.scratch/cross-store-reuse/FLATTENING.md` and the code is
+  `flattenedUnits()` in `web/src/lib/flattening.mjs`, three `diffRows()` alignments over
+  the reports already on disk.
+  It is a **divergence and never a cause**. *Why* production varied is not a fact any crawl
+  holds: a store-scoped mechanism — a custom variable, a store-scoped block — renders no
+  HTML, and 21 of the 111 are a new-site rewrite rather than one store's words winning. So
+  the tool may say *production varied here and the new site does not* and may never name
+  the mechanism, guess the variable, or claim the words were store-scoped.
+  **`store-scoped content` is refused** as a class, a label and a word: ticket 07 proposed
+  it and ticket 11's measurement refused it, on the two grounds above. The word is listed
+  here so that it reads as *refused* and not as *somewhere I have not looked yet*.
+  It is **not work** and it becomes no finding — ADR 0017 holds, and a divergence on
+  production is never a defect. Where a flattening is a defect it already **is** an
+  ordinary axis-A finding on the store that lost its words: 109 of the 111 are one today,
+  58 on `be`, 34 on `be_fr`, 28 on `fr` and 17 on `nl`. What this adds is a **reason beside
+  a difference the log already reports**, and an **ordering** — the 42 page pairs sort
+  ahead of the agreement share on the block list, so the reading is met and not hunted
+  for. It carries no id, no override, no class pill and no place in any bar.
 - A block is **not an axis**, and there is no axis C. The axes are what an editor
   works; a block is what an editor reads. The word is refused on purpose, because an
   axis in this repo means a tab, a task and in the end a count — ticket 11 forbids

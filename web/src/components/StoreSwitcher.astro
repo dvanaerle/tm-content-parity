@@ -8,9 +8,17 @@ import { STORE_NAME } from '../lib/stores.mjs';
  *
  * The label is the store id and not the country. The store id is the word the
  * whole tool uses. `CONTEXT.md` gives it, the report filenames carry it, and an
- * override is keyed on it. The country name is the title. There it explains the id
- * without replacing it — an English name is no invitation to draw `Germany` where a
- * reader learned six ids (ticket 124).
+ * override is keyed on it. The country name goes in the link's **name**. There it
+ * explains the id without replacing it — an English name is no invitation to draw
+ * `Germany` where a reader learned six ids (ticket 124).
+ *
+ * It is the one hint in the interface that is not `Hint.jsx`'s, and the reason is
+ * this file (ticket 129). This switcher is server-rendered chrome in the header of
+ * every page of the site; a tooltip is a React island, so drawing one here would
+ * ship the runtime into every header for a word that fits in an accessible name.
+ * The name reaches a keyboard reader, a touch reader and a screen reader — which is
+ * what the `title` this replaces did not do — and the sighted mouse user loses a
+ * hover on six links whose ids they already know.
  *
  * It navigates to the dashboard of the store. It never goes to the same page in
  * another store. The stores translate the category keys (ticket 04), so a page key
@@ -21,11 +29,11 @@ const { stores, store } = Astro.props;
 
 {
   stores.length > 1 && (
-    <nav aria-label="Store" class="ml-auto flex items-center gap-1 text-sm">
+    <nav aria-label="Store" class="ml-auto flex flex-wrap items-center justify-end gap-1 text-sm">
       {stores.map((id) => (
         <a
           href={`/${id}/`}
-          title={STORE_NAME[id]}
+          aria-label={`${id} — ${STORE_NAME[id]}`}
           aria-current={id === store ? 'page' : undefined}
           class={`rounded px-2 py-1 font-medium ${id === store ? CHROME.storeCurrent : CHROME.storeOther}`}
         >

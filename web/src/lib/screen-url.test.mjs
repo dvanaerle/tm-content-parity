@@ -123,23 +123,35 @@ describe('a control that belongs to one view', () => {
     );
   });
 
-  // *Include closed* belongs to the search, and there is no search without a
-  // term. `Dashboard.jsx` says as much: the views answer about the work that is left.
-  it('writes include closed only while something is typed', () => {
-    expect(searchFromScreen({ ...SCREEN, includeClosed: true })).toBe('');
+  // *Include closed* belongs to the search, and a term is what opens one.
+  it('writes include closed while something is typed', () => {
     expect(searchFromScreen({ ...SCREEN, query: 'deals', includeClosed: true })).toBe(
       'query=deals&closed=1',
     );
     expect(screenFromSearch('query=deals&closed=1').includeClosed).toBe(true);
   });
 
+  // Since ticket 144 it narrows the *Repeats* list too — a fully decided difference is off
+  // that list by default — so the control is part of that screen and a copied link carries it.
+  it('writes include closed on the differences list, with nothing typed and no pill on', () => {
+    expect(searchFromScreen({ ...SCREEN, includeClosed: true })).toBe('closed=1');
+    expect(screenFromSearch('closed=1').includeClosed).toBe(true);
+  });
+
+  // The guard the widening keeps: with nothing searched and *Pages* the view there is
+  // nothing for it to narrow, and the link would promise a narrowing it does not do. It is
+  // the rule the sort and the priorities keep from the other side.
+  it('is not written where nothing is searched and the page list is the view', () => {
+    expect(searchFromScreen({ ...SCREEN, view: 'pages', includeClosed: true })).toBe('view=pages');
+  });
+
   // A class on its own **is** a search since ticket 09, so the option that says what counts
   // as a result has something to belong to with nothing typed. Without this a link to a class
   // query showing closed work arrived showing none of it.
   it('writes include closed over a class query, which has no term', () => {
-    expect(
-      searchFromScreen({ ...SCREEN, classes: ['broken-link'], includeClosed: true }),
-    ).toBe('classes=broken-link&closed=1');
+    expect(searchFromScreen({ ...SCREEN, classes: ['broken-link'], includeClosed: true })).toBe(
+      'classes=broken-link&closed=1',
+    );
   });
 });
 

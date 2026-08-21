@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { Hint } from './Hint.jsx';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { Label } from './ui/label.jsx';
@@ -6,8 +7,8 @@ import { Dismiss, Floating } from './Floating.jsx';
 import PressReport from './PressReport.jsx';
 import { OfPages, Selected } from './Selected.jsx';
 import { bulkClear, bulkDismissal } from '../lib/bulk.mjs';
-import { crossesBlock } from '../lib/view.mjs';
-import { classInfo } from '../lib/classes.mjs';
+import { classInfo, spansEveryStore } from '../lib/classes.mjs';
+import { crossesStore } from '../lib/language-blocks.mjs';
 import { day } from '../lib/dates.mjs';
 
 /**
@@ -62,10 +63,10 @@ const BAR = 'bulk-bar';
  * argued for the design went with the rest of the prose.
  *
  * @param {object} props
- * @param {import('../lib/view.mjs').RepeatEntry[]} props.entries  The ticked pages, which
+ * @param {import('../lib/repeat-list.mjs').RepeatEntry[]} props.entries  The ticked pages, which
  *   are the pages both presses are aimed at.
  * @param {number} props.pages  Every page under the selection, which is the denominator.
- * @param {import('../lib/view.mjs').Repeat[]} props.holding  The differences the ticks are
+ * @param {import('../lib/repeat-list.mjs').Repeat[]} props.holding  The differences the ticks are
  *   in. One of them is what lets this bar say that difference's own words.
  * @param {string | null} props.builtAt  The snapshot the ticks were made over, where that is
  *   worth saying. The caller decides that, because it is the caller that knows how the
@@ -208,7 +209,7 @@ export default function BulkControl({
           {bulk?.canWrite && asking === null && (
             <>
               {dismissal.covers > 0 && (
-                <Button variant="outline" size="xs" onClick={() => setAsking('dismiss')}>
+                <Button variant="outline" size="sm" onClick={() => setAsking('dismiss')}>
                   Dismiss on {dismissal.covers === 1 ? 'this page' : `${dismissal.covers} pages`}…
                 </Button>
               )}
@@ -219,20 +220,25 @@ export default function BulkControl({
                   exactly where there is a second step. It is still the one press whose
                   label carries *Saving…* itself, since it has no form of its own. */}
               {cleared.covers > 0 && (
-                <Button
-                  variant="outline"
-                  size="xs"
-                  disabled={bulk.busy}
-                  onClick={() =>
-                    needsRestating(cleared.covers) ? setAsking('clear') : press(cleared.events)
-                  }
-                  title={clearTitle(cleared)}
-                >
-                  {bulk.busy
-                    ? 'Saving…'
-                    : `Clear the decision on ${cleared.covers === 1 ? 'this page' : `${cleared.covers} pages`}`}
-                  {needsRestating(cleared.covers) && '…'}
-                </Button>
+                // The hint goes on the press itself and not on a wrapper, because `busy` is a
+                // moment and not a state: a control that is off for the length of a write has
+                // no *why is this off* to explain, and swapping its shape mid-save would move
+                // the bar under the finger that pressed it (`Hint.jsx` says which is which).
+                <Hint text={clearHint(cleared)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={bulk.busy}
+                    onClick={() =>
+                      needsRestating(cleared.covers) ? setAsking('clear') : press(cleared.events)
+                    }
+                  >
+                    {bulk.busy
+                      ? 'Saving…'
+                      : `Clear the decision on ${cleared.covers === 1 ? 'this page' : `${cleared.covers} pages`}`}
+                    {needsRestating(cleared.covers) && '…'}
+                  </Button>
+                </Hint>
               )}
             </>
           )}
@@ -263,8 +269,8 @@ export default function BulkControl({
           read as two decisions crossing. Over the clearing's own gate it is the opposite —
           an editor typing the count back is exactly who has to be told the press leaves the
           store. */}
-      {bulk?.canWrite && asking !== 'dismiss' && cleared.covers > 0 && crossesBlock(cleared) && (
-        <ClearCrossesBlock cleared={cleared} oneDifference={Boolean(repeat)} />
+      {bulk?.canWrite && asking !== 'dismiss' && cleared.covers > 0 && crossesStore(cleared) && (
+        <ClearCrossesStore cleared={cleared} repeat={repeat} />
       )}
 
       {bulk?.canWrite && asking === null && dismissal.covers === 0 && <NothingToDismiss />}
@@ -297,7 +303,7 @@ export default function BulkControl({
           <Label htmlFor="bulk-dismissal-note" className="font-medium text-foreground">
             Why is this not a defect?
           </Label>
-          <Covers dismissal={dismissal} oneDifference={Boolean(repeat)} />
+          <Covers dismissal={dismissal} repeat={repeat} />
           <div className="flex flex-wrap items-center gap-1">
             <Input
               autoFocus
@@ -308,22 +314,30 @@ export default function BulkControl({
             />
             {/* One note, copied to all N rows. The SQL constraint refuses a dismissal
                 without one anyway, so the button cannot be pressed without it. */}
-            <Button
-              type="submit"
-              variant="outline"
-              size="xs"
-              disabled={dismissal.events.length === 0 || bulk.busy}
-              title={dismissal.events.length === 0 ? 'A decision needs a reason.' : undefined}
+            {/* The hint exists only while the press is off, and the reason it is off is the
+                whole of what it says — so it is the case `Hint.jsx` puts on a wrapper: a
+                disabled button takes no focus and hovers nothing, and *a decision needs a
+                reason* is the sentence an editor most needs to be able to reach. */}
+            <Hint
+              text={dismissal.events.length === 0 && 'A decision needs a reason.'}
+              disabled={dismissal.events.length === 0}
             >
-              {bulk.busy
-                ? 'Saving…'
-                : `Dismiss on ${dismissal.covers} ${dismissal.covers === 1 ? 'page' : 'pages'}`}
-            </Button>
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                disabled={dismissal.events.length === 0 || bulk.busy}
+              >
+                {bulk.busy
+                  ? 'Saving…'
+                  : `Dismiss on ${dismissal.covers} ${dismissal.covers === 1 ? 'page' : 'pages'}`}
+              </Button>
+            </Hint>
             {/* `type="button"` and not the default. A button inside a form submits it, so
                 without this the cancel *presses* the decision it is there to abandon:
                 `close()` runs, the submit fires behind it, and N rows land in an
                 append-only table that has nothing to undo them with. */}
-            <Button type="button" variant="outline" size="xs" onClick={close}>
+            <Button type="button" variant="outline" size="sm" onClick={close}>
               Cancel
             </Button>
           </div>
@@ -453,7 +467,7 @@ const NothingToDismiss = () => (
  * the one judgement does — and if it is ever wanted back it is a sentence of its own here,
  * not a resurrection of the choosing.
  */
-function Covers({ dismissal, oneDifference }) {
+function Covers({ dismissal, repeat }) {
   // The total is the seam's own two numbers added, and never the repeat's size or a second
   // reading of the selection: the sentence has to count the same pages the events do
   // (ticket 110), and one arithmetic in one place is how it cannot drift.
@@ -467,57 +481,78 @@ function Covers({ dismissal, oneDifference }) {
       {dismissal.decided > 0
         ? ` of the ${pages}: the other ${dismissal.decided} ${dismissal.decided === 1 ? 'is' : 'are'} decided already.`
         : '.'}
-      {crossesBlock(dismissal) && (
-        <InWhichStores stores={dismissal.stores} oneDifference={oneDifference} />
+      {crossesStore(dismissal) && (
+        <InWhichStores stores={dismissal.stores} repeat={repeat} />
       )}
     </p>
   );
 }
 
 /**
- * **In which stores**, said before the press (ticket 03).
+ * **In which stores**, said before the press (ticket 03, widened by ticket 04).
  *
- * The sentence itself and not the decision to draw it — `crossesBlock()` is that, and this is
+ * The sentence itself and not the decision to draw it — `crossesStore()` is that, and this is
  * written once for the two presses that say it. It used to exist twice in two wordings: this
- * one, and a shorter one inside the clearing's `title`. Two wordings of one fact is two facts
+ * one, and a shorter one inside the clearing's hint. Two wordings of one fact is two facts
  * as far as an editor reading them is concerned.
  *
- * The clause explaining **why** is drawn only over one difference (ticket 138). *The same
- * words are one decision* is what makes a block-spanning row one row: `nl/afhalen` and
- * `be/afhalen` carry the same string. Over a selection spanning differences the strings are
- * not the same and that sentence would be a false reason for a true fact — the press does
- * reach two stores, and it reaches them because the pages ticked are on both.
+ * The clause explaining **why** is drawn only over one difference (ticket 138), and **which**
+ * reason it gives is the row's own: a `text` row reaches two stores because they share a
+ * language, and an `images` row reaches six because a basename is one string in every
+ * language. Two reasons, and the wrong one under the other row would be a false explanation
+ * of a true fact. Over a selection spanning differences there is no single reason to give —
+ * the press reaches those stores because the pages ticked are on them — so the clause is
+ * absent, as it has been since ticket 138.
  */
-const InWhichStores = ({ stores, oneDifference }) => (
+const InWhichStores = ({ stores, repeat }) => (
   <>
     {' '}
-    Written in <strong className="font-medium text-foreground">{stores.join(' and ')}</strong>
-    {oneDifference
-      ? ': these two stores share a language, so the same words are one decision.'
-      : '.'}
+    Written in <strong className="font-medium text-foreground">{storeList(stores)}</strong>
+    {repeat ? `: ${becauseOf(repeat)}` : '.'}
   </>
 );
+
+/**
+ * The stores as an English list, because there can now be six of them (ticket 04).
+ *
+ * `join(' and ')` was right while the widest press was a language block's two and reads as
+ * *be and be_fr and de and fr and nl* at six.
+ */
+const storeList = (stores) =>
+  stores.length < 3 ? stores.join(' and ') : `${stores.slice(0, -1).join(', ')} and ${stores.at(-1)}`;
+
+/**
+ * Why one press reaches those stores, in the row's own terms.
+ *
+ * It reads the **class** and asks the same question `repeatsInStore()` keyed the grouping
+ * on, through the same function, so the row an editor is pressing and the reason they are
+ * given cannot come apart.
+ */
+const becauseOf = (repeat) =>
+  spansEveryStore(repeat.class)
+    ? 'this difference is the same string on each of them, so it is one decision.'
+    : 'these two stores share a language, so the same words are one decision.';
 
 /**
  * The clearing's own **in which stores**, on screen (ticket 03).
  *
  * The dismissal has a form to state its size and its stores in; this press writes on the
- * first click and had only its `title`, so the sentence naming a second store was visible on
- * hover and nowhere else — absent on touch, and absent to anyone arriving at the button by
- * keyboard. *States, before the press, in which stores* is not a thing a tooltip can do.
+ * first click and had only its hint, so the sentence naming a second store was one an editor
+ * had to ask for — and until ticket 129 asking meant holding a mouse over it. *States, before
+ * the press, in which stores* is not a thing a tooltip can do, however it is drawn.
  *
  * It is drawn **only** where the press crosses, which is what keeps it from being a line
  * under every clearing on `de` and `uk`: the interface is quiet by default (ADR 0019), and
  * this sentence earns its place by saying that a decision is about to leave the store.
  */
-const ClearCrossesBlock = ({ cleared, oneDifference }) => (
+const ClearCrossesStore = ({ cleared, repeat }) => (
   <p className="text-xs text-muted-foreground">
     Clearing on{' '}
     <strong className="font-medium text-foreground tabular-nums">
       {cleared.covers} {cleared.covers === 1 ? 'page' : 'pages'}
     </strong>
     .
-    <InWhichStores stores={cleared.stores} oneDifference={oneDifference} />
+    <InWhichStores stores={cleared.stores} repeat={repeat} />
   </p>
 );
 
@@ -542,7 +577,7 @@ const Running = ({ written, total, onStop }) => (
           asked to hear again, and the *Stop* beside it would be buried under them. */}
       Saving <span aria-live="off">{written}</span> of {total}…
     </strong>
-    <Button type="button" variant="outline" size="xs" onClick={onStop}>
+    <Button type="button" variant="outline" size="sm" onClick={onStop}>
       Stop
     </Button>
   </p>
@@ -585,14 +620,14 @@ const RestateTheCount = ({ covers, typed, onType, busy, onConfirm, onCancel }) =
     <Button
       type="submit"
       variant="outline"
-      size="xs"
+      size="sm"
       disabled={busy || typed.trim() !== String(covers)}
     >
       {busy ? 'Saving…' : `Clear the decision on ${covers} pages`}
     </Button>
     {/* `type="button"`, for the reason the dismissal's cancel states: the default submits
         the form this one is there to abandon. */}
-    <Button type="button" variant="outline" size="xs" onClick={onCancel}>
+    <Button type="button" variant="outline" size="sm" onClick={onCancel}>
       Cancel
     </Button>
   </form>
@@ -611,11 +646,11 @@ const needsRestating = (covers) => covers > HANDFUL;
  * Why this press is on fewer pages than are ticked, said where the gap is (ticket 110).
  *
  * The other two presses have a form to state their two numbers in; this one writes on the
- * first click and has only its own label. So the count it leaves alone lives in the
- * `title`, which is where round two put everything that explains a number already on
- * screen rather than changing what an editor presses.
+ * first click and has only its own label. So the count it leaves alone lives in the hint,
+ * which is where round two put everything that explains a number already on screen rather
+ * than changing what an editor presses — reachable without a mouse since ticket 129.
  */
-const clearTitle = ({ covers, skipped }) =>
+const clearHint = ({ covers, skipped }) =>
   'Removes the decision and puts the difference back to open.' +
   (skipped > 0
     ? ` ${skipped} of the ${covers + skipped} selected pages stays as it is: nothing is` +

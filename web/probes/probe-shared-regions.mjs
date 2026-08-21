@@ -68,7 +68,7 @@ import { createHash } from 'node:crypto';
 // not exist, which is the whole of what section 3 is asked to establish.
 import { storeOfFile } from '../../compare/contract.mjs';
 import { isWork } from '../../compare/vocabulary.mjs';
-import { repeatsInStore } from '../src/lib/view.mjs';
+import { repeatsInStore } from '../src/lib/repeat-list.mjs';
 
 const ROOT = new URL('../../', import.meta.url);
 const REPORTS = new URL('data/reports/', ROOT);

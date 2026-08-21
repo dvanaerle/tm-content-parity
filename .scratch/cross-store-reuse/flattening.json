@@ -1,0 +1,1897 @@
+{
+ "totals": {
+  "pairs": 230,
+  "crossPaired": 9675,
+  "diverging": 311,
+  "bothMapped": 214,
+  "flattened": 111,
+  "onlyOneSideMapped": 97,
+  "alreadyAFinding": 109,
+  "classes": {
+   "copy": 94,
+   "casing": 15,
+   "campaign": 1,
+   "price": 1
+  }
+ },
+ "pages": [
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "schuifpui",
+   "pageB": "schuifpui",
+   "rule": "alternate",
+   "count": 16,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Veel meer genieten met een schuifpui",
+     "prodB": "Meer genieten met een aluminium schuifpui",
+     "newBoth": "Veel meer genieten met een schuifpui",
+     "won": "nl",
+     "tag": "h2"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Een aluminium schuifpui kiest u om optimaal te genieten van uw huis en tuin. Er komt veel meer natuurlijk licht het huis binnen én het maakt de woonkamer ruimtelijker. Ook creëert het een natuurlijk overloop van buitenshuis naar binnenhuis. Een nadeel is dat kunststof schuifpuien lastig te instaleren zijn, vaak dient er namelijk een draagmuur uitgebroken te worden. Hierdoor is het meestal niet mogelijk om zelf te montage te doen waardoor u een bedrijf zult moeten inschakelen.",
+     "prodB": "Wilt u optimaal genieten van uw huis en tuin? Dan is een schuifpui echt iets voor u. Het maakt de woonkamer ruimtelijker én er komt veel meer natuurlijk licht het huis binnen. Verder zorgt het ook voor een natuurlijke overloop van buitenshuis naar binnenhuis. Het nadeel van een kunststof schuifpui is dat u de montage meestal niet zelf kunt doen. Vaak dient er namelijk een draagmuur uitgebroken te worden waardoor schuifpuien lastig zelf te monteren zijn. Voor de montage zult u dus een bedrijf moeten inschakelen.",
+     "newBoth": "Een aluminium schuifpui kiest u om optimaal te genieten van uw huis en tuin. Er komt veel meer natuurlijk licht het huis binnen én het maakt de woonkamer ruimtelijker. Ook creëert het een natuurlijk overloop van buitenshuis naar binnenhuis. Een nadeel is dat kunststof schuifpuien lastig te instaleren zijn, vaak dient er namelijk een draagmuur uitgebroken te worden. Hierdoor is het meestal niet mogelijk om zelf te montage te doen waardoor u een bedrijf zult moeten inschakelen.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Een glazen schuifwand biedt de voordelen van een schuifpui én deze kunt u ook nog eens volledig zelf plaatsen. U bespaart dus de montagekosten. Ook zorgt de schuifwand voor een moderne en ruimtelijke uitstraling. Een glazen schuifwand is een echte aanwinst voor uw huis.",
+     "prodB": "Met een glazen schuifwand geniet u van de voordelen van de schuifpui én deze kunt u ook nog eens volledig zelf plaatsen. Zo bespaart u kosten voor de montage. Ook zorgt een glazen schuifwand voor een moderne en ruimtelijke uitstraling. Een glazen schuifwand is dus een echte aanwinst voor uw huis en tuin.",
+     "newBoth": "Een glazen schuifwand biedt de voordelen van een schuifpui én deze kunt u ook nog eens volledig zelf plaatsen. U bespaart dus de montagekosten. Ook zorgt de schuifwand voor een moderne en ruimtelijke uitstraling. Een glazen schuifwand is een echte aanwinst voor uw huis.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "In tegenstelling tot een aluminium schuifpui kunt u een glazen schuifwand inzetten op andere constructies, zoals:",
+     "prodB": "Een glazen schuifwand kunt u, in tegenstelling tot een aluminium schuifpui, inzetten op andere constructies:",
+     "newBoth": "In tegenstelling tot een aluminium schuifpui kunt u een glazen schuifwand inzetten op andere constructies, zoals:",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Een beetje handige doe-het-zelver kan een glazen schuifwand zelf monteren met behulp van eenvoudige handleidingen en video's. De modulaire opzet van onze pakketten maakt dat u versteld zult staan van hoe snel u een luxe glazen schuifwand in elkaar zet!",
+     "prodB": "Met behulp van een eenvoudige stap-voor-stap handleiding en video kan iedereen zijn of haar eigen glazen schuifwand monteren. De modulaire opzet van onze pakketten maakt dat u versteld zult staan van hoe snel u een luxe glazen schuifwand in elkaar zet!",
+     "newBoth": "Etc. Een beetje handige doe-het-zelver kan een glazen schuifwand zelf monteren met behulp van eenvoudige handleidingen en video's. De modulaire opzet van onze pakketten maakt dat u versteld zult staan van hoe snel u een luxe glazen schuifwand in elkaar zet!",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Zoals u ziet zijn er voor- en nadelen van een kunststof schuifpui en opzichte van een glazen schuifwand. Wilt u zich verder oriënteren? Dat kan! Een paar leuke tips voor als u lekker op uw gemak nog eens wilt denken over een glazen schuifwand.",
+     "prodB": "Zoals u hierboven leest, zijn er voor- en nadelen te benoemen van een kunststof schuifpui ten opzichte van een glazen schuifwand. Wilt u zich graag verder oriënteren? Dat kan! Bekijk dan eens het volgende:",
+     "newBoth": "Zoals u ziet zijn er voor- en nadelen van een kunststof schuifpui en opzichte van een glazen schuifwand. Wilt u zich verder oriënteren? Dat kan! Een paar leuke tips voor als u lekker op uw gemak nog eens wilt denken over een glazen schuifwand.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Een tip van ons: vraag kostenloos én vrijblijvende het samplepakket aan. Dan kunt u zien én voelen hoe onze producten eruit zien.",
+     "prodB": "Een extra tip: Vraag kostenloos én vrijblijvend het samplepakket aan. Zo kunt u zien én voelen hoe onze producten eruit zien.",
+     "newBoth": "Een tip van ons: vraag kostenloos én vrijblijvende het samplepakket aan. Dan kunt u zien én voelen hoe onze producten eruit zien.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Het inmeten, aanschaffen en monteren van een schuifpui brengt tijd en kosten met zich mee. Bij het plaatsen van een glazen schuifpui wordt een draagmuur uitgebroken. Hierdoor is het bijna niet mogelijk om de montage zelf te doen waardoor u een bedrijf dient in te schakelen.",
+     "prodB": "Onze glazen schuifwand is een compleet bouwpakket dat u volledig zelfstandig kunt plaatsen. Het inmeten, aanschaffen en monteren van een kunststof schuifpui brengt tijd en kosten met zich mee. Er dient een draagmuur uitgebroken te worden waardoor het bijna niet mogelijk is om de montage zelf te doen. U zult bij een schuifpui dus kosten kwijt zijn aan een montagebedrijf, dit is bij het plaatsen van een glazen schuifwand niet nodig.",
+     "newBoth": "Het inmeten, aanschaffen en monteren van een schuifpui brengt tijd en kosten met zich mee. Bij het plaatsen van een glazen schuifpui wordt een draagmuur uitgebroken. Hierdoor is het bijna niet mogelijk om de montage zelf te doen waardoor u een bedrijf dient in te schakelen.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Onze glazen schuifwand is een compleet pakket dat u volledig zelfstandig kunt plaatsen. Dat betekent dus dat u veel kosten bespaart op de montage. Een glazen schuifwand monteren is dus voordelig ten opzichte van een schuifpui omdat u bij ons via DobbitTV ideeën en tips krijgt voor uw keuze en montage.",
+     "prodB": "Een glazen schuifwand monteren is dus voordelig ten opzichte van een schuifpui. Bekijk DobbitTV voor ideeën en tips voor uw keuze en de montage.",
+     "newBoth": "Onze glazen schuifwand is een compleet pakket dat u volledig zelfstandig kunt plaatsen. Dat betekent dus dat u veel kosten bespaart op de montage. Een glazen schuifwand monteren is dus voordelig ten opzichte van een schuifpui omdat u bij ons via DobbitTV ideeën en tips krijgt voor uw keuze en montage.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Het is dus voordeliger om een glazen schuifwand aan te schaffen in tegenstelling tot de aanschaf en montage van een schuifpui. Met onze handige online rekentool berekent u eenvoudig de exacte kosten van de glazen schuifwand.",
+     "prodB": "U zag al dat de aanschaf van een glazen schuifwand voordeliger is in vergelijking tot de aanschaf en montage van een aluminium schuifpui. Bereken eenvoudig de exacte kosten van uw glazen schuifwand met onze handige online rekentool.",
+     "newBoth": "Het is dus voordeliger om een glazen schuifwand aan te schaffen in tegenstelling tot de aanschaf en montage van een schuifpui. Met onze handige online rekentool berekent u eenvoudig de exacte kosten van de glazen schuifwand.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "U ziet: onze glazen schuifwanden zijn erg voordelig. Onthoud dat u er ook maar liefst 10 jaar Tuinmaximaal garantie op krijgt; dat geeft een fijn gevoel. Onze schuifwanden zijn namelijk van ongeëvenaarde kwaliteit, uiteraard voorzien van CE markering en bestand tegen orkaankracht, een laag sneeuw en aardbevingen (dit geldt uiteraard alleen als u de montagehandleiding goed volgt).",
+     "prodB": "Zoals u ziet, zijn onze glazen schuifwanden erg voordelig. U krijgt er ook maar liefst 10 jaar Tuinmaximaal garantie op. Onze glazen schuifwanden zijn van ongeëvenaarde kwaliteit, voorzien dan CE markering en bestand tegen orkaankracht, een laag sneeuw en aardbevingen. Dit geldt natuurlijk alleen wanneer u de stappen uit de montagehandleiding goed volgt.",
+     "newBoth": "U ziet: onze glazen schuifwanden zijn erg voordelig. Onthoud dat u er ook maar liefst 10 jaar Tuinmaximaal garantie op krijgt; dat geeft een fijn gevoel. Onze schuifwanden zijn namelijk van ongeëvenaarde kwaliteit, uiteraard voorzien van CE markering en bestand tegen orkaankracht, een laag sneeuw en aardbevingen (dit geldt uiteraard alleen als u de montagehandleiding goed volgt).",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Overtuigd? Bereken dan nu de kosten van uw glazen schuifwand op maat!",
+     "prodB": "Overtuigd? Bereken dan nu de kosten van uw glazen schuifwand.",
+     "newBoth": "Overtuigd? Bereken dan nu de kosten van uw glazen schuifwand op maat!",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Loop rond in onze virtuele showroom en doe inspiratie op voor jouw oplossing",
+     "prodB": "Doe inspiratie op en loop rond in onze virtuele showroom",
+     "newBoth": "Loop rond in onze virtuele showroom en doe inspiratie op voor jouw oplossing",
+     "won": "nl",
+     "tag": "li"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Vraag gelijk even ons gratis samplepakket aan en vergelijk glastypen, bekijk kleurstaaltjes en meer",
+     "prodB": "Vraag gelijk even ons gratis samplepakket Vergelijk glastypen, bekijk kleurstaaltjes en meer",
+     "newBoth": "Vraag gelijk even ons gratis samplepakket aan en vergelijk glastypen, bekijk kleurstaaltjes en meer",
+     "won": "nl",
+     "tag": "li"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Begin nu gelijk met het samenstellen van jouw terrasoverkapping",
+     "prodB": "Begin nu gelijk met het samenstellen van uw glazen schuifwand",
+     "newBoth": "Begin nu gelijk met het samenstellen van jouw terrasoverkapping",
+     "won": "nl",
+     "tag": "li"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Glazen schuifwanden >",
+     "prodB": "Bekijk glazen schuifwanden",
+     "newBoth": "Glazen schuifwanden",
+     "won": "neither",
+     "tag": "a"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "terrasoverkapping/productinformatie",
+   "pageB": "terrasoverkapping/productinformatie",
+   "rule": "alternate",
+   "count": 13,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Aangezien er veel verschil is in de kwaliteit van de op de verandamarkt gebruikte coatings, willen we het belang van de kwaliteit ervan benadrukken.Na verloop van tijd zult u zeker het verschil zien tussen de coatings. Kies voor Gumax® Excellence en u kiest voor een coating die zijn kleur en glans uitstekend behoudt. Een uitstekende matte coating van een wereldwijde leider in poedercoatings die u gemoedsrust schenkt. De coating biedt:",
+     "prodB": "Aangezien er veel verschil is in de kwaliteit van de op de verandamarkt gebruikte coatings, willen we het belang van de kwaliteit ervan benadrukken. Na verloop van tijd zult u zeker het verschil zien tussen de coatings. Kies voor Gumax® Excellence en u kiest voor een coating die zijn kleur en glans uitstekend behoudt. Een uitstekende matte coating van een wereldwijde leider in poedercoatings die u gemoedsrust schenkt. De coating biedt:",
+     "newBoth": "Aangezien er veel verschil is in de kwaliteit van de op de verandamarkt gebruikte coatings, willen we het belang van de kwaliteit ervan benadrukken. Na verloop van tijd zult u zeker het verschil zien tussen de coatings. Kies voor Gumax® excellence en u kiest voor een coating die zijn kleur en glans uitstekend behoudt. Een uitstekende matte coating van een wereldwijde leider in poedercoatings die u gemoedsrust schenkt. De coating biedt:",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Houd bij het inmeten voor uw overkapping rekening met drie variabele afmetingen, namelijk de breedte, diepte en hoogte. Wilt u weten hoe hoog de doorloophoogte bij uw overkapping kan zijn? Op deze pagina vindt u het zijaanzicht van onze overkappingen. Hier berekent u de mogelijke doorloophoogte(s) door middel van de beschikbare muurhoogte aan uw woning. Heeft u een kleinere tuin en wilt u weten hoe een overkapping daarin zou passen? Lees dan het artikel over een kleine overkapping in een kleine tuin.",
+     "prodB": "Heeft u besloten een terrasoverkapping aan uw woning toe te voegen? Geweldig! Dan begint nu het echte werk. U moet namelijk rekening houden met drie variabele afmetingen: de breedte, de diepte en de hoogte. Benieuwd naar de mogelijke doorloophoogte bij uw overkapping? Met onze eenvoudige berekeningsmodule krijgt u de mogelijke doorloophoogte(s). Het zijaanzicht geeft u, op basis van de beschikbare muurhoogte aan uw woning, de mogelijkheid volledig zelf de overkapping aan te passen naar uw wensen. Heeft u een kleinere tuin en wilt u weten hoe een overkapping daarin zou passen? Lees dan het artikel over een kleine overkapping in een kleine tuin.",
+     "newBoth": "Houd bij het inmeten voor uw overkapping rekening met drie variabele afmetingen, namelijk de breedte, diepte en hoogte. Wilt u weten hoe hoog de doorloophoogte bij uw overkapping kan zijn? Op deze pagina vindt u het zijaanzicht van onze overkappingen. Hier berekent u de mogelijke doorloophoogte(s) door middel van de beschikbare muurhoogte aan uw woning. Heeft u een kleinere tuin en wilt u weten hoe een overkapping daarin zou passen? Lees dan het artikel over een kleine overkapping in een kleine tuin.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "nl": true,
+      "be": false
+     },
+     "prodA": "Sets van 6 spotjes of sets van 4 spotjes van 3 Watt per stuk",
+     "prodB": "Sets van 6 spotjes of sets van 4 spotjes van 3 Watt per stuk;",
+     "newBoth": "Sets van 6 spotjes of sets van 4 spotjes van 3 Watt per stuk;",
+     "won": "be",
+     "tag": "li"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Kies uw staande terrasverwarmer >",
+     "prodB": "Kies uw staande terrasverwarmer>",
+     "newBoth": "Kies uw Gumax® staande terrasverwarmer",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Kies uw goot bladvanger >",
+     "prodB": "Kies uw goot bladvanger>",
+     "newBoth": "Kies uw Gumax® goot bladvanger",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Dit zijn de opties bij de montage van fundering;",
+     "prodB": "Dit zijn de opties bij zelfmontage van fundering;",
+     "newBoth": "Dit zijn de opties bij de montage van fundering;",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Monteren op betonpoeren. Stel de betonpoeren op de meegeleverde stoeptegels waterpas af;",
+     "prodB": "Monteren op betonpoeren: zorg dat de betonpoeren op de meegeleverde stoeptegels waterpas afgesteld zijn.",
+     "newBoth": "Monteren op betonpoeren. Stel de betonpoeren op de meegeleverde stoeptegels waterpas af;",
+     "won": "nl",
+     "tag": "li"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Staanders op het terras plaatsen. Het terras dient stevig genoeg te zijn om 750kg per staander te dragen.",
+     "prodB": "Het terras gebruiken: plaats staanders op het bestaande terras. Let op, het terras moet stevig genoeg zijn om 750 kg per staander te dragen.",
+     "newBoth": "Staanders op het terras plaatsen. Het terras dient stevig genoeg te zijn om 750kg per staander te dragen.",
+     "won": "nl",
+     "tag": "li"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "- Waar komen de staanders van de overkapping te staan?",
+     "prodB": "Waar komen de staanders van de overkapping te staan?",
+     "newBoth": "Waar komen de staanders van de overkapping te staan?",
+     "won": "be",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Maak het aluminium frame en de glazen dakplaten van uw terrasoverkapping schoon met de Gumax® reinigingsset. Voor het schoonmaken van het dak is het raadzaam om een uitschuifbare zeem te gebruiken. Verwijder eerst aangehecht vuil voorzichtig met de meegeleverde microvezeldoeken of spoel het oppervlak af om krassen te voorkomen. Gebruik voor het schoonmaken geen schuurmiddelen en/of schuursponzen.",
+     "prodB": "Verwijder eerst aangehecht vuil voorzichtig met de meegeleverde microvezeldoeken of spoel het oppervlak af om krassen te voorkomen. Om deze reden raden we het gebruik van schuurmiddelen en/of schuursponzen af.",
+     "newBoth": "Maak het aluminium frame en de glazen dakplaten van uw terrasoverkapping schoon met de Gumax® reinigingsset. Voor het schoonmaken van het dak is het raadzaam om een uitschuifbare zeem te gebruiken. Verwijder eerst aangehecht vuil voorzichtig met de meegeleverde microvezeldoeken of spoel het oppervlak af om krassen te voorkomen. Gebruik voor het schoonmaken geen schuurmiddelen en/of schuursponzen.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Tuinmaximaal adviseert het aluminium frame in gebieden met zout water minimaal tweemaal per jaar schoon te maken. In andere gebieden volstaat één keer per jaar. Verwijder tevens regelmatig bladeren en vuil uit uw goot om verstopping van de goot te voorkomen.",
+     "prodB": "Woont u in een gebied met zout water? Dan raadt Tuinmaximaal u aan minimaal twee keer per jaar het aluminiumframe schoon te maken. In andere gebieden volstaat een eenmalige jaarlijkse schoonmaakbeurt. Let op: verwijder regelmatig bladeren en vuil uit uw goot, om verstopping te voorkomen.",
+     "newBoth": "Tuinmaximaal adviseert het aluminium frame in gebieden met zout water minimaal tweemaal per jaar schoon te maken. In andere gebieden volstaat één keer per jaar. Verwijder tevens regelmatig bladeren en vuil uit uw goot om verstopping van de goot te voorkomen.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Betreden van het dak Het dak van de overkapping is niet bedoeld om op te lopen of te staan. Betreed u desondanks toch het dak, houd dan rekening met het volgende. Zorg er te allen tijde voor dat u uw gewicht over meerdere liggers verdeelt door een plaat of plank te gebruiken om op te gaan staan. Onder de planken kunt u rubberen matten leggen, zodat u beschadigingen aan het dak voorkomt. Van belang is dat maximaal 1 persoon tegelijk het dak betreedt om deze schoon te maken.",
+     "prodB": "Let op, Het dak van de overkapping is niet bedoeld om op te lopen of te staan. Betreed u desondanks toch het dak, houd dan rekening met het volgende. Zorg er te allen tijde voor dat u uw gewicht over meerdere liggers verdeelt door een plaat of plank te gebruiken om op te gaan staan. Onder de planken kunt u rubberen matten leggen, zodat u beschadigingen aan het dak voorkomt. Van belang is dat maximaal 1 persoon tegelijk het dak betreedt om deze schoon te maken.",
+     "newBoth": "Betreden van het dak Het dak van de overkapping is niet bedoeld om op te lopen of te staan. Betreed u desondanks toch het dak, houd dan rekening met het volgende. Zorg er te allen tijde voor dat u uw gewicht over meerdere liggers verdeelt door een plaat of plank te gebruiken om op te gaan staan. Onder de planken kunt u rubberen matten leggen, zodat u beschadigingen aan het dak voorkomt. Van belang is dat maximaal 1 persoon tegelijk het dak betreedt om deze schoon te maken.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Zijwanden en spieën",
+     "prodB": "Zijwanden en spiën",
+     "newBoth": "Zijwanden en spieën",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/portes-coulissantes/information-produit",
+   "pageB": "(fr)portes-coulissantes/information-produit",
+   "rule": "path",
+   "count": 8,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Mat anthracite (RAL 7016)",
+     "prodB": "Anthracite mat (RAL 7016)",
+     "newBoth": "Anthracite mat (RAL 7016)",
+     "won": "fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Mat blanc (RAL 9016)",
+     "prodB": "Blanc mat (RAL 9016)",
+     "newBoth": "Blanc mat (RAL 9016)",
+     "won": "fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Mat noir (RAL 9005)",
+     "prodB": "Noir mat (RAL 9005)",
+     "newBoth": "Noir mat (RAL 9005)",
+     "won": "fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Est fabriqué en verre trempé de 8 mm avec un film de transport mat ;",
+     "prodB": "Est fabriqué en verre trempé de 8 mm;",
+     "newBoth": "Est fabriqué en verre trempé de 8 mm;",
+     "won": "fr",
+     "tag": "li"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Disponible en profondeurs de 2,5, 3, 3,5 et 4 mètres.",
+     "prodB": "Disponible en profondeurs de 2,5, 3, 3,5 et 4 mètres;",
+     "newBoth": "Disponible en profondeurs de 2,5, 3, 3,5 et 4 mètres;",
+     "won": "fr",
+     "tag": "li"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Portes coulissantes à entraînement Gumax®",
+     "prodB": "Portes coulissante à entraînement Gumax®",
+     "newBoth": "Portes coulissante à entraînement Gumax®",
+     "won": "fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Gumax Protection solaire",
+     "prodB": "Protection solaire Gumax",
+     "newBoth": "Protection solaire",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Parois latérales et clavettes Gumax",
+     "prodB": "Parois latérales et clavettes",
+     "newBoth": "Paroi latérales et clavettes",
+     "won": "neither",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/verandas/information-produit",
+   "pageB": "(fr)verandas/information-produit",
+   "rule": "path",
+   "count": 6,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Sous votre véranda, vous devez pouvoir profiter en toute sécurité. Alors que d'autres marques de vérandas utilisent l'aluminium 6060-T6, les vérandas Gumax® sont fabriquées en aluminium 6063-T6, 25 % plus résistant. La gouttière et les tubes de renforcement de la véranda Gumax® Heavy Duty sont également fabriqués en aluminium 6061-T6, encore plus résistant. L'aluminium que nous utilisons présente de nombreux avantages. Il nécessite donc très peu d'entretien, a une longue durée de vie et n'est pas affecté par l'humidité ou les rayons UV. Tous les profils en aluminium des vérandas Gumax® sont recouverts d'un thermolaquage Gumax® Excellence Superior Coating.",
+     "prodB": "Sous votre véranda, vous devez pouvoir profiter en toute sécurité. Alors que d'autres marques de vérandas utilisent l'aluminium 6060-T6, les vérandas Gumax® sont fabriquées en aluminium 6063-T6, 25 % plus résistant. La gouttière et les tubes de renforcement de la véranda Gumax® Heavy Duty sont également fabriqués en aluminium 6061-T6, encore plus résistant (25 %). L'aluminium que nous utilisons présente de nombreux avantages. Il nécessite donc très peu d'entretien, a une longue durée de vie et n'est pas affecté par l'humidité ou les rayons UV. Tous les profils en aluminium des vérandas Gumax® sont recouverts d'un thermolaquage Gumax® Excellence Superior Coating.",
+     "newBoth": "Sous votre véranda, vous devez pouvoir profiter en toute sécurité. Alors que d'autres marques de vérandas utilisent l'aluminium 6060-T6, les vérandas Gumax® sont fabriquées en aluminium 6063-T6, 25 % plus résistant. La gouttière et les tubes de renforcement de la véranda Gumax® Heavy Duty sont également fabriqués en aluminium 6061-T6, encore plus résistant (25 %). L'aluminium que nous utilisons présente de nombreux avantages. Il nécessite donc très peu d'entretien, a une longue durée de vie et n'est pas affecté par l'humidité ou les rayons UV. Tous les profils en aluminium des vérandas Gumax® sont recouverts d'un thermolaquage Gumax® excellence superior coating.",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "price",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Tuinmaximaal recommande une hauteur libre de 2.10 m, 2.15 m, 2.20 m, 2.25 m, 2.30 m ou 2,35 m. Mesurez la hauteur libre entre le haut de la fondation/du pavage et le dessous plat de la gouttière/poutre. Grâce à ces dimensions, les baies coulissantes en verre sous la véranda s'adaptent toujours exactement et les semelles en béton peuvent encore être creusés facilement.",
+     "prodB": "Tuinmaximaal recommande une hauteur libre de 2,10 m, 2,15 m, 2,20 m, 2,25 m, 2,30 m ou 2,35 m. Mesurez la hauteur libre entre le haut de la fondation/du pavage et le dessous plat de la gouttière/poutre. Grâce à ces dimensions, les baies coulissantes en verre sous la véranda s'adaptent toujours exactement et les semelles en béton peuvent encore être creusés facilement.",
+     "newBoth": "Hauteur Tuinmaximaal recommande une hauteur libre de 2,10 m, 2,15 m, 2,20 m, 2,25 m, 2,30 m ou 2,35 m. Mesurez la hauteur libre entre le haut de la fondation/du pavage et le dessous plat de la gouttière/poutre. Grâce à ces dimensions, les baies coulissantes en verre sous la véranda s'adaptent toujours exactement et les semelles en béton peuvent encore être creusés facilement. Calculez facilement et rapidement la hauteur libre de votre véranda grâce à notre outil de mesure pratique.",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Choisissez votre Lighting System >",
+     "prodB": "Choisissez Lighting System >",
+     "newBoth": "Choisissez Lighting System Gumax®",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Pour des soirées agréables sous votre véranda ;",
+     "prodB": "Pour des soirées agréables sous votre véranda",
+     "newBoth": "Pour des soirées agréables sous votre véranda ;",
+     "won": "be_fr",
+     "tag": "li"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Lot de 6 projecteurs ou lot de 4 projecteurs de 3 Watts chacun, avec étiquette;",
+     "prodB": "Lot de 6 projecteurs ou lot de 4 projecteurs de 3 Watts chacun, avec étiquette",
+     "newBoth": "Lot de 6 projecteurs ou lot de 4 projecteurs de 3 Watts chacun, avec étiquette;",
+     "won": "be_fr",
+     "tag": "li"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Avec télécommande, pour allumer/éteindre l'éclairage et le diminuer.",
+     "prodB": "Avec télécommande, pour allumer/éteindre l'éclairage et le diminuer",
+     "newBoth": "Avec télécommande, pour allumer/éteindre l'éclairage et le diminuer.",
+     "won": "be_fr",
+     "tag": "li"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "garantie",
+   "pageB": "garantie",
+   "rule": "alternate",
+   "count": 5,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": false
+     },
+     "prodA": "Een goede investering en zorgeloos genieten met 10 jaar Tuinmaximaal garantie, naast uw wettelijke rechten als consument. Voor alle artikelen die je bij ons koopt, geldt de wettelijke garantie.",
+     "prodB": "Een goede investering en zorgeloos genieten met 10 jaar Tuinmaximaal garantie, naast uw wettelijke rechten als consument. Deze garantie geldt voor producten die u als consument rechtstreeks bij Tuinmaximaal heeft gekocht.",
+     "newBoth": "Een goede investering en zorgeloos genieten met 10 jaar Tuinmaximaal garantie, naast uw wettelijke rechten als consument. Deze garantie geldt voor producten die u als consument rechtstreeks bij Tuinmaximaal heeft gekocht.",
+     "won": "be",
+     "tag": "p"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Gumax vrijstaande overkapping: 10 jaar",
+     "prodB": "Gumax Vrijstaande overkapping: 10 jaar",
+     "newBoth": "Gumax vrijstaande overkapping: 10 jaar",
+     "won": "nl",
+     "tag": "li"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Gumax Gevelisolatie montagesysteem: 10 jaar",
+     "prodB": "Gumax Gevelisolatie-montagesysteem 10 jaar",
+     "newBoth": "Gumax Gevelisolatie montagesysteem: 10 jaar",
+     "won": "nl",
+     "tag": "li"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Gumax staande terrasverwarmer: 2 jaar",
+     "prodB": "Gumax Staande terrasverwarmer: 2 jaar",
+     "newBoth": "Gumax staande terrasverwarmer: 2 jaar",
+     "won": "nl",
+     "tag": "li"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Meer informatie en alle voorwaarden vindt u hier.",
+     "prodB": "Meer informatie alle voorwaarden vindt u hier.",
+     "newBoth": "Meer informatie en alle voorwaarden vindt u hier.",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/avantages",
+   "pageB": "(fr)avantages",
+   "rule": "path",
+   "count": 4,
+   "units": [
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "La garantie du plus bas prix La garantie d'avoir le prix, le plus bas sur toutes les toitures en terrasse. Lire la suite.",
+     "prodB": "La garantie du plus bas prix La garantie d'avoir le prix, le plus bas sur toutes les toitures en terrasse. Lire la suite",
+     "newBoth": "La garantie du plus bas prix La garantie d'avoir le prix, le plus bas sur toutes les toitures en terrasse. Lire la suite",
+     "won": "fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Livraison rapide dans tous les Pays-Bas et la Belgique, à l'exception des îles Wadden. Tous les produits sont disponibles en stock, de sorte que vous recevrez votre commande rapidement.",
+     "prodB": "Livraison rapide Nous livrons rapidement votre commande à votre domicile dans tous les Pays-Bas (à l'exception des îles Wadden), en Belgique, au Luxembourg et dans certaines régions de France et d'Allemagne.",
+     "newBoth": "Livraison rapide Nous livrons rapidement votre commande à votre domicile dans tous les Pays-Bas (à l'exception des îles Wadden), en Belgique, au Luxembourg et dans certaines régions de France et d'Allemagne.",
+     "won": "fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Pack de construction simple, facile à l'emploi, vidéos et manuels de montage Door de eenvoud van onze Grâce à la simplicité du pack de construction, vous placez une véranda, une porte et coulissante ou une protection solaire très facilement vous-même. Regardez vite les nouvelles vidéos et les nouveaux manuels de montage et mettez-vous directement au travail. Tous les produits sont en stock et peuvent être enlevés directement.",
+     "prodB": "Pack de construction simple, facile à l'emploi, vidéos et manuels de montage Grâce à la simplicité du pack de construction, vous placez une véranda, une porte et coulissante ou une protection solaire très facilement vous-même. Regardez vite les nouvelles vidéos et les nouveaux manuels de montage et mettez-vous directement au travail. Tous les produits sont en stock et peuvent être enlevés directement.",
+     "newBoth": "Pack de construction simple, facile à l'emploi, vidéos et manuels de montage Grâce à la simplicité du pack de construction, vous placez une véranda, une porte et coulissante ou une protection solaire très facilement vous-même. Regardez vite les nouvelles vidéos et les nouveaux manuels de montage et mettez-vous directement au travail. Tous les produits sont en stock et peuvent être enlevés directement.",
+     "won": "fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Matériaux de haute qualité L'utilisation des matériaux de haute qualité tels que de l'aluminium du type 6063-T6 avec 60 à 80 µ m de revêtement, polycarbonate de haute qualité et du verre de sécurité. Les produits Heavy Duty sont fabriqués en aluminium 6061-T6, ce qui les rend encore plus robustes.",
+     "prodB": "Matériaux de haute qualité L'utilisation des matériaux de haute qualité tels que de l'aluminium du type 6063-T6 avec 60 à 80 µ m de revêtement, polycarbonate de haute qualité et du verre de sécurité.",
+     "newBoth": "Matériaux de haute qualité L'utilisation des matériaux de haute qualité tels que de l'aluminium du type 6063-T6 avec 60 à 80 µ m de revêtement, polycarbonate de haute qualité et du verre de sécurité.",
+     "won": "fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/verandas/paroi-laterale",
+   "pageB": "(fr)verandas/paroi-laterale",
+   "rule": "path",
+   "count": 4,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Parois latérales et clavettes",
+     "prodB": "Parois latérales et clavettes pour votre pergola ou véranda",
+     "newBoth": "Parois latérales et clavettes pour votre pergola ou véranda",
+     "won": "fr",
+     "tag": "h1"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Fermez votre véranda facilement et avec style",
+     "prodB": "Fermez facilement et avec style le côté de votre véranda",
+     "newBoth": "Fermez facilement et avec style le côté de votre véranda",
+     "won": "fr",
+     "tag": "h2"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Quelle est la différence entre les parois latérales et les clavettes pour votre pergola ?",
+     "prodB": "Quelle est la différence entre les parois latérales et les clavettes pour votre pergola?",
+     "newBoth": "Quelle est la différence entre les parois latérales et les clavettes pour votre pergola ?",
+     "won": "be_fr",
+     "tag": "h2"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Une paroi latérale ferme le côté de votre pergola ou véranda et offre une protection optimale contre le vent et la pluie. Mais qu'est-ce qu'une clavette ? Il s'agit d'un panneau triangulaire qui comble l'espace entre le toit incliné et la paroi latérale, la paroi coulissante en verre ou la clôture de jardin. Dans le cas d'une paroi latérale en aluminium, une clavette offre en plus un peu plus de visibilité, tout en gardant votre véranda bien protégée et à l'abri.",
+     "prodB": "Une fermeture latérale pour pergola ou véranda referme le côté de votre véranda et offre une protection optimale contre le vent et la pluie. Mais qu'est-ce qu'un pignon ? Il s'agit d'un panneau triangulaire qui comble l'espace entre le toit incliné et la paroi latérale, la paroi coulissante en verre ou la clôture de jardin. Dans le cas d'un panneau latéral en aluminium, le pignon permet également une meilleure vue vers l'extérieur, tout en gardant votre véranda bien protégée et soignée.",
+     "newBoth": "Une paroi latérale ferme le côté de votre pergola ou véranda et offre une protection optimale contre le vent et la pluie. Mais qu'est-ce qu'une clavette ? Il s'agit d'un panneau triangulaire qui comble l'espace entre le toit incliné et la paroi latérale, la paroi coulissante en verre ou la clôture de jardin. Dans le cas d'une paroi latérale en aluminium, une clavette offre en plus un peu plus de visibilité, tout en gardant votre véranda bien protégée et à l'abri.",
+     "won": "be_fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "lighting-system",
+   "pageB": "lighting-system",
+   "rule": "alternate",
+   "count": 4,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Le Lighting System Gumax® se commande facilement à l'aide de la télécommande. La télécommande permet de choisir facilement la lumière qui convient à l'occasion. Faites varier la lumière à votre guise et choisissez parmi un large spectre de couleurs. Il est même possible de régler manuellement les différents luminaires. Cela peut se faire séparément ou globalement.",
+     "prodB": "Le Lighting System Gumax® se commande facilement à l'aide de la télécommande. La télécommande permet de choisir facilement la lumière qui convient à l'occasion. Faites varier la lumière à votre guise et choisissez parmi des millions de couleurs. Il est même possible de régler manuellement les différents luminaires. Cela peut se faire séparément ou globalement.",
+     "newBoth": "Le Lighting System Gumax® se commande facilement à l'aide de la télécommande. La télécommande permet de choisir facilement la lumière qui convient à l'occasion. Faites varier la lumière à votre guise et choisissez parmi un large spectre de couleurs. Il est même possible de régler manuellement les différents luminaires. Cela peut se faire séparément ou globalement.",
+     "won": "be_fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Il est également possible de contrôler l'éclairage à l'aide d'un système Smart Home. Choisissez les scènes souhaitées ou définissez votre propre palette de couleurs. Avec un système Smart Home, vous pouvez facilement définir des routines personnelles automatiques. L'éclairage sous la véranda s'adapte ainsi automatiquement à vos habitudes.",
+     "prodB": "Il est également possible de contrôler l'éclairage à l'aide d'un système Smart Home. Choisissez les scènes souhaitées ou définissez votre propre palette de couleurs. Grâce à l'application, vous pouvez facilement définir des routines personnelles automatiques. L'éclairage sous la véranda s'adapte ainsi automatiquement à vos habitudes.",
+     "newBoth": "Il est également possible de contrôler l'éclairage à l'aide d'un système Smart Home. Choisissez les scènes souhaitées ou définissez votre propre palette de couleurs. Avec un système Smart Home, vous pouvez facilement définir des routines personnelles automatiques. L'éclairage sous la véranda s'adapte ainsi automatiquement à vos habitudes.",
+     "won": "be_fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Étape 3. Dans un système Smart Home, sélectionnez le Lighting System Gumax®.",
+     "prodB": "Étape 3. Dans les paramètres Bluetooth, sélectionnez le Lighting System Gumax®.",
+     "newBoth": "Étape 3. Dans un système Smart Home, sélectionnez le Lighting System Gumax®.",
+     "won": "be_fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Le montage de l'éclairage sous votre véranda est facile. Vous pouvez même monter le Lighting System séparément. L'éclairage s'intègre parfaitement sous votre véranda. En outre, les luminaires sont résistants à la poussière et aux éclaboussures. Pour plus d'informations, regardez les instructions d'installation étape par étape et la vidéo d'installation pratique.",
+     "prodB": "Le montage de l'éclairage sous votre véranda est facile. Vous pouvez même monter le Lighting System séparément. Système d'encliquetage en cours de brevetage, la fixation est facile. L'éclairage s'intègre parfaitement sous votre véranda. L'éclairage est en outre garanti contre les éclaboussures et l'humidité. Pour plus d'informations, regardez les instructions d'installation étape par étape et la vidéo d'installation pratique.",
+     "newBoth": "Le montage de l'éclairage sous votre véranda est facile. Vous pouvez même monter le Lighting System séparément. L'éclairage s'intègre parfaitement sous votre véranda. En outre, les luminaires sont résistants à la poussière et aux éclaboussures. Pour plus d'informations, regardez les instructions d'installation étape par étape et la vidéo d'installation pratique.",
+     "won": "be_fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "voordelen",
+   "pageB": "voordelen",
+   "rule": "alternate",
+   "count": 4,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Veilig winkelen Doordat we zijn voorzien van een Thuiswinkel Waarborg keurmerk en meer dan 1500 onafhankelijke recensies van klanten op klantenvertellen.nl, kunt u er zeker van zijn dat u veilig winkelt.",
+     "prodB": "Veilig winkelen Doordat we zijn voorzien van een Kwaliteitslabel van BeCommerce en meer dan 1500 onafhankelijke recensies van klanten op klantenvertellen.nl, kunt u er zeker van zijn dat u veilig winkelt.",
+     "newBoth": "Veilig winkelen Doordat we zijn voorzien van een Thuiswinkel Waarborg keurmerk en meer dan 1500 onafhankelijke recensies van klanten op klantenvertellen.nl, kunt u er zeker van zijn dat u veilig winkelt.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "10 Jaar Tuinmaximaal garantie Tuinmaximaal garantie op onze producten tot wel tien jaar! Kijk op onze garantie pagina voor meer informatie.",
+     "prodB": "10 jaar Tuinmaximaal garantie Tuinmaximaal garantie op onze producten tot wel tien jaar! Kijk op onze garantie pagina voor meer informatie.",
+     "newBoth": "10 Jaar Tuinmaximaal garantie Tuinmaximaal garantie op onze producten tot wel tien jaar! Kijk op onze garantie pagina voor meer informatie.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Hoogwaardige materialen Gebruik van hoogwaardige materialen zoals type 6063-T6 aluminium met 60 tot 80 mµ coating, hoogwaardig polycarbonaat en veiligheidsglas.",
+     "prodB": "Hoogwaardige materialen Gebruik van hoogwaardige materialen zoals type 6063-T6 aluminium met 60 tot 80 mµ coating, polycarbonaat en veiligheidsglas.",
+     "newBoth": "Hoogwaardige materialen Gebruik van hoogwaardige materialen zoals type 6063-T6 aluminium met 60 tot 80 mµ coating, hoogwaardig polycarbonaat en veiligheidsglas.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Voordelen aluminium Gumax® terrasoverkappingen en carports worden vervaardigd uit het hoogwaardige 6063-T6 aluminium. Voor de Heavy Duty terrasoverkappingen wordt zelfs het nog sterkere 6061-T6 aluminium gebruikt. Niet alleen bent u hierdoor verzekerd van een solide constructie, aluminium biedt meer voordelen.",
+     "prodB": "Voordelen aluminium Gumax® terrasoverkappingen en carports worden vervaardigd uit het hoogwaardige 6063-T6 aluminium. De Heavy Duty Products worden zelfs geproduceerd uit het nog stevigere 6061-T6 aluminium. Niet alleen bent u hierdoor verzekerd van een solide constructie, aluminium biedt meer voordelen.",
+     "newBoth": "Voordelen aluminium Gumax® terrasoverkappingen en carports worden vervaardigd uit het hoogwaardige 6063-T6 aluminium. Voor de Heavy Duty terrasoverkappingen wordt zelfs het nog sterkere 6061-T6 aluminium gebruikt. Niet alleen bent u hierdoor verzekerd van een solide constructie, aluminium biedt meer voordelen.",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "(home)",
+   "pageB": "(home)",
+   "rule": "alternate",
+   "count": 3,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": false
+     },
+     "prodA": "Tuinmaximaal is dé online winkel voor terrasoverkappingen en accessoires. We zorgen ervoor dat iedereen maximaal van zijn of haar tuin geniet, 365 dagen per jaar! Dit maken we mogelijk met onze betaalbare, maar tegelijk kwalitatieve en stijlvolle Gumax® terrasoverkappingen. Ontdek onze collectie in de virtuele showroom of ervaar de producten zelf in één van onze fysieke showrooms in Nederland of Duitsland.",
+     "prodB": "Tuinmaximaal is dé online winkel voor terrasoverkappingen en accessoires. We zorgen ervoor dat iedereen maximaal van zijn of haar tuin geniet, 365 dagen per jaar! Dit maken we mogelijk met onze betaalbare, maar tegelijk kwalitatieve en stijlvolle Gumax® terrasoverkappingen. Bekijk het zelf in onze virtuele showroom en ontdek onze brede collectie. Tevens bieden we de mogelijkheid om onze producten in het echt te ervaren in onze fysieke showroom in Eindhoven en Venlo.",
+     "newBoth": "Tuinmaximaal is dé online winkel voor terrasoverkappingen en accessoires. We zorgen ervoor dat iedereen maximaal van zijn of haar tuin geniet, 365 dagen per jaar! Dit maken we mogelijk met onze betaalbare, maar tegelijk kwalitatieve en stijlvolle Gumax® terrasoverkappingen. Bekijk het zelf in onze virtuele showroom en ontdek onze brede collectie. Tevens bieden we de mogelijkheid om onze producten in het echt te ervaren in onze fysieke showroom in Eindhoven en Venlo.",
+     "won": "be",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Modulaire systemen waarbij overkappingen eenvoudig uit te breiden zijn",
+     "prodB": "Wij maken gebruik van modulaire systemen waarbij overkappingen eenvoudig uit te breiden zijn",
+     "newBoth": "Modulaire systemen waarbij overkappingen eenvoudig uit te breiden zijn",
+     "won": "nl",
+     "tag": "li"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Altijd alles op voorraad & snel thuisbezorgd.",
+     "prodB": "Altijd alles op voorraad & snel thuisbezorgd",
+     "newBoth": "Altijd alles op voorraad & snel thuisbezorgd.",
+     "won": "nl",
+     "tag": "li"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/galerie-generale",
+   "pageB": "(fr)galerie-generale",
+   "rule": "path",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Véranda moderne Gumax® en blanc mat de 5.06 (raccourcie) x 4 mètre avec un toit en polycarbonate opale et porte et baie coulissante",
+     "prodB": "Véranda moderne Gumax en blanc mat de 5,06 (raccourci) x 4 mètres avec toit en polycarbonate opale et portes et baies coulissantes",
+     "newBoth": "Véranda moderne Gumax® en blanc de 5,06 (raccourcie) x 4 mètre avec un toit en polycarbonate opale et porte et baie coulissante",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Eclairage LED dans véranda attenante à la maison et panneaux de toit en verre clair",
+     "prodB": "Eclairage LED dans véranda attenante à la maison et panneaux de toit en verre",
+     "newBoth": "Véranda attenante à la maison en aluminium avec éclairage LED et toit en polycarbonate",
+     "won": "neither",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/galerie/portes-coulissantes",
+   "pageB": "(fr)galerie/portes-coulissantes",
+   "rule": "path",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Portes coulissantes en verre avec joint balais dans une salle de jardin",
+     "prodB": "Portes coulissantes en verre avec joints balais dans un salon de jardin",
+     "newBoth": "Portes coulissantes en verre avec joints balais dans un salon de jardin",
+     "won": "fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Véranda blanche classique avec parois coulissantes en verre.",
+     "prodB": "Véranda blanche classique avec parois coulissantes en verre",
+     "newBoth": "Véranda blanche classique avec parois coulissantes en verre et toit en verre opale",
+     "won": "neither",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/pergola",
+   "pageB": "(fr)pergola",
+   "rule": "path",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Vous pouvez profiter en toute sécurité de votre pièce de jardin grâce à la construction très robuste en aluminium 6063-T6. Votre pergola a une longue durée de vie et est inoxydable. L'entretien demande également peu de temps et de ressources. Un pièce de jardin Heavy Duty, fabriqué en aluminium 6061-T6, a une capacité de charge allant jusqu'à 98 kg par m². Les pergolas de Tuinmaximaal sont marquées CE. Ainsi, votre pergola résiste même à des conditions météorologiques extrêmes comme un mètre de neige fraîche, a un vent atteignant la force d'un ouragan et de forts tremblements de terre. Ceci vous garantit une qualité inégalée au meilleur prix!",
+     "prodB": "Vous pouvez profiter en toute sécurité de votre pièce de jardin grâce à la construction très robuste en aluminium 6063-T6 ou 6061-T6. Les pièces de jardin Heavy Duty sont fabriquées en aluminium 6061-T6, qui est encore plus résistant. Votre pergola a une longue durée de vie et est inoxydable. L'entretien demande également peu de temps et de ressources. Les pergolas de Tuinmaximaal sont marquées CE. Ainsi, votre pergola résiste même à des conditions météorologiques extrêmes comme un mètre de neige fraîche, a un vent atteignant la force d'un ouragan et de forts tremblements de terre. Ceci vous garantit une qualité inégalée au meilleur prix!",
+     "newBoth": "Vous pouvez profiter en toute sécurité de votre pièce de jardin grâce à la construction très robuste en aluminium 6063-T6. Votre pergola a une longue durée de vie et est inoxydable. L'entretien demande également peu de temps et de ressources. Un pièce de jardin Heavy Duty, fabriqué en aluminium 6061-T6, a une capacité de charge allant jusqu'à 98 kg par m². Les pergolas de Tuinmaximaal sont marquées CE. Ainsi, votre pergola résiste même à des conditions météorologiques extrêmes comme un mètre de neige fraîche, a un vent atteignant la force d'un ouragan et de forts tremblements de terre. Ceci vous garantit une qualité inégalée au meilleur prix!",
+     "won": "be_fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Consulter les horaires de livraison et de ramassage ici",
+     "prodB": "Consulter les délais de livraison et de ramassage ici",
+     "newBoth": "Consulter les horaires de livraison et de ramassage ici",
+     "won": "be_fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/piece-de-jardin",
+   "pageB": "(fr)piece-de-jardin",
+   "rule": "path",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Vous voulez une pièce de jardin pas chère cherepour tirer encore plus partie de votre maison et de votre jardin? Une pièce de jardin est un véritable ajout à votre maison. Placez un salon ou une grande table à manger dans la pièce et profitez de la vie en plein air toute l'année, même par mauvais temps. Les portes coulissantes en verre empêchent le vent et la pluie d'entrer tandis que la luminosité reste pratiquement la même reste pratiquement la même. Une belle journée? Ouvrez les parois vitrées pour profiter pleinement du soleil et d'une température agréable. Chaque porte coulissante peut être décalée individuellement, ce qui vous permet d'aménager votre pièce de jardin comme vous le souhaitez.",
+     "prodB": "Vous voulez une pièce de jardin pour tirer encore plus partie de votre maison et de votre jardin? Une pièce de jardin est un véritable ajout à votre maison. Placez un salon ou une grande table à manger dans la pièce et profitez de la vie en plein air toute l'année, même par mauvais temps. Les portes coulissantes en verre empêchent le vent et la pluie d'entrer tandis que la luminosité reste pratiquement la même reste pratiquement la même. Une belle journée? Ouvrez les parois vitrées pour profiter pleinement du soleil et d'une température agréable. Chaque porte coulissante peut être décalée individuellement, ce qui vous permet d'aménager votre pièce de jardin comme vous le souhaitez.",
+     "newBoth": "Vous voulez une pièce de jardin pour tirer encore plus partie de votre maison et de votre jardin? Une pièce de jardin est un véritable ajout à votre maison. Placez un salon ou une grande table à manger dans la pièce et profitez de la vie en plein air toute l'année, même par mauvais temps. Les portes coulissantes en verre empêchent le vent et la pluie d'entrer tandis que la luminosité reste pratiquement la même reste pratiquement la même. Une belle journée? Ouvrez les parois vitrées pour profiter pleinement du soleil et d'une température agréable. Chaque porte coulissante peut être décalée individuellement, ce qui vous permet d'aménager votre pièce de jardin comme vous le souhaitez.",
+     "won": "fr",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Profiter le plus rapidement possible de votre pièce de jardin ? Lorsque vous venez chercher votre véranda, vous avez votre commande chez vous le jour-même. L'enlèvement des commandes est possible 7 jours / 7. Sachez qu'en raison de la haute saison, nous travaillons avec des rendez-vous pour le ramassage. Venez toujours à 2 pour charger les éléments lourds et veillez à prendre un chevalet pour transporter les éventuels panneaux de verre. Venez au showroom pour votre pièce de jardin pas chère.",
+     "prodB": "Profiter le plus rapidement possible de votre pièce de jardin ? Lorsque vous venez chercher votre véranda, vous avez votre commande chez vous le jour-même. L'enlèvement des commandes est possible 7 jours / 7. Sachez qu'en raison de la haute saison, nous travaillons avec des rendez-vous pour le ramassage. Venez toujours à 2 pour charger les éléments lourds et veillez à prendre un chevalet pour transporter les éventuels panneaux de verre.",
+     "newBoth": "Profiter le plus rapidement possible de votre pièce de jardin ? Lorsque vous venez chercher votre véranda, vous avez votre commande chez vous le jour-même. L'enlèvement des commandes est possible 7 jours / 7. Sachez qu'en raison de la haute saison, nous travaillons avec des rendez-vous pour le ramassage. Venez toujours à 2 pour charger les éléments lourds et veillez à prendre un chevalet pour transporter les éventuels panneaux de verre.",
+     "won": "fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/toit-de-terrasse",
+   "pageB": "(fr)toit-de-terrasse",
+   "rule": "path",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Sous votre toit de terrasse, vous devez pouvoir profiter en toute sécurité. La qualité est donc notre priorité absolue. Cependant, les toits bon marché de Tuinmaximaal montrent que la bonne qualité n' a pas besoin d'être chère. Avec une bande de gouttière galvanisée et l'utilisation d'aluminium 6036-T6, on obtient une construction très robuste qui peut supporter une charge de 80 kg par m². Un toit de terrasse Heavy Duty, fabriquée en aluminium 6061-T6 très résistant, a une capacité de charge allant jusqu'à 98 kg par m². Tous nos toits et carports en aluminium ont également le marquage CE. Cela signifie qu'ils répondent à toutes les normes de construction, assurant ainsi une construction sécuritaire. Composez votre toit de terrasse dans notre boutique en ligne. Choisissez un auvent de jardin classique ou moderne dans la couleur blanc mate ou anthracite et choisissez le type de toit désiré. Nos toit de terrasse sont recouvertes d'un revêtement en poudre de type Gumax® Excellence Superior Coating. Vous avez également le choix entre plusieurs accessoires pour compléter votre salon de jardin. Vous êtes curieux de connaître toutes les possibilités de nos toits terrasse? Jetez un coup d'œil à notre galerie photo ou visitez notre showrooms à Eindhoven ou à Venlo.",
+     "prodB": "Sous votre toit de terrasse, vous devez pouvoir profiter en toute sécurité. La qualité est donc notre priorité absolue. Cependant, les toits bon marché de Tuinmaximaal montrent que la bonne qualité n' a pas besoin d'être chère. Avec une bande de gouttière galvanisée et l'utilisation d'aluminium 6036-T6, on obtient une construction très robuste qui peut supporter une charge de 80 kg par m². Un toit de terrasse Heavy Duty, fabriquée en aluminium 6061-T6 très résistant, a une capacité de charge allant jusqu'à 98 kg par m². Tous nos toits et carports en aluminium ont également le marquage CE. Cela signifie qu'ils répondent à toutes les normes de construction, assurant ainsi une construction sécuritaire. Composez votre toit de terrasse dans notre boutique en ligne. Choisissez un auvent de jardin classique ou moderne dans la couleur blanc mate ou anthracite et choisissez le type de toit désiré. Nos toit de terrasse sont recouvertes d'un revêtement en poudre de type Gumax® Excellence Superior Coating. Vous avez également le choix entre plusieurs accessoires pour compléter votre salon de jardin. Vous êtes curieux de connaître toutes les possibilités de nos toits terrasse? Jetez un coup d'œil à notre galerie photo ou visitez notre showroom à Eindhoven.",
+     "newBoth": "Sous votre toit de terrasse, vous devez pouvoir profiter en toute sécurité. La qualité est donc notre priorité absolue. Cependant, les toits bon marché de Tuinmaximaal montrent que la bonne qualité n' a pas besoin d'être chère. Avec une bande de gouttière galvanisée et l'utilisation d'aluminium 6036-T6, on obtient une construction très robuste qui peut supporter une charge de 80 kg par m². Un toit de terrasse Heavy Duty, fabriquée en aluminium 6061-T6 très résistant, a une capacité de charge allant jusqu'à 98 kg par m². Tous nos toits et carports en aluminium ont également le marquage CE. Cela signifie qu'ils répondent à toutes les normes de construction, assurant ainsi une construction sécuritaire. Composez votre toit de terrasse dans notre boutique en ligne. Choisissez un auvent de jardin classique ou moderne dans la couleur blanc mate ou anthracite et choisissez le type de toit désiré. Nos toit de terrasse sont recouvertes d'un revêtement en poudre de type Gumax® Excellence Superior Coating. Vous avez également le choix entre plusieurs accessoires pour compléter votre salon de jardin. Vous êtes curieux de connaître toutes les possibilités de nos toits terrasse? Jetez un coup d'œil à notre galerie photo ou visitez notre showroom à Eindhoven ou à Venlo.",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Consulter les horaires de livraison et de ramassage ici",
+     "prodB": "Consulter les délais de livraison et de ramassage ici",
+     "newBoth": "Consulter les horaires de livraison et de ramassage ici",
+     "won": "be_fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "dop",
+   "pageB": "dop",
+   "rule": "alternate",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": false
+     },
+     "prodA": "Klik hier voor de prestatieverklaring (DOP) van de Gumax® Shading Panel.",
+     "prodB": "Klik hier voor de prestatieverklaring (DOP) van het Gumax® Shading Panel.",
+     "newBoth": "Klik hier voor de prestatieverklaring (DOP) van het Gumax® Shading Panel.",
+     "won": "be",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Let op: Om ervoor te zorgen dat de terrasoverkapping zijn optimale draagvermogen bereikt zoals hierboven vermeld, moeten de montage- en gebruiksinstructies uit de handleiding worden gevolgd. Deze handleiding kunt u vinden op onze downloadpagina.",
+     "prodB": "Om ervoor te zorgen dat de terrasoverkapping zijn optimale draagvermogen bereikt zoals hierboven vermeld, moeten de montage- en gebruiksinstructies uit de handleiding worden gevolgd. Deze handleiding kunt u vinden op onze downloadpagina.",
+     "newBoth": "Let op: Om ervoor te zorgen dat de terrasoverkapping zijn optimale draagvermogen bereikt zoals hierboven vermeld, moeten de montage- en gebruiksinstructies uit de handleiding worden gevolgd. Deze handleiding kunt u vinden op onze downloadpagina.",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "fotogalerij/glazen-schuifwand",
+   "pageB": "fotogalerij/glazen-schuifwand",
+   "rule": "alternate",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Glazen schuifwanden met tochstrips in een aanbouw",
+     "prodB": "Glazen schuifwanden met tochtstrips in een aanbouw",
+     "newBoth": "Glazen schuifwanden in een met hout afgewerkte aanbouw",
+     "won": "neither",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Glazen schuifwand in mat antraciet afgewerkt met houten balken en tocht- en sierstrips",
+     "prodB": "Gumax antraciet glazen schuifwanden met spie en sierstrips in mat antraciet terrasoverkapping",
+     "newBoth": "Gumax antraciet glazen schuifwanden met spie en sierstrips in mat antraciet terrasoverkapping",
+     "won": "be",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "glazen-schuifwand/productinformatie",
+   "pageB": "glazen-schuifwand/productinformatie",
+   "rule": "alternate",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Voor de profielen van Gumax® glazen schuifwanden heeft u de keuze uit de kleuren mat antraciet, mat wit en mat zwart. De kleuren geven uw overkapping een luxe uitstraling en zijn gelijk in prijs en toepasbaarheid. Veelal wordt gekozen voor dezelfde profielkleuren als de kleur van de overkapping.",
+     "prodB": "Voor de profielen van Gumax glazen schuifwanden heeft u de keuze uit de kleuren mat antraciet (RAL 7016), mat wit (RAL 9016) en mat zwart (RAL 9005). Deze kleuren geven uw overkapping een luxe uitstraling en zijn gelijk in prijs en toepasbaarheid. Veelal wordt gekozen voor dezelfde profielkleuren als de kleur van de overkapping.",
+     "newBoth": "Voor de profielen van Gumax® glazen schuifwanden heeft u de keuze uit de kleuren mat antraciet, mat wit en mat zwart. De kleuren geven uw overkapping een luxe uitstraling en zijn gelijk in prijs en toepasbaarheid. Veelal wordt gekozen voor dezelfde profielkleuren als de kleur van de overkapping.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Gumax® Steel Look set",
+     "prodB": "Gumax® Steel Look glazen schuifwand",
+     "newBoth": "Gumax® Steel Look set",
+     "won": "nl",
+     "tag": "h3"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "laagste-prijs-garantie",
+   "pageB": "laagste-prijs-garantie",
+   "rule": "alternate",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": false
+     },
+     "prodA": "Hoe kan het dat Tuinmaximaal de laagsteprijsgarantie heeft? Tuinmaximaal zit bovenop het productieproces en slaat hierbij alle tussenhandelaren over. Waar normaal bij iedere schakel een winstmarge wordt verrekend boven op de prijs, is dit bij Tuinmaximaal niet nodig. Daar profiteert u van!",
+     "prodB": "Hoe kan het dat Tuinmaximaal de laagsteprijsgarantie heeft?",
+     "newBoth": "Hoe kan het dat Tuinmaximaal de laagsteprijsgarantie heeft? Tuinmaximaal zit bovenop het productieproces en slaat hierbij alle tussenhandelaren over. Waar normaal bij iedere schakel een winstmarge wordt verrekend boven op de prijs, is dit bij Tuinmaximaal niet nodig. Daar profiteert u van!",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Tuinmaximaal garandeert u de laagste prijzen van Nederland, België, Frankrijk en Duitsland voor complete sets van terrasoverkappingen, schuifwanden en/of automatische zonwering en/of Bamboe vlonderplanken set. Heeft u een van deze producten elders voor een lagere prijs gevonden, dan ontvangt u een cadeaubon t.w.v. €50,- te besteden in onze webshop.*",
+     "prodB": "Tuinmaximaal garandeert u de laagste prijzen van Nederland, België, Frankrijk en Duitsland voor complete sets van terrasoverkappingen, schuifwanden en automatische zonwering en/of Bamboe vlonderplanken set. Heeft u een van deze producten elders voor een lagere prijs gevonden, dan ontvangt u een cadeaubon t.w.v. €50,- te besteden in onze webshop.*",
+     "newBoth": "Tuinmaximaal garandeert u de laagste prijzen van Nederland, België, Frankrijk en Duitsland voor complete sets van terrasoverkappingen, schuifwanden en/of automatische zonwering en/of Bamboe vlonderplanken set. Heeft u een van deze producten elders voor een lagere prijs gevonden, dan ontvangt u een cadeaubon t.w.v. €50,- te besteden in onze webshop.*",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "levergebied",
+   "pageB": "levergebied",
+   "rule": "alternate",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Tuinmaximaal levert uw bestelling aan huis in Nederland (m.u.v. de Waddeneilanden), België, Luxemburg, Duitsland, Frankrijk en het Verenigd Koninkrijk. Lees meer over het complete Europese levergebied waar Tuinmaximaal nu levert. Wilt u levering buiten het levergebied? Lees dan verder welke mogelijkheden er voor uw bestelling buiten het levergebied zijn.",
+     "prodB": "Tuinmaximaal levert uw bestelling aan huis in België, Nederland (m.u.v. de Waddeneilanden), Luxemburg, Duitsland, Frankrijk en het Verenigd Koninkrijk. Lees meer over het complete Europese levergebied waar Tuinmaximaal nu levert. Wilt u levering buiten het levergebied? Lees dan verder welke mogelijkheden er voor uw bestelling buiten het levergebied zijn.",
+     "newBoth": "Tuinmaximaal levert uw bestelling aan huis in Nederland (m.u.v. de Waddeneilanden), België, Luxemburg, Duitsland, Frankrijk en het Verenigd Koninkrijk. Lees meer over het complete Europese levergebied waar Tuinmaximaal nu levert. Wilt u levering buiten het levergebied? Lees dan verder welke mogelijkheden er voor uw bestelling buiten het levergebied zijn.",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Regio 1 : ca. 5 weken",
+     "prodB": "Regio 1: ca. 5 weken",
+     "newBoth": "Regio 1 : ca. 5 weken",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "shading-panel",
+   "pageB": "shading-panel",
+   "rule": "alternate",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Gumax® Shading Panels passen onder iedere terrasoverkapping: van Gumax® terrasoverkappingen tot houten overkappingen of carports. De schuifdeurpanelen zijn verkrijgbaar in 12 inbouwhoogtes tot 2700 mm die u, dankzij het goed bewerkbare aluminium, eenvoudig inkort tot de gewenste hoogte. Stel zelf de panelen samen en combineer ze naar wens in verschillende kleuren. U hebt voor het frame de keuze uit 3 kleuren (mat antraciet, mat wit en mat zwart). De lamellen zijn verkrijgbaar in 3 basic kleuren (mat zwart, mat antraciet en mat wit) en 2 speciale kleuren (mat grijsbeige en mat grijs aluminiumkleurig).",
+     "prodB": "Gumax® Shading Panels passen onder iedere terrasoverkapping: van Gumax® terrasoverkappingen tot houten overkappingen of carports. De schuifdeurpanelen zijn verkrijgbaar in 12 inbouwhoogtes tot 2700 mm die u, dankzij het goed bewerkbare aluminium, eenvoudig inkort tot de gewenste hoogte. Stel zelf de panelen samen en combineer ze naar wens in verschillende kleuren. U hebt voor het frame de keuze uit 3 kleuren (mat antraciet, mat wit en mat zwart). De lamellen zijn verkrijgbaar in 3 basic kleuren (mat antraciet, mat wit en mat zwart) en 2 speciale kleuren (mat grijsbeige en mat grijs aluminiumkleurig).",
+     "newBoth": "Gumax® Shading Panels passen onder iedere terrasoverkapping: van Gumax® terrasoverkappingen tot houten overkappingen of carports. De schuifdeurpanelen zijn verkrijgbaar in 12 inbouwhoogtes tot 2700 mm die u, dankzij het goed bewerkbare aluminium, eenvoudig inkort tot de gewenste hoogte. Stel zelf de panelen samen en combineer ze naar wens in verschillende kleuren. U hebt voor het frame de keuze uit 3 kleuren (mat antraciet, mat wit en mat zwart). De lamellen zijn verkrijgbaar in 3 basic kleuren (mat zwart, mat antraciet en mat wit) en 2 speciale kleuren (mat grijsbeige en mat grijs aluminiumkleurig).",
+     "won": "nl",
+     "tag": "p"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "* Als u een Gumax® Shading Panel wilt installeren in combinatie met een ander product dan een Gumax® terrasoverkapping, bent uzelf verantwoordelijkheid om te (laten) beoordelen of het Gumax® Shading Panel hiervoor geschikt is.",
+     "prodB": "*Als u een Gumax® Shading Panel wilt installeren in combinatie met een ander product dan een Gumax® terrasoverkapping, bent uzelf verantwoordelijkheid om te (laten) beoordelen of het Gumax® Shading Panel hiervoor geschikt is.",
+     "newBoth": "* Als u een Gumax® Shading Panel wilt installeren in combinatie met een ander product dan een Gumax® terrasoverkapping, bent uzelf verantwoordelijkheid om te (laten) beoordelen of het Gumax® Shading Panel hiervoor geschikt is.",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "verlichting",
+   "pageB": "verlichting",
+   "rule": "alternate",
+   "count": 2,
+   "units": [
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Choisissez vos spots LED >",
+     "prodB": "Choisissez vos Spots LED >",
+     "newBoth": "Choisissez vos Spots LED",
+     "won": "neither",
+     "tag": "a"
+    },
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Configurer avec une véranda",
+     "prodB": "Composer avec une véranda",
+     "newBoth": "Composer avec une véranda",
+     "won": "fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/30000-verandas-et-parois-coulissantes-par-annee",
+   "pageB": "(fr)30000-verandas-et-parois-coulissantes-par-annee",
+   "rule": "path",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Alors que d'autres marques utilisent 6060-T6, Gumax utilise seulement l'augmentation de 25% en 6063-T6. Les vérandas Heavy Duty sont fabriqués en aluminium 6061-T6, encore plus résistant. En outre, les vérandas Gumax sont uniques en leur qualité par l'utilisation d'unbande d'acier galvanisé d'acier à ressortdans chaque gouttière. Grâce à l'utilisation de ce type d'acierextrêmement solide sont toutes vérandas pour supporter une charge allant jusqu'à 80 kg par m². Les vérandas Heavy Duty ont une capacité de charge allant jusqu'à 98 kg par m². Gumax vérandas sont également fournis du marquage CE ce qui signifie qu'ils répondent à toutes les normes deconstruction européennes et ils sont résistants de:",
+     "prodB": "Là où d'autres fabricants utilisent l'aluminium 6060-T6, Gumax utilise l'aluminium 6063-T6, qui est 25% plus résistant. Les vérandas Heavy Duty sont fabriquées en aluminium 6061-T6, qui est encore plus résistant. n outre, les vérandas Gumax sont uniques en leur qualité par l'utilisation d'unbande d'acier galvanisé d'acier à ressortdans chaque gouttière. Grâce à l'utilisation de ce type d'acierextrêmement solide sont toutes vérandas pour supporter une charge allant jusqu'à 80 kg par m². Les vérandas Heavy Duty ont une capacité de charge allant jusqu'à 98 kg par m². Gumax vérandas sont également fournis du marquage CE ce qui signifie qu'ils répondent à toutes les normes deconstruction européennes et ils sont résistants de:",
+     "newBoth": "Là où d'autres fabricants utilisent l'aluminium 6060-T6, GUMAX utilise l'aluminium 6063-T6, qui est 25% plus résistant. Les vérandas Heavy Duty sont fabriquées en aluminium 6061-T6, qui est encore plus résistant. n outre, les vérandas Gumax sont uniques en leur qualité par l'utilisation d'unbande d'acier galvanisé d'acier à ressortdans chaque gouttière. Grâce à l'utilisation de ce type d'acierextrêmement solide sont toutes vérandas pour supporter une charge allant jusqu'à 80 kg par m². Les vérandas Heavy Duty ont une capacité de charge allant jusqu'à 98 kg par m². Gumax vérandas sont également fournis du marquage CE ce qui signifie qu'ils répondent à toutes les normes deconstruction européennes et ils sont résistants de:",
+     "won": "neither",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/echantillons/succes",
+   "pageB": "(fr)echantillons/succes",
+   "rule": "path",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "retour à la page d'accueil",
+     "prodB": "Retour à la page d'accueil",
+     "newBoth": "Retour à la page d'accueil",
+     "won": "fr",
+     "tag": "a"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/lighting-system/information-produit",
+   "pageB": "(fr)lighting-system/information-produit",
+   "rule": "path",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Un éclairage qui s'atténue lorsque vous partez. Rentrez toujours chez vous dans une maison éclairée.",
+     "prodB": "Rentrez toujours chez vous dans une maison éclairée. Un éclairage qui s'atténue lorsque vous partez.",
+     "newBoth": "Rentrez toujours chez vous dans une maison éclairée. Un éclairage qui s'atténue lorsque vous partez.",
+     "won": "fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/modes-de-paiement",
+   "pageB": "(fr)modes-de-paiement",
+   "rule": "path",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Payer plus tard",
+     "prodB": "Payer plus tard & paiement échelonné",
+     "newBoth": "Payer plus tard & paiement échelonné",
+     "won": "fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/samplepackage/succes",
+   "pageB": "(fr)samplepackage/succes",
+   "rule": "path",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "casing",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "retour à la page d'accueil",
+     "prodB": "Retour à la page d'accueil",
+     "newBoth": "Retour à la page d'accueil",
+     "won": "fr",
+     "tag": "a"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/telechargements",
+   "pageB": "(fr)telechargements",
+   "rule": "path",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": true
+     },
+     "prodA": "Déclarations des perfomances Vérandas",
+     "prodB": "Déclarations des perfomances Vérandas Gumax®",
+     "newBoth": "Déclarations des perfomances Vérandas Gumax®",
+     "won": "fr",
+     "tag": "li"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "(be_fr)fr/zone-de-livraison",
+   "pageB": "(fr)zone-de-livraison",
+   "rule": "path",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Vous voulez commencer à installer votre véranda le plus tôt possible ? Venez retirer votre commande au point d'enlèvement de Venlo. Il n'y a pas de frais supplémentaires. L'enlèvement de votre commande se fait uniquement sur rendez-vous. Nous vous contacterons dès que nous aurons reçu votre paiement. Plus d'informations sur le ramassage.",
+     "prodB": "Vous voulez commencer à installer votre véranda le plus tôt possible ? Venez retirer votre commande au point d'enlèvement de Venlo. Il n'y a pas de frais supplémentaires.",
+     "newBoth": "Vous voulez commencer à installer votre véranda le plus tôt possible ? Venez retirer votre commande au point d'enlèvement de Venlo. Il n'y a pas de frais supplémentaires.",
+     "won": "fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "30000-terrasoverkappingen-en-schuifwanden-per-jaar",
+   "pageB": "30000-terrasoverkappingen-en-schuifwanden-per-jaar",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Waar andere merken 6060-T6 aluminium gebruiken, maakt Gumax gebruik van het 25% sterkere 6063-T6 aluminium en voor de Heavy Duty terrasoverkappingen zelfs het nog sterkere 6061-T6 aluminium. Hiernaast zijn de Gumax terrasoverkappingen uniek in hun kwaliteit door het gebruik van een gegalvaniseerde stalen strip van verenstaal in iedere goot. Door het gebruik van deze oersterke staalsoort zijn de terrasoverkappingen bestand tegen een last van wel 80 kg per m², de Heavy Duty terrasoverkappingen zijn zelfs bestand tegen een last van 98 kg per m². De Gumax terrasoverkappingen zijn dan ook voorzien van CE markering wat inhoudt dat zij voldoen aan alle Europese bouwnormen en ze zijn zelfs bestand tegen:",
+     "prodB": "Waar andere merken 6060-T6 aluminium gebruiken, maakt Gumax® gebruik van het 25% sterkere 6063-T6 aluminium en voor de Heavy Duty terrasoverkappingen zelfs het nog sterkere 6061-T6 aluminium. Hiernaast zijn de Gumax® terrasoverkappingen uniek in hun kwaliteit door het gebruik van een gegalvaniseerde stalen strip van verenstaal in iedere goot. Door het gebruik van deze oersterke staalsoort zijn alle terrasoverkappingen bestand tegen een last van wel 80 kg per m², de Heavy Duty terrasoverkappingen zijn zelfs bestand tegen een last van 98 kg per m². De Gumax® terrasoverkappingen zijn dan ook voorzien van CE markering wat inhoudt dat zij voldoen aan alle Europese bouwnormen en ze zijn zelfs bestand tegen:",
+     "newBoth": "Waar andere merken 6060-T6 aluminium gebruiken, maakt Gumax® gebruik van het 25% sterkere 6063-T6 aluminium en voor de Heavy Duty terrasoverkappingen zelfs het nog sterkere 6061-T6 aluminium. Hiernaast zijn de Gumax® terrasoverkappingen uniek in hun kwaliteit door het gebruik van een gegalvaniseerde stalen strip van verenstaal in iedere goot. Door het gebruik van deze oersterke staalsoort zijn de terrasoverkappingen bestand tegen een last van wel 80 kg per m², de Heavy Duty terrasoverkappingen zijn zelfs bestand tegen een last van 98 kg per m². De Gumax terrasoverkappingen zijn dan ook voorzien van CE markering wat inhoudt dat zij voldoen aan alle Europese bouwnormen en ze zijn zelfs bestand tegen:",
+     "won": "neither",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "afhalen",
+   "pageB": "afhalen",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Hoe werkt bestellen en afhalen? Het bestellen en afhalen van uw producten is eenvoudig. U doorloopt de volgende stappen:",
+     "prodB": "Hoe werkt bestellen en afhalen?",
+     "newBoth": "Hoe werkt bestellen en afhalen?",
+     "won": "be",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "betaalmethoden",
+   "pageB": "betaalmethoden",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "campaign",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "In het onderstaande overzicht ziet u de aangeboden betaalmethoden en de daarbij horende reguliere transactietijden. Let op; Wanneer u komt afhalen dient de betaling voltooid te zijn. Houd de transactietijden in de gaten om te zien of de bestelling voltooid is.",
+     "prodB": "In het onderstaande overzicht ziet u de aangeboden betaalmethoden en de daarbij horende reguliere transactietijden. Let op; Wanneer u komt afhalen dient de betaling voltooid te zijn. Hou de transactietijden in de gaten om te zien of de bestelling voltooid is.",
+     "newBoth": "In het onderstaande overzicht ziet u de aangeboden betaalmethoden en de daarbij horende reguliere transactietijden. Let op: Wanneer u komt afhalen dient de betaling voltooid te zijn. Houd de transactietijden in de gaten om te zien of de bestelling voltooid is.",
+     "won": "neither",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "carport",
+   "pageB": "carport",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Veelgestelde vragen over carports",
+     "prodB": "Veel gestelde vragen over carports",
+     "newBoth": "Veelgestelde vragen over carports",
+     "won": "nl",
+     "tag": "h3"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "downloads",
+   "pageB": "downloads",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Automatische zonwering - mat wit 2,5 meter diep 3,0 meter diep, besteld voor 25-04-2024 3,5 meter diep 4,0 meter diep, besteld voor 16-04-2024",
+     "prodB": "Automatische zonwering - mat wit 2,5 meter diep 3,0 meter diep, besteld voor 25-04-2024 2,5 meter diep 4,0 meter diep besteld voor 16-04-2024",
+     "newBoth": "2,5 meter diep 3,0 meter diep, besteld voor 25-04-2024 3,5 meter diep 4,0 meter diep, besteld voor 16-04-2024",
+     "won": "neither",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "faq/levering",
+   "pageB": "faq/levering",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": true,
+      "be": true
+     },
+     "prodA": "Tuinmaximaal houdt u per mail en telefonisch op de hoogte van de status van uw bestelling. U ontvangt een bevestigingsmail en een betaalbewijs. Ook nemen we contact met u op voor het afspreken van een bezorgdatum en we bellen op de bezorgdag een half uur voor aankomst. Voor vragen over de bezorging van uw bestelling kunt u altijd contact opnemen met onze planningsafdeling via 040-820 0211.",
+     "prodB": "Tuinmaximaal houdt u per mail en telefonisch op de hoogte van de status van uw bestelling. U ontvangt een bevestigingsmail en een betaalbewijs. Ook nemen we contact met u op voor het afspreken van een bezorgdatum en we bellen op de bezorgdag een half uur voor aankomst. Voor vragen over de bezorging van uw bestelling kunt u altijd contact opnemen met onze klantenservice via (+32) 014 480 515.",
+     "newBoth": "Tuinmaximaal houdt u per mail en telefonisch op de hoogte van de status van uw bestelling. U ontvangt een bevestigingsmail en een betaalbewijs. Ook nemen we contact met u op voor het afspreken van een bezorgdatum en we bellen op de bezorgdag een half uur voor aankomst. Voor vragen over de bezorging van uw bestelling kunt u altijd contact opnemen met onze planningsafdeling via",
+     "won": "neither",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "fotogalerij",
+   "pageB": "fotogalerij",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Fotogalerij terrasoverkapping",
+     "prodB": "Fotogalerij",
+     "newBoth": "Fotogalerij terrasoverkapping",
+     "won": "nl",
+     "tag": "h1"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "garantie",
+   "pageB": "garantie",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": false
+     },
+     "prodA": "Système de montage pour façades avec isolation : 10 ans Kit de mise à niveau toiture Gumax : 10 ans",
+     "prodB": "Système de montage pour façades avec isolation : 10 ans",
+     "newBoth": "Système de montage pour façades avec isolation : 10 ans",
+     "won": "fr",
+     "tag": "li"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "samplepakket",
+   "pageB": "samplepakket",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "In dit samplepakket vindt u alles wat u nodig heeft om uw beslissing te maken. Denk daarbij aan samples van de twee glastypen, het polycarbonaat, kleurenstaaltjes, de actuele brochure en prijslijst.",
+     "prodB": "In dit samplepakket vindt u alles wat u nodig heeft om uw beslissing te maken. Denk daarbij aan samples van de twee glastypen, het polycarbonaat, kleurenstaaltjes, actuele brochure en prijslijst.",
+     "newBoth": "In dit samplepakket vindt u alles wat u nodig heeft om uw beslissing te maken. Denk daarbij aan samples van de twee glastypen, het polycarbonaat, kleurenstaaltjes, de actuele brochure en prijslijst.",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "shading-panel",
+   "pageB": "shading-panel",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": false,
+      "fr": true
+     },
+     "prodA": "Les Shading Panels Gumax® s'adaptent à n'importe quelle véranda : des vérandas Gumax® aux vérandas en bois ou aux carports. Les panneaux de portes coulissantes sont disponibles en 12 hauteurs de montage allant jusqu'à 2700 mm, que vous pouvez facilement raccourcir à la hauteur souhaitée grâce à l'aluminium facilement usinable. Composez vous-même les panneaux et combinez-les dans différentes couleurs à votre guise. Vous pouvez choisir parmi 3 couleurs (anthracite mat, blanc mat et noir mat) pour le cadre. Les lames sont disponibles en 3 couleurs de base (anthracite mat, blanc mat et noir mat) et en 2 couleurs spéciales (gris-beige mat et gris aluminium mat).",
+     "prodB": "Les Shading Panels Gumax® s'adaptent à n'importe quelle véranda : des vérandas Gumax® aux vérandas en bois ou aux carports. Les panneaux de portes coulissantes sont disponibles en 12 hauteurs de montage allant jusqu'à 2700 mm, que vous pouvez facilement raccourcir à la hauteur souhaitée grâce à l'aluminium facilement usinable. Composez vous-même les panneaux et combinez-les dans différentes couleurs à votre guise. Vous pouvez choisir parmi 3 couleurs (anthracite mat,blanc mat et noir mat) pour le cadre. Les lames sont disponibles en 3 couleurs de base (anthracite mat, blanc mat et noir mat) et en 2 couleurs spéciales (gris-beige mat et gris aluminium mat).",
+     "newBoth": "Les Shading Panels Gumax® s'adaptent à n'importe quelle véranda : des vérandas Gumax® aux vérandas en bois ou aux carports. Les panneaux de portes coulissantes sont disponibles en 12 hauteurs de montage allant jusqu'à 2700 mm, que vous pouvez facilement raccourcir à la hauteur souhaitée grâce à l'aluminium facilement usinable. Composez vous-même les panneaux et combinez-les dans différentes couleurs à votre guise. Vous pouvez choisir parmi 3 couleurs (anthracite mat, blanc mat et noir mat) pour le cadre. Les lames sont disponibles en 3 couleurs de base (anthracite mat, blanc mat et noir mat) et en 2 couleurs spéciales (gris-beige mat et gris aluminium mat).",
+     "won": "be_fr",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "terrasoverkapping/montage/isolatiemateriaal",
+   "pageB": "terrasoverkapping/montage/isolatiemateriaal",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Tuinmaximaal levert uw terrasoverkapping op maat met bevestigingsmaterialen die geschikt zijn om het muurprofiel direct op een (dubbel-)steense muur te monteren en levert géén bevestigingsmateriaal dat geschikt is voor de montage op een muur met isolatiemateriaal. Indien uw buitenmuren voorzien zijn van isolatiemateriaal, zult u zelf moeten zorgen voor de juiste bevestigingsmaterialen. Vraag bij de bouwmarkt na welk bevestigingsmateriaal u nodig heeft om de terrasoverkapping te monteren. U dient voor de montage van een overkapping op een muur met isolatiemateriaal, na te gaan hoe dik het isolatiemateriaal tot de binnenmuur is. U zult het muurprofiel van een overkapping doorgaans monteren op een hoogte tussen 2,50m en 3,00m (dit kan ook net iets hoger of lager zijn, bereken de gewenste hoogte hier).",
+     "prodB": "Tuinmaximaal levert uw zelfbouw terrasoverkapping met bevestigingsmaterialen die geschikt zijn om het muurprofiel direct op een (dubbel-)steense muur te monteren en levert géén bevestigingsmateriaal dat geschikt is voor de montage op een muur met isolatiemateriaal. Indien uw buitenmuren voorzien zijn van isolatiemateriaal, zult u zelf moeten zorgen voor de juiste bevestigingsmaterialen. Vraag bij de bouwmarkt na welk bevestigingsmateriaal u nodig heeft om de overkapping te monteren. U dient voor de montage van een overkapping op een muur met isolatiemateriaal, na te gaan hoe dik het isolatiemateriaal tot de binnenmuur is. U zult het muurprofiel van een overkapping doorgaans monteren op een hoogte tussen 2,50m en 3,00m (dit kan ook net iets hoger of lager zijn, bereken de gewenste hoogte hier).",
+     "newBoth": "Tuinmaximaal levert uw terrasoverkapping op maat met bevestigingsmaterialen die geschikt zijn om het muurprofiel direct op een (dubbel-)steense muur te monteren en levert géén bevestigingsmateriaal dat geschikt is voor de montage op een muur met isolatiemateriaal. Indien uw buitenmuren voorzien zijn van isolatiemateriaal, zult u zelf moeten zorgen voor de juiste bevestigingsmaterialen. Vraag bij de bouwmarkt na welk bevestigingsmateriaal u nodig heeft om de terrasoverkapping te monteren. U dient voor de montage van een overkapping op een muur met isolatiemateriaal, na te gaan hoe dik het isolatiemateriaal tot de binnenmuur is. U zult het muurprofiel van een overkapping doorgaans monteren op een hoogte tussen 2,50m en 3,00m (dit kan ook net iets hoger of lager zijn, bereken de gewenste hoogte hier).",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  },
+  {
+   "block": "fr",
+   "stores": [
+    "be_fr",
+    "fr"
+   ],
+   "pageA": "zonwering",
+   "pageB": "zonwering",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "be_fr": true,
+      "fr": false
+     },
+     "prodA": "Store pour véranda :les possibilités",
+     "prodB": "Store pour véranda : les possibilités",
+     "newBoth": "Store pour véranda : les possibilités",
+     "won": "fr",
+     "tag": "h3"
+    }
+   ]
+  },
+  {
+   "block": "nl",
+   "stores": [
+    "nl",
+    "be"
+   ],
+   "pageA": "zonwering/productinformatie",
+   "pageB": "zonwering/productinformatie",
+   "rule": "alternate",
+   "count": 1,
+   "units": [
+    {
+     "divergence": "copy",
+     "already": {
+      "nl": false,
+      "be": true
+     },
+     "prodA": "Gumax® zonwering is zowel effectief onder overkappingen met glazen daken als een polycarbonaat daktype. In onderstaande grafiek worden de temperatuurverschillen tussen overkappingen met Gumax® zonwering en zonder zonwering weergegeven. Deze berekening is uitgevoerd in een situatie met toenemende en afnemende zonnestraling gedurende de dag en is de temperatuur zoals gemeten net onder het dak. Deze berekening* is uitgevoerd onder de volgende fictieve situatie:",
+     "prodB": "Gumax® zonwering is zowel effectief onder overkappingen met glazen daken als polycarbonaat daktypen. In onderstaande grafiek worden de temperatuurverschillen tussen overkappingen met Gumax® zonwering en zonder zonwering weergegeven. Deze berekening is uitgevoerd in een situatie met toenemende en afnemende zonnestraling gedurende de dag en is de temperatuur zoals gemeten net onder het dak. Deze berekening* is uitgevoerd onder de volgende fictieve situatie:",
+     "newBoth": "Gumax® zonwering is zowel effectief onder overkappingen met glazen daken als een polycarbonaat daktype. In onderstaande grafiek worden de temperatuurverschillen tussen overkappingen met Gumax® zonwering en zonder zonwering weergegeven. Deze berekening is uitgevoerd in een situatie met toenemende en afnemende zonnestraling gedurende de dag en is de temperatuur zoals gemeten net onder het dak. Deze berekening* is uitgevoerd onder de volgende fictieve situatie:",
+     "won": "nl",
+     "tag": "p"
+    }
+   ]
+  }
+ ]
+}

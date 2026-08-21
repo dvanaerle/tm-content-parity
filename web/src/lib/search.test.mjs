@@ -602,6 +602,22 @@ describe('matchedFields', () => {
     expect(matchedFields(entry({}), '  ')).toEqual([]);
   });
 
+  it('finds a renamed image under the new filename, which is the point of the class', () => {
+    // Cross-store-reuse ticket 02. The new basename used to be on an `image-added` only —
+    // `information`, and `addPage()` indexes `work` — so it was in no index at all and a
+    // search for it answered nothing in any store. `image-renamed` is `work` and carries
+    // both names in the two columns, so both halves of the arrow are findable. `detail` is
+    // on no searchable field, which is why the arrow alone would not have done it.
+    const renamed = entry({
+      class: 'image-renamed',
+      prod: 'max.svg',
+      new: 'max-new.svg',
+      detail: 'max.svg → max-new.svg',
+    });
+    expect(matchedFields(renamed, 'max-new.svg')).toEqual(['newText']);
+    expect(matchedFields(renamed, 'max.svg')).toEqual(['prodText']);
+  });
+
   it('names every field that matched, in the order the fields are listed', () => {
     // One word can hit the text and the heading at once. Naming both is how a result
     // explains itself; naming only the first would hide half the reason it is there.
@@ -829,7 +845,7 @@ describe('searchStore', () => {
   it('says how many findings on how many pages', () => {
     // A count *of the result* and nothing else. Search narrows; it moves no count, so
     // there is no bar here, no denominator and no closed count — the rule ticket 36
-    // pinned, which `view.mjs` obeys in the same words.
+    // pinned, which `filter.mjs` obeys in the same words.
     const result = searchStore({
       index: index([
         entry({ id: 'a', page: 'afhalen' }),
@@ -1861,17 +1877,20 @@ describe('the search corpus over every store', () => {
     ]);
   });
 
-  it('leaves the repeat corpus where it is: four rows for one string on six stores', () => {
-    // Reading crosses any store; pressing crosses only a language block. So the widening is
-    // visible in the corpus and **not** in the grouping — `{nl, be}` and `{be_fr, fr}` are
-    // one row each, and `de` and `uk` are alone. Ticket 04 is what moves this number.
+  it('groups one link target on six stores into one row (ticket 04)', () => {
+    // The repeat corpus is the **check's** since ticket 04, and this module does not decide
+    // it: the grouping is `repeatsInStore()`'s and is reused rather than rewritten. A link
+    // target is host-folded, so it is the same string on every store and the six are one row.
+    // It was four while the key's first term was the block — `{nl, be}`, `{be_fr, fr}`, `de`
+    // and `uk`.
     const result = searchStore({
       index: mergeIndexes(everywhere),
       term: '',
       classes: ['broken-link'],
     });
 
-    expect(result.repeats).toHaveLength(4);
+    expect(result.repeats).toHaveLength(1);
+    expect(result.repeats[0].on).toHaveLength(6);
   });
 
   it('says which store every page of a result is on', () => {

@@ -40,10 +40,9 @@ const stores = await storesInLog();
   }
   {/*
     Above the stores, because a search that can return a `uk` row is not a view of `nl`
-    (ticket 03). It is first of the two sections here for the same reason it is above them at
-    all: finding a string is what an editor came to do, and doing it once beats doing it six
-    times. There is no per-store copy of this link — the store dashboards have their own box,
-    which searches the store and its language block.
+    (ticket 03): finding a string is what an editor came to do, and doing it once beats doing
+    it six times. There is no per-store copy of this link — the store dashboards have their own
+    box, which searches the store and its language block.
   */}
   <section class="mt-8 border-t pt-4">
     <h2 class="mb-1 text-sm font-semibold">Search every store</h2>
@@ -53,20 +52,6 @@ const stores = await storesInLog();
     </p>
     <a class={`text-sm font-medium hover:underline ${CHROME.link}`} href="/search/">
       Open the search
-    </a>
-  </section>
-  {/*
-    Above the stores, because one Magento record serves two of them. A per-store copy of
-    this list would be the same fact drawn twice.
-  */}
-  <section class="mt-8 border-t pt-4">
-    <h2 class="mb-1 text-sm font-semibold">Record layout</h2>
-    <p class="mb-2 max-w-prose text-sm text-muted-foreground">
-      Which store pages are their own Magento record on the new site, read off the admin grid
-      and kept here. It says where one edit corrects two stores.
-    </p>
-    <a class={`text-sm font-medium hover:underline ${CHROME.link}`} href="/record-layout/">
-      Open the record layout
     </a>
   </section>
 </Shell>

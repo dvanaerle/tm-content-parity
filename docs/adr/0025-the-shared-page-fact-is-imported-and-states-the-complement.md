@@ -1,5 +1,12 @@
 # The shared-page fact is imported, and it states the complement
 
+> **Withdrawn unbuilt, 2026-08-21.** No surface in this repo carries the shared-page fact any
+> more. The code is deleted and no `record_layout` table was ever created, so the fact has
+> never been held anywhere and no consumer was ever written. *What was withdrawn, and why*
+> at the bottom says what went and what survives. **This record is kept, not superseded:**
+> every argument about the fact itself still holds, and it is the argument anyone rebuilding
+> this would otherwise have to make again.
+>
 > **Amended 2026-08-19 by ticket 08.** The fact no longer lives in a committed file. It is
 > kept in the log's own append-only table, edited in the interface, because the person who
 > reads the grid is not the person with a clone. Everything below survives except where it
@@ -121,12 +128,15 @@ for no other reason.
 
 ## Where the fact and the rule live
 
+*Nowhere, since 2026-08-21. Both halves below are deleted; the section is kept because the
+**split** is the reusable finding.*
+
 ~~`web/src/lib/not-shared-pages.mjs` — the **fact**: the entries and the date. Hand-edited, by
 a person, on the grid's rhythm and not the code's.~~ *Struck 2026-08-19, ticket 08. The fact is
 the `record_layout` table, derived by `overrides/record-layout.mjs`.*
 
-- `web/src/lib/shared-pages.mjs` — the **rule**: the corpus conditions, the date guard, and
-  the entries that name a store page the corpus no longer holds.
+- ~~`web/src/lib/shared-pages.mjs` — the **rule**: the corpus conditions, the date guard, and
+  the entries that name a store page the corpus no longer holds.~~
 
 The **split** survives the strike, and it is what made ticket 08 a small change: the fact and
 the rule were already two things with two authors and two rhythms, so moving the fact left the
@@ -212,6 +222,50 @@ second meaning — which is what `CONTEXT.md` exists to stop.
 - **Any export or database read.** The reason this is imported by hand is that no other
   route exists today. The reason it is imported *at all* is that the fact is not derivable,
   and that half does not expire.
+
+## What was withdrawn, and why, 2026-08-21
+
+Every surface this record described is deleted: the `record_layout` table's SQL, the pure
+derivation and its port, the screen and its route, the link on the root, and the rule
+`shared-pages.mjs`. 1,938 lines and 41 tests.
+
+**Nothing was ever held.** The table was never created in the Supabase project — the SQL sat
+in `supabase/` unapplied, absent from `schema.sql` and from the snapshot, and no backup under
+`data/` ever carried a row. So this is not a migration and there is nothing to export. Ticket
+08's own header had already recorded that its table "was never applied to a project".
+
+**Nothing ever read it.** `sharedPageIndex()` and `isSharedPage()` had no callers. The two
+tickets that would have consumed the fact — a fix claim travelling over a link, and a linked
+page saying what is store-scoped — are both out of scope, so the feature collected a
+permission-granting fact that no decision anywhere asked for.
+
+**The refusal that stranded it is now settled.** Ticket 10 superseded ticket 08 and was then
+parked, and it parked its own removal criteria with it — leaving this code in the tree with no
+ticket owning it, which it said in as many words. Its re-open trigger was ticket 11 reporting a
+meaningful flattening count or a meaningful double-claim count. Ticket 11 resolved 2026-08-21:
+the double claim is **unmeasurable, and 0 of the 10 that survive**; the flattening is **111
+units on 42 page pairs**, which is meaningful but is explicitly the half that needs no table,
+no link and no editor input. So the refusal holds on its own terms, and the code it stranded
+gets the decision it was owed.
+
+**One cost is paid off rather than carried.** *Anyone who can open the site can now change a
+permission-granting fact* was this record's frankest entry, and the argument ticket 10 was
+refused partly for. Deleting the table retires it. Nothing in this repo now widens the write
+on a permission from *whoever can push to git*.
+
+**What survives, and is why this record is kept.** The fact still cannot be derived — identical
+words are what two separate records look like the day before they diverge, and that inference
+runs the wrong way in both directions. The complement is still the sound and the short list,
+and still only sound because a record is shared inside a language block or not at all. It still
+comes from the new site's enabled records and never production's. An out-of-date reading still
+grants nothing, and no reading still means nothing is shared — an empty complement must never
+read as *everything is shared*. Nothing may be keyed on a Magento record id. And it is still
+not a *link*. Whoever builds this next inherits all of that.
+
+**What would bring it back** is unchanged from *What would make this obsolete* above, read the
+other way: a store-view map that stays fresh, or any export or database read, would remove the
+reason the fact had to be transcribed by hand — which was always the expensive half, never the
+part that expires.
 
 ## Alternatives
 

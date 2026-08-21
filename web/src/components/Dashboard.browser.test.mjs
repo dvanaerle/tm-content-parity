@@ -1,8 +1,53 @@
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import Dashboard from './Dashboard.jsx';
 import { PageNoteMark } from './Annotate.jsx';
+
+/**
+ * The **log**, handed to the dashboard through the port it reads (ticket 144).
+ *
+ * A faithful implementation of the three methods and not a mock: the port is an interface the
+ * application already injects one layer down — `createOverridesPort()` takes a client for its
+ * own paging test — and the lint rules forbid module mocking outright. What every rule in this
+ * ticket turns on is *what the log answers*, so the log has to be an input.
+ *
+ * `events` is a module-scope list a test writes before it mounts, and it is emptied between
+ * tests: an empty list is a connected log with nothing decided, which is the state every test
+ * written before this ticket was written against.
+ */
+let events = [];
+
+const port = {
+  readEvents: async () => events,
+  readEventsForStore: async () => events,
+  appendEvent: async (event) => event,
+};
+
+beforeEach(() => {
+  events = [];
+});
+
+/**
+ * A decision in the log's own shape, as `overrides_log` stores one. `dismissed` and `fixed`
+ * are the two things that close a finding, and this writes the first: it is a judgement, so
+ * nothing can contradict it and the bar counts it closed for good.
+ */
+const dismissal = (page, findingId) => ({
+  store: 'nl',
+  page,
+  scope: 'finding',
+  findingId,
+  action: 'dismissed',
+  editor: 'Danielle',
+  note: 'Acceptable.',
+  createdAt: '2026-08-14T12:00:00.000Z',
+  observationId: '2026-08-14T10:00:00.000Z-aaaaaaaa',
+  priority: null,
+});
+
+/** The log arriving, which is one turn of the microtask queue after a mount. */
+const logArrives = () => act(async () => {});
 
 /**
  * The three buckets, on the store dashboard (ticket 80).
@@ -64,11 +109,18 @@ const PAGES = [
   page('schuttingen', [finding('c', 'link-target')]),
 ];
 
+/**
+ * The block sibling's pages (ticket 03). `nl` and `be` share Dutch, so a difference the two
+ * carry in the same words is **one** row on both dashboards — and one entry in the repeat the
+ * class pill counts. Nothing on this screen but that list reads them.
+ */
+const SIBLING_PAGES = [{ ...page('afhalen', [finding('d'), finding('e')]), store: 'be' }];
+
 function mount(props = {}) {
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
-  act(() => root.render(createElement(Dashboard, { store: 'nl', pages: PAGES, ...props })));
+  act(() => root.render(createElement(Dashboard, { store: 'nl', pages: PAGES, port, ...props })));
   return () => act(() => root.unmount());
 }
 
@@ -972,7 +1024,10 @@ describe('a page note in a list', () => {
     // The page it is about is where the note is drawn in full and where it is edited, so the
     // mark goes there rather than revealing the text in place.
     expect(mark.getAttribute('href')).toBe('/nl/overkappingen/');
-    expect(mark.title).toBe(LONG);
+    // The note is the mark's own name since ticket 129, and no longer a `title` beside it: a
+    // reader who is not holding a mouse is given the whole note and not the word *Note*.
+    expect(mark.getAttribute('aria-label')).toContain(LONG);
+    expect(mark.hasAttribute('title')).toBe(false);
 
     unmount();
   });
@@ -1042,17 +1097,137 @@ describe('a hint on the dashboard, reached without a mouse', () => {
   });
 
   /**
-   * The page list, which is the half of this screen part A owns end to end. The repeats list
-   * beside it draws `Diff`, `OverrideControl` and `Occurrences`, whose hints are part B's
-   * files and part B's commit — so this sweep says *the pages view*, and means it, rather
-   * than claiming a screen that is not converted yet.
+   * **Both views**, since part B. Part A swept the pages view alone and said so, because the
+   * repeats list beside it still drew `Diff`, `OverrideControl` and `Occurrences` with their
+   * attributes on. They are converted now, so the screen is swept whole — which is the
+   * assertion part A could not make and the one the guard in `interface-reach.test.mjs`
+   * generalises to every drawn file.
    */
-  it('leaves no title for the browser to draw its own box from, in the pages view', () => {
+  for (const view of ['pages', 'repeats']) {
+    it(`leaves no title for the browser to draw its own box from, in the ${view} view`, () => {
+      history.replaceState(null, '', `?view=${view}`);
+      const unmount = mount();
+
+      expect([...document.querySelectorAll('[title]')].map((element) => element.title)).toEqual([]);
+
+      unmount();
+    });
+  }
+});
+
+/**
+ * Ticket 144. A pill says how much **open work of its class is left**, read live from the
+ * log over the language block's repeat list — the same list the rows below it come from.
+ *
+ * It counted `summary.byClass` before, which is a snapshot tally over this store's comparable
+ * pages, while the list under it is the block's repeats. `Case or punctuation 40` over a group
+ * header saying *52 differences* was the report that opened this ticket, and neither number
+ * was stale with respect to the other: two units over two corpora. So these tests are mounted
+ * rather than pure — what is being asserted is the log arriving.
+ *
+ * **No figure is pinned to a fixture.** The claims are relational: the pill falls by the
+ * number of findings closed, a class the log emptied has no pill at all, and the pill and the
+ * bar disagree because they count different things.
+ */
+describe('what a class pill counts', () => {
+  /** Each pill as `{ 'Copy changed': '2', … }`: the label an editor reads, and its number. */
+  const pills = () =>
+    Object.fromEntries(
+      [...document.querySelectorAll('[data-slot="toggle-group-item"]')]
+        .filter((item) => item.querySelector('[data-badge="class"]'))
+        .map((item) => [
+          item.querySelector('[data-badge="class"]').textContent.trim(),
+          item.querySelector('[data-slot="pill-count"]').textContent.trim(),
+        ]),
+    );
+
+  /**
+   * The two pages hold three findings: two `copy` on one page, which group into one
+   * difference, and one `link-target` on the other.
+   */
+  it('falls as the log arrives, and shows the full count until it has', async () => {
+    events = [dismissal('overkappingen', 'a')];
+    const unmount = mount();
+
+    // The first paint is **before** the events land. `byFinding` reports every finding open
+    // there, and the full count is the correct answer: an unread log means *nothing decided*
+    // and never *nothing left*. This is the ticket's named trap, and here it fails loudly.
+    expect(pills()).toEqual({ 'Copy changed': '2', 'Link target changed': '1' });
+
+    await logArrives();
+
+    // One of the two `copy` findings is dismissed, so the pill falls by one — with no
+    // recrawl, and while the difference itself is still a difference on two pages.
+    expect(pills()).toEqual({ 'Copy changed': '1', 'Link target changed': '1' });
+    unmount();
+  });
+
+  it('draws no pill at all for a class with nothing open left', async () => {
+    events = [dismissal('schuttingen', 'c')];
+    const unmount = mount();
+    await logArrives();
+
+    // Pressing a pill can no longer answer *No difference found*: the pill is gone.
+    expect(pills()).toEqual({ 'Copy changed': '2' });
+    unmount();
+  });
+
+  it('draws that class a pill reading zero while include closed is on', async () => {
+    // The only way into a fully decided class's rows, and the **number** does not depend on
+    // the control — it is still the open count. Only a zero pill's presence does.
+    history.replaceState(null, '', '?closed=1');
+    events = [dismissal('schuttingen', 'c')];
+    const unmount = mount();
+    await logArrives();
+
+    expect(pills()).toEqual({ 'Copy changed': '2', 'Link target changed': '0' });
+    unmount();
+  });
+
+  /**
+   * Asserted in **one** test because their disagreement is the point, and it is the thing a
+   * reader arrives at this screen and reports as a bug. ADR 0029 is where it is argued: a
+   * pill sits above the repeat list and must describe it, and that list is mirrored across
+   * the language block; the bar describes the store an editor is responsible for.
+   */
+  it('counts the language block, while the progress bar still counts the store', () => {
+    const unmount = mount({ siblingPages: SIBLING_PAGES });
+
+    // Four `copy` findings over the block — two on `nl`, two on the sibling's page, all one
+    // difference because the two stores carry the same words.
+    expect(pills()['Copy changed']).toBe('4');
+    // The store's own three, unmoved. The bar, the chips and the roll-ups are snapshot-shaped
+    // and store-scoped, and they stay that way.
+    expect(strip().open.count).toBe('3');
+    unmount();
+  });
+});
+
+/**
+ * *Include closed* on the *Repeats* view (ticket 144). It is drawn with the list it narrows,
+ * the way the sort and the priority pills are drawn with *Pages*.
+ */
+describe('include closed on the differences list', () => {
+  const control = () =>
+    [...document.querySelectorAll('label')].find((label) =>
+      label.textContent.trim().startsWith('Include closed'),
+    );
+
+  it('is offered over the differences, and is off to begin with', () => {
+    const unmount = mount();
+
+    expect(control()).toBeDefined();
+    expect(control().querySelector('[data-slot="checkbox"]').getAttribute('aria-checked')).toBe(
+      'false',
+    );
+    unmount();
+  });
+
+  it('is not offered over the page list, which it narrows nothing of', () => {
     history.replaceState(null, '', '?view=pages');
     const unmount = mount();
 
-    expect([...document.querySelectorAll('[title]')].map((element) => element.title)).toEqual([]);
-
+    expect(control()).toBeUndefined();
     unmount();
   });
 });

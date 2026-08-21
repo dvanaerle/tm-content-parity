@@ -1,21 +1,30 @@
-import { useMemo } from 'react';
-import Repeats from './Repeats.jsx';
-import { PageNote } from './Annotate.jsx';
-import { ClassFilterBanner } from './Chips.jsx';
-import { Checkbox } from './ui/checkbox.jsx';
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty.jsx';
-import { Label } from './ui/label.jsx';
-import { Separator } from './ui/separator.jsx';
-import { CHROME } from '../lib/palette.mjs';
-import { STORE_LANGUAGE } from '../lib/stores.mjs';
-import { Attribution } from './Attribution.jsx';
-import { day } from '../lib/dates.mjs';
-import { cn } from '../lib/utils.js';
-import { logState } from '../lib/log-read.mjs';
-import { explainScope, inScope, searchNotes, searchStore } from '../lib/search.mjs';
-import { useSearchIndex } from '../lib/search-index.mjs';
-import { siblingOf } from '../lib/language-blocks.mjs';
-import { pagesWithClasses } from '../lib/view.mjs';
+import { useMemo } from "react";
+import Repeats from "./Repeats.jsx";
+import { PageNote } from "./Annotate.jsx";
+import { ClassFilterBanner } from "./Chips.jsx";
+import { Checkbox } from "./ui/checkbox.jsx";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "./ui/empty.jsx";
+import { Label } from "./ui/label.jsx";
+import { Separator } from "./ui/separator.jsx";
+import { CHROME } from "../lib/palette.mjs";
+import { Attribution } from "./Attribution.jsx";
+import { day } from "../lib/dates.mjs";
+import { cn } from "../lib/utils.js";
+import { logState } from "../lib/log-read.mjs";
+import {
+  explainScope,
+  inScope,
+  searchNotes,
+  searchStore,
+} from "../lib/search.mjs";
+import { useSearchIndex } from "../lib/search-index.mjs";
+import { siblingOf } from "../lib/language-blocks.mjs";
+import { pagesWithClasses } from "../lib/filter.mjs";
 
 /**
  * *on 1 page*, and *on 2 pages*.
@@ -31,7 +40,7 @@ import { pagesWithClasses } from '../lib/view.mjs';
  *
  * @param {number} pages
  */
-const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
+const onPages = (pages) => `on ${pages} ${pages === 1 ? "page" : "pages"}`;
 
 /**
  * What an editor gets for typing words: every finding in the corpus that holds them, across
@@ -86,8 +95,16 @@ const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
  *   in their name — are a store's own answers and are not drawn above the stores. They need
  *   the whole page list, and six stores of page summaries is seven megabytes of island prop
  *   against a corpus that is already in six static files.
- * - There is **no press** above the stores: the caller withholds `bulk`, and `Repeats` then
- *   draws no tick. Reading is what widened here; ticket 04 is what widens the press.
+ * - **Which rows may be pressed** follows from it as well (ticket 04, ADR 0030). A store's
+ *   search refuses nothing; above the stores an `images` or `links` row is pressed and a row
+ *   of translated words is drawn with its reason instead. Reading is what widened here;
+ *   ticket 04 is what widens the press.
+ *
+ * The store arrives **inside the reading** and not beside it, because a second copy of it
+ * here is the second spelling ADR 0030 exists to remove: the reading is built by the screen,
+ * off the one fact the screen states about itself, and this component reads that fact from
+ * it. Where a page of this screen links to comes off the same reading, for the same reason —
+ * the three header blocks below are handed it rather than a builder of their own.
  *
  * **The index is a prop and the fetch is the caller's** since that ticket. Both screens need
  * it before this component runs — the store's to keep it out of the hands of a visitor who
@@ -96,7 +113,7 @@ const onPages = (pages) => `on ${pages} ${pages === 1 ? 'page' : 'pages'}`;
  * `StoreSearch` below is that wrapper for the store screen.
  */
 export default function Search({
-  store = null,
+  reading,
   index,
   indexError = null,
   pages = [],
@@ -104,21 +121,15 @@ export default function Search({
   term,
   classes = [],
   onClearFilters,
-  byFinding,
   log,
   includeClosed,
   onIncludeClosed,
   bulk = null,
-  link,
-  classLink = null,
 }) {
-  /*
-   * Whether this list spans stores, which is the one question the two screens answer
-   * differently. It is *no store of its own* and not *more than one store in the index*: a
-   * block store's search reaches two stores and is still `nl`'s screen, drawing `nl`'s page
-   * list and speaking Dutch.
-   */
-  const acrossStores = !store;
+  // The screen, as the one reading of it: which store it is of, whether that makes it a list
+  // spanning stores, and where a page of it lands. Not one of the three is derived again here
+  // (ADR 0030).
+  const { store, acrossStores, byFinding, hrefOfPage } = reading;
 
   const result = useMemo(
     () =>
@@ -130,7 +141,7 @@ export default function Search({
             includeClosed,
             // The log's own answer about a finding. `open` for one the log has not decided,
             // which is also what an unconnected log says about everything.
-            stateOf: (id) => byFinding.get(id)?.state ?? 'open',
+            stateOf: (id) => byFinding.get(id)?.state ?? "open",
           })
         : null,
     // The pills are in here, so moving one re-answers the same term against the new
@@ -185,9 +196,15 @@ export default function Search({
   // the term — and what is missing is only the sentence about a page that answered nothing.
   // Answering it would mean shipping six stores' page summaries, which is the trade the
   // component docblock states.
-  const blockPages = useMemo(() => [...pages, ...siblingPages], [pages, siblingPages]);
+  const blockPages = useMemo(
+    () => [...pages, ...siblingPages],
+    [pages, siblingPages],
+  );
   const answer = useMemo(
-    () => (result && !acrossStores ? explainScope({ pages: blockPages, result }) : null),
+    () =>
+      result && !acrossStores
+        ? explainScope({ pages: blockPages, result })
+        : null,
     [acrossStores, blockPages, result],
   );
 
@@ -210,7 +227,9 @@ export default function Search({
     // that a scope can reach a one-sided page and say so; this block is the **page list's**
     // answer and the page list has never held one. A one-sided page reached by name
     // belongs to the aside, which says why it is there — this block says nothing at all.
-    const found = pages.filter((page) => page.comparable && inScope(page.page, term));
+    const found = pages.filter(
+      (page) => page.comparable && inScope(page.page, term),
+    );
     // The pills narrow this half through the derivation the page list itself narrows
     // by, rather than through a second reading of what a class filter means.
     //
@@ -226,13 +245,18 @@ export default function Search({
   if (indexError) {
     return (
       <p className="px-4 py-6 text-sm text-muted-foreground">
-        A search index was not read ({indexError}). Search works again after a new build.
+        A search index was not read ({indexError}). Search works again after a
+        new build.
       </p>
     );
   }
 
   if (!result)
-    return <p className="px-4 py-6 text-sm text-muted-foreground">The search index is loading…</p>;
+    return (
+      <p className="px-4 py-6 text-sm text-muted-foreground">
+        The search index is loading…
+      </p>
+    );
 
   return (
     <>
@@ -273,8 +297,10 @@ export default function Search({
               : `${result.total} findings ${onPages(result.pages)}`}
           </strong>
           <span className="text-muted-foreground">
-            {result.repeats.length > 1 && ` in ${result.repeats.length} differences`}. From the
-            snapshot of {day(index.builtAt)} — the counts at the top do not move with it.
+            {result.repeats.length > 1 &&
+              ` in ${result.repeats.length} differences`}
+            . From the snapshot of {day(index.builtAt)} — the counts at the top
+            do not move with it.
           </span>
         </p>
 
@@ -287,10 +313,17 @@ export default function Search({
         </Label>
       </div>
 
-      <Scope store={store} answer={answer} found={result.repeats.length} link={link} />
+      <Scope
+        store={store}
+        answer={answer}
+        found={result.repeats.length}
+        link={hrefOfPage}
+      />
 
       {result.repeats.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-muted-foreground">No difference with these words.</p>
+        <p className="px-4 py-6 text-sm text-muted-foreground">
+          No difference with these words.
+        </p>
       ) : (
         <Repeats
           // Remounting is how the selection is dropped, and the key is the whole of that
@@ -302,25 +335,18 @@ export default function Search({
           // The scope is inside `term`: it is the leading `/…` of the same typed string,
           // and `parseTerm()` is the only thing that splits them. So all four of the
           // things that narrow this list are in this key.
-          key={`${term}|${includeClosed}|${classes.join(',')}`}
+          key={`${term}|${includeClosed}|${classes.join(",")}`}
           repeats={result.repeats}
-          byFinding={byFinding}
-          // The language of the scraped strings on every row, which is this store's: a
-          // result reaches the sibling store and a block is two stores of one language.
-          // Above the stores there is no such answer — six stores speak four languages — so
-          // the list gives none and each row answers for itself. See `rowLanguage()`.
-          language={store ? STORE_LANGUAGE[store] : null}
-          // Every row says which store it is on, and the tick in it names one too.
-          acrossStores={acrossStores}
-          // *Broken link* on a row opens every broken link there is (ticket 03).
-          classLink={classLink}
+          // The screen, as one reading of it (ADR 0030). What a row may press and why the
+          // others may not, what language its two quoted strings are in, whether it names
+          // its store, and where its two links land — all of it derived from the store this
+          // screen is of, which is the one thing the screen states about itself.
+          reading={reading}
           // The rows are worst-first on what is left in each difference (ticket 141), and
           // that reading waits for the log: until it has answered, `byFinding` says every
           // finding is open. It is the same `read` the notes half below is drawn on.
           logRead={read.ready}
           bulk={bulk}
-          link={link}
-          searched
           // The snapshot the rows were built over, so a wide press can name it. The
           // selection straddles two clocks — these rows are the build's, and what a press
           // may act on is the live log's — and that is worth saying out loud once at 472.
@@ -330,8 +356,10 @@ export default function Search({
 
       {/* Under a scope the header above is the by-page reading of the same typing, so
           this block would list the same pages a second time. */}
-      {scope || acrossStores ? null : <Named store={store} pages={named} link={link} />}
-      <Notes result={notes} link={link} acrossStores={acrossStores} />
+      {scope || acrossStores ? null : (
+        <Named store={store} pages={named} link={hrefOfPage} />
+      )}
+      <Notes result={notes} link={hrefOfPage} acrossStores={acrossStores} />
     </>
   );
 }
@@ -366,12 +394,13 @@ export default function Search({
 function Scope({ store, answer, found, link }) {
   if (!answer) return null;
 
-  if (answer.state === 'no-such-page')
+  if (answer.state === "no-such-page")
     return (
       <section className="border-b border-border px-4 py-3">
         <p className="text-sm">
-          No page the search reaches has {answer.scope} in its key, so there is nothing to search
-          inside. Check the spelling — a page key is not always the name you read on the page.
+          No page the search reaches has {answer.scope} in its key, so there is
+          nothing to search inside. Check the spelling — a page key is not
+          always the name you read on the page.
         </p>
       </section>
     );
@@ -379,7 +408,8 @@ function Scope({ store, answer, found, link }) {
   return (
     <section className="border-b border-border px-4 py-3">
       <h3 className="text-sm font-medium">
-        {answer.pages.length} {answer.pages.length === 1 ? 'page' : 'pages'} in /{answer.scope}
+        {answer.pages.length} {answer.pages.length === 1 ? "page" : "pages"} in
+        /{answer.scope}
       </h3>
       <ul className="mt-1 text-sm">
         {answer.pages.map((page) => (
@@ -388,14 +418,19 @@ function Scope({ store, answer, found, link }) {
                 since ticket 05, so a line here can be a page of the sibling — and a link
                 built from the dashboard's store would open a page that is not the one
                 named. */}
-            <a className={cn('hover:underline', CHROME.link)} href={link(page.store, page.page)}>
+            <a
+              className={cn("hover:underline", CHROME.link)}
+              href={link(page.store, page.page)}
+            >
               {page.page}
             </a>
             {/* Which store, and only where it is not this one — the same rule the repeat row
                 keeps: the marker appears exactly when a page is outside the store an editor
                 thinks they are working in, and never once per line for no reader. */}
             {page.store !== store && (
-              <span className="ml-2 text-xs text-muted-foreground">on {page.store}</span>
+              <span className="ml-2 text-xs text-muted-foreground">
+                on {page.store}
+              </span>
             )}
             <WhyNothing page={page} />
           </li>
@@ -425,20 +460,25 @@ function Scope({ store, answer, found, link }) {
  * would be the rot the previous sentence is guarding against.
  */
 function WhyNothing({ page }) {
-  if (page.kind === 'matched') return null;
+  if (page.kind === "matched") return null;
 
-  if (page.kind === 'one-sided')
+  if (page.kind === "one-sided")
     return (
       <span className="ml-2 text-muted-foreground">
-        Only one site has this page ({page.skipReason}).{' '}
-        <a className={cn('hover:underline', CHROME.link)} href="#one-sided-pages">
+        Only one site has this page ({page.skipReason}).{" "}
+        <a
+          className={cn("hover:underline", CHROME.link)}
+          href="#one-sided-pages"
+        >
           One-sided pages
-        </a>{' '}
+        </a>{" "}
         lists it.
       </span>
     );
 
-  return <span className="ml-2 text-muted-foreground">{NOTHING[page.kind]}</span>;
+  return (
+    <span className="ml-2 text-muted-foreground">{NOTHING[page.kind]}</span>
+  );
 }
 
 /**
@@ -448,9 +488,10 @@ function WhyNothing({ page }) {
  * apart.
  */
 const NOTHING = {
-  clean: 'Compared, and no difference on it.',
-  'no-open-work': 'Compared, and every difference on it is closed. Nothing left to do.',
-  'no-match': 'Has differences, and none of them holds these words.',
+  clean: "Compared, and no difference on it.",
+  "no-open-work":
+    "Compared, and every difference on it is closed. Nothing left to do.",
+  "no-match": "Has differences, and none of them holds these words.",
 };
 
 /**
@@ -469,12 +510,16 @@ function Named({ store, pages, link }) {
       <Separator />
       <section className="px-4 py-3">
         <h3 className="text-sm font-medium">
-          {pages.length} {pages.length === 1 ? 'page has' : 'pages have'} this name
+          {pages.length} {pages.length === 1 ? "page has" : "pages have"} this
+          name
         </h3>
         <ul className="mt-1 flex flex-wrap gap-x-3 text-sm">
           {pages.map((page) => (
             <li key={page.page}>
-              <a className={cn('hover:underline', CHROME.link)} href={link(store, page.page)}>
+              <a
+                className={cn("hover:underline", CHROME.link)}
+                href={link(store, page.page)}
+              >
                 {page.page}
               </a>
             </li>
@@ -514,13 +559,14 @@ function Named({ store, pages, link }) {
  * already in memory.
  */
 function Notes({ result, link, acrossStores = false }) {
-  if (result.state === 'reading') return <NotesAside>The override log is loading…</NotesAside>;
+  if (result.state === "reading")
+    return <NotesAside>The override log is loading…</NotesAside>;
 
-  if (result.state === 'failed')
+  if (result.state === "failed")
     return (
       <NotesAside>
-        The override log was not read ({result.reason}), so this half of the answer is missing.
-        Reload the page to try again.
+        The override log was not read ({result.reason}), so this half of the
+        answer is missing. Reload the page to try again.
       </NotesAside>
     );
 
@@ -536,22 +582,26 @@ function Notes({ result, link, acrossStores = false }) {
       <Separator />
       <section className="bg-muted px-4 py-3">
         <h3 className="text-sm font-medium">
-          {notes.length} {notes.length === 1 ? 'note' : 'notes'} {narrowedBy(result)}
+          {notes.length} {notes.length === 1 ? "note" : "notes"}{" "}
+          {narrowedBy(result)}
         </h3>
         <p data-wears="ink" data-tone="info" className="mb-2 text-xs">
-          Read from the log now, not from the snapshot. This half is current, and the findings above
-          are as old as the last build.
+          Read from the log now, not from the snapshot. This half is current,
+          and the findings above are as old as the last build.
         </p>
         <ul className="text-sm">
           {notes.map((note) => (
             <li
-              key={`${note.createdAt}|${note.page}|${note.findingId ?? note.class ?? ''}`}
+              key={`${note.createdAt}|${note.page}|${note.findingId ?? note.class ?? ""}`}
               className="py-0.5"
             >
               {/* The event's own store and page, and not the component's: an event
                   carries where it was written, and reading it is what keeps the link
                   honest if the two ever disagree. */}
-              <a className={cn('hover:underline', CHROME.link)} href={link(note.store, note.page)}>
+              <a
+                className={cn("hover:underline", CHROME.link)}
+                href={link(note.store, note.page)}
+              >
                 {note.page}
               </a>
               {/* Which store the note was written on, above the stores. The page keys are
@@ -560,16 +610,24 @@ function Notes({ result, link, acrossStores = false }) {
                   store's own screen every note is that store's, and printing it once per line
                   would be a word for no reader. */}
               {acrossStores && (
-                <span className="ml-2 text-xs text-muted-foreground">on {note.store}</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  on {note.store}
+                </span>
               )}
               {/* A page note is quoted and italic, the way it is drawn on the page and in
                   the store list. A dismissal note is the plain sentence it has always
                   been, and it sits inside the decision it explains. */}
               <Attribution
-                action={note.action === 'noted' ? 'page note' : note.action}
+                action={note.action === "noted" ? "page note" : note.action}
                 editor={note.editor}
                 at={note.createdAt}
-                reason={note.action === 'noted' ? <PageNote note={note.note} /> : note.note}
+                reason={
+                  note.action === "noted" ? (
+                    <PageNote note={note.note} />
+                  ) : (
+                    note.note
+                  )
+                }
               />
             </li>
           ))}
@@ -592,7 +650,7 @@ function Notes({ result, link, acrossStores = false }) {
  * what part A's contract exists to prevent.
  */
 const narrowedBy = ({ scope, text }) => {
-  if (!scope) return 'with these words';
+  if (!scope) return "with these words";
   return text ? `with these words on /${scope}` : `on /${scope}`;
 };
 
@@ -636,12 +694,19 @@ const NotesAside = ({ children }) => (
  * they fetch what they always fetched. A store pays for a block only if it is in one, which
  * is ADR 0018's trade in its own shape; ADR 0021 holds what the second file costs.
  */
-export function StoreSearch({ store, ...rest }) {
-  // The two stores, and never a wider set. The all-stores corpus is a screen of its own and
-  // not a dropdown on this one: a control may narrow what is read, and what may be *pressed*
-  // is a property of the check.
-  const corpus = useMemo(() => [store, siblingOf(store)].filter(Boolean), [store]);
+export function StoreSearch({ reading, ...rest }) {
+  // The store off the reading, which is the one place this screen's store is written. The two
+  // stores of the block and never a wider set: the all-stores corpus is a screen of its own
+  // and not a dropdown on this one — a control may narrow what is read, and what may be
+  // *pressed* is a property of the check.
+  const { store } = reading;
+  const corpus = useMemo(
+    () => [store, siblingOf(store)].filter(Boolean),
+    [store],
+  );
   const { index, error } = useSearchIndex(corpus);
 
-  return <Search store={store} index={index} indexError={error} {...rest} />;
+  return (
+    <Search reading={reading} index={index} indexError={error} {...rest} />
+  );
 }

@@ -229,6 +229,7 @@ describe('the block reading', () => {
         share: 1,
         units: 1,
         found: 1,
+        flattening: 0,
       },
       {
         page: 'pergola',
@@ -237,6 +238,7 @@ describe('the block reading', () => {
         share: null,
         units: null,
         found: null,
+        flattening: 0,
       },
     ]);
   });
@@ -260,6 +262,7 @@ describe('the block reading', () => {
         share: 1,
         units: 2,
         found: 2,
+        flattening: 0,
       },
     ]);
   });
@@ -301,6 +304,7 @@ describe('the block reading', () => {
         share: null,
         units: null,
         found: null,
+        flattening: 0,
       },
     ]);
   });
@@ -411,6 +415,7 @@ describe('the block reading', () => {
       share: null,
       units: null,
       found: null,
+      flattening: 0,
     });
 
     expect(blockReading({ rows, store: 'be', unitsOf: () => null }).rows).toEqual([
@@ -471,5 +476,49 @@ describe('the block reading', () => {
 
     expect(blockReading({ rows, store: 'de', unitsOf: () => null })).toBe(null);
     expect(blockReading({ rows, store: 'uk', unitsOf: () => null })).toBe(null);
+  });
+});
+
+/**
+ * The pages the migration flattened, lifted to the top (ticket 07).
+ *
+ * 42 page pairs of the 246 carry a store difference production had and the new site has
+ * not — the warranty scope, the delivery area. It is the reading this list is now for, so
+ * it is **met and not hunted for**: the pairs sort ahead of the share, which ranks how far
+ * two stores drifted apart and says nothing about what the migration lost.
+ */
+describe('the pages the migration flattened', () => {
+  const rows = [
+    row('drifted', { nl: 'drifted', be: 'drifted' }),
+    row('garantie', { nl: 'garantie', be: 'garantie' }),
+    row('levergebied', { nl: 'levergebied', be: 'levergebied' }),
+  ];
+  const unitsOf = units({
+    be: { drifted: ['a', 'b', 'c', 'd'], garantie: ['a', 'b'], levergebied: ['a', 'b'] },
+    nl: { drifted: ['a', 'x', 'y', 'z'], garantie: ['a', 'q'], levergebied: ['a', 'q'] },
+  });
+  const flatteningOn = (page) => ({ garantie: 2, levergebied: 5 })[page] ?? 0;
+
+  it('lifts them above the pages that merely drifted apart', () => {
+    // `drifted` has the worst share by a distance and it is not what the migration lost.
+    const reading = blockReading({ rows, store: 'be', unitsOf, flatteningOn });
+
+    expect(reading.rows.map((one) => one.page)).toEqual(['levergebied', 'garantie', 'drifted']);
+  });
+
+  it('counts the flattened units of the block, so the list can say what the order is for', () => {
+    const reading = blockReading({ rows, store: 'be', unitsOf, flatteningOn });
+
+    expect(reading.shared.map((one) => one.flattening)).toEqual([5, 2, 0]);
+    expect(reading.flattening).toBe(7);
+  });
+
+  it('claims none of it where nothing was read for it', () => {
+    // The default direction is *nothing was flattened*, and it is the safe one: the
+    // opposite would have the list assert a lost store difference on every page in it.
+    const reading = blockReading({ rows, store: 'be', unitsOf });
+
+    expect(reading.flattening).toBe(0);
+    expect(reading.rows.map((one) => one.page)).toEqual(['drifted', 'garantie', 'levergebied']);
   });
 });

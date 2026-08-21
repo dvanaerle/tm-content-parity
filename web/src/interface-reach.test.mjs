@@ -16,10 +16,10 @@ import { describe, expect, it } from 'vitest';
  * which is this repo's habit for a rule that can be swept: name every site at once, in
  * source, rather than pay for a standing screenshot suite.
  *
- * **A `title` does not count as the name.** `Annotate.jsx` already says why where it draws
- * the note mark: ADR 0019 refuses hover that reveals something a reader needs, and a title
- * reaches neither a keyboard reader nor a touch one. It stays as the convenience for a
- * pointer that it is, beside a real name.
+ * **A `title` does not count as the name**, and since ticket 129 it does not count as
+ * anything: ADR 0019 refuses hover that reveals something a reader needs, a `title` reaches
+ * neither a keyboard reader nor a touch one, and the third rule at the foot of this file is
+ * what keeps one from coming back. A hint is `Hint.jsx`'s now.
  */
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
@@ -171,5 +171,140 @@ describe('every control an editor can reach says what it is', () => {
       '<a href={href}><XIcon /><span className="sr-only">Close</span></a>',
     ];
     for (const drawn of kept) expect(unnamedControls(drawn), drawn).toHaveLength(0);
+  });
+});
+
+/**
+ * The second half of *reach*: a control an editor can find still has to be one they can
+ * hit. ADR 0019's *target floor* carries the number and the success criterion it answers.
+ *
+ * What is greppable is the **size a call site names**, so the guard has two halves: no call
+ * site asks for a size below the floor, and the primitive that decides what a size means
+ * does not offer one back. Neither half sees a rendered pixel — the ADR says so, and says
+ * what that leaves to a reader.
+ */
+const BELOW_THE_FLOOR = [/size="(icon-)?xs"/];
+
+const BUTTON = 'components/ui/button.jsx';
+
+/**
+ * The keys of the `size` block, and only that block — `variant` is the same shape one
+ * level up and its names would otherwise read as sizes.
+ *
+ * @param {string} text
+ * @returns {string[]}
+ */
+const sizesDeclared = (text) => {
+  const inside = text.split(/^ {6}size: \{$/m)[1]?.split(/^ {6}\},$/m)[0] ?? '';
+  return [...inside.matchAll(/^ {8}'?([a-z-]+)'?:/gm)].map(([, name]) => name);
+};
+
+describe('every control an editor can reach is big enough to hit', () => {
+  it('asks for no size below the target floor', async () => {
+    const caught = (await drawnFiles(true)).flatMap(([file, text]) =>
+      text
+        .split('\n')
+        .map((line, index) => /** @type {[string, number]} */ ([line, index]))
+        .filter(([line]) => BELOW_THE_FLOOR.some((pattern) => pattern.test(line)))
+        .map(([line, index]) => `${named(file)}:${index + 1} — ${line.trim()}`),
+    );
+    expect(caught).toEqual([]);
+  }, 30_000);
+
+  it('offers no size below the target floor', async () => {
+    const button = await readFile(join(ROOT, ...BUTTON.split('/')), 'utf8');
+    expect(sizesDeclared(button)).toEqual(['default', 'sm', 'lg', 'icon', 'icon-sm', 'icon-lg']);
+  });
+
+  // The guard has to be able to fail.
+  it('catches the size a regression would name', () => {
+    const asked = ['  <Button variant="outline" size="xs" onClick={close}>', '  size="icon-xs"'];
+    for (const line of asked) {
+      expect(
+        BELOW_THE_FLOOR.some((pattern) => pattern.test(line)),
+        line,
+      ).toBe(true);
+    }
+  });
+
+  it('leaves a size that clears the floor alone', () => {
+    for (const line of [
+      '  <Button size="sm">Dismiss</Button>',
+      '  size="icon-sm"',
+      '  size="lg"',
+    ]) {
+      expect(
+        BELOW_THE_FLOOR.some((pattern) => pattern.test(line)),
+        line,
+      ).toBe(false);
+    }
+  });
+});
+
+/**
+ * The third rule of *reach*: **a hint is not a `title`** (ticket 129).
+ *
+ * Every hint in this interface was a native `title` until that ticket. A `title` is invisible
+ * on a touch screen, unreachable by keyboard, unstyleable and announced by screen readers when
+ * they feel like it, so a sentence written for an editor reached the editors holding a mouse.
+ * `Hint.jsx` is where a hint is attached now, and this is what keeps the attribute from coming
+ * back — one `title` written in a hurry is a hint that has quietly left the keyboard again, and
+ * nothing on the screen looks wrong.
+ *
+ * `ui/` is swept too, because a primitive that starts writing a `title` is exactly the day a
+ * guard that trusted `ui/` cannot see.
+ */
+
+/**
+ * The components that declare a `title` prop of their own.
+ *
+ * A prop is not an attribute: these three render the string as a heading an editor reads on
+ * the screen, and a guard that could not tell the two apart would be switched off by the
+ * first person it annoyed. They are **named** rather than inferred from the capital letter,
+ * because `<Button title="…">` is a capital letter too and forwards the attribute straight to
+ * the DOM. A fourth name added here is a decision, not a formality: prefer `hint`, which is
+ * what the shared components' own prop is called since ticket 129.
+ */
+const TITLE_IS_A_PROP = ['Aside', 'Absent', 'Shell'];
+
+/**
+ * The element or component each `title=` in a file belongs to.
+ *
+ * An attribute belongs to the nearest `<` before it that opens a tag, which is what makes a
+ * backwards scan honest here even where the value holds JSX of its own — `<Aside title={<>…
+ * <span/>…</>}` names `Aside`, because the span comes after the attribute and not before it.
+ *
+ * @param {string} text
+ * @returns {string[]}
+ */
+const titledTags = (text) =>
+  // Not `\btitle` — a word boundary sits after the hyphen of `data-slot="alert-title"`, and
+  // every shadcn primitive with a heading in it writes one of those.
+  [...text.matchAll(/(?<![\w-])title\s*=/g)].map(
+    ({ index }) => text.slice(text.lastIndexOf('<', index) + 1).match(/^[\w.-]*/)[0],
+  );
+
+describe('a hint an editor can reach is never a title attribute', () => {
+  it('writes no title attribute in any drawn file', async () => {
+    const caught = (await drawnFiles(true)).flatMap(([file, text]) =>
+      titledTags(text)
+        .filter((tag) => !TITLE_IS_A_PROP.includes(tag))
+        .map((tag) => `${named(file)} — <${tag} title=`),
+    );
+    expect(caught).toEqual([]);
+  }, 30_000);
+
+  // The guard has to be able to fail.
+  it('catches the title a regression would write', () => {
+    expect(titledTags('<a href={href} title="Open on production">↗</a>')).toEqual(['a']);
+    expect(titledTags('<Button title={hint} onClick={press}>Clear</Button>')).toEqual(['Button']);
+    expect(titledTags('<span\n  className="x"\n  title={text}\n>')).toEqual(['span']);
+  });
+
+  it('leaves the components that draw a title on the screen alone', () => {
+    expect(titledTags('<Aside title={<>Diagnostics (<span>{count}</span>)</>}>')).toEqual([
+      'Aside',
+    ]);
+    expect(titledTags('<Shell title="Stores">')).toEqual(['Shell']);
   });
 });

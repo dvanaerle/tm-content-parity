@@ -20,10 +20,11 @@
  * never a bound of this module.
  *
  * **A search corpus is not a repeat corpus.** Reading may cross any store, because reading
- * moves no count; pressing may not. So the widening lands here and stops: the grouping is
- * still `repeatsInStore()`'s, whose key is the **language block**, and one string on six
- * stores is four rows and not one. `CONTEXT.md` holds the two words and ticket 04 is what
- * moves the second of them.
+ * moves no count; pressing may cross only where the **check** makes the two sides the same
+ * string. So the widening lands here and stops: the grouping is still `repeatsInStore()`'s
+ * and this module decides none of it. Since ticket 04 that grouping keys on the check, so
+ * one link target on six stores is one row and one sentence of Dutch is four —
+ * and the same call answers both. `CONTEXT.md` holds the two words.
  *
  * **The notes half crosses too, and stays its own block.** It was narrowed to one store by
  * `eventsOfStores()`, on the reasoning that a cross-store search is the back door to a
@@ -56,7 +57,7 @@
  * page key can hold one. See `docs/adr/0016-a-leading-slash-is-a-page-scope.md`.
  *
  * **Search narrows; it moves no count.** The rule ticket 36 pinned holds here as it
- * holds in `view.mjs`: this module returns what is on screen and never what it adds up
+ * holds in `content-view.mjs`: this module returns what is on screen and never what it adds up
  * to. It says how many findings on how many pages — a count *of the result*, in the
  * manner of `prepareRows`' `total` — and no bar, no denominator and no closed count.
  *
@@ -95,7 +96,8 @@
 import { latestByKey } from '../../../overrides/state.mjs';
 import { FINDING_CLASSES, isWork } from '../../../compare/vocabulary.mjs';
 import { logState } from './log-read.mjs';
-import { classIsOn, findingsIn, repeatsInStore, repeatsWithClasses } from './view.mjs';
+import { classIsOn } from './filter.mjs';
+import { findingsIn, repeatsInStore, repeatsWithClasses } from './repeat-list.mjs';
 
 /**
  * One finding, cut to what a search reads.
@@ -614,7 +616,7 @@ export const inScope = (page, scope) => page.toLowerCase().includes(fold(scope))
  *   asked** they are also what asks (ticket 09): no words and no scope, and the classes on
  *   are the corpus every finding of which is a hit.
  * @returns {{
- *   repeats: (import('./view.mjs').Repeat & { fields: string[] })[],
+ *   repeats: (import('./repeat-list.mjs').Repeat & { fields: string[] })[],
  *   total: number,
  *   pages: number,
  *   matchedRepeats: number,

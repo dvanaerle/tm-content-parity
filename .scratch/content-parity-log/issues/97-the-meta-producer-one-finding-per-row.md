@@ -1,7 +1,10 @@
 # 97 — The producer: one finding per head row
 
 Type: build
-Status: ready-for-agent
+Status: resolved 2026-08-20 — `1144ee0` on `main`. Every slice and every gate criterion is
+ticked, and `## What landed, measured 2026-08-20` holds the numbers: `compareMeta()` sits beside
+the other three checks in `comparePage()` and reads `metaRows()`, `check: 'meta'` goes 349 → 548
+(**+199**), and `text`, `links` and `images` are unmoved on every store.
 Blocked by: 91, 95, 96
 Parent: 58-axis-a-meta-check.md
 
@@ -136,7 +139,7 @@ the denominator move together; a gate that checks for 0.90% is checking the wron
 
 ### `no-route` is inside these numbers
 
-Ticket [93](../.out-of-scope/93-no-route-leaves-the-log.md) proposed to remove it and is
+Ticket [93](.out-of-scope/93-no-route-leaves-the-log.md) proposed to remove it and is
 now **out of scope**, so it stays. This measurement counts it, and counts it correctly. `no-route` contributes **3** of the 197: `meta-title-changed` on `be_fr`
 and on `fr`, and `meta-description-changed` on `fr` — production's
 `Page non trouvée | Tuinmaximaal` against the new site's `Page introuvable | Tuinmaximaal`.

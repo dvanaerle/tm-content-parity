@@ -1723,6 +1723,127 @@ describe('compareImages', () => {
   });
 });
 
+// ---- a renamed image
+
+/**
+ * Ticket 02 of the cross-store-reuse PRD, and ADR 0027. A rename defeats a set comparison
+ * on the basename by construction — the two sides share no key — so it arrives today as an
+ * `image-missing` an editor must join in their head to an `image-added` that is not even in
+ * the search index.
+ *
+ * Every assertion here is about which findings come out of `compareImages()` for two pages of
+ * image records. None of them reads the matcher's shape, which ADR 0027 expects to be replaced
+ * by a byte digest on the gallery pages once the crawl carries one.
+ */
+describe('a renamed image', () => {
+  /**
+   * @param {import('./contract.mjs').ImageRecord[]} prod
+   * @param {import('./contract.mjs').ImageRecord[]} next
+   */
+  const compare = (prod, next) =>
+    collect((collector) =>
+      compareImages(extract({ images: prod }), extract({ side: 'new', images: next }), collector),
+    );
+
+  it('is one finding, and the two singles it replaces are gone', () => {
+    const findings = compare([image('max.svg', '', 3)], [image('max-new.svg', '', 3)]);
+    expect(findings.map((f) => f.class)).toEqual(['image-renamed']);
+  });
+
+  it('names both filenames, so a search for the new one returns it', () => {
+    // The two columns are what the index reads: `prodText` and `newText` on a finding that
+    // is not about a link. `detail` is on no searchable field, so the arrow alone would
+    // leave the new basename unfindable — which is the half of the ticket a search proves.
+    const [finding] = compare([image('max.svg', '', 3)], [image('max-new.svg', '', 3)]);
+    expect([finding.prod, finding.new]).toEqual(['max.svg', 'max-new.svg']);
+  });
+
+  it('carries the arrow as its detail, so a second rename asks again', () => {
+    // `heading-level`'s `h2 → h3`. The detail is part of the finding id, so a page renamed
+    // twice is two findings and the first decision does not answer the second.
+    const [finding] = compare([image('max.svg', '', 3)], [image('max-new.svg', '', 3)]);
+    expect(finding.detail).toBe('max.svg → max-new.svg');
+  });
+
+  it('offers a link on both sides, which neither single could', () => {
+    // An `image-missing` has no new-side location, because the image is not there to be
+    // scrolled to. A rename is on both pages, so both halves of the pair aim somewhere.
+    const [finding] = compare([image('max.svg', '', 3)], [image('max-new.svg', '', 3)]);
+    expect(finding.locations.production).not.toBeNull();
+    expect(finding.locations.new).not.toBeNull();
+  });
+
+  it('resolves before the singles, so no image record is on two rows', () => {
+    const findings = compare(
+      [image('dak.jpg', 'Dak', 1), image('max.svg', '', 3)],
+      [image('dak.jpg', 'Dak', 1), image('max-new.svg', '', 3)],
+    );
+    expect(findings.map((f) => [f.class, f.prod, f.new])).toEqual([
+      ['image-renamed', 'max.svg', 'max-new.svg'],
+    ]);
+  });
+
+  it('scores equal alt text higher without letting it gate the pairing', () => {
+    // `alt` is often empty and an empty alt on both sides is parity rather than a finding,
+    // so a rule that required the alt to agree would answer nothing on most pages. It
+    // corroborates a pairing the arity and the position already made.
+    const agreeing = compare([image('max.svg', 'Max', 3)], [image('max-new.svg', 'Max', 3)]);
+    const silent = compare([image('max.svg', '', 3)], [image('max-new.svg', '', 3)]);
+    expect(agreeing.map((f) => [f.class, f.score])).toEqual([['image-renamed', 1]]);
+    expect(silent.map((f) => [f.class, f.score])).toEqual([['image-renamed', 0.5]]);
+  });
+
+  it('refuses a many-to-many pairing, however plausible it reads', () => {
+    // One-to-one only. A reader can verify that the fourth image on one side is the fourth
+    // on the other; they cannot verify which of two became which of two.
+    const findings = compare(
+      [image('max.svg', '', 3), image('mini.svg', '', 4)],
+      [image('max-new.svg', '', 3), image('mini-new.svg', '', 4)],
+    );
+    expect(findings.map((f) => f.class)).toEqual([
+      'image-missing',
+      'image-missing',
+      'image-added',
+      'image-added',
+    ]);
+  });
+
+  it('refuses a lone pair that is not at the same position', () => {
+    const findings = compare(
+      [image('max.svg', '', 1), image('dak.jpg', 'Dak', 2)],
+      [image('dak.jpg', 'Dak', 1), image('max-new.svg', '', 2)],
+    );
+    expect(findings.map((f) => f.class)).toEqual(['image-missing', 'image-added']);
+  });
+
+  it('is not shifted out of position by a campaign banner one side carries', () => {
+    // The banner is excluded from claiming, so it must be excluded from the ranking too.
+    // Counted in the positions it would put `max.svg` second and `max-new.svg` first, and
+    // decline a rename over artwork neither side asked an editor about.
+    const findings = compare(
+      [image('summer_sale_2026.svg', '', 1), image('max.svg', '', 2)],
+      [image('max-new.svg', '', 1)],
+    );
+    // The rename leads, because it resolves before either loop emits.
+    expect(findings.map((f) => f.class)).toEqual(['image-renamed', 'image-campaign']);
+  });
+
+  it('scores two alts that disagree the same as none at all', () => {
+    // Both are *the alt does not corroborate*, which is one answer and not two. It is
+    // also not evidence against: a page that renamed an image is a page somebody edited,
+    // and the alt is what they edited.
+    const findings = compare([image('max.svg', 'Max', 3)], [image('max-new.svg', 'Maxi', 3)]);
+    expect(findings.map((f) => [f.class, f.score])).toEqual([['image-renamed', 0.5]]);
+  });
+
+  it('lets a campaign image take no part in a pairing', () => {
+    // A campaign filename is a `diagnostic` on either side and never an `image-missing` or
+    // an `image-added`, so it is not one of the two the rule counts.
+    const findings = compare([image('summer_sale_2026.svg', '', 3)], [image('max-new.svg', '', 3)]);
+    expect(findings.map((f) => f.class)).toEqual(['image-campaign', 'image-added']);
+  });
+});
+
 // ---- position
 
 /**
@@ -2035,16 +2156,21 @@ describe('the heading a finding sits under', () => {
   });
 
   it('gives a one-sided image finding no heading on the side it is not on', () => {
+    // `gedeeld.jpg` is on both sides and makes no finding of its own. It is here to keep
+    // the two singles below single: it puts the unclaimed image second in production's
+    // image order and first in the new site's, so the rename rule of ADR 0027 declines
+    // the pair and this test goes on asking what it asked before — which side a heading
+    // is on.
     const findings = collect((collector) =>
       compareImages(
         extract({
           elements: outline([['Kleuren en RAL', 'h2']]),
-          images: [image('dak.jpg', 'Glazen dak', 1)],
+          images: [image('gedeeld.jpg', 'Gedeeld', 1), image('dak.jpg', 'Glazen dak', 2)],
         }),
         extract({
           side: 'new',
           elements: outline([['Montage', 'h2']]),
-          images: [image('zijwand.jpg', 'Zijwand', 1)],
+          images: [image('zijwand.jpg', 'Zijwand', 1), image('gedeeld.jpg', 'Gedeeld', 2)],
         }),
         collector,
       ),

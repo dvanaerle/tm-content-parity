@@ -1,0 +1,164 @@
+/**
+ * Ticket 11, measurement 1 — the flattening. Content units that **diverge on
+ * production's two stores** and **agree on the new site's**. Throwaway probe over
+ * `data/extract/`. No network, no writes to the corpus.
+ *
+ * Three alignments, all of them `diffRows()` so that *which two blocks are the same
+ * block* keeps one definition:
+ *   1. production A against production B  — the cross-store pairing (`siblingReading()`
+ *      does exactly this, on `norm`).
+ *   2. production A against new A         — axis A in one store (`comparePage()`'s).
+ *   3. production B against new B.
+ * A unit pair that differs in (1) and whose two counterparts through (2) and (3) carry
+ * the same `norm` is a candidate flattened store difference.
+ *
+ * It reports the divergence and never the cause: a store-scoped variable renders no HTML.
+ */
+import { readFileSync, writeFileSync } from 'node:fs';
+import { reportFilename } from '../../compare/contract.mjs';
+import { classifyPair, diffRows } from '../../compare/text.mjs';
+import { siblingPages } from '../../web/src/lib/blocks.mjs';
+import { LANGUAGE_BLOCKS } from '../../web/src/lib/language-blocks.mjs';
+
+const ROOT = new URL('../../', import.meta.url);
+const rows = JSON.parse(readFileSync(new URL('data/10-store-seeds.json', ROOT), 'utf8')).rows;
+
+const sidesOf = (store, page) => {
+  let file;
+  try {
+    file = readFileSync(new URL(`data/extract/${store}/${page}.json`, ROOT), 'utf8');
+  } catch {
+    return null;
+  }
+  const both = JSON.parse(file);
+  const ok = (side) => side && side.status === 200 && side.elements?.length;
+  if (!ok(both.production) || !ok(both.new)) return null;
+  return { production: both.production, new: both.new };
+};
+
+/** production unit → its new-site counterpart, by axis-A alignment. */
+const counterparts = (sides) => {
+  const map = new Map();
+  for (const row of diffRows(sides.production, sides.new)) {
+    if (row.prod && row.new) map.set(row.prod, row.new);
+  }
+  return map;
+};
+
+/** The findings the log already reports on one store page, by their two texts. */
+const findingsOf = (store, page) => {
+  let file;
+  try {
+    file = readFileSync(new URL(`data/reports/${reportFilename(store, page)}`, ROOT), 'utf8');
+  } catch {
+    return null;
+  }
+  const report = JSON.parse(file);
+  return new Map(report.findings.map((one) => [JSON.stringify([one.prod, one.new]), one]));
+};
+
+const out = [];
+const totals = {
+  pairs: 0,
+  crossPaired: 0,
+  diverging: 0,
+  bothMapped: 0,
+  flattened: 0,
+  onlyOneSideMapped: 0,
+  alreadyAFinding: 0,
+  classes: {},
+};
+
+for (const block of LANGUAGE_BLOCKS) {
+  const [a, b] = block.stores;
+  for (const match of siblingPages({ rows, store: a })) {
+    if (!match.sibling) continue;
+    const here = sidesOf(a, match.page);
+    const there = sidesOf(b, match.sibling.page);
+    if (!here || !there) continue;
+    totals.pairs += 1;
+
+    const mapA = counterparts(here);
+    const mapB = counterparts(there);
+    const foundA = findingsOf(a, match.page);
+    const foundB = findingsOf(b, match.sibling.page);
+    const found = [];
+
+    for (const row of diffRows(here.production, there.production)) {
+      if (!row.prod || !row.new) continue;
+      totals.crossPaired += 1;
+      if (row.prod.norm === row.new.norm) continue;
+      totals.diverging += 1;
+
+      const newA = mapA.get(row.prod);
+      const newB = mapB.get(row.new);
+      if (!newA || !newB) {
+        totals.onlyOneSideMapped += 1;
+        continue;
+      }
+      totals.bothMapped += 1;
+      if (newA.norm !== newB.norm) continue;
+      totals.flattened += 1;
+      // The class the log would give the production divergence, so that a punctuation
+      // nudge can be told from a rewritten promise. It is `classifyPair()`'s own answer,
+      // read across the two stores — the same rule, not a second one.
+      const divergence = classifyPair(row.prod, row.new);
+      const already = {
+        [a]: Boolean(foundA?.has(JSON.stringify([row.prod.norm, newA.norm]))),
+        [b]: Boolean(foundB?.has(JSON.stringify([row.new.norm, newB.norm]))),
+      };
+      totals.classes[divergence ?? 'null'] = (totals.classes[divergence ?? 'null'] ?? 0) + 1;
+      if (already[a] || already[b]) totals.alreadyAFinding += 1;
+      found.push({
+        divergence,
+        already,
+        prodA: row.prod.norm,
+        prodB: row.new.norm,
+        newBoth: newA.norm,
+        // Which store's production words the new site now shows on both, where either does.
+        won: newA.norm === row.prod.norm ? a : newA.norm === row.new.norm ? b : 'neither',
+        tag: row.prod.tag,
+      });
+    }
+
+    if (found.length) {
+      out.push({
+        block: block.language,
+        stores: [a, b],
+        pageA: match.page,
+        pageB: match.sibling.page,
+        rule: match.sibling.rule,
+        count: found.length,
+        units: found,
+      });
+    }
+  }
+}
+
+out.sort((x, y) => y.count - x.count || (x.pageA < y.pageA ? -1 : 1));
+writeFileSync(new URL('flattening.json', import.meta.url), JSON.stringify({ totals, pages: out }, null, 1));
+
+console.log('totals', JSON.stringify(totals));
+console.log('pages with at least one candidate:', out.length);
+const won = { nl: 0, be: 0, be_fr: 0, fr: 0, neither: 0 };
+for (const page of out) for (const unit of page.units) won[unit.won] += 1;
+console.log('the words the new site kept:', JSON.stringify(won));
+const kinds = {};
+for (const page of out)
+  for (const unit of page.units) {
+    const key = `${unit.divergence}`;
+    kinds[key] = (kinds[key] ?? 0) + 1;
+  }
+console.log('the class of the production divergence:', JSON.stringify(kinds));
+for (const page of out) {
+  console.log(`\n${page.count}  [${page.stores.join('|')}] ${page.pageA} / ${page.pageB} (${page.rule})`);
+  for (const unit of page.units.slice(0, 4)) {
+    console.log(`   ${page.stores[0]} prod: ${JSON.stringify(unit.prodA.slice(0, 160))}`);
+    console.log(`   ${page.stores[1]} prod: ${JSON.stringify(unit.prodB.slice(0, 160))}`);
+    console.log(
+      `   both new: ${JSON.stringify(unit.newBoth.slice(0, 160))}  → kept ${unit.won}` +
+        ` · divergence ${unit.divergence} · already a finding on ${JSON.stringify(unit.already)}`,
+    );
+  }
+  if (page.units.length > 4) console.log(`   … ${page.units.length - 4} more`);
+}

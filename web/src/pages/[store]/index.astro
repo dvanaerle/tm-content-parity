@@ -5,9 +5,10 @@ import Shell from '../../layouts/Shell.astro';
 import { blockReading } from '../../lib/blocks.mjs';
 import { storeTotals } from '../../lib/not-checked.mjs';
 import {
-  loadProductionUnits, loadSeedRows, loadSummaries, notCheckedFor, regionsChangedInLog,
+  loadExtracts, loadSeedRows, loadSummaries, notCheckedFor, regionsChangedInLog,
   regionsRemovedInStore, storesInLog,
 } from '../../lib/reports.mjs';
+import { flattenedPages } from '../../lib/flattening.mjs';
 import { siblingOf } from '../../lib/language-blocks.mjs';
 import { STORE_NAME } from '../../lib/stores.mjs';
 
@@ -65,17 +66,38 @@ const sibling = siblingOf(store);
 // exactly nothing rather than costing them a branch.
 const siblingPages = sibling ? await loadSummaries(sibling) : [];
 
-const unitsByStore = new Map(
+/*
+ * Both stores of the block, **both sides**, read once for the whole dashboard.
+ *
+ * Production is what the agreement share is measured over, and the new site is what the
+ * flattening needs: a store difference production had and the new site has not is a
+ * statement about all four extracts of a page pair. It is one read of the reports and one
+ * peak in memory, at build time, on two stores — `de` and `uk` are in no block and pay
+ * nothing, as they pay nothing for the panel itself.
+ *
+ * None of it is shipped. The panel below renders on the server, so what reaches the
+ * browser is the reading: a share, a count and a page key.
+ */
+const extractsByStore = new Map(
   await Promise.all(
     (sibling ? [store, sibling] : []).map(
-      async (one) => /** @type {const} */ ([one, await loadProductionUnits(one)]),
+      async (one) => /** @type {const} */ ([one, await loadExtracts(one)]),
     ),
   ),
 );
+const sidesOf = (one, page) => extractsByStore.get(one)?.get(page) ?? null;
+
+const seeds = await loadSeedRows();
+// What the migration flattened, per page of this store (ticket 07). It orders the list
+// below, and it is the same `flattenedUnits()` the page's sibling tab draws — so no page
+// is lifted for a reason the tab it lifts to does not show.
+const flattening = flattenedPages({ rows: seeds, store, sidesOf });
+
 const block = blockReading({
-  rows: await loadSeedRows(),
+  rows: seeds,
   store,
-  unitsOf: (one, page) => unitsByStore.get(one)?.get(page) ?? null,
+  unitsOf: (one, page) => sidesOf(one, page)?.production?.map((unit) => unit.norm) ?? null,
+  flatteningOn: (page) => flattening.get(page) ?? 0,
 });
 ---
 

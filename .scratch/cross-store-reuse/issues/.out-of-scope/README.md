@@ -13,3 +13,7 @@ The rules are the ones set out for `content-parity-log/issues/.out-of-scope/`:
 - Links inside a moved file need one more `../`, because the file went one level down.
 
 Made on 2026-08-19 by the audit of every open `ready-for-agent` ticket, for tickets 06 and 10.
+
+Both were closed on 2026-08-21 when issue 11 reported. Ticket 10's trigger is **spent** — 11
+read it directly and refused it, so re-opening needs a new argument and not that one again.
+Ticket 06 carries a **new** trigger, because 11 answered its old one against it.

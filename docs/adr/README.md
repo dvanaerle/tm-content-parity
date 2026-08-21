@@ -15,7 +15,8 @@ was built. 0023 was then taken by unrelated ui-polish work (`da588cf`) and 0026 
 work (`71a6cea`), so two tickets now name numbers that belong to other decisions, and:
 
 **0024 is vacant and will stay vacant.** It was reserved by
-`.scratch/cross-store-reuse/issues/04-an-image-repeat-crosses-all-six-stores.md` and that
-ticket was never started. Nothing was written and nothing was deleted. The gap is a
-reservation that expired, not a lost decision — do not go looking for it, and do not fill it,
-because a number that once meant one thing should not later mean another.
+`.scratch/cross-store-reuse/issues/04-an-image-repeat-crosses-all-six-stores.md`, which was
+not started until 2026-08-21 and took **0028** when it was, as this rule says it should.
+Nothing was ever written at 0024 and nothing was deleted. The gap is a reservation that
+expired, not a lost decision — do not go looking for it, and do not fill it, because a number
+that once meant one thing should not later mean another.

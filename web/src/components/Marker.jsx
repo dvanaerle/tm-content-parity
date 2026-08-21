@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Hint } from './Hint.jsx';
 import { Checkbox } from './ui/checkbox.jsx';
 import { Label } from './ui/label.jsx';
 import { TableCell, TableRow } from './ui/table.jsx';
@@ -33,7 +34,7 @@ import { CHROME } from '../lib/palette.mjs';
  * place for *agreeing* to drift into *unchanged*.
  *
  * @param {object} props
- * @param {import('../lib/view.mjs').ContextMarker} props.marker
+ * @param {import('../lib/content-view.mjs').ContextMarker} props.marker
  * @param {number} props.columns  How many columns the marker spans, which is the one
  *                                thing its two tables disagree about.
  * @param {() => void} props.onToggle
@@ -82,7 +83,7 @@ export function Marker({ marker, columns, onToggle }) {
  * nothing, so the caller passes the markers and this decides whether to appear.
  *
  * @param {object} props
- * @param {import('../lib/view.mjs').ContextMarker[]} props.markers
+ * @param {import('../lib/content-view.mjs').ContextMarker[]} props.markers
  * @param {boolean} props.allOpen
  * @param {string} props.agreesWith  What the collapsed blocks agree with, named as the
  *                                   reader already reads it: `production` in the content
@@ -93,14 +94,19 @@ export function MarkerToggle({ markers, allOpen, agreesWith, onOpen }) {
   if (markers.length === 0) return null;
 
   return (
-    <Label
-      className="font-normal text-muted-foreground"
-      title={`The blocks that agree with ${agreesWith}. They are never removed from this page — this opens all of them at once.`}
-    >
-      <Checkbox
-        checked={allOpen}
-        onCheckedChange={(checked) => onOpen(checked ? markers.map((marker) => marker.key) : [])}
-      />
+    <Label className="font-normal text-muted-foreground">
+      {/* On the tick and not on the label around it: the label is a plain element, so a hint
+          there would be read by nothing and hovered by a mouse only, and the tick is the
+          control that already answers to a keyboard (ticket 129). The trigger merges onto it,
+          so the press the label passes on is still the tick's own press. */}
+      <Hint
+        text={`The blocks that agree with ${agreesWith}. They are never removed from this page — this opens all of them at once.`}
+      >
+        <Checkbox
+          checked={allOpen}
+          onCheckedChange={(checked) => onOpen(checked ? markers.map((marker) => marker.key) : [])}
+        />
+      </Hint>
       Show agreeing blocks
     </Label>
   );

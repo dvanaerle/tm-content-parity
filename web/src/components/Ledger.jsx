@@ -6,7 +6,7 @@ import {
   HistoryNote,
   Occurrences,
   Section,
-  onePageTitle,
+  onePageHint,
 } from './Annotations.jsx';
 import { BucketCount, ClassPill } from './Chips.jsx';
 import ContentView from './ContentView.jsx';
@@ -35,7 +35,7 @@ import { bucketOf, bucketsOf } from '../../../overrides/state.mjs';
 import { BUCKETS, BUCKET_LABEL } from '../lib/buckets.mjs';
 // The sentence the content view says about the same control, written once (ticket 05): the
 // noun differs and the meaning does not.
-import { allDiagnostic } from '../lib/view.mjs';
+import { allDiagnostic } from '../lib/classes.mjs';
 
 /**
  * The column heads of both tables here and of the content view are the same small
@@ -179,7 +179,7 @@ export default function Ledger({
   // once. An `information` finding is one an editor can link to and cannot decide, so it
   // is drawn with no control at all — the same shape `MetaTable` has had since ticket 54,
   // for the same reason: the shared colours must not show something an editor can
-  // complete. Ticket 86, and `canDecide()` in `view.mjs` is the rule.
+  // complete. Ticket 86, and `canDecide()` in `classes.mjs` is the rule.
   const control = (finding) =>
     canDecide(finding) ? (
       <OverrideControl
@@ -436,7 +436,22 @@ export default function Ledger({
                 alignment inside it cost nothing to a reader who never opens it. */}
           {sibling && (
             <TabsContent value={SIBLING_TAB}>
-              <SiblingView store={report.store} here={production.elements} sibling={sibling} />
+              <SiblingView
+                store={report.store}
+                here={production.elements}
+                /* The new site's own units, so the tab can draw its second reading. They
+                   come off the report and therefore follow a re-check, which is the half
+                   of the comparison that can change while the page is open — the
+                   sibling's two extracts are another store's and arrive from the build.
+
+                   **Only where the new site answered 200.** A page it did not serve still
+                   carries an extract — the error page's own words — and handing those over
+                   would have the tab compare a 404 to the sibling's real page and call it
+                   measured. It is the same rule `loadExtracts()` applies to the sibling's
+                   side, said on this side too. */
+                hereNew={next.status === 200 ? next.elements : null}
+                sibling={sibling}
+              />
             </TabsContent>
           )}
         </div>
@@ -637,7 +652,7 @@ const FindingRow = ({ finding, focus, control, sides, language }) => {
       <TableCell data-slot="class" className="px-2 py-2 align-top whitespace-normal">
         <ClassPill class={finding.class} />
         <Detail detail={finding.detail} />
-        <Occurrences count={finding.occurrences} title={onePageTitle(finding.occurrences)} />
+        <Occurrences count={finding.occurrences} hint={onePageHint(finding.occurrences)} />
         {/* A link finding aims at its anchor wording, which a reader does see. An
             image key and an alt text are not words on the page, so an image finding
             falls back to the heading above it — and to the page itself where it has

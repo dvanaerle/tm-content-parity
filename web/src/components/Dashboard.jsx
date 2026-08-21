@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AnnotateBar, PageNoteMark } from './Annotate.jsx';
-import { Checkbox } from './ui/checkbox.jsx';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AnnotateBar, PageNoteMark } from "./Annotate.jsx";
+import { Checkbox } from "./ui/checkbox.jsx";
 import {
   Bar,
   BucketCount,
@@ -11,14 +11,19 @@ import {
   PriorityPill,
   ScopeChip,
   ScopeRowButton,
-} from './Chips.jsx';
-import { Hint } from './Hint.jsx';
-import { EditorPrompt, LogBanner } from './Progress.jsx';
-import { ClassGroups } from './Repeats.jsx';
-import { StoreSearch } from './Search.jsx';
-import SearchBox from './SearchBox.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible.jsx';
+} from "./Chips.jsx";
+import { Hint } from "./Hint.jsx";
+import { Label } from "./ui/label.jsx";
+import { EditorPrompt, LogBanner } from "./Progress.jsx";
+import { ClassGroups } from "./Repeats.jsx";
+import { StoreSearch } from "./Search.jsx";
+import SearchBox from "./SearchBox.jsx";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.jsx";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./ui/collapsible.jsx";
 import {
   Select,
   SelectContent,
@@ -26,37 +31,56 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select.jsx';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.jsx';
-import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.jsx';
-import { CHECK_LABEL, classInfo } from '../lib/classes.mjs';
+} from "./ui/select.jsx";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table.jsx";
+import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group.jsx";
+import { CHECK_LABEL, classInfo } from "../lib/classes.mjs";
 import {
   awaitsDecision,
   BUCKETS,
   BUCKET_LABEL,
   BUCKET_MEANING,
   BUCKET_TONE,
-} from '../lib/buckets.mjs';
-import { CHROME } from '../lib/palette.mjs';
-import { STORE_LANGUAGE } from '../lib/stores.mjs';
-import { cn } from '../lib/utils.js';
-import { NO_EDITOR, useEditor, useStoreOverrides } from '../lib/overrides.mjs';
-import { pageHref } from '../lib/page-url.mjs';
-import { parseTerm, withScope } from '../lib/search.mjs';
-import { classHref, useScreen } from '../lib/screen-url.mjs';
-import { groupNotChecked } from '../lib/not-checked.mjs';
-import { CANONICAL_VIEWPORT } from '../../../shared/canonical-viewport.mjs';
-import { emptyBuckets } from '../../../overrides/state.mjs';
+} from "../lib/buckets.mjs";
+import { CHROME } from "../lib/palette.mjs";
+import { listReading } from "../lib/list-reading.mjs";
+import { cn } from "../lib/utils.js";
 import {
-  classCounts,
-  pagesWithClasses,
-  pagesWithPriorities,
-  repeatsInStore,
-  repeatsWithClasses,
-  toggleIn,
-} from '../lib/view.mjs';
+  NO_EDITOR,
+  useBulk,
+  useEditor,
+  useStoreOverrides,
+} from "../lib/overrides.mjs";
+import { pageHref } from "../lib/page-url.mjs";
+import { parseTerm, withScope } from "../lib/search.mjs";
+import { classHref, useScreen } from "../lib/screen-url.mjs";
+import { groupNotChecked } from "../lib/not-checked.mjs";
+import { CANONICAL_VIEWPORT } from "../../../shared/canonical-viewport.mjs";
+import { emptyBuckets } from "../../../overrides/state.mjs";
+import { pagesWithClasses, pagesWithPriorities, toggleIn } from "../lib/filter.mjs";
+import { repeatList, repeatsInStore } from "../lib/repeat-list.mjs";
 
-const CHECKS = ['text', 'links', 'images'];
+const CHECKS = ["text", "links", "images"];
+
+/**
+ * What a class pill's number is, said the same way on every list it is drawn over (ticket
+ * 144).
+ *
+ * The pill counts the **open findings** of its class, read from the log over the language
+ * block's repeat list — the same list the rows below it come from. So it falls as work is
+ * decided and no filter ever moves it, which is the one sentence a reader needs and the exact
+ * opposite of the one this replaces.
+ */
+const PILL_COUNT =
+  "The number is the open work of this class in this language block. A filter never moves it;" +
+  " a decision does.";
 
 /**
  * The header's two rows of buckets, split by the vocabulary's own predicate.
@@ -78,7 +102,7 @@ const RECEDING = BUCKETS.filter((bucket) => !awaitsDecision(bucket));
  * while its cells stayed would shift every count one column to the left, which is the one
  * failure this constant exists to make impossible.
  */
-const WIDE_ONLY = 'hidden @4xl:table-cell';
+const WIDE_ONLY = "hidden @4xl:table-cell";
 
 /**
  * One store's work on one screen. A store is what an editor is responsible for
@@ -123,6 +147,14 @@ export default function Dashboard({
   notChecked = [],
   regions = [],
   regionsChanged = { store: null, reason: null, changes: [] },
+  /**
+   * The override port, for a caller that has one. `null` in the application: the hook below
+   * builds its own from the environment, which is the only thing the Astro page could hand it
+   * anyway. It is here so that a test can hand this screen a **log** — every rule about a pill
+   * falling and a row going is a rule about what the log answers — and it is the seam
+   * `createOverridesPort()` already opens one layer further down.
+   */
+  port = null,
 }) {
   /*
    * Every control on this screen, in the **address bar** since ticket 109.
@@ -152,13 +184,17 @@ export default function Dashboard({
    * keeps that link honest if the two ever disagree.
    */
   const link = useCallback(
-    (linkStore, page, finding = null) => pageHref(linkStore, page, { finding, back: search }),
+    (linkStore, page, finding = null) =>
+      pageHref(linkStore, page, { finding, back: search }),
     [search],
   );
 
   // One-sided pages are out of the bar from the first day: ticket 20 owns them,
   // and seventy-six undecidable rows would poison the roll-up.
-  const comparable = useMemo(() => pages.filter((page) => page.comparable), [pages]);
+  const comparable = useMemo(
+    () => pages.filter((page) => page.comparable),
+    [pages],
+  );
   const oneSided = pages.filter((page) => !page.comparable);
 
   /**
@@ -184,6 +220,7 @@ export default function Dashboard({
     pages: comparable,
     siblingPages: comparableSiblings,
     editor,
+    port,
   });
 
   /** The open count **after** overrides, so the worst page is the worst remaining page. */
@@ -241,19 +278,20 @@ export default function Dashboard({
    * the bar does, so the annotation an editor set and the annotation the filter reads are
    * one value — ticket 83.
    */
-  const annotationsOf = (page) => log.byPage.get(`${page.store}/${page.page}`)?.annotations;
+  const annotationsOf = (page) =>
+    log.byPage.get(`${page.store}/${page.page}`)?.annotations;
   const priorityOf = (page) => annotationsOf(page)?.priority ?? null;
 
   const rows = useMemo(() => {
     // The two filters are **and**, not or: the high-priority `copy` pages is one question.
-    // Both narrow what is drawn and neither moves a count — the rule `view.mjs` states.
+    // Both narrow what is drawn and neither moves a count — the rule `filter.mjs` states.
     const found = pagesWithPriorities(
       pagesWithClasses(comparable, classes),
       priorities,
       priorityOf,
     );
     return [...found].sort((a, b) =>
-      sort === 'worst' ? openOf(b) - openOf(a) : a.page.localeCompare(b.page),
+      sort === "worst" ? openOf(b) - openOf(a) : a.page.localeCompare(b.page),
     );
   }, [comparable, classes, priorities, sort, log.byPage]);
 
@@ -263,10 +301,17 @@ export default function Dashboard({
    * wire twice.
    *
    * Since ticket 03 the sibling's pages are in the input, and `repeatsInStore()` is what
-   * decides whether anything joins: it keys on the **block** where a store is in one, so a
-   * difference `nl` and `be` carry in the same words is one row on both dashboards, and a
-   * difference only one of them carries is a row of one store the way it always was. On
-   * `de` and `uk` the second array is empty and this is the call it always was.
+   * decides whether anything joins: on `text` and `meta` it keys on the **block** where a
+   * store is in one, so a difference `nl` and `be` carry in the same words is one row on both
+   * dashboards, and a difference only one of them carries is a row of one store the way it
+   * always was. On `de` and `uk` the second array is empty and this is the call it always was.
+   *
+   * Ticket 04 made the key's first term a function of the **check**, and this screen is where
+   * that is least visible: an `images` or `links` row may group over all six stores, and the
+   * two arrays below hold two. So the widest row a dashboard draws is the block-spanning row
+   * it drew before. The six-store grouping is on the search **above** the stores, which is the
+   * screen holding six stores' findings — six stores of page summaries as island props was
+   * priced and refused by ticket 03.
    *
    * So a block store's list holds **three** kinds of row, and the third is the one to say out
    * loud: rows spanning both stores, rows of this store alone, and rows of the **sibling
@@ -285,32 +330,7 @@ export default function Dashboard({
     () => repeatsInStore([...comparable, ...comparableSiblings]),
     [comparable, comparableSiblings],
   );
-  const shownRepeats = useMemo(() => repeatsWithClasses(repeats, classes), [repeats, classes]);
 
-  /**
-   * What the filter strip counts, which is whichever list is under it.
-   *
-   * Asked once rather than three times in the strip's own props: *how many, of how many,
-   * of what* is one answer about one list, and three separate readings of `view` are
-   * three chances for the noun to end up over the other list's number. The searching
-   * case is absent on purpose — a search counts its own result, and only `Search` holds
-   * that count.
-   *
-   * The repeats noun says **in this language block** where there is one, because that is what
-   * the number is over: the list is mirrored across the block and holds rows the sibling
-   * carries alone, so *3,264 differences* on `nl`'s screen would be a count of `nl`'s work,
-   * which it is not — `totals` and the bar above are that. On `de` and `uk` there is no
-   * sibling, the two counts are the same number they always were, and the words are too.
-   */
-  const narrowed =
-    view === 'repeats'
-      ? {
-          shown: shownRepeats.length,
-          total: repeats.length,
-          noun:
-            comparableSiblings.length > 0 ? 'differences in this language block' : 'differences',
-        }
-      : { shown: rows.length, total: comparable.length, noun: 'pages' };
 
   /**
    * How many pages carry each priority, for the number beside each pill. It counts the
@@ -329,7 +349,9 @@ export default function Dashboard({
    * the pages of one difference and this one is over the pages of a store. Same seam, same
    * bar, different key — a priority annotates the page, so the page is what is ticked.
    */
-  const [selected, setSelected] = useState(/** @type {Set<string>} */ (new Set()));
+  const [selected, setSelected] = useState(
+    /** @type {Set<string>} */ (new Set()),
+  );
   const keyOf = (page) => `${page.store}/${page.page}`;
 
   const tick = useCallback(
@@ -370,17 +392,29 @@ export default function Dashboard({
    * reach the row that uses it, and it says **why** it cannot write rather than merely
    * that it cannot: a control that vanishes without a reason reads as a missing feature.
    */
-  const bulk = useMemo(
-    () => ({
-      canWrite: log.canWrite,
-      busy: log.busy,
-      appendMany: log.appendMany,
-      // The hook's own sentence about its own flag, not a second reading of the four
-      // conditions behind it.
-      notWritingReason: log.notWritingReason,
-    }),
-    [log.canWrite, log.busy, log.appendMany, log.notWritingReason],
+  const bulk = useBulk(log);
+
+  /**
+   * The one fact this screen states about the two repeat lists it draws: **the store they
+   * are about** (ADR 0030). Everything that follows — that a press crosses nothing wider
+   * than this store, that the two quoted strings on a row are in this store's language,
+   * that a row does not repeat the store the editor is already looking at — is derived by
+   * the reading and no longer spelled out here in four answers.
+   *
+   * Two readings off **one** statement of it, because the two lists differ in exactly one
+   * thing: the search answers a question somebody typed, so its rows draw the fields the term
+   * matched, and the *Repeats* queue answers nothing and draws none. Written twice, the second
+   * copy is where a field arrives on one list and not the other.
+   */
+  const listScreen = useMemo(
+    () => ({ store, byFinding: log.byFinding, link, classLink: classHref }),
+    [store, log.byFinding, link],
   );
+  const searchReading = useMemo(
+    () => listReading({ ...listScreen, searched: true }),
+    [listScreen],
+  );
+  const repeatsReading = useMemo(() => listReading(listScreen), [listScreen]);
 
   const totals = useMemo(() => {
     const byClass = {};
@@ -397,6 +431,71 @@ export default function Dashboard({
     return { diagnostic, byClass, ...log.derived.bar };
   }, [comparable, log.derived]);
 
+  /**
+   * What each class pill says: how much **open work of that class is left**, read live from
+   * the log over the list the rows come from (ticket 144).
+   *
+   * It counted `summary.byClass` until this ticket — a snapshot tally over this store's
+   * comparable pages — while the list under it is the block's repeats. `Case or punctuation
+   * 40` over a group header saying *52 differences* was the result: two units over two
+   * corpora, neither stale with respect to the other, and a second count made to agree with
+   * the first would drift again the next time either moved. So the pill reads **the same list**
+   * and the agreement is by construction. ADR 0029 argues the two decisions that span it.
+   *
+   * **It is not held.** Position and membership are a held reading in `useWorstFirst()`,
+   * because a row moving under the editor's hand is the thing that must not happen; a number
+   * is a reading and moves, so this recomputes on every decision and `log.byFinding` is in
+   * the dependencies on purpose. The bar and the chips above are untouched — they are the
+   * store's, snapshot-shaped, and they stay citable.
+   *
+   * **A pill counts the whole corpus and the rows are the narrowed list**, which is no longer
+   * a rule this screen keeps by remembering it: `repeatList()` is handed the un-narrowed list
+   * and the pills that are on, and it counts before it narrows. This screen used to hold two
+   * lists to get the two numbers below and to compose four functions in the right order to get
+   * the pills; both are that one call now.
+   *
+   * `shown` and `total` are the filter strip's pair — how many differences the pills left, of
+   * how many there are — and they are read from the same call for the same reason.
+   */
+  const queue = useMemo(
+    () =>
+      repeatList({
+        repeats,
+        classes,
+        includeClosed,
+        stateOf: (id) => log.byFinding.get(id),
+        tally: totals.byClass,
+      }),
+    [repeats, classes, log.byFinding, totals.byClass, includeClosed],
+  );
+
+  /**
+   * What the filter strip counts, which is whichever list is under it.
+   *
+   * Asked once rather than three times in the strip's own props: *how many, of how many,
+   * of what* is one answer about one list, and three separate readings of `view` are
+   * three chances for the noun to end up over the other list's number. The searching
+   * case is absent on purpose — a search counts its own result, and only `Search` holds
+   * that count.
+   *
+   * The repeats noun says **in this language block** where there is one, because that is what
+   * the number is over: the list is mirrored across the block and holds rows the sibling
+   * carries alone, so *3,264 differences* on `nl`'s screen would be a count of `nl`'s work,
+   * which it is not — `totals` and the bar above are that. On `de` and `uk` there is no
+   * sibling, the two counts are the same number they always were, and the words are too.
+   */
+  const narrowed =
+    view === "repeats"
+      ? {
+          shown: queue.shown,
+          total: queue.total,
+          noun:
+            comparableSiblings.length > 0
+              ? "differences in this language block"
+              : "differences",
+        }
+      : { shown: rows.length, total: comparable.length, noun: "pages" };
+
   return (
     <div className="space-y-6">
       <LogBanner
@@ -412,7 +511,9 @@ export default function Dashboard({
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <EditorPrompt editor={editor} save={save} />
           <span className="text-muted-foreground">
-            {editor ? 'A decision on a difference is recorded under this name.' : NO_EDITOR}
+            {editor
+              ? "A decision on a difference is recorded under this name."
+              : NO_EDITOR}
           </span>
         </div>
       )}
@@ -508,19 +609,24 @@ export default function Dashboard({
               already here. */}
           <div className="flex flex-wrap items-center gap-2">
             <ClassFilterPills
-              counts={classCounts(totals.byClass)}
+              counts={queue.classCounts}
               selected={classes}
               onToggle={(cls) => patch({ classes: toggleIn(classes, cls) })}
-              // The counts stay the store's own — a pill says how much of this kind there
-              // is, which is not a question about what is on screen. What a press *does*
-              // depends on which of the three lists is under it, so the hint does too.
+              // What a press *does* depends on which of the three lists is under it, so the
+              // first sentence does; the second is the same on all three, because the number
+              // is a property of the store's work and not of the view under it (ticket 144).
+              //
+              // It no longer says *the counts above do not change*. That was true and it was
+              // the wrong reassurance: the number on the pill **does** change — the log moves
+              // it — and what never moves it is a filter. Said the old way, an editor who
+              // watched a pill fall after a dismissal had to conclude the hint was lying.
               hint={(cls) => {
                 const { label } = classInfo(cls);
                 if (searching)
-                  return `Search inside ${label} only. The counts above do not change.`;
-                return view === 'repeats'
-                  ? `Show the differences of class ${label} only. The counts above do not change.`
-                  : `Show the pages with ${label} only. The counts above do not change.`;
+                  return `Search inside ${label} only. ${PILL_COUNT}`;
+                return view === "repeats"
+                  ? `Show the differences of class ${label} only. ${PILL_COUNT}`
+                  : `Show the pages with ${label} only. ${PILL_COUNT}`;
               }}
             />
             {/* The scope, beside the pills because it is the same kind of thing (ticket 104
@@ -530,7 +636,12 @@ export default function Dashboard({
 
                 No `searching &&` guard, and none is possible: `parseTerm()` trims before it
                 reads, so a scope that is not `null` is a box with something in it. */}
-            {scope && <ScopeChip scope={scope} onClear={() => patch({ query: withoutScope })} />}
+            {scope && (
+              <ScopeChip
+                scope={scope}
+                onClear={() => patch({ query: withoutScope })}
+              />
+            )}
           </div>
           {/* `flex-wrap` here and not only on the toolbar row: the row wrapped, but
               this inner group did not, so its three controls were measured as one
@@ -550,37 +661,67 @@ export default function Dashboard({
                 index is fetched, so the first keystroke is answered. The write is still
                 `patch({ query })`, so a scope chosen from the list and one typed by hand are
                 one write. */}
-            <SearchBox value={query} onChange={(next) => patch({ query: next })} pages={pages} />
+            <SearchBox
+              value={query}
+              onChange={(next) => patch({ query: next })}
+              pages={pages}
+            />
             {/* The switch belongs to the two views, and a search answers past both of
                 them, so it steps aside while one is on screen. */}
-            {!searching && <ViewSwitch view={view} onChange={(next) => patch({ view: next })} />}
+            {!searching && (
+              <ViewSwitch
+                view={view}
+                onChange={(next) => patch({ view: next })}
+              />
+            )}
+            {/* *Include closed* over the differences list (ticket 144). It is drawn with the
+                list it narrows, the way the sort and the priorities are drawn with *Pages*,
+                and the search draws its own copy over its own result — two lists, two places
+                the control belongs, one screen parameter.
+
+                It is the **only way into a fully decided class's rows**, because a pill with
+                nothing open draws nothing and the Ledger is the home for *what did we decide*.
+                It moves no number: with it on, a class holding only closed work draws a pill
+                reading `0`, and every other pill says exactly what it said. */}
+            {!searching && view === "repeats" && (
+              <Label className="gap-1 text-sm font-normal text-muted-foreground">
+                <Checkbox
+                  checked={includeClosed}
+                  onCheckedChange={(checked) =>
+                    patch({ includeClosed: Boolean(checked) })
+                  }
+                />
+                Include closed
+              </Label>
+            )}
             {/* Ticket 83. It narrows pages, so it is drawn with the list of pages — the
                 same reason the sort is here and not over *Repeats*. */}
-            {!searching && view === 'pages' && (
+            {!searching && view === "pages" && (
               <PriorityFilterPills
                 selected={priorities}
                 counts={priorityCounts}
-                onToggle={(one) => patch({ priorities: toggleIn(priorities, one) })}
+                onToggle={(one) =>
+                  patch({ priorities: toggleIn(priorities, one) })
+                }
               />
             )}
-            {!searching &&
-              view === 'pages' && (
-                // A native select works without JavaScript and this one does not. Nothing is
-                // lost: the control and its state already live inside a `client:load` island,
-                // so the sort was inert without JavaScript before this swap as well.
-                //
-                // It belongs to the **page list**, because it narrows pages, and there is no
-                // second one over *Repeats*: that list is worst-first on what is left in each
-                // difference and has no order to choose between (ticket 141).
-                <Select
-                  value={sort}
-                  onValueChange={(next) => patch({ sort: next })}
-                  items={SORT_LABEL}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  {/* The popup sizes to its own longest option, not to the trigger.
+            {!searching && view === "pages" && (
+              // A native select works without JavaScript and this one does not. Nothing is
+              // lost: the control and its state already live inside a `client:load` island,
+              // so the sort was inert without JavaScript before this swap as well.
+              //
+              // It belongs to the **page list**, because it narrows pages, and there is no
+              // second one over *Repeats*: that list is worst-first on what is left in each
+              // difference and has no order to choose between (ticket 141).
+              <Select
+                value={sort}
+                onValueChange={(next) => patch({ sort: next })}
+                items={SORT_LABEL}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                {/* The popup sizes to its own longest option, not to the trigger.
                     shadcn's default is `w-(--anchor-width)`, which assumes the trigger
                     is the wider box — and against a `w-fit` trigger it never is. The
                     trigger keeps 30 pixels clear on the right for its chevron while a
@@ -597,17 +738,17 @@ export default function Dashboard({
 
                     It is corrected here and not in `ui/select.jsx`, which stays exactly
                     as shadcn ships it so a re-add can never drop a local fix. */}
-                  <SelectContent className="w-auto max-w-(--available-width) min-w-[max(var(--anchor-width),9rem)]">
-                    <SelectGroup>
-                      {Object.entries(SORT_LABEL).map(([name, label]) => (
-                        <SelectItem key={name} value={name}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
+                <SelectContent className="w-auto max-w-(--available-width) min-w-[max(var(--anchor-width),9rem)]">
+                  <SelectGroup>
+                    {Object.entries(SORT_LABEL).map(([name, label]) => (
+                      <SelectItem key={name} value={name}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
         <div>
@@ -619,7 +760,7 @@ export default function Dashboard({
               component has it. */}
           {searching && (
             <StoreSearch
-              store={store}
+              reading={searchReading}
               // The **whole** list and not the comparable half (ticket 104). A scope onto
               // a one-sided page used to be silence, which is the search contradicting the
               // aside below on the same screen — and a one-sided page is exactly one of
@@ -642,7 +783,6 @@ export default function Dashboard({
               // silently surviving that is the more surprising outcome. The words after
               // the scope are a search and not a filter, so they stay.
               onClearFilters={() => patch({ classes: [], query: withoutScope })}
-              byFinding={log.byFinding}
               // The whole read and not the events alone (ticket 123). The readiness
               // flag has sat beside them here since the hook was written, and the
               // notes half never asked for it, so a log in flight drew as a log
@@ -651,8 +791,6 @@ export default function Dashboard({
               includeClosed={includeClosed}
               onIncludeClosed={(next) => patch({ includeClosed: next })}
               bulk={bulk}
-              link={link}
-              classLink={classHref}
             />
           )}
 
@@ -662,71 +800,74 @@ export default function Dashboard({
               // Only while the page list is under it, for the reason `searchFromScreen`
               // gives: on *Repeats* this filter narrows nothing, so a strip claiming it
               // does would be the mismatched pair the banner exists to prevent.
-              priorities={view === 'pages' ? priorities : []}
+              priorities={view === "pages" ? priorities : []}
               {...narrowed}
               onClear={() => patch({ classes: [], priorities: [] })}
               className="border-b px-4 py-2"
             />
           )}
 
-          {!searching &&
-            view === 'repeats' && (
-              // Keyed on the filter, so a narrowed list starts at the top of its own
-              // rendering budget, with its groups open on the pills that narrowed it.
-              // A budget carried over from the wider list would say *100 of 100
-              // drawn* over a list of 12.
-              //
-              // Ticket 100: the rows arrive in a class group for each class. The list is
-              // already narrowed to the pills here, and the classes go along so the groups
-              // can draw the selected ones only — the same filter said once, to two things
-              // that must agree about it.
-              <ClassGroups
-                key={classes.join(',')}
-                repeats={shownRepeats}
-                classes={classes}
-                // Off the hook and never rebuilt here (ticket 03): it has to cover the
-                // sibling's findings too, and the hook is the one place holding both lists.
-                // An index built here off this store's pages would read the sibling's decided
-                // findings as `open` and offer a press that overwrites a colleague.
-                byFinding={log.byFinding}
-                // Whether the log has answered. The order of this list is worst-first on
-                // what is **left** in each difference (ticket 141), and until the events
-                // have arrived `byFinding` says every finding is open — so the order waits
-                // for this rather than holding a reading in which nothing is decided.
-                logRead={log.ready}
-                bulk={bulk}
-                link={link}
-                classLink={classHref}
-                // What language the two quoted strings on a row are in (ticket 125). The
-                // rows have no store of their own, and a difference that crosses a block
-                // crosses into the other store of one language — so this store answers for
-                // every row in the list.
-                language={STORE_LANGUAGE[store]}
-              />
-            )}
+          {!searching && view === "repeats" && (
+            // Keyed on the filter, so a narrowed list starts at the top of its own
+            // rendering budget, with its groups open on the pills that narrowed it.
+            // A budget carried over from the wider list would say *100 of 100
+            // drawn* over a list of 12.
+            //
+            // Ticket 100: the rows arrive in a class group for each class. The list handed
+            // over is the **un-narrowed** one and the pills go with it, because the list and
+            // the pills above it are counted from one call there as they are here — a list
+            // narrowed on the way in would leave that call unable to count a class it can no
+            // longer see.
+            <ClassGroups
+              key={`${classes.join(",")}|${includeClosed}`}
+              repeats={repeats}
+              classes={classes}
+              // The screen, as one reading of it (ADR 0030). The log inside it comes off
+              // the hook and is never rebuilt here (ticket 03): it has to cover the
+              // sibling's findings too, and the hook is the one place holding both lists.
+              // An index built here off this store's pages would read the sibling's decided
+              // findings as `open` and offer a press that overwrites a colleague.
+              reading={repeatsReading}
+              // Whether the log has answered. The order of this list is worst-first on
+              // what is **left** in each difference (ticket 141), and until the events
+              // have arrived `byFinding` says every finding is open — so the order waits
+              // for this rather than holding a reading in which nothing is decided.
+              logRead={log.ready}
+              // Whether a wholly decided difference is on the list, and whether the pages
+              // it settled are inside it (ticket 144). Default off: the queue answers
+              // *what is left*.
+              includeClosed={includeClosed}
+              bulk={bulk}
+            />
+          )}
 
-          {!searching &&
-            view === 'pages' && (
-              // The `@container` the four count columns drop out by. It is here and not on the
-              // table because a table is not a layout box a query can trust: the wrapper's
-              // width is the room the table has, which is the question being asked.
-              <div className="@container">
-                <Table>
-                  <TableHeader>
-                    {/* The capitals are addressed to the `th` and not to the row, which is the
+          {!searching && view === "pages" && (
+            // The `@container` the four count columns drop out by. It is here and not on the
+            // table because a table is not a layout box a query can trust: the wrapper's
+            // width is the room the table has, which is the question being asked.
+            <div className="@container">
+              <Table>
+                <TableHeader>
+                  {/* The capitals are addressed to the `th` and not to the row, which is the
                     one spelling ADR 0019 sanctions: a row that shouts shouts whatever a
                     later edit puts in it, and a `th` selector cannot come to mean anything
                     but a heading cell. */}
-                    <TableRow className="[&_th]:text-xs [&_th]:tracking-wide [&_th]:uppercase">
-                      {/* The header word is drawn for a screen reader and not for an eye, the
+                  <TableRow className="[&_th]:text-xs [&_th]:tracking-wide [&_th]:uppercase">
+                    {/* The header word is drawn for a screen reader and not for an eye, the
                     way `Repeats.jsx` draws its own: a header cell holding nothing but a
                     checkbox announces nothing. */}
-                      <TableHead className="w-8 px-4">
-                        <SelectAllPages rows={rows} selected={selected} onTickAll={tickAll} />
-                        <span className="sr-only">Select</span>
-                      </TableHead>
-                      <TableHead className="px-4 text-muted-foreground">Page</TableHead>
-                      {/* The three buckets name themselves in the head, so the three numbers
+                    <TableHead className="w-8 px-4">
+                      <SelectAllPages
+                        rows={rows}
+                        selected={selected}
+                        onTickAll={tickAll}
+                      />
+                      <span className="sr-only">Select</span>
+                    </TableHead>
+                    <TableHead className="px-4 text-muted-foreground">
+                      Page
+                    </TableHead>
+                    {/* The three buckets name themselves in the head, so the three numbers
                       under it need no legend of their own. Joined from the same list the
                       cells below are drawn from, so the head cannot come to name two of
                       them, or name them in another order than they are drawn in.
@@ -735,106 +876,136 @@ export default function Dashboard({
                       much work a page holds, and it stood sixth — so an editor reading
                       worst-first read four per-check counts to reach the number the sort was
                       made on. */}
-                      <TableHead className="w-56 px-4 text-muted-foreground">
-                        {BUCKETS.map((bucket) => BUCKET_LABEL[bucket]).join(' · ')}
+                    <TableHead className="w-56 px-4 text-muted-foreground">
+                      {BUCKETS.map((bucket) => BUCKET_LABEL[bucket]).join(
+                        " · ",
+                      )}
+                    </TableHead>
+                    <TableHead className="w-20 px-4 text-muted-foreground">
+                      Blocks
+                    </TableHead>
+                    {CHECKS.map((check) => (
+                      <TableHead
+                        key={check}
+                        className={cn(WIDE_ONLY, "w-24 text-muted-foreground")}
+                      >
+                        {CHECK_LABEL[check]}
                       </TableHead>
-                      <TableHead className="w-20 px-4 text-muted-foreground">Blocks</TableHead>
-                      {CHECKS.map((check) => (
-                        <TableHead
-                          key={check}
-                          className={cn(WIDE_ONLY, 'w-24 text-muted-foreground')}
-                        >
-                          {CHECK_LABEL[check]}
-                        </TableHead>
-                      ))}
-                      {/* *Hidden* until ticket 04. The control that reveals these is *Show
+                    ))}
+                    {/* *Hidden* until ticket 04. The control that reveals these is *Show
                       diagnostics* and the visibility they carry is `diagnostic`, so a third
                       word for one thing was the collision `CONTEXT.md` closed elsewhere. */}
-                      <TableHead className={cn(WIDE_ONLY, 'w-24 px-4 text-muted-foreground')}>
-                        Diagnostics
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rows.map((page) => (
-                      <TableRow
-                        key={`${page.store}/${page.page}`}
-                        data-state={selected.has(keyOf(page)) ? 'selected' : undefined}
-                      >
-                        <TableCell className="px-4">
-                          <Checkbox
-                            checked={selected.has(keyOf(page))}
-                            onCheckedChange={(ticked) => tick(keyOf(page), ticked)}
-                            aria-label={`Select ${page.page}`}
-                          />
-                        </TableCell>
-                        {/* The page key is **the** thing in this row (ticket 04), so it is the
+                    <TableHead
+                      className={cn(
+                        WIDE_ONLY,
+                        "w-24 px-4 text-muted-foreground",
+                      )}
+                    >
+                      Diagnostics
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((page) => (
+                    <TableRow
+                      key={`${page.store}/${page.page}`}
+                      data-state={
+                        selected.has(keyOf(page)) ? "selected" : undefined
+                      }
+                    >
+                      <TableCell className="px-4">
+                        <Checkbox
+                          checked={selected.has(keyOf(page))}
+                          onCheckedChange={(ticked) =>
+                            tick(keyOf(page), ticked)
+                          }
+                          aria-label={`Select ${page.page}`}
+                        />
+                      </TableCell>
+                      {/* The page key is **the** thing in this row (ticket 04), so it is the
                         only content in here at full weight. The cell carried five things and
                         the key was one of five; a reader scanning for a page had nothing to
                         scan. What is left beside it is its own scope control and its two
                         annotations, both of which are about this page and neither of which is
                         a number. */}
-                        <TableCell className="px-4">
-                          <a
-                            className={cn('text-base font-semibold hover:underline', CHROME.link)}
-                            href={link(page.store, page.page)}
-                          >
-                            {page.page}
-                          </a>
-                          {/* The row hands its key to the search (ticket 104 part E), which is
+                      <TableCell className="px-4">
+                        <a
+                          className={cn(
+                            "text-base font-semibold hover:underline",
+                            CHROME.link,
+                          )}
+                          href={link(page.store, page.page)}
+                        >
+                          {page.page}
+                        </a>
+                        {/* The row hands its key to the search (ticket 104 part E), which is
                           what keeps the classes on and the view where it was. */}
-                          <ScopeRowButton
-                            page={page.page}
-                            onScope={() => scopeTo(page.page)}
-                            className="ml-2"
-                          />
-                          {/* The two annotations, beside the page they are about. The note is a
+                        <ScopeRowButton
+                          page={page.page}
+                          onScope={() => scopeTo(page.page)}
+                          className="ml-2"
+                        />
+                        {/* The two annotations, beside the page they are about. The note is a
                         **mark** here and never the note itself: it has no length limit and
                         this cell has no width to spare, so one long note used to stretch the
                         row past the width of the screen and take every count with it. It is
                         in full on the page it is about, which is also where it is edited. */}
-                          <PriorityPill priority={priorityOf(page)} className="ml-2" />
-                          <PageNoteMark
-                            note={annotationsOf(page)?.note}
-                            page={page.page}
-                            href={link(page.store, page.page)}
-                            className="ml-2"
-                          />
-                        </TableCell>
-                        <TableCell className="px-4">
-                          <Bar shown={openOf(page)} units={page.sides.production.units} />
-                          <PageBuckets buckets={bucketsOfPage(page)} />
-                        </TableCell>
-                        <TableCell className="px-4 text-muted-foreground tabular-nums">
-                          {page.sides.production.units}
-                        </TableCell>
-                        {CHECKS.map((check) => (
-                          <TableCell
-                            key={check}
-                            className={cn(WIDE_ONLY, 'text-muted-foreground tabular-nums')}
-                          >
-                            {page.summary.byCheck[check] ?? '—'}
-                          </TableCell>
-                        ))}
+                        <PriorityPill
+                          priority={priorityOf(page)}
+                          className="ml-2"
+                        />
+                        <PageNoteMark
+                          note={annotationsOf(page)?.note}
+                          page={page.page}
+                          href={link(page.store, page.page)}
+                          className="ml-2"
+                        />
+                      </TableCell>
+                      <TableCell className="px-4">
+                        <Bar
+                          shown={openOf(page)}
+                          units={page.sides.production.units}
+                        />
+                        <PageBuckets buckets={bucketsOfPage(page)} />
+                      </TableCell>
+                      <TableCell className="px-4 text-muted-foreground tabular-nums">
+                        {page.sides.production.units}
+                      </TableCell>
+                      {CHECKS.map((check) => (
                         <TableCell
-                          className={cn(WIDE_ONLY, 'px-4 text-muted-foreground tabular-nums')}
+                          key={check}
+                          className={cn(
+                            WIDE_ONLY,
+                            "text-muted-foreground tabular-nums",
+                          )}
                         >
-                          {page.summary.diagnostic}
+                          {page.summary.byCheck[check] ?? "—"}
                         </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          {!searching && view === 'pages' && rows.length === 0 && (
-            <p className="px-4 py-6 text-sm text-muted-foreground">No page found.</p>
+                      ))}
+                      <TableCell
+                        className={cn(
+                          WIDE_ONLY,
+                          "px-4 text-muted-foreground tabular-nums",
+                        )}
+                      >
+                        {page.summary.diagnostic}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          {!searching && view === "pages" && rows.length === 0 && (
+            <p className="px-4 py-6 text-sm text-muted-foreground">
+              No page found.
+            </p>
           )}
 
           {/* Drawn only when something is ticked, the way ticket 31's bar is: a toolbar
               that is always on screen and always means *all of them* is the press ticket
               110 replaced. */}
-          {!searching && view === 'pages' && selected.size > 0 && (
+          {!searching && view === "pages" && selected.size > 0 && (
             <AnnotateBar
               pages={rows}
               selected={selected}
@@ -854,8 +1025,14 @@ export default function Dashboard({
         note="Only one site has these pages."
       >
         {oneSided.map((page) => (
-          <li key={`${page.store}/${page.page}`} className="flex flex-wrap items-center gap-2 py-1">
-            <a className={`hover:underline ${CHROME.link}`} href={link(page.store, page.page)}>
+          <li
+            key={`${page.store}/${page.page}`}
+            className="flex flex-wrap items-center gap-2 py-1"
+          >
+            <a
+              className={`hover:underline ${CHROME.link}`}
+              href={link(page.store, page.page)}
+            >
               {page.page}
             </a>
             {/* The same control the table's rows carry (ticket 104 part E), and this is the
@@ -863,7 +1040,10 @@ export default function Dashboard({
                 pages table, and no index entry can offer it either — so this row is the only
                 way into a scope on it. What the scope lands on is part A's sentence about
                 why the comparison did not run, which is the aside's own words. */}
-            <ScopeRowButton page={page.page} onScope={() => scopeTo(page.page)} />
+            <ScopeRowButton
+              page={page.page}
+              onScope={() => scopeTo(page.page)}
+            />
             <span className="text-muted-foreground">{page.skipReason}</span>
           </li>
         ))}
@@ -879,27 +1059,37 @@ export default function Dashboard({
         {groupNotChecked(notChecked).map((group) => (
           <li key={group.key} className="border-t py-2 first:border-0">
             <strong className="font-medium">
-              {NOT_CHECKED_KIND[group.kind] ?? group.kind} ({group.pages.length})
+              {NOT_CHECKED_KIND[group.kind] ?? group.kind} ({group.pages.length}
+              )
             </strong>
             <span className="block text-muted-foreground">{group.reason}</span>
             <span className="mt-1 block text-muted-foreground">
-              {group.pages.map((entry) => entry.page).join(', ')}
+              {group.pages.map((entry) => entry.page).join(", ")}
             </span>
           </li>
         ))}
         {notChecked.length === 0 && (
-          <li className="py-1 text-muted-foreground">Each page found in this store is checked.</li>
+          <li className="py-1 text-muted-foreground">
+            Each page found in this store is checked.
+          </li>
         )}
       </Aside>
 
-      <DiagnosticsAside count={totals.diagnostic} pages={comparable} link={link} />
+      <DiagnosticsAside
+        count={totals.diagnostic}
+        pages={comparable}
+        link={link}
+      />
 
-      <Aside title={`Excluded regions (${regions.length})`} note="Page areas outside editor work.">
+      <Aside
+        title={`Excluded regions (${regions.length})`}
+        note="Page areas outside editor work."
+      >
         {regions.map((region) => (
           <li key={region.selector} className="py-1">
             <code className="font-medium">{region.selector}</code>
             <span className="text-muted-foreground">
-              {' '}
+              {" "}
               — {REGION_KIND[region.kind] ?? region.kind}. {region.reason}
             </span>
           </li>
@@ -966,12 +1156,12 @@ const PageBuckets = ({ buckets }) => (
               the ticket asks to be removed rather than promoted into a component. */}
           <span
             className={cn(
-              buckets[bucket] === 0 && 'text-muted-foreground',
+              buckets[bucket] === 0 && "text-muted-foreground",
               // Open carries the weight when there is work in it, and the other two carry
               // their tone.
-              buckets[bucket] > 0 && bucket === 'open' && 'font-semibold',
+              buckets[bucket] > 0 && bucket === "open" && "font-semibold",
             )}
-            data-wears={tone ? 'ink' : null}
+            data-wears={tone ? "ink" : null}
             data-tone={tone}
           >
             {buckets[bucket]}
@@ -993,7 +1183,9 @@ const PageBuckets = ({ buckets }) => (
  * *Fixed* control, which genuinely is a decision. A selection decides nothing.
  */
 function SelectAllPages({ rows, selected, onTickAll }) {
-  const all = rows.length > 0 && rows.every((page) => selected.has(`${page.store}/${page.page}`));
+  const all =
+    rows.length > 0 &&
+    rows.every((page) => selected.has(`${page.store}/${page.page}`));
   const some = selected.size > 0 && !all;
 
   return (
@@ -1024,7 +1216,11 @@ function ViewSwitch({ view, onChange }) {
     >
       {Object.entries(VIEW_LABEL).map(([name, { label, hint }]) => (
         <Hint key={name} text={hint}>
-          <ToggleGroupItem value={name} data-chrome="switch" className="text-muted-foreground">
+          <ToggleGroupItem
+            value={name}
+            data-chrome="switch"
+            className="text-muted-foreground"
+          >
             {label}
           </ToggleGroupItem>
         </Hint>
@@ -1035,19 +1231,19 @@ function ViewSwitch({ view, onChange }) {
 
 const VIEW_LABEL = {
   repeats: {
-    label: 'Repeats',
-    hint: 'One row for each difference, with the pages it is on. What do I decide next?',
+    label: "Repeats",
+    hint: "One row for each difference, with the pages it is on. What do I decide next?",
   },
   pages: {
-    label: 'Pages',
-    hint: 'Each page of this store, most differences first. Which page do I open next?',
+    label: "Pages",
+    hint: "Each page of this store, most differences first. Which page do I open next?",
   },
 };
 
 /** The two orders the page list is read in, and the words the closed control shows. */
 const SORT_LABEL = {
-  worst: 'Worst first',
-  name: 'By name',
+  worst: "Worst first",
+  name: "By name",
 };
 
 /**
@@ -1062,20 +1258,24 @@ const SORT_LABEL = {
  * It is a statement about the whole run. A store's own numbers are the line above.
  */
 function RegionCoverage({ store, reason, changes }) {
-  const moved = changes.filter((change) => change.verdict !== 'unchanged');
+  const moved = changes.filter((change) => change.verdict !== "unchanged");
   if (!reason && moved.length === 0) return null;
 
-  const scope = store ? `store ${store}` : 'all stores';
+  const scope = store ? `store ${store}` : "all stores";
   return (
     <li className="mt-2 border-t pt-2">
-      <strong className="font-medium">Compared with the previous snapshot ({scope})</strong>
+      <strong className="font-medium">
+        Compared with the previous snapshot ({scope})
+      </strong>
       {reason ? (
-        <span className="block text-muted-foreground">Not compared. {REGION_VERDICT_REASON}</span>
+        <span className="block text-muted-foreground">
+          Not compared. {REGION_VERDICT_REASON}
+        </span>
       ) : (
         moved.map((change) => (
           <span key={change.selector} className="block text-muted-foreground">
             <code>{change.selector}</code>
-            {' — '}
+            {" — "}
             {REGION_VERDICT[change.verdict](change)}
           </span>
         ))
@@ -1100,27 +1300,28 @@ function CanonicalViewportNote() {
     <li className="mt-2 border-t pt-2">
       <strong className="font-medium">One width</strong>
       <span className="block text-muted-foreground">
-        A page is compared as its {CANONICAL_VIEWPORT} version. Production sends both versions of
-        some blocks in one page, so where it sends a separate version for a phone, that version is
-        not checked.
+        A page is compared as its {CANONICAL_VIEWPORT} version. Production sends
+        both versions of some blocks in one page, so where it sends a separate
+        version for a phone, that version is not checked.
       </span>
     </li>
   );
 }
 
 const REGION_VERDICT_REASON =
-  'The previous snapshot has a different size, or it is absent. ' + 'The next run compares again.';
+  "The previous snapshot has a different size, or it is absent. " +
+  "The next run compares again.";
 
 /**
  * One sentence for each verdict. `unchanged` has none, because a run where
  * nothing moved must stay quiet.
  */
 const REGION_VERDICT = {
-  'stopped-matching': (change) =>
+  "stopped-matching": (change) =>
     `removed on ${change.was.pages} pages in the previous snapshot, ` +
     `and now on ${change.now.pages}. This rule no longer matches, and the region is back in the log. ` +
-    'A rule anchored on a campaign stops to match when the campaign changes.',
-  'started-matching': (change) =>
+    "A rule anchored on a campaign stops to match when the campaign changes.",
+  "started-matching": (change) =>
     `removed on ${change.was.pages} pages in the previous snapshot, ` +
     `and now on ${change.now.pages}. This rule matches since this run.`,
   narrowed: (change) =>
@@ -1129,11 +1330,11 @@ const REGION_VERDICT = {
   widened: (change) =>
     `removed on ${change.was.pages} pages in the previous snapshot, ` +
     `and now on ${change.now.pages}. This rule matches more pages than before.`,
-  'new-entry': (change) =>
+  "new-entry": (change) =>
     `new in the list, removed on ${change.now.pages} pages. ` +
-    'The previous snapshot has no number for it.',
-  'left-the-list': (change) =>
-    'is no longer in the list. It was removed on ' +
+    "The previous snapshot has no number for it.",
+  "left-the-list": (change) =>
+    "is no longer in the list. It was removed on " +
     `${change.was.pages} pages in the previous snapshot.`,
 };
 
@@ -1143,15 +1344,15 @@ const REGION_VERDICT = {
  * they never share a word.
  */
 const NOT_CHECKED_KIND = {
-  'dropped-by-rule': 'Not a content page',
-  'excluded-page': 'Outside the log on purpose',
-  'not-crawled': 'Not fetched',
+  "dropped-by-rule": "Not a content page",
+  "excluded-page": "Outside the log on purpose",
+  "not-crawled": "Not fetched",
 };
 
 /** The two words of the vocabulary, as the dashboard says them. */
 const REGION_KIND = {
-  'non-editorial': 'Catalogue content',
-  'legacy-only': 'Production only',
+  "non-editorial": "Catalogue content",
+  "legacy-only": "Production only",
 };
 
 /**
@@ -1183,11 +1384,19 @@ function DiagnosticsAside({ count, pages, link }) {
       note="What a rule saw and did not count as work. Nothing here is a defect."
     >
       {carrying.map((page) => (
-        <li key={`${page.store}/${page.page}`} className="flex items-center gap-2 py-1">
-          <a className={`hover:underline ${CHROME.link}`} href={link(page.store, page.page)}>
+        <li
+          key={`${page.store}/${page.page}`}
+          className="flex items-center gap-2 py-1"
+        >
+          <a
+            className={`hover:underline ${CHROME.link}`}
+            href={link(page.store, page.page)}
+          >
             {page.page}
           </a>
-          <span className="text-muted-foreground tabular-nums">{page.summary.diagnostic}</span>
+          <span className="text-muted-foreground tabular-nums">
+            {page.summary.diagnostic}
+          </span>
         </li>
       ))}
       {carrying.length === 0 && (
@@ -1233,7 +1442,7 @@ function Aside({ id, title, note, disclosure = false, children }) {
                 <CollapsibleTrigger className="flex items-center gap-2">
                   <span>{title}</span>
                   <span aria-hidden className="text-muted-foreground">
-                    {open ? '▾' : '▸'}
+                    {open ? "▾" : "▸"}
                   </span>
                 </CollapsibleTrigger>
               ) : (

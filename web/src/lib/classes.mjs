@@ -117,7 +117,7 @@ function toneOf(cls) {
  * the same reason: a rule the interface derives from the visibility belongs beside the
  * other one, not in whichever surface asked first. The three surfaces that ask are the
  * content view, Links and Images — and two of them have no rows, so this cannot
- * live in `view.mjs`, which is the content view's own module.
+ * live in `content-view.mjs`, which is the content view's own module.
  *
  * It is deliberately **not** `isWork()`. A `diagnostic` finding is decidable: what a rule
  * saw sits behind *Show diagnostics*, and it keeps the control it has. Only `information` says
@@ -158,5 +158,62 @@ export function classInfo(cls) {
     tone,
   };
 }
+
+/**
+ * What a surface says when the **diagnostics control** is the whole reason it is empty.
+ *
+ * Two surfaces reach this: the content view, where what is withheld is a block, and a
+ * finding table, where it is a finding of one check. They were about to say it in two
+ * near-identical sentences, which is one sentence's worth of meaning and two places for a
+ * rewording to land in one of them. So the noun is the argument and the sentence is not.
+ *
+ * It names the **control** and not an absence, which is the whole point: *nothing found* is
+ * the answer an editor is working towards, and *you switched it off* is one press from being
+ * undone. Saying the first about the second is the bug this replaces.
+ *
+ * @param {object} said
+ * @param {number} said.count  How many the control is holding back. Never zero: a caller with
+ *   nothing withheld has a different sentence to say.
+ * @param {string} said.noun  What one of them is, as the surface's own reader would name it —
+ *   `block` in the content view, `Links finding` on a finding tab.
+ * @returns {string}
+ */
+export const allDiagnostic = ({ count, noun }) =>
+  `Every ${noun} on this page is a diagnostic. Show diagnostics to read the ${count}.`;
+
+/**
+ * The checks whose two sides are **the same string on every store**.
+ *
+ * `images` compares basenames with the path stripped and `links` compares host-folded
+ * targets, so `max.svg` and `/nl/oud-pad` are the strings they are in every language. The
+ * asset convention keeps a filename English and semantic, which is what makes the basename
+ * key language-independent in the first place.
+ *
+ * `text` and `meta` are not here, and that is the whole of the distinction: those two are
+ * words an editor reads, the stores translate them, and the same defect in six stores is
+ * four differences because the four texts are four texts.
+ *
+ * It is a set of **checks** and not of classes, so a class added to either check inherits
+ * the answer rather than needing an entry — which is what stops the thirty-third class from
+ * arriving with a corpus nobody chose.
+ */
+const SAME_STRING_ON_EVERY_STORE = new Set(['images', 'links']);
+
+/**
+ * Whether a difference of this class is the same string on every store, and so whether one
+ * press on it may reach all six (ticket 04).
+ *
+ * It is exported because two surfaces ask it and must agree: `repeat-list.mjs` keys the grouping
+ * on it, and the screen above the stores offers a tick on it. A row grouped over six stores
+ * that refused the press, or a tick offered on a row holding one block's words, are the two
+ * ways those could come apart.
+ *
+ * A class the vocabulary does not name answers **false**, which is the narrow answer: an
+ * unknown class stays inside its language block, where it decides no more than it did
+ * before.
+ *
+ * @param {string} cls
+ */
+export const spansEveryStore = (cls) => SAME_STRING_ON_EVERY_STORE.has(FINDING_CLASSES[cls]?.check);
 
 export { FINDING_CLASSES, isWork, visibilityOf };

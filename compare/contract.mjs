@@ -230,7 +230,8 @@ export {
  * @property {string | null} prod   The production side, normalised. `null` if absent.
  * @property {string | null} new    The new side, normalised. `null` if absent.
  * @property {string | null} detail What changed when the two sides of text are equal.
- *                                  `h2 → h3` on `heading-level` and `tag-changed`.
+ *                                  `h2 → h3` on `heading-level` and `tag-changed`, and
+ *                                  `max.svg → max-new.svg` on `image-renamed`.
  *                                  Part of the id. See `findingId()`.
  * @property {string | null} anchorHeading
  *                                  The heading the finding sits under: the nearest
@@ -259,7 +260,12 @@ export {
  *                                  or the grouping key**, for the same reason
  *                                  `anchorHeading` is not.
  * @property {number} occurrences   Not part of the id.
- * @property {number | null} score  The similarity score. On `copy` findings only.
+ * @property {number | null} score  The similarity score on a `copy` finding, and the
+ *                                  alt-text corroboration on an `image-renamed` one — 1
+ *                                  where both sides carry the same non-empty alt, 0.5 where
+ *                                  the alt says nothing (ADR 0027). `null` on every other
+ *                                  class. Two questions in one column, and what it answers
+ *                                  is read off the class, in the manner of `detail`.
  */
 
 /**
