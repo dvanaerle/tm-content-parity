@@ -1,0 +1,4 @@
+# Derived, 857 KB, and rebuilt by audit.py in a few seconds from the snapshot in
+# data/reports/ plus the word list. The report and the SQL are the outputs worth
+# reading in a diff; this is the intermediate they are cut from.
+verdicts.json
