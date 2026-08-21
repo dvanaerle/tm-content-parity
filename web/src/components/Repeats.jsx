@@ -6,10 +6,10 @@ import {
   useMemo,
   useState,
 } from "react";
-// `bucketOf()` for the one question *Include closed* asks of a page — is it in the Closed
-// bucket — read from the function that groups the four derived states rather than restated
-// here (ticket 80).
-import { barOf, bucketOf } from "../../../overrides/state.mjs";
+// The bar a row prints, from the derivation that owns the four states rather than counted
+// here (ticket 80). Which of those states count as *closed* is asked in `repeat-list.mjs` now,
+// where a row's presence and its position are decided off the same reading.
+import { barOf } from "../../../overrides/state.mjs";
 import { Detail, Occurrences, onePageHint } from "./Annotations.jsx";
 import { Hint } from "./Hint.jsx";
 import BulkControl from "./BulkControl.jsx";
@@ -36,12 +36,7 @@ import {
 } from "./ui/table.jsx";
 import { CHROME } from "../lib/palette.mjs";
 import { cn } from "../lib/utils.js";
-import {
-  findingsIn,
-  groupRepeatsByClass,
-  repeatsByOpenWork,
-  repeatsWithWorkLeft,
-} from "../lib/repeat-list.mjs";
+import { repeatList } from "../lib/repeat-list.mjs";
 
 /**
  * A store's work listed as differences rather than as pages (ticket 81).
@@ -103,7 +98,7 @@ function FlatList({ repeats, logRead, bulk, builtAt }) {
   // (`searchStore()`, ticket 09), so there is nothing left to take away — and where the editor
   // did ask for closed work, these are the rows they asked for. Only the dashboard's *Repeats*
   // view hides one, and `ClassGroups` below is where the control reaches.
-  const { rows: worstFirst } = useWorstFirst(
+  const { rows: worstFirst, findings } = useWorstFirst(
     repeats,
     reading.byFinding,
     logRead,
@@ -135,7 +130,7 @@ function FlatList({ repeats, logRead, bulk, builtAt }) {
   const rows = (
     <>
       <RowList repeats={worstFirst} />
-      <Total repeats={worstFirst} />
+      <Total differences={worstFirst.length} findings={findings} />
     </>
   );
 
@@ -189,15 +184,20 @@ const barFor = (repeat, stateOf) =>
   barOf(repeat.on.map((entry) => stateOf(entry.id)));
 
 /**
+ * *Every class*, as one array rather than a fresh `[]` per render: the reading below is
+ * memoised on it, and a new empty array each paint would re-derive the whole list on every
+ * paint — which on the flat list, where no pill reaches, is every paint there is.
+ */
+const EVERY_CLASS = Object.freeze([]);
+
+/**
  * The list **worst-first and with the settled differences off it** — the difference with
  * the most work left on top, and nothing on it that is wholly decided (tickets 141, 144).
  *
- * It is **one place answering three questions off one reading of one bar**: whether a row is
- * drawn, where it sits, and which of its pages are drawn with it. The order is taken here
- * and not in `repeatsInStore()` because it is the log that decides it — that derivation is
- * pure over the page summaries, and the closed count is `barOf()` over the log, read one row
- * down. This is the layer where both are in scope, so a row's presence, its position and the
- * *N of N closed* it prints cannot be three counts of one thing.
+ * **The hook holds; `repeatList()` derives.** Everything the list does to itself is that one
+ * call, and it is where a row's presence, its position, its class group and its drawn pages are
+ * made readings of one bar rather than four. What is left here is the only part a function
+ * cannot decide: the *timing* — which reading of the log the derivation is handed.
  *
  * **The count is not held and membership is.** *Numbers are readings and move; membership
  * is a position and is held.* The reading is taken when the list arrives and kept, so closing
@@ -220,22 +220,26 @@ const barFor = (repeat, stateOf) =>
  * in a second fetch — is read from the log as it is now, because there is no earlier
  * reading of it to hold.
  *
- * @param {import('../lib/repeat-list.mjs').Repeat[]} repeats
+ * @param {import('../lib/repeat-list.mjs').Repeat[]} repeats  The whole list, un-narrowed: the
+ *   classes below narrow the rows, and a count the derivation takes over all of it stays over
+ *   all of it.
  * @param {Map<string, object>} byFinding
  * @param {boolean} logRead  Whether the log has answered. Until it has, there is no reading
  *                           of it worth holding.
- * @param {{ includeClosed: boolean }} options  *Include closed*, and required rather than
- *   defaulted: a list that hides a wholly decided difference and one that does not are two
- *   different screens, and a caller must say which it is drawing. One name and one polarity
- *   all the way down — a `hidesClosed` here inverted into an `includeClosed` one line below
- *   would be two names for one bit.
- * @returns {{ rows: import('../lib/repeat-list.mjs').Repeat[], closedPages: Set<string> | null }}
- *   `closedPages` is the pages standing behind the same control, as finding ids off the
- *   **held** reading, and `null` where nothing is hidden. It is one set over the whole list
- *   rather than a question each page asks the live log, so a page cannot leave the table
- *   under the editor who just decided it.
+ * @param {{ classes?: string[], includeClosed: boolean }} options  The class pills that are
+ *   on, and *Include closed*. The second is required rather than defaulted: a list that hides a
+ *   wholly decided difference and one that does not are two different screens, and a caller
+ *   must say which it is drawing. One name and one polarity all the way down — a `hidesClosed`
+ *   here inverted into an `includeClosed` one line below would be two names for one bit.
+ * @returns {ReturnType<typeof repeatList>}  The whole reading, `closedPages` included: the
+ *   pages standing behind the same control, as finding ids off the **held** reading.
  */
-function useWorstFirst(repeats, byFinding, logRead, { includeClosed }) {
+function useWorstFirst(
+  repeats,
+  byFinding,
+  logRead,
+  { classes = EVERY_CLASS, includeClosed },
+) {
   const [held, setHeld] = useState(
     /** @type {null | { rows: object[], log: Map }} */ (null),
   );
@@ -251,21 +255,18 @@ function useWorstFirst(repeats, byFinding, logRead, { includeClosed }) {
     // `byFinding` is deliberately out of the dependencies: it changes on every decision an
     // editor makes, and re-taking this on those is exactly the row moving out from under
     // them. It is still read for a finding the held reading does not know.
-    () => {
-      const stateOf = (/** @type {string} */ id) =>
-        asArrived.get(id) ?? byFinding.get(id);
-      const openIn = (/** @type {import('../lib/repeat-list.mjs').Repeat} */ repeat) =>
-        barFor(repeat, stateOf).open;
-      const left = repeatsWithWorkLeft(repeats, openIn, { includeClosed });
-
-      return {
-        rows: repeatsByOpenWork(left, openIn),
-        closedPages: includeClosed ? null : closedPagesIn(left, stateOf),
-      };
-    },
-    [repeats, asArrived, includeClosed],
+    () =>
+      repeatList({
+        repeats,
+        classes,
+        includeClosed,
+        stateOf: (/** @type {string} */ id) =>
+          asArrived.get(id) ?? byFinding.get(id),
+      }),
+    [repeats, asArrived, classes, includeClosed],
   );
 }
+
 
 /**
  * Which pages of one difference are **drawn**: all of them, or the ones *Include closed* has
@@ -281,42 +282,11 @@ function useWorstFirst(repeats, byFinding, logRead, { includeClosed }) {
  * @param {import('../lib/repeat-list.mjs').Repeat} repeat
  * @param {Set<string> | null} closedPages
  */
-/**
- * The pages of these differences that are **closed**, as finding ids.
- *
- * The two things that close a finding are a dismissal and a claimed fix, and *closed* is the
- * bucket that holds them — read off `bucketOf()` rather than listed here, so this and the
- * bar it is drawn beside cannot come to disagree about which states are done. A contradicted
- * claim is not one of them: it reads as open everywhere else, so its page is still drawn.
- *
- * The lookup is **left to throw**, for `barFor()`'s reason one step further: skipping a
- * missing id would quietly lower a denominator, and now it would quietly keep a page on
- * screen as well.
- */
 const drawnPagesOf = (repeat, closedPages) =>
   closedPages
     ? repeat.on.filter((entry) => !closedPages.has(entry.id))
     : repeat.on;
 
-const closedPagesIn = (repeats, stateOf) =>
-  new Set(
-    repeats.flatMap((repeat) =>
-      repeat.on
-        .filter((entry) => bucketOf(stateOf(entry.id).state) === "closed")
-        .map((entry) => entry.id),
-    ),
-  );
-
-/**
- * How much open work one difference holds, off the bar the row prints (ticket 144).
- *
- * The dashboard reads it for the class pills, which count the open findings of a class over
- * this very list. It is exported rather than spelled again there because a pill counting one
- * bar and the rows under it counting another is the disagreement this ticket exists to end:
- * `Case or punctuation 40` over a group header saying *52 differences*.
- */
-export const openWorkIn = (repeat, byFinding) =>
-  barFor(repeat, (id) => byFinding.get(id)).open;
 
 /**
  * Whether a new list holds the same differences as the one the order was taken over.
@@ -699,22 +669,19 @@ function GroupedList({ repeats, classes, logRead, bulk, includeClosed }) {
   // The one list on which a wholly decided difference is hidden (ticket 144). It is the queue
   // an editor lands on, so it answers *what is left*; the flat list a search draws answers a
   // question the editor typed and hides nothing of its own.
-  const { rows: worstFirst, closedPages } = useWorstFirst(
-    repeats,
-    byFinding,
-    logRead,
-    {
-      includeClosed,
-    },
-  );
-  // A group of a class with nothing left is not drawn, and its header counts the differences
-  // **drawn** — both of which fall out of the row rule rather than being built: this is the
-  // narrowed list, and `groupRepeatsByClass()` already draws only the classes that hold
-  // something.
-  const groups = useMemo(
-    () => groupRepeatsByClass(worstFirst, classes),
-    [worstFirst, classes],
-  );
+  //
+  // The pills narrow it **inside** the derivation rather than before it (ticket 03 of the
+  // deepening pass): the rows, their groups and the drawn pages are one reading of one bar, and
+  // the class filter is a term of it rather than a list handed in already narrowed. A group of
+  // a class with nothing left is not drawn and its header counts the differences **drawn**,
+  // both of which fall out of that rather than being built here.
+  const {
+    rows: worstFirst,
+    groups,
+    closedPages,
+    shown,
+    findings,
+  } = useWorstFirst(repeats, byFinding, logRead, { classes, includeClosed });
 
   // Which groups are open. The initial state is the derivation's `opensOnLoad`: closed,
   // unless a group is the only one holding anything or the pills already chose it.
@@ -738,11 +705,14 @@ function GroupedList({ repeats, classes, logRead, bulk, includeClosed }) {
     /** @type {Record<string, number>} */ ({}),
   );
 
-  if (repeats.length === 0) return <NoRepeats />;
+  // Nothing the pills let through, which is *No difference found* and not *no open work*: it
+  // is `shown` and not `worstFirst.length` because the two sentences are exactly the difference
+  // between the narrowed list and what the log left of it.
+  if (shown === 0) return <NoRepeats />;
 
-  // Every difference in this store is decided, so the queue is empty and the control that
-  // holds them is the way in. It is a different sentence from *No difference found*: nothing
-  // **left** and nothing **there** are two answers, and this is the one the log earned.
+  // Every difference the pills let through is decided, so the queue is empty and the control
+  // that holds them is the way in. It is a different sentence from *No difference found*:
+  // nothing **left** and nothing **there** are two answers, and this is the one the log earned.
   if (worstFirst.length === 0) return <AllClosed />;
 
   return (
@@ -763,7 +733,7 @@ function GroupedList({ repeats, classes, logRead, bulk, includeClosed }) {
           />
         ))}
       </ul>
-      <Total repeats={worstFirst} />
+      <Total differences={worstFirst.length} findings={findings} />
     </FlatSelection>
   );
 }
@@ -868,15 +838,16 @@ function RowList({ repeats, closedPages = null, drawn: given, onDraw }) {
 /**
  * What the list adds up to, stated once at the bottom of it.
  *
- * Both numbers come from **this** list, so they cannot disagree about what they are
- * counting. A filtered row count over an unfiltered finding count would be exactly the
- * mismatched pair ticket 81 exists to stop — and the total is over the repeats given,
- * grouped or not, so grouping them cannot move it either.
+ * Both numbers are **one reading of one list**: they arrive together from `repeatList()`,
+ * which counted the findings off the rows it drew. A filtered row count over an unfiltered
+ * finding count would be exactly the mismatched pair ticket 81 exists to stop, and two counts
+ * this component took itself is how they could come apart. Grouping cannot move either: a
+ * group is a slice of the rows these numbers are over.
  */
-function Total({ repeats }) {
+function Total({ differences, findings }) {
   return (
     <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-      {repeats.length} differences over {findingsIn(repeats)} findings.
+      {differences} differences over {findings} findings.
     </p>
   );
 }

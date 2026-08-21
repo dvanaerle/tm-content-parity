@@ -70,6 +70,34 @@ The pill is counted from **the same list the rows come from**, by the same funct
 decides which rows are drawn and where they sit. A second count made to agree with the first
 would have drifted again the next time either moved.
 
+### Where the rule is stated
+
+Amended 2026-08-21. *The same list* means the same **corpus** and the same **log** — not the
+same narrowing. The pill counts before the class filter and the rows come after it, because a
+pill that fell to its own count when you pressed it would be a control that lies about what it
+holds.
+
+That is one sentence with two clauses in it, and for a while nothing enforced the order: the
+list was six exported derivations, three callers composed them by hand, and *count before, list
+after* was a comment on each of them.
+
+**`repeatList()` in `web/src/lib/repeat-list.mjs` is the one enforcement point.** It is handed
+the un-narrowed list, the pills that are on and one reading of the log, and it returns the
+pill counts, the rows, the class groups, the two totals and the closed pages together. The steps
+between it and `repeatsInStore()` are private to that module, so composing them in the wrong
+order is not a thing a caller can do. `repeatsInStore()` stays outside it, because it is what
+builds the list and a search needs its output.
+
+The rows, the groups and the closed pages are derived **when something asks for them**, so the
+one entry costs a caller nothing it does not read: the dashboard reads three numbers off a live
+log on every decision, and sorting and grouping the whole list for it would be the price of the
+enforcement rather than the enforcement itself.
+
+Whether the reading it is handed is **held** or **live** stays the caller's, which is the
+consequence below about timing: the queue holds it so a decision does not move a row, and the
+pills read it live so a number does not go stale. One function serves both, because it is handed
+the reading each of them wants.
+
 ## Consequences
 
 - **The unit is the finding.** That is the unit of a decision, and it is what the row's *N of N

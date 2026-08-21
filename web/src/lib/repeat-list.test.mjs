@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  classCountsByOpenWork,
-  findingsIn,
-  groupRepeatsByClass,
-  repeatsByOpenWork,
-  repeatsInStore,
-  repeatsWithClasses,
-  repeatsWithWorkLeft,
-} from './repeat-list.mjs';
+import { findingsIn, repeatList, repeatsInStore, repeatsWithClasses } from './repeat-list.mjs';
 
 /**
  * Ticket 81. A repeat is every finding in **one store** with the same class, the same
@@ -198,207 +190,270 @@ describe('repeatsWithClasses', () => {
 });
 
 /**
- * Ticket 141. The list leads with the difference holding the most work **left**.
+ * Ticket 03 of the deepening pass. **One entry** over everything the repeat list does to
+ * itself once the log is in scope: which rows are drawn, where they sit, which class group
+ * they are drawn under, what the pills say, and which pages *Include closed* took away.
  *
- * Ticket 81 proved that a repeat's page count is its finding count, and ordered on pages
- * for that reason. The proof is about **total** findings and stops holding the moment the
- * log closes some of them: twenty closed pages and two open is still twenty-two. So the
- * order is taken on the open count instead, which is user story 33 of ticket 29 — *the
- * worst page is the worst remaining page* — applied to the list ticket 81 built.
+ * It exists for the rule three callers used to keep by remembering it: **a pill counts a
+ * class over the whole list, and the rows are the narrowed one.** A pill that fell to its
+ * own count when you pressed it would be a control that lies about what it holds, and the
+ * order of six exported functions was the only thing enforcing it. ADR 0029's *the same list
+ * the rows come from* means the same corpus and the same log — not the same narrowing — and
+ * this is the one place that sentence is enforced.
+ *
+ * The cases below are tickets 141, 144 and 100's, rewritten against the entry: the four
+ * functions they used to call one at a time are this function's steps now, and a test that
+ * called them in an order of its own would be proving the shape this ticket deleted.
+ *
+ * The reading is handed in, in the manner ticket 141 established: this module never sees the
+ * override log, and the caller that draws a row already reads that row's bar. So a test hands
+ * over a `stateOf` — a finding's state as the caller has it — rather than building a log, and
+ * that is the whole of what makes these pure tests.
  */
-describe('repeatsByOpenWork', () => {
-  const repeat = (key, pages) => ({ key, on: Array(pages).fill({}) });
+describe('repeatList', () => {
+  /** Page ids for a difference that is on `count` pages, unique per difference. */
+  const pages = (prefix, count) => Array.from({ length: count }, (_, at) => `${prefix}-${at}`);
 
-  it('leads with the difference holding the most open findings, not the most pages', () => {
-    const footer = repeat('footer', 30);
-    const price = repeat('price', 5);
-    const open = new Map([
-      [footer, 2],
-      [price, 5],
-    ]);
-
-    expect(repeatsByOpenWork([footer, price], (row) => open.get(row))).toEqual([price, footer]);
+  /**
+   * A difference over the named pages. The key is the grouping made printable, as
+   * `repeatsInStore()` returns it, and it is passed in only where a test is about the
+   * tie-break that reads it.
+   */
+  const repeat = (cls, ids, key = `${cls}|${ids.join(',')}`) => ({
+    key,
+    class: cls,
+    on: ids.map((id) => ({ id })),
   });
 
-  it('sinks a difference with nothing left below every difference with work left', () => {
-    const settled = repeat('settled', 30);
-    const one = repeat('one', 1);
-    const open = new Map([
-      [settled, 0],
-      [one, 1],
-    ]);
+  /**
+   * The caller's reading of the log: every finding open, except the ones named. `work` is
+   * the visibility a repeat is built out of, so it is the default here for the same reason.
+   */
+  const reading =
+    (states = {}) =>
+    (id) => ({ visibility: 'work', state: states[id] ?? 'open' });
 
-    expect(repeatsByOpenWork([settled, one], (row) => open.get(row))).toEqual([one, settled]);
+  /** Every page of a difference closed, which is what takes its row off the list. */
+  const allFixed = (ids) => Object.fromEntries(ids.map((id) => [id, 'fixed']));
+
+  it('returns rows, groups, class counts, totals, findings and closed pages from one call', () => {
+    const copy = repeat('copy', pages('copy', 3));
+    const casing = repeat('casing', pages('casing', 1));
+
+    const list = repeatList({
+      repeats: [copy, casing],
+      classes: ['copy'],
+      stateOf: reading(),
+    });
+
+    expect(list.rows).toEqual([copy]);
+    expect(list.groups.map((group) => group.class)).toEqual(['copy']);
+    expect(list.classCounts).toEqual([
+      { class: 'copy', count: 3 },
+      { class: 'casing', count: 1 },
+    ]);
+    expect(list.total).toBe(2);
+    expect(list.shown).toBe(1);
+    expect(list.findings).toBe(3);
+    expect(list.closedPages).toEqual(new Set());
+  });
+
+  it('counts a class over the whole list while the rows narrow to it', () => {
+    // The rule this entry exists for. A pill says how much of its kind there is, which is
+    // not a question about what is drawn — so pressing `copy` must not take `casing`'s
+    // number off the strip, and it must not change `copy`'s own.
+    const repeats = [repeat('copy', pages('copy', 2)), repeat('casing', pages('casing', 1))];
+    const list = (classes) => repeatList({ repeats, classes, stateOf: reading() });
+
+    expect(list(['copy']).classCounts).toEqual(list([]).classCounts);
+    expect(list(['copy']).rows.map((row) => row.class)).toEqual(['copy']);
+    expect(list([]).rows).toHaveLength(2);
+  });
+
+  it('leads with the difference holding the most open findings, not the most pages', () => {
+    // Ticket 141, and user story 33 of ticket 29 over the list ticket 81 built: the worst
+    // difference is the worst **remaining** one. Twenty closed pages and two open is still
+    // twenty-two, so the page count stops answering the moment the log closes some of them.
+    const footer = repeat('copy', pages('footer', 4));
+    const price = repeat('copy', pages('price', 3));
+
+    const list = repeatList({
+      repeats: [footer, price],
+      stateOf: reading({ 'footer-0': 'dismissed', 'footer-1': 'fixed' }),
+    });
+
+    expect(list.rows).toEqual([price, footer]);
+  });
+
+  it('sinks a wholly decided difference below every difference with work left', () => {
+    // It is only on the list at all while *Include closed* holds it there (ticket 144);
+    // where it is, ticket 141's order still decides where it sits, and last is where.
+    const settled = repeat('copy', pages('settled', 4));
+    const one = repeat('copy', pages('one', 1));
+
+    const list = repeatList({
+      repeats: [settled, one],
+      includeClosed: true,
+      stateOf: reading(allFixed(pages('settled', 4))),
+    });
+
+    expect(list.rows).toEqual([one, settled]);
   });
 
   it('falls back to the page count and then to the key, so two renders never disagree', () => {
     // Equal open counts is the common case rather than the corner: a store where nothing is
-    // decided yet has every row equal on this term. The fallback is ticket 81's order, so
-    // an undecided list arrives exactly as it did before this ticket.
-    const wide = repeat('a-wide', 9);
-    const narrow = repeat('z-narrow', 2);
-    const twin = repeat('a-twin', 2);
+    // decided has every row equal on that term. The fallback is ticket 81's whole order, so
+    // an undecided list arrives exactly as it always did.
+    const wide = repeat('copy', pages('wide', 9), 'a-wide');
+    const narrow = repeat('copy', pages('narrow', 2), 'z-narrow');
+    const twin = repeat('copy', pages('twin', 2), 'a-twin');
 
-    expect(repeatsByOpenWork([narrow, twin, wide], () => 1)).toEqual([wide, twin, narrow]);
+    const list = repeatList({
+      repeats: [narrow, twin, wide],
+      stateOf: reading(allFixed([...pages('wide', 8), 'narrow-1', 'twin-1'])),
+    });
+
+    expect(list.rows).toEqual([wide, twin, narrow]);
   });
-
-  it('narrows nothing: a settled difference stays on the list it was given', () => {
-    // The backlog is not drained — ticket 81's own progress-language criterion. A
-    // difference settled on all thirty pages stays on screen reading *30 of 30 closed*;
-    // it only stops leading.
-    const repeats = [repeat('a', 3), repeat('b', 1)];
-
-    expect(repeatsByOpenWork(repeats, () => 0)).toHaveLength(2);
-  });
-});
-
-/**
- * Ticket 144. A pill says how much open work of its class is **left**, and a difference
- * with nothing left is off the list.
- *
- * Both functions take the open count as an argument, in the manner `repeatsByOpenWork()`
- * established: this module never sees the override log, and the component that draws a row
- * already reads that row's bar. So these tests hand a reading in rather than building a log,
- * which is also the whole of what makes them pure tests.
- *
- * **No figure is pinned.** A test asserting `32` teaches nothing about the rule and breaks
- * when a fixture gains a page, so the claims below are relational: the tally is over findings
- * and not rows, a class the log emptied is absent, and the order is `classCounts()`'s.
- */
-describe('repeatsWithWorkLeft', () => {
-  const repeat = (key, pages) => ({ key, class: 'casing', on: Array(pages).fill({}) });
 
   it('takes a difference with nothing open off the list', () => {
-    const settled = repeat('settled', 2);
-    const left = repeat('left', 1);
-    const open = new Map([
-      [settled, 0],
-      [left, 1],
-    ]);
+    // Ticket 144. Fifteen `casing` rows all reading *2 of 2 closed* is the list answering
+    // *what did this crawl find* to an editor asking *what is left*.
+    const settled = repeat('casing', pages('settled', 2));
+    const left = repeat('casing', pages('left', 1));
 
-    expect(repeatsWithWorkLeft([settled, left], (row) => open.get(row))).toEqual([left]);
+    const list = repeatList({
+      repeats: [settled, left],
+      stateOf: reading({ 'settled-0': 'fixed', 'settled-1': 'dismissed' }),
+    });
+
+    expect(list.rows).toEqual([left]);
   });
 
   it('keeps a partly closed difference, however little is left of it', () => {
-    // One page of thirty is still work, and the row it draws still says *29 of 30 closed*.
-    const partly = repeat('partly', 30);
+    // One page of four is still work, and the row it draws still says *3 of 4 closed* —
+    // which is the sentence that tells an editor the work landed.
+    const partly = repeat('casing', pages('partly', 4));
 
-    expect(repeatsWithWorkLeft([partly], () => 1)).toEqual([partly]);
+    const list = repeatList({
+      repeats: [partly],
+      stateOf: reading({ 'partly-0': 'fixed', 'partly-1': 'fixed', 'partly-2': 'dismissed' }),
+    });
+
+    expect(list.rows).toEqual([partly]);
   });
 
-  it('brings every dropped difference back while include closed is on', () => {
-    const repeats = [repeat('a', 3), repeat('b', 1)];
+  it('brings every dropped difference back with include closed, and hides no page with it', () => {
+    // The control decides **membership** and the closed-page reading together, because they
+    // are the same question asked of a row and of a page: with it on nothing is hidden, so
+    // there is no set of hidden pages to hold and `closedPages` is `null` rather than empty.
+    const settled = repeat('casing', pages('settled', 2));
+    const stateOf = reading({ 'settled-0': 'fixed', 'settled-1': 'dismissed' });
 
-    expect(repeatsWithWorkLeft(repeats, () => 0, { includeClosed: true })).toEqual(repeats);
+    expect(repeatList({ repeats: [settled], stateOf }).rows).toEqual([]);
+
+    const included = repeatList({ repeats: [settled], stateOf, includeClosed: true });
+    expect(included.rows).toEqual([settled]);
+    expect(included.closedPages).toBeNull();
   });
-});
 
-describe('classCountsByOpenWork', () => {
-  const repeat = (cls, key, pages) => ({ key, class: cls, on: Array(pages).fill({}) });
+  it('reads the closed pages of the rows it draws, as findings and off one reading', () => {
+    // One set over the whole list rather than a question each page asks the live log, so a
+    // page cannot leave the table under the editor who just decided it. A contradicted claim
+    // is not closed — it reads as open everywhere else, so its page is still drawn.
+    const partly = repeat('casing', pages('partly', 4));
 
-  /** The open count of a row, read the way the component reads it: off the row's own bar. */
-  const openIn = (open) => (row) => open.get(row);
+    const list = repeatList({
+      repeats: [partly],
+      stateOf: reading({
+        'partly-0': 'fixed',
+        'partly-1': 'dismissed',
+        'partly-2': 'contradicted',
+      }),
+    });
+
+    expect(list.closedPages).toEqual(new Set(['partly-0', 'partly-1']));
+  });
 
   it('counts the open findings of a class and not its rows', () => {
     // Two rows, four findings between them, three of them still open. A pill saying *2*
     // would tell an editor they have less work than they have.
-    const one = repeat('casing', 'one', 2);
-    const two = repeat('casing', 'two', 2);
+    const one = repeat('casing', pages('one', 2));
+    const two = repeat('casing', pages('two', 2));
 
-    expect(
-      classCountsByOpenWork(
-        [one, two],
-        openIn(
-          new Map([
-            [one, 2],
-            [two, 1],
-          ]),
-        ),
-      ),
-    ).toEqual([{ class: 'casing', count: 3 }]);
+    const list = repeatList({ repeats: [one, two], stateOf: reading({ 'two-1': 'fixed' }) });
+
+    expect(list.classCounts).toEqual([{ class: 'casing', count: 3 }]);
   });
 
   it('draws no pill for a class with nothing open left', () => {
-    const settled = repeat('casing', 'settled', 2);
-    const left = repeat('copy', 'left', 1);
+    // A class the log has emptied draws no pill, so pressing one can no longer answer *No
+    // difference found*.
+    const settled = repeat('casing', pages('settled', 2));
+    const left = repeat('copy', pages('left', 1));
 
-    expect(
-      classCountsByOpenWork(
-        [settled, left],
-        openIn(
-          new Map([
-            [settled, 0],
-            [left, 1],
-          ]),
-        ),
-      ),
-    ).toEqual([{ class: 'copy', count: 1 }]);
+    const list = repeatList({
+      repeats: [settled, left],
+      stateOf: reading(allFixed(pages('settled', 2))),
+    });
+
+    expect(list.classCounts).toEqual([{ class: 'copy', count: 1 }]);
   });
 
   it('draws a zero pill for a wholly closed class while include closed is on', () => {
     // The only way into a fully decided class's rows. The **number** does not depend on the
     // control — it is still the open count — only a zero pill's presence does.
-    const settled = repeat('casing', 'settled', 2);
+    const settled = repeat('casing', pages('settled', 2));
 
-    expect(classCountsByOpenWork([settled], () => 0, { includeClosed: true })).toEqual([
-      { class: 'casing', count: 0 },
-    ]);
+    const list = repeatList({
+      repeats: [settled],
+      includeClosed: true,
+      stateOf: reading(allFixed(pages('settled', 2))),
+    });
+
+    expect(list.classCounts).toEqual([{ class: 'casing', count: 0 }]);
   });
 
   it('keeps a class the repeat list cannot hold, whatever the log says', () => {
     // A repeat is built out of the `work` findings a summary carries, so `text-added` has no
     // row here at all. It is a finding you can link to and cannot decide, so no decision can
-    // close it and the snapshot's figure is the live one.
-    expect(classCountsByOpenWork([], () => 0, { tally: { 'text-added': 4, casing: 40 } })).toEqual([
-      { class: 'text-added', count: 4 },
-    ]);
+    // close it and the snapshot's figure is the live one. The tally's `work` entries are
+    // ignored on purpose: the list is the answer for those, and taking the larger of two
+    // numbers is how the pill and the rows would come apart again.
+    const list = repeatList({
+      repeats: [],
+      stateOf: reading(),
+      tally: { 'text-added': 4, casing: 40 },
+    });
+
+    expect(list.classCounts).toEqual([{ class: 'text-added', count: 4 }]);
   });
 
   it('orders the pills the way every other pill row is ordered', () => {
     // `classCounts()`'s own order — the biggest first, ties by name — so the strip does not
     // resequence when it starts reading the log instead of the snapshot.
-    const wide = repeat('copy', 'wide', 5);
-    const twin = repeat('casing', 'twin', 1);
-    const other = repeat('leakage', 'other', 1);
+    const wide = repeat('copy', pages('wide', 5));
+    const twin = repeat('casing', pages('twin', 1));
+    const other = repeat('leakage', pages('other', 1));
 
-    expect(
-      classCountsByOpenWork(
-        [twin, wide, other],
-        openIn(
-          new Map([
-            [twin, 1],
-            [wide, 5],
-            [other, 1],
-          ]),
-        ),
-      ).map((pill) => pill.class),
-    ).toEqual(['copy', 'casing', 'leakage']);
-  });
-});
+    const list = repeatList({ repeats: [twin, wide, other], stateOf: reading() });
 
-/**
- * Ticket 100. The repeat list arrives in a **class group** for each class, so an editor
- * meets six or so numbers instead of one undifferentiated column, and chooses which kind
- * of difference to work through.
- *
- * The word is group and never *section*: `CONTEXT.md` gives "section" to a run of one page
- * under an anchor heading, which is still how a difference says where it is. Ticket 100
- * asked for "sections" and the name is refused; the concept it describes is this.
- *
- * It is a **pure derivation over the repeats ticket 81 already makes**: no second grouping
- * of findings, and the rows in a group are the very objects `repeatsInStore()` returned.
- */
-describe('groupRepeatsByClass', () => {
-  const repeat = (cls, pages) => ({
-    key: `${cls}|${pages}`,
-    class: cls,
-    on: Array(pages).fill({}),
+    expect(list.classCounts.map((pill) => pill.class)).toEqual(['copy', 'casing', 'leakage']);
   });
 
-  it("is one group for a class, carrying that class's repeats", () => {
-    const groups = groupRepeatsByClass([repeat('copy', 3), repeat('casing', 1), repeat('copy', 2)]);
+  it("is one group for a class, carrying that class's rows", () => {
+    // Ticket 100. One wall of rows asks an editor to read it before it says anything; six or
+    // so numbers, one per kind of difference, is a choice instead.
+    const list = repeatList({
+      repeats: [
+        repeat('copy', pages('wide', 3)),
+        repeat('casing', pages('one', 1)),
+        repeat('copy', pages('narrow', 2)),
+      ],
+      stateOf: reading(),
+    });
 
-    const of = (cls) => groups.find((group) => group.class === cls).repeats;
+    const of = (cls) => list.groups.find((group) => group.class === cls).repeats;
     expect(of('copy').map((one) => one.on.length)).toEqual([3, 2]);
     expect(of('casing')).toHaveLength(1);
   });
@@ -406,133 +461,173 @@ describe('groupRepeatsByClass', () => {
   it('orders the groups by the closed vocabulary and never by the counts', () => {
     // A group that moves position as work is done is a group nobody can learn. The
     // vocabulary declares `copy` before `casing`, and one repeat against forty does not
-    // change that.
-    const order = groupRepeatsByClass([repeat('casing', 40), repeat('copy', 1)]).map(
-      (group) => group.class,
-    );
+    // change that. A group is a place on the screen; a row is the work in it.
+    const list = repeatList({
+      repeats: [repeat('casing', pages('casing', 40)), repeat('copy', pages('copy', 1))],
+      stateOf: reading(),
+    });
 
+    const order = list.groups.map((group) => group.class);
     expect(order.indexOf('copy')).toBeLessThan(order.indexOf('casing'));
   });
 
-  it('keeps the order inside a group exactly as it was given', () => {
-    // The list arrives sorted, so this ticket changes nothing about which work is on top —
-    // only how much of it arrives at once. A group is a slice of the ungrouped list and
-    // never a second opinion about its order, which since ticket 141 is worst-first on
-    // what is left and is taken where the log is in scope.
-    const finding = (id, prod) => ({
-      id,
-      class: 'copy',
-      prod,
-      new: 'x',
-      detail: null,
-      occurrences: 1,
+  it('holds the rows of a group in the order the whole list is in', () => {
+    // A group is a slice of the ungrouped list and never a second opinion about its order,
+    // which since ticket 141 is worst-first on what is left. That is why the grouping is
+    // inside this entry: the two cannot be composed the wrong way round.
+    const settled = repeat('copy', pages('settled', 3));
+    const left = repeat('copy', pages('left', 1));
+
+    const list = repeatList({
+      repeats: [settled, left],
+      includeClosed: true,
+      stateOf: reading(allFixed(pages('settled', 3))),
     });
-    const repeats = repeatsInStore([
-      { store: 'nl', page: 'a', findings: [finding('a1', 'Zelden'), finding('a2', 'Vaak')] },
-      { store: 'nl', page: 'b', findings: [finding('b1', 'Vaak')] },
-    ]);
 
-    const [group] = groupRepeatsByClass(repeats);
-
-    expect(group.repeats).toEqual(repeats);
-    expect(group.repeats.map((one) => one.prod)).toEqual(['Vaak', 'Zelden']);
+    const [group] = list.groups;
+    expect(group.repeats).toEqual(list.rows);
+    expect(group.repeats).toEqual([left, settled]);
   });
 
-  it('draws no group for a work class that has no repeats', () => {
+  it('draws no group for a work class that has no rows', () => {
     // The empty group used to be drawn and to say so, keeping *nothing wrong here* apart
-    // from *this class does not exist*. It costs a row apiece in the list an editor reads
-    // to find work, and a store where most rules come back clean pays it on every line.
-    // Which rules ran is a property of the run and not of this queue.
-    const groups = groupRepeatsByClass([repeat('copy', 2)]);
+    // from *this class does not exist*. It costs a row apiece in the list an editor reads to
+    // find work, and a store where most rules come back clean pays it on every line. Which
+    // rules ran is a property of the run and not of this queue.
+    const list = repeatList({ repeats: [repeat('copy', pages('copy', 2))], stateOf: reading() });
 
-    expect(groups.map((group) => group.class)).toEqual(['copy']);
+    expect(list.groups.map((group) => group.class)).toEqual(['copy']);
   });
 
   it('gives a class that is not work a group of its own rather than mixing it into one', () => {
-    // `text-added` is `information` and `copy` is `work`, and a row of the first inside
-    // the `copy` group would be drawn as if the editor had been asked to look at it. A
-    // class that is not work and holds nothing is drawn nowhere: an empty group is the
-    // answer *the rule ran and found none*, and that is only owed for the work.
-    const groups = groupRepeatsByClass([repeat('copy', 1), repeat('text-added', 2)]);
-    const of = (cls) => groups.find((group) => group.class === cls);
+    // `text-added` is `information` and `copy` is `work`, and a row of the first inside the
+    // `copy` group would be drawn as if the editor had been asked to look at it. A class that
+    // is not work and holds nothing is drawn nowhere: an empty group is the answer *the rule
+    // ran and found none*, and that is only owed for the work.
+    const list = repeatList({
+      repeats: [repeat('copy', pages('copy', 1)), repeat('text-added', pages('added', 2))],
+      // Nothing an `information` finding holds is work, so nothing in it reads as open: such
+      // a row is on this list only because the control that keeps the decided rows is on.
+      includeClosed: true,
+      stateOf: (id) => ({
+        visibility: id.startsWith('added') ? 'information' : 'work',
+        state: 'open',
+      }),
+    });
 
+    const of = (cls) => list.groups.find((group) => group.class === cls);
     expect(of('text-added').repeats).toHaveLength(1);
     expect(of('copy').repeats).toHaveLength(1);
     expect(of('tag-changed')).toBeUndefined();
   });
 
   it('draws a class wherever it holds something, whatever its visibility', () => {
-    // Ticket 86 asked whether a class that has left `work` still has an empty group owed
-    // to it. No class has one now, so the question is closed from the other side: the rule
-    // is `byClass.has(cls)`, which reads the repeats and never the vocabulary. A class
-    // changing sides moves nothing here, and ticket 116 will need no edit either.
-    const groups = groupRepeatsByClass([repeat('copy', 2), repeat('heading-level', 1)]).map(
-      (group) => group.class,
-    );
+    // Ticket 86 asked whether a class that has left `work` still has an empty group owed to
+    // it. No class has one now, so the question is closed from the other side: the rule reads
+    // the rows and never the vocabulary. A class changing sides moves nothing here.
+    const list = repeatList({
+      repeats: [repeat('copy', pages('copy', 2)), repeat('heading-level', pages('heading', 1))],
+      stateOf: reading(),
+    });
 
+    const groups = list.groups.map((group) => group.class);
     expect(groups).toContain('heading-level');
     expect(groups).not.toContain('casing');
   });
 
   it('draws only the selected classes when a class pill is on', () => {
-    // The pills stay the one filter, and the two controls must not tell different
-    // stories: an unselected class is not drawn at all, rather than drawn and closed.
-    const groups = groupRepeatsByClass([repeat('copy', 2), repeat('casing', 1)], ['casing']);
+    // The pills stay the one filter, and the two controls must not tell different stories: an
+    // unselected class is not drawn at all, rather than drawn and closed.
+    const list = repeatList({
+      repeats: [repeat('copy', pages('copy', 2)), repeat('casing', pages('casing', 1))],
+      classes: ['casing'],
+      stateOf: reading(),
+    });
 
-    expect(groups.map((group) => group.class)).toEqual(['casing']);
-    expect(groups[0].repeats).toHaveLength(1);
+    expect(list.groups.map((group) => group.class)).toEqual(['casing']);
+    expect(list.groups[0].repeats).toHaveLength(1);
   });
 
   it('starts closed, unless one group is the only one holding anything', () => {
-    // A closed single group is a click that asks nothing. Two of them is the case this
-    // ticket exists for: the editor chooses, and nothing is chosen for them.
-    const opens = (groups) => groups.filter((one) => one.opensOnLoad).map((one) => one.class);
+    // A closed single group is a click that asks nothing. Two of them is the case ticket 100
+    // exists for: the editor chooses, and nothing is chosen for them.
+    const opens = (repeats) =>
+      repeatList({ repeats, stateOf: reading() })
+        .groups.filter((group) => group.opensOnLoad)
+        .map((group) => group.class);
 
-    expect(opens(groupRepeatsByClass([repeat('copy', 2)]))).toEqual(['copy']);
-    expect(opens(groupRepeatsByClass([repeat('copy', 2), repeat('casing', 1)]))).toEqual([]);
+    expect(opens([repeat('copy', pages('copy', 2))])).toEqual(['copy']);
+    expect(opens([repeat('copy', pages('copy', 2)), repeat('casing', pages('casing', 1))])).toEqual(
+      [],
+    );
   });
 
   it('opens the selected groups, because the editor already chose them', () => {
-    // Two pills open two groups, which the ticket also asks to be one at a time. The
-    // pills win where the two rules meet: the queue must not answer a two-class filter
-    // with one class drawn open. One-at-a-time governs the clicks.
-    const groups = groupRepeatsByClass(
-      [repeat('copy', 2), repeat('casing', 1), repeat('link-target', 1)],
-      ['copy', 'casing'],
-    );
+    // Two pills open two groups, which ticket 100 also asks to be one at a time. The pills
+    // win where the two rules meet: the queue must not answer a two-class filter with one
+    // class drawn open. One-at-a-time governs the clicks.
+    const list = repeatList({
+      repeats: [
+        repeat('copy', pages('copy', 2)),
+        repeat('casing', pages('casing', 1)),
+        repeat('link-target', pages('link', 1)),
+      ],
+      classes: ['copy', 'casing'],
+      stateOf: reading(),
+    });
 
-    expect(groups.map((group) => group.opensOnLoad)).toEqual([true, true]);
+    expect(list.groups.map((group) => group.opensOnLoad)).toEqual([true, true]);
   });
 
   it('draws nothing at all when a pill is on and nothing is under it', () => {
-    // There is no empty group left to open or to keep shut. The selected class holds
-    // nothing, so it forms no group, and the list says *no difference found* above it.
-    expect(groupRepeatsByClass([], ['copy'])).toEqual([]);
+    // There is no empty group left to open or to keep shut. The selected class holds nothing,
+    // so it forms no group, and `shown` is what tells the caller to say *no difference found*
+    // rather than *no open work here* — nothing **there** and nothing **left** are two
+    // answers, and the count of the narrowed list is what keeps them apart.
+    const list = repeatList({
+      repeats: [repeat('casing', pages('casing', 1))],
+      classes: ['copy'],
+      stateOf: reading(),
+    });
+
+    expect(list.groups).toEqual([]);
+    expect(list.shown).toBe(0);
+    expect(list.total).toBe(1);
   });
 
   it('draws a class the vocabulary does not name, last rather than nowhere', () => {
-    // The vocabulary is closed, so today nothing reaches here that is not in it. The
-    // guard is for the failure being **silent**: a group list built from the vocabulary
-    // alone would drop the row off the screen while the footer below kept counting it,
-    // and the reader would meet *40 verschillen* over 38 rows. This list never gets to
-    // decide that a repeat is not work.
-    const groups = groupRepeatsByClass([repeat('copy', 1), repeat('invented', 1)]);
+    // The vocabulary is closed, so today nothing reaches here that is not in it. The guard is
+    // for the failure being **silent**: a group list built from the vocabulary alone would
+    // drop the row off the screen while the footer below kept counting it, and the reader
+    // would meet *40 differences* over 38 rows.
+    const list = repeatList({
+      repeats: [repeat('copy', pages('copy', 1)), repeat('invented', pages('invented', 1))],
+      stateOf: reading(),
+    });
 
-    expect(groups.at(-1).class).toBe('invented');
-    expect(groups.at(-1).repeats).toHaveLength(1);
+    expect(list.groups.at(-1).class).toBe('invented');
+    expect(list.groups.at(-1).repeats).toHaveLength(1);
   });
 
-  it('moves no count: the groups hold the list it was given, whole', () => {
-    // The rule that outranks the rest of this ticket. Grouping is drawing, so the repeat
-    // total across the groups is the ungrouped total — and a group carries rows, a name
-    // and its initial state, and nothing a bar could be built from.
-    const repeats = [repeat('copy', 2), repeat('casing', 1), repeat('copy', 5)];
-    const groups = groupRepeatsByClass(repeats);
-    const inside = groups.flatMap((group) => group.repeats);
+  it('moves no count: the groups hold the rows it drew, whole', () => {
+    // Grouping is drawing, so the repeat total across the groups is the ungrouped total —
+    // and a group carries rows, a name and its initial state, and nothing a bar could be
+    // built from. The footer's two numbers are one reading: `findings` is counted off the
+    // rows and not off the corpus, so a row count and a finding count cannot disagree.
+    const list = repeatList({
+      repeats: [
+        repeat('copy', pages('wide', 2)),
+        repeat('casing', pages('one', 1)),
+        repeat('copy', pages('wider', 5)),
+      ],
+      stateOf: reading(),
+    });
 
-    expect(inside).toHaveLength(repeats.length);
-    expect(findingsIn(inside)).toBe(findingsIn(repeats));
-    expect(Object.keys(groups[0]).sort()).toEqual(['class', 'opensOnLoad', 'repeats']);
+    const inside = list.groups.flatMap((group) => group.repeats);
+    expect(inside).toHaveLength(list.rows.length);
+    expect(findingsIn(inside)).toBe(list.findings);
+    expect(list.findings).toBe(8);
+    expect(Object.keys(list.groups[0]).sort()).toEqual(['class', 'opensOnLoad', 'repeats']);
   });
 });
 

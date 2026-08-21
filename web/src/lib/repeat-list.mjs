@@ -8,9 +8,16 @@
  * on thirty pages is one row here, and an editor meets it once instead of thirty times.
  *
  * **This module never sees the override log.** Every rule below that depends on what is
- * still open — the order, the narrowing, the pills — takes an `openOf` accessor from the
- * caller that already draws the row's bar, so a row's position, its presence and its
- * printed *N of N closed* are three readings of one bar and can never disagree.
+ * still open — the order, the narrowing, the pills, the closed pages — reads a `stateOf`
+ * accessor handed in by the caller that already draws the row's bar, so a row's position, its
+ * presence and its printed *N of N closed* are three readings of one bar and can never
+ * disagree.
+ *
+ * **`repeatList()` at the foot of this file is the one way in** to all of that. Everything
+ * between `repeatsInStore()` and it is a step of that function and not an interface: the six
+ * steps had an order, the order was part of the interface, and the part easiest to get wrong
+ * was the pill — it counts **before** the narrowing, because a pill that fell to its own count
+ * when you pressed it would be a control that lies about what it holds.
  */
 
 // The closed vocabulary, for the **order** of the class groups and nothing else. The
@@ -30,6 +37,10 @@ import { blockOf, storesOf } from './language-blocks.mjs';
 // The pills over this list: what a class filter lets through, and the order the pills are
 // drawn in. Both are the narrowing rule and neither is this list's to restate.
 import { classCounts, classIsOn } from './filter.mjs';
+// A difference's bar, and which states count as done. The caller hands in one finding's state
+// at a time; these two are what turn a set of them into *how much is left* and *which pages
+// are closed*, so this list and the bar a row prints cannot come to disagree about either.
+import { barOf, bucketOf } from '../../../overrides/state.mjs';
 
 /**
  * One page of a repeat: the page, the store it is on, and the finding that is the
@@ -228,7 +239,7 @@ const bySize = (a, b) => b.on.length - a.on.length || a.key.localeCompare(b.key)
  *                                             open, off the bar the row prints.
  * @returns {Repeat[]}
  */
-export function repeatsByOpenWork(repeats, openOf) {
+function repeatsByOpenWork(repeats, openOf) {
   // Counted once per row and not inside the comparator, which would read the log O(n log n)
   // times over a 25,657-row list.
   const seats = repeats.map((repeat) => ({ repeat, open: openOf(repeat) }));
@@ -244,7 +255,7 @@ export function repeatsByOpenWork(repeats, openOf) {
  * The repeat list with the **fully decided differences off it** (ticket 144).
  *
  * The name is *with work left* and not *by open work*: `repeatsByOpenWork()` above **orders**
- * the list and this **narrows** it, `useWorstFirst()` calls the two on adjacent lines, and two
+ * the list and this **narrows** it, `repeatList()` calls the two on adjacent lines, and two
  * names a preposition apart would be two things a reader has to keep straight.
  *
  * Ticket 141 sank such a row instead of removing it, deliberately — sinking is the safe
@@ -273,7 +284,7 @@ export function repeatsByOpenWork(repeats, openOf) {
  *   only**: no count below moves with it.
  * @returns {Repeat[]}
  */
-export function repeatsWithWorkLeft(repeats, openOf, { includeClosed = false } = {}) {
+function repeatsWithWorkLeft(repeats, openOf, { includeClosed = false } = {}) {
   if (includeClosed) return repeats;
   return repeats.filter((repeat) => openOf(repeat) > 0);
 }
@@ -318,7 +329,7 @@ export function repeatsWithWorkLeft(repeats, openOf, { includeClosed = false } =
  *   number never depends on this**; only a zero pill's presence does.
  * @returns {{ class: string, count: number }[]}
  */
-export function classCountsByOpenWork(repeats, openOf, { tally = {}, includeClosed = false } = {}) {
+function classCountsByOpenWork(repeats, openOf, { tally = {}, includeClosed = false } = {}) {
   /** @type {Map<string, number>} */
   const open = new Map();
   for (const repeat of repeats) {
@@ -406,7 +417,7 @@ export const findingsIn = (repeats) => repeats.reduce((sum, repeat) => sum + rep
  * @param {string[]} classes  The pills that are on. Empty means every class.
  * @returns {ClassGroup[]}
  */
-export function groupRepeatsByClass(repeats, classes = []) {
+function groupRepeatsByClass(repeats, classes = []) {
   /** @type {Map<string, Repeat[]>} */
   const byClass = new Map();
   for (const repeat of repeats) {
@@ -457,4 +468,175 @@ export function groupRepeatsByClass(repeats, classes = []) {
   const opening = new Set([...chosen, ...lone]);
 
   return groups.map((group) => ({ ...group, opensOnLoad: opening.has(group.class) }));
+}
+
+/**
+ * How much open work one difference holds, off the bar the row prints (ticket 144).
+ *
+ * The lookup cannot miss — the caller's reading is derived from the same store summaries the
+ * repeats are — and it is **left to throw** rather than skipping a missing finding: a skipped
+ * member would quietly lower the denominator, so the row would say *3 of 3 closed* about four
+ * findings, and since ticket 141 it would quietly move or hide the row as well.
+ *
+ * `barOf()` is spelled here and again where a row draws its bar, which is the one duplication
+ * this ticket leaves standing: the row's bar is drawn by the component that has the row, and
+ * this is the count the list is ordered and narrowed by. Both read `barOf()` over `repeat.on`,
+ * so they are two spellings of one rule and not two rules.
+ *
+ * @param {Repeat} repeat
+ * @param {(id: string) => object} stateOf  One finding's state, as the caller has it.
+ */
+const openWorkIn = (repeat, stateOf) => barOf(repeat.on.map((entry) => stateOf(entry.id))).open;
+
+/**
+ * The pages of these differences that are **closed**, as finding ids (ticket 144).
+ *
+ * The two things that close a finding are a dismissal and a claimed fix, and *closed* is the
+ * bucket that holds them — read off `bucketOf()` rather than listed here, so this and the bar
+ * it is drawn beside cannot come to disagree about which states are done. A contradicted claim
+ * is not one of them: it reads as open everywhere else, so its page is still drawn.
+ *
+ * It is **one set over the whole list** rather than a question each page asks the live log, so
+ * a page cannot leave the table under the editor who just decided it.
+ *
+ * @param {Repeat[]} repeats
+ * @param {(id: string) => object} stateOf
+ * @returns {Set<string>}
+ */
+const closedPagesIn = (repeats, stateOf) =>
+  new Set(
+    repeats.flatMap((repeat) =>
+      repeat.on
+        .filter((entry) => bucketOf(stateOf(entry.id).state) === 'closed')
+        .map((entry) => entry.id),
+    ),
+  );
+
+/**
+ * **The repeat list, as one call.** Everything the list does to itself once the log is in
+ * scope: which rows are drawn, where they sit, which class group each is drawn under, what the
+ * pills say, and which of a row's pages *Include closed* took away.
+ *
+ * It exists for the rule three callers used to keep by remembering it — **a pill counts a
+ * class over the **whole list**, and the rows are the narrowed one.** The steps above it were
+ * six exported functions whose *order* was the interface, and the pill is the part easiest to
+ * get wrong: it counts **before** the narrowing, because a pill that fell to its own count when
+ * you pressed it would be a control that lies about what it holds. ADR 0029's *the same list
+ * the rows come from* means the same corpus and the same log — not the same narrowing — and
+ * this function is where that sentence is now enforced rather than remembered.
+ *
+ * `repeatsInStore()` stays outside it, and that is deliberate: it is what builds the list, it is
+ * memoised on the pages, and `searchStore()` needs its output to attach what a term matched.
+ * Collapsing the two would re-group every page in the store each time a class pill is pressed.
+ *
+ * The reading is **handed in** rather than read here, in the manner ticket 141 established:
+ * this module never sees the override log, and the caller that draws a row already reads that
+ * row's bar. The parameter is a `stateOf` and not an open count per row, because the closed
+ * pages are a question about a **finding** and the order is a question about a row — one
+ * accessor answers both, and two would be two readings that could disagree.
+ *
+ * Whether that reading is **held** is the caller's, and it is not a decision this function can
+ * make: `useWorstFirst()` keeps the log as the list found it, so a decision does not move a
+ * row out from under the editor, while the dashboard's pills read it live. *Numbers are
+ * readings and move; membership is a position and is held* (ADR 0029), and the same function
+ * serves both because it is handed the reading each of them wants.
+ *
+ * @param {object} input
+ * @param {Repeat[]} input.repeats  The whole list: `repeatsInStore()`'s output, un-narrowed.
+ *   The pills are counted over **this**, which is the whole point of one entry.
+ * @param {string[]} [input.classes]  The class pills that are on. Empty means every class, and
+ *   it narrows the rows and the groups and no count.
+ * @param {(id: string) => object} input.stateOf  One finding's state, off the bar the caller
+ *   draws. Left to throw on a finding it does not know — see `openWorkIn()`.
+ * @param {boolean} [input.includeClosed]  Whether a wholly decided difference is on the list,
+ *   and whether the pages it settled are drawn inside it. Membership only: no count moves.
+ * @param {Record<string, number>} [input.tally]  The snapshot's findings per class, for the
+ *   classes this list **cannot hold** — see `classCountsByOpenWork()`, which is where that
+ *   exception is argued. A caller with no such pills to draw omits it.
+ * @returns {{
+ *   rows: Repeat[],
+ *   groups: ClassGroup[],
+ *   classCounts: { class: string, count: number }[],
+ *   total: number,
+ *   shown: number,
+ *   findings: number,
+ *   closedPages: Set<string> | null,
+ * }}
+ *   `rows` and `groups` are narrowed; `classCounts` is counted over the whole list. `total`
+ *   and `shown` are that list and what the pills leave of it — the pair the filter strip
+ *   counts, and the reason the dashboard no longer keeps a second list to get the second one.
+ *   `shown` is the **class-narrowed** count and not `rows.length`: the strip says how much the
+ *   filter left, and a caller distinguishing *no difference found* from *no open work here*
+ *   needs the two numbers apart. `closedPages` is `null` where nothing is hidden, because a
+ *   caller with nothing to hide holds no set.
+ */
+export function repeatList({ repeats, classes = [], stateOf, includeClosed = false, tally = {} }) {
+  // Counted once per row and read by every step below, which would otherwise each ask the log
+  // again over a 25,657-row list. It is keyed on the row, and every list below is a subset of
+  // this one, so the lookup cannot miss.
+  const open = new Map(repeats.map((repeat) => [repeat, openWorkIn(repeat, stateOf)]));
+  const openOf = (/** @type {Repeat} */ repeat) => open.get(repeat);
+
+  // **Count first.** Over `repeats` and never over what the pills left, so pressing one pill
+  // does not empty the others.
+  const pills = classCountsByOpenWork(repeats, openOf, { tally, includeClosed });
+
+  // **Then narrow, then order**, in the fields below. The classes decide membership, the log
+  // takes the settled rows away, and the remainder arrives worst-first.
+  const narrowed = repeatsWithClasses(repeats, classes);
+  const rows = once(() =>
+    repeatsByOpenWork(repeatsWithWorkLeft(narrowed, openOf, { includeClosed }), openOf),
+  );
+  // The groups are a slice of `rows` and never a second opinion about their order, which is what
+  // putting the two in one function buys: they cannot be composed the other way round.
+  const groups = once(() => groupRepeatsByClass(rows(), classes));
+  const closedPages = once(() => (includeClosed ? null : closedPagesIn(rows(), stateOf)));
+  const findings = once(() => findingsIn(rows()));
+
+  return {
+    get rows() {
+      return rows();
+    },
+    get groups() {
+      return groups();
+    },
+    classCounts: pills,
+    total: repeats.length,
+    shown: narrowed.length,
+    get findings() {
+      return findings();
+    },
+    get closedPages() {
+      return closedPages();
+    },
+  };
+}
+
+/**
+ * A derivation taken **at most once**, when something asks for it.
+ *
+ * The pills and the rows have one enforcement point and two readers. The dashboard reads three
+ * numbers off a live log on every decision an editor makes, and never a row; the queue reads the
+ * rows off a held one. Sorting and grouping 25,657 differences for a caller that wants a pill
+ * count is work nobody asked for, and taking it eagerly is the only cost one entry point would
+ * otherwise carry over the four functions it replaced.
+ *
+ * The result is held rather than re-derived per read, because a component destructures this
+ * object on every paint and the rows must be the same array each time — a new one would re-seat
+ * every row React is holding.
+ *
+ * @template T
+ * @param {() => T} derive
+ * @returns {() => T}
+ */
+function once(derive) {
+  let held = /** @type {T} */ (undefined);
+  let taken = false;
+  return () => {
+    if (!taken) {
+      held = derive();
+      taken = true;
+    }
+    return held;
+  };
 }

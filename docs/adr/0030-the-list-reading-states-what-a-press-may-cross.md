@@ -96,7 +96,10 @@ reading and draw that plausible page. *No store* is a screen, not the absence of
   vocabulary it reads, with the reading importing it from there unchanged.
 - **`openWorkIn` is untouched.** The dashboard goes on importing it from `Repeats.jsx`, which is
   a drawing module used as a library and is wrong for a different reason. Fixing it here would
-  pull a third screen into this change for no reason of this change's.
+  pull a third screen into this change for no reason of this change's. It has since been fixed
+  from the other end: the pills come back from `repeatList()` with the rows they count, so the
+  dashboard has no open-work question of its own to ask and the import is gone rather than
+  moved — see the amendment to ADR 0029.
 - **A refusal is words and not a flag, still.** The list cannot draw a refusal it has no
   sentence for, which is the rule the old `refusesPress` prop kept and the reading keeps: the
   reading returns the sentence, and a boolean would let a caller invent one.

@@ -15,7 +15,7 @@ import {
 import { Hint } from "./Hint.jsx";
 import { Label } from "./ui/label.jsx";
 import { EditorPrompt, LogBanner } from "./Progress.jsx";
-import { ClassGroups, openWorkIn } from "./Repeats.jsx";
+import { ClassGroups } from "./Repeats.jsx";
 import { StoreSearch } from "./Search.jsx";
 import SearchBox from "./SearchBox.jsx";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.jsx";
@@ -65,7 +65,7 @@ import { groupNotChecked } from "../lib/not-checked.mjs";
 import { CANONICAL_VIEWPORT } from "../../../shared/canonical-viewport.mjs";
 import { emptyBuckets } from "../../../overrides/state.mjs";
 import { pagesWithClasses, pagesWithPriorities, toggleIn } from "../lib/filter.mjs";
-import { classCountsByOpenWork, repeatsInStore, repeatsWithClasses } from "../lib/repeat-list.mjs";
+import { repeatList, repeatsInStore } from "../lib/repeat-list.mjs";
 
 const CHECKS = ["text", "links", "images"];
 
@@ -330,37 +330,7 @@ export default function Dashboard({
     () => repeatsInStore([...comparable, ...comparableSiblings]),
     [comparable, comparableSiblings],
   );
-  const shownRepeats = useMemo(
-    () => repeatsWithClasses(repeats, classes),
-    [repeats, classes],
-  );
 
-  /**
-   * What the filter strip counts, which is whichever list is under it.
-   *
-   * Asked once rather than three times in the strip's own props: *how many, of how many,
-   * of what* is one answer about one list, and three separate readings of `view` are
-   * three chances for the noun to end up over the other list's number. The searching
-   * case is absent on purpose — a search counts its own result, and only `Search` holds
-   * that count.
-   *
-   * The repeats noun says **in this language block** where there is one, because that is what
-   * the number is over: the list is mirrored across the block and holds rows the sibling
-   * carries alone, so *3,264 differences* on `nl`'s screen would be a count of `nl`'s work,
-   * which it is not — `totals` and the bar above are that. On `de` and `uk` there is no
-   * sibling, the two counts are the same number they always were, and the words are too.
-   */
-  const narrowed =
-    view === "repeats"
-      ? {
-          shown: shownRepeats.length,
-          total: repeats.length,
-          noun:
-            comparableSiblings.length > 0
-              ? "differences in this language block"
-              : "differences",
-        }
-      : { shown: rows.length, total: comparable.length, noun: "pages" };
 
   /**
    * How many pages carry each priority, for the number beside each pill. It counts the
@@ -478,21 +448,53 @@ export default function Dashboard({
    * the dependencies on purpose. The bar and the chips above are untouched — they are the
    * store's, snapshot-shaped, and they stay citable.
    *
-   * `repeats` and not `shownRepeats`: a pill counts a class, and narrowing the list to one
-   * class would leave the other pills counting nothing.
+   * **A pill counts the whole corpus and the rows are the narrowed list**, which is no longer
+   * a rule this screen keeps by remembering it: `repeatList()` is handed the un-narrowed list
+   * and the pills that are on, and it counts before it narrows. This screen used to hold two
+   * lists to get the two numbers below and to compose four functions in the right order to get
+   * the pills; both are that one call now.
+   *
+   * `shown` and `total` are the filter strip's pair — how many differences the pills left, of
+   * how many there are — and they are read from the same call for the same reason.
    */
-  const classPills = useMemo(
+  const queue = useMemo(
     () =>
-      classCountsByOpenWork(
+      repeatList({
         repeats,
-        (repeat) => openWorkIn(repeat, log.byFinding),
-        {
-          tally: totals.byClass,
-          includeClosed,
-        },
-      ),
-    [repeats, log.byFinding, totals.byClass, includeClosed],
+        classes,
+        includeClosed,
+        stateOf: (id) => log.byFinding.get(id),
+        tally: totals.byClass,
+      }),
+    [repeats, classes, log.byFinding, totals.byClass, includeClosed],
   );
+
+  /**
+   * What the filter strip counts, which is whichever list is under it.
+   *
+   * Asked once rather than three times in the strip's own props: *how many, of how many,
+   * of what* is one answer about one list, and three separate readings of `view` are
+   * three chances for the noun to end up over the other list's number. The searching
+   * case is absent on purpose — a search counts its own result, and only `Search` holds
+   * that count.
+   *
+   * The repeats noun says **in this language block** where there is one, because that is what
+   * the number is over: the list is mirrored across the block and holds rows the sibling
+   * carries alone, so *3,264 differences* on `nl`'s screen would be a count of `nl`'s work,
+   * which it is not — `totals` and the bar above are that. On `de` and `uk` there is no
+   * sibling, the two counts are the same number they always were, and the words are too.
+   */
+  const narrowed =
+    view === "repeats"
+      ? {
+          shown: queue.shown,
+          total: queue.total,
+          noun:
+            comparableSiblings.length > 0
+              ? "differences in this language block"
+              : "differences",
+        }
+      : { shown: rows.length, total: comparable.length, noun: "pages" };
 
   return (
     <div className="space-y-6">
@@ -607,7 +609,7 @@ export default function Dashboard({
               already here. */}
           <div className="flex flex-wrap items-center gap-2">
             <ClassFilterPills
-              counts={classPills}
+              counts={queue.classCounts}
               selected={classes}
               onToggle={(cls) => patch({ classes: toggleIn(classes, cls) })}
               // What a press *does* depends on which of the three lists is under it, so the
@@ -811,13 +813,14 @@ export default function Dashboard({
             // A budget carried over from the wider list would say *100 of 100
             // drawn* over a list of 12.
             //
-            // Ticket 100: the rows arrive in a class group for each class. The list is
-            // already narrowed to the pills here, and the classes go along so the groups
-            // can draw the selected ones only — the same filter said once, to two things
-            // that must agree about it.
+            // Ticket 100: the rows arrive in a class group for each class. The list handed
+            // over is the **un-narrowed** one and the pills go with it, because the list and
+            // the pills above it are counted from one call there as they are here — a list
+            // narrowed on the way in would leave that call unable to count a class it can no
+            // longer see.
             <ClassGroups
               key={`${classes.join(",")}|${includeClosed}`}
-              repeats={shownRepeats}
+              repeats={repeats}
               classes={classes}
               // The screen, as one reading of it (ADR 0030). The log inside it comes off
               // the hook and is never rebuilt here (ticket 03): it has to cover the

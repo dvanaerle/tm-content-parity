@@ -1,7 +1,7 @@
 # 03 — A repeat list counts before it narrows
 
 Type: spec
-Status: ready-for-agent
+Status: ready-for-human
 Written: 2026-08-21
 Decided in: the grilling of candidate 2, 2026-08-21
 Blocked by: 02. It needs `repeat-list.mjs` to exist, and it edits the same three screens.
@@ -67,19 +67,35 @@ ticket 02, which is also where the pipeline is currently composed by hand — **
 rewritten against the entry point**, because as they stand they prove the shape this ticket
 deletes. Everything else moves untouched.
 
-- [ ] `repeatList(…)` returns rows, groups, class counts, totals, findings and closed pages from
+- [x] `repeatList(…)` returns rows, groups, class counts, totals, findings and closed pages from
       one call.
-- [ ] A test proves the pill count does not move when the classes narrow, and that the rows do.
-- [ ] A test proves the order is worst-first on **open** findings, and that *Include closed*
+- [x] A test proves the pill count does not move when the classes narrow, and that the rows do.
+- [x] A test proves the order is worst-first on **open** findings, and that *Include closed*
       changes both the rows and the closed-page reading.
-- [ ] `repeatsWithWorkLeft`, `repeatsByOpenWork`, `groupRepeatsByClass` and
+- [x] `repeatsWithWorkLeft`, `repeatsByOpenWork`, `groupRepeatsByClass` and
       `classCountsByOpenWork` are no longer exported. The repeat half is four exports:
       `repeatsInStore`, `repeatsWithClasses`, `findingsIn`, `repeatList`.
-- [ ] `useWorstFirst` keeps the held reading and calls the entry once.
-- [ ] `openWorkIn` and `closedPagesIn` live in `repeat-list.mjs`; `Dashboard.jsx` imports nothing
-      from `Repeats.jsx`.
-- [ ] The dashboard's pill counts and both screens' lists are unchanged, proven by the existing
+- [x] `useWorstFirst` keeps the held reading and calls the entry once.
+- [x] `openWorkIn` and `closedPagesIn` live in `repeat-list.mjs`; `Dashboard.jsx` imports no
+      **derivation** from `Repeats.jsx`. It still imports `ClassGroups`, which is the component
+      it draws — moving a component was never this ticket's.
+- [x] The dashboard's pill counts and both screens' lists are unchanged, proven by the existing
       browser tests passing unedited.
-- [ ] ADR 0029 gains a short *where the rule is stated* amendment naming the entry point as its
+- [x] ADR 0029 gains a short *where the rule is stated* amendment naming the entry point as its
       one enforcement point.
-- [ ] `oxlint` and the full test suite pass.
+- [x] `oxlint` and the full test suite pass.
+
+## Landed
+
+Two departures from the signature above, both forced and both written down where they are:
+
+- **The accessor is `stateOf(id)` and not `openOf(repeat)`.** `closedPagesIn()` asks which
+  *findings* are closed, so a per-row open count cannot answer it. One accessor answers both
+  questions; two would be two readings of one bar that could disagree, which is the thing the
+  module exists to prevent.
+- **`tally` is a fifth parameter.** The dashboard's pills for the classes this list cannot hold
+  come off the snapshot (ADR 0029), and dropping it would have taken those pills off the screen.
+
+`shown` is the **class-narrowed** count and not `rows.length`: it is what the filter strip has
+always counted, and it is also how `GroupedList` keeps *No difference found* apart from *No open
+work here*.

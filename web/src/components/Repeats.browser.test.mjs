@@ -925,10 +925,10 @@ describe("the selection on a difference", () => {
 /**
  * Ticket 141. The list leads with the difference holding the most work **left**.
  *
- * It cannot be answered in `repeat-list.mjs`: `repeatsInStore()` is a pure derivation over the
- * page summaries and never sees the override log, so the open count exists only here,
- * where the row already reads its own bar. That is why this is a mounted test and not a
- * second unit test beside `repeatsByOpenWork()`.
+ * The order itself is `repeatList()`'s and has a plain-Vitest test there. What is only
+ * answerable here is that the mounted list **hands it the right reading**: the open count comes
+ * off the log this component holds, and a shape that is right in a unit test and wrong in a
+ * render is the failure this file exists for.
  */
 describe("the order of the list", () => {
   const both = [repeat, other];
